@@ -136,6 +136,7 @@ class MarketData:
     current_enterprise_value: Any = UNAVAILABLE
     current_market_cap: Any = UNAVAILABLE
     historical_ps_band: Optional[Dict[str, Any]] = None
+    historical_pfcf_band: Optional[Dict[str, Any]] = None
     historical_ev_ebitda_band: Optional[Dict[str, Any]] = None
     source_type: str = "UNKNOWN"
     provider: str = "UNKNOWN"
@@ -146,6 +147,8 @@ class MarketData:
             self.historical_pe_band = {}
         if self.historical_ps_band is None:
             self.historical_ps_band = {}
+        if self.historical_pfcf_band is None:
+            self.historical_pfcf_band = {}
         if self.historical_ev_ebitda_band is None:
             self.historical_ev_ebitda_band = {}
 
@@ -280,6 +283,7 @@ class YahooFinanceProvider:
                 current_enterprise_value=fundamental.current_enterprise_value,
                 current_market_cap=fundamental.current_market_cap,
                 historical_ps_band=fundamental.historical_ps_band,
+                historical_pfcf_band=fundamental.historical_pfcf_band,
                 historical_ev_ebitda_band=fundamental.historical_ev_ebitda_band,
                 source_type="API_LIVE",
                 provider=f"{self.name}+{fundamental.provider}",
@@ -336,6 +340,7 @@ class CompanyResolver:
             current_enterprise_value=data.get("current_enterprise_value", UNAVAILABLE),
             current_market_cap=data.get("current_market_cap", UNAVAILABLE),
             historical_ps_band=dict(data.get("historical_ps_band", {})),
+            historical_pfcf_band=dict(data.get("historical_pfcf_band", {})),
             historical_ev_ebitda_band=dict(data.get("historical_ev_ebitda_band", {})),
             source_type=data.get("source_type", "REGRESSION_FIXTURE"),
             provider=data.get("provider", "RegressionFixture"),
@@ -461,10 +466,12 @@ class MarketImpliedAssumptionsEngine:
 
         pe_band = data.historical_pe_band or {}
         ps_band = data.historical_ps_band or {}
+        pfcf_band = data.historical_pfcf_band or {}
         ev_band = data.historical_ev_ebitda_band or {}
 
         historical_median = safe_float(pe_band.get("median"))
         historical_ps_median = safe_float(ps_band.get("median"))
+        historical_pfcf_median = safe_float(pfcf_band.get("median"))
         historical_ev_ebitda_median = safe_float(ev_band.get("median"))
 
         for value in (reference_multiple, pfcf_multiple, ev_ebitda_multiple, ps_multiple):
@@ -472,7 +479,7 @@ class MarketImpliedAssumptionsEngine:
                 raise ValueError("Reference multiples must be positive.")
 
         selected_pe = reference_multiple if reference_multiple is not None else historical_median
-        selected_pfcf = pfcf_multiple
+        selected_pfcf = pfcf_multiple if pfcf_multiple is not None else historical_pfcf_median
         selected_ev_ebitda = ev_ebitda_multiple if ev_ebitda_multiple is not None else historical_ev_ebitda_median
         selected_ps = ps_multiple if ps_multiple is not None else historical_ps_median
 
@@ -534,6 +541,7 @@ class MarketImpliedAssumptionsEngine:
                 "current_ps": current_ps,
                 "historical_pe_band": pe_band,
                 "historical_ps_band": ps_band,
+                "historical_pfcf_band": pfcf_band,
                 "historical_ev_ebitda_band": ev_band,
                 "approx_historical_pe_percentile": pe_percentile,
                 "approx_historical_ps_percentile": ps_percentile,
@@ -867,6 +875,7 @@ def run_st_eva(
         ("current_enterprise_value", data.current_enterprise_value),
         ("current_market_cap", data.current_market_cap),
         ("historical_ps_band", data.historical_ps_band),
+        ("historical_pfcf_band", data.historical_pfcf_band),
         ("historical_ev_ebitda_band", data.historical_ev_ebitda_band),
     ):
         if value in (None, UNAVAILABLE, {}):
