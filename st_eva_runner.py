@@ -30,17 +30,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+from fundamental_provider import YahooFundamentalProvider
+
 
 UNAVAILABLE = "UNAVAILABLE"
 
 VERSION_METADATA = {
     "engine": "ST-EVA Market-Implied Assumptions Engine",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "analysis_type": "market_implied_assumptions",
     "calculation_engine": "deterministic-python",
     "data_policy": "zero-synthetic-financial-data",
-    "validator_version": "2.0",
-    "schema_version": "2.0",
+    "validator_version": "2.1",
+    "schema_version": "2.1",
 }
 
 
@@ -244,6 +246,8 @@ class YahooFinanceProvider:
             else:
                 price_date = datetime.now(timezone.utc).date().isoformat()
 
+            fundamental = YahooFundamentalProvider().fetch(clean)
+
             return MarketData(
                 ticker=clean,
                 company_name=f"{clean} (Live Acquired)",
@@ -255,8 +259,12 @@ class YahooFinanceProvider:
                 price_source_url=url,
                 price_history=prices,
                 volume_history=volumes,
+                current_eps=fundamental.current_eps,
+                forward_eps=fundamental.forward_eps,
+                consensus_forward_eps=fundamental.consensus_forward_eps,
+                historical_pe_band=fundamental.historical_pe_band,
                 source_type="API_LIVE",
-                provider=self.name,
+                provider=f"{self.name}+{fundamental.provider}",
             )
         except Exception:
             return None
