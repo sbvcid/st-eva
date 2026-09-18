@@ -1,0 +1,85 @@
+{
+  "research_id": "RES-4CED847E",
+  "ticker": "NU",
+  "company_name": "Nu Holdings Ltd.",
+  "timestamp": "2026-09-18T19:36:53.318868+08:00",
+  "version_metadata": {
+    "model": "google/gemini-3.5-flash-lite (Single-LLM Engine)",
+    "prompt_version": "ST-EVA-v6.2",
+    "scenario_engine": "v5-dynamic",
+    "validator_version": "v3.1-hardened"
+  },
+  "p0": 12.8,
+  "currency": "USD",
+  "event_date": "2026-11-10",
+  "market_bet": "市場正在押注短線基本面修復與事件催化。",
+  "expectation_gap": "市場定價與基礎假設之間存在預期差 (Expectation Gap)。",
+  "scenarios": {
+    "bull": {
+      "probability": 0.3,
+      "target_price": 12.14,
+      "scenario_eps": 0.55,
+      "assumptions": {
+        "eps_growth": 0.15,
+        "target_multiple": 22.0,
+        "probability": 0.3,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "base": {
+      "probability": 0.5,
+      "target_price": 9.32,
+      "scenario_eps": 0.5,
+      "assumptions": {
+        "eps_growth": 0.05,
+        "target_multiple": 18.5,
+        "probability": 0.5,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "bear": {
+      "probability": 0.2,
+      "target_price": 6.05,
+      "scenario_eps": 0.43,
+      "assumptions": {
+        "eps_growth": -0.1,
+        "target_multiple": 14.0,
+        "probability": 0.2,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    }
+  },
+  "metrics": {
+    "EV": 9.51,
+    "expected_return": -25.69,
+    "payoff_ratio": -0.1
+  },
+  "evidence_ids": [
+    "ev-p0-001",
+    "ev-eps-001",
+    "ev-metrics-001"
+  ],
+  "outcome_tracking": {
+    "event_result": null,
+    "actual_eps": null,
+    "actual_revenue": null,
+    "event_day_return": null,
+    "t_plus_1_return": null,
+    "t_plus_5_return": null,
+    "t_plus_20_return": null,
+    "actual_price_t_plus_1": null,
+    "actual_price_t_plus_5": null,
+    "actual_price_t_plus_20": null,
+    "calibration": {
+      "bull_hit": null,
+      "base_hit": null,
+      "bear_hit": null,
+      "target_error": null,
+      "ev_error": null
+    },
+    "updated_at": null
+  }
+}
