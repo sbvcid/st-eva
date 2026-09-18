@@ -325,7 +325,8 @@ class YahooFundamentalProvider:
             payload = self._timeseries(
                 clean,
                 ["trailingPeRatio", "trailingPsRatio", "trailingEnterprisesValueEBITDARatio", "trailingMarketCap", "trailingFreeCashFlow"],
-            )            source_urls.append(
+            )
+            source_urls.append(
                 "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
                 "v1/finance/timeseries/" + clean
             )
