@@ -374,22 +374,32 @@ def interpolate_pe_percentile(
     value: float,
     band: Dict[str, Any],
 ) -> Optional[float]:
-    low = safe_float(band.get("10th"))
-    median = safe_float(band.get("median"))
-    high = safe_float(band.get("90th"))
+    points = [
+        (10.0, safe_float(band.get("10th"))),
+        (25.0, safe_float(band.get("25th"))),
+        (50.0, safe_float(band.get("median"))),
+        (75.0, safe_float(band.get("75th"))),
+        (90.0, safe_float(band.get("90th"))),
+    ]
 
-    if low is None or median is None or high is None:
-        return None
-    if not (0 < low < median < high):
+    observed = [(p, v) for p, v in points if v is not None]
+    if len(observed) < 2:
         return None
 
-    if value <= low:
-        return 10.0
-    if value <= median:
-        return 10.0 + 40.0 * (value - low) / (median - low)
-    if value <= high:
-        return 50.0 + 40.0 * (value - median) / (high - median)
-    return 90.0
+    for index in range(1, len(observed)):
+        left_p, left_v = observed[index - 1]
+        right_p, right_v = observed[index]
+        if left_v >= right_v:
+            return None
+        if value <= right_v:
+            if value <= left_v:
+                return left_p
+            return left_p + (right_p - left_p) * (
+                (value - left_v) / (right_v - left_v)
+            )
+
+    return observed[-1][0]
+
 
 
 class MarketImpliedAssumptionsEngine:
