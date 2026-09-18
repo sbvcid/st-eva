@@ -1,4 +1,4 @@
-# ST-EVA 2.1 Specification
+# ST-EVA 2.2 Specification
 
 ## 1. Objective
 
@@ -18,7 +18,8 @@ Examples:
 
 - current market price;
 - current, forward, or consensus EPS supplied by a source;
-- historical P/E band;
+- historical P/E, P/S, and EV/EBITDA bands;
+- current FCF, EBITDA, revenue, enterprise value, and market cap when sourced;
 - price and volume history;
 - event date supplied by a source.
 
@@ -101,7 +102,7 @@ consensus_forward_eps * historical_pe_median
 Price gap versus that reference:
 consensus_median_price / P0 - 1
 
-## 6. Fundamental data provider
+## 6. Multi-method valuation
 
 The deterministic engine consumes fundamentals through a provider abstraction. The Yahoo implementation may supply trailing EPS, forward EPS, forward-year consensus EPS, and an observed historical trailing P/E distribution. Each field is source-derived and timestamped where Yahoo exposes the information.
 
@@ -109,31 +110,28 @@ Consensus EPS must come from an explicit estimate source. Forward EPS must never
 
 Provider failures or unavailable fields do not trigger fallback estimates. They remain unavailable.
 
-## 7. Missing-data policy
+## 8. Missing-data policy
 
 Missing inputs are represented as UNAVAILABLE at the raw-data layer and null in numeric derived output.
 
 No fallback guess is allowed.
 
-## 8. Evidence policy
+## 9. Evidence policy
 
 Every material source input receives an Evidence ID.
 
 Invalid evidence references are validation errors.
 
-## 9. Snapshot policy
+## 10. Snapshot policy
 
 Analysis snapshots are append-only at the application level.
 
 Outcome records are separate files and never modify the original analysis snapshot.
 
-## 10. Future extensions
+## 11. Future extensions
 
 Possible later modules:
 
-- EV/EBITDA reverse engineering;
-- FCF yield reverse engineering;
-- revenue × margin reverse engineering;
 - multi-provider consensus acquisition;
 - event-window outcome calibration;
 - optional LLM interpretation layer.
