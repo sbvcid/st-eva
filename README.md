@@ -30,7 +30,7 @@ The word "implied" is conditional. Price alone cannot identify one unique future
 - Consensus forward P/E when consensus EPS is available.
 - Historical P/E band.
 - Current P/FCF, EV/EBITDA, and P/S when source inputs are available.
-- Historical P/S and EV/EBITDA bands when observed Yahoo valuation time series are available.
+- Historical P/S, P/FCF, and EV/EBITDA bands when observed Yahoo valuation time series are available.
 - Implied FCF, EBITDA, and revenue under explicit reference multiples.
 - Implied net margin when P/E and P/S references can be combined.
 - Approximate position inside the historical P/E band.
@@ -80,7 +80,7 @@ P/E priority:
 2. Historical P/E median.
 3. No reference.
 
-P/FCF, EV/EBITDA, and P/S references can be supplied explicitly. EV/EBITDA and P/S also fall back to their observed historical median when available. P/FCF does not use a synthetic historical median.
+P/FCF, EV/EBITDA, and P/S references can be supplied explicitly. EV/EBITDA and P/S also fall back to their observed historical median when available. P/FCF historical bands are derived only when market-cap and trailing FCF observations can be matched by date.
 
 Examples:
 
