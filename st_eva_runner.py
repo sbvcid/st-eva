@@ -619,6 +619,14 @@ class Validator:
                 errors.append("Reference multiple must be positive.")
 
         for key, value in analysis["implied_assumptions"].items():
+            if key == "reference_multiples":
+                if not isinstance(value, dict):
+                    errors.append("reference_multiples must be an object.")
+                else:
+                    for name, multiple in value.items():
+                        if multiple is not None and not is_number(multiple):
+                            errors.append(f"reference_multiples.{name} must be numeric or null.")
+                continue
             if value is not None and not is_number(value):
                 errors.append(f"{key} must be numeric or null.")
 
@@ -887,6 +895,7 @@ def run_st_eva(
         "observed_valuation": analysis["observed_valuation"],
         "market_implied_assumptions": analysis["implied_assumptions"],
         "consensus_cross_check": analysis["consensus_cross_check"],
+        "fundamental_snapshot": analysis["fundamental_snapshot"],
         "reference": analysis["reference"],
         "market_metrics": metrics,
         "missing_data": missing_data,
