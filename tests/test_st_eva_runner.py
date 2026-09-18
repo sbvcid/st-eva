@@ -7,9 +7,30 @@ from st_eva_runner import (
 )
 from fundamental_provider import FundamentalData, YahooFundamentalProvider
 
+from fundamental_provider import FundamentalData, YahooFundamentalProvider
+
 
 
 class TestMarketImpliedAssumptions(unittest.TestCase):
+    def test_fundamental_provider_defaults_are_unavailable(self):
+        data = FundamentalData()
+        self.assertEqual(data.current_eps, "UNAVAILABLE")
+        self.assertEqual(data.forward_eps, "UNAVAILABLE")
+        self.assertEqual(data.consensus_forward_eps, "UNAVAILABLE")
+        self.assertEqual(data.historical_pe_band, {})
+
+    def test_consensus_extraction_prefers_forward_year_estimate(self):
+        trend = {
+            "trend": [
+                {"period": "0q", "earningsEstimate": {"avg": 1.0}},
+                {"period": "+1y", "earningsEstimate": {"avg": 4.0}},
+            ]
+        }
+        self.assertEqual(
+            YahooFundamentalProvider._extract_consensus_forward_eps(trend),
+            4.0,
+        )
+
     def test_fundamental_provider_defaults_are_unavailable(self):
         data = FundamentalData()
         self.assertEqual(data.current_eps, "UNAVAILABLE")
