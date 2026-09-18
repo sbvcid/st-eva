@@ -1,108 +1,151 @@
-# Short-Term Event-Driven Valuation Framework (ST-EVA v6.1)
+# ST-EVA — Market-Implied Assumptions Engine
 
-ST-EVA v6.1 is an independent **Short-Term Event-Driven Investment Research Engine** designed for 1–8 week horizons. It is structured to serve as a rigorous research tool that can be invoked programmatically by future Investment Agents.
+ST-EVA answers one question:
 
----
+「目前價格反映了什麼假設？」
 
-## What ST-EVA Solves
-- **Expectation Gaps**: Quantifies what the market is pricing in versus consensus and fundamentals over short event windows (e.g., earnings, product launches, macroeconomic catalysts).
-- **Deterministic Valuation**: Eliminates LLM math hallucination by enforcing Python-driven calculation of Expected Value (EV), Scenario Target Prices, Upside/Downside, and Payoff Ratios.
-- **Evidence Traceability**: Enforces strict provenance through a Unified Evidence Store where every claim and metric maps to verifiable Evidence IDs.
-- **Anti-Hallucination & Stress Validation**: Validates all model hypotheses, scenario probability limits, data discrepancies across multi-source providers, and evidence-to-claim consistency.
+It starts from the observed market price and reverse-engineers the earnings assumptions required to justify that price under an explicitly selected valuation reference.
 
-## What ST-EVA Does Not Solve
-- Long-term DCF, DDM, or LBO modeling.
-- Portfolio optimization or automated trade execution.
-- Multi-agent debate or subjective asset allocation.
+## Core calculation
 
----
+For current price P0 and reference P/E multiple M:
 
-## Architecture Pipeline
+Implied Forward EPS = P0 / M
 
-```text
-Market Data Providers (Yahoo Finance, Alpha Vantage, FMP)
-                   ↓
-         Multi-Source Aggregator
-                   ↓
-         Unified Evidence Store
-                   ↓
-       Deterministic Metrics Engine
-                   ↓
-            ResearchInput
-                   ↓
-      Single LLM Research Engine (Structured JSON)
-                   ↓
-       Dynamic Scenario Engine
-                   ↓
-        Python Valuation Arithmetic
-                   ↓
-              Validator 3.0
-                   ↓
-    ┌──────────────┴──────────────┐
-    ↓                             ↓
-Structured JSON           Human-Readable Markdown
-(Machine-Readable API)    (Analyst Report)
-    ↓
-Immutable Research Snapshot (`history/`)
-```
+If current EPS is available:
 
----
+Required EPS CAGR = (Implied Forward EPS / Current EPS) ^ (1 / T) - 1
 
-## Core Principles
-1. **Separation of Concerns**: LLM is strictly responsible for *interpretation, hypotheses, and qualitative reasoning*. Python is responsible for *math, deterministic calculations, and schema validation*.
-2. **Evidence as Hard Constraint**: All claims must reference valid Evidence IDs. Non-existent IDs trigger immediate rejection.
-3. **Multi-Source Data Provenance**: Data is acquired across providers with deterministic discrepancy checks (e.g., >1% price variance flagged as `DATA_DISCREPANCY`).
-4. **Immutable Historical Snapshots**: Every run generates a version-controlled canonical JSON record in `history/` containing outcome tracking stubs for future calibration and backtesting.
+If consensus forward EPS is available:
 
----
+EPS Gap = Implied Forward EPS / Consensus Forward EPS - 1
 
-## Public Tool Interface (`run_st_eva`)
+The word "implied" is conditional. Price alone cannot identify one unique future EPS or growth path.
 
-```python
-from st_eva_runner import run_st_eva
+## What the engine reports
 
-result = run_st_eva(
-    ticker="AAPL",
-    horizon="1-8 weeks",
-    event="Q3 2026 Earnings"
-)
-```
+- Current price and provenance.
+- Current P/E when current EPS is available.
+- Forward P/E when forward EPS is available.
+- Consensus forward P/E when consensus EPS is available.
+- Historical P/E band.
+- Approximate position inside the historical P/E band.
+- Forward EPS implied by the selected valuation multiple.
+- EPS gap between implied EPS and consensus EPS.
+- EPS CAGR required from current EPS.
+- Price implied by consensus EPS at the historical median P/E.
+- Price and volume statistics.
+- Missing data.
+- Evidence IDs.
+- An immutable-at-application-level research snapshot.
 
-### Output JSON Schema
-```json
-{
-  "ticker": "AAPL",
-  "company_name": "AAPL (Live Acquired)",
-  "research_id": "RES-455776B8",
-  "as_of": "2026-09-18",
-  "horizon": "1-8 weeks",
-  "price": 337.0,
-  "currency": "USD",
-  "event": {
-    "date": "UNAVAILABLE",
-    "status": "Unconfirmed"
-  },
-  "market_expectation": { ... },
-  "scenarios": { ... },
-  "expected_value": 346.60,
-  "expected_return_pct": 2.85,
-  "upside": 50.55,
-  "downside": 33.70,
-  "payoff": 1.50,
-  "risks": [ ... ],
-  "triggers": [ ... ],
-  "kill_switches": [ ... ],
-  "evidence": [ ... ],
-  "validation": { "status": "PASSED", "validator_version": "v3-adversarial" },
-  "version_metadata": { ... }
-}
-```
+## What it does not do
 
----
+ST-EVA does not:
 
-## Test Commands
+- invent EPS;
+- invent consensus estimates;
+- invent probability weights;
+- invent Bull/Base/Bear target prices;
+- use arbitrary price multipliers when fundamentals are unavailable;
+- output a buy/sell stance;
+- claim that one P/E multiple is objectively what the market assumes;
+- ask an LLM to perform valuation arithmetic.
 
-Run the full ST-EVA test suite:
-```powershell
-python st_eva_runner.py
-```
+An LLM can later interpret the structured result, but the calculation core is deterministic Python.
+
+## Data categories
+
+OBSERVED:
+Data supplied by a market-data provider or explicit test fixture.
+
+DERIVED:
+Deterministic calculations from observed inputs.
+
+CONDITIONAL_INFERENCE:
+Reverse-engineered assumptions that depend on an explicit valuation reference.
+
+UNAVAILABLE:
+A required input that has not been sourced. It is never guessed.
+
+## Valuation reference
+
+Priority:
+
+1. User-supplied reference multiple.
+2. Historical P/E median.
+3. No reference.
+
+Example:
+
+python st_eva_runner.py AAPL --mode live --reference-multiple 30
+
+If neither a supplied reference multiple nor a historical median is available, ST-EVA still reports observed valuation data but does not fabricate implied EPS.
+
+## Usage
+
+Run regression tests:
+
+python st_eva_runner.py --test
+
+Run static fixtures:
+
+python st_eva_runner.py MSFT --mode regression
+python st_eva_runner.py TENCENT --mode regression
+python st_eva_runner.py NU --mode regression
+
+Run live Yahoo Finance acquisition:
+
+python st_eva_runner.py AAPL --mode live --no-snapshot
+
+Save a research snapshot:
+
+python st_eva_runner.py AAPL --mode live --reference-multiple 30
+
+Snapshots are written to history/.
+
+## Architecture
+
+Observed Market Data
+        |
+        v
+Evidence Store
+        |
+        v
+Deterministic Metrics
+        |
+        v
+Reverse Valuation Engine
+        |
+        +--> Historical P/E reference
+        |
+        +--> Consensus EPS cross-check
+        |
+        +--> Required EPS / CAGR
+        |
+        v
+Validator
+        |
+        v
+Machine-readable JSON
+        |
+        v
+Immutable-at-application-level Snapshot
+
+## Testing
+
+The regression fixtures are static test data. They are not live prices.
+
+The test suite checks:
+
+- reverse-valuation arithmetic;
+- evidence integrity;
+- zero synthetic financial data;
+- missing-data behavior;
+- unknown-ticker handling.
+
+Future extensions can add EV/EBITDA, FCF yield, revenue/margin reverse engineering, more providers, and an optional LLM interpretation layer without changing the deterministic core.
+
+## Scope
+
+ST-EVA is an analytical component. It describes assumptions embedded in a price; it does not make the investment decision.
