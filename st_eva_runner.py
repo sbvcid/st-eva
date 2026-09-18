@@ -517,7 +517,7 @@ class MarketImpliedAssumptionsEngine:
             else None
         )
 
-        pe_percentile = interpolate_pe_percentile(current_pe, pe_band) if current_pe is not None else None
+        pe_percentile = interpolate_pe_percentile(selected_pe, pe_band) if selected_pe is not None else None
         ps_percentile = interpolate_pe_percentile(current_ps, ps_band) if current_ps is not None else None
         ev_ebitda_percentile = interpolate_pe_percentile(current_ev_ebitda, ev_band) if current_ev_ebitda is not None else None
 
