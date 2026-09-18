@@ -110,11 +110,8 @@ class YahooFundamentalProvider:
         self.opener.addheaders = [("User-Agent", "Mozilla/5.0 ST-EVA/2.1")]
 
     def _get(self, url: str) -> Optional[Dict[str, Any]]:
-        try:
-            with self.opener.open(url, timeout=self.timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except Exception:
-            return None
+        with self.opener.open(url, timeout=self.timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
 
     def _bootstrap_crumb(self) -> Optional[str]:
         try:
@@ -341,8 +338,7 @@ class YahooFundamentalProvider:
             "trailingPsRatio",
             "trailingEnterprisesValueEBITDARatio",
         ]
-        
-        errors = []
+
         try:
             payload = self._timeseries(clean, valuation_types)
             if not payload:
