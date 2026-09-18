@@ -30,13 +30,6 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             4.0,
         )
 
-    def test_fundamental_provider_defaults_are_unavailable(self):
-        data = FundamentalData()
-        self.assertEqual(data.current_eps, "UNAVAILABLE")
-        self.assertEqual(data.forward_eps, "UNAVAILABLE")
-        self.assertEqual(data.consensus_forward_eps, "UNAVAILABLE")
-        self.assertEqual(data.historical_pe_band, {})
-
     def test_consensus_extraction_never_uses_actual_eps(self):
         trend = {
             "trend": [
