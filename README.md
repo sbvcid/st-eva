@@ -1,4 +1,4 @@
-# ST-EVA — Market-Implied Assumptions Engine
+# ST-EVA 2.1 — Market-Implied Assumptions Engine
 
 ST-EVA answers one question:
 
@@ -104,9 +104,19 @@ python st_eva_runner.py AAPL --mode live --reference-multiple 30
 
 Snapshots are written to history/.
 
+## Fundamental data provider
+
+Live mode now uses a separate `YahooFundamentalProvider` for source financial data. It attempts to acquire trailing EPS, forward EPS, forward-year consensus EPS from Yahoo earnings estimates, and an observed historical trailing P/E distribution from Yahoo fundamentals time series. Missing fields remain unavailable.
+
+The provider does not synthesize consensus from forward EPS and does not invent historical valuation ranges. Historical P/E 10th/median/90th values are descriptive statistics calculated only from retrieved observations.
+
 ## Architecture
 
 Observed Market Data
+        |
+        +--> Yahoo Fundamental Provider
+        |         |
+        |         +--> EPS / consensus / P-E observations
         |
         v
 Evidence Store
