@@ -57,7 +57,7 @@ class FundamentalData:
     current_eps: Any = UNAVAILABLE
     forward_eps: Any = UNAVAILABLE
     consensus_forward_eps: Any = UNAVAILABLE
-    historical_pe_band: Optional[Dict[str, float]] = None
+    historical_pe_band: Optional[Dict[str, Any]] = None
     provider: str = "YahooFinanceFundamentals"
     source_type: str = "API_LIVE"
     as_of: Optional[str] = None
@@ -134,13 +134,13 @@ class YahooFundamentalProvider:
         params = urllib.parse.urlencode(
             {
                 "symbol": ticker,
-                "type": "trailingPe",
+                "type": "trailingPeRatio",
                 "period1": start,
                 "period2": end,
             }
         )
         url = (
-            "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
+            "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/"
             f"v1/finance/timeseries/{urllib.parse.quote(ticker)}?{params}"
         )
         return self._get(url) or {}
@@ -218,7 +218,7 @@ class YahooFundamentalProvider:
             results = (payload.get("timeseries") or {}).get("result") or []
             values: List[float] = []
             for result in results:
-                for row in result.get("trailingPe", []) or []:
+                for row in result.get("trailingPeRatio", []) or []:
                     value = raw_value(row.get("reportedValue"))
                     if value is not None and value > 0 and value < 500:
                         values.append(value)
@@ -226,7 +226,9 @@ class YahooFundamentalProvider:
             if values:
                 pe_band = {
                     "10th": percentile(values, 0.10),
+                    "25th": percentile(values, 0.25),
                     "median": median(values),
+                    "75th": percentile(values, 0.75),
                     "90th": percentile(values, 0.90),
                     "observations": len(values),
                 }
