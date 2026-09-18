@@ -6,6 +6,7 @@ from st_eva_runner import (
     run_st_eva,
 )
 from fundamental_provider import FundamentalData, YahooFundamentalProvider
+from llm_interpreter import build_interpretation_prompt
 
 
 
@@ -90,6 +91,18 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         self.assertAlmostEqual(result["implied_assumptions"]["fcf_at_reference_multiple"], 40.0)
         self.assertAlmostEqual(result["implied_assumptions"]["ebitda_at_reference_multiple"], 1100.0 / 15.0)
         self.assertAlmostEqual(result["implied_assumptions"]["revenue_at_reference_multiple"], 200.0)
+
+    def test_llm_interpreter_is_non_arithmetic_adapter(self):
+        prompt = build_interpretation_prompt({
+            "market_implied_assumptions": {
+                "forward_eps_at_reference_multiple": 10.0,
+                "required_eps_cagr_from_current_eps": 0.12,
+            },
+            "missing_data": ["current_fcf"],
+        })
+        self.assertIn("Do not calculate or modify financial numbers", prompt)
+        self.assertIn("10.0", prompt)
+        self.assertIn("current_fcf", prompt)
 
     def test_msft_implied_eps(self):
         data = CompanyResolver.resolve("MSFT", mode="regression")
