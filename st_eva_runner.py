@@ -37,12 +37,12 @@ UNAVAILABLE = "UNAVAILABLE"
 
 VERSION_METADATA = {
     "engine": "ST-EVA Market-Implied Assumptions Engine",
-    "version": "2.2.0",
+    "version": "2.2.2",
     "analysis_type": "market_implied_assumptions",
     "calculation_engine": "deterministic-python",
     "data_policy": "zero-synthetic-financial-data",
-    "validator_version": "2.2.0",
-    "schema_version": "2.2.0",
+    "validator_version": "2.2.2",
+    "schema_version": "2.2.2",
 }
 
 
@@ -127,6 +127,8 @@ class MarketData:
     current_eps: Any = UNAVAILABLE
     forward_eps: Any = UNAVAILABLE
     consensus_forward_eps: Any = UNAVAILABLE
+    consensus_forward_eps_period: Optional[str] = None
+    errors: List[str] = field(default_factory=list)
     next_event: Any = UNAVAILABLE
     next_event_status: str = "Unconfirmed"
     historical_pe_band: Optional[Dict[str, Any]] = None
