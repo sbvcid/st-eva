@@ -77,7 +77,7 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             "10th": 10.0, "25th": 12.0, "median": 15.0,
             "75th": 18.0, "90th": 20.0, "observations": 5,
         }
-        result = MarketImpliedAssumptionsEngine.analyze(data)
+        result = MarketImpliedAssumptionsEngine.analyze(data, pfcf_multiple=25.0)
         self.assertAlmostEqual(result["observed_valuation"]["current_pfcf"], 100.0)
         self.assertAlmostEqual(result["observed_valuation"]["current_ev_ebitda"], 55.0)
         self.assertAlmostEqual(result["observed_valuation"]["current_ps"], 20.0)
