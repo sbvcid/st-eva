@@ -1,4 +1,4 @@
-# ST-EVA 2.0 Specification
+# ST-EVA 2.1 Specification
 
 ## 1. Objective
 
@@ -101,25 +101,33 @@ consensus_forward_eps * historical_pe_median
 Price gap versus that reference:
 consensus_median_price / P0 - 1
 
-## 6. Missing-data policy
+## 6. Fundamental data provider
+
+The deterministic engine consumes fundamentals through a provider abstraction. The Yahoo implementation may supply trailing EPS, forward EPS, forward-year consensus EPS, and an observed historical trailing P/E distribution. Each field is source-derived and timestamped where Yahoo exposes the information.
+
+Consensus EPS must come from an explicit estimate source. Forward EPS must never be reused as consensus merely to fill a missing field. Historical P/E statistics must be calculated only from retrieved observations.
+
+Provider failures or unavailable fields do not trigger fallback estimates. They remain unavailable.
+
+## 7. Missing-data policy
 
 Missing inputs are represented as UNAVAILABLE at the raw-data layer and null in numeric derived output.
 
 No fallback guess is allowed.
 
-## 7. Evidence policy
+## 8. Evidence policy
 
 Every material source input receives an Evidence ID.
 
 Invalid evidence references are validation errors.
 
-## 8. Snapshot policy
+## 9. Snapshot policy
 
 Analysis snapshots are append-only at the application level.
 
 Outcome records are separate files and never modify the original analysis snapshot.
 
-## 9. Future extensions
+## 10. Future extensions
 
 Possible later modules:
 
