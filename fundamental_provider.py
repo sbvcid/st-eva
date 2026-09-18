@@ -58,6 +58,13 @@ class FundamentalData:
     forward_eps: Any = UNAVAILABLE
     consensus_forward_eps: Any = UNAVAILABLE
     historical_pe_band: Optional[Dict[str, Any]] = None
+    current_fcf: Any = UNAVAILABLE
+    current_ebitda: Any = UNAVAILABLE
+    current_revenue: Any = UNAVAILABLE
+    current_enterprise_value: Any = UNAVAILABLE
+    current_market_cap: Any = UNAVAILABLE
+    historical_ps_band: Optional[Dict[str, Any]] = None
+    historical_ev_ebitda_band: Optional[Dict[str, Any]] = None
     provider: str = "YahooFinanceFundamentals"
     source_type: str = "API_LIVE"
     as_of: Optional[str] = None
@@ -68,6 +75,10 @@ class FundamentalData:
             object.__setattr__(self, "historical_pe_band", {})
         if self.source_urls is None:
             object.__setattr__(self, "source_urls", [])
+        if self.historical_ps_band is None:
+            object.__setattr__(self, "historical_ps_band", {})
+        if self.historical_ev_ebitda_band is None:
+            object.__setattr__(self, "historical_ev_ebitda_band", {})
 
 
 class YahooFundamentalProvider:
@@ -125,26 +136,53 @@ class YahooFundamentalProvider:
         )
         return self._get(url)
 
-    def _timeseries_pe(
-        self,
-        ticker: str,
-    ) -> Dict[str, Any]:
+    def _timeseries(self, ticker: str, types: List[str], years: int = 5) -> Dict[str, Any]:
         end = int(time.time())
-        start = end - 5 * 365 * 24 * 60 * 60
-        params = urllib.parse.urlencode(
-            {
-                "symbol": ticker,
-                "type": "trailingPeRatio",
-                "period1": start,
-                "period2": end,
-            }
-        )
+        start = end - years * 365 * 24 * 60 * 60
+        params = urllib.parse.urlencode({
+            "symbol": ticker,
+            "type": ",".join(types),
+            "period1": start,
+            "period2": end,
+        })
         url = (
-            "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/"
+            "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
             f"v1/finance/timeseries/{urllib.parse.quote(ticker)}?{params}"
         )
         return self._get(url) or {}
 
+    @staticmethod
+    def _band_from_result(results: List[Dict[str, Any]], field: str, minimum: float = 0.0, maximum: float = 500.0) -> Dict[str, Any]:
+        values: List[float] = []
+        for result in results:
+            for row in result.get(field, []) or []:
+                value = raw_value(row.get("reportedValue"))
+                if value is not None and minimum < value < maximum:
+                    values.append(value)
+        if not values:
+            return {}
+        return {
+            "10th": percentile(values, 0.10),
+            "25th": percentile(values, 0.25),
+            "median": median(values),
+            "75th": percentile(values, 0.75),
+            "90th": percentile(values, 0.90),
+            "observations": len(values),
+        }
+
+    @staticmethod
+    def _latest_value(results: List[Dict[str, Any]], field: str) -> Optional[float]:
+        values: List[tuple[str, float]] = []
+        for result in results:
+            for row in result.get(field, []) or []:
+                value = raw_value(row.get("reportedValue"))
+                date = row.get("asOfDate") or ""
+                if value is not None:
+                    values.append((str(date), value))
+        if not values:
+            return None
+        values.sort(key=lambda item: item[0])
+        return values[-1][1]
     @staticmethod
     def _extract_consensus_forward_eps(
         earnings_trend: Dict[str, Any],
@@ -180,6 +218,11 @@ class YahooFundamentalProvider:
         current_eps = None
         forward_eps = None
         consensus_eps = None
+        current_fcf = None
+        current_ebitda = None
+        current_revenue = None
+        current_enterprise_value = None
+        current_market_cap = None
         as_of: Optional[str] = None
 
         try:
@@ -208,30 +251,47 @@ class YahooFundamentalProvider:
         except Exception:
             pass
 
-        pe_band: Dict[str, float] = {}
+        valuation_types = [
+            "trailingFreeCashFlow",
+            "trailingEbitda",
+            "trailingTotalRevenue",
+            "trailingEnterpriseValue",
+            "trailingMarketCap",
+            "trailingPsRatio",
+            "trailingEnterprisesValueEBITDARatio",
+        ]
         try:
-            payload = self._timeseries_pe(clean)
+            payload = self._timeseries(clean, valuation_types)
             source_urls.append(
                 "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
                 "v1/finance/timeseries/" + clean
             )
             results = (payload.get("timeseries") or {}).get("result") or []
-            values: List[float] = []
-            for result in results:
-                for row in result.get("trailingPeRatio", []) or []:
-                    value = raw_value(row.get("reportedValue"))
-                    if value is not None and value > 0 and value < 500:
-                        values.append(value)
+            current_fcf = self._latest_value(results, "trailingFreeCashFlow")
+            current_ebitda = self._latest_value(results, "trailingEbitda")
+            current_revenue = self._latest_value(results, "trailingTotalRevenue")
+            current_enterprise_value = self._latest_value(results, "trailingEnterpriseValue")
+            current_market_cap = self._latest_value(results, "trailingMarketCap")
+        except Exception:
+            pass
 
-            if values:
-                pe_band = {
-                    "10th": percentile(values, 0.10),
-                    "25th": percentile(values, 0.25),
-                    "median": median(values),
-                    "75th": percentile(values, 0.75),
-                    "90th": percentile(values, 0.90),
-                    "observations": len(values),
-                }
+        pe_band: Dict[str, Any] = {}
+        ps_band: Dict[str, Any] = {}
+        ev_ebitda_band: Dict[str, Any] = {}
+        try:
+            payload = self._timeseries(
+                clean,
+                ["trailingPeRatio", "trailingPsRatio", "trailingEnterprisesValueEBITDARatio"],
+            )            source_urls.append(
+                "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
+                "v1/finance/timeseries/" + clean
+            )
+            results = (payload.get("timeseries") or {}).get("result") or []
+            pe_band = self._band_from_result(results, "trailingPeRatio")
+            ps_band = self._band_from_result(results, "trailingPsRatio")
+            ev_ebitda_band = self._band_from_result(
+                results, "trailingEnterprisesValueEBITDARatio"
+            )
         except Exception:
             pass
 
@@ -242,6 +302,19 @@ class YahooFundamentalProvider:
                 consensus_eps if consensus_eps is not None else UNAVAILABLE
             ),
             historical_pe_band=pe_band,
+            current_fcf=current_fcf if current_fcf is not None else UNAVAILABLE,
+            current_ebitda=current_ebitda if current_ebitda is not None else UNAVAILABLE,
+            current_revenue=current_revenue if current_revenue is not None else UNAVAILABLE,
+            current_enterprise_value=(
+                current_enterprise_value
+                if current_enterprise_value is not None
+                else UNAVAILABLE
+            ),
+            current_market_cap=(
+                current_market_cap if current_market_cap is not None else UNAVAILABLE
+            ),
+            historical_ps_band=ps_band,
+            historical_ev_ebitda_band=ev_ebitda_band,
             as_of=as_of,
             source_urls=source_urls,
         )
