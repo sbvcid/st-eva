@@ -1,4 +1,4 @@
-# ST-EVA 2.1 — Market-Implied Assumptions Engine
+# ST-EVA 2.2 — Market-Implied Assumptions Engine
 
 ST-EVA answers one question:
 
@@ -29,6 +29,10 @@ The word "implied" is conditional. Price alone cannot identify one unique future
 - Forward P/E when forward EPS is available.
 - Consensus forward P/E when consensus EPS is available.
 - Historical P/E band.
+- Current P/FCF, EV/EBITDA, and P/S when source inputs are available.
+- Historical P/S and EV/EBITDA bands when observed Yahoo valuation time series are available.
+- Implied FCF, EBITDA, and revenue under explicit reference multiples.
+- Implied net margin when P/E and P/S references can be combined.
 - Approximate position inside the historical P/E band.
 - Forward EPS implied by the selected valuation multiple.
 - EPS gap between implied EPS and consensus EPS.
@@ -68,13 +72,20 @@ Reverse-engineered assumptions that depend on an explicit valuation reference.
 UNAVAILABLE:
 A required input that has not been sourced. It is never guessed.
 
-## Valuation reference
+## Valuation references
 
-Priority:
+P/E priority:
 
-1. User-supplied reference multiple.
+1. User-supplied P/E reference.
 2. Historical P/E median.
 3. No reference.
+
+P/FCF, EV/EBITDA, and P/S references can be supplied explicitly. EV/EBITDA and P/S also fall back to their observed historical median when available. P/FCF does not use a synthetic historical median.
+
+Examples:
+
+python st_eva_runner.py AAPL --mode live --reference-multiple 30
+python st_eva_runner.py AAPL --mode live --pfcf-multiple 25 --ev-ebitda-multiple 20 --ps-multiple 8
 
 Example:
 
@@ -108,7 +119,7 @@ Snapshots are written to history/.
 
 Live mode now uses a separate `YahooFundamentalProvider` for source financial data. It attempts to acquire trailing EPS, forward EPS, forward-year consensus EPS from Yahoo earnings estimates, and an observed historical trailing P/E distribution from Yahoo fundamentals time series. Missing fields remain unavailable.
 
-The provider does not synthesize consensus from forward EPS and does not invent historical valuation ranges. Historical P/E 10th/median/90th values are descriptive statistics calculated only from retrieved observations.
+The provider does not synthesize consensus from forward EPS and does not invent historical valuation ranges. Historical P/E, P/S, and EV/EBITDA bands are descriptive statistics calculated only from retrieved observations. Current FCF, EBITDA, revenue, enterprise value, and market cap are sourced from Yahoo fundamentals time series when available.
 
 ## Architecture
 
@@ -116,7 +127,8 @@ Observed Market Data
         |
         +--> Yahoo Fundamental Provider
         |         |
-        |         +--> EPS / consensus / P-E observations
+        |         +--> EPS / consensus / valuation observations
+        |         +--> FCF / EBITDA / revenue / EV / market cap
         |
         v
 Evidence Store
@@ -154,7 +166,7 @@ The test suite checks:
 - missing-data behavior;
 - unknown-ticker handling.
 
-Future extensions can add EV/EBITDA, FCF yield, revenue/margin reverse engineering, more providers, and an optional LLM interpretation layer without changing the deterministic core.
+The deterministic core now supports P/E, P/FCF, EV/EBITDA, and P/S reverse valuation. Future work can add additional providers and an optional LLM interpretation layer without moving arithmetic into the LLM.
 
 ## Scope
 
