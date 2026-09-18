@@ -18,7 +18,7 @@ Examples:
 
 - current market price;
 - current, forward, or consensus EPS supplied by a source;
-- historical P/E, P/S, and EV/EBITDA bands;
+- historical P/E, P/FCF, P/S, and EV/EBITDA bands;
 - current FCF, EBITDA, revenue, enterprise value, and market cap when sourced;
 - price and volume history;
 - event date supplied by a source.
