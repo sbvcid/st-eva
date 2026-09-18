@@ -37,12 +37,12 @@ UNAVAILABLE = "UNAVAILABLE"
 
 VERSION_METADATA = {
     "engine": "ST-EVA Market-Implied Assumptions Engine",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "analysis_type": "market_implied_assumptions",
     "calculation_engine": "deterministic-python",
     "data_policy": "zero-synthetic-financial-data",
-    "validator_version": "2.1",
-    "schema_version": "2.1",
+    "validator_version": "2.1.1",
+    "schema_version": "2.1.1",
 }
 
 
@@ -155,7 +155,7 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "consensus_forward_eps": 31.50,
         "next_event": "2026-11-14",
         "next_event_status": "Estimated fixture date; not live",
-        "historical_pe_band": {"10th": 12.0, "median": 18.5, "90th": 28.0},
+        "historical_pe_band": {"10th": 12.0, "25th": 15.0, "median": 18.5, "75th": 23.0, "90th": 28.0},
         "price_history": [405.0, 410.0, 415.0, 420.0, 425.0, 432.2],
         "volume_history": [30000000, 32000000, 31000000, 33000000, 32500000, 32000000],
         "source_type": "REGRESSION_FIXTURE",
@@ -175,7 +175,7 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "consensus_forward_eps": 13.20,
         "next_event": "2026-10-22",
         "next_event_status": "Estimated fixture date; not live",
-        "historical_pe_band": {"10th": 22.0, "median": 30.0, "90th": 38.0},
+        "historical_pe_band": {"10th": 22.0, "25th": 26.0, "median": 30.0, "75th": 34.0, "90th": 38.0},
         "price_history": [410.0, 412.0, 415.0, 418.0, 422.0, 425.5],
         "volume_history": [20000000, 21000000, 20500000, 22000000, 21500000, 21000000],
         "source_type": "REGRESSION_FIXTURE",
@@ -195,7 +195,7 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "consensus_forward_eps": 0.48,
         "next_event": "2026-11-10",
         "next_event_status": "Estimated fixture date; not live",
-        "historical_pe_band": {"10th": 14.0, "median": 20.0, "90th": 32.0},
+        "historical_pe_band": {"10th": 14.0, "25th": 17.0, "median": 20.0, "75th": 25.0, "90th": 32.0},
         "price_history": [11.8, 12.0, 12.2, 12.4, 12.6, 12.8],
         "volume_history": [40000000, 42000000, 41000000, 45000000, 43000000, 44000000],
         "source_type": "REGRESSION_FIXTURE",
