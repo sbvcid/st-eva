@@ -7,8 +7,6 @@ from st_eva_runner import (
 )
 from fundamental_provider import FundamentalData, YahooFundamentalProvider
 
-from fundamental_provider import FundamentalData, YahooFundamentalProvider
-
 
 
 class TestMarketImpliedAssumptions(unittest.TestCase):
@@ -48,6 +46,26 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         self.assertEqual(
             YahooFundamentalProvider._extract_consensus_forward_eps(trend),
             4.0,
+        )
+
+
+    def test_historical_pe_percentile_uses_full_band(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.historical_pe_band = {
+            "10th": 10.0,
+            "25th": 15.0,
+            "median": 20.0,
+            "75th": 30.0,
+            "90th": 40.0,
+        }
+        result = MarketImpliedAssumptionsEngine.analyze(
+            data,
+            reference_multiple=20.0,
+        )
+        self.assertAlmostEqual(
+            result["observed_valuation"]["approx_historical_pe_percentile"],
+            50.0,
+            places=10,
         )
 
     def test_msft_implied_eps(self):
