@@ -68,6 +68,29 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             places=10,
         )
 
+    def test_multi_method_reverse_valuation(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.current_fcf = 10.0
+        data.current_ebitda = 20.0
+        data.current_revenue = 50.0
+        data.current_market_cap = 1000.0
+        data.current_enterprise_value = 1100.0
+        data.historical_ps_band = {
+            "10th": 3.0, "25th": 4.0, "median": 5.0,
+            "75th": 6.0, "90th": 7.0, "observations": 5,
+        }
+        data.historical_ev_ebitda_band = {
+            "10th": 10.0, "25th": 12.0, "median": 15.0,
+            "75th": 18.0, "90th": 20.0, "observations": 5,
+        }
+        result = MarketImpliedAssumptionsEngine.analyze(data)
+        self.assertAlmostEqual(result["observed_valuation"]["current_pfcf"], 100.0)
+        self.assertAlmostEqual(result["observed_valuation"]["current_ev_ebitda"], 55.0)
+        self.assertAlmostEqual(result["observed_valuation"]["current_ps"], 20.0)
+        self.assertAlmostEqual(result["implied_assumptions"]["fcf_at_reference_multiple"], 40.0)
+        self.assertAlmostEqual(result["implied_assumptions"]["ebitda_at_reference_multiple"], 1100.0 / 15.0)
+        self.assertAlmostEqual(result["implied_assumptions"]["revenue_at_reference_multiple"], 200.0)
+
     def test_msft_implied_eps(self):
         data = CompanyResolver.resolve("MSFT", mode="regression")
         self.assertIsNotNone(data)
