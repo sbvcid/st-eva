@@ -683,6 +683,46 @@ def build_evidence(
             data.historical_pe_band or UNAVAILABLE,
             "Historical P/E reference band.",
         ),
+        (
+            "ev-pfcf-band-001",
+            data.historical_pfcf_band or UNAVAILABLE,
+            "Historical P/FCF reference band.",
+        ),
+        (
+            "ev-ps-band-001",
+            data.historical_ps_band or UNAVAILABLE,
+            "Historical P/S reference band.",
+        ),
+        (
+            "ev-ev-ebitda-band-001",
+            data.historical_ev_ebitda_band or UNAVAILABLE,
+            "Historical EV/EBITDA reference band.",
+        ),
+        (
+            "ev-fcf-001",
+            data.current_fcf,
+            "Observed trailing free cash flow. Never synthesized.",
+        ),
+        (
+            "ev-ebitda-001",
+            data.current_ebitda,
+            "Observed trailing EBITDA. Never synthesized.",
+        ),
+        (
+            "ev-revenue-001",
+            data.current_revenue,
+            "Observed trailing revenue. Never synthesized.",
+        ),
+        (
+            "ev-enterprise-value-001",
+            data.current_enterprise_value,
+            "Observed enterprise value. Never synthesized.",
+        ),
+        (
+            "ev-market-cap-001",
+            data.current_market_cap,
+            "Observed market capitalization. Never synthesized.",
+        ),
     ):
         available = value != UNAVAILABLE and value not in (None, {})
         store.add(Evidence(
