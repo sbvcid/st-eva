@@ -56,7 +56,7 @@ ST-EVA does not:
 - claim that one P/E multiple is objectively what the market assumes;
 - ask an LLM to perform valuation arithmetic.
 
-An LLM can later interpret the structured result, but the calculation core is deterministic Python.
+An optional provider-agnostic LLM interpretation adapter is included in `llm_interpreter.py`. It receives the validated JSON and interprets it without performing valuation arithmetic. The calculation core remains deterministic Python.
 
 ## Data categories
 
