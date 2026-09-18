@@ -296,7 +296,7 @@ class YahooFundamentalProvider:
 
         valuation_types = [
             "trailingFreeCashFlow",
-            "trailingEbitda",
+            "trailingEBITDA",
             "trailingTotalRevenue",
             "trailingEnterpriseValue",
             "trailingMarketCap",
@@ -311,7 +311,7 @@ class YahooFundamentalProvider:
             )
             results = (payload.get("timeseries") or {}).get("result") or []
             current_fcf = self._latest_value(results, "trailingFreeCashFlow")
-            current_ebitda = self._latest_value(results, "trailingEbitda")
+            current_ebitda = self._latest_value(results, "trailingEBITDA")
             current_revenue = self._latest_value(results, "trailingTotalRevenue")
             current_enterprise_value = self._latest_value(results, "trailingEnterpriseValue")
             current_market_cap = self._latest_value(results, "trailingMarketCap")

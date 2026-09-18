@@ -145,6 +145,30 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         )
         self.assertIsNone(result)
 
+    def test_derived_ratio_band_requires_exact_date_matching(self):
+        results = [
+            {
+                "trailingMarketCap": [
+                    {"asOfDate": "2025-06-30", "reportedValue": {"raw": 1000.0}}
+                ]
+            },
+            {
+                "trailingFreeCashFlow": [
+                    {"asOfDate": "2025-06-29", "reportedValue": {"raw": 50.0}}
+                ]
+            }
+        ]
+        band = YahooFundamentalProvider._derived_ratio_band(results, "trailingMarketCap", "trailingFreeCashFlow")
+        self.assertEqual(band, {})
+
+    def test_missing_fcf_and_ebitda_remain_unavailable(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.current_fcf = "UNAVAILABLE"
+        data.current_ebitda = "UNAVAILABLE"
+        result = MarketImpliedAssumptionsEngine.analyze(data)
+        self.assertIsNone(result["observed_valuation"]["current_pfcf"])
+        self.assertIsNone(result["observed_valuation"]["current_ev_ebitda"])
+
 
 if __name__ == "__main__":
     unittest.main()
