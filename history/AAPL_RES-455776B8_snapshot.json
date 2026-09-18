@@ -1,0 +1,84 @@
+{
+  "research_id": "RES-455776B8",
+  "ticker": "AAPL",
+  "company_name": "AAPL (Yahoo Live)",
+  "timestamp": "2026-09-18T19:17:42.460429+08:00",
+  "version_metadata": {
+    "model": "google/gemini-3.5-flash-lite",
+    "prompt_version": "ST-EVA-v6.2",
+    "scenario_engine": "v5-dynamic",
+    "validator_version": "v3-adversarial"
+  },
+  "p0": 337.0,
+  "currency": "USD",
+  "event_date": "UNAVAILABLE",
+  "market_bet": "市場正在押注短期核心基本面修復與事件催化。",
+  "expectation_gap": "預期差合理，估值具備收斂空間。",
+  "scenarios": {
+    "bull": {
+      "probability": 0.3,
+      "target_price": 426.31,
+      "scenario_eps": 19.38,
+      "assumptions": {
+        "eps_growth": 0.15,
+        "target_multiple": 22.0,
+        "probability": 0.3,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "base": {
+      "probability": 0.5,
+      "target_price": 327.31,
+      "scenario_eps": 17.69,
+      "assumptions": {
+        "eps_growth": 0.05,
+        "target_multiple": 18.5,
+        "probability": 0.5,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "bear": {
+      "probability": 0.2,
+      "target_price": 212.31,
+      "scenario_eps": 15.17,
+      "assumptions": {
+        "eps_growth": -0.1,
+        "target_multiple": 14.0,
+        "probability": 0.2,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    }
+  },
+  "metrics": {
+    "EV": 334.01,
+    "expected_return": -0.89,
+    "payoff_ratio": 0.72
+  },
+  "evidence_ids": [
+    "ev-p0-001",
+    "ev-eps-001",
+    "ev-metrics-001"
+  ],
+  "outcome_tracking_stub": {
+    "actual_event_result": null,
+    "actual_eps": null,
+    "actual_price_horizons": {
+      "t_plus_1d": null,
+      "t_plus_5d": null,
+      "t_plus_20d": null,
+      "event_day": null,
+      "post_event_5d": null,
+      "post_event_20d": null
+    },
+    "calibration_metrics": {
+      "bull_hit": null,
+      "base_hit": null,
+      "bear_hit": null,
+      "target_error": null,
+      "ev_error": null
+    }
+  }
+}

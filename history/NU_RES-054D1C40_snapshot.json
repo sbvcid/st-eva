@@ -1,0 +1,84 @@
+{
+  "research_id": "RES-054D1C40",
+  "ticker": "NU",
+  "company_name": "Nu Holdings Ltd.",
+  "timestamp": "2026-09-18T19:17:42.138351+08:00",
+  "version_metadata": {
+    "model": "google/gemini-3.5-flash-lite",
+    "prompt_version": "ST-EVA-v6.2",
+    "scenario_engine": "v5-dynamic",
+    "validator_version": "v3-adversarial"
+  },
+  "p0": 12.8,
+  "currency": "USD",
+  "event_date": "2026-11-10",
+  "market_bet": "市場正在押注短期核心基本面修復與事件催化。",
+  "expectation_gap": "預期差合理，估值具備收斂空間。",
+  "scenarios": {
+    "bull": {
+      "probability": 0.3,
+      "target_price": 12.14,
+      "scenario_eps": 0.55,
+      "assumptions": {
+        "eps_growth": 0.15,
+        "target_multiple": 22.0,
+        "probability": 0.3,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "base": {
+      "probability": 0.5,
+      "target_price": 9.32,
+      "scenario_eps": 0.5,
+      "assumptions": {
+        "eps_growth": 0.05,
+        "target_multiple": 18.5,
+        "probability": 0.5,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "bear": {
+      "probability": 0.2,
+      "target_price": 6.05,
+      "scenario_eps": 0.43,
+      "assumptions": {
+        "eps_growth": -0.1,
+        "target_multiple": 14.0,
+        "probability": 0.2,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    }
+  },
+  "metrics": {
+    "EV": 9.51,
+    "expected_return": -25.69,
+    "payoff_ratio": -0.1
+  },
+  "evidence_ids": [
+    "ev-p0-001",
+    "ev-eps-001",
+    "ev-metrics-001"
+  ],
+  "outcome_tracking_stub": {
+    "actual_event_result": null,
+    "actual_eps": null,
+    "actual_price_horizons": {
+      "t_plus_1d": null,
+      "t_plus_5d": null,
+      "t_plus_20d": null,
+      "event_day": null,
+      "post_event_5d": null,
+      "post_event_20d": null
+    },
+    "calibration_metrics": {
+      "bull_hit": null,
+      "base_hit": null,
+      "bear_hit": null,
+      "target_error": null,
+      "ev_error": null
+    }
+  }
+}
