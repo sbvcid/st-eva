@@ -64,6 +64,7 @@ class FundamentalData:
     current_enterprise_value: Any = UNAVAILABLE
     current_market_cap: Any = UNAVAILABLE
     historical_ps_band: Optional[Dict[str, Any]] = None
+    historical_pfcf_band: Optional[Dict[str, Any]] = None
     historical_ev_ebitda_band: Optional[Dict[str, Any]] = None
     provider: str = "YahooFinanceFundamentals"
     source_type: str = "API_LIVE"
@@ -77,6 +78,8 @@ class FundamentalData:
             object.__setattr__(self, "source_urls", [])
         if self.historical_ps_band is None:
             object.__setattr__(self, "historical_ps_band", {})
+        if self.historical_pfcf_band is None:
+            object.__setattr__(self, "historical_pfcf_band", {})
         if self.historical_ev_ebitda_band is None:
             object.__setattr__(self, "historical_ev_ebitda_band", {})
 
@@ -159,6 +162,46 @@ class YahooFundamentalProvider:
                 value = raw_value(row.get("reportedValue"))
                 if value is not None and minimum < value < maximum:
                     values.append(value)
+        if not values:
+            return {}
+        return {
+            "10th": percentile(values, 0.10),
+            "25th": percentile(values, 0.25),
+            "median": median(values),
+            "75th": percentile(values, 0.75),
+            "90th": percentile(values, 0.90),
+            "observations": len(values),
+        }
+
+    @staticmethod
+    def _derived_ratio_band(
+        results: List[Dict[str, Any]],
+        numerator_field: str,
+        denominator_field: str,
+        maximum: float = 500.0,
+    ) -> Dict[str, Any]:
+        numerator: Dict[str, float] = {}
+        denominator: Dict[str, float] = {}
+        for result in results:
+            for row in result.get(numerator_field, []) or []:
+                value = raw_value(row.get("reportedValue"))
+                date = row.get("asOfDate")
+                if value is not None and date:
+                    numerator[str(date)] = value
+            for row in result.get(denominator_field, []) or []:
+                value = raw_value(row.get("reportedValue"))
+                date = row.get("asOfDate")
+                if value is not None and date:
+                    denominator[str(date)] = value
+
+        values = []
+        for date, num in numerator.items():
+            den = denominator.get(date)
+            if den is not None and den > 0:
+                ratio = num / den
+                if 0 < ratio < maximum:
+                    values.append(ratio)
+
         if not values:
             return {}
         return {
@@ -289,6 +332,9 @@ class YahooFundamentalProvider:
             results = (payload.get("timeseries") or {}).get("result") or []
             pe_band = self._band_from_result(results, "trailingPeRatio")
             ps_band = self._band_from_result(results, "trailingPsRatio")
+            pfcf_band = self._derived_ratio_band(
+                results, "trailingMarketCap", "trailingFreeCashFlow"
+            )
             ev_ebitda_band = self._band_from_result(
                 results, "trailingEnterprisesValueEBITDARatio"
             )
@@ -314,6 +360,7 @@ class YahooFundamentalProvider:
                 current_market_cap if current_market_cap is not None else UNAVAILABLE
             ),
             historical_ps_band=ps_band,
+            historical_pfcf_band=pfcf_band,
             historical_ev_ebitda_band=ev_ebitda_band,
             as_of=as_of,
             source_urls=source_urls,
