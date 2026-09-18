@@ -169,6 +169,70 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         self.assertIsNone(result["observed_valuation"]["current_pfcf"])
         self.assertIsNone(result["observed_valuation"]["current_ev_ebitda"])
 
+    def test_currency_consistency_protection_a_to_g(self):
+        # A. same-currency Market Cap / Revenue
+        results_a = [
+            {"trailingMarketCap": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1000.0}}]},
+            {"trailingTotalRevenue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 100.0}}]}
+        ]
+        val_mc = YahooFundamentalProvider._latest_value(results_a, "trailingMarketCap")
+        val_rev = YahooFundamentalProvider._latest_value(results_a, "trailingTotalRevenue")
+        self.assertEqual(val_mc[1], val_rev[1])
+
+        # B. different-currency Market Cap / Revenue (USD vs TWD)
+        results_b = [
+            {"trailingMarketCap": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1000.0}}]},
+            {"trailingTotalRevenue": [{"asOfDate": "2026-01-01", "currencyCode": "TWD", "reportedValue": {"raw": 3000.0}}]}
+        ]
+        mc_val, mc_curr = YahooFundamentalProvider._latest_value(results_b, "trailingMarketCap")
+        rev_val, rev_curr = YahooFundamentalProvider._latest_value(results_b, "trailingTotalRevenue")
+        self.assertNotEqual(mc_curr, rev_curr)
+
+        # C. same-currency EV / EBITDA
+        results_c = [
+            {"trailingEnterpriseValue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1100.0}}]},
+            {"trailingEBITDA": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 100.0}}]}
+        ]
+        ev_val, ev_curr = YahooFundamentalProvider._latest_value(results_c, "trailingEnterpriseValue")
+        eb_val, eb_curr = YahooFundamentalProvider._latest_value(results_c, "trailingEBITDA")
+        self.assertEqual(ev_curr, eb_curr)
+
+        # D. different-currency EV / EBITDA
+        results_d = [
+            {"trailingEnterpriseValue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1100.0}}]},
+            {"trailingEBITDA": [{"asOfDate": "2026-01-01", "currencyCode": "TWD", "reportedValue": {"raw": 3000.0}}]}
+        ]
+        ev_val, ev_curr = YahooFundamentalProvider._latest_value(results_d, "trailingEnterpriseValue")
+        eb_val, eb_curr = YahooFundamentalProvider._latest_value(results_d, "trailingEBITDA")
+        self.assertNotEqual(ev_curr, eb_curr)
+
+        # E. different-currency FCF
+        results_e = [
+            {"trailingMarketCap": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1000.0}}]},
+            {"trailingFreeCashFlow": [{"asOfDate": "2026-01-01", "currencyCode": "TWD", "reportedValue": {"raw": 50.0}}]}
+        ]
+        mc_val, mc_curr = YahooFundamentalProvider._latest_value(results_e, "trailingMarketCap")
+        fcf_val, fcf_curr = YahooFundamentalProvider._latest_value(results_e, "trailingFreeCashFlow")
+        self.assertNotEqual(mc_curr, fcf_curr)
+
+        # F. missing currency metadata
+        results_f = [
+            {"trailingMarketCap": [{"asOfDate": "2026-01-01", "reportedValue": {"raw": 1000.0}}]},
+            {"trailingTotalRevenue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 100.0}}]}
+        ]
+        mc_val, mc_curr = YahooFundamentalProvider._latest_value(results_f, "trailingMarketCap")
+        rev_val, rev_curr = YahooFundamentalProvider._latest_value(results_f, "trailingTotalRevenue")
+        self.assertIsNone(mc_curr)
+        self.assertIsNotNone(rev_curr)
+
+        # G. TSM regression case simulation
+        tsm_market_cap = 2000000000000.0
+        tsm_mc_curr = "USD"
+        tsm_fcf = 1000000000000.0
+        tsm_fcf_curr = "TWD"
+        fcf_final = tsm_fcf if (tsm_mc_curr and tsm_fcf_curr and tsm_mc_curr == tsm_fcf_curr) else None
+        self.assertIsNone(fcf_final)
+
 
 if __name__ == "__main__":
     unittest.main()

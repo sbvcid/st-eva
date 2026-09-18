@@ -180,27 +180,33 @@ class YahooFundamentalProvider:
         denominator_field: str,
         maximum: float = 500.0,
     ) -> Dict[str, Any]:
-        numerator: Dict[str, float] = {}
-        denominator: Dict[str, float] = {}
+        numerator: Dict[str, tuple[float, Optional[str]]] = {}
+        denominator: Dict[str, tuple[float, Optional[str]]] = {}
         for result in results:
             for row in result.get(numerator_field, []) or []:
                 value = raw_value(row.get("reportedValue"))
                 date = row.get("asOfDate")
+                curr = row.get("currencyCode")
                 if value is not None and date:
-                    numerator[str(date)] = value
+                    numerator[str(date)] = (value, curr)
             for row in result.get(denominator_field, []) or []:
                 value = raw_value(row.get("reportedValue"))
                 date = row.get("asOfDate")
+                curr = row.get("currencyCode")
                 if value is not None and date:
-                    denominator[str(date)] = value
+                    denominator[str(date)] = (value, curr)
 
         values = []
-        for date, num in numerator.items():
-            den = denominator.get(date)
-            if den is not None and den > 0:
-                ratio = num / den
-                if 0 < ratio < maximum:
-                    values.append(ratio)
+        for date, (num, num_curr) in numerator.items():
+            den_tuple = denominator.get(date)
+            if den_tuple is not None:
+                den, den_curr = den_tuple
+                if den is not None and den > 0:
+                    if not num_curr or not den_curr or num_curr.upper() != den_curr.upper():
+                        continue
+                    ratio = num / den
+                    if 0 < ratio < maximum:
+                        values.append(ratio)
 
         if not values:
             return {}
@@ -214,18 +220,19 @@ class YahooFundamentalProvider:
         }
 
     @staticmethod
-    def _latest_value(results: List[Dict[str, Any]], field: str) -> Optional[float]:
-        values: List[tuple[str, float]] = []
+    def _latest_value(results: List[Dict[str, Any]], field: str) -> Optional[tuple[float, Optional[str]]]:
+        values: List[tuple[str, float, Optional[str]]] = []
         for result in results:
             for row in result.get(field, []) or []:
                 value = raw_value(row.get("reportedValue"))
                 date = row.get("asOfDate") or ""
+                curr = row.get("currencyCode")
                 if value is not None:
-                    values.append((str(date), value))
+                    values.append((str(date), value, curr))
         if not values:
             return None
         values.sort(key=lambda item: item[0])
-        return values[-1][1]
+        return values[-1][1], values[-1][2]
     @staticmethod
     def _extract_consensus_forward_eps(
         earnings_trend: Dict[str, Any],
@@ -310,11 +317,39 @@ class YahooFundamentalProvider:
                 "v1/finance/timeseries/" + clean
             )
             results = (payload.get("timeseries") or {}).get("result") or []
-            current_fcf = self._latest_value(results, "trailingFreeCashFlow")
-            current_ebitda = self._latest_value(results, "trailingEBITDA")
-            current_revenue = self._latest_value(results, "trailingTotalRevenue")
-            current_enterprise_value = self._latest_value(results, "trailingEnterpriseValue")
-            current_market_cap = self._latest_value(results, "trailingMarketCap")
+            fcf_tuple = self._latest_value(results, "trailingFreeCashFlow")
+            ebitda_tuple = self._latest_value(results, "trailingEBITDA")
+            rev_tuple = self._latest_value(results, "trailingTotalRevenue")
+            ev_tuple = self._latest_value(results, "trailingEnterpriseValue")
+            mc_tuple = self._latest_value(results, "trailingMarketCap")
+
+            current_fcf = fcf_tuple[0] if fcf_tuple else None
+            fcf_curr = fcf_tuple[1] if fcf_tuple else None
+
+            current_ebitda = ebitda_tuple[0] if ebitda_tuple else None
+            ebitda_curr = ebitda_tuple[1] if ebitda_tuple else None
+
+            current_revenue = rev_tuple[0] if rev_tuple else None
+            rev_curr = rev_tuple[1] if rev_tuple else None
+
+            current_enterprise_value = ev_tuple[0] if ev_tuple else None
+            ev_curr = ev_tuple[1] if ev_tuple else None
+
+            current_market_cap = mc_tuple[0] if mc_tuple else None
+            mc_curr = mc_tuple[1] if mc_tuple else None
+
+            # Currency consistency protection
+            if current_market_cap is not None:
+                if current_fcf is not None:
+                    if not mc_curr or not fcf_curr or mc_curr.upper() != fcf_curr.upper():
+                        current_fcf = None
+                if current_revenue is not None:
+                    if not mc_curr or not rev_curr or mc_curr.upper() != rev_curr.upper():
+                        current_revenue = None
+
+            if current_enterprise_value is not None and current_ebitda is not None:
+                if not ev_curr or not ebitda_curr or ev_curr.upper() != ebitda_curr.upper():
+                    current_ebitda = None
         except Exception:
             pass
 
