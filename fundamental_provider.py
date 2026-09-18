@@ -321,10 +321,7 @@ class YahooFundamentalProvider:
                     + clean
                 )
         except Exception as e:
-            # error observability
-            # ... I need to add an errors field to FundamentalData!
-            # Let's use a temporary error list here
-            pass
+            errors.append(f"Quote summary error: {e}")
 
         # ... (similar changes for the timeseries part)
 
