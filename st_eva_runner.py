@@ -37,12 +37,12 @@ UNAVAILABLE = "UNAVAILABLE"
 
 VERSION_METADATA = {
     "engine": "ST-EVA Market-Implied Assumptions Engine",
-    "version": "2.1.1",
+    "version": "2.2.0",
     "analysis_type": "market_implied_assumptions",
     "calculation_engine": "deterministic-python",
     "data_policy": "zero-synthetic-financial-data",
-    "validator_version": "2.1.1",
-    "schema_version": "2.1.1",
+    "validator_version": "2.2.0",
+    "schema_version": "2.2.0",
 }
 
 
@@ -130,6 +130,13 @@ class MarketData:
     next_event: Any = UNAVAILABLE
     next_event_status: str = "Unconfirmed"
     historical_pe_band: Optional[Dict[str, Any]] = None
+    current_fcf: Any = UNAVAILABLE
+    current_ebitda: Any = UNAVAILABLE
+    current_revenue: Any = UNAVAILABLE
+    current_enterprise_value: Any = UNAVAILABLE
+    current_market_cap: Any = UNAVAILABLE
+    historical_ps_band: Optional[Dict[str, Any]] = None
+    historical_ev_ebitda_band: Optional[Dict[str, Any]] = None
     source_type: str = "UNKNOWN"
     provider: str = "UNKNOWN"
     discrepancy_status: str = "SINGLE_SOURCE"
@@ -137,6 +144,10 @@ class MarketData:
     def __post_init__(self) -> None:
         if self.historical_pe_band is None:
             self.historical_pe_band = {}
+        if self.historical_ps_band is None:
+            self.historical_ps_band = {}
+        if self.historical_ev_ebitda_band is None:
+            self.historical_ev_ebitda_band = {}
 
 
 # Static test fixtures. They are not live market data.
@@ -263,6 +274,13 @@ class YahooFinanceProvider:
                 forward_eps=fundamental.forward_eps,
                 consensus_forward_eps=fundamental.consensus_forward_eps,
                 historical_pe_band=fundamental.historical_pe_band,
+                current_fcf=fundamental.current_fcf,
+                current_ebitda=fundamental.current_ebitda,
+                current_revenue=fundamental.current_revenue,
+                current_enterprise_value=fundamental.current_enterprise_value,
+                current_market_cap=fundamental.current_market_cap,
+                historical_ps_band=fundamental.historical_ps_band,
+                historical_ev_ebitda_band=fundamental.historical_ev_ebitda_band,
                 source_type="API_LIVE",
                 provider=f"{self.name}+{fundamental.provider}",
             )
@@ -312,6 +330,13 @@ class CompanyResolver:
             next_event=data.get("next_event", UNAVAILABLE),
             next_event_status=data.get("next_event_status", "Unconfirmed"),
             historical_pe_band=dict(data.get("historical_pe_band", {})),
+            current_fcf=data.get("current_fcf", UNAVAILABLE),
+            current_ebitda=data.get("current_ebitda", UNAVAILABLE),
+            current_revenue=data.get("current_revenue", UNAVAILABLE),
+            current_enterprise_value=data.get("current_enterprise_value", UNAVAILABLE),
+            current_market_cap=data.get("current_market_cap", UNAVAILABLE),
+            historical_ps_band=dict(data.get("historical_ps_band", {})),
+            historical_ev_ebitda_band=dict(data.get("historical_ev_ebitda_band", {})),
             source_type=data.get("source_type", "REGRESSION_FIXTURE"),
             provider=data.get("provider", "RegressionFixture"),
         )
@@ -416,6 +441,9 @@ class MarketImpliedAssumptionsEngine:
         data: MarketData,
         reference_multiple: Optional[float] = None,
         horizon_years: float = 1.0,
+        pfcf_multiple: Optional[float] = None,
+        ev_ebitda_multiple: Optional[float] = None,
+        ps_multiple: Optional[float] = None,
     ) -> Dict[str, Any]:
         if data.price <= 0:
             raise ValueError("Current price must be positive.")
@@ -425,127 +453,133 @@ class MarketImpliedAssumptionsEngine:
         current_eps = safe_float(data.current_eps)
         forward_eps = safe_float(data.forward_eps)
         consensus_eps = safe_float(data.consensus_forward_eps)
+        current_fcf = safe_float(data.current_fcf)
+        current_ebitda = safe_float(data.current_ebitda)
+        current_revenue = safe_float(data.current_revenue)
+        enterprise_value = safe_float(data.current_enterprise_value)
+        market_cap = safe_float(data.current_market_cap)
 
-        band = data.historical_pe_band or {}
-        historical_median = safe_float(band.get("median"))
+        pe_band = data.historical_pe_band or {}
+        ps_band = data.historical_ps_band or {}
+        ev_band = data.historical_ev_ebitda_band or {}
 
-        if reference_multiple is not None and reference_multiple <= 0:
-            raise ValueError("reference_multiple must be positive.")
+        historical_median = safe_float(pe_band.get("median"))
+        historical_ps_median = safe_float(ps_band.get("median"))
+        historical_ev_ebitda_median = safe_float(ev_band.get("median"))
 
-        selected_multiple = (
-            reference_multiple
-            if reference_multiple is not None
-            else historical_median
-        )
+        for value in (reference_multiple, pfcf_multiple, ev_ebitda_multiple, ps_multiple):
+            if value is not None and value <= 0:
+                raise ValueError("Reference multiples must be positive.")
 
-        current_pe = (
-            data.price / current_eps
-            if current_eps is not None and current_eps > 0
-            else None
-        )
+        selected_pe = reference_multiple if reference_multiple is not None else historical_median
+        selected_pfcf = pfcf_multiple
+        selected_ev_ebitda = ev_ebitda_multiple if ev_ebitda_multiple is not None else historical_ev_ebitda_median
+        selected_ps = ps_multiple if ps_multiple is not None else historical_ps_median
 
-        forward_pe = (
-            data.price / forward_eps
-            if forward_eps is not None and forward_eps > 0
-            else None
-        )
+        current_pe = data.price / current_eps if current_eps and current_eps > 0 else None
+        forward_pe = data.price / forward_eps if forward_eps and forward_eps > 0 else None
+        consensus_forward_pe = data.price / consensus_eps if consensus_eps and consensus_eps > 0 else None
 
-        consensus_forward_pe = (
-            data.price / consensus_eps
-            if consensus_eps is not None and consensus_eps > 0
-            else None
-        )
-
-        implied_forward_eps = (
-            data.price / selected_multiple
-            if selected_multiple is not None and selected_multiple > 0
-            else None
-        )
-
+        implied_forward_eps = data.price / selected_pe if selected_pe and selected_pe > 0 else None
         eps_gap_vs_consensus = (
             implied_forward_eps / consensus_eps - 1.0
-            if (
-                implied_forward_eps is not None
-                and consensus_eps is not None
-                and consensus_eps > 0
-            )
-            else None
+            if implied_forward_eps is not None and consensus_eps and consensus_eps > 0 else None
         )
-
         required_eps_cagr = (
             (implied_forward_eps / current_eps) ** (1.0 / horizon_years) - 1.0
-            if (
-                implied_forward_eps is not None
-                and current_eps is not None
-                and current_eps > 0
-            )
+            if implied_forward_eps is not None and current_eps and current_eps > 0 else None
+        )
+
+        current_pfcf = market_cap / current_fcf if market_cap and current_fcf and current_fcf > 0 else None
+        implied_fcf = market_cap / selected_pfcf if market_cap and selected_pfcf and selected_pfcf > 0 else None
+
+        current_ev_ebitda = (
+            enterprise_value / current_ebitda
+            if enterprise_value and current_ebitda and current_ebitda > 0 else None
+        )
+        implied_ebitda = (
+            enterprise_value / selected_ev_ebitda
+            if enterprise_value and selected_ev_ebitda and selected_ev_ebitda > 0 else None
+        )
+
+        current_ps = market_cap / current_revenue if market_cap and current_revenue and current_revenue > 0 else None
+        implied_revenue = market_cap / selected_ps if market_cap and selected_ps and selected_ps > 0 else None
+        implied_net_margin = (
+            (implied_forward_eps / (implied_revenue / (market_cap / data.price)))
+            if implied_forward_eps is not None and implied_revenue is not None and market_cap and market_cap > 0
             else None
         )
 
-        pe_percentile = (
-            interpolate_pe_percentile(current_pe, band)
-            if current_pe is not None
-            else None
-        )
+        pe_percentile = interpolate_pe_percentile(current_pe, pe_band) if current_pe is not None else None
+        ps_percentile = interpolate_pe_percentile(current_ps, ps_band) if current_ps is not None else None
+        ev_ebitda_percentile = interpolate_pe_percentile(current_ev_ebitda, ev_band) if current_ev_ebitda is not None else None
 
         consensus_price_at_median = (
             consensus_eps * historical_median
-            if consensus_eps is not None and historical_median is not None
-            else None
-        )
-
-        price_gap_vs_consensus_median = (
-            consensus_price_at_median / data.price - 1.0
-            if consensus_price_at_median is not None
-            else None
+            if consensus_eps and historical_median else None
         )
 
         return {
             "reference": {
-                "method": (
-                    "user_supplied_multiple"
-                    if reference_multiple is not None
-                    else (
-                        "historical_pe_median"
-                        if historical_median is not None
-                        else "none"
-                    )
-                ),
-                "multiple": selected_multiple,
-                "conditional_statement": (
-                    "Implied earnings and growth are conditional on the "
-                    "selected valuation multiple. Price alone does not "
-                    "identify a unique fundamental path."
-                ),
+                "method": "user_supplied_multiple" if reference_multiple is not None else ("historical_pe_median" if historical_median is not None else "none"),
+                "multiple": selected_pe,
+                "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
             },
             "observed_valuation": {
                 "current_pe": current_pe,
                 "forward_pe": forward_pe,
                 "consensus_forward_pe": consensus_forward_pe,
-                "historical_pe_band": band,
+                "current_pfcf": current_pfcf,
+                "current_ev_ebitda": current_ev_ebitda,
+                "current_ps": current_ps,
+                "historical_pe_band": pe_band,
+                "historical_ps_band": ps_band,
+                "historical_ev_ebitda_band": ev_band,
                 "approx_historical_pe_percentile": pe_percentile,
+                "approx_historical_ps_percentile": ps_percentile,
+                "approx_historical_ev_ebitda_percentile": ev_ebitda_percentile,
             },
             "implied_assumptions": {
                 "forward_eps_at_reference_multiple": implied_forward_eps,
                 "eps_gap_vs_consensus": eps_gap_vs_consensus,
                 "required_eps_cagr_from_current_eps": required_eps_cagr,
-                "required_forward_eps": implied_forward_eps,
                 "required_eps_growth": required_eps_cagr,
+                "fcf_at_reference_multiple": implied_fcf,
+                "ebitda_at_reference_multiple": implied_ebitda,
+                "revenue_at_reference_multiple": implied_revenue,
+                "implied_net_margin": implied_net_margin,
+                "reference_multiples": {
+                    "pe": selected_pe,
+                    "pfcf": selected_pfcf,
+                    "ev_ebitda": selected_ev_ebitda,
+                    "ps": selected_ps,
+                },
             },
             "consensus_cross_check": {
                 "consensus_forward_eps": consensus_eps,
                 "price_at_historical_median_pe": consensus_price_at_median,
                 "price_gap_vs_historical_median_on_consensus_eps": (
-                    price_gap_vs_consensus_median
+                    consensus_price_at_median / data.price - 1.0
+                    if consensus_price_at_median is not None else None
                 ),
+            },
+            "fundamental_snapshot": {
+                "current_fcf": data.current_fcf,
+                "current_ebitda": data.current_ebitda,
+                "current_revenue": data.current_revenue,
+                "current_enterprise_value": data.current_enterprise_value,
+                "current_market_cap": data.current_market_cap,
             },
             "source_inputs": {
                 "current_eps": data.current_eps,
                 "forward_eps": data.forward_eps,
                 "consensus_forward_eps": data.consensus_forward_eps,
-                "historical_pe_band": band,
+                "historical_pe_band": pe_band,
+                "historical_ps_band": ps_band,
+                "historical_ev_ebitda_band": ev_band,
             },
         }
+
 
 
 class Validator:
@@ -762,6 +796,9 @@ def run_st_eva(
     mode: str = "auto",
     reference_multiple: Optional[float] = None,
     horizon_years: float = 1.0,
+    pfcf_multiple: Optional[float] = None,
+    ev_ebitda_multiple: Optional[float] = None,
+    ps_multiple: Optional[float] = None,
     save_snapshot: bool = True,
     history_dir: str = "history",
 ) -> Optional[Dict[str, Any]]:
@@ -784,6 +821,9 @@ def run_st_eva(
         data=data,
         reference_multiple=reference_multiple,
         horizon_years=horizon_years,
+        pfcf_multiple=pfcf_multiple,
+        ev_ebitda_multiple=ev_ebitda_multiple,
+        ps_multiple=ps_multiple,
     )
 
     analysis_errors = Validator.validate_analysis(analysis)
@@ -813,6 +853,13 @@ def run_st_eva(
         ("forward_eps", data.forward_eps),
         ("consensus_forward_eps", data.consensus_forward_eps),
         ("historical_pe_band", data.historical_pe_band),
+        ("current_fcf", data.current_fcf),
+        ("current_ebitda", data.current_ebitda),
+        ("current_revenue", data.current_revenue),
+        ("current_enterprise_value", data.current_enterprise_value),
+        ("current_market_cap", data.current_market_cap),
+        ("historical_ps_band", data.historical_ps_band),
+        ("historical_ev_ebitda_band", data.historical_ev_ebitda_band),
     ):
         if value in (None, UNAVAILABLE, {}):
             missing_data.append(name)
@@ -988,6 +1035,9 @@ def main() -> None:
         default=1.0,
         help="Horizon used for required EPS CAGR.",
     )
+    parser.add_argument("--pfcf-multiple", type=float, default=None)
+    parser.add_argument("--ev-ebitda-multiple", type=float, default=None)
+    parser.add_argument("--ps-multiple", type=float, default=None)
     parser.add_argument("--event", default=None)
     parser.add_argument("--horizon", default="1-8 weeks")
     parser.add_argument("--no-snapshot", action="store_true")
@@ -1007,6 +1057,9 @@ def main() -> None:
         mode=args.mode,
         reference_multiple=args.reference_multiple,
         horizon_years=args.horizon_years,
+        pfcf_multiple=args.pfcf_multiple,
+        ev_ebitda_multiple=args.ev_ebitda_multiple,
+        ps_multiple=args.ps_multiple,
         save_snapshot=not args.no_snapshot,
     )
 
