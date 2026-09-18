@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-ST-EVA 2.1 - Yahoo fundamental data provider.
+ST-EVA 2.2.2 - Yahoo fundamental data provider.
 
 This module only acquires and normalizes source data. It never estimates or
 fills missing financial values. Historical P/E percentiles are calculated only
@@ -276,8 +276,15 @@ class YahooFundamentalProvider:
         clean = ticker.upper().strip()
         source_urls: List[str] = []
 
-        crumb = self._bootstrap_crumb()
-        summary = self._quote_summary(clean, crumb) if crumb else None
+        errors: List[str] = []
+
+        try:
+            crumb = self._bootstrap_crumb()
+            summary = self._quote_summary(clean, crumb) if crumb else None
+        except Exception as e:
+            errors.append(f"Bootstrapping/Summary error: {e}")
+            crumb = None
+            summary = None
 
         current_eps = None
         forward_eps = None
@@ -399,8 +406,8 @@ class YahooFundamentalProvider:
             ev_ebitda_band = self._band_from_result(
                 results, "trailingEnterprisesValueEBITDARatio"
             )
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"Band calculation error: {e}")
 
         return FundamentalData(
             current_eps=current_eps if current_eps is not None else UNAVAILABLE,

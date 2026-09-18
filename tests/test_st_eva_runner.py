@@ -27,7 +27,7 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         }
         self.assertEqual(
             YahooFundamentalProvider._extract_consensus_forward_eps(trend),
-            4.0,
+            (4.0, "+1y"),
         )
 
     def test_consensus_extraction_never_uses_actual_eps(self):
@@ -39,7 +39,7 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         }
         self.assertEqual(
             YahooFundamentalProvider._extract_consensus_forward_eps(trend),
-            4.0,
+            (4.0, "+1y"),
         )
 
 
@@ -175,17 +175,17 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             {"trailingMarketCap": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1000.0}}]},
             {"trailingTotalRevenue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 100.0}}]}
         ]
-        val_mc = YahooFundamentalProvider._latest_value(results_a, "trailingMarketCap")
-        val_rev = YahooFundamentalProvider._latest_value(results_a, "trailingTotalRevenue")
-        self.assertEqual(val_mc[1], val_rev[1])
+        val_mc, curr_mc, as_of_mc = YahooFundamentalProvider._latest_value(results_a, "trailingMarketCap")
+        val_rev, curr_rev, as_of_rev = YahooFundamentalProvider._latest_value(results_a, "trailingTotalRevenue")
+        self.assertEqual(curr_mc, curr_rev)
 
         # B. different-currency Market Cap / Revenue (USD vs TWD)
         results_b = [
             {"trailingMarketCap": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1000.0}}]},
             {"trailingTotalRevenue": [{"asOfDate": "2026-01-01", "currencyCode": "TWD", "reportedValue": {"raw": 3000.0}}]}
         ]
-        mc_val, mc_curr = YahooFundamentalProvider._latest_value(results_b, "trailingMarketCap")
-        rev_val, rev_curr = YahooFundamentalProvider._latest_value(results_b, "trailingTotalRevenue")
+        mc_val, mc_curr, mc_as_of = YahooFundamentalProvider._latest_value(results_b, "trailingMarketCap")
+        rev_val, rev_curr, rev_as_of = YahooFundamentalProvider._latest_value(results_b, "trailingTotalRevenue")
         self.assertNotEqual(mc_curr, rev_curr)
 
         # C. same-currency EV / EBITDA
@@ -193,8 +193,8 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             {"trailingEnterpriseValue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1100.0}}]},
             {"trailingEBITDA": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 100.0}}]}
         ]
-        ev_val, ev_curr = YahooFundamentalProvider._latest_value(results_c, "trailingEnterpriseValue")
-        eb_val, eb_curr = YahooFundamentalProvider._latest_value(results_c, "trailingEBITDA")
+        ev_val, ev_curr, ev_as_of = YahooFundamentalProvider._latest_value(results_c, "trailingEnterpriseValue")
+        eb_val, eb_curr, eb_as_of = YahooFundamentalProvider._latest_value(results_c, "trailingEBITDA")
         self.assertEqual(ev_curr, eb_curr)
 
         # D. different-currency EV / EBITDA
@@ -202,8 +202,8 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             {"trailingEnterpriseValue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1100.0}}]},
             {"trailingEBITDA": [{"asOfDate": "2026-01-01", "currencyCode": "TWD", "reportedValue": {"raw": 3000.0}}]}
         ]
-        ev_val, ev_curr = YahooFundamentalProvider._latest_value(results_d, "trailingEnterpriseValue")
-        eb_val, eb_curr = YahooFundamentalProvider._latest_value(results_d, "trailingEBITDA")
+        ev_val, ev_curr, ev_as_of = YahooFundamentalProvider._latest_value(results_d, "trailingEnterpriseValue")
+        eb_val, eb_curr, eb_as_of = YahooFundamentalProvider._latest_value(results_d, "trailingEBITDA")
         self.assertNotEqual(ev_curr, eb_curr)
 
         # E. different-currency FCF
@@ -211,8 +211,8 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             {"trailingMarketCap": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 1000.0}}]},
             {"trailingFreeCashFlow": [{"asOfDate": "2026-01-01", "currencyCode": "TWD", "reportedValue": {"raw": 50.0}}]}
         ]
-        mc_val, mc_curr = YahooFundamentalProvider._latest_value(results_e, "trailingMarketCap")
-        fcf_val, fcf_curr = YahooFundamentalProvider._latest_value(results_e, "trailingFreeCashFlow")
+        mc_val, mc_curr, mc_as_of = YahooFundamentalProvider._latest_value(results_e, "trailingMarketCap")
+        fcf_val, fcf_curr, fcf_as_of = YahooFundamentalProvider._latest_value(results_e, "trailingFreeCashFlow")
         self.assertNotEqual(mc_curr, fcf_curr)
 
         # F. missing currency metadata
@@ -220,8 +220,8 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             {"trailingMarketCap": [{"asOfDate": "2026-01-01", "reportedValue": {"raw": 1000.0}}]},
             {"trailingTotalRevenue": [{"asOfDate": "2026-01-01", "currencyCode": "USD", "reportedValue": {"raw": 100.0}}]}
         ]
-        mc_val, mc_curr = YahooFundamentalProvider._latest_value(results_f, "trailingMarketCap")
-        rev_val, rev_curr = YahooFundamentalProvider._latest_value(results_f, "trailingTotalRevenue")
+        mc_val, mc_curr, mc_as_of = YahooFundamentalProvider._latest_value(results_f, "trailingMarketCap")
+        rev_val, rev_curr, rev_as_of = YahooFundamentalProvider._latest_value(results_f, "trailingTotalRevenue")
         self.assertIsNone(mc_curr)
         self.assertIsNotNone(rev_curr)
 
@@ -232,6 +232,21 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         tsm_fcf_curr = "TWD"
         fcf_final = tsm_fcf if (tsm_mc_curr and tsm_fcf_curr and tsm_mc_curr == tsm_fcf_curr) else None
         self.assertIsNone(fcf_final)
+
+
+    def test_fundamental_provider_collects_errors(self):
+        class FailingProvider(YahooFundamentalProvider):
+            def _bootstrap_crumb(self):
+                return "fake_crumb"
+            def _quote_summary(self, ticker, crumb):
+                raise Exception("Network failure")
+
+        provider = FailingProvider()
+        data = provider.fetch("MSFT")
+        self.assertTrue(len(data.errors) > 0)
+        self.assertTrue(any("Network failure" in e for e in data.errors))
+        self.assertEqual(data.current_eps, "UNAVAILABLE")
+
 
 
 if __name__ == "__main__":

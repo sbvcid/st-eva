@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-ST-EVA 2.0 - Market-Implied Assumptions Engine
+ST-EVA 2.2.2 - Market-Implied Assumptions Engine
 
 Purpose:
     Answer "What assumptions are embedded in the current price?"
@@ -25,7 +25,7 @@ import os
 import tempfile
 import urllib.request
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
