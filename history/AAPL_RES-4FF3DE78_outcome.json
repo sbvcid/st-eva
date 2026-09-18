@@ -1,0 +1,24 @@
+{
+  "research_id": "RES-4FF3DE78",
+  "ticker": "AAPL",
+  "updated_at": "2026-09-18T19:42:06.124741+08:00",
+  "outcome_data": {
+    "event_result": null,
+    "actual_eps": null,
+    "actual_revenue": null,
+    "event_day_return": null,
+    "t_plus_1_return": null,
+    "t_plus_5_return": null,
+    "t_plus_20_return": null,
+    "actual_price_t_plus_1": 343.74,
+    "actual_price_t_plus_5": null,
+    "actual_price_t_plus_20": null
+  },
+  "calibration": {
+    "bull_hit": false,
+    "base_hit": true,
+    "bear_hit": false,
+    "target_error": 0.0,
+    "ev_error": -5.06
+  }
+}

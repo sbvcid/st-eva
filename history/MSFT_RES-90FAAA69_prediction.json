@@ -1,0 +1,67 @@
+{
+  "research_id": "RES-90FAAA69",
+  "ticker": "MSFT",
+  "company_name": "Microsoft Corporation",
+  "timestamp": "2026-09-18T19:42:05.874389+08:00",
+  "version_metadata": {
+    "engine": "ST-EVA Research Engine",
+    "version": "1.0.0-RC",
+    "model": "google/gemini-3.5-flash-lite (Single-LLM Structured Engine)",
+    "prompt_version": "ST-EVA-v6.2",
+    "scenario_engine": "v5-dynamic",
+    "validator_version": "v3.1-hardened"
+  },
+  "p0": 425.5,
+  "currency": "USD",
+  "event_date": "2026-10-22",
+  "market_bet": "市場正在押注短線基本面修復與事件催化。",
+  "expectation_gap": "市場定價與基礎假設之間存在預期差 (Expectation Gap)。",
+  "scenarios": {
+    "bull": {
+      "probability": 0.3,
+      "target_price": 333.96,
+      "scenario_eps": 15.18,
+      "assumptions": {
+        "eps_growth": 0.15,
+        "target_multiple": 22.0,
+        "probability": 0.3,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "base": {
+      "probability": 0.5,
+      "target_price": 256.41,
+      "scenario_eps": 13.86,
+      "assumptions": {
+        "eps_growth": 0.05,
+        "target_multiple": 18.5,
+        "probability": 0.5,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "bear": {
+      "probability": 0.2,
+      "target_price": 166.32,
+      "scenario_eps": 11.88,
+      "assumptions": {
+        "eps_growth": -0.1,
+        "target_multiple": 14.0,
+        "probability": 0.2,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    }
+  },
+  "metrics": {
+    "EV": 261.66,
+    "expected_return": -38.51,
+    "payoff_ratio": -0.35
+  },
+  "evidence_ids": [
+    "ev-p0-001",
+    "ev-eps-001",
+    "ev-metrics-001"
+  ]
+}

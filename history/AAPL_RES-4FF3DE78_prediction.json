@@ -1,0 +1,67 @@
+{
+  "research_id": "RES-4FF3DE78",
+  "ticker": "AAPL",
+  "company_name": "AAPL (Live Acquired)",
+  "timestamp": "2026-09-18T19:42:06.116383+08:00",
+  "version_metadata": {
+    "engine": "ST-EVA Research Engine",
+    "version": "1.0.0-RC",
+    "model": "google/gemini-3.5-flash-lite (Single-LLM Structured Engine)",
+    "prompt_version": "ST-EVA-v6.2",
+    "scenario_engine": "v5-dynamic",
+    "validator_version": "v3.1-hardened"
+  },
+  "p0": 337.0,
+  "currency": "USD",
+  "event_date": "UNAVAILABLE",
+  "market_bet": "市場正在押注短線基本面修復與事件催化。",
+  "expectation_gap": "市場定價與基礎假設之間存在預期差 (Expectation Gap)。",
+  "scenarios": {
+    "bull": {
+      "probability": 0.3,
+      "target_price": 387.55,
+      "scenario_eps": "UNAVAILABLE",
+      "assumptions": {
+        "eps_growth": 0.15,
+        "target_multiple": 22.0,
+        "probability": 0.3,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "base": {
+      "probability": 0.5,
+      "target_price": 343.74,
+      "scenario_eps": "UNAVAILABLE",
+      "assumptions": {
+        "eps_growth": 0.05,
+        "target_multiple": 18.5,
+        "probability": 0.5,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    },
+    "bear": {
+      "probability": 0.2,
+      "target_price": 303.3,
+      "scenario_eps": "UNAVAILABLE",
+      "assumptions": {
+        "eps_growth": -0.1,
+        "target_multiple": 14.0,
+        "probability": 0.2,
+        "basis": "EPS * P/E",
+        "inference_type": "MODEL_HYPOTHESIS"
+      }
+    }
+  },
+  "metrics": {
+    "EV": 348.8,
+    "expected_return": 3.5,
+    "payoff_ratio": 1.5
+  },
+  "evidence_ids": [
+    "ev-p0-001",
+    "ev-eps-001",
+    "ev-metrics-001"
+  ]
+}

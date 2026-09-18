@@ -9,11 +9,13 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
 
 # ==========================================
-# ST-EVA v6.1: HARDENED PHASE 7 ENGINE & TOOL INTERFACE
+# ST-EVA v1.0.0-RC: HARDENED RESEARCH ENGINE & TOOL INTERFACE
 # ==========================================
 
 VERSION_METADATA = {
-    "model": "google/gemini-3.5-flash-lite (Single-LLM Engine)",
+    "engine": "ST-EVA Research Engine",
+    "version": "1.0.0-RC",
+    "model": "google/gemini-3.5-flash-lite (Single-LLM Structured Engine)",
     "prompt_version": "ST-EVA-v6.2",
     "scenario_engine": "v5-dynamic",
     "validator_version": "v3.1-hardened"
@@ -143,7 +145,6 @@ class YahooFinanceProvider:
         clean_ticker = ticker.upper().strip()
         chart_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{clean_ticker}?range=3mo&interval=1d"
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        today_str = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
         
         try:
             req = urllib.request.Request(chart_url, headers=headers)
@@ -153,12 +154,19 @@ class YahooFinanceProvider:
                 if not result:
                     return None
                 meta = result[0].get("meta", {})
+                timestamps = result[0].get("timestamp", [])
                 indicators = result[0].get("indicators", {}).get("quote", [{}])[0]
                 prices = [p for p in indicators.get("close", []) if p is not None]
                 volumes = [v for v in indicators.get("volume", []) if v is not None]
                 regular_price = meta.get("regularMarketPrice") or (prices[-1] if prices else None)
                 if regular_price is None:
                     return None
+                    
+                # Extract accurate trade date from Yahoo chart timestamp if available
+                p0_date_str = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+                if timestamps:
+                    latest_ts = timestamps[-1]
+                    p0_date_str = datetime.fromtimestamp(latest_ts, tz=timezone.utc).strftime("%Y-%m-%d")
                     
                 return {
                     "provider": self.name,
@@ -167,7 +175,7 @@ class YahooFinanceProvider:
                     "exchange": meta.get("exchangeName", "Unknown"),
                     "currency": meta.get("currency", "USD"),
                     "p0": float(regular_price),
-                    "p0_date": today_str,
+                    "p0_date": p0_date_str,
                     "p0_source": "Yahoo Finance API",
                     "p0_source_url": chart_url,
                     "price_history": prices,
@@ -256,13 +264,15 @@ class DeterministicMetricsEngine:
 
 
 # ==========================================
-# 3. SINGLE-LLM RESEARCH ENGINE (Structured JSON)
+# 3. SINGLE-LLM RESEARCH ENGINE (Structured JSON Synthesis)
 # ==========================================
 
 class SingleLLMResearchEngine:
     @staticmethod
     def synthesize(research_input: ResearchInput, simulate_bad_evidence_id: bool = False) -> Dict[str, Any]:
-        ev_ids = ["ev-p0-001", "ev-eps-001", "ev-metrics-001"]
+        ev_ids = ["ev-p0-001", "ev-metrics-001"]
+        if research_input.fundamental_metrics.get("eps_ntm") != "UNAVAILABLE":
+            ev_ids.append("ev-eps-001")
         if simulate_bad_evidence_id:
             ev_ids.append("ev-invalid-999")
             
@@ -300,24 +310,34 @@ class SingleLLMResearchEngine:
 
 
 # ==========================================
-# 4. DYNAMIC SCENARIO ENGINE
+# 4. DYNAMIC SCENARIO ENGINE (Zero Synthetic EPS)
 # ==========================================
 
 class DynamicScenarioEngine:
     @staticmethod
-    def calculate_scenarios(p0: float, base_eps: float, assumptions: dict) -> Dict[str, Dict[str, Any]]:
+    def calculate_scenarios(p0: float, base_eps: Any, assumptions: dict) -> Dict[str, Dict[str, Any]]:
         scenarios = {}
+        has_real_eps = isinstance(base_eps, (int, float))
+        
         for k, asm in assumptions.items():
             eps_growth = asm["eps_growth"]
             target_multiple = asm["target_multiple"]
             prob = asm["probability"]
-            scenario_eps = base_eps * (1.0 + eps_growth)
-            target_price = round(scenario_eps * target_multiple, 2)
+            
+            if has_real_eps:
+                scenario_eps = base_eps * (1.0 + eps_growth)
+                target_price = round(scenario_eps * target_multiple, 2)
+                s_eps_val = round(scenario_eps, 2)
+            else:
+                # If EPS is UNAVAILABLE, derive target prices purely from percentage shifts of P0 without fake EPS
+                multiplier = 1.15 if k == "bull" else (1.02 if k == "base" else 0.90)
+                target_price = round(p0 * multiplier, 2)
+                s_eps_val = "UNAVAILABLE"
             
             scenarios[k] = {
                 "prob": prob,
                 "price": target_price,
-                "scenario_eps": round(scenario_eps, 2),
+                "scenario_eps": s_eps_val,
                 "eps_growth": f"{eps_growth*100:+.1f}%",
                 "target_multiple": f"{target_multiple}x",
                 "probability_type": asm["inference_type"]
@@ -326,19 +346,16 @@ class DynamicScenarioEngine:
 
 
 # ==========================================
-# 5. VALIDATOR 3.1 (Hardened Evidence, Discrepancy & Probability Checks)
+# 5. VALIDATOR 3.1
 # ==========================================
 
 class Validator:
     @staticmethod
     def validate_all(fixture: dict, evidence_store: EvidenceStore, scenarios: dict, synthesis_json: dict) -> List[str]:
         errors = []
-        
-        # 1. Discrepancy Check: DATA_DISCREPANCY halts normal research completion
         if fixture.get("discrepancy_status") == "DATA_DISCREPANCY":
             errors.append("Validation Failed: DATA_DISCREPANCY detected across providers. Halting research completion.")
             
-        # 2. Probability Sum == 1.0 and limits in [0, 1]
         probs = [s["prob"] for s in scenarios.values()]
         if abs(sum(probs) - 1.0) > 1e-6:
             errors.append(f"Validation Failed: Probability sum is {sum(probs)}, must be exactly 1.0.")
@@ -348,7 +365,6 @@ class Validator:
             if not (0.0 <= p <= 1.0):
                 errors.append(f"Validation Failed: Probability {k}={p} outside [0, 1].")
                 
-        # 3. Evidence ID Existence Check (Adversarial Check)
         all_evidence_ids = list(evidence_store.all_items().keys())
         for key in ["market_bet", "expectation_gap", "event_interpretation"]:
             item = synthesis_json.get(key, {})
@@ -369,7 +385,7 @@ class Validator:
 
 
 # ==========================================
-# 6. IMMUTABLE SNAPSHOT & OUTCOME TRACKING ENGINE
+# 6. TRUE IMMUTABLE SNAPSHOT & OUTCOME STORE
 # ==========================================
 
 class SnapshotManager:
@@ -380,7 +396,7 @@ class SnapshotManager:
         taipei_offset = timezone(timedelta(hours=8))
         timestamp = datetime.now(taipei_offset).isoformat()
         
-        snapshot = {
+        prediction_record = {
             "research_id": research_id,
             "ticker": fixture["ticker"],
             "company_name": fixture["company_name"],
@@ -404,77 +420,84 @@ class SnapshotManager:
                 "expected_return": round(expected_return * 100, 2),
                 "payoff_ratio": round(payoff_ratio, 2)
             },
-            "evidence_ids": list(evidence_store.all_items().keys()),
-            "outcome_tracking": {
-                "event_result": None,
-                "actual_eps": None,
-                "actual_revenue": None,
-                "event_day_return": None,
-                "t_plus_1_return": None,
-                "t_plus_5_return": None,
-                "t_plus_20_return": None,
-                "actual_price_t_plus_1": None,
-                "actual_price_t_plus_5": None,
-                "actual_price_t_plus_20": None,
-                "calibration": {
-                    "bull_hit": None,
-                    "base_hit": None,
-                    "bear_hit": None,
-                    "target_error": None,
-                    "ev_error": None
-                },
-                "updated_at": None
-            }
+            "evidence_ids": list(evidence_store.all_items().keys())
         }
         
         clean_ticker = fixture['ticker'].replace("/", "_").replace(".", "_")
-        snapshot_filename = f"history/{clean_ticker}_{research_id}_snapshot.json"
-        with open(snapshot_filename, "w", encoding="utf-8") as f:
-            json.dump(snapshot, f, ensure_ascii=False, indent=2)
+        prediction_filename = f"history/{clean_ticker}_{research_id}_prediction.json"
+        with open(prediction_filename, "w", encoding="utf-8") as f:
+            json.dump(prediction_record, f, ensure_ascii=False, indent=2)
             
         return research_id
 
     @staticmethod
     def update_outcome(research_id: str, outcome_data: Dict[str, Any]) -> bool:
         os.makedirs("history", exist_ok=True)
-        target_file = None
+        pred_file = None
         for root, dirs, files in os.walk("history"):
             for file in files:
-                if research_id in file and file.endswith("_snapshot.json"):
-                    target_file = os.path.join(root, file)
+                if research_id in file and file.endswith("_prediction.json"):
+                    pred_file = os.path.join(root, file)
                     break
                     
-        if not target_file or not os.path.exists(target_file):
-            print(f"[ERROR] Snapshot with Research ID '{research_id}' not found.")
+        if not pred_file or not os.path.exists(pred_file):
+            print(f"[ERROR] Prediction snapshot with Research ID '{research_id}' not found.")
             return False
             
-        with open(target_file, "r", encoding="utf-8") as f:
-            snapshot = json.load(f)
-            
-        ot = snapshot["outcome_tracking"]
-        for k, v in outcome_data.items():
-            if k in ot:
-                ot[k] = v
-                
-        p0 = snapshot["p0"]
-        scenarios = snapshot["scenarios"]
-        ev = snapshot["metrics"]["EV"]
-        
-        actual_price_1d = ot.get("actual_price_t_plus_1")
-        if actual_price_1d is not None:
-            ot["calibration"]["target_error"] = round(actual_price_1d - scenarios["base"]["target_price"], 2)
-            ot["calibration"]["ev_error"] = round(actual_price_1d - ev, 2)
-            ot["calibration"]["bull_hit"] = actual_price_1d >= scenarios["bull"]["target_price"]
-            ot["calibration"]["base_hit"] = abs(actual_price_1d - scenarios["base"]["target_price"]) <= abs(scenarios["base"]["target_price"] * 0.05)
-            ot["calibration"]["bear_hit"] = actual_price_1d <= scenarios["bear"]["target_price"]
+        with open(pred_file, "r", encoding="utf-8") as f:
+            prediction_record = json.load(f)
             
         taipei_offset = timezone(timedelta(hours=8))
-        ot["updated_at"] = datetime.now(taipei_offset).isoformat()
+        timestamp = datetime.now(taipei_offset).isoformat()
         
-        with open(target_file, "w", encoding="utf-8") as f:
-            json.dump(snapshot, f, ensure_ascii=False, indent=2)
+        # Build independent outcome record pointing to research_id (True Immutable Snapshot Architecture)
+        outcome_record = {
+            "research_id": research_id,
+            "ticker": prediction_record["ticker"],
+            "updated_at": timestamp,
+            "outcome_data": {
+                "event_result": outcome_data.get("event_result"),
+                "actual_eps": outcome_data.get("actual_eps"),
+                "actual_revenue": outcome_data.get("actual_revenue"),
+                "event_day_return": outcome_data.get("event_day_return"),
+                "t_plus_1_return": outcome_data.get("t_plus_1_return"),
+                "t_plus_5_return": outcome_data.get("t_plus_5_return"),
+                "t_plus_20_return": outcome_data.get("t_plus_20_return"),
+                "actual_price_t_plus_1": outcome_data.get("actual_price_t_plus_1"),
+                "actual_price_t_plus_5": outcome_data.get("actual_price_t_plus_5"),
+                "actual_price_t_plus_20": outcome_data.get("actual_price_t_plus_20")
+            },
+            "calibration": {
+                "bull_hit": None,
+                "base_hit": None,
+                "bear_hit": None,
+                "target_error": None,
+                "ev_error": None
+            }
+        }
+        
+        p0 = prediction_record["p0"]
+        scenarios = prediction_record["scenarios"]
+        ev = prediction_record["metrics"]["EV"]
+        
+        actual_price_1d = outcome_record["outcome_data"].get("actual_price_t_plus_1")
+        if actual_price_1d is not None:
+            base_target = scenarios["base"]["target_price"]
+            bull_target = scenarios["bull"]["target_price"]
+            bear_target = scenarios["bear"]["target_price"]
             
-        print(f"[SUCCESS] Outcome tracking updated for Research ID: {research_id}")
+            outcome_record["calibration"]["target_error"] = round(actual_price_1d - base_target, 2)
+            outcome_record["calibration"]["ev_error"] = round(actual_price_1d - ev, 2)
+            outcome_record["calibration"]["bull_hit"] = actual_price_1d >= bull_target
+            outcome_record["calibration"]["base_hit"] = abs(actual_price_1d - base_target) <= abs(base_target * 0.05)
+            outcome_record["calibration"]["bear_hit"] = actual_price_1d <= bear_target
+            
+        clean_ticker = prediction_record['ticker'].replace("/", "_").replace(".", "_")
+        outcome_filename = f"history/{clean_ticker}_{research_id}_outcome.json"
+        with open(outcome_filename, "w", encoding="utf-8") as f:
+            json.dump(outcome_record, f, ensure_ascii=False, indent=2)
+            
+        print(f"[SUCCESS] Immutable outcome record created for Research ID: {research_id} -> {outcome_filename}")
         return True
 
 
@@ -503,12 +526,21 @@ def run_st_eva(ticker: str, horizon: str = "1-8 weeks", event: Optional[str] = N
     ))
     
     eps_base = fixture.get("eps_ntm", "UNAVAILABLE")
-    evidence_store.add("ev-eps-001", RawData(
-        value=eps_base, provider=provider_name, source="Consensus Provider",
-        source_url=None, as_of=fixture["p0_date"], unit=fixture["currency"], currency=fixture["currency"],
-        definition="Forward EPS Baseline", source_type=source_type,
-        quality="Medium" if eps_base != "UNAVAILABLE" else "Unavailable", traceability="Medium", evidence_id="ev-eps-001"
-    ))
+    if eps_base != "UNAVAILABLE":
+        evidence_store.add("ev-eps-001", RawData(
+            value=eps_base, provider=provider_name, source="Consensus Provider",
+            source_url=None, as_of=fixture["p0_date"], unit=fixture["currency"], currency=fixture["currency"],
+            definition="Forward EPS Baseline", source_type=source_type,
+            quality="Medium", traceability="Medium", evidence_id="ev-eps-001"
+        ))
+    else:
+        evidence_store.add("ev-eps-001", RawData(
+            value="UNAVAILABLE", provider="None", source="UNAVAILABLE",
+            source_url=None, as_of=fixture["p0_date"], unit=fixture["currency"], currency=fixture["currency"],
+            definition="Forward EPS Baseline", source_type=source_type,
+            quality="Unavailable", traceability="Unavailable", evidence_id="ev-eps-001"
+        ))
+
     evidence_store.add("ev-metrics-001", RawData(
         value=deterministic_metrics, provider="Python Deterministic Engine", source="Calculated",
         source_url=None, as_of=fixture["p0_date"], unit="Ratio", currency=fixture["currency"],
@@ -528,10 +560,8 @@ def run_st_eva(ticker: str, horizon: str = "1-8 weeks", event: Optional[str] = N
 
     synthesis_json = SingleLLMResearchEngine.synthesize(research_input, simulate_bad_evidence_id=simulate_bad_evidence_id)
     
-    calc_eps_base = float(eps_base) if eps_base != "UNAVAILABLE" else float(fixture["p0"]) / 20.0
-    
     scen_engine = DynamicScenarioEngine()
-    scenarios = scen_engine.calculate_scenarios(fixture["p0"], calc_eps_base, synthesis_json["scenario_assumptions"])
+    scenarios = scen_engine.calculate_scenarios(fixture["p0"], eps_base, synthesis_json["scenario_assumptions"])
 
     validation_errors = Validator.validate_all(fixture, evidence_store, scenarios, synthesis_json)
     if validation_errors:
@@ -551,7 +581,8 @@ def run_st_eva(ticker: str, horizon: str = "1-8 weeks", event: Optional[str] = N
         "price": fixture["p0"],
         "currency": fixture["currency"],
         "event": {
-            "date": event or fixture.get("next_event"),
+            "name": event or "Earnings / Catalyst",
+            "date": fixture.get("next_event", "UNAVAILABLE"),
             "status": fixture.get("next_event_status", "Unconfirmed")
         },
         "market_expectation": synthesis_json["market_bet"],
@@ -570,12 +601,13 @@ def run_st_eva(ticker: str, horizon: str = "1-8 weeks", event: Optional[str] = N
             "status": "PASSED",
             "validator_version": VERSION_METADATA["validator_version"]
         },
+        "stance": objective_stance,
         "version_metadata": VERSION_METADATA
     }
     return result_json
 
 if __name__ == "__main__":
-    print("=== ST-EVA v6.1 Hardened Test Suite ===")
+    print("=== ST-EVA v1.0.0-RC Hardened Test Suite ===")
     
     for t in ["Tencent", "MSFT", "NU"]:
         print(f"\n[Test] Regression Mode: {t}")
