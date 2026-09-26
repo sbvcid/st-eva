@@ -32,6 +32,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 from fundamental_provider import YahooFundamentalProvider
+from report_formatter import (
+    normalize_ticker,
+    print_report,
+    resolve_console_encoding,
+)
 
 
 UNAVAILABLE = "UNAVAILABLE"
@@ -1190,8 +1195,16 @@ def main() -> None:
     parser.add_argument("--horizon", default="1-8 weeks")
     parser.add_argument("--no-snapshot", action="store_true")
     parser.add_argument("--test", action="store_true")
+    parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="Print machine-readable JSON instead of the readable report.",
+    )
 
     args = parser.parse_args()
+
+    resolve_console_encoding()
 
     if args.test or not args.ticker:
         run_regression_tests()
@@ -1199,7 +1212,7 @@ def main() -> None:
             return
 
     result = run_st_eva(
-        ticker=args.ticker,
+        ticker=normalize_ticker(args.ticker),
         horizon=args.horizon,
         event=args.event,
         mode=args.mode,
@@ -1213,10 +1226,15 @@ def main() -> None:
 
     if result is None:
         raise SystemExit(
-            "ST-EVA could not acquire usable market data."
+            f"ST-EVA could not acquire usable market data for "
+            f"'{args.ticker}'. Check the ticker symbol, or use --mode regression "
+            f"for a static fixture."
         )
 
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if args.as_json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        print_report(result)
 
 
 if __name__ == "__main__":

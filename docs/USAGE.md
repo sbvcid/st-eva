@@ -10,6 +10,112 @@ does not produce target prices, and does not issue buy/sell signals.
 
 Python 3.9 or newer. No third-party packages. No API keys.
 
+## The one-liner
+
+Ticker in, report out:
+
+```powershell
+python st_eva_runner.py AAPL
+```
+
+Add `--no-snapshot` while exploring, and `--reference-multiple <n>` when you want
+the reverse-engineered section populated. Add `--json` if you are piping the
+result somewhere.
+
+## Quick start
+
+There is no configuration. Give it a ticker, it prints the result.
+
+```powershell
+python st_eva_runner.py 0700.HK --mode live --no-snapshot --reference-multiple 20
+```
+
+```
+==========================================================================
+ST-EVA 2.2.3  |  0700.HK
+0700.HK (Live Acquired)  (HKG)
+價格: HKD 436.60    資料日期: 2026-09-25
+==========================================================================
+
+[資料品質] UNVERIFIABLE — 無法驗證（單一來源）
+           來源: YahooFinance+YahooFinanceFundamentals  (API_LIVE)
+           取得錯誤: 無
+           共識 EPS 期間: +1y
+
+--------------------------------------------------------------------------
+已觀察估值 (OBSERVED)
+--------------------------------------------------------------------------
+  指標          數值
+  ------------  -----
+  目前 P/E      14.69
+  前瞻 P/E      12.11
+  共識前瞻 P/E  14.15
+  P/FCF         N/A
+  EV/EBITDA     N/A
+  P/S           N/A
+
+歷史估值區間 (來源觀測值)
+  倍數       中位數  觀測數  目前分位  可否作參考
+  ---------  ------  ------  --------  ----------
+  P/E        24.00   7       -         觀測不足
+  P/S        5.44    8       -         觀測不足
+  P/FCF      無資料  -       -         -
+  EV/EBITDA  15.69   8       -         觀測不足
+
+--------------------------------------------------------------------------
+參考倍數 (REFERENCE)
+--------------------------------------------------------------------------
+選用方式: user_supplied_multiple — 使用者指定倍數
+選用倍數: 20.00x
+採用門檻: 歷史區間需 >= 20 個觀測值方可作為參考
+
+注意: 以下歷史區間因觀測數不足未被採用為參考
+      - pe
+      - ps
+      - ev_ebitda
+      若需隱含數值，請以 --reference-multiple 明確指定。
+
+--------------------------------------------------------------------------
+市場隱含假設 (CONDITIONAL INFERENCE)
+--------------------------------------------------------------------------
+  項目                數值     說明
+  ------------------  -------  ------------------
+  隱含前瞻 EPS        21.8300  價格 / 20.00x
+  EPS 缺口 (vs 共識)  -29.2%   正值 = 高於共識
+  所需 EPS CAGR       -26.6%   自目前 EPS 起算
+```
+
+Note how the 觀測數 column reads 7, 8, 8. Yahoo returns a small number of
+annual observations, so the historical bands are reported but never used. The
+`--reference-multiple 20` above is what makes the implied section possible.
+
+The report always ends with the missing-data list and the limitations. It never
+prints a target price, a probability, or a stance.
+
+## Company names work too
+
+```powershell
+python st_eva_runner.py 蘋果 --mode live --no-snapshot
+python st_eva_runner.py 騰訊 --mode live --no-snapshot
+python st_eva_runner.py 台積電 --mode live --no-snapshot
+python st_eva_runner.py apple --mode live --no-snapshot
+python st_eva_runner.py nvidia --mode live --no-snapshot
+```
+
+Unrecognised input passes through unchanged so it fails loudly rather than
+silently resolving to a different company.
+
+## Output modes
+
+| Command | Output |
+|---|---|
+| `python st_eva_runner.py AAPL` | Readable report (default) |
+| `python st_eva_runner.py AAPL --json` | Machine-readable JSON |
+| `python st_eva_runner.py AAPL --no-snapshot` | Suppress snapshot writing |
+
+`--json` preserves the exact schema used before the readable report existed, so
+existing pipelines are unaffected.
+
 ## The central idea
 
 Most tools ask "what will this stock be worth". ST-EVA asks the inverse:
@@ -45,13 +151,11 @@ net margin — is built on top of that single reference.
 python st_eva_runner.py 0700.HK --mode live --no-snapshot
 ```
 
-Read `reference.historical_band_status.pe`:
+Read the 可否作參考 column:
 
-- `USABLE_FOR_REFERENCE` — enough observations, the historical median will be
-  adopted automatically.
-- `DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS` — the band exists but is too
-  thin. Implied figures will be `null`.
-- `UNAVAILABLE` — no band at all.
+- 可用 — enough observations, the historical median is adopted automatically.
+- 觀測不足 — the band exists but is too thin. Implied figures show `N/A`.
+- 無資料 — no band at all.
 
 A real live run for AAPL currently reports only 8 P/E observations, so the
 historical median is refused. This is deliberate: eight points cannot support a
@@ -74,7 +178,7 @@ Only write a snapshot once the numbers look defensible:
 python st_eva_runner.py 0700.HK --mode live --reference-multiple 20
 ```
 
-## Reading the output
+## Reading the report
 
 Example using the TENCENT regression fixture:
 
@@ -83,14 +187,33 @@ python st_eva_runner.py TENCENT --mode regression --no-snapshot
 ```
 
 ```
-price       432.2 HKD | 0700.HK
-forward PE  13.72
-PE band     {10th: 12.0, 25th: 15.0, median: 18.5, 75th: 23.0, 90th: 28.0}
-PE pctile   50.0
+--------------------------------------------------------------------------
+已觀察估值 (OBSERVED)
+--------------------------------------------------------------------------
+  指標          數值
+  ------------  -----
+  目前 P/E      N/A
+  前瞻 P/E      13.72
+  共識前瞻 P/E  13.72
 
-ref method  historical_pe_median | multiple 18.5
-implied EPS 23.36
-eps gap     -0.2583
+歷史估值區間 (來源觀測值)
+  倍數       中位數  觀測數  目前分位  可否作參考
+  ---------  ------  ------  --------  ----------
+  P/E        18.50   未宣告  約 50 分位  可用
+
+--------------------------------------------------------------------------
+參考倍數 (REFERENCE)
+--------------------------------------------------------------------------
+選用方式: historical_pe_median — 歷史 P/E 中位數
+選用倍數: 18.50x
+
+--------------------------------------------------------------------------
+市場隱含假設 (CONDITIONAL INFERENCE)
+--------------------------------------------------------------------------
+  項目                數值     說明
+  ------------------  -------  ------------------
+  隱含前瞻 EPS        23.3622  價格 / 18.50x
+  EPS 缺口 (vs 共識)  -25.8%   正值 = 高於共識
 ```
 
 Interpretation:
@@ -102,11 +225,16 @@ Interpretation:
 4. Consensus forward EPS is 31.50, so the price-implied figure sits 25.8% below
    consensus.
 
+Note the 觀測數 reads 未宣告 for this fixture. A band that does not declare its
+observation count is treated as usable, which is what keeps static regression
+fixtures working. Live bands always declare a count and are subject to the
+threshold.
+
 The conditional statement that matters: **23.36 is what the price requires if
 the market is paying 18.5x.** It is not a forecast, and it is not "the market
 expects 23.36".
 
-## Key output fields
+## Key output fields (`--json`)
 
 ```jsonc
 {
@@ -140,12 +268,14 @@ python st_eva_runner.py AAPL --mode live `
 ```
 
 ```
-  P/E        current=39.07    implied=11.37
-  P/FCF      current=35.98    implied=196741221744.0
-  EV/EBITDA  current=29.41    implied=247023777180.0
-  P/S        current=10.54    implied=614816317950.0
-  eps gap    0.187
-  implied margin 0.2667
+  項目                數值     說明
+  ------------------  -------  ------------------
+  隱含前瞻 EPS        11.3690  價格 / 30.00x
+  EPS 缺口 (vs 共識)  +18.7%   正值 = 高於共識
+  隱含 FCF            196.74B  P/FCF = 25.00x
+  隱含 EBITDA         247.02B  EV/EBITDA = 20.00x
+  隱含營收            614.82B  P/S = 8.00x
+  隱含淨利率          26.7%    P/S + P/E 聯合推得
 ```
 
 Each method expresses the same price in a different unit. Comparing them is how
@@ -155,9 +285,9 @@ The implied net margin is worth attention: it combines the P/S-implied revenue
 with the P/E-implied EPS to answer "what profitability must this company earn
 for the current price to hold?" For AAPL at 30x, that is 26.7%.
 
-P/FCF, EV/EBITDA and P/S implied figures are absolute currency amounts and will
-be large. Compare them across methods or against history; do not read the
-absolute magnitude.
+P/FCF, EV/EBITDA and P/S implied figures are absolute currency amounts. The
+report abbreviates large values as B/M, but the magnitude itself is not the
+signal — compare them across methods or against history instead.
 
 ## Other options
 
@@ -201,6 +331,9 @@ the untouched snapshot.
 
 ```python
 from st_eva_runner import run_st_eva
+from report_formatter import render_report, resolve_console_encoding
+
+resolve_console_encoding()
 
 result = run_st_eva(
     'AAPL',
@@ -209,8 +342,12 @@ result = run_st_eva(
     save_snapshot=False,
 )
 
+print(render_report(result))
 print(result['market_implied_assumptions']['forward_eps_at_reference_multiple'])
 ```
+
+`render_report()` performs no arithmetic. It only reformats a result the engine
+has already validated.
 
 ## LLM interpretation
 
@@ -235,20 +372,16 @@ stays deterministic Python; only the prose is delegated.
 
 ```powershell
 python st_eva_runner.py --test              # 6 built-in regression checks
-python -m unittest discover -s tests        # 19 unit tests
+python -m unittest discover -s tests        # 28 unit tests
 ```
 
 ## Windows console encoding
 
-Console output containing Chinese may be mangled on a default Windows terminal.
-Set the encoding first:
-
-```powershell
-$env:PYTHONIOENCODING="utf-8"
-python -X utf8 st_eva_runner.py TENCENT --mode regression
-```
-
-This is a terminal issue, not an engine issue.
+The CLI reconfigures stdout and stderr to UTF-8 on startup, so the readable
+report renders correctly on a default Windows console without any environment
+setup. If you import `run_st_eva()` from your own script, call
+`resolve_console_encoding()` first when the target stream may be using a legacy
+code page.
 
 ## What this tool will not do
 

@@ -1,3 +1,4 @@
+import io
 import unittest
 
 from st_eva_runner import (
@@ -8,6 +9,82 @@ from st_eva_runner import (
 )
 from fundamental_provider import FundamentalData, YahooFundamentalProvider
 from llm_interpreter import build_interpretation_prompt
+from report_formatter import (
+    _display_width,
+    normalize_ticker,
+    render_report,
+)
+
+
+
+class TestReportFormatter(unittest.TestCase):
+    def test_display_width_counts_cjk_as_two_columns(self):
+        self.assertEqual(_display_width("abc"), 3)
+        self.assertEqual(_display_width("隱含"), 4)
+        self.assertEqual(_display_width("P/E"), 3)
+
+    def test_normalize_ticker_resolves_known_aliases(self):
+        self.assertEqual(normalize_ticker("apple"), "AAPL")
+        self.assertEqual(normalize_ticker("騰訊"), "0700.HK")
+        self.assertEqual(normalize_ticker("台積電"), "2330.TW")
+
+    def test_normalize_ticker_does_not_invent_mappings(self):
+        # Unknown input must pass through so it fails loudly.
+        self.assertEqual(normalize_ticker("ZZZZ_NOT_REAL"), "ZZZZ_NOT_REAL")
+
+    def test_report_renders_without_arithmetic(self):
+        result = run_st_eva(
+            "MSFT", mode="regression", save_snapshot=False
+        )
+        report = render_report(result)
+        # The implied EPS from the engine must appear verbatim.
+        self.assertIn("14.1833", report)
+        self.assertIn("425.50", report)
+        self.assertIn("historical_pe_median", report)
+
+    def test_report_declares_no_reference_when_multiple_missing(self):
+        result = run_st_eva(
+            "MSFT", mode="regression", save_snapshot=False
+        )
+        result["reference"]["method"] = "none"
+        result["reference"]["multiple"] = None
+        result["market_implied_assumptions"]["forward_eps_at_reference_multiple"] = None
+        report = render_report(result)
+        self.assertIn("無參考倍數", report)
+        self.assertIn("--reference-multiple", report)
+
+    def test_report_flags_insufficient_observations(self):
+        result = run_st_eva(
+            "MSFT", mode="regression", save_snapshot=False
+        )
+        result["reference"]["historical_band_status"]["pe"] = (
+            "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+        )
+        report = render_report(result)
+        self.assertIn("觀測數不足未被採用為參考", report)
+
+    def test_report_never_emits_target_price_or_stance(self):
+        result = run_st_eva(
+            "TENCENT", mode="regression", save_snapshot=False
+        )
+        report = render_report(result)
+        for forbidden in ("目標價", "買進", "賣出", "目標價", "偏多", "觀望"):
+            self.assertNotIn(forbidden, report)
+
+    def test_report_handles_unicode_stream(self):
+        result = run_st_eva(
+            "TENCENT", mode="regression", save_snapshot=False
+        )
+        buffer = io.StringIO()
+        from report_formatter import print_report
+        print_report(result, stream=buffer)
+        self.assertIn("0700.HK", buffer.getvalue())
+
+    def test_report_is_deterministic(self):
+        result = run_st_eva(
+            "MSFT", mode="regression", save_snapshot=False
+        )
+        self.assertEqual(render_report(result), render_report(result))
 
 
 

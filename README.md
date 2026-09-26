@@ -121,23 +121,28 @@ cannot cross-validate itself. Provider failures are surfaced in
 
 ## Usage
 
-ST-EVA has no third-party dependencies. Python 3.9+ is sufficient.
+ST-EVA has no third-party dependencies and no API key. Python 3.9+ is sufficient.
+Give it a ticker and it prints the result.
 
 ```powershell
-python st_eva_runner.py --test                          # built-in regression suite
-python -m unittest discover -s tests                    # full unittest suite
-
-python st_eva_runner.py TENCENT --mode regression       # static fixture, no network
-python st_eva_runner.py AAPL --mode live --no-snapshot  # live Yahoo acquisition
-python st_eva_runner.py AAPL --mode live --reference-multiple 30   # save a snapshot
+python st_eva_runner.py 0700.HK --mode live --no-snapshot
 ```
 
-Treat `--reference-multiple` as a required argument in practice. A historical band
-is only adopted automatically when it carries enough observations; otherwise the
-engine reports the band as descriptive and leaves implied figures null.
+The default output is a readable report. Use `--json` for the machine-readable
+schema, and `--test` to run the built-in regression suite.
 
-See [docs/USAGE.md](docs/USAGE.md) for the full workflow, multi-method reverse
-valuation, snapshot tracking, and LLM interpretation.
+```powershell
+python st_eva_runner.py --test
+python -m unittest discover -s tests
+python st_eva_runner.py AAPL --mode live --reference-multiple 30
+```
+
+Company names are accepted (`蘋果`, `騰訊`, `台積電`, `apple`). Treat
+`--reference-multiple` as a required argument in practice: a historical band is
+only adopted automatically when it carries enough observations.
+
+See [docs/USAGE.md](docs/USAGE.md) for the full workflow, output reference,
+multi-method reverse valuation, snapshot tracking, and LLM interpretation.
 
 ## Fundamental data provider
 
