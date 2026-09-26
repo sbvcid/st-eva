@@ -22,6 +22,7 @@ import argparse
 import json
 import math
 import os
+import sys
 import tempfile
 import urllib.request
 import uuid
@@ -35,14 +36,19 @@ from fundamental_provider import YahooFundamentalProvider
 
 UNAVAILABLE = "UNAVAILABLE"
 
+# A historical valuation band derived from too few observations cannot support
+# a 10/25/50/75/90 percentile reading, so it must not silently become the
+# primary valuation reference. Such bands are reported as descriptive only.
+MIN_BAND_OBSERVATIONS_FOR_REFERENCE = 20
+
 VERSION_METADATA = {
     "engine": "ST-EVA Market-Implied Assumptions Engine",
-    "version": "2.2.2",
+    "version": "2.2.3",
     "analysis_type": "market_implied_assumptions",
     "calculation_engine": "deterministic-python",
     "data_policy": "zero-synthetic-financial-data",
-    "validator_version": "2.2.2",
-    "schema_version": "2.2.2",
+    "validator_version": "2.2.3",
+    "schema_version": "2.2.3",
 }
 
 
@@ -220,6 +226,21 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
 }
 
 
+def _derive_discrepancy_status(data: "MarketData") -> str:
+    """
+    Classify the evidence quality of an acquired dataset.
+
+    This is an evidence state, not an investment rating. A single provider
+    cannot verify itself, so a live single-source acquisition is reported as
+    UNVERIFIABLE rather than silently trusted.
+    """
+    if data.errors:
+        return "UNVERIFIABLE"
+    if data.discrepancy_status == "DATA_DISCREPANCY":
+        return "DATA_DISCREPANCY"
+    return "UNVERIFIABLE" if data.source_type == "API_LIVE" else "SINGLE_SOURCE"
+
+
 class YahooFinanceProvider:
     name = "YahooFinance"
 
@@ -264,7 +285,7 @@ class YahooFinanceProvider:
 
             fundamental = YahooFundamentalProvider().fetch(clean)
 
-            return MarketData(
+            market_data = MarketData(
                 ticker=clean,
                 company_name=f"{clean} (Live Acquired)",
                 exchange=str(meta.get("exchangeName", "Unknown")),
@@ -278,6 +299,7 @@ class YahooFinanceProvider:
                 current_eps=fundamental.current_eps,
                 forward_eps=fundamental.forward_eps,
                 consensus_forward_eps=fundamental.consensus_forward_eps,
+                consensus_forward_eps_period=fundamental.consensus_forward_eps_period,
                 historical_pe_band=fundamental.historical_pe_band,
                 current_fcf=fundamental.current_fcf,
                 current_ebitda=fundamental.current_ebitda,
@@ -289,8 +311,16 @@ class YahooFinanceProvider:
                 historical_ev_ebitda_band=fundamental.historical_ev_ebitda_band,
                 source_type="API_LIVE",
                 provider=f"{self.name}+{fundamental.provider}",
+                errors=list(fundamental.errors),
             )
-        except Exception:
+
+            market_data.discrepancy_status = _derive_discrepancy_status(market_data)
+            return market_data
+        except Exception as error:
+            print(
+                f"[ST-EVA] Yahoo acquisition failed for {clean}: {error}",
+                file=sys.stderr,
+            )
             return None
 
 
@@ -402,10 +432,49 @@ class DeterministicMetricsEngine:
         return result
 
 
+def band_is_usable_for_reference(
+    band: Optional[Dict[str, Any]],
+) -> bool:
+    """
+    A band is usable as a valuation reference only when it carries enough
+    observations to support a percentile reading.
+
+    A band that declares no observation count is treated as usable, which
+    preserves existing regression fixtures and explicit user input.
+    """
+    if not band:
+        return False
+    observations = safe_float(band.get("observations"))
+    if observations is None:
+        return True
+    return observations >= MIN_BAND_OBSERVATIONS_FOR_REFERENCE
+
+
+def band_median_for_reference(
+    band: Optional[Dict[str, Any]],
+) -> Optional[float]:
+    if not band_is_usable_for_reference(band):
+        return None
+    return safe_float((band or {}).get("median"))
+
+
+def band_status(
+    band: Optional[Dict[str, Any]],
+) -> str:
+    if not band or not safe_float((band or {}).get("median")):
+        return "UNAVAILABLE"
+    if band_is_usable_for_reference(band):
+        return "USABLE_FOR_REFERENCE"
+    return "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+
+
 def interpolate_pe_percentile(
     value: float,
     band: Dict[str, Any],
 ) -> Optional[float]:
+    if not band_is_usable_for_reference(band):
+        return None
+
     points = [
         (10.0, safe_float(band.get("10th"))),
         (25.0, safe_float(band.get("25th"))),
@@ -471,10 +540,10 @@ class MarketImpliedAssumptionsEngine:
         pfcf_band = data.historical_pfcf_band or {}
         ev_band = data.historical_ev_ebitda_band or {}
 
-        historical_median = safe_float(pe_band.get("median"))
-        historical_ps_median = safe_float(ps_band.get("median"))
-        historical_pfcf_median = safe_float(pfcf_band.get("median"))
-        historical_ev_ebitda_median = safe_float(ev_band.get("median"))
+        historical_median = band_median_for_reference(pe_band)
+        historical_ps_median = band_median_for_reference(ps_band)
+        historical_pfcf_median = band_median_for_reference(pfcf_band)
+        historical_ev_ebitda_median = band_median_for_reference(ev_band)
 
         for value in (reference_multiple, pfcf_multiple, ev_ebitda_multiple, ps_multiple):
             if value is not None and value <= 0:
@@ -533,6 +602,13 @@ class MarketImpliedAssumptionsEngine:
                 "method": "user_supplied_multiple" if reference_multiple is not None else ("historical_pe_median" if historical_median is not None else "none"),
                 "multiple": selected_pe,
                 "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
+                "historical_band_status": {
+                    "pe": band_status(pe_band),
+                    "ps": band_status(ps_band),
+                    "pfcf": band_status(pfcf_band),
+                    "ev_ebitda": band_status(ev_band),
+                },
+                "min_observations_for_reference": MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
             },
             "observed_valuation": {
                 "current_pe": current_pe,
@@ -664,6 +740,13 @@ def build_evidence(
         traceability="High",
     ))
 
+    band_evidence_ids = {
+        "ev-pe-band-001",
+        "ev-pfcf-band-001",
+        "ev-ps-band-001",
+        "ev-ev-ebitda-band-001",
+    }
+
     for evidence_id, value, definition in (
         (
             "ev-current-eps-001",
@@ -734,7 +817,7 @@ def build_evidence(
             source="Input data",
             source_url=None,
             as_of=data.price_date,
-            unit=data.currency if evidence_id != "ev-pe-band-001" else "multiple",
+            unit="multiple" if evidence_id in band_evidence_ids else data.currency,
             currency=data.currency,
             definition=definition,
             source_type=data.source_type,
@@ -942,6 +1025,11 @@ def run_st_eva(
             "provider": data.provider,
             "source": data.price_source,
             "source_type": data.source_type,
+        },
+        "data_quality": {
+            "discrepancy_status": data.discrepancy_status,
+            "acquisition_errors": data.errors,
+            "consensus_forward_eps_period": data.consensus_forward_eps_period,
         },
         "observed_valuation": analysis["observed_valuation"],
         "market_implied_assumptions": analysis["implied_assumptions"],

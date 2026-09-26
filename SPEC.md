@@ -1,4 +1,4 @@
-# ST-EVA 2.2 Specification
+# ST-EVA 2.2.3 Specification
 
 ## 1. Objective
 
@@ -76,6 +76,23 @@ Priority:
 
 If no reference is available, observed valuation can still be reported, but reverse-engineered EPS and growth remain null.
 
+### 4.1 Historical band quality gate
+
+A historical valuation band may act as a reference only when it reports at least
+`MIN_BAND_OBSERVATIONS_FOR_REFERENCE` (20) observations.
+
+A band below the threshold must not silently become the reference multiple and
+must not produce a percentile reading. The engine reports it as
+`DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS` in `reference.historical_band_status`
+and leaves the dependent reverse-valuation outputs null.
+
+Precision is not evidence. A percentile distribution computed from too few
+observations is not a defensible reference, regardless of how many decimal places
+the median carries.
+
+A band that declares no `observations` field is treated as usable. This preserves
+static regression fixtures and explicitly supplied reference bands.
+
 ## 5. Formulas
 
 Current P/E:
@@ -110,23 +127,44 @@ Consensus EPS must come from an explicit estimate source. Forward EPS must never
 
 Provider failures or unavailable fields do not trigger fallback estimates. They remain unavailable.
 
-## 8. Missing-data policy
+## 7. Missing-data policy
 
 Missing inputs are represented as UNAVAILABLE at the raw-data layer and null in numeric derived output.
 
 No fallback guess is allowed.
 
-## 9. Evidence policy
+A provider failure must degrade to UNAVAILABLE, never to an exception that aborts
+acquisition. Partially acquired data remains usable; the failure is recorded.
+
+## 8. Evidence policy
 
 Every material source input receives an Evidence ID.
 
 Invalid evidence references are validation errors.
+
+Evidence unit must describe the value actually carried. Valuation bands are
+multiples (`unit = "multiple"`), not currency amounts.
+
+## 9. Data quality reporting
+
+Every run reports a `data_quality` block containing `discrepancy_status`,
+`acquisition_errors`, and `consensus_forward_eps_period`.
+
+`discrepancy_status` is an evidence state, not an investment rating. A live
+acquisition from a single provider is `UNVERIFIABLE`: one source cannot
+cross-validate itself, and the engine must not present its output as verified.
+
+Provider errors must be propagated to the caller. Collecting errors internally and
+discarding them is a defect.
 
 ## 10. Snapshot policy
 
 Analysis snapshots are append-only at the application level.
 
 Outcome records are separate files and never modify the original analysis snapshot.
+
+Artifacts produced by the pre-2.2 framework are retained under `history/legacy-v6/`
+and must not be presented as current engine output.
 
 ## 11. Future extensions
 

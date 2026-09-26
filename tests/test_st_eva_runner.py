@@ -3,6 +3,7 @@ import unittest
 from st_eva_runner import (
     CompanyResolver,
     MarketImpliedAssumptionsEngine,
+    build_evidence,
     run_st_eva,
 )
 from fundamental_provider import FundamentalData, YahooFundamentalProvider
@@ -11,6 +12,111 @@ from llm_interpreter import build_interpretation_prompt
 
 
 class TestMarketImpliedAssumptions(unittest.TestCase):
+    def test_thin_historical_band_is_not_used_as_reference(self):
+        # A band with too few observations must not become the reference
+        # multiple, and must not produce a percentile reading.
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.historical_pe_band = {
+            "10th": 10.0,
+            "25th": 15.0,
+            "median": 20.0,
+            "75th": 30.0,
+            "90th": 40.0,
+            "observations": 8,
+        }
+        result = MarketImpliedAssumptionsEngine.analyze(data)
+        self.assertIsNone(result["reference"]["multiple"])
+        self.assertEqual(result["reference"]["method"], "none")
+        self.assertIsNone(
+            result["observed_valuation"]["approx_historical_pe_percentile"]
+        )
+        self.assertEqual(
+            result["reference"]["historical_band_status"]["pe"],
+            "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+        )
+        self.assertIsNone(
+            result["implied_assumptions"]["forward_eps_at_reference_multiple"]
+        )
+
+    def test_adequate_historical_band_is_used_as_reference(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.historical_pe_band = {
+            "10th": 10.0,
+            "25th": 15.0,
+            "median": 20.0,
+            "75th": 30.0,
+            "90th": 40.0,
+            "observations": 120,
+        }
+        result = MarketImpliedAssumptionsEngine.analyze(data)
+        self.assertEqual(result["reference"]["method"], "historical_pe_median")
+        self.assertEqual(result["reference"]["multiple"], 20.0)
+        self.assertEqual(
+            result["reference"]["historical_band_status"]["pe"],
+            "USABLE_FOR_REFERENCE",
+        )
+
+    def test_user_supplied_multiple_overrides_thin_band(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.historical_pe_band = {
+            "10th": 10.0, "25th": 15.0, "median": 20.0,
+            "75th": 30.0, "90th": 40.0, "observations": 5,
+        }
+        result = MarketImpliedAssumptionsEngine.analyze(
+            data, reference_multiple=30.0
+        )
+        self.assertEqual(result["reference"]["multiple"], 30.0)
+        self.assertEqual(result["reference"]["method"], "user_supplied_multiple")
+        self.assertAlmostEqual(
+            result["implied_assumptions"]["forward_eps_at_reference_multiple"],
+            425.50 / 30.0,
+            places=10,
+        )
+
+    def test_fundamental_provider_survives_timeseries_failure(self):
+        # Regression: pfcf_band was unbound when the valuation timeseries
+        # request failed, which crashed the whole acquisition.
+        class FailingProvider(YahooFundamentalProvider):
+            def _bootstrap_crumb(self):
+                return "fake_crumb"
+
+            def _quote_summary(self, ticker, crumb):
+                return {"quoteSummary": {"result": []}}
+
+            def _timeseries(self, ticker, types, years=5):
+                raise Exception("timeseries unavailable")
+
+        data = FailingProvider().fetch("AAPL")
+        self.assertEqual(data.historical_pfcf_band, {})
+        self.assertEqual(data.historical_pe_band, {})
+        self.assertTrue(data.errors)
+
+    def test_all_band_evidence_uses_multiple_unit(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.historical_pe_band = {
+            "10th": 22.0, "25th": 26.0, "median": 30.0,
+            "75th": 34.0, "90th": 38.0, "observations": 4,
+        }
+        data.historical_ps_band = {"10th": 3.0, "median": 5.0, "observations": 2}
+        data.historical_pfcf_band = {"10th": 12.0, "median": 20.0, "observations": 2}
+        data.historical_ev_ebitda_band = {
+            "10th": 8.0, "median": 14.0, "observations": 2,
+        }
+        data.current_fcf = 10.0
+        metrics = {
+            "observations": 2, "return_1d": None, "return_5d": None,
+            "return_20d": None, "return_60d": None,
+            "realized_volatility_annualized": None,
+            "average_volume": 1.0, "latest_volume_vs_average": None,
+        }
+        store = build_evidence(data, metrics).as_dict()
+        for evidence_id in (
+            "ev-pe-band-001", "ev-pfcf-band-001",
+            "ev-ps-band-001", "ev-ev-ebitda-band-001",
+        ):
+            self.assertEqual(store[evidence_id]["unit"], "multiple")
+        self.assertEqual(store["ev-fcf-001"]["unit"], "USD")
+
     def test_fundamental_provider_defaults_are_unavailable(self):
         data = FundamentalData()
         self.assertEqual(data.current_eps, "UNAVAILABLE")
@@ -71,11 +177,11 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         data.current_enterprise_value = 1100.0
         data.historical_ps_band = {
             "10th": 3.0, "25th": 4.0, "median": 5.0,
-            "75th": 6.0, "90th": 7.0, "observations": 5,
+            "75th": 6.0, "90th": 7.0, "observations": 120,
         }
         data.historical_ev_ebitda_band = {
             "10th": 10.0, "25th": 12.0, "median": 15.0,
-            "75th": 18.0, "90th": 20.0, "observations": 5,
+            "75th": 18.0, "90th": 20.0, "observations": 120,
         }
         result = MarketImpliedAssumptionsEngine.analyze(data, pfcf_multiple=25.0)
         self.assertAlmostEqual(result["observed_valuation"]["current_pfcf"], 100.0)

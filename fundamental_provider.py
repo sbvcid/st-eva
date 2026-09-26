@@ -286,6 +286,8 @@ class YahooFundamentalProvider:
         current_eps = None
         forward_eps = None
         consensus_eps = None
+        consensus_period: Optional[str] = None
+        eps_as_of: Optional[str] = None
         current_fcf = None
         current_ebitda = None
         current_revenue = None
@@ -380,6 +382,7 @@ class YahooFundamentalProvider:
 
         pe_band: Dict[str, Any] = {}
         ps_band: Dict[str, Any] = {}
+        pfcf_band: Dict[str, Any] = {}
         ev_ebitda_band: Dict[str, Any] = {}
         try:
             payload = self._timeseries(

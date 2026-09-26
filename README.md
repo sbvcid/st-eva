@@ -1,4 +1,4 @@
-# ST-EVA 2.2 — Market-Implied Assumptions Engine
+# ST-EVA 2.2.3 — Market-Implied Assumptions Engine
 
 ST-EVA answers one question:
 
@@ -82,6 +82,43 @@ P/E priority:
 
 P/FCF, EV/EBITDA, and P/S references can be supplied explicitly. EV/EBITDA and P/S also fall back to their observed historical median when available. P/FCF historical bands are derived only when market-cap and trailing FCF observations can be matched by date.
 
+### Historical band quality gate
+
+A historical band can only act as a valuation reference when it carries enough
+observations to support a percentile reading. The threshold is
+`MIN_BAND_OBSERVATIONS_FOR_REFERENCE` (20).
+
+A band below that threshold is still reported under `observed_valuation`, but it:
+
+- is not used as a reference multiple;
+- does not produce an `approx_historical_*_percentile` reading;
+- is reported as `DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS` in
+  `reference.historical_band_status`.
+
+A numerically precise band built from too few points is not trustworthy, and the
+engine will not treat it as though it were. This is the defect behind the NU case
+recorded in [docs/ST-EVA-2.3-PLAN.md](docs/ST-EVA-2.3-PLAN.md).
+
+Bands that declare no `observations` count at all are treated as usable, which
+preserves static regression fixtures.
+
+## Data quality reporting
+
+Every run emits a `data_quality` block:
+
+```json
+"data_quality": {
+  "discrepancy_status": "UNVERIFIABLE",
+  "acquisition_errors": [],
+  "consensus_forward_eps_period": "+1y"
+}
+```
+
+`discrepancy_status` is an evidence state, not an investment rating. A live
+single-provider acquisition is reported as `UNVERIFIABLE` because a single source
+cannot cross-validate itself. Provider failures are surfaced in
+`acquisition_errors` instead of being silently swallowed.
+
 Examples:
 
 python st_eva_runner.py AAPL --mode live --reference-multiple 30
@@ -120,6 +157,18 @@ Snapshots are written to history/.
 Live mode now uses a separate `YahooFundamentalProvider` for source financial data. It attempts to acquire trailing EPS, forward EPS, forward-year consensus EPS from Yahoo earnings estimates, and an observed historical trailing P/E distribution from Yahoo fundamentals time series. Missing fields remain unavailable.
 
 The provider does not synthesize consensus from forward EPS and does not invent historical valuation ranges. Historical P/E, P/S, and EV/EBITDA bands are descriptive statistics calculated only from retrieved observations. Current FCF, EBITDA, revenue, enterprise value, and market cap are sourced from Yahoo fundamentals time series when available.
+
+## Repository layout
+
+```
+st_eva_runner.py        engine, CLI, validation, snapshots
+fundamental_provider.py Yahoo fundamental acquisition adapter
+llm_interpreter.py      optional non-arithmetic LLM adapter
+tests/                  unittest suite
+history/                current engine snapshots
+history/legacy-v6/      pre-2.2 artifacts, retained but not current output
+docs/                   version plans
+```
 
 ## Architecture
 
