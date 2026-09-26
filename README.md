@@ -119,38 +119,25 @@ single-provider acquisition is reported as `UNVERIFIABLE` because a single sourc
 cannot cross-validate itself. Provider failures are surfaced in
 `acquisition_errors` instead of being silently swallowed.
 
-Examples:
-
-python st_eva_runner.py AAPL --mode live --reference-multiple 30
-python st_eva_runner.py AAPL --mode live --pfcf-multiple 25 --ev-ebitda-multiple 20 --ps-multiple 8
-
-Example:
-
-python st_eva_runner.py AAPL --mode live --reference-multiple 30
-
-If neither a supplied reference multiple nor a historical median is available, ST-EVA still reports observed valuation data but does not fabricate implied EPS.
-
 ## Usage
 
-Run regression tests:
+ST-EVA has no third-party dependencies. Python 3.9+ is sufficient.
 
-python st_eva_runner.py --test
+```powershell
+python st_eva_runner.py --test                          # built-in regression suite
+python -m unittest discover -s tests                    # full unittest suite
 
-Run static fixtures:
+python st_eva_runner.py TENCENT --mode regression       # static fixture, no network
+python st_eva_runner.py AAPL --mode live --no-snapshot  # live Yahoo acquisition
+python st_eva_runner.py AAPL --mode live --reference-multiple 30   # save a snapshot
+```
 
-python st_eva_runner.py MSFT --mode regression
-python st_eva_runner.py TENCENT --mode regression
-python st_eva_runner.py NU --mode regression
+Treat `--reference-multiple` as a required argument in practice. A historical band
+is only adopted automatically when it carries enough observations; otherwise the
+engine reports the band as descriptive and leaves implied figures null.
 
-Run live Yahoo Finance acquisition:
-
-python st_eva_runner.py AAPL --mode live --no-snapshot
-
-Save a research snapshot:
-
-python st_eva_runner.py AAPL --mode live --reference-multiple 30
-
-Snapshots are written to history/.
+See [docs/USAGE.md](docs/USAGE.md) for the full workflow, multi-method reverse
+valuation, snapshot tracking, and LLM interpretation.
 
 ## Fundamental data provider
 
