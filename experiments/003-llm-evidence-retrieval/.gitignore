@@ -1,0 +1,15 @@
+# Build artefacts.
+#
+# The snapshot is rebuilt with `python -m harness --build`; committing it would
+# put a moving EDGAR extract in version control, and the dataset's expectations
+# are resolved from whichever snapshot is in use, so a committed copy would go
+# stale against the code that reads it.
+snapshot.sqlite
+snapshot.sqlite-*
+
+# Run outputs: one directory per model, holding its full trace and audit. These
+# are the results of an experiment, not the experiment.
+runs/
+harness/runs/
+
+__pycache__/
