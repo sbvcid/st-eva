@@ -39,7 +39,13 @@ from data_contract import (
     SourceType,
     Unit,
 )
-from st_eva_runner import metrics_observation
+from st_eva_runner import (
+    DeterministicMetricsEngine,
+    MarketImpliedAssumptionsEngine,
+    build_evidence,
+    material_observations,
+    metrics_observation,
+)
 
 
 RETRIEVED = "2026-09-28T12:00:00+00:00"
@@ -423,6 +429,145 @@ class TestS3DerivedFigureTraceability(unittest.TestCase):
         self.assertEqual(
             refusal["blocks"], [],
             "the input is present; this is not a missing-data case",
+        )
+
+
+class TestS2ReasonCodeCoverage(unittest.TestCase):
+    """
+    A to E: every refusal in a real context is machine-readable, and the code
+    comes from the closed vocabulary rather than being invented per call site.
+
+    The two classes covered here are the observation-level and reference-level
+    refusals, which are the ones a derived figure never passes through and
+    which were therefore the easiest to leave uncoded.
+    """
+
+    TICKERS = ("MSFT", "TENCENT", "MU", "NU")
+
+    def _documents(self):
+        from st_eva_runner import CompanyResolver
+
+        for ticker in self.TICKERS:
+            data = CompanyResolver.resolve(ticker, mode="regression")
+            metrics = DeterministicMetricsEngine.compute(
+                data.price_history, data.volume_history
+            )
+            evidence = build_evidence(data, metrics)
+            analysis = MarketImpliedAssumptionsEngine.analyze(data)
+            materials = list(material_observations(data).values())
+            yield ticker, build_document(
+                data, analysis, evidence, metrics, materials
+            )
+
+    def test_a_observation_level_refusals_carry_a_code(self):
+        """A: NOT_REPORTED_BY_SOURCE always names why."""
+        seen = 0
+        for ticker, document in self._documents():
+            for item in document["unavailable"]:
+                if item["reason_kind"] != "NOT_REPORTED_BY_SOURCE":
+                    continue
+                seen += 1
+                self.assertEqual(
+                    item["reason_code"],
+                    "SOURCE_DID_NOT_REPORT",
+                    f"{ticker}: {item['item']} has no reason_code",
+                )
+        self.assertGreater(seen, 0, "no observation-level refusals were exercised")
+
+    def test_b_reference_level_refusals_carry_a_code(self):
+        """B: NO_REFERENCE_AVAILABLE always names why."""
+        seen = 0
+        for ticker, document in self._documents():
+            for item in document["unavailable"]:
+                if item["reason_kind"] != "NO_REFERENCE_AVAILABLE":
+                    continue
+                seen += 1
+                self.assertEqual(
+                    item["reason_code"],
+                    "REFERENCE_NOT_AVAILABLE",
+                    f"{ticker}: {item['item']} has no reason_code",
+                )
+        self.assertGreater(seen, 0, "no reference-level refusals were exercised")
+
+    def test_c_derived_figure_refusals_keep_kind_and_code(self):
+        """C: the derived path is unchanged by this fix."""
+        expected = {
+            "MISSING_INPUT": "INPUT_OBSERVATION_UNAVAILABLE",
+            "NEGATIVE_INPUT": "NON_POSITIVE_DENOMINATOR",
+            "INSUFFICIENT_OBSERVATIONS": "SERIES_TOO_THIN",
+            "ENGINE_PRODUCED_NO_VALUE": "ENGINE_PRODUCED_NO_VALUE",
+        }
+        seen = set()
+        for ticker, document in self._documents():
+            for item in document["unavailable"]:
+                if not item["ref"].startswith("der:"):
+                    continue
+                seen.add(item["reason_kind"])
+                self.assertIn(
+                    item["reason_kind"],
+                    expected,
+                    f"{ticker}: {item['ref']} has an unexpected reason_kind",
+                )
+                self.assertEqual(
+                    item["reason_code"],
+                    expected[item["reason_kind"]],
+                    f"{ticker}: {item['ref']} reason_code moved",
+                )
+        self.assertIn("MISSING_INPUT", seen, "no derived refusal was exercised")
+
+    def test_d_every_reason_code_comes_from_the_vocabulary(self):
+        """
+        D and E: the code is a member of REASON_CODES, and it is a real string
+        rather than None, empty, or a per-site invention.
+        """
+        from investment_context import REASON_CODES, REASON_KINDS
+
+        for ticker, document in self._documents():
+            for item in document["unavailable"]:
+                code = item.get("reason_code")
+                self.assertIn(
+                    code,
+                    REASON_CODES,
+                    f"{ticker}: {item['item']} code {code!r} is not in the "
+                    "vocabulary",
+                )
+                self.assertIsInstance(code, str)
+                self.assertTrue(
+                    code.strip(),
+                    f"{ticker}: {item['item']} has an empty code",
+                )
+                self.assertIn(item["reason_kind"], REASON_KINDS)
+                self.assertTrue(
+                    item.get("reason"),
+                    f"{ticker}: {item['item']} has no explanation",
+                )
+
+    def test_the_vocabulary_was_not_widened(self):
+        """
+        The fix wires existing codes to existing kinds. It must not have
+        introduced a kind or a code to get there.
+        """
+        from investment_context import REASON_CODES, REASON_KINDS
+
+        self.assertEqual(
+            len(REASON_KINDS), 7, "REASON_KINDS changed size"
+        )
+        self.assertEqual(
+            len(REASON_CODES), 8, "REASON_CODES changed size"
+        )
+        self.assertEqual(
+            set(REASON_CODES) - {
+                "SOURCE_DID_NOT_REPORT",
+                "INPUT_OBSERVATION_UNAVAILABLE",
+                "REFERENCE_NOT_AVAILABLE",
+                "SERIES_TOO_THIN",
+                "OPERAND_CURRENCIES_DIFFER",
+                "NON_POSITIVE_DENOMINATOR",
+                "NON_POSITIVE_NUMERATOR",
+                "ENGINE_PRODUCED_NO_VALUE",
+            },
+            set(),
+            "REASON_CODES gained a member",
         )
 
 

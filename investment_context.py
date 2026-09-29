@@ -370,22 +370,32 @@ class ContextBuilder:
         return figure
 
     def _mark_unavailable(
-        self,
-        ref: str,
-        reason: str,
-        reason_kind: str,
-        item: str,
-        blocks: Sequence[str] = (),
-    ) -> None:
-        self.unavailable.append(
-            {
-                "item": item,
-                "ref": ref,
-                "reason": reason,
-                "reason_kind": reason_kind,
-                "blocks": list(blocks),
-            }
-        )
+           self,
+           ref: str,
+           reason: str,
+           reason_kind: str,
+           item: str,
+           blocks: Sequence[str] = (),
+           reason_code: Optional[str] = None,
+       ) -> None:
+           """
+           Record an absent item.
+
+           `reason_code` comes from the closed `REASON_CODES` vocabulary. It is
+           not optional in practice: a refusal a consumer has to read as prose
+           to act on is a guess waiting to happen, and every caller in this
+           module passes a code.
+           """
+           self.unavailable.append(
+               {
+                   "item": item,
+                   "ref": ref,
+                   "reason": reason,
+                   "reason_kind": reason_kind,
+                   "reason_code": reason_code,
+                   "blocks": list(blocks),
+               }
+           )
 
     # -- observations -----------------------------------------------------
 
@@ -432,6 +442,7 @@ class ContextBuilder:
                         f"by {observation.provider}"
                     ),
                     reason_kind=REASON_NOT_REPORTED,
+                    reason_code="SOURCE_DID_NOT_REPORT",
                     item=observation.metric,
                 )
             else:
@@ -941,6 +952,7 @@ class ContextBuilder:
                     "supplied"
                 ),
                 reason_kind=REASON_NO_REFERENCE,
+                reason_code="REFERENCE_NOT_AVAILABLE",
                 item=f"{name}_multiple",
             )
         return ref
@@ -1774,6 +1786,11 @@ class ContextBuilder:
                         "no percentile position is read from it"
                     )
                     entry["reason_kind"] = REASON_INSUFFICIENT_OBSERVATIONS
+                    # The code moves with the kind. The input observation is
+                    # present and usable; the *series* behind it is too thin,
+                    # and leaving INPUT_OBSERVATION_UNAVAILABLE here would say
+                    # the opposite.
+                    entry["reason_code"] = "SERIES_TOO_THIN"
                 continue
             self._add_derivation(
                 name=name,
