@@ -41,6 +41,7 @@ from evidence_query import (
     ORDER_DESC,
     EvidenceQuery,
     QueryError,
+    UnknownMetricError,
 )
 from sqlite_archive import SQLiteArchive
 
@@ -487,12 +488,113 @@ class TestHistoricalSeries(QueryFixture):
             end = row["period"]["end"]
             self.assertTrue("2024-01-01" <= end <= "2024-12-31", end)
 
+    def test_the_status_filter_is_named_for_what_it_filters(self):
+        """
+        A2, from the first real model run.
+
+        The filter was called `status` while every observation carried both a
+        `status.validation_status` and a `status.evidence_state.state` beside
+        each other. A model that had been told the distinction in a prompt
+        passed `SOURCE_REPORTED` anyway -- an evidence state, to a parameter that
+        filters cross-check status -- and got an empty list back.
+
+        The rename is the fix. A parameter whose meaning has to be recovered
+        from prose is not self-describing, and a vocabulary a surface invites
+        you to use in the wrong parameter is worse than no vocabulary.
+        """
+        import inspect
+
+        parameters = inspect.signature(
+            EvidenceQuery.query_observations
+        ).parameters
+        self.assertIn("validation_status", parameters)
+        self.assertNotIn(
+            "status",
+            parameters,
+            "the ambiguous name is back; it collides with the evidence state "
+            "that sits beside it in every payload",
+        )
+
+    def test_a_validation_status_is_refused_with_an_explanation(self):
+        """
+        An unmatched status returns `[]`, and an empty list reads as "no such
+        data". So an evidence state passed here is refused *by name*, with the
+        distinction the caller needs to act on.
+        """
+        with self.assertRaises(QueryError) as caught:
+            self.query.query_observations(
+                asset=AAPL,
+                metric="revenue",
+                validation_status="SOURCE_REPORTED",
+            )
+        message = str(caught.exception)
+        self.assertIn("evidence state", message)
+        self.assertIn("SOURCE_REPORTED", message)
+
+    def test_the_status_keyword_is_no_longer_accepted(self):
+        """
+        Renaming without removing the old name would leave the ambiguity in
+        place with a deprecation notice nobody reads.
+        """
+        with self.assertRaises(TypeError):
+            self.query.query_observations(
+                asset=AAPL, metric="revenue", status="UNVERIFIABLE"
+            )
+
+    def test_a_numeric_string_limit_is_accepted(self):
+        """
+        The first run spent four failed calls on `limit: "1"`. Refusing it
+        taught nothing and cost a round trip; the caller wanted one.
+        """
+        self.assertEqual(
+            len(
+                self.query.query_observations(
+                    asset=AAPL, metric="revenue", limit="1"
+                )
+            ),
+            1,
+        )
+
+    def test_a_negative_limit_is_still_refused(self):
+        for bad in ("0", -1, "abc"):
+            with self.assertRaises(QueryError):
+                self.query.query_observations(
+                    asset=AAPL, metric="revenue", limit=bad
+                )
+
     def test_query_by_asset_and_metric(self):
         self.assertTrue(
             self.query.query_observations(asset=AAPL, metric="assets")
         )
+        # A metric ST-EVA has never heard of now raises rather than returning
+        # an empty list. It used to return `[]`, identically to a metric that
+        # exists and has no rows for the filter, and the first real model run
+        # could not tell a typo from an absence -- it reported "no data exists"
+        # seven times against an archive holding 1,922 revenue observations.
+        # The two cases are different questions and now answer differently.
+        with self.assertRaises(UnknownMetricError) as caught:
+            self.query.query_observations(asset=AAPL, metric="nonexistent")
+        # The recovery has to be in the error, or the caller is left guessing.
+        self.assertIn("nonexistent", str(caught.exception))
+        self.assertIn("revenue", str(caught.exception))
+        self.assertIn("assets", str(caught.exception))
+        self.assertIn("nonexistent", caught.exception.requested)
+        self.assertIn("revenue", caught.exception.available)
+
+    def test_a_known_metric_with_no_observations_is_not_an_error(self):
+        """
+        The other half of the distinction, and the reason it is worth making.
+
+        `debt` is registered as STALE, which is exactly the case where holding
+        no observations is the true answer. Refusing the name would turn a
+        correct empty result into an error and lose the state that explains it.
+        """
         self.assertEqual(
-            self.query.query_observations(asset=AAPL, metric="nonexistent"), []
+            self.query.query_observations(asset=AAPL, metric="debt"), []
+        )
+        self.assertEqual(
+            self.query.get_metric_history(AAPL, "debt")["state"]["state"],
+            STALE,
         )
 
     def test_ordering_is_explicit(self):

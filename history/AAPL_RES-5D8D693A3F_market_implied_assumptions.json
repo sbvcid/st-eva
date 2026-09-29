@@ -1,0 +1,370 @@
+{
+  "research_id": "RES-5D8D693A3F",
+  "analysis_type": "market_implied_assumptions",
+  "created_at": "2026-09-26T11:12:32.918767+00:00",
+  "ticker": "AAPL",
+  "company_name": "AAPL (Live Acquired)",
+  "price_date": "2026-09-25",
+  "current_price": 341.07,
+  "currency": "USD",
+  "horizon_years": 1.0,
+  "version_metadata": {
+    "engine": "ST-EVA Market-Implied Assumptions Engine",
+    "version": "2.2.3",
+    "analysis_type": "market_implied_assumptions",
+    "calculation_engine": "deterministic-python",
+    "data_policy": "zero-synthetic-financial-data",
+    "validator_version": "2.2.3",
+    "schema_version": "2.2.3"
+  },
+  "analysis": {
+    "reference": {
+      "method": "none",
+      "multiple": null,
+      "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
+      "historical_band_status": {
+        "pe": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+        "ps": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+        "pfcf": "UNAVAILABLE",
+        "ev_ebitda": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+      },
+      "min_observations_for_reference": 20
+    },
+    "observed_valuation": {
+      "current_pe": 39.06872852233677,
+      "forward_pe": 35.58242526355323,
+      "consensus_forward_pe": 35.60865248389848,
+      "current_pfcf": 35.98494723996401,
+      "current_ev_ebitda": 29.414771126286773,
+      "current_ps": 10.536178687853855,
+      "historical_pe_band": {
+        "10th": 31.2445325,
+        "25th": 34.07094725,
+        "median": 35.646632999999994,
+        "75th": 36.783830249999994,
+        "90th": 38.758215,
+        "observations": 8
+      },
+      "historical_ps_band": {
+        "10th": 7.8728026,
+        "25th": 8.35152,
+        "median": 9.441114,
+        "75th": 9.779437,
+        "90th": 10.1201398,
+        "observations": 9
+      },
+      "historical_pfcf_band": {},
+      "historical_ev_ebitda_band": {
+        "10th": 22.4705,
+        "25th": 25.169375,
+        "median": 27.00795,
+        "75th": 27.325650000000003,
+        "90th": 28.095599999999997,
+        "observations": 8
+      },
+      "approx_historical_pe_percentile": null,
+      "approx_historical_ps_percentile": null,
+      "approx_historical_ev_ebitda_percentile": null
+    },
+    "implied_assumptions": {
+      "forward_eps_at_reference_multiple": null,
+      "eps_gap_vs_consensus": null,
+      "required_eps_cagr_from_current_eps": null,
+      "required_eps_growth": null,
+      "fcf_at_reference_multiple": null,
+      "ebitda_at_reference_multiple": null,
+      "revenue_at_reference_multiple": null,
+      "implied_net_margin": null,
+      "reference_multiples": {
+        "pe": null,
+        "pfcf": null,
+        "ev_ebitda": null,
+        "ps": null
+      }
+    },
+    "consensus_cross_check": {
+      "consensus_forward_eps": 9.57829,
+      "price_at_historical_median_pe": null,
+      "price_gap_vs_historical_median_on_consensus_eps": null
+    },
+    "fundamental_snapshot": {
+      "current_fcf": 136683000000.0,
+      "current_ebitda": 167959000000.0,
+      "current_revenue": 466823000000.0,
+      "current_enterprise_value": 4940475543600.0,
+      "current_market_cap": 4918530543600.0
+    },
+    "source_inputs": {
+      "current_eps": 8.73,
+      "forward_eps": 9.58535,
+      "consensus_forward_eps": 9.57829,
+      "historical_pe_band": {
+        "10th": 31.2445325,
+        "25th": 34.07094725,
+        "median": 35.646632999999994,
+        "75th": 36.783830249999994,
+        "90th": 38.758215,
+        "observations": 8
+      },
+      "historical_ps_band": {
+        "10th": 7.8728026,
+        "25th": 8.35152,
+        "median": 9.441114,
+        "75th": 9.779437,
+        "90th": 10.1201398,
+        "observations": 9
+      },
+      "historical_ev_ebitda_band": {
+        "10th": 22.4705,
+        "25th": 25.169375,
+        "median": 27.00795,
+        "75th": 27.325650000000003,
+        "90th": 28.095599999999997,
+        "observations": 8
+      }
+    }
+  },
+  "market_metrics": {
+    "return_1d": 0.015331012415526368,
+    "return_5d": 0.014696701780992472,
+    "return_20d": 0.08420758434315667,
+    "return_60d": 0.15860453042655775,
+    "realized_volatility_annualized": 0.2838039628202771,
+    "average_volume": 51133362.5,
+    "latest_volume_vs_average": -0.41427477999319917,
+    "observations": 64
+  },
+  "evidence": {
+    "ev-price-001": {
+      "evidence_id": "ev-price-001",
+      "value": 341.07,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Yahoo Finance chart API",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=3mo&interval=1d",
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Observed current or latest market price.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "High"
+    },
+    "ev-current-eps-001": {
+      "evidence_id": "ev-current-eps-001",
+      "value": 8.73,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Current/trailing EPS. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-forward-eps-001": {
+      "evidence_id": "ev-forward-eps-001",
+      "value": 9.58535,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Forward EPS. Used only when explicitly supplied.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-consensus-eps-001": {
+      "evidence_id": "ev-consensus-eps-001",
+      "value": 9.57829,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Consensus forward EPS. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-pe-band-001": {
+      "evidence_id": "ev-pe-band-001",
+      "value": {
+        "10th": 31.2445325,
+        "25th": 34.07094725,
+        "median": 35.646632999999994,
+        "75th": 36.783830249999994,
+        "90th": 38.758215,
+        "observations": 8
+      },
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "multiple",
+      "currency": "USD",
+      "definition": "Historical P/E reference band.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-pfcf-band-001": {
+      "evidence_id": "ev-pfcf-band-001",
+      "value": "UNAVAILABLE",
+      "provider": "None",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "multiple",
+      "currency": "USD",
+      "definition": "Historical P/FCF reference band.",
+      "source_type": "API_LIVE",
+      "quality": "Unavailable",
+      "traceability": "Unavailable"
+    },
+    "ev-ps-band-001": {
+      "evidence_id": "ev-ps-band-001",
+      "value": {
+        "10th": 7.8728026,
+        "25th": 8.35152,
+        "median": 9.441114,
+        "75th": 9.779437,
+        "90th": 10.1201398,
+        "observations": 9
+      },
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "multiple",
+      "currency": "USD",
+      "definition": "Historical P/S reference band.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-ev-ebitda-band-001": {
+      "evidence_id": "ev-ev-ebitda-band-001",
+      "value": {
+        "10th": 22.4705,
+        "25th": 25.169375,
+        "median": 27.00795,
+        "75th": 27.325650000000003,
+        "90th": 28.095599999999997,
+        "observations": 8
+      },
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "multiple",
+      "currency": "USD",
+      "definition": "Historical EV/EBITDA reference band.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-fcf-001": {
+      "evidence_id": "ev-fcf-001",
+      "value": 136683000000.0,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Observed trailing free cash flow. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-ebitda-001": {
+      "evidence_id": "ev-ebitda-001",
+      "value": 167959000000.0,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Observed trailing EBITDA. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-revenue-001": {
+      "evidence_id": "ev-revenue-001",
+      "value": 466823000000.0,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Observed trailing revenue. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-enterprise-value-001": {
+      "evidence_id": "ev-enterprise-value-001",
+      "value": 4940475543600.0,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Observed enterprise value. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-market-cap-001": {
+      "evidence_id": "ev-market-cap-001",
+      "value": 4918530543600.0,
+      "provider": "YahooFinance+YahooFinanceFundamentals",
+      "source": "Input data",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "USD",
+      "currency": "USD",
+      "definition": "Observed market capitalization. Never synthesized.",
+      "source_type": "API_LIVE",
+      "quality": "Medium",
+      "traceability": "Medium"
+    },
+    "ev-metrics-001": {
+      "evidence_id": "ev-metrics-001",
+      "value": {
+        "return_1d": 0.015331012415526368,
+        "return_5d": 0.014696701780992472,
+        "return_20d": 0.08420758434315667,
+        "return_60d": 0.15860453042655775,
+        "realized_volatility_annualized": 0.2838039628202771,
+        "average_volume": 51133362.5,
+        "latest_volume_vs_average": -0.41427477999319917,
+        "observations": 64
+      },
+      "provider": "Python",
+      "source": "Deterministic calculation",
+      "source_url": null,
+      "as_of": "2026-09-25",
+      "unit": "ratio",
+      "currency": "USD",
+      "definition": "Price and volume metrics calculated from observed history.",
+      "source_type": "DETERMINISTIC_CALCULATION",
+      "quality": "High",
+      "traceability": "High"
+    }
+  },
+  "limitations": [
+    "This is reverse valuation, not a price target.",
+    "Implied earnings/growth are conditional on the selected multiple.",
+    "Missing financial data is not estimated."
+  ]
+}

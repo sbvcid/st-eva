@@ -36,6 +36,21 @@ EXPOSED = (
 _PRIMITIVES = {str: "string", int: "integer", float: "number", bool: "boolean"}
 
 
+# Enumerations the surface accepts, published in the schema.
+#
+# The first real run sent `order="period_start"`, which is not a member, and
+# lost the call. A closed vocabulary that is enforced but not advertised is a
+# vocabulary the caller has to guess at; the error message would eventually have
+# listed the options, at the cost of a round trip.
+ENUMS = {
+    "order": (
+        "PERIOD_ASCENDING",
+        "PERIOD_DESCENDING",
+        "AVAILABLE_AT_ASCENDING",
+    ),
+}
+
+
 def tool_schemas(toolbox: Any) -> List[Dict[str, Any]]:
     """JSON Schema tool definitions for every exposed operation."""
     schemas: List[Dict[str, Any]] = []
@@ -44,12 +59,30 @@ def tool_schemas(toolbox: Any) -> List[Dict[str, Any]]:
         properties: Dict[str, Any] = {}
         required: List[str] = []
         signature = inspect.signature(method)
+        # Annotations have to be *resolved*, not read. `from __future__ import
+        # annotations` turns every annotation in this package into a string, so
+        # reading them directly reports `Optional[int]` as a string type -- and
+        # the first real model run duly sent `limit` as `"1"` because the schema
+        # it was shown said string. The friction recorded as a model weakness
+        # was this module's bug, and only re-resolving the string fixes it.
+        hints = _resolved_hints(method)
         for parameter, annotation in signature.parameters.items():
             if parameter == "self" or parameter.startswith("_"):
                 continue
+            annotation = hints.get(parameter, annotation)
             if annotation is inspect.Parameter.empty:
                 continue
             properties[parameter] = _schema_for(annotation)
+            if parameter in ENUMS:
+                properties[parameter] = {
+                    "type": "string",
+                    "enum": list(ENUMS[parameter]),
+                    "description": (
+                        "one of "
+                        + ", ".join(ENUMS[parameter])
+                        + "; anything else is refused"
+                    ),
+                }
             if parameter in _required_parameters(method, signature):
                 required.append(parameter)
         schemas.append(
@@ -67,6 +100,21 @@ def tool_schemas(toolbox: Any) -> List[Dict[str, Any]]:
             }
         )
     return schemas
+
+
+def _resolved_hints(method: Any) -> Dict[str, Any]:
+    """
+    The method's annotations as types, not as strings.
+
+    Falls back to the raw signature where a name cannot be resolved in this
+    module's namespace, because a schema that omits a parameter is better than
+    one that mis-describes it — and a mis-described parameter is what told the
+    model to send a number as a string.
+    """
+    try:
+        return typing.get_type_hints(method)
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 def _required_parameters(

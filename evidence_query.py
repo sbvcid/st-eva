@@ -36,7 +36,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from data_contract import parse_iso_date, utc_now
+from data_contract import ValidationStatus, parse_iso_date, utc_now
 from core_registry import CoreRegistry
 from evidence_model import (
     CONFLICTING,
@@ -49,6 +49,13 @@ from evidence_model import (
     UNAVAILABLE,
     STATE_STATUS,
     canonical_json,
+)
+
+# The cross-check statuses an observation can carry. Closed because an unmatched
+# one returns an empty list, and an empty list reads as "no such data" rather
+# than "you named something that does not exist".
+VALIDATION_STATUSES: Tuple[str, ...] = tuple(
+    status.value for status in ValidationStatus
 )
 
 # Lineage kinds. A consumer must not have to infer whether a figure was
@@ -73,11 +80,104 @@ class QueryError(Exception):
     """A query was malformed. Raised before anything reaches the database."""
 
 
+class UnknownMetricError(QueryError):
+    """
+    The metric named is not one ST-EVA knows.
+
+    Distinct from an empty result, and the distinction is the whole point. A
+    query for a metric that exists but has no matching observations returns
+    `[]`; a query for a metric that does not exist used to return the same
+    `[]`, and a caller could not tell a typo from an absence. In the first real
+    model run that produced seven false negatives in fifteen tests, each
+    answered "no data exists" against an archive holding 1,922 revenue
+    observations.
+
+    The available names travel with the error, so the recovery is one turn
+    rather than a guess.
+    """
+
+    def __init__(self, requested: str, available: Sequence[str]) -> None:
+        self.requested = requested
+        self.available = list(available)
+        super().__init__(
+            f"UNKNOWN_METRIC: no metric named {requested!r}. "
+            f"Known metrics: {', '.join(self.available)}"
+        )
+
+
+def _require_known_metric(
+    connection: sqlite3.Connection,
+    metric: str,
+) -> None:
+    """
+    Refuse a metric ST-EVA has never heard of.
+
+    The vocabulary is everything ST-EVA can name, and that includes the state
+    table: a metric recorded as NOT_APPLICABLE or STALE is exactly the case
+    where holding no observations is the correct answer, so refusing the name
+    would turn a true answer into an error. Three places contribute — the
+    registry, the observations themselves, and the states.
+
+    A metric that is in that vocabulary but matches no rows is a different
+    situation entirely and is not an error: that is an empty answer to a real
+    question.
+    """
+    known = {
+        row["metric_id"]
+        for row in connection.execute("SELECT metric_id FROM metric_registry")
+    }
+    observed = {
+        row["metric"]
+        for row in connection.execute(
+            "SELECT DISTINCT metric FROM observations"
+        )
+    }
+    stated = {
+        row["metric"]
+        for row in connection.execute("SELECT DISTINCT metric FROM evidence_state")
+    }
+    available = sorted(known | observed | stated)
+    if available and metric not in available:
+        raise UnknownMetricError(metric, available)
+
+
+def _validate_validation_status(value: str) -> str:
+    """
+    Cross-check status, from a closed vocabulary.
+
+    Refused rather than matched, because an unmatched status returns `[]` and an
+    empty list reads as "no such data" — which is how passing `SOURCE_REPORTED`
+    here produced a false negative in the first real model run. `SOURCE_REPORTED`
+    is an evidence *state*, not a validation status, and saying so in the error
+    is more useful than returning nothing.
+    """
+    if value in VALIDATION_STATUSES:
+        return value
+    if value in EVIDENCE_STATES:
+        raise QueryError(
+            f"{value!r} is an evidence state, not a validation status. "
+            "filter with `validation_status` for the cross-check status, or "
+            "read `status.evidence_state.state` on an observation. Validation "
+            f"statuses are: {', '.join(sorted(VALIDATION_STATUSES))}"
+        )
+    raise QueryError(
+        f"validation_status must be one of "
+        f"{', '.join(sorted(VALIDATION_STATUSES))}, got {value!r}"
+    )
+
+
 def _validate_limit(limit: Optional[int]) -> int:
     if limit is None:
         return _DEFAULT_LIMIT
+    if isinstance(limit, str) and limit.strip().isdigit():
+        # A caller that sent "50" wants fifty. Refusing it teaches nothing and
+        # costs a round trip; the first real model run spent four failed calls
+        # on numeric strings.
+        limit = int(limit.strip())
     if not isinstance(limit, int) or isinstance(limit, bool):
-        raise QueryError("limit must be an integer")
+        raise QueryError(
+            f"limit must be an integer, got {type(limit).__name__}"
+        )
     if limit < 1:
         raise QueryError("limit must be at least 1")
     if limit > _MAX_LIMIT:
@@ -328,7 +428,7 @@ class EvidenceQuery:
         knowable_at: Optional[str] = None,
         provider: Optional[str] = None,
         source_type: Optional[str] = None,
-        status: Optional[str] = None,
+        validation_status: Optional[str] = None,
         basis_framework: Optional[str] = None,
         currency: Optional[str] = None,
         unit: Optional[str] = None,
@@ -349,6 +449,22 @@ class EvidenceQuery:
         retrieval time. A value whose source published no availability cannot be
         asserted to have been knowable at any instant, and this is where the
         2.4.2 distinction is enforced on the read path.
+
+        `validation_status` filters the cross-check status -- UNVERIFIABLE,
+        CONFLICTING and the rest. It was named `status` until the first real
+        model run, where that name cost more than it explained: every
+        observation also carries an *evidence state* (SOURCE_REPORTED,
+        UNAVAILABLE, STALE), the two sat adjacent in every payload, and a
+        caller had no way to know which one `status` meant except by being told
+        in a prompt. The model was told in a prompt, and still passed
+        `SOURCE_REPORTED` here. A name that has to be disambiguated by prose
+        is not self-describing, so the filter now names what it filters.
+
+        An unknown metric raises `UnknownMetricError` rather than returning an
+        empty list. A misspelling and a genuinely empty answer used to produce
+        the same `[]`, and a reader could not tell a typo from an absence -- a
+        distinction that is the difference between "try another name" and
+        "report that the data is not there".
         """
         period_start = _validate_date("period_start", period_start)
         period_end = _validate_date("period_end", period_end)
@@ -357,6 +473,10 @@ class EvidenceQuery:
         _validate_period(period_start, period_end)
         order = _validate_order(order)
         bounded = _validate_limit(limit)
+        if validation_status is not None:
+            validation_status = _validate_validation_status(validation_status)
+        if metric is not None:
+            _require_known_metric(self.connection, metric)
 
         where: List[str] = []
         params: List[Any] = []
@@ -387,9 +507,9 @@ class EvidenceQuery:
         if source_type:
             where.append("o.source_type = ?")
             params.append(source_type)
-        if status:
+        if validation_status:
             where.append("o.status = ?")
-            params.append(status)
+            params.append(validation_status)
         if currency:
             where.append("o.currency = ?")
             params.append(currency)

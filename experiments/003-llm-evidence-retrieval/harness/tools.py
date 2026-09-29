@@ -87,7 +87,7 @@ class Toolbox:
         knowable_at: Optional[str] = None,
         provider: Optional[str] = None,
         source_type: Optional[str] = None,
-        status: Optional[str] = None,
+        validation_status: Optional[str] = None,
         unit: Optional[str] = None,
         currency: Optional[str] = None,
         instant: Optional[bool] = None,
@@ -98,8 +98,13 @@ class Toolbox:
         """
         Observations matching a filter, oldest first.
 
-        Note that `limit` truncates silently here. Use `page` when the length of
-        a series matters.
+        `metric` must be one ST-EVA knows. An unknown name is refused with the
+        list of real ones rather than returning an empty result, because an
+        empty result is what a genuinely absent figure looks like and the two
+        were indistinguishable.
+
+        `limit` truncates silently. Use `page` when the length of a series
+        matters.
         """
         return self._call(
             "query_observations",
@@ -112,7 +117,7 @@ class Toolbox:
                 "knowable_at": knowable_at,
                 "provider": provider,
                 "source_type": source_type,
-                "status": status,
+                "validation_status": validation_status,
                 "unit": unit,
                 "currency": currency,
                 "instant": instant,
@@ -129,7 +134,7 @@ class Toolbox:
                 knowable_at=knowable_at,
                 provider=provider,
                 source_type=source_type,
-                status=status,
+                validation_status=validation_status,
                 unit=unit,
                 currency=currency,
                 instant=instant,

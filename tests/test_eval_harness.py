@@ -476,30 +476,29 @@ class TestTheAnswerContractIsAnEvaluationFormatOnly(unittest.TestCase):
 
 class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
     """
-    Pinned so they cannot be forgotten.
+    The findings a real model produced, and the behaviour that replaced them.
 
-    Every item here was found by a real model running the sealed dataset, which
-    is the only way any of them could have been found: the scripted targets had
-    fixed answers, so they never depended on what the archive actually contained
-    at the moment.
+    These were found by a real model running the sealed dataset, which is the
+    only way any of them could have been found: the scripted targets had fixed
+    answers, so they never depended on what the archive actually contained at
+    the moment.
 
-    These are written as *characterisations*, not as assertions that the defect
-    is fixed. A1 and A2 are open findings and the query surface is sealed, so a
-    test that demanded a fix would fail for a reason nobody is going to act on.
-    A characterisation that passes today and fails after a fix is the right
-    instrument: it turns a silent improvement into a visible change.
+    A1 and A2 are now fixed, so these assert the fix rather than the defect. A
+    test that characterised the old behaviour would start failing for a reason
+    nobody is going to act on; a test that pins the fix starts failing when
+    someone reintroduces the problem, which is when it is worth hearing about.
     """
 
-    def test_a1_an_unknown_metric_is_indistinguishable_from_no_data(self):
+    def test_a1_an_unknown_metric_is_no_longer_indistinguishable(self):
         """
-        A1: an empty list says nothing about why it is empty.
+        A1, fixed: an unknown metric is refused, not answered with `[]`.
 
         This produced 7 of 15 false negatives in the first real run, each
-        answered with "no data exists" when the archive held hundreds of rows.
-        The vocabulary exists in `coverage_report`; the surface just does not
-        offer it when a filter matches nothing.
+        answered "no data exists" while the archive held hundreds of rows. The
+        recovery has to travel with the error, or the caller is left guessing
+        which of the two things went wrong.
         """
-        from evidence_query import EvidenceQuery
+        from evidence_query import EvidenceQuery, UnknownMetricError
         from harness.snapshot import default_snapshot_path
 
         query = EvidenceQuery.open(default_snapshot_path())
@@ -507,61 +506,94 @@ class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
             real = query.query_observations(
                 asset="AAPL", metric="revenue", limit=1
             )
-            misspelled = query.query_observations(
-                asset="AAPL", metric="operating margin", limit=1
-            )
-            well_formed_but_empty = query.query_observations(
-                asset="AAPL", metric="revenue", period_end="1900-01-01", limit=1
+            empty_but_known = query.query_observations(
+                asset="AAPL", metric="guidance", limit=1
             )
             self.assertTrue(real, "the archive should hold revenue")
             self.assertEqual(
-                misspelled, [],
-                "an unknown metric name no longer returns an empty list; check "
-                "whether it now names the metric it could not find, and update "
-                "this finding",
+                empty_but_known, [],
+                "guidance is registered as STALE; holding nothing is the true "
+                "answer and must stay an empty result, not an error",
             )
-            self.assertEqual(
-                misspelled, well_formed_but_empty,
-                "a misspelled metric and a metric with no rows became "
-                "distinguishable, which is the fix; update this finding",
+            with self.assertRaises(UnknownMetricError) as caught:
+                query.query_observations(
+                    asset="AAPL", metric="operating margin", limit=5
+                )
+            error = caught.exception
+            self.assertEqual(error.requested, "operating margin")
+            self.assertIn("revenue", error.available)
+            self.assertIn("capex", error.available)
+            self.assertIn("UNKNOWN_METRIC", str(error))
+        finally:
+            query.close()
+
+    def test_a2_the_status_filter_is_named_for_what_it_filters(self):
+        """
+        A2, fixed: the parameter is `validation_status` and the old name is gone.
+
+        The model passed `SOURCE_REPORTED` — a term the documented vocabulary
+        teaches — to a parameter called `status` that filters cross-check
+        status, and got an empty list back. It still did so after the prompt was
+        corrected to spell the distinction out, which is what made it a naming
+        collision rather than a misunderstanding.
+
+        Renaming without removing the old name would leave the ambiguity in
+        place behind a notice nobody reads, so the old keyword is refused.
+        """
+        import inspect
+
+        from evidence_query import EvidenceQuery, QueryError
+        from harness.snapshot import default_snapshot_path
+
+        parameters = inspect.signature(
+            EvidenceQuery.query_observations
+        ).parameters
+        self.assertIn("validation_status", parameters)
+        self.assertNotIn("status", parameters)
+
+        query = EvidenceQuery.open(default_snapshot_path())
+        try:
+            # The exact mistake from the run, now refused by name.
+            with self.assertRaises(QueryError) as caught:
+                query.query_observations(
+                    asset="AAPL", metric="revenue",
+                    validation_status="SOURCE_REPORTED",
+                )
+            self.assertIn("evidence state", str(caught.exception))
+
+            # And the parameter that was always meant by it still works.
+            self.assertTrue(
+                query.query_observations(
+                    asset="AAPL", metric="revenue",
+                    validation_status="UNVERIFIABLE", limit=1,
+                )
             )
         finally:
             query.close()
 
-    def test_a2_the_status_filter_does_not_accept_evidence_states(self):
+    def test_the_toolbox_exposes_the_renamed_filter(self):
         """
-        A2: `status` filters validation status, not evidence state.
-
-        The model passed `SOURCE_REPORTED` — a term the documented vocabulary
-        teaches — and got zero rows. It still happened after the prompt was
-        corrected to spell the distinction out, which is what makes it a naming
-        collision rather than a misunderstanding.
+        The model is told about the surface by introspecting the toolbox, so a
+        renamed parameter that the wrapper did not adopt would still be
+        advertised under its old name in every tool schema.
         """
-        from evidence_query import EvidenceQuery
+        from harness.schemas import tool_schemas
         from harness.snapshot import default_snapshot_path
+        from evidence_query import EvidenceQuery
+        from harness.tools import Toolbox
 
         query = EvidenceQuery.open(default_snapshot_path())
         try:
-            unfiltered = query.query_observations(
-                asset="AAPL", metric="revenue", period_end="2007-09-29", limit=5
-            )
-            with_evidence_state = query.query_observations(
-                asset="AAPL", metric="revenue", period_end="2007-09-29",
-                status="SOURCE_REPORTED", limit=5,
-            )
-            with_validation_status = query.query_observations(
-                asset="AAPL", metric="revenue", period_end="2007-09-29",
-                status="UNVERIFIABLE", limit=5,
-            )
-            self.assertTrue(unfiltered)
-            self.assertEqual(
-                with_evidence_state, [],
-                "the status filter now accepts evidence states; update A2",
-            )
-            self.assertEqual(
-                len(with_validation_status), len(unfiltered),
-                "the status filter no longer matches validation status",
-            )
+            schemas = {
+                s["function"]["name"]: s["function"]["parameters"]
+                for s in tool_schemas(Toolbox(_query=query))
+            }
+            properties = schemas["query_observations"]["properties"]
+            self.assertIn("validation_status", properties)
+            self.assertNotIn("status", properties)
+            # The model's four failed calls were these, and the schema now
+            # says integer and enumerates the order.
+            self.assertEqual(properties["limit"]["type"], "integer")
         finally:
             query.close()
 

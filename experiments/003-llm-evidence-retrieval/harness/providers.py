@@ -68,11 +68,13 @@ Each observation carries a `status` with two separate parts:
 - `status.validation_status` says whether cross-checking found anything, and
   is `UNVERIFIABLE` for a figure only one source has reported.
 
-The `status` *filter* on `query_observations` matches
-`status.validation_status`, NOT the evidence state. Passing an evidence state
-such as `SOURCE_REPORTED` to that filter returns nothing, which is not the same
-as the figure being absent. To see the evidence state, read it on each
-observation rather than filtering for it.
+To filter on either, the parameter names it. `query_observations` takes
+`validation_status` for the cross-check status; the evidence state is not
+filterable and is read from each observation.
+
+An unknown metric is refused by name, with the real ones attached. A metric
+ST-EVA knows but has no rows for your filter returns an empty list, which is a
+different answer and means the data is not there for that period.
 
 Rules:
 
