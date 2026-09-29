@@ -1,34 +1,94 @@
 from __future__ import annotations
 
 """
-ST-EVA 2.2.2 - Yahoo fundamental data provider.
+ST-EVA 2.3-A - Yahoo fundamental data provider.
 
-This module only acquires and normalizes source data. It never estimates or
-fills missing financial values. Historical P/E percentiles are calculated only
-from observed Yahoo time-series observations.
+This module acquires and normalizes source data. It never estimates or fills a
+missing financial value, and it never computes a valuation ratio.
+
+Its output type is the provider-agnostic Observation defined in
+data_contract. A Yahoo field name such as trailingEps survives only as the
+`methodology` of an observation; it is never a metric the engine reads.
+
+The 2.2.3 FundamentalData shape is still produced by `fetch()` so existing
+callers and tests keep working, but it is now a projection of the acquisition
+result rather than the provider's output type.
 """
 
 import json
-import math
 import time
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from http.cookiejar import CookieJar
-from statistics import median
 from typing import Any, Dict, List, Optional, Tuple
 
+from data_contract import (
+    AvailabilityBasis,
+    CurrencyBasis,
+    METRIC_CASH,
+    METRIC_CONSENSUS_FORWARD_EPS,
+    METRIC_DEBT,
+    METRIC_DEFINITIONS,
+    METRIC_EBITDA,
+    METRIC_ENTERPRISE_VALUE,
+    METRIC_EPS_DILUTED,
+    METRIC_EV_EBITDA_BAND,
+    METRIC_FORWARD_EPS,
+    METRIC_FREE_CASH_FLOW,
+    METRIC_MARKET_CAP,
+    METRIC_NET_INCOME,
+    METRIC_PE_BAND,
+    METRIC_PFCF_BAND,
+    METRIC_PS_BAND,
+    METRIC_REVENUE,
+    METRIC_SHARES_OUTSTANDING,
+    METRIC_TRAILING_EPS,
+    Observation,
+    ObservationSet,
+    SOURCE_YAHOO,
+    SourceType,
+    UNAVAILABLE,
+    UNIT_CURRENCY,
+    UNIT_MULTIPLE,
+    UNIT_PER_SHARE,
+    Unit,
+    ValidationStatus,
+    build_observation,
+    comparable_observation_id,
+    currencies_match,
+    distribution_from_samples,
+    is_number,
+    observation_id_for,
+    safe_float,
+    unavailable_observation,
+    utc_now,
+)
 
-UNAVAILABLE = "UNAVAILABLE"
 
+QUOTE_SUMMARY_URL = (
+    "https://query2.finance.yahoo.com/v10/finance/quoteSummary/"
+)
+TIMESERIES_URL = (
+    "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
+    "v1/finance/timeseries/"
+)
 
-def is_number(value: Any) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(float(value))
-    )
+EPS_DEFINITION = "Current/trailing EPS. Never synthesized."
+FORWARD_EPS_DEFINITION = "Forward EPS. Used only when explicitly supplied."
+CONSENSUS_EPS_DEFINITION = "Consensus forward EPS. Never synthesized."
+FCF_DEFINITION = "Observed trailing free cash flow. Never synthesized."
+EBITDA_DEFINITION = "Observed trailing EBITDA. Never synthesized."
+REVENUE_DEFINITION = "Observed trailing revenue. Never synthesized."
+EV_DEFINITION = "Observed enterprise value. Never synthesized."
+MARKET_CAP_DEFINITION = "Observed market capitalization. Never synthesized."
+
+BAND_DEFINITIONS = {
+    METRIC_PE_BAND: "Historical P/E reference band.",
+    METRIC_PFCF_BAND: "Historical P/FCF reference band.",
+    METRIC_PS_BAND: "Historical P/S reference band.",
+    METRIC_EV_EBITDA_BAND: "Historical EV/EBITDA reference band.",
+}
 
 
 def raw_value(value: Any) -> Optional[float]:
@@ -37,23 +97,25 @@ def raw_value(value: Any) -> Optional[float]:
     return float(value) if is_number(value) else None
 
 
-def percentile(values: List[float], p: float) -> Optional[float]:
-    if not values:
-        return None
-    values = sorted(values)
-    if len(values) == 1:
-        return values[0]
-    position = (len(values) - 1) * p
-    lower = math.floor(position)
-    upper = math.ceil(position)
-    if lower == upper:
-        return values[lower]
-    weight = position - lower
-    return values[lower] * (1 - weight) + values[upper] * weight
+def distribution_from_series(series: List[Tuple[str, float]]) -> Dict[str, Any]:
+    """
+    Band statistics for a dated sample.
+
+    A dated sample keeps its dates so the period the band covers stays
+    visible. An empty sample yields an empty band, never a band of zeros.
+    """
+    return distribution_from_samples([value for _, value in series])
 
 
 @dataclass(frozen=True)
 class FundamentalData:
+    """
+    Deprecated 2.2.3 projection of a fundamental acquisition.
+
+    Retained for backward compatibility only. New code reads
+    `FundamentalAcquisition.observations`.
+    """
+
     current_eps: Any = UNAVAILABLE
     current_eps_as_of: Optional[str] = None
     forward_eps: Any = UNAVAILABLE
@@ -98,8 +160,55 @@ class FundamentalData:
             object.__setattr__(self, "historical_ev_ebitda_band", {})
 
 
+@dataclass(frozen=True)
+class FundamentalAcquisition:
+    """
+    What the Yahoo fundamentals adapter produced for one ticker.
+
+    `observations` is the contract-native output. The remaining fields exist
+    only to project the deprecated 2.2.3 shape without a second acquisition
+    path.
+    """
+
+    ticker: str
+    provider: str
+    source_type: str
+    retrieved_at: str
+    observations: Tuple[Observation, ...] = ()
+    errors: Tuple[str, ...] = ()
+    source_urls: Tuple[str, ...] = ()
+    as_of: Optional[str] = None
+    legacy_fields: Tuple[Tuple[str, Any], ...] = ()
+
+    def observation_set(self) -> ObservationSet:
+        return ObservationSet(
+            ticker=self.ticker,
+            observations=self.observations,
+        )
+
+    def errors_for_legacy(self) -> List[str]:
+        return list(self.errors)
+
+    def to_fundamental_data(self) -> FundamentalData:
+        values: Dict[str, Any] = dict(self.legacy_fields)
+        values.setdefault("provider", self.provider)
+        values.setdefault("source_type", self.source_type)
+        values.setdefault("as_of", self.as_of)
+        values.setdefault("source_urls", list(self.source_urls))
+        values.setdefault("errors", list(self.errors))
+        return FundamentalData(**values)
+
+
 class YahooFundamentalProvider:
+    """
+    Acquires Yahoo fundamentals as provider-agnostic observations.
+
+    Never synthesizes: a metric the source does not return becomes an
+    UNAVAILABLE observation, not a default.
+    """
+
     name = "YahooFinanceFundamentals"
+    source_type = SourceType.API_LIVE.value
 
     def __init__(self, timeout: int = 8) -> None:
         self.timeout = timeout
@@ -134,7 +243,7 @@ class YahooFundamentalProvider:
         ticker: str,
         crumb: str,
     ) -> Optional[Dict[str, Any]]:
-        modules = "defaultKeyStatistics,earningsTrend"
+        modules = "defaultKeyStatistics,earningsTrend,financialData"
         query = urllib.parse.urlencode(
             {
                 "modules": modules,
@@ -165,32 +274,56 @@ class YahooFundamentalProvider:
         )
         return self._get(url) or {}
 
-    @staticmethod
-    def _band_from_result(results: List[Dict[str, Any]], field: str, minimum: float = 0.0, maximum: float = 500.0) -> Dict[str, Any]:
-        values: List[float] = []
-        for result in results:
-            for row in result.get(field, []) or []:
-                value = raw_value(row.get("reportedValue"))
-                if value is not None and minimum < value < maximum:
-                    values.append(value)
-        if not values:
-            return {}
-        return {
-            "10th": percentile(values, 0.10),
-            "25th": percentile(values, 0.25),
-            "median": median(values),
-            "75th": percentile(values, 0.75),
-            "90th": percentile(values, 0.90),
-            "observations": len(values),
-        }
+    # -- sample extraction -------------------------------------------------
 
     @staticmethod
-    def _derived_ratio_band(
+    def _series_from_result(
+        results: List[Dict[str, Any]],
+        field_name: str,
+        minimum: float = 0.0,
+        maximum: float = 500.0,
+    ) -> List[Tuple[str, float]]:
+        """
+        Dated samples for one timeseries field.
+
+        The date is retained so the band can declare the period it covers.
+        Rows without a usable value are dropped rather than zero-filled.
+        """
+        series: List[Tuple[str, float]] = []
+        for result in results:
+            for row in result.get(field_name, []) or []:
+                value = raw_value(row.get("reportedValue"))
+                if value is not None and minimum < value < maximum:
+                    series.append((str(row.get("asOfDate") or ""), value))
+        return series
+
+    @staticmethod
+    def _band_from_result(
+        results: List[Dict[str, Any]],
+        field_name: str,
+        minimum: float = 0.0,
+        maximum: float = 500.0,
+    ) -> Dict[str, Any]:
+        return distribution_from_series(
+            YahooFundamentalProvider._series_from_result(
+                results, field_name, minimum, maximum
+            )
+        )
+
+    @staticmethod
+    def _paired_ratio_series(
         results: List[Dict[str, Any]],
         numerator_field: str,
         denominator_field: str,
         maximum: float = 500.0,
-    ) -> Dict[str, Any]:
+    ) -> List[Tuple[str, float]]:
+        """
+        Dated samples for a ratio the source does not publish directly.
+
+        Numerator and denominator must share an exact date and an explicitly
+        equal currency. A mismatch drops the sample; it never produces a
+        ratio computed across two currencies.
+        """
         numerator: Dict[str, tuple[float, Optional[str]]] = {}
         denominator: Dict[str, tuple[float, Optional[str]]] = {}
         for result in results:
@@ -207,34 +340,39 @@ class YahooFundamentalProvider:
                 if value is not None and date:
                     denominator[str(date)] = (value, curr)
 
-        values = []
+        series: List[Tuple[str, float]] = []
         for date, (num, num_curr) in numerator.items():
             den_tuple = denominator.get(date)
-            if den_tuple is not None:
-                den, den_curr = den_tuple
-                if den is not None and den > 0:
-                    if not num_curr or not den_curr or num_curr.upper() != den_curr.upper():
-                        continue
-                    ratio = num / den
-                    if 0 < ratio < maximum:
-                        values.append(ratio)
-
-        if not values:
-            return {}
-        return {
-            "10th": percentile(values, 0.10),
-            "25th": percentile(values, 0.25),
-            "median": median(values),
-            "75th": percentile(values, 0.75),
-            "90th": percentile(values, 0.90),
-            "observations": len(values),
-        }
+            if den_tuple is None:
+                continue
+            den, den_curr = den_tuple
+            if den is None or den <= 0:
+                continue
+            if not currencies_match(num_curr, den_curr):
+                continue
+            ratio = num / den
+            if 0 < ratio < maximum:
+                series.append((date, ratio))
+        return series
 
     @staticmethod
-    def _latest_value(results: List[Dict[str, Any]], field: str) -> Optional[Tuple[float, Optional[str], Optional[str]]]:
+    def _derived_ratio_band(
+        results: List[Dict[str, Any]],
+        numerator_field: str,
+        denominator_field: str,
+        maximum: float = 500.0,
+    ) -> Dict[str, Any]:
+        return distribution_from_series(
+            YahooFundamentalProvider._paired_ratio_series(
+                results, numerator_field, denominator_field, maximum
+            )
+        )
+
+    @staticmethod
+    def _latest_value(results: List[Dict[str, Any]], field_name: str) -> Optional[Tuple[float, Optional[str], Optional[str]]]:
         values: List[tuple[str, float, Optional[str]]] = []
         for result in results:
-            for row in result.get(field, []) or []:
+            for row in result.get(field_name, []) or []:
                 value = raw_value(row.get("reportedValue"))
                 date = row.get("asOfDate") or ""
                 curr = row.get("currencyCode")
@@ -244,6 +382,7 @@ class YahooFundamentalProvider:
             return None
         values.sort(key=lambda item: item[0])
         return values[-1][1], values[-1][2], values[-1][0]
+
     @staticmethod
     def _extract_consensus_forward_eps(
         earnings_trend: Dict[str, Any],
@@ -269,19 +408,27 @@ class YahooFundamentalProvider:
         candidates.sort(key=lambda item: item[0])
         return candidates[0][1], candidates[0][2]
 
-    def fetch(self, ticker: str) -> FundamentalData:
+    # -- acquisition -------------------------------------------------------
+
+    def fetch_acquisition(
+        self,
+        ticker: str,
+        instrument_currency: Optional[str] = None,
+    ) -> FundamentalAcquisition:
+        """
+        Acquire Yahoo fundamentals as observations.
+
+        `instrument_currency` is applied to per-share figures with the
+        INSTRUMENT_DEFAULT basis, because Yahoo does not state a currency for
+        EPS. Applying it is declared, not silent.
+        """
         clean = ticker.upper().strip()
+        retrieved_at = utc_now()
         source_urls: List[str] = []
-
         errors: List[str] = []
-
-        try:
-            crumb = self._bootstrap_crumb()
-            summary = self._quote_summary(clean, crumb) if crumb else None
-        except Exception as e:
-            errors.append(f"Bootstrapping/Summary error: {e}")
-            crumb = None
-            summary = None
+        observations: List[Observation] = []
+        summary_item: Dict[str, Any] = {}
+        valuation_results: List[Dict[str, Any]] = []
 
         current_eps = None
         forward_eps = None
@@ -296,10 +443,26 @@ class YahooFundamentalProvider:
         as_of: Optional[str] = None
 
         try:
+            crumb = self._bootstrap_crumb()
+            summary = self._quote_summary(clean, crumb) if crumb else None
+        except Exception as e:
+            errors.append(f"Bootstrapping/Summary error: {e}")
+            crumb = None
+            summary = None
+
+        quote_summary_url: Optional[str] = None
+        consensus_raw: Any = None
+        eps_as_of_by_key: Dict[str, Optional[str]] = {
+            "trailing_eps": None,
+            "forward_eps": None,
+        }
+
+        try:
             result = (
                 (summary or {}).get("quoteSummary", {}).get("result") or []
             )
             item = result[0] if result else {}
+            summary_item = item if isinstance(item, dict) else {}
             stats = item.get("defaultKeyStatistics") or {}
             trend = item.get("earningsTrend") or {}
 
@@ -308,6 +471,7 @@ class YahooFundamentalProvider:
             consensus_info = self._extract_consensus_forward_eps(trend)
             consensus_eps = consensus_info[0] if consensus_info else None
             consensus_period = consensus_info[1] if consensus_info else None
+            consensus_raw = trend
 
             # Find EPS as-of date
             eps_as_of = None
@@ -317,16 +481,87 @@ class YahooFundamentalProvider:
                     eps_as_of = str(node["asOfDate"])
                     break
 
+            # The observations keep each figure's own as-of date. The legacy
+            # projection keeps the first available date, unchanged from 2.2.3.
+            for key, holder in (
+                ("trailingEps", "trailing_eps"),
+                ("forwardEps", "forward_eps"),
+            ):
+                node = stats.get(key)
+                if isinstance(node, dict) and node.get("asOfDate"):
+                    eps_as_of_by_key[holder] = str(node["asOfDate"])
+
             if summary is not None:
-                source_urls.append(
-                    "https://query2.finance.yahoo.com/v10/finance/quoteSummary/"
-                    + clean
-                )
+                quote_summary_url = QUOTE_SUMMARY_URL + clean
+                source_urls.append(quote_summary_url)
         except Exception as e:
             errors.append(f"Quote summary error: {e}")
 
-        # ... (similar changes for the timeseries part)
-
+        observations.append(
+            build_observation(
+                metric=METRIC_TRAILING_EPS,
+                value=current_eps,
+                unit=UNIT_PER_SHARE,
+                provider=self.name,
+                source_type=self.source_type,
+                definition=EPS_DEFINITION,
+                methodology=(
+                    "Yahoo quoteSummary defaultKeyStatistics.trailingEps"
+                ),
+                retrieved_at=retrieved_at,
+                currency=instrument_currency,
+                currency_basis=self._per_share_currency_basis(
+                    instrument_currency
+                ),
+                period_end=eps_as_of_by_key["trailing_eps"],
+                as_of=eps_as_of_by_key["trailing_eps"],
+                available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                source_url=quote_summary_url,
+                raw=None if summary is None else {
+                    "module": "defaultKeyStatistics",
+                    "field": "trailingEps",
+                    "asOfDate": eps_as_of_by_key["trailing_eps"],
+                },
+            )
+        )
+        observations.append(
+            build_observation(
+                metric=METRIC_FORWARD_EPS,
+                value=forward_eps,
+                unit=UNIT_PER_SHARE,
+                provider=self.name,
+                source_type=self.source_type,
+                definition=FORWARD_EPS_DEFINITION,
+                methodology=(
+                    "Yahoo quoteSummary defaultKeyStatistics.forwardEps"
+                ),
+                retrieved_at=retrieved_at,
+                currency=instrument_currency,
+                currency_basis=self._per_share_currency_basis(
+                    instrument_currency
+                ),
+                period_end=eps_as_of_by_key["forward_eps"],
+                as_of=eps_as_of_by_key["forward_eps"],
+                available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                source_url=quote_summary_url,
+                raw=None if summary is None else {
+                    "module": "defaultKeyStatistics",
+                    "field": "forwardEps",
+                    "asOfDate": eps_as_of_by_key["forward_eps"],
+                },
+            )
+        )
+        observations.append(
+            self._consensus_observation(
+                clean=clean,
+                value=consensus_eps,
+                period=consensus_period,
+                trend=consensus_raw,
+                retrieved_at=retrieved_at,
+                source_url=quote_summary_url,
+                instrument_currency=instrument_currency,
+            )
+        )
 
         valuation_types = [
             "trailingFreeCashFlow",
@@ -336,18 +571,24 @@ class YahooFundamentalProvider:
             "trailingMarketCap",
             "trailingPsRatio",
             "trailingEnterprisesValueEBITDARatio",
+            # 2.3-B cross-source metrics. Added to the same request rather than
+            # to a second one, so no extra round trip and no change to what the
+            # existing seven types return.
+            "trailingNetIncomeCommonStockholders",
+            "trailingDilutedEPS",
         ]
 
+        valuation_url: Optional[str] = None
+        band_url: Optional[str] = None
         try:
             payload = self._timeseries(clean, valuation_types)
             if not payload:
                 raise Exception("Failed to fetch fundamentals timeseries")
-            source_urls.append(
-                "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
-                "v1/finance/timeseries/" + clean
-            )
+            valuation_url = TIMESERIES_URL + clean
+            source_urls.append(valuation_url)
             results = (payload.get("timeseries") or {}).get("result") or []
-            
+            valuation_results = results
+
             fcf_tuple = self._latest_value(results, "trailingFreeCashFlow")
             ebitda_tuple = self._latest_value(results, "trailingEBITDA")
             rev_tuple = self._latest_value(results, "trailingTotalRevenue")
@@ -360,86 +601,657 @@ class YahooFundamentalProvider:
             current_enterprise_value, ev_curr, current_enterprise_value_as_of = ev_tuple if ev_tuple else (None, None, None)
             current_market_cap, mc_curr, current_market_cap_as_of = mc_tuple if mc_tuple else (None, None, None)
 
-            # Currency consistency protection
+            # Currency consistency protection. A ratio across two currencies is
+            # refused, not computed, and the refusal is recorded on the
+            # observation rather than left as a silent absence.
+            refused: Dict[str, str] = {}
             if current_market_cap is not None:
-                if current_fcf is not None:
-                    if not mc_curr or not fcf_curr or mc_curr.upper() != fcf_curr.upper():
-                        current_fcf = None
-                if current_revenue is not None:
-                    if not mc_curr or not rev_curr or mc_curr.upper() != rev_curr.upper():
-                        current_revenue = None
-
-            if current_enterprise_value is not None and current_ebitda is not None:
-                if not ev_curr or not ebitda_curr or ev_curr.upper() != ebitda_curr.upper():
-                    current_ebitda = None
+                if current_fcf is not None and not currencies_match(mc_curr, fcf_curr):
+                    refused[METRIC_FREE_CASH_FLOW] = (
+                        "Free cash flow currency does not match market cap "
+                        "currency."
+                    )
+                    current_fcf = None
+                if current_revenue is not None and not currencies_match(mc_curr, rev_curr):
+                    refused[METRIC_REVENUE] = (
+                        "Revenue currency does not match market cap currency."
+                    )
+                    current_revenue = None
+            if current_enterprise_value is not None and current_ebitda is not None and not currencies_match(ev_curr, ebitda_curr):
+                refused[METRIC_EBITDA] = (
+                    "EBITDA currency does not match enterprise value currency."
+                )
+                current_ebitda = None
 
         except Exception as e:
             errors.append(str(e))
             current_fcf = current_ebitda = current_revenue = current_enterprise_value = current_market_cap = None
             fcf_curr = ebitda_curr = rev_curr = ev_curr = mc_curr = None
             current_fcf_as_of = current_ebitda_as_of = current_revenue_as_of = current_enterprise_value_as_of = current_market_cap_as_of = None
+            refused = {}
 
+        for metric, value, currency, value_as_of, field_name, definition in (
+            (
+                METRIC_FREE_CASH_FLOW,
+                current_fcf,
+                fcf_curr,
+                current_fcf_as_of,
+                "trailingFreeCashFlow",
+                FCF_DEFINITION,
+            ),
+            (
+                METRIC_EBITDA,
+                current_ebitda,
+                ebitda_curr,
+                current_ebitda_as_of,
+                "trailingEBITDA",
+                EBITDA_DEFINITION,
+            ),
+            (
+                METRIC_REVENUE,
+                current_revenue,
+                rev_curr,
+                current_revenue_as_of,
+                "trailingTotalRevenue",
+                REVENUE_DEFINITION,
+            ),
+            (
+                METRIC_ENTERPRISE_VALUE,
+                current_enterprise_value,
+                ev_curr,
+                current_enterprise_value_as_of,
+                "trailingEnterpriseValue",
+                EV_DEFINITION,
+            ),
+            (
+                METRIC_MARKET_CAP,
+                current_market_cap,
+                mc_curr,
+                current_market_cap_as_of,
+                "trailingMarketCap",
+                MARKET_CAP_DEFINITION,
+            ),
+        ):
+            observations.append(
+                self._timeseries_observation(
+                    metric=metric,
+                    value=value,
+                    currency=currency,
+                    as_of=value_as_of,
+                    field_name=field_name,
+                    definition=definition,
+                    retrieved_at=retrieved_at,
+                    source_url=valuation_url,
+                    refusal=refused.get(metric),
+                )
+            )
 
-        pe_band: Dict[str, Any] = {}
-        ps_band: Dict[str, Any] = {}
-        pfcf_band: Dict[str, Any] = {}
-        ev_ebitda_band: Dict[str, Any] = {}
+        band_series: Dict[str, List[Tuple[str, float]]] = {}
         try:
             payload = self._timeseries(
                 clean,
                 ["trailingPeRatio", "trailingPsRatio", "trailingEnterprisesValueEBITDARatio", "trailingMarketCap", "trailingFreeCashFlow"],
             )
-            source_urls.append(
-                "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/"
-                "v1/finance/timeseries/" + clean
-            )
+            band_url = TIMESERIES_URL + clean
+            source_urls.append(band_url)
             results = (payload.get("timeseries") or {}).get("result") or []
-            pe_band = self._band_from_result(results, "trailingPeRatio")
-            ps_band = self._band_from_result(results, "trailingPsRatio")
-            pfcf_band = self._derived_ratio_band(
+            band_series[METRIC_PE_BAND] = self._series_from_result(
+                results, "trailingPeRatio"
+            )
+            band_series[METRIC_PS_BAND] = self._series_from_result(
+                results, "trailingPsRatio"
+            )
+            band_series[METRIC_PFCF_BAND] = self._paired_ratio_series(
                 results, "trailingMarketCap", "trailingFreeCashFlow"
             )
-            ev_ebitda_band = self._band_from_result(
+            band_series[METRIC_EV_EBITDA_BAND] = self._series_from_result(
                 results, "trailingEnterprisesValueEBITDARatio"
             )
         except Exception as e:
             errors.append(f"Band calculation error: {e}")
 
-        return FundamentalData(
-            current_eps=current_eps if current_eps is not None else UNAVAILABLE,
-            current_eps_as_of=eps_as_of,
-            forward_eps=forward_eps if forward_eps is not None else UNAVAILABLE,
-            forward_eps_as_of=eps_as_of,
-            consensus_forward_eps=(
-                consensus_eps if consensus_eps is not None else UNAVAILABLE
+        for metric, series in (
+            (METRIC_PE_BAND, band_series.get(METRIC_PE_BAND)),
+            (METRIC_PFCF_BAND, band_series.get(METRIC_PFCF_BAND)),
+            (METRIC_PS_BAND, band_series.get(METRIC_PS_BAND)),
+            (METRIC_EV_EBITDA_BAND, band_series.get(METRIC_EV_EBITDA_BAND)),
+        ):
+            observations.append(
+                self._band_observation(
+                    metric=metric,
+                    series=series or [],
+                    retrieved_at=retrieved_at,
+                    source_url=band_url,
+                )
+            )
+
+        legacy_fields = (
+            (
+                "current_eps",
+                current_eps if current_eps is not None else UNAVAILABLE,
             ),
-            consensus_forward_eps_period=consensus_period,
-            historical_pe_band=pe_band,
-            current_fcf=current_fcf if current_fcf is not None else UNAVAILABLE,
-            current_fcf_currency=fcf_curr,
-            current_fcf_as_of=current_fcf_as_of,
-            current_ebitda=current_ebitda if current_ebitda is not None else UNAVAILABLE,
-            current_ebitda_currency=ebitda_curr,
-            current_ebitda_as_of=current_ebitda_as_of,
-            current_revenue=current_revenue if current_revenue is not None else UNAVAILABLE,
-            current_revenue_currency=rev_curr,
-            current_revenue_as_of=current_revenue_as_of,
-            current_enterprise_value=(
+            ("current_eps_as_of", eps_as_of),
+            (
+                "forward_eps",
+                forward_eps if forward_eps is not None else UNAVAILABLE,
+            ),
+            ("forward_eps_as_of", eps_as_of),
+            (
+                "consensus_forward_eps",
+                consensus_eps if consensus_eps is not None else UNAVAILABLE,
+            ),
+            ("consensus_forward_eps_period", consensus_period),
+            (
+                "historical_pe_band",
+                distribution_from_series(band_series.get(METRIC_PE_BAND) or []),
+            ),
+            (
+                "current_fcf",
+                current_fcf if current_fcf is not None else UNAVAILABLE,
+            ),
+            ("current_fcf_currency", fcf_curr),
+            ("current_fcf_as_of", current_fcf_as_of),
+            (
+                "current_ebitda",
+                current_ebitda if current_ebitda is not None else UNAVAILABLE,
+            ),
+            ("current_ebitda_currency", ebitda_curr),
+            ("current_ebitda_as_of", current_ebitda_as_of),
+            (
+                "current_revenue",
+                current_revenue if current_revenue is not None else UNAVAILABLE,
+            ),
+            ("current_revenue_currency", rev_curr),
+            ("current_revenue_as_of", current_revenue_as_of),
+            (
+                "current_enterprise_value",
                 current_enterprise_value
                 if current_enterprise_value is not None
-                else UNAVAILABLE
+                else UNAVAILABLE,
             ),
-            current_enterprise_value_currency=ev_curr,
-            current_enterprise_value_as_of=current_enterprise_value_as_of,
-            current_market_cap=(
-                current_market_cap if current_market_cap is not None else UNAVAILABLE
+            ("current_enterprise_value_currency", ev_curr),
+            ("current_enterprise_value_as_of", current_enterprise_value_as_of),
+            (
+                "current_market_cap",
+                current_market_cap if current_market_cap is not None else UNAVAILABLE,
             ),
-            current_market_cap_currency=mc_curr,
-            current_market_cap_as_of=current_market_cap_as_of,
-            historical_ps_band=ps_band,
-            historical_pfcf_band=pfcf_band,
-            historical_ev_ebitda_band=ev_ebitda_band,
+            ("current_market_cap_currency", mc_curr),
+            ("current_market_cap_as_of", current_market_cap_as_of),
+            (
+                "historical_ps_band",
+                distribution_from_series(band_series.get(METRIC_PS_BAND) or []),
+            ),
+            (
+                "historical_pfcf_band",
+                distribution_from_series(band_series.get(METRIC_PFCF_BAND) or []),
+            ),
+            (
+                "historical_ev_ebitda_band",
+                distribution_from_series(
+                    band_series.get(METRIC_EV_EBITDA_BAND) or []
+                ),
+            ),
+        )
+
+        return FundamentalAcquisition(
+            ticker=clean,
+            provider=self.name,
+            source_type=self.source_type,
+            retrieved_at=retrieved_at,
+            observations=tuple(observations)
+            + tuple(
+                self.comparable_observations(
+                    summary_item,
+                    valuation_results,
+                    instrument_currency,
+                    retrieved_at,
+                    quote_summary_url,
+                    valuation_url,
+                )
+            ),
+            errors=tuple(errors),
+            source_urls=tuple(source_urls),
             as_of=as_of,
-            source_urls=source_urls,
-            errors=errors,
+            legacy_fields=legacy_fields,
+        )
+
+    def fetch(
+        self,
+        ticker: str,
+        instrument_currency: Optional[str] = None,
+    ) -> FundamentalData:
+        """
+        Deprecated 2.2.3 entry point.
+
+        Retained so existing callers and tests keep working against the
+        familiar shape. New code calls `fetch_acquisition()`, which returns
+        provider-agnostic observations.
+        """
+        return self.fetch_acquisition(
+            ticker,
+            instrument_currency=instrument_currency,
+        ).to_fundamental_data()
+
+    # -- observation construction -----------------------------------------
+
+    @staticmethod
+    def _per_share_currency_basis(
+        instrument_currency: Optional[str],
+    ) -> str:
+        if instrument_currency:
+            return CurrencyBasis.INSTRUMENT_DEFAULT.value
+        return CurrencyBasis.UNDECLARED.value
+
+    @staticmethod
+    def _band_bounds(series: List[Tuple[str, float]]) -> Tuple[Optional[str], Optional[str]]:
+        dates = sorted(date for date, _ in series if date)
+        if not dates:
+            return None, None
+        return dates[0], dates[-1]
+
+    def _band_observation(
+        self,
+        metric: str,
+        series: List[Tuple[str, float]],
+        retrieved_at: str,
+        source_url: Optional[str],
+    ) -> Observation:
+        """
+        A distribution observation that keeps the samples it was built from.
+
+        The samples are the evidence. A median computed from them can be
+        recomputed, which a stored median alone could never support.
+        """
+        band = distribution_from_series(series)
+        period_start, period_end = self._band_bounds(series)
+        upstream = {
+            METRIC_PE_BAND: "trailingPeRatio",
+            METRIC_PFCF_BAND: "trailingMarketCap / trailingFreeCashFlow",
+            METRIC_PS_BAND: "trailingPsRatio",
+            METRIC_EV_EBITDA_BAND: "trailingEnterprisesValueEBITDARatio",
+        }[metric]
+
+        if not band:
+            return unavailable_observation(
+                metric=metric,
+                provider=self.name,
+                source_type=self.source_type,
+                definition=BAND_DEFINITIONS[metric],
+                methodology=(
+                    f"percentile band over Yahoo fundamentals-timeseries "
+                    f"{upstream} samples"
+                ),
+                retrieved_at=retrieved_at,
+                unit=UNIT_MULTIPLE,
+                source_url=source_url,
+            )
+
+        count = int(band["observations"])
+        if count < 20:
+            status = ValidationStatus.INSUFFICIENT_OBSERVATIONS
+            reasons = (
+                f"{metric} carries {count} samples, below the 20 required for "
+                "a reference multiple.",
+            )
+        else:
+            status = None
+            reasons = ()
+
+        return build_observation(
+            metric=metric,
+            value=band,
+            unit=UNIT_MULTIPLE,
+            provider=self.name,
+            source_type=self.source_type,
+            definition=BAND_DEFINITIONS[metric],
+            methodology=(
+                f"percentile band over Yahoo fundamentals-timeseries "
+                f"{upstream} samples"
+            ),
+            retrieved_at=retrieved_at,
+            currency=None,
+            currency_basis=CurrencyBasis.NOT_APPLICABLE.value,
+            period_start=period_start,
+            period_end=period_end,
+            as_of=period_end,
+            available_at_basis=AvailabilityBasis.UNDECLARED.value,
+            source_url=source_url,
+            raw={
+                "samples": [value for _, value in series],
+                "as_of_dates": [date for date, _ in series],
+                "upstream_field": upstream,
+            },
+            observation_count=count,
+            status=status,
+            status_reasons=reasons,
+        )
+
+    def _timeseries_observation(
+        self,
+        metric: str,
+        value: Optional[float],
+        currency: Optional[str],
+        as_of: Optional[str],
+        field_name: str,
+        definition: str,
+        retrieved_at: str,
+        source_url: Optional[str],
+        refusal: Optional[str] = None,
+    ) -> Observation:
+        """
+        A scalar fundamentals observation.
+
+        A currency refusal is reported as UNAVAILABLE with an explicit reason
+        instead of yielding a number computed across two currencies.
+        """
+        currency_basis = (
+            CurrencyBasis.REPORTED.value
+            if currency
+            else CurrencyBasis.UNDECLARED.value
+        )
+
+        if value is None and refusal:
+            return Observation(
+                observation_id=observation_id_for(metric),
+                metric=metric,
+                value=None,
+                unit=UNIT_CURRENCY,
+                currency=currency,
+            currency_basis=currency_basis,
+            period_start=None,
+            period_end=as_of,
+            as_of=as_of,
+            available_at=None,
+            available_at_basis=AvailabilityBasis.UNDECLARED.value,
+            provider=self.name,
+            source_type=self.source_type,
+            source_url=source_url,
+            definition=definition,
+            methodology=(
+                f"Yahoo fundamentals-timeseries {field_name}"
+            ),
+            retrieved_at=retrieved_at,
+            raw=None,
+            observation_count=None,
+            status=ValidationStatus.CURRENCY_MISMATCH,
+            status_reasons=(refusal,),
+        )
+
+        return build_observation(
+            metric=metric,
+            value=value,
+            unit=UNIT_CURRENCY,
+            provider=self.name,
+            source_type=self.source_type,
+            definition=definition,
+            methodology=f"Yahoo fundamentals-timeseries {field_name}",
+            retrieved_at=retrieved_at,
+            currency=currency,
+            currency_basis=currency_basis,
+            period_end=as_of,
+            as_of=as_of,
+            available_at_basis=AvailabilityBasis.UNDECLARED.value,
+            source_url=source_url,
+            raw=None if value is None else {
+                "field": field_name,
+                "asOfDate": as_of,
+                "currencyCode": currency,
+            },
+        )
+
+    def comparable_observations(
+        self,
+        summary_item: Dict[str, Any],
+        valuation_results: List[Dict[str, Any]],
+        instrument_currency: Optional[str],
+        retrieved_at: str,
+        quote_summary_url: Optional[str],
+        timeseries_url: Optional[str],
+    ) -> List[Observation]:
+        """
+        The vendor side of the 2.3-B cross-source metrics.
+
+        These are additional observations with `cmp-` IDs. Nothing here changes
+        the 2.2.3 material evidence, the legacy projection, or the engine's
+        input, and no `assets` observation is produced because the vendor
+        publishes no counterpart for it.
+
+        Each observation records what the vendor did and did not tell us. A
+        trailing figure arrives with an as-of date and no window; an
+        undated `financialData` total arrives with neither. Those gaps are
+        recorded rather than filled in, because they are the reason a later
+        comparison may be refused.
+        """
+        emitted: List[Observation] = []
+        stats = (summary_item or {}).get("defaultKeyStatistics") or {}
+        financial = (summary_item or {}).get("financialData") or {}
+
+        # Trailing aggregates, from the fundamentals timeseries.
+        for metric, field_name in (
+            (METRIC_REVENUE, "trailingTotalRevenue"),
+            (METRIC_NET_INCOME, "trailingNetIncomeCommonStockholders"),
+            (METRIC_EPS_DILUTED, "trailingDilutedEPS"),
+        ):
+            latest = self._latest_value(valuation_results, field_name)
+            if latest is None:
+                continue
+            value, currency, as_of = latest
+            unit = (
+                Unit.PER_SHARE.value
+                if metric == METRIC_EPS_DILUTED
+                else Unit.CURRENCY.value
+            )
+            emitted.append(
+                build_observation(
+                    metric=metric,
+                    value=value,
+                    unit=unit,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=(
+                        METRIC_DEFINITIONS.get(metric, "")
+                    ),
+                    methodology=(
+                        f"Yahoo fundamentals-timeseries {field_name}; a "
+                        "trailing aggregate whose window the vendor does not "
+                        "publish"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=currency or instrument_currency,
+                    currency_basis=(
+                        CurrencyBasis.REPORTED.value
+                        if currency
+                        else (
+                            CurrencyBasis.INSTRUMENT_DEFAULT.value
+                            if instrument_currency
+                            else CurrencyBasis.UNDECLARED.value
+                        )
+                    ),
+                    # No window: the vendor states only the as-of date.
+                    period_start=None,
+                    period_end=None,
+                    as_of=as_of,
+                    available_at=None,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=timeseries_url,
+                    raw={
+                        "yahoo_field": field_name,
+                        "as_of": as_of,
+                        "reported_currency": currency,
+                        "window_published_by_vendor": False,
+                        # The vendor does not publish the window, but the field
+                        # is a trailing aggregate and that is a declared fact
+                        # about it. Declaring it is what lets the comparison be
+                        # made at all; inferring period type from the absent
+                        # window would misread a flow as a stock.
+                        "period_type": "duration",
+                        "vendor_basis": "TRAILING_AGGREGATE",
+                    },
+                    basis={
+                        "measurement_basis": "TRAILING_AGGREGATE",
+                        "reporting_currency": currency or "UNDECLARED",
+                        "period_window": "UNDECLARED_BY_SOURCE",
+                        "source_declared": True,
+                    },
+                    observation_id=comparable_observation_id(
+                        metric,
+                        SOURCE_YAHOO,
+                        period=as_of,
+                    ),
+                )
+            )
+
+        # Undated balance-sheet totals from the financialData module.
+        #
+        # This module states no currency for these figures. It is tempting to
+        # apply the instrument's quote currency, and it is wrong: a vendor
+        # normalises some fields to the quote currency and leaves others in the
+        # reporting currency, and nothing in the response says which. Asserting
+        # the quote currency turns an unknown into a false fact, and a false
+        # currency is worse than a missing one because it combines silently
+        # with everything else in that currency.
+        for metric, field_name in (
+            (METRIC_CASH, "totalCash"),
+            (METRIC_DEBT, "totalDebt"),
+        ):
+            value = safe_float(financial.get(field_name))
+            if value is None:
+                continue
+            emitted.append(
+                build_observation(
+                    metric=metric,
+                    value=value,
+                    unit=Unit.CURRENCY.value,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=METRIC_DEFINITIONS[metric],
+                    methodology=(
+                        f"Yahoo quoteSummary financialData.{field_name}; the "
+                        "module states no currency and no balance-sheet date "
+                        "for this figure, so neither is asserted"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=None,
+                    currency_basis=CurrencyBasis.UNDECLARED.value,
+                    period_start=None,
+                    period_end=None,
+                    as_of=None,
+                    available_at=None,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=quote_summary_url,
+                    raw={
+                        "yahoo_field": f"financialData.{field_name}",
+                        "module_currency": financial.get("currency"),
+                        "balance_sheet_date_published": False,
+                        "currency_published": False,
+                        "period_type": "instant",
+                        "vendor_basis": "UNDATED_INSTANT",
+                    },
+                    basis={
+                        "security_type": "UNDECLARED",
+                        "reporting_currency": "UNDECLARED",
+                        "source_declared": False,
+                    },
+                    observation_id=comparable_observation_id(
+                        metric,
+                        SOURCE_YAHOO,
+                        period="undated",
+                    ),
+                )
+            )
+
+        # Cover-page share count. Undated here, and materially different from a
+        # period-average diluted count, which is a different concept.
+        shares = safe_float(stats.get("sharesOutstanding"))
+        if shares is not None:
+            emitted.append(
+                build_observation(
+                    metric=METRIC_SHARES_OUTSTANDING,
+                    value=shares,
+                    unit=Unit.COUNT.value,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=METRIC_DEFINITIONS[METRIC_SHARES_OUTSTANDING],
+                    methodology=(
+                        "Yahoo quoteSummary defaultKeyStatistics."
+                        "sharesOutstanding; undated, and sourced from the same "
+                        "regulatory cover page the filing source reads, so "
+                        "agreement is not independent corroboration"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=None,
+                    currency_basis=CurrencyBasis.NOT_APPLICABLE.value,
+                    period_start=None,
+                    period_end=None,
+                    as_of=None,
+                    available_at=None,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=quote_summary_url,
+                    raw={
+                        "yahoo_field": "defaultKeyStatistics.sharesOutstanding",
+                        "as_of_published": False,
+                        "period_type": "instant",
+                        "vendor_basis": "UNDATED_INSTANT",
+                    },
+                    basis={
+                        # The vendor does not say whether this is a count of
+                        # the listed instrument or of the underlying security.
+                        # For an issuer whose listed unit differs from its
+                        # registered security that is not a distinction worth
+                        # guessing at, so it is declared undeclared.
+                        "security_type": "UNDECLARED",
+                        "shares_basis": "UNDECLARED",
+                        "source_declared": False,
+                    },
+                    observation_id=comparable_observation_id(
+                        METRIC_SHARES_OUTSTANDING,
+                        SOURCE_YAHOO,
+                        period="undated",
+                    ),
+                )
+            )
+
+        return emitted
+
+    def _consensus_observation(
+        self,
+        clean: str,
+        value: Optional[float],
+        period: Optional[str],
+        trend: Any,
+        retrieved_at: str,
+        source_url: Optional[str],
+        instrument_currency: Optional[str],
+    ) -> Observation:
+        """
+        The consensus estimate observation.
+
+        The estimate period is Yahoo's own label ("+1y", "0y", ...) and is kept
+        verbatim. It is not a fiscal period, so it is not turned into
+        period_start/period_end that the source never stated.
+        """
+        return build_observation(
+            metric=METRIC_CONSENSUS_FORWARD_EPS,
+            value=value,
+            unit=UNIT_PER_SHARE,
+            provider=self.name,
+            source_type=self.source_type,
+            definition=CONSENSUS_EPS_DEFINITION,
+            methodology=(
+                "Yahoo quoteSummary earningsTrend trend[period]"
+                ".earningsEstimate.avg"
+            ),
+            retrieved_at=retrieved_at,
+            currency=instrument_currency,
+            currency_basis=self._per_share_currency_basis(
+                instrument_currency
+            ),
+            as_of=None,
+            available_at_basis=AvailabilityBasis.UNDECLARED.value,
+            source_url=source_url,
+            raw=None if value is None else {
+                "module": "earningsTrend",
+                "field": "trend[].earningsEstimate.avg",
+                "period": period,
+            },
         )

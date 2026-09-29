@@ -114,7 +114,73 @@ silently resolving to a different company.
 | `python st_eva_runner.py AAPL --no-snapshot` | Suppress snapshot writing |
 
 `--json` preserves the exact schema used before the readable report existed, so
-existing pipelines are unaffected.
+existing pipelines are unaffected. The 2.3-A data contract is additive: it
+changes no key and no value in this output, and it appears only in the snapshot
+artifact as a separate `data_contract` block.
+
+## Where the data came from
+
+Every number the engine uses is backed by an observation that records its
+metric, unit, currency, period, provenance, and the raw payload the provider
+returned. To inspect it:
+
+```python
+from st_eva_runner import material_observations, YahooFinanceProvider
+
+data = YahooFinanceProvider().fetch('AAPL')
+for metric, observation in material_observations(data).items():
+    print(metric, observation.value, observation.unit, observation.currency)
+    print('   period', observation.period_start, observation.period_end)
+    print('   as_of', observation.as_of, 'available_at', observation.available_at)
+    print('   source', observation.provider, observation.source_url)
+    print('   method', observation.methodology)
+    print('   status', observation.status.value, observation.status_reasons)
+```
+
+A live band reports the window it covers, which is what a bare median could
+never tell you:
+
+```
+pe_band   median 35.6  period 2024-06-10..2026-09-17  observations 8
+          provider YahooFinanceFundamentals
+          status INSUFFICIENT_OBSERVATIONS
+```
+
+`available_at` is `None` with basis `UNDECLARED` when the provider does not
+disclose when a figure became public. That gap is recorded rather than filled
+with the retrieval time, because a retrieval time is not a publication time.
+
+## Cross-checking against the SEC
+
+The SEC is a second source for seven metrics. It never replaces Yahoo and never
+feeds the engine; it produces a verdict on the pair.
+
+```python
+from cross_validation import cross_validate_all
+from fundamental_provider import YahooFundamentalProvider
+from sec_provider import SECProvider
+
+sec = SECProvider().fetch('AAPL')
+yahoo = YahooFundamentalProvider().fetch_acquisition('AAPL', instrument_currency='USD')
+for metric, result in cross_validate_all(yahoo.observations, sec.observations).items():
+    print(f"{metric:<20} {result.status.value}")
+    print(f"   {result.validation.explanation}")
+    print(f"   references: {list(result.validation.references)}")
+```
+
+Three notes on reading the output:
+
+- `CONSOLIDENCY`-style agreement carries an `independence` field in
+  `comparison_basis`. When it reads `UNVERIFIED_INDEPENDENCE`, the agreement is
+  real but the vendor's ingestion path is not disclosed, so it is not proof.
+- A `PERIOD_MISMATCH` on an identical pair means the values match but one side
+  published no date, so contemporaneity cannot be established. The record says
+  so rather than claiming agreement.
+- Both observations survive the comparison unchanged. Read either side directly
+  if you want the raw figure rather than the verdict.
+
+The SEC requires a declared, contactable `User-Agent` and allows at most 10
+requests per second. `SECProvider` sets one and self-limits to 4 per second.
 
 ## The central idea
 
@@ -372,8 +438,84 @@ stays deterministic Python; only the prose is delegated.
 
 ```powershell
 python st_eva_runner.py --test              # 6 built-in regression checks
-python -m unittest discover -s tests        # 28 unit tests
+python -m unittest discover -s tests        # 271 unit tests
 ```
+
+The data contract itself is covered separately in
+`tests/test_data_contract.py`, which asserts the provenance fields, the
+validation semantics, the raw-preservation rule, the deterministic
+recomputation guarantee, and the provider-agnostic engine boundary.
+
+Second-source validation is covered in `tests/test_sec_validation.py`, which
+asserts the comparability policy, the discrete-fact filter, the trailing-window
+constructions, period alignment, tolerance, and the no-merge guarantee.
+
+The Investment Context is covered in `tests/test_investment_context.py`, which
+asserts that every ref resolves, every operation is registered, every
+derivation recomputes, unavailable figures carry no value, the content hash is
+stable, and the 2.2.3 JSON is byte-identical with and without `--context`.
+
+The tests that call the real SEC and Yahoo are opt-in, because a fair-access
+rate limit and a deterministic suite do not mix:
+
+```powershell
+$env:ST_EVA_LIVE = "1"
+python -m unittest tests.test_investment_context.TestLiveContexts
+python -m unittest tests.test_sec_validation.TestLiveAdapters
+python -m unittest tests.test_archive_replay.TestLiveArchive
+```
+
+## Archive and replay
+
+Opt-in persistence. Without `--archive` the output is byte-identical to 2.2.3.
+
+```powershell
+python st_eva_runner.py AAPL --context ctx.json --archive data/st-eva.sqlite
+```
+
+```python
+from archive import replay
+from sqlite_archive import SQLiteArchive
+from st_eva_runner import build_context_from_observations
+
+store = SQLiteArchive("data/st-eva.sqlite")
+result = replay(store, "AAPL", "2026-06-30", build_context_from_observations)
+print(result.outcome, result.reason)
+```
+
+| Outcome | Meaning |
+|---|---|
+| `MATCH` | the rebuild reproduces the archived document |
+| `DIVERGED` | the same inputs produced a different document; the diff is informative |
+| `NO_SNAPSHOT` | no context was archived for that instant |
+| `INSUFFICIENT` | not enough was archived at that instant; **nothing was substituted** |
+
+`INSUFFICIENT` is a successful replay. It means the archive cannot answer the
+question asked, and it reports why rather than approximating.
+
+`replay_fidelity` is `SOURCE_DECLARED` only when every observation used carries a
+source-declared availability. Anything archive-dated downgrades the whole replay
+to `OBSERVATIONAL`, because a document cannot be more trustworthy than its
+weakest input.
+
+`retrieved_at` is never copied into `available_at`. The SEC requires a declared,
+contactable `User-Agent` and allows at most 10 requests per second;
+`SECProvider` sets one and self-limits to 4 per second.
+
+### Source capture
+
+```python
+from sqlite_archive import SQLiteArchive
+
+store = SQLiteArchive("data/st-eva.sqlite", capture_content=True)
+for document in store.documents_summary():
+    print(document["document_type"], document["byte_size"],
+          document["content_encoding"])     # gzip = payload kept, None = reference
+```
+
+Pass `capture_content=False` to record only the hash and the URI, for a source
+whose payload should not be stored. A captured document that a stored
+observation references is never deleted; the table has no delete path at all.
 
 ## Windows console encoding
 
