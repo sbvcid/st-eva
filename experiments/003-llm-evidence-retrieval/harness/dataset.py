@@ -21,7 +21,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .auditor import Audit, Auditor
+from .auditor import (
+    Audit,
+    Auditor,
+    acknowledges_truncation,
+)
 from .target import TargetAnswer
 from .tools import Toolbox
 
@@ -532,11 +536,15 @@ def _audit_t2(auditor, audit, answer, tools, retrieved):
         )
     )
     total = audit.expected("point_count")
+    if total:
+        auditor.check_evidence_was_retrieved(
+            audit, total, set(retrieved), set(answer.evidence_refs)
+        )
     if total and total > 200:
-        acknowledged = _mentions_number(answer.answer, total) or _mentions(
-            answer.answer, "truncat"
-        ) or _mentions(answer.answer, "partial")
-        auditor.check_truncation_awareness(audit, answer.answer, True, acknowledged)
+        acknowledged = acknowledges_truncation(answer.answer, total)
+        auditor.check_truncation_awareness(
+            audit, answer.answer, True, acknowledged
+        )
 
 
 def _audit_t3(auditor, audit, answer, tools, retrieved):
@@ -549,22 +557,43 @@ def _audit_t3(auditor, audit, answer, tools, retrieved):
 
 
 def _audit_t4(auditor, audit, answer, tools, retrieved):
+    """
+    Point-in-time retrieval, and the precondition that it happened at all.
+
+    The first real run passed this test on an answer that retrieved nothing and
+    said the data was absent, because the only checks were "the filter was
+    present in the arguments" and "no more citations than knowable rows" — and
+    citing nothing satisfies the second. The filter check now also requires the
+    call to have *succeeded*, and the retrieved-evidence precondition is
+    asserted directly.
+    """
     knowable = audit.expected("knowable_count")
     total = audit.expected("total_count")
-    used_knowable_at = any(
-        call.arguments.get("knowable_at") for call in tools.calls
+
+    # The call has to have happened and returned, not merely been attempted.
+    filtered_calls = [
+        call
+        for call in tools.calls
         if call.operation == "query_observations"
-    )
+        and call.arguments.get("knowable_at")
+        and not call.error
+        and call.result
+    ]
     audit.checks.append(
         _check(
-            "F11", "used the point-in-time filter", used_knowable_at,
-            "a knowable_at filter", "none",
-            detail="the answer was not constrained to what was knowable then",
-            classification=None if used_knowable_at else "B",
+            "F11",
+            "a point-in-time query ran and returned",
+            bool(filtered_calls),
+            "a successful knowable_at query",
+            f"{len(filtered_calls)} successful",
+            detail="the point-in-time filter was never applied successfully",
+            classification=None if filtered_calls else "B",
         )
     )
-    # A count of later evidence smuggled into a past-instant answer is the
-    # specific failure, and it is visible as an answer longer than the past.
+    auditor.check_evidence_was_retrieved(
+        audit, knowable, set(retrieved), set(answer.evidence_refs)
+    )
+
     if knowable is not None and total is not None:
         overreach = _count_observation_refs(answer.answer) > knowable
         audit.checks.append(
@@ -723,6 +752,9 @@ def _audit_t9(auditor, audit, answer, tools, retrieved):
 def _audit_t10(auditor, audit, answer, tools, retrieved):
     concepts = audit.expected("concepts")
     mapping_types = audit.expected("mapping_types") or {}
+    auditor.check_evidence_was_retrieved(
+        audit, len(concepts), set(retrieved), set(answer.evidence_refs)
+    )
     for concept in concepts:
         named = _mentions(answer.answer, concept.split(":")[-1])
         audit.checks.append(
@@ -804,13 +836,35 @@ def _audit_t13(auditor, audit, answer, tools, retrieved):
 
 
 def _audit_t14(auditor, audit, answer, tools, retrieved):
+    """
+    Whether the answer treated a truncated series as a whole one.
+
+    Uses the truncation-aware helper rather than a keyword, because a bare
+    "partial" was accepted in the first real run by an answer that was
+    describing PARTIAL *mapping fidelity* — the right word meaning something
+    else entirely. The archive's own point count has to appear, or the answer
+    has to say in truncation-specific terms that it did not see everything.
+    """
     total = audit.expected("point_count")
-    acknowledged = _mentions_number(answer.answer, total) or _mentions(
-        answer.answer, "truncat"
-    ) or _mentions(answer.answer, "partial") or _mentions(
-        answer.answer, "not the whole"
-    )
+    acknowledged = acknowledges_truncation(answer.answer, total)
     auditor.check_truncation_awareness(audit, answer.answer, True, acknowledged)
+    # Also check the structured channel, which is where a model that noticed
+    # the boundary has somewhere to say so without corrupting the prose.
+    flagged = any(
+        acknowledges_truncation(text, total)
+        for text in list(answer.uncertainties) + list(answer.derived_refs)
+    )
+    audit.checks.append(
+        _check(
+            "F10",
+            "truncation is visible in the structured output or the prose",
+            acknowledged or flagged,
+            "an explicit statement of the boundary",
+            "stated" if (acknowledged or flagged) else "not stated",
+            detail="the answer does not say the series is partial",
+            classification=None if (acknowledged or flagged) else "B",
+        )
+    )
 
 
 def _audit_t15(auditor, audit, answer, tools, retrieved):

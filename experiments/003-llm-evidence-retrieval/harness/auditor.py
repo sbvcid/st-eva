@@ -774,6 +774,50 @@ class Auditor:
             )
         )
 
+    def check_evidence_was_retrieved(
+        self,
+        audit: Audit,
+        expected_observations: Optional[int],
+        retrieved: Set[str],
+        claims: Set[str],
+    ) -> None:
+        """
+        An answer that retrieved nothing cannot be right about a question whose
+        evidence exists.
+
+        This is the check the first real run was missing, and its absence is the
+        worst kind of evaluator defect: it makes the audit *reward* failure. T4
+        passed because its only two checks were "the filter appeared in the
+        arguments" and "citations <= knowable", and a model that retrieved zero
+        observations and answered "No revenue observations were found" satisfied
+        both. A grader that passes the answer it should most punish is worse
+        than no grader, because the failure is invisible in the score.
+
+        It is a precondition rather than a per-test detail: if the archive holds
+        evidence for the question and the target came back with nothing, that is
+        a failure on its own terms, whatever the other checks say.
+        """
+        if not expected_observations:
+            return
+        got = bool(retrieved or claims)
+        audit.checks.append(
+            Check(
+                capability="F4",
+                name="evidence was actually retrieved",
+                passed=got,
+                expected=f">= {expected_observations} observations in the archive",
+                actual=sorted(claims or retrieved),
+                detail=(
+                    "the archive holds evidence for this question and the "
+                    "target returned none, so nothing it said about it could "
+                    "have come from the evidence"
+                )
+                if not got
+                else "",
+                classification=CLASS_TARGET if not got else None,
+            )
+        )
+
     def check_truncation_awareness(
         self,
         audit: Audit,
@@ -945,6 +989,45 @@ def _asserts_certification(text: str) -> bool:
         prefix = text[max(0, match.start() - 60) : match.start()]
         if _NEGATION.search(prefix):
             continue
+        return True
+    return False
+
+
+_TRUNCATION_VOCABULARY = re.compile(
+    r"truncat"
+    # "not the whole series", "not retrieved the whole series", "did not
+    # receive the full set" -- the negation may sit at some distance from the
+    # word it governs, and an acknowledgement phrased that way is still one.
+    r"|\bnot\b[^.]{0,30}\b(?:whole|full|entire)\b"
+    r"|(?:have|has|had) only"
+    r"|only the first"
+    r"|partial (?:series|result|response|set|list|page)"
+    r"|(?:series|response|list|page) is partial"
+    r"|(?:incomplete|first page|one page|default limit|max(?:imum)? limit)"
+    r"|did not retrieve (?:the )?(?:all|every|rest)",
+    re.I,
+)
+
+
+def acknowledges_truncation(answer: str, total: Optional[int]) -> bool:
+    """
+    Whether an answer says the series it saw is only part of the series.
+
+    Not a keyword search. The first real run accepted a bare "partial" as an
+    acknowledgement, and the answer that supplied it was describing *mapping
+    fidelity* — "derived from PARTIAL fidelity under US-GAAP" — which has
+    nothing to do with truncation. The right word, in the wrong sense, and the
+    test passed.
+
+    Two things therefore have to line up: vocabulary that is specific to
+    truncation, and either the archive's own point count or a reference to what
+    was not retrieved. A model that quotes the true total or says plainly that
+    it read one page has made the statement; a model that happens to use the
+    word "partial" has not.
+    """
+    if _TRUNCATION_VOCABULARY.search(answer):
+        return True
+    if total is not None and _mentions_number(answer, total):
         return True
     return False
 

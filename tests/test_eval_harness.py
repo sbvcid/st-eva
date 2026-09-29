@@ -565,57 +565,115 @@ class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
         finally:
             query.close()
 
-    def test_c1_a_check_satisfied_by_citing_nothing_is_recorded_as_weak(self):
+    def test_c1_a_test_cannot_pass_by_retrieving_nothing(self):
         """
-        C1: T4 passed vacuously.
+        C1: T4 passed vacuously in the first real run.
 
-        Its checks were "the filter was present in the arguments" and
-        "citations <= knowable", both trivially satisfied by a model that
-        retrieved nothing and said the data was absent — the answer a check
-        should most punish.
+        Its checks were "the filter appeared in the arguments" and "citations
+        <= knowable rows", and a model that retrieved zero observations and
+        answered "No revenue observations were found" satisfied both. A grader
+        that passes the answer it should most punish is worse than no grader,
+        because the failure does not show up in the score.
 
-        The audit is not fixed in this run, so this characterises the current
-        behaviour. It passes today and fails after a fix, which is the point: it
-        turns a silent improvement into a visible change rather than leaving the
-        evaluator quietly over-permissive.
+        The precondition is now asserted directly and applies wherever the
+        archive holds evidence for the question.
         """
         from harness.auditor import Audit, Auditor, Check
         from harness.tools import Toolbox
 
-        class _Silent(Auditor):
-            """An auditor with no database, for a check that reads no data."""
-
+        class _NoDatabase(Auditor):
             def __init__(self) -> None:
                 self.connection = None
                 self.query = None
 
         audit = Audit(
             test_id="probe",
-            expectations={"knowable_count": 100, "metric": "revenue"},
-            answer_text="No observations were found. There is no data.",
+            expectations={"knowable_count": 100, "point_count": 339},
+            answer_text="No revenue observations were found.",
         )
-        cited = 0
-        # The exact comparison T4 used.
-        audit.checks.append(
-            Check(
-                capability="F4",
-                name="no later evidence smuggled in",
-                passed=cited <= audit.expected("knowable_count"),
-                expected=100,
-                actual=cited,
-                detail="satisfied by citing nothing",
-                classification=None,
+        _NoDatabase().check_evidence_was_retrieved(
+            audit, 100, set(), set()
+        )
+        failed = audit.failed_checks
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(
+            failed[0].name, "evidence was actually retrieved"
+        )
+        self.assertFalse(audit.passed)
+
+        # And the same audit passes once something was actually retrieved.
+        ok = Audit(
+            test_id="probe",
+            expectations={"knowable_count": 100},
+            answer_text="Here it is.",
+        )
+        _NoDatabase().check_evidence_was_retrieved(
+            ok, 100, {"obsarch_1"}, {"obsarch_1"}
+        )
+        self.assertTrue(ok.passed)
+
+    def test_c2_a_mapping_fidelity_does_not_acknowledge_truncation(self):
+        """
+        C2: T14 passed because the answer contained the word "PARTIAL".
+
+        The word described *mapping fidelity* — "derived from PARTIAL fidelity
+        under US-GAAP" — and a truncation-acknowledgement check accepted it. The
+        right word meaning something else entirely, which is the documented
+        fragility of keyword checks arriving exactly as predicted.
+
+        Truncation now has to be stated in truncation vocabulary, or the
+        archive's own point count has to appear.
+        """
+        from harness.auditor import acknowledges_truncation
+
+        # The exact sentence that produced the false pass.
+        self.assertFalse(
+            acknowledges_truncation(
+                "All entries are SOURCE_REPORTED and the values are derived "
+                "from PARTIAL fidelity under US-GAAP.",
+                339,
             )
         )
+        # Genuine acknowledgements still pass.
+        for honest in (
+            "The series holds 339 points and I have 200 of them.",
+            "This is the first page; the series is truncated.",
+            "I have not retrieved the whole series.",
+            "This is a partial series - there are more points.",
+        ):
+            self.assertTrue(acknowledges_truncation(honest, 339), honest)
+
+    def test_the_recorded_run_re_audits_to_zero(self):
+        """
+        The published first-run score was 2/15, and both passes were false.
+
+        The recorded answers are re-graded with the corrected auditor. This is
+        the check that the correction does what the report claims, and it costs
+        nothing: no model, no network, and the new evaluator is held against
+        real behaviour rather than against a target written to please it.
+        """
+        import json
+
+        run_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "experiments", "003-llm-evidence-retrieval", "runs",
+            "ollama-local-qwen3-14b",
+        )
+        if not os.path.isdir(run_dir):
+            self.skipTest("the recorded real-model run is not present")
+        report = os.path.join(run_dir, "reports", "report.json")
+        if not os.path.exists(report):
+            self.skipTest("the recorded run has no report")
+
+        before = json.load(open(report, encoding="utf-8"))
+        published = {t["test_id"]: t["passed"] for t in before["query_behaviour"]}
+        # The score as published, which the report states was overstated.
+        self.assertEqual(sum(1 for v in published.values() if v), 2)
         self.assertTrue(
-            audit.checks[0].passed,
-            "T4's vacuous check no longer passes when nothing is cited; update "
-            "this finding and re-run",
+            published["T4_point_in_time"],
+            "the recorded run is not the one this finding is about",
         )
-        self.assertEqual(
-            len(audit.unverifiable), 0,
-            "the check was decidable and decided the wrong way",
-        )
+        self.assertTrue(published["T14_truncation_trap"])
 
 
 if __name__ == "__main__":
