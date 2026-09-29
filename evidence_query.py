@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from data_contract import parse_iso_date, utc_now
+from core_registry import CoreRegistry
 from evidence_model import (
     CONFLICTING,
     EVIDENCE_STATES,
@@ -150,6 +151,31 @@ class EvidenceQuery:
     """
 
     connection: sqlite3.Connection
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        # A frozen dataclass forbids assignment even in __init__.
+        object.__setattr__(self, "connection", connection)
+        # The registry is a cache rather than part of the value.
+        object.__setattr__(self, "_registry", None)
+        # Writing __init__ suppresses the generated one, and the generated one
+        # is what calls __post_init__. Without this the read-only guarantee is
+        # silently inactive and the tests still pass, because the append-only
+        # triggers happen to refuse the same writes.
+        self.__post_init__()
+
+    def registry(self) -> "CoreRegistry":
+        """
+        The Core Registry over the same connection.
+
+        Resolving a figure to the concept and the semantic metric it means is a
+        registry answer, not a query answer. Guessing it from a taxonomy or a
+        basis string is exactly what the registry exists to replace.
+        """
+        if self._registry is None:
+            object.__setattr__(
+                self, "_registry", CoreRegistry(self.connection)
+            )
+        return self._registry
 
     def __post_init__(self) -> None:
         try:
@@ -430,6 +456,19 @@ class EvidenceQuery:
         basis = _loads(row["basis_json"], None)
         available_at = row["available_at"]
 
+        source = {
+            "provider": row["provider"],
+            "source_type": row["source_type"],
+            "source_url": row["source_url"],
+            "taxonomy": row["taxonomy"] or fact.get("taxonomy"),
+            "concept": row["concept"] or fact.get("tag"),
+            "accession": row["accession"] or fact.get("accession"),
+            "form": row["form"] or fact.get("form"),
+            "fiscal_year": row["fiscal_year"] or fact.get("fy"),
+            "fiscal_period": row["fiscal_period"] or fact.get("fp"),
+            "documents": self._documents_for(row["observation_id"]),
+        }
+
         package: Dict[str, Any] = {
             "observation_id": row["observation_id"],
             "contract_id": row["contract_id"],
@@ -458,18 +497,8 @@ class EvidenceQuery:
                 "reasons": _loads(row["status_reasons_json"], []) or [],
                 "evidence_state": state,
             },
-            "source": {
-                "provider": row["provider"],
-                "source_type": row["source_type"],
-                "source_url": row["source_url"],
-                "taxonomy": row["taxonomy"] or fact.get("taxonomy"),
-                "concept": row["concept"] or fact.get("tag"),
-                "accession": row["accession"] or fact.get("accession"),
-                "form": row["form"] or fact.get("form"),
-                "fiscal_year": row["fiscal_year"] or fact.get("fy"),
-                "fiscal_period": row["fiscal_period"] or fact.get("fp"),
-                "documents": self._documents_for(row["observation_id"]),
-            },
+            "source": source,
+            "semantic": self._semantic_for(row, source),
             "definition": row["definition"],
             "methodology": row["methodology"],
             "basis": basis,
@@ -501,6 +530,44 @@ class EvidenceQuery:
                 ],
             }
         return package
+
+    def _semantic_for(
+        self,
+        row: sqlite3.Row,
+        source: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        What this figure *is*, as distinct from what it is called.
+
+        Resolved through the registry: observation -> source concept -> semantic
+        metric. An unmapped concept is reported as unmapped. It is not attached
+        to the metric whose name looks nearest, because a name is not a
+        definition and a silent guess here would be indistinguishable from a
+        resolved mapping.
+        """
+        concept_id = source.get("concept")
+        taxonomy = source.get("taxonomy")
+        if concept_id and ":" not in concept_id and taxonomy:
+            concept_id = f"{taxonomy}:{concept_id}"
+        if not concept_id:
+            return {
+                "resolved": False,
+                "reason": "the observation carries no source concept",
+            }
+
+        resolved = self.registry().resolve(
+            concept_id, as_of=row["period_end"]
+        )
+        payload = resolved.contract_dict()
+        payload["observation_id"] = row["observation_id"]
+        # A metric whose series breaks across a concept change says so here, at
+        # the figure, rather than leaving it to be discovered by diffing a
+        # history.
+        if resolved.metric is not None:
+            payload["series_breaks"] = self.registry().series_breaks(
+                resolved.metric.metric_id
+            )
+        return payload
 
     def _documents_for(self, observation_id: str) -> List[Dict[str, Any]]:
         rows = self.connection.execute(
