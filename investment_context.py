@@ -46,6 +46,7 @@ from data_contract import (
     Observation,
     Unit,
     ValidationStatus,
+    duration_days,
     is_comparable_observation,
     is_number,
     parse_iso_date,
@@ -61,7 +62,7 @@ from operation_registry import (
     result_unit,
 )
 
-CONTEXT_SCHEMA_VERSION = "2.3-C.1"
+CONTEXT_SCHEMA_VERSION = "2.3-C.2"
 MIN_READER_VERSION = "2.3-C.0"
 LEGACY_SNAPSHOT_SCHEMA_VERSION = "2.2.3"
 CONTRACT_VERSION = "2.3-A"
@@ -1261,27 +1262,51 @@ class ContextBuilder:
             depends_on=tuple(operands),
         )
         if not available:
+            operand_states = [
+                ("available" if value is not None else "unavailable", value)
+                for value in resolved
+            ]
+            classified = reason_code_for(
+                operation=op,
+                operand_states=operand_states,
+                engine_value=engine_value if not missing else None,
+                operand_refs=[_operand_base(item) for item in operands],
+            ) or {}
             if refusal is not None:
+                # A cross-currency refusal names the currencies itself, and
+                # that is more specific than any input condition, so it keeps
+                # its own reason and only borrows the machine-readable shape.
                 reason = refusal
-                reason_kind = "INCOMPATIBLE_CURRENCY"
+                classified = {
+                    "reason_kind": "INCOMPATIBLE_CURRENCY",
+                    "reason_code": "OPERAND_CURRENCIES_DIFFER",
+                    "explanation": refusal,
+                }
+            elif missing:
+                reason = classified.get("explanation", "not computable")
             else:
-                reason_kind = (
-                    REASON_MISSING_INPUT if missing else REASON_NOT_AVAILABLE
-                )
-                reason = (
-                    "not computable: unavailable input(s) "
-                    + ", ".join(missing)
-                    if missing
-                    else "not computable: the engine produced no value and no "
-                    "substitute is permitted"
-                )
-            self._mark_unavailable(
-                ref=ref,
-                reason=reason,
-                reason_kind=reason_kind,
-                item=name,
-                blocks=missing,
-            )
+                reason = classified.get("explanation", "not computable")
+
+            entry = {
+                "item": name,
+                "ref": ref,
+                "reason": reason,
+                "reason_kind": classified.get(
+                    "reason_kind",
+                    REASON_MISSING_INPUT if missing else REASON_NOT_AVAILABLE,
+                ),
+                "reason_code": classified.get("reason_code"),
+                "blocks": missing,
+            }
+            for field_name in (
+                "operand_position",
+                "input_ref",
+                "input_value",
+                "condition",
+            ):
+                if classified.get(field_name) is not None:
+                    entry[field_name] = classified[field_name]
+            self.unavailable.append(entry)
         elif computed is not None:
             self._assert_parity(ref, computed, engine_value)
         return ref
@@ -2276,8 +2301,79 @@ class ContextBuilder:
             }
         return section
 
+    def _state_flags_for(
+        self,
+        operands: Sequence[str],
+        stale_metrics: Sequence[str],
+    ) -> List[Dict[str, Any]]:
+        """
+        What a reader must know about a figure's inputs, stated on the figure.
+
+        The freshness and validation sections already hold this. Repeating all
+        of it on every figure would bloat the document and create two places
+        for the same fact to disagree. What goes here are pointers to the
+        specific ref that is affected, so a reader who has the figure can reach
+        the reason without a second lookup — and a reader who only has the
+        figure is not misled into treating it as current.
+        """
+        flags: List[Dict[str, Any]] = []
+        for operand in operands:
+            base = _operand_base(operand)
+            entry = self.refs.get(base)
+            if entry is None:
+                continue
+            metric = str(entry.payload.get("metric") or "")
+            if metric and metric in stale_metrics:
+                flags.append(
+                    {
+                        "kind": "STALE_INPUT",
+                        "ref": base,
+                        "metric": metric,
+                        "detail": (
+                            "this input's metric has no observation inside its "
+                            "source cadence's freshness window"
+                        ),
+                        "see": "data_quality.freshness.by_metric",
+                    }
+                )
+            if entry.kind == KIND_OBSERVATION and not entry.payload.get(
+                "available_at"
+            ):
+                flags.append(
+                    {
+                        "kind": "UNDATED_INPUT",
+                        "ref": base,
+                        "detail": (
+                            "this input's source declared no publication time, "
+                            "so its recency cannot be established"
+                        ),
+                        "see": "data_quality.freshness.by_metric",
+                    }
+                )
+        if not operands:
+            return flags
+        covered, _refs = self._validation_state_for(operands)
+        if covered == VALIDATION_UNVALIDATED and any(
+            _operand_base(operand).startswith(f"{KIND_OBSERVATION}:")
+            for operand in operands
+        ):
+            flags.append(
+                {
+                    "kind": "UNVALIDATED_INPUTS",
+                    "count": len(operands),
+                    "detail": (
+                        "no cross-source check judged these inputs; a clean "
+                        "verdict on a different observation of the same metric "
+                        "is not a validation of these"
+                    ),
+                    "see": "provenance.refs and validated_evidence",
+                }
+            )
+        return flags
+
     def _derived_section(self) -> Dict[str, Any]:
         section: Dict[str, Any] = {}
+        stale_metrics = set(self._stale_metrics)
         for ref, figure in sorted(self.figures.items()):
             if split_ref(ref)[0] != KIND_DERIVED:
                 continue
@@ -2293,6 +2389,12 @@ class ContextBuilder:
             )
             entry["validation_state"] = state
             entry["validation_refs"] = list(refs)
+            flags = self._state_flags_for(
+                derivation.depends_on if derivation is not None else (),
+                sorted(stale_metrics),
+            )
+            if flags:
+                entry["state_flags"] = flags
             if not figure.available:
                 entry["provenance_kind"] = PROVENANCE_UNAVAILABLE
             section[split_ref(ref)[1]] = entry
@@ -2449,6 +2551,137 @@ DISCONTINUITY_RELATIVE_THRESHOLD = 0.5
 
 NOT_EXPLAINED = "NOT_EXPLAINED_BY_ST_EVA"
 
+# A series is comparable only when every point in it shares a series key. Where
+# a metric's points fall into more than one key they are not a single line, and
+# the Context says so instead of differencing across the gap.
+SERIES_COMPARABLE = "COMPARABLE"
+NOT_COMPARABLE = "NOT_COMPARABLE"
+
+QUARTER_MIN_DAYS = 60
+QUARTER_MAX_DAYS = 130
+YEAR_MIN_DAYS = 330
+YEAR_MAX_DAYS = 400
+
+NEGATIVE_INPUT = "NEGATIVE_INPUT"
+NON_POSITIVE_DENOMINATOR = "NON_POSITIVE_DENOMINATOR"
+NON_POSITIVE_NUMERATOR = "NON_POSITIVE_NUMERATOR"
+
+# Refusal vocabulary. Every refusal carries a code from these closed sets, so
+# a consumer can branch on it rather than reading prose. The prose is kept
+# alongside for a human, and is never the only description.
+REASON_KINDS: Tuple[str, ...] = (
+    REASON_NOT_REPORTED,
+    REASON_MISSING_INPUT,
+    REASON_NO_REFERENCE,
+    REASON_INSUFFICIENT_OBSERVATIONS,
+    "INCOMPATIBLE_CURRENCY",
+    NEGATIVE_INPUT,
+    REASON_NOT_AVAILABLE,
+)
+
+REASON_CODES: Tuple[str, ...] = (
+    "SOURCE_DID_NOT_REPORT",
+    "INPUT_OBSERVATION_UNAVAILABLE",
+    "REFERENCE_NOT_AVAILABLE",
+    "SERIES_TOO_THIN",
+    "OPERAND_CURRENCIES_DIFFER",
+    NON_POSITIVE_DENOMINATOR,
+    NON_POSITIVE_NUMERATOR,
+    "ENGINE_PRODUCED_NO_VALUE",
+)
+
+# Operations whose second operand is a scale-like quantity that must be
+# strictly positive for the ratio to mean anything. A ratio over a negative
+# figure is not a multiple; it is a sign with no interpretation.
+_POSITIVE_DENOMINATOR_OPERATIONS = frozenset(
+    {"divide", "ratio", "amount_per_share", "shares_from_market_cap",
+     "price_return", "deviation_from_average"}
+)
+
+
+def reason_code_for(
+    operation: str,
+    operand_states: Sequence[Tuple[str, Optional[float]]],
+    engine_value: Any = None,
+    operand_refs: Sequence[str] = (),
+) -> Optional[Dict[str, Any]]:
+    """
+    Classify why a derived figure is absent, as machine-readable fields.
+
+    Returns None when the engine produced a value, because there is then nothing
+    to explain. Otherwise names the condition, the operand responsible, and the
+    value that caused it.
+
+    The order matters: a missing input is reported as missing even when
+    another operand is also non-positive, because a missing input is the
+    earlier and more actionable fact.
+    """
+    if engine_value is not None:
+        return None
+
+    states = list(operand_states)
+    refs = list(operand_refs)
+
+    def describe(index: int) -> str:
+        ref = refs[index] if index < len(refs) else f"operand {index}"
+        return f"operand {index} ({ref})"
+
+    for index, (state, _value) in enumerate(states):
+        if state != "available":
+            return {
+                "reason_kind": REASON_MISSING_INPUT,
+                "reason_code": "INPUT_OBSERVATION_UNAVAILABLE",
+                "operand_position": index,
+                "input_ref": refs[index] if index < len(refs) else None,
+                "explanation": (
+                    f"not computable: {describe(index)} is unavailable, and no "
+                    "substitute is permitted."
+                ),
+            }
+
+    if operation in _POSITIVE_DENOMINATOR_OPERATIONS and len(states) > 1:
+        value = states[1][1]
+        if is_number(value) and float(value) <= 0:
+            return {
+                "reason_kind": NEGATIVE_INPUT,
+                "reason_code": NON_POSITIVE_DENOMINATOR,
+                "operand_position": 1,
+                "input_ref": refs[1] if len(refs) > 1 else None,
+                "input_value": safe_float(value),
+                "condition": "DIVISOR_MUST_BE_POSITIVE",
+                "explanation": (
+                    f"not computable: {describe(1)} is "
+                    f"{value}, and a ratio over a non-positive figure has no "
+                    "interpretation. The observation itself is present and is "
+                    "not treated as missing."
+                ),
+            }
+
+    for index, (_state, value) in enumerate(states):
+        if is_number(value) and float(value) <= 0:
+            return {
+                "reason_kind": NEGATIVE_INPUT,
+                "reason_code": NON_POSITIVE_NUMERATOR,
+                "operand_position": index,
+                "input_ref": refs[index] if index < len(refs) else None,
+                "input_value": safe_float(value),
+                "condition": "OPERAND_MUST_BE_POSITIVE",
+                "explanation": (
+                    f"not computable: {describe(index)} is {value}, and a "
+                    "figure computed from a non-positive operand is not "
+                    "interpretable."
+                ),
+            }
+
+    return {
+        "reason_kind": REASON_NOT_AVAILABLE,
+        "reason_code": "ENGINE_PRODUCED_NO_VALUE",
+        "explanation": (
+            "not computable: every input is present and usable, and the engine "
+            "produced no value. No substitute is permitted."
+        ),
+    }
+
 
 @dataclass(frozen=True)
 class IdentityCheck:
@@ -2493,19 +2726,72 @@ IDENTITY_CHECKS: Tuple[IdentityCheck, ...] = (
 
 def _point_basis_key(observation: Observation) -> str:
     """
-    What kind of series a point belongs to.
+    What kind of series a point belongs to, when the construction differs.
 
     A discrete reported period and a constructed trailing window are the same
     metric but not the same measure: one covers three months and the other
-    twelve. Differencing them produces a discontinuity that means nothing, and
-    sorting them by period leaves ties broken by registration order, so a
-    replay would order them differently from the run it is replaying.
+    twelve. Differencing them produces a discontinuity that means nothing.
     """
     raw = observation.raw if isinstance(observation.raw, dict) else {}
     derivation = raw.get("derivation")
     if derivation:
         return f"CONSTRUCTED:{derivation}"
+    return "REPORTED"
+
+
+def period_span_bucket(
+    period_start: Optional[str],
+    period_end: Optional[str],
+) -> str:
+    """
+    The length class a period falls into.
+
+    A quarterly observation and an annual one are not two points on a line.
+    Without this bucket, differencing them yields a change that measures the
+    filing calendar rather than the business.
+    """
+    if not period_start:
+        return "INSTANT"
+    days = duration_days(period_start, period_end)
+    if days is None:
+        return "UNDECLARED"
+    if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
+        return "QUARTERLY"
+    if YEAR_MIN_DAYS <= days <= YEAR_MAX_DAYS:
+        return "ANNUAL"
+    return "CUMULATIVE"
+
+
+def observation_type_of(observation: Observation) -> str:
+    """
+    Whether a point was reported by a source or constructed by ST-EVA, and
+    whether it carries a period at all.
+    """
+    raw = observation.raw if isinstance(observation.raw, dict) else {}
+    if raw.get("derivation"):
+        return "DERIVED_WINDOW"
+    if observation.period_start is None and observation.period_end:
+        return "INSTANT_REPORTED"
+    if observation.available_at is None:
+        return "REPORTED_UNDATED"
     return "REPORTED_PERIOD"
+
+
+def series_key(observation: Observation) -> Dict[str, str]:
+    """
+    What a point must match to be differenced against another point.
+
+    Three axes, all of them necessary. Two points are only comparable on period
+    length, on how the figure was produced, and on whether either carries a
+    period at all.
+    """
+    return {
+        "period_span": period_span_bucket(
+            observation.period_start, observation.period_end
+        ),
+        "observation_type": observation_type_of(observation),
+        "basis": _point_basis_key(observation),
+    }
 
 
 def series_metadata(
@@ -2515,68 +2801,49 @@ def series_metadata(
     """
     Per-metric series shape, and where a series jumps.
 
-    Points are grouped by metric and then by kind, so a period-over-period
-    change is only ever computed between two points that cover the same span.
-    A consumer reading individual observations would otherwise have to diff them
-    to notice that a balance-sheet series moved by a factor of four between two
-    quarters, and would in passing difference a quarter against a trailing
-    window and conclude nothing at all.
+    A discontinuity is only computed between two points that share a series key.
+    Where a metric's points fall into more than one key, the series is reported
+    as not comparable and the reason is stated, rather than being differenced
+    across spans and presented as a change in the business.
 
-    What a discontinuity *means* is not stated. A large move may be a genuine
+    Two points that share a period end are not a step on a line. They are two
+    versions of one period, and they are reported separately.
+
+    What a discontinuity *means* is never stated. A large move may be a genuine
     change, a reclassification, a change in the concepts a filer tags, or a
     change in how a vendor composes a total, and only the filer can say which.
-    ST-EVA reports that the series is not continuous and declines to explain it.
     """
-    grouped: Dict[Tuple[str, str], List[Tuple[str, str, Observation]]] = {}
+    grouped: Dict[Tuple[str, str, str, str], List[Tuple[str, str, Observation]]] = {}
     for observation in observations:
         if not observation.is_available or not is_number(observation.value):
             continue
-        period = observation.period_end or observation.as_of
-        if not period:
+        if not (observation.period_end or observation.as_of):
             continue
-        key = (observation.metric, _point_basis_key(observation))
+        key = series_key(observation)
+        group = (
+            observation.metric,
+            key["period_span"],
+            key["observation_type"],
+            key["basis"],
+        )
         # The identifier is part of the sort key so the order is total: two
-        # points can share a period end, and a stable order is what makes a
-        # replay reproduce the archived document byte for byte.
-        grouped.setdefault(key, []).append(
-            (str(period), str(observation.observation_id), observation)
+        # points can share a period end, and a stable order is what lets a
+        # replay reproduce the archived document.
+        grouped.setdefault(group, []).append(
+            (
+                str(observation.period_end or observation.as_of),
+                str(observation.observation_id),
+                observation,
+            )
         )
 
-    report: Dict[str, Dict[str, Any]] = {}
-    for (metric, basis_key), entries in grouped.items():
+    per_metric: Dict[str, Dict[str, Any]] = {}
+    for (metric, span, kind, basis), entries in grouped.items():
         entries.sort(key=lambda item: (item[0], item[1]))
         periods = [period for period, _, _ in entries]
         values = [float(observation.value) for _, _, observation in entries]
-        providers = sorted({observation.provider for _, _, observation in entries})
-
-        discontinuities: List[Dict[str, Any]] = []
-        for position in range(1, len(values)):
-            previous, current = values[position - 1], values[position]
-            if previous == 0:
-                continue
-            relative = abs(current - previous) / abs(previous)
-            if relative > relative_threshold:
-                discontinuities.append(
-                    {
-                        "from_period": periods[position - 1],
-                        "to_period": periods[position],
-                        "from_value": previous,
-                        "to_value": current,
-                        "absolute_change": current - previous,
-                        "relative_change": relative,
-                        "explanation": NOT_EXPLAINED,
-                        "cause": "UNDETERMINED_FROM_AVAILABLE_SOURCES",
-                    }
-                )
-
-        if len(values) < 2:
-            comparability = "SINGLE_OBSERVATION_NO_TREND"
-        elif len(values) < 4:
-            comparability = "THIN_SERIES"
-        else:
-            comparability = "SERIES_AVAILABLE"
-
-        bucket = report.setdefault(
+        label = f"{span}|{kind}|{basis}"
+        bucket = per_metric.setdefault(
             metric,
             {
                 "observations": 0,
@@ -2586,43 +2853,121 @@ def series_metadata(
                 "latest_value": None,
                 "comparability": "NO_SERIES",
                 "discontinuities": [],
+                "same_period_pairs": [],
                 "trend_is_explained": False,
+                "series_status": SERIES_COMPARABLE,
+                "series_status_reason": None,
                 "bases": {},
                 "note": (
-                    "Points are grouped by kind. A discrete reported period and "
-                    "a constructed trailing window are the same metric but not "
-                    "the same measure, and are never differenced against one "
-                    "another."
+                    "Points are grouped by period span, observation type, and "
+                    "basis. Two points may be differenced only when all three "
+                    "match. A group with fewer than two points has no trend."
                 ),
             },
         )
         bucket["observations"] += len(values)
-        bucket["providers"] = sorted(set(bucket["providers"]) | set(providers))
+        bucket["providers"] = sorted(
+            set(bucket["providers"]) | {o.provider for _, _, o in entries}
+        )
         if bucket["first_period"] is None or periods[0] < bucket["first_period"]:
             bucket["first_period"] = periods[0]
         if bucket["last_period"] is None or periods[-1] > bucket["last_period"]:
             bucket["last_period"] = periods[-1]
         bucket["latest_value"] = values[-1]
-        total = bucket["observations"]
-        if total < 2:
-            bucket["comparability"] = "SINGLE_OBSERVATION_NO_TREND"
-        elif total < 4:
-            bucket["comparability"] = "THIN_SERIES"
+
+        group_discontinuities: List[Dict[str, Any]] = []
+        group_pairs: List[Dict[str, Any]] = []
+        for position in range(1, len(values)):
+            previous, current = values[position - 1], values[position]
+            if periods[position] == periods[position - 1]:
+                # Two versions of the same period. Not a step on a line.
+                group_pairs.append(
+                    {
+                        "period_end": periods[position],
+                        "from_value": previous,
+                        "to_value": current,
+                        "relative_difference": (
+                            abs(current - previous) / abs(previous)
+                            if previous
+                            else None
+                        ),
+                        "relationship": "RESTATEMENT_OR_REVISION",
+                        "from_ref": entries[position - 1][2].observation_id,
+                        "to_ref": entries[position][2].observation_id,
+                        "explanation": NOT_EXPLAINED,
+                        "selection": "NO_WINNER_SELECTED",
+                    }
+                )
+                continue
+            if previous == 0:
+                continue
+            relative = abs(current - previous) / abs(previous)
+            if relative > relative_threshold:
+                group_discontinuities.append(
+                    {
+                        "from_period": periods[position - 1],
+                        "to_period": periods[position],
+                        "from_value": previous,
+                        "to_value": current,
+                        "absolute_change": current - previous,
+                        "relative_change": relative,
+                        "series_group": label,
+                        "explanation": NOT_EXPLAINED,
+                        "cause": "UNDETERMINED_FROM_AVAILABLE_SOURCES",
+                    }
+                )
+
+        if len(values) < 2:
+            group_comparability = "SINGLE_OBSERVATION_NO_TREND"
+        elif len(values) < 4:
+            group_comparability = "THIN_SERIES"
         else:
-            bucket["comparability"] = "SERIES_AVAILABLE"
-        bucket["discontinuities"].extend(discontinuities)
-        bucket["bases"][basis_key] = {
+            group_comparability = "SERIES_AVAILABLE"
+
+        bucket["bases"][label] = {
+            "period_span": span,
+            "observation_type": kind,
+            "basis": basis,
             "observations": len(values),
             "first_period": periods[0],
             "last_period": periods[-1],
-            "comparability": comparability,
-            "discontinuities": discontinuities,
+            "comparability": group_comparability,
+            "discontinuities": group_discontinuities,
+            "same_period_pairs": group_pairs,
         }
-    for bucket in report.values():
+        bucket["discontinuities"].extend(group_discontinuities)
+        bucket["same_period_pairs"].extend(group_pairs)
+
+    for bucket in per_metric.values():
+        if bucket["observations"] < 2:
+            bucket["comparability"] = "SINGLE_OBSERVATION_NO_TREND"
+        elif bucket["observations"] < 4:
+            bucket["comparability"] = "THIN_SERIES"
+        else:
+            bucket["comparability"] = "SERIES_AVAILABLE"
+
+        # More than one group means the points are not a single line, and the
+        # reader is told so rather than being handed a list that looks like one.
+        if len(bucket["bases"]) > 1:
+            bucket["series_status"] = NOT_COMPARABLE
+            bucket["series_status_reason"] = "PERIOD_SPAN_MISMATCH"
+            bucket["series_status_detail"] = {
+                "groups": sorted(bucket["bases"]),
+                "note": (
+                    "These observations are on different period spans, "
+                    "observation types, or constructions. They are not "
+                    "differenced against each other, and the list of "
+                    "discontinuities below spans only the groups named."
+                ),
+            }
+        else:
+            bucket["series_status"] = SERIES_COMPARABLE
+            bucket["series_status_reason"] = None
         bucket["discontinuities"].sort(
             key=lambda item: (item["from_period"], item["to_period"])
         )
-    return report
+        bucket["same_period_pairs"].sort(key=lambda item: item["period_end"])
+    return per_metric
 
 
 # ---------------------------------------------------------------------------

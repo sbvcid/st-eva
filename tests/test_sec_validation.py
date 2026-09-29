@@ -52,11 +52,14 @@ from data_contract import (
     is_comparable_observation,
     validate_observation,
 )
+from data_contract import (
+    QUARTER_MAX_DAYS,
+    QUARTER_MIN_DAYS,
+    duration_days,
+)
 from fundamental_provider import YahooFundamentalProvider
 from st_eva_runner import run_st_eva
 from sec_provider import (
-    QUARTER_MAX_DAYS,
-    QUARTER_MIN_DAYS,
     SECProvider,
     SecFact,
     is_annual,

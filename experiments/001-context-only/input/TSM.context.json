@@ -1,0 +1,4457 @@
+{
+  "context_schema_version": "2.3-C.1",
+  "min_reader_version": "2.3-C.0",
+  "built_from": {
+    "legacy_snapshot_schema_version": "2.2.3",
+    "contract_version": "2.3-A",
+    "cross_source_version": "2.3-B"
+  },
+  "context_id": "ctx_b0313faee92f779f9d67b6b14e83ce17",
+  "supersedes": null,
+  "asset": {
+    "ticker": "TSM",
+    "company_name": "TSM (Live Acquired)",
+    "exchange": "NYQ",
+    "currency": "USD",
+    "identifiers": {
+      "ticker": "TSM",
+      "cik": "0001046179",
+      "sec_entity_name": "TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD"
+    }
+  },
+  "as_of": "2026-09-28",
+  "generated_at": "2026-09-29T05:02:11.026029+00:00",
+  "knowledge_cutoff": "2026-09-28",
+  "scope": {
+    "provides": [
+      "observed values with per-metric provenance",
+      "cross-source validation verdicts with their tolerance and basis",
+      "deterministic derivations traceable to raw observations",
+      "the multiple every implied figure is conditional on",
+      "an explicit list of what could not be established, and why"
+    ],
+    "does_not_provide": [
+      "an investment rating, recommendation, or buy/sell/hold view",
+      "a price target or any forward price",
+      "a probability, likelihood, or confidence for any outcome",
+      "a quality score, ranking, or grade of the data or the asset",
+      "a comparison against peers, sectors, or other assets",
+      "a claim that any value is cheap, expensive, or mispriced",
+      "a claim that either data source is authoritative",
+      "a forecast; every implied figure is conditional on a stated reference"
+    ],
+    "authority_note": "Neither source is treated as truth. A CONSISTENT verdict means two comparable figures agree within a declared tolerance; it does not mean the figure is verified, and independence of the sources is declared separately."
+  },
+  "glossary": {
+    "assets": {
+      "definition": "Total assets at a balance sheet date. Never synthesized.",
+      "unit": "currency"
+    },
+    "cash": {
+      "definition": "Cash and cash equivalents at a balance sheet date. Never synthesized. Vendor 'total cash' may include short-term investments, which is a different concept.",
+      "unit": "currency"
+    },
+    "consensus_forward_eps": {
+      "definition": "Consensus forward EPS. Never synthesized.",
+      "unit": "per_share"
+    },
+    "debt": {
+      "definition": "Total debt at a balance sheet date, composed from the filer's current and non-current debt concepts. Never synthesized.",
+      "unit": "currency"
+    },
+    "ebitda": {
+      "definition": "Observed trailing EBITDA. Never synthesized.",
+      "unit": "currency"
+    },
+    "enterprise_value": {
+      "definition": "Observed enterprise value. Never synthesized.",
+      "unit": "currency"
+    },
+    "eps_diluted": {
+      "definition": "Diluted earnings per share. Never synthesized. Per-share amounts are not strictly additive across periods.",
+      "unit": "per_share"
+    },
+    "ev_ebitda_band": {
+      "definition": "Historical EV/EBITDA reference band.",
+      "unit": "multiple"
+    },
+    "forward_eps": {
+      "definition": "Forward EPS. Used only when explicitly supplied.",
+      "unit": "per_share"
+    },
+    "free_cash_flow": {
+      "definition": "Observed trailing free cash flow. Never synthesized.",
+      "unit": "currency"
+    },
+    "market_cap": {
+      "definition": "Observed market capitalization. Never synthesized.",
+      "unit": "currency"
+    },
+    "net_income": {
+      "definition": "Net income attributable to the parent. Never synthesized.",
+      "unit": "currency"
+    },
+    "pe_band": {
+      "definition": "Historical P/E reference band.",
+      "unit": "multiple"
+    },
+    "pfcf_band": {
+      "definition": "Historical P/FCF reference band.",
+      "unit": "multiple"
+    },
+    "price": {
+      "definition": "Observed current or latest market price.",
+      "unit": "currency"
+    },
+    "price_volume_metrics": {
+      "definition": "Price and volume metrics calculated from observed history.",
+      "unit": "ratio"
+    },
+    "ps_band": {
+      "definition": "Historical P/S reference band.",
+      "unit": "multiple"
+    },
+    "revenue": {
+      "definition": "Observed trailing revenue. Never synthesized.",
+      "unit": "currency"
+    },
+    "shares_outstanding": {
+      "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+      "unit": "count"
+    },
+    "trailing_eps": {
+      "definition": "Current/trailing EPS. Never synthesized.",
+      "unit": "per_share"
+    }
+  },
+  "observed": {
+    "cash": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": {
+          "security_type": "UNDECLARED",
+          "reporting_currency": "UNDECLARED",
+          "source_declared": false
+        },
+        "figure": {
+          "ref": "obs:cmp-cash-yahoo-undated",
+          "unit": "currency",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 3518010228736.0
+        }
+      }
+    ],
+    "consensus_forward_eps": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-consensus-eps-001",
+          "unit": "per_share",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": 21.9251
+        }
+      }
+    ],
+    "debt": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": {
+          "security_type": "UNDECLARED",
+          "reporting_currency": "UNDECLARED",
+          "source_declared": false
+        },
+        "figure": {
+          "ref": "obs:cmp-debt-yahoo-undated",
+          "unit": "currency",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 1068558516224.0
+        }
+      }
+    ],
+    "ebitda": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-ebitda-001",
+          "unit": "currency",
+          "currency": "TWD",
+          "provenance_kind": "UNAVAILABLE"
+        }
+      }
+    ],
+    "enterprise_value": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-enterprise-value-001",
+          "unit": "currency",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": 1928367260763.0
+        }
+      }
+    ],
+    "eps_diluted": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": {
+          "measurement_basis": "TRAILING_AGGREGATE",
+          "reporting_currency": "TWD",
+          "period_window": "UNDECLARED_BY_SOURCE",
+          "source_declared": true
+        },
+        "figure": {
+          "ref": "obs:cmp-eps_diluted-yahoo-2026-06-30",
+          "unit": "per_share",
+          "currency": "TWD",
+          "provenance_kind": "OBSERVED",
+          "value": 427.45
+        }
+      }
+    ],
+    "ev_ebitda_band": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-ev-ebitda-band-001",
+          "unit": "multiple",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": {
+            "10th": 11.08864,
+            "25th": 13.6138,
+            "median": 13.8035,
+            "75th": 17.8008,
+            "90th": 17.97018,
+            "observations": 9
+          }
+        }
+      }
+    ],
+    "forward_eps": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-forward-eps-001",
+          "unit": "per_share",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": 21.9251
+        }
+      }
+    ],
+    "free_cash_flow": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-fcf-001",
+          "unit": "currency",
+          "currency": "TWD",
+          "provenance_kind": "UNAVAILABLE"
+        }
+      }
+    ],
+    "market_cap": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-market-cap-001",
+          "unit": "currency",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": 2008084460181.0
+        }
+      }
+    ],
+    "net_income": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": {
+          "measurement_basis": "TRAILING_AGGREGATE",
+          "reporting_currency": "TWD",
+          "period_window": "UNDECLARED_BY_SOURCE",
+          "source_declared": true
+        },
+        "figure": {
+          "ref": "obs:cmp-net_income-yahoo-2026-06-30",
+          "unit": "currency",
+          "currency": "TWD",
+          "provenance_kind": "OBSERVED",
+          "value": 2216808460000.0
+        }
+      }
+    ],
+    "pe_band": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-pe-band-001",
+          "unit": "multiple",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": {
+            "10th": 29.2605381,
+            "25th": 31.434897749999998,
+            "median": 31.9665355,
+            "75th": 32.64076525,
+            "90th": 34.4892664,
+            "observations": 8
+          }
+        }
+      }
+    ],
+    "pfcf_band": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-pfcf-band-001",
+          "unit": "multiple",
+          "currency": null,
+          "provenance_kind": "UNAVAILABLE"
+        }
+      }
+    ],
+    "price": [
+      {
+        "provider": "YahooFinance+YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-price-001",
+          "unit": "currency",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": 452.88
+        }
+      }
+    ],
+    "price_volume_metrics": [
+      {
+        "provider": "Python",
+        "source_type": "DETERMINISTIC_CALCULATION",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-metrics-001",
+          "unit": "ratio",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": {
+            "return_1d": 0.005037659184314203,
+            "return_5d": 0.017387765601095007,
+            "return_20d": 0.084690593982514,
+            "return_60d": 0.04311774705823024,
+            "realized_volatility_annualized": 0.3859758022034984,
+            "average_volume": 11974381.25,
+            "latest_volume_vs_average": -0.3429639631692869,
+            "observations": 64
+          }
+        }
+      }
+    ],
+    "ps_band": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-ps-band-001",
+          "unit": "multiple",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": {
+            "10th": 11.4331327,
+            "25th": 12.38452,
+            "median": 13.748383,
+            "75th": 15.947895749999999,
+            "90th": 16.2302142,
+            "observations": 8
+          }
+        }
+      }
+    ],
+    "revenue": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": {
+          "measurement_basis": "TRAILING_AGGREGATE",
+          "reporting_currency": "TWD",
+          "period_window": "UNDECLARED_BY_SOURCE",
+          "source_declared": true
+        },
+        "figure": {
+          "ref": "obs:cmp-revenue-yahoo-2026-06-30",
+          "unit": "currency",
+          "currency": "TWD",
+          "provenance_kind": "OBSERVED",
+          "value": 4440492457000.0
+        }
+      },
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-revenue-001",
+          "unit": "currency",
+          "currency": "TWD",
+          "provenance_kind": "OBSERVED",
+          "value": 4440492457000.0
+        }
+      }
+    ],
+    "shares_outstanding": [
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2018-12-31-000119312519108390",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25930380458.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2019-12-31-000119312520107579",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25930380458.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2020-12-31-000119312521118512",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25930380458.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2021-12-31-000119312522104891",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25930380458.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2022-12-31-000119312523107214",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25930380458.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2023-12-31-000119312524099840",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25932070992.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25932733242.0
+        }
+      },
+      {
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 25932524521.0
+        }
+      },
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": {
+          "security_type": "UNDECLARED",
+          "shares_basis": "UNDECLARED",
+          "source_declared": false
+        },
+        "figure": {
+          "ref": "obs:cmp-shares_outstanding-yahoo-undated",
+          "unit": "count",
+          "currency": null,
+          "provenance_kind": "OBSERVED",
+          "value": 5186474013.0
+        }
+      }
+    ],
+    "trailing_eps": [
+      {
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "basis": null,
+        "figure": {
+          "ref": "obs:ev-current-eps-001",
+          "unit": "per_share",
+          "currency": "USD",
+          "provenance_kind": "OBSERVED",
+          "value": 13.5
+        }
+      }
+    ]
+  },
+  "validated_evidence": {
+    "revenue": {
+      "status": "UNAVAILABLE",
+      "comparable": false,
+      "vendor_ref": "obs:cmp-revenue-yahoo-2026-06-30",
+      "filing_ref": null,
+      "independence": "UNVERIFIED_INDEPENDENCE",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.005,
+        "absolute": 50000000.0,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "revenue",
+        "vendor_observation": "cmp-revenue-yahoo-2026-06-30",
+        "filing_observation": null,
+        "period_window_days": 7,
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "required_unit": "currency",
+        "required_period_type": "duration",
+        "required_measurement_basis": "TTM",
+        "known_caveats": [
+          "The vendor does not publish the trailing window it used; the match rests on the as-of date, not on a declared period."
+        ],
+        "independence_note": "The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified."
+      },
+      "explanation": "revenue could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+      "references": [
+        "cmp-revenue-yahoo-2026-06-30"
+      ]
+    },
+    "net_income": {
+      "status": "UNAVAILABLE",
+      "comparable": false,
+      "vendor_ref": "obs:cmp-net_income-yahoo-2026-06-30",
+      "filing_ref": null,
+      "independence": "UNVERIFIED_INDEPENDENCE",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.005,
+        "absolute": 50000000.0,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "net_income",
+        "vendor_observation": "cmp-net_income-yahoo-2026-06-30",
+        "filing_observation": null,
+        "period_window_days": 7,
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "required_unit": "currency",
+        "required_period_type": "duration",
+        "required_measurement_basis": "TTM",
+        "known_caveats": [
+          "The vendor does not publish the trailing window it used; the match rests on the as-of date, not on a declared period."
+        ],
+        "independence_note": "The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified."
+      },
+      "explanation": "net_income could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+      "references": [
+        "cmp-net_income-yahoo-2026-06-30"
+      ]
+    },
+    "eps_diluted": {
+      "status": "UNAVAILABLE",
+      "comparable": false,
+      "vendor_ref": "obs:cmp-eps_diluted-yahoo-2026-06-30",
+      "filing_ref": null,
+      "independence": "UNVERIFIED_INDEPENDENCE",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.01,
+        "absolute": 0.01,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "eps_diluted",
+        "vendor_observation": "cmp-eps_diluted-yahoo-2026-06-30",
+        "filing_observation": null,
+        "period_window_days": 7,
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "required_unit": "per_share",
+        "required_period_type": "duration",
+        "required_measurement_basis": "TTM",
+        "known_caveats": [
+          "Per-share amounts are not strictly additive: summing four quarterly diluted EPS figures only reproduces a trailing figure while the share denominator is constant."
+        ]
+      },
+      "explanation": "eps_diluted could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+      "references": [
+        "cmp-eps_diluted-yahoo-2026-06-30"
+      ]
+    },
+    "assets": {
+      "status": "UNAVAILABLE",
+      "comparable": false,
+      "vendor_ref": null,
+      "filing_ref": null,
+      "independence": "NOT_INDEPENDENT",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.005,
+        "absolute": 50000000.0,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "assets",
+        "vendor_observation": null,
+        "filing_observation": null,
+        "period_window_days": 7,
+        "independence": "NOT_INDEPENDENT",
+        "required_unit": "currency",
+        "required_period_type": "instant",
+        "required_measurement_basis": "INSTANT",
+        "known_caveats": [
+          "The vendor publishes no total-assets counterpart; its fundamentals-timeseries request for total assets returns HTTP 404."
+        ]
+      },
+      "explanation": "assets could not be cross-checked: vendor and filing side unavailable. Neither side is treated as the correct answer.",
+      "references": []
+    },
+    "cash": {
+      "status": "UNAVAILABLE",
+      "comparable": false,
+      "vendor_ref": "obs:cmp-cash-yahoo-undated",
+      "filing_ref": null,
+      "independence": "UNVERIFIED_INDEPENDENCE",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.01,
+        "absolute": 50000000.0,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "cash",
+        "vendor_observation": "cmp-cash-yahoo-undated",
+        "filing_observation": null,
+        "period_window_days": 7,
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "required_unit": "currency",
+        "required_period_type": "instant",
+        "required_measurement_basis": "INSTANT",
+        "known_caveats": [
+          "The vendor's totalCash includes short-term investments; the filing-side cash concept does not. The two are different quantities."
+        ]
+      },
+      "explanation": "cash could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+      "references": [
+        "cmp-cash-yahoo-undated"
+      ]
+    },
+    "debt": {
+      "status": "UNAVAILABLE",
+      "comparable": false,
+      "vendor_ref": "obs:cmp-debt-yahoo-undated",
+      "filing_ref": null,
+      "independence": "UNVERIFIED_INDEPENDENCE",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.01,
+        "absolute": 50000000.0,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "debt",
+        "vendor_observation": "cmp-debt-yahoo-undated",
+        "filing_observation": null,
+        "period_window_days": 7,
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "required_unit": "currency",
+        "required_period_type": "instant",
+        "required_measurement_basis": "INSTANT",
+        "known_caveats": [
+          "The filing taxonomy publishes no single total-debt concept. The figure is composed from the filer's current and non-current debt concepts, and filers compose debt differently."
+        ]
+      },
+      "explanation": "debt could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+      "references": [
+        "cmp-debt-yahoo-undated"
+      ]
+    },
+    "shares_outstanding": {
+      "status": "METHODOLOGY_MISMATCH",
+      "comparable": false,
+      "vendor_ref": "obs:cmp-shares_outstanding-yahoo-undated",
+      "filing_ref": "obs:cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+      "independence": "NOT_INDEPENDENT",
+      "tolerance": {
+        "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+        "relative": 0.001,
+        "absolute": 10000.0,
+        "rule": "difference must satisfy both bounds"
+      },
+      "comparison_basis": {
+        "metric": "shares_outstanding",
+        "vendor_observation": "cmp-shares_outstanding-yahoo-undated",
+        "filing_observation": "cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+        "period_window_days": 7,
+        "independence": "NOT_INDEPENDENT",
+        "required_unit": "count",
+        "required_period_type": "instant",
+        "required_measurement_basis": "INSTANT",
+        "known_caveats": [
+          "The vendor publishes no date for this count, so the two figures cannot be confirmed to be contemporaneous.",
+          "A period-average diluted share count is a different concept from a cover-page count outstanding."
+        ],
+        "independence_note": "The vendor's share count is taken from the same regulatory cover page the filing source reads, so agreement here is not independent corroboration. It confirms the plumbing, not the number.",
+        "vendor_value": 5186474013.0,
+        "filing_value": 25932524521.0,
+        "vendor_unit": "count",
+        "filing_unit": "count",
+        "vendor_currency": null,
+        "filing_currency": null,
+        "vendor_as_of": null,
+        "filing_period_end": "2025-12-31",
+        "vendor_period": null,
+        "filing_period": null,
+        "vendor_available_at": null,
+        "filing_available_at": "2026-04-16T10:05:49.000Z",
+        "vendor_basis_declared": {
+          "security_type": "UNDECLARED",
+          "shares_basis": "UNDECLARED",
+          "source_declared": false
+        },
+        "filing_basis_declared": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "value_ratio": 5.000029780540617,
+        "basis_differences": null,
+        "ratio_interpretation": "NOT_EXPLAINED. The counts differ by a factor of 5.0000, which is far more than a rounding difference. One source declares the security or share basis it counts and the other does not, so the two cannot be shown to be counting the same thing. ST-EVA does not infer what the factor represents."
+      },
+      "explanation": "shares_outstanding could not be compared. The two sources report counts differing by a factor of 5.0000, and one of them does not declare the security or share basis it is counting, so the two cannot be shown to be the same quantity. Both values are retained unchanged, no numeric verdict is issued, and no listing or share-class relationship is inferred.",
+      "references": [
+        "cmp-shares_outstanding-yahoo-undated",
+        "cmp-shares_outstanding-sec-2025-12-31-000162828026025362"
+      ]
+    }
+  },
+  "derived": {
+    "consensus_forward_pe": {
+      "figure": {
+        "ref": "der:consensus_forward_pe",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "value": 20.655778080829734
+      },
+      "derivation_ref": "der:consensus_forward_pe",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": []
+    },
+    "consensus_price_at_median": {
+      "figure": {
+        "ref": "der:consensus_price_at_median",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:consensus_price_at_median",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "current_ev_ebitda": {
+      "figure": {
+        "ref": "der:current_ev_ebitda",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:current_ev_ebitda",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "current_pe": {
+      "figure": {
+        "ref": "der:current_pe",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "value": 33.54666666666667
+      },
+      "derivation_ref": "der:current_pe",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": []
+    },
+    "current_pfcf": {
+      "figure": {
+        "ref": "der:current_pfcf",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:current_pfcf",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "current_ps": {
+      "figure": {
+        "ref": "der:current_ps",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:current_ps",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "ev_ebitda_percentile": {
+      "figure": {
+        "ref": "der:ev_ebitda_percentile",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:ev_ebitda_percentile",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "forward_pe": {
+      "figure": {
+        "ref": "der:forward_pe",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "value": 20.655778080829734
+      },
+      "derivation_ref": "der:forward_pe",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": []
+    },
+    "implied_ebitda": {
+      "figure": {
+        "ref": "der:implied_ebitda",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:implied_ebitda",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "implied_fcf": {
+      "figure": {
+        "ref": "der:implied_fcf",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:implied_fcf",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "implied_forward_eps": {
+      "figure": {
+        "ref": "der:implied_forward_eps",
+        "unit": "per_share",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:implied_forward_eps",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "implied_revenue": {
+      "figure": {
+        "ref": "der:implied_revenue",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:implied_revenue",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "implied_shares": {
+      "figure": {
+        "ref": "der:implied_shares",
+        "unit": "count",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "value": 4434032106.034711
+      },
+      "derivation_ref": "der:implied_shares",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": []
+    },
+    "pe_percentile": {
+      "figure": {
+        "ref": "der:pe_percentile",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:pe_percentile",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "ps_percentile": {
+      "figure": {
+        "ref": "der:ps_percentile",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:ps_percentile",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    },
+    "required_eps_cagr": {
+      "figure": {
+        "ref": "der:required_eps_cagr",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE"
+      },
+      "derivation_ref": "der:required_eps_cagr",
+      "validation_state": "UNVALIDATED",
+      "validation_refs": [],
+      "provenance_kind": "UNAVAILABLE"
+    }
+  },
+  "valuation_reference": {
+    "metric": "pe",
+    "multiple": null,
+    "basis": "NONE",
+    "operand_field": "multiple",
+    "provenance_kind": "UNAVAILABLE",
+    "source_ref": null,
+    "source_statistic": "median",
+    "source_observation_count": 8,
+    "eligible_as_reference": false,
+    "eligibility_rule": "a band needs at least 20 usable observations",
+    "eligibility_reason": "8 observations is below the required count",
+    "selected_at": "2026-09-29T05:02:11.026029+00:00",
+    "selection_method": "none",
+    "user_overridden": false,
+    "ref": "refc:valuation_reference",
+    "kind": "refc"
+  },
+  "market_implied": {
+    "figures": {
+      "implied_forward_eps": {
+        "ref": "der:implied_forward_eps",
+        "figure": {
+          "ref": "der:implied_forward_eps",
+          "unit": "per_share",
+          "currency": "USD",
+          "provenance_kind": "UNAVAILABLE"
+        },
+        "conditional_on": [
+          "refc:valuation_reference"
+        ],
+        "derivation_ref": "der:implied_forward_eps",
+        "validation_state": "UNVALIDATED"
+      },
+      "required_eps_cagr": {
+        "ref": "der:required_eps_cagr",
+        "figure": {
+          "ref": "der:required_eps_cagr",
+          "unit": "ratio",
+          "currency": null,
+          "provenance_kind": "UNAVAILABLE"
+        },
+        "conditional_on": [
+          "refc:valuation_reference"
+        ],
+        "derivation_ref": "der:required_eps_cagr",
+        "validation_state": "UNVALIDATED"
+      },
+      "implied_fcf": {
+        "ref": "der:implied_fcf",
+        "figure": {
+          "ref": "der:implied_fcf",
+          "unit": "currency",
+          "currency": "USD",
+          "provenance_kind": "UNAVAILABLE"
+        },
+        "conditional_on": [
+          "refc:pfcf_reference"
+        ],
+        "derivation_ref": "der:implied_fcf",
+        "validation_state": "UNVALIDATED"
+      },
+      "implied_ebitda": {
+        "ref": "der:implied_ebitda",
+        "figure": {
+          "ref": "der:implied_ebitda",
+          "unit": "currency",
+          "currency": "USD",
+          "provenance_kind": "UNAVAILABLE"
+        },
+        "conditional_on": [
+          "refc:ev_ebitda_reference"
+        ],
+        "derivation_ref": "der:implied_ebitda",
+        "validation_state": "UNVALIDATED"
+      },
+      "implied_revenue": {
+        "ref": "der:implied_revenue",
+        "figure": {
+          "ref": "der:implied_revenue",
+          "unit": "currency",
+          "currency": "USD",
+          "provenance_kind": "UNAVAILABLE"
+        },
+        "conditional_on": [
+          "refc:ps_reference"
+        ],
+        "derivation_ref": "der:implied_revenue",
+        "validation_state": "UNVALIDATED"
+      }
+    },
+    "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
+    "min_observations_for_reference": 20
+  },
+  "data_quality": {
+    "evidence_coverage": {
+      "available": 11,
+      "unavailable": 3,
+      "total": 14
+    },
+    "cross_source": {
+      "UNAVAILABLE": 6,
+      "METHODOLOGY_MISMATCH": 1
+    },
+    "acquisition_errors": [],
+    "consensus_forward_eps_period": "+1y",
+    "band_eligibility": {
+      "pe": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+      "ps": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+      "pfcf": "UNAVAILABLE",
+      "ev_ebitda": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+    },
+    "freshness": {
+      "as_of": "2026-09-28",
+      "window_days_by_cadence": {
+        "DAILY": 7,
+        "PERIODIC_FILING": 120
+      },
+      "checked": 28,
+      "aged_observations": 8,
+      "stale_metrics": [
+        "shares_outstanding"
+      ],
+      "no_recent_value_for": [
+        "shares_outstanding"
+      ],
+      "note": "An individual observation is 'aged' when the source published it before the freshness window; that is normal for a filing about an earlier period and is not by itself a defect. A metric is listed in 'stale_metrics' when its newest observation is older than the window, which means it has no current value. Both are retained; neither is substituted.",
+      "by_metric": {
+        "cash": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "consensus_forward_eps": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "debt": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "ebitda": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "enterprise_value": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-09-22",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "eps_diluted": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-06-30",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "ev_ebitda_band": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-09-22",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "forward_eps": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "free_cash_flow": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "market_cap": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-09-22",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "net_income": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-06-30",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "pe_band": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-09-22",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "pfcf_band": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "price": {
+          "checked": 1,
+          "undated_availability": 0,
+          "latest_as_of": "2026-09-28",
+          "latest_availability": "2026-09-28",
+          "aged_observation_refs": [],
+          "current_value_age_days": 0,
+          "window_days": 120,
+          "recency": "CURRENT"
+        },
+        "price_volume_metrics": {
+          "checked": 1,
+          "undated_availability": 0,
+          "latest_as_of": null,
+          "latest_availability": "2026-09-28",
+          "aged_observation_refs": [],
+          "current_value_age_days": 0,
+          "window_days": 120,
+          "recency": "CURRENT"
+        },
+        "ps_band": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": "2026-09-22",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "revenue": {
+          "checked": 2,
+          "undated_availability": 2,
+          "latest_as_of": "2026-06-30",
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        },
+        "shares_outstanding": {
+          "checked": 9,
+          "undated_availability": 1,
+          "latest_as_of": "2025-12-31",
+          "latest_availability": "2026-04-16T10:05:49.000Z",
+          "aged_observation_refs": [
+            "obs:cmp-shares_outstanding-sec-2018-12-31-000119312519108390",
+            "obs:cmp-shares_outstanding-sec-2019-12-31-000119312520107579",
+            "obs:cmp-shares_outstanding-sec-2020-12-31-000119312521118512",
+            "obs:cmp-shares_outstanding-sec-2021-12-31-000119312522104891",
+            "obs:cmp-shares_outstanding-sec-2022-12-31-000119312523107214",
+            "obs:cmp-shares_outstanding-sec-2023-12-31-000119312524099840",
+            "obs:cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+            "obs:cmp-shares_outstanding-sec-2025-12-31-000162828026025362"
+          ],
+          "current_value_age_days": 165,
+          "window_days": 120,
+          "recency": "NO_RECENT_VALUE"
+        },
+        "trailing_eps": {
+          "checked": 1,
+          "undated_availability": 1,
+          "latest_as_of": null,
+          "latest_availability": null,
+          "aged_observation_refs": [],
+          "current_value_age_days": null,
+          "recency": "UNDATED_AVAILABILITY"
+        }
+      }
+    },
+    "identity_conflicts": [
+      {
+        "check": "price_times_count_equals_market_cap",
+        "statement": "price x share count should reconcile with the reported market capitalisation, so the share count implied by that capitalisation should reconcile with the reported share count",
+        "status": "CONFLICTING",
+        "derived_ref": "der:implied_shares",
+        "derived_value": 4434032106.034711,
+        "derived_expression": "obs:ev-market-cap-001 / obs:ev-price-001",
+        "reported_ref": "obs:cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+        "reported_value": 25932733242.0,
+        "reported_observation_id": "cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+        "reported_provider": "SecEdgar",
+        "reported_as_of": "2024-12-31",
+        "reported_available_at": "2025-04-17T10:16:18.000Z",
+        "relative_difference": 0.8290179417396133,
+        "tolerance": {
+          "relative": 0.05,
+          "absolute": 1.0
+        },
+        "resolution": "NO_WINNER_SELECTED",
+        "explanation": "Both figures are retained unchanged. ST-EVA does not determine which basis is correct, and choosing one would be the failure this record exists to prevent."
+      }
+    ],
+    "series": {
+      "price": {
+        "observations": 1,
+        "providers": [
+          "YahooFinance+YahooFinanceFundamentals"
+        ],
+        "first_period": "2026-09-28",
+        "last_period": "2026-09-28",
+        "latest_value": 452.88,
+        "comparability": "SINGLE_OBSERVATION_NO_TREND",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 1,
+            "first_period": "2026-09-28",
+            "last_period": "2026-09-28",
+            "comparability": "SINGLE_OBSERVATION_NO_TREND",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      },
+      "revenue": {
+        "observations": 2,
+        "providers": [
+          "YahooFinanceFundamentals"
+        ],
+        "first_period": "2026-06-30",
+        "last_period": "2026-06-30",
+        "latest_value": 4440492457000.0,
+        "comparability": "THIN_SERIES",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 2,
+            "first_period": "2026-06-30",
+            "last_period": "2026-06-30",
+            "comparability": "THIN_SERIES",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      },
+      "enterprise_value": {
+        "observations": 1,
+        "providers": [
+          "YahooFinanceFundamentals"
+        ],
+        "first_period": "2026-09-22",
+        "last_period": "2026-09-22",
+        "latest_value": 1928367260763.0,
+        "comparability": "SINGLE_OBSERVATION_NO_TREND",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 1,
+            "first_period": "2026-09-22",
+            "last_period": "2026-09-22",
+            "comparability": "SINGLE_OBSERVATION_NO_TREND",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      },
+      "market_cap": {
+        "observations": 1,
+        "providers": [
+          "YahooFinanceFundamentals"
+        ],
+        "first_period": "2026-09-22",
+        "last_period": "2026-09-22",
+        "latest_value": 2008084460181.0,
+        "comparability": "SINGLE_OBSERVATION_NO_TREND",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 1,
+            "first_period": "2026-09-22",
+            "last_period": "2026-09-22",
+            "comparability": "SINGLE_OBSERVATION_NO_TREND",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      },
+      "shares_outstanding": {
+        "observations": 8,
+        "providers": [
+          "SecEdgar"
+        ],
+        "first_period": "2018-12-31",
+        "last_period": "2025-12-31",
+        "latest_value": 25932524521.0,
+        "comparability": "SERIES_AVAILABLE",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 8,
+            "first_period": "2018-12-31",
+            "last_period": "2025-12-31",
+            "comparability": "SERIES_AVAILABLE",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      },
+      "net_income": {
+        "observations": 1,
+        "providers": [
+          "YahooFinanceFundamentals"
+        ],
+        "first_period": "2026-06-30",
+        "last_period": "2026-06-30",
+        "latest_value": 2216808460000.0,
+        "comparability": "SINGLE_OBSERVATION_NO_TREND",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 1,
+            "first_period": "2026-06-30",
+            "last_period": "2026-06-30",
+            "comparability": "SINGLE_OBSERVATION_NO_TREND",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      },
+      "eps_diluted": {
+        "observations": 1,
+        "providers": [
+          "YahooFinanceFundamentals"
+        ],
+        "first_period": "2026-06-30",
+        "last_period": "2026-06-30",
+        "latest_value": 427.45,
+        "comparability": "SINGLE_OBSERVATION_NO_TREND",
+        "discontinuities": [],
+        "trend_is_explained": false,
+        "bases": {
+          "REPORTED_PERIOD": {
+            "observations": 1,
+            "first_period": "2026-06-30",
+            "last_period": "2026-06-30",
+            "comparability": "SINGLE_OBSERVATION_NO_TREND",
+            "discontinuities": []
+          }
+        },
+        "note": "Points are grouped by kind. A discrete reported period and a constructed trailing window are the same metric but not the same measure, and are never differenced against one another."
+      }
+    }
+  },
+  "unavailable": [
+    {
+      "item": "pfcf_band",
+      "ref": "obs:ev-pfcf-band-001",
+      "reason": "pfcf_band was requested and not provided by YahooFinanceFundamentals",
+      "reason_kind": "NOT_REPORTED_BY_SOURCE",
+      "blocks": []
+    },
+    {
+      "item": "free_cash_flow",
+      "ref": "obs:ev-fcf-001",
+      "reason": "free_cash_flow was requested and not provided by YahooFinanceFundamentals",
+      "reason_kind": "NOT_REPORTED_BY_SOURCE",
+      "blocks": [
+        "der:current_pfcf"
+      ]
+    },
+    {
+      "item": "ebitda",
+      "ref": "obs:ev-ebitda-001",
+      "reason": "ebitda was requested and not provided by YahooFinanceFundamentals",
+      "reason_kind": "NOT_REPORTED_BY_SOURCE",
+      "blocks": [
+        "der:current_ev_ebitda"
+      ]
+    },
+    {
+      "item": "valuation_reference_multiple",
+      "ref": "refc:valuation_reference",
+      "reason": "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+      "reason_kind": "NO_REFERENCE_AVAILABLE",
+      "blocks": [
+        "der:implied_forward_eps",
+        "der:consensus_price_at_median",
+        "der:pe_percentile"
+      ]
+    },
+    {
+      "item": "pfcf_reference_multiple",
+      "ref": "refc:pfcf_reference",
+      "reason": "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+      "reason_kind": "NO_REFERENCE_AVAILABLE",
+      "blocks": [
+        "der:implied_fcf"
+      ]
+    },
+    {
+      "item": "ev_ebitda_reference_multiple",
+      "ref": "refc:ev_ebitda_reference",
+      "reason": "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+      "reason_kind": "NO_REFERENCE_AVAILABLE",
+      "blocks": [
+        "der:implied_ebitda"
+      ]
+    },
+    {
+      "item": "ps_reference_multiple",
+      "ref": "refc:ps_reference",
+      "reason": "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+      "reason_kind": "NO_REFERENCE_AVAILABLE",
+      "blocks": [
+        "der:implied_revenue"
+      ]
+    },
+    {
+      "item": "current_pfcf",
+      "ref": "der:current_pfcf",
+      "reason": "not computable: unavailable input(s) obs:ev-fcf-001",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "obs:ev-fcf-001"
+      ]
+    },
+    {
+      "item": "current_ev_ebitda",
+      "ref": "der:current_ev_ebitda",
+      "reason": "not computable: unavailable input(s) obs:ev-ebitda-001",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "obs:ev-ebitda-001",
+        "der:ev_ebitda_percentile"
+      ]
+    },
+    {
+      "item": "current_ps",
+      "ref": "der:current_ps",
+      "reason": "divide v1 combines amounts in different currencies (operand 0 is USD, operand 1 is TWD). The result would be a number with no economic meaning, so it is refused. Convert to a common currency at a stated rate, or do not combine them.",
+      "reason_kind": "INCOMPATIBLE_CURRENCY",
+      "blocks": [
+        "der:ps_percentile"
+      ]
+    },
+    {
+      "item": "implied_forward_eps",
+      "ref": "der:implied_forward_eps",
+      "reason": "not computable: unavailable input(s) refc:valuation_reference",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "refc:valuation_reference",
+        "der:required_eps_cagr"
+      ]
+    },
+    {
+      "item": "consensus_price_at_median",
+      "ref": "der:consensus_price_at_median",
+      "reason": "not computable: unavailable input(s) refc:valuation_reference",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "refc:valuation_reference"
+      ]
+    },
+    {
+      "item": "required_eps_cagr",
+      "ref": "der:required_eps_cagr",
+      "reason": "not computable: unavailable input(s) der:implied_forward_eps",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "der:implied_forward_eps"
+      ]
+    },
+    {
+      "item": "implied_fcf",
+      "ref": "der:implied_fcf",
+      "reason": "not computable: unavailable input(s) refc:pfcf_reference",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "refc:pfcf_reference"
+      ]
+    },
+    {
+      "item": "implied_ebitda",
+      "ref": "der:implied_ebitda",
+      "reason": "not computable: unavailable input(s) refc:ev_ebitda_reference",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "refc:ev_ebitda_reference"
+      ]
+    },
+    {
+      "item": "implied_revenue",
+      "ref": "der:implied_revenue",
+      "reason": "not computable: unavailable input(s) refc:ps_reference",
+      "reason_kind": "MISSING_INPUT",
+      "blocks": [
+        "refc:ps_reference"
+      ]
+    },
+    {
+      "item": "pe_percentile",
+      "ref": "der:pe_percentile",
+      "reason": "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it",
+      "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+      "blocks": [
+        "refc:valuation_reference"
+      ]
+    },
+    {
+      "item": "ps_percentile",
+      "ref": "der:ps_percentile",
+      "reason": "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it",
+      "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+      "blocks": [
+        "der:current_ps"
+      ]
+    },
+    {
+      "item": "ev_ebitda_percentile",
+      "ref": "der:ev_ebitda_percentile",
+      "reason": "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it",
+      "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+      "blocks": [
+        "der:current_ev_ebitda"
+      ]
+    }
+  ],
+  "limitations": [
+    "This is reverse valuation, not a price target.",
+    "Implied earnings/growth are conditional on the selected multiple.",
+    "Missing financial data is not estimated.",
+    "valuation_reference was unavailable, so every figure conditional on it is absent rather than estimated.",
+    "pfcf_reference was unavailable, so every figure conditional on it is absent rather than estimated.",
+    "ev_ebitda_reference was unavailable, so every figure conditional on it is absent rather than estimated.",
+    "ps_reference was unavailable, so every figure conditional on it is absent rather than estimated."
+  ],
+  "provenance": {
+    "refs": {
+      "der:consensus_forward_pe": {
+        "derivation": "der:consensus_forward_pe",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "ref": "der:consensus_forward_pe",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:consensus_price_at_median": {
+        "derivation": "der:consensus_price_at_median",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:consensus_price_at_median",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:current_ev_ebitda": {
+        "derivation": "der:current_ev_ebitda",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:current_ev_ebitda",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:current_pe": {
+        "derivation": "der:current_pe",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "ref": "der:current_pe",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:current_pfcf": {
+        "derivation": "der:current_pfcf",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:current_pfcf",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:current_ps": {
+        "derivation": "der:current_ps",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:current_ps",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:ev_ebitda_percentile": {
+        "derivation": "der:ev_ebitda_percentile",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:ev_ebitda_percentile",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:forward_pe": {
+        "derivation": "der:forward_pe",
+        "unit": "multiple",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "ref": "der:forward_pe",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:implied_ebitda": {
+        "derivation": "der:implied_ebitda",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:implied_ebitda",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:implied_fcf": {
+        "derivation": "der:implied_fcf",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:implied_fcf",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:implied_forward_eps": {
+        "derivation": "der:implied_forward_eps",
+        "unit": "per_share",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:implied_forward_eps",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:implied_revenue": {
+        "derivation": "der:implied_revenue",
+        "unit": "currency",
+        "currency": "USD",
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:implied_revenue",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:implied_shares": {
+        "derivation": "der:implied_shares",
+        "unit": "count",
+        "currency": null,
+        "provenance_kind": "DERIVED",
+        "ref": "der:implied_shares",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:pe_percentile": {
+        "derivation": "der:pe_percentile",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:pe_percentile",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:ps_percentile": {
+        "derivation": "der:ps_percentile",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:ps_percentile",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "der:required_eps_cagr": {
+        "derivation": "der:required_eps_cagr",
+        "unit": "ratio",
+        "currency": null,
+        "provenance_kind": "UNAVAILABLE",
+        "ref": "der:required_eps_cagr",
+        "kind": "der",
+        "operand_field": "value"
+      },
+      "ev:ev-consensus-eps-001": {
+        "observation": "obs:ev-consensus-eps-001",
+        "legacy_row": {
+          "evidence_id": "ev-consensus-eps-001",
+          "value": 21.9251,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Consensus forward EPS. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-consensus-eps-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-current-eps-001": {
+        "observation": "obs:ev-current-eps-001",
+        "legacy_row": {
+          "evidence_id": "ev-current-eps-001",
+          "value": 13.5,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Current/trailing EPS. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-current-eps-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-ebitda-001": {
+        "observation": "obs:ev-ebitda-001",
+        "legacy_row": {
+          "evidence_id": "ev-ebitda-001",
+          "value": "UNAVAILABLE",
+          "provider": "None",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Observed trailing EBITDA. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Unavailable",
+          "traceability": "Unavailable"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-ebitda-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-enterprise-value-001": {
+        "observation": "obs:ev-enterprise-value-001",
+        "legacy_row": {
+          "evidence_id": "ev-enterprise-value-001",
+          "value": 1928367260763.0,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Observed enterprise value. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-enterprise-value-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-ev-ebitda-band-001": {
+        "observation": "obs:ev-ev-ebitda-band-001",
+        "legacy_row": {
+          "evidence_id": "ev-ev-ebitda-band-001",
+          "value": {
+            "10th": 11.08864,
+            "25th": 13.6138,
+            "median": 13.8035,
+            "75th": 17.8008,
+            "90th": 17.97018,
+            "observations": 9
+          },
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "multiple",
+          "currency": "USD",
+          "definition": "Historical EV/EBITDA reference band.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-ev-ebitda-band-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-fcf-001": {
+        "observation": "obs:ev-fcf-001",
+        "legacy_row": {
+          "evidence_id": "ev-fcf-001",
+          "value": "UNAVAILABLE",
+          "provider": "None",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Observed trailing free cash flow. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Unavailable",
+          "traceability": "Unavailable"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-fcf-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-forward-eps-001": {
+        "observation": "obs:ev-forward-eps-001",
+        "legacy_row": {
+          "evidence_id": "ev-forward-eps-001",
+          "value": 21.9251,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Forward EPS. Used only when explicitly supplied.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-forward-eps-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-market-cap-001": {
+        "observation": "obs:ev-market-cap-001",
+        "legacy_row": {
+          "evidence_id": "ev-market-cap-001",
+          "value": 2008084460181.0,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Observed market capitalization. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-market-cap-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-metrics-001": {
+        "observation": "obs:ev-metrics-001",
+        "legacy_row": {
+          "evidence_id": "ev-metrics-001",
+          "value": {
+            "return_1d": 0.005037659184314203,
+            "return_5d": 0.017387765601095007,
+            "return_20d": 0.084690593982514,
+            "return_60d": 0.04311774705823024,
+            "realized_volatility_annualized": 0.3859758022034984,
+            "average_volume": 11974381.25,
+            "latest_volume_vs_average": -0.3429639631692869,
+            "observations": 64
+          },
+          "provider": "Python",
+          "source": "Deterministic calculation",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "ratio",
+          "currency": "USD",
+          "definition": "Price and volume metrics calculated from observed history.",
+          "source_type": "DETERMINISTIC_CALCULATION",
+          "quality": "High",
+          "traceability": "High"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-metrics-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-pe-band-001": {
+        "observation": "obs:ev-pe-band-001",
+        "legacy_row": {
+          "evidence_id": "ev-pe-band-001",
+          "value": {
+            "10th": 29.2605381,
+            "25th": 31.434897749999998,
+            "median": 31.9665355,
+            "75th": 32.64076525,
+            "90th": 34.4892664,
+            "observations": 8
+          },
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "multiple",
+          "currency": "USD",
+          "definition": "Historical P/E reference band.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-pe-band-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-pfcf-band-001": {
+        "observation": "obs:ev-pfcf-band-001",
+        "legacy_row": {
+          "evidence_id": "ev-pfcf-band-001",
+          "value": "UNAVAILABLE",
+          "provider": "None",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "multiple",
+          "currency": "USD",
+          "definition": "Historical P/FCF reference band.",
+          "source_type": "API_LIVE",
+          "quality": "Unavailable",
+          "traceability": "Unavailable"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-pfcf-band-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-price-001": {
+        "observation": "obs:ev-price-001",
+        "legacy_row": {
+          "evidence_id": "ev-price-001",
+          "value": 452.88,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Yahoo Finance chart API",
+          "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/TSM?range=3mo&interval=1d",
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Observed current or latest market price.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "High"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-price-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-ps-band-001": {
+        "observation": "obs:ev-ps-band-001",
+        "legacy_row": {
+          "evidence_id": "ev-ps-band-001",
+          "value": {
+            "10th": 11.4331327,
+            "25th": 12.38452,
+            "median": 13.748383,
+            "75th": 15.947895749999999,
+            "90th": 16.2302142,
+            "observations": 8
+          },
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "multiple",
+          "currency": "USD",
+          "definition": "Historical P/S reference band.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-ps-band-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "ev:ev-revenue-001": {
+        "observation": "obs:ev-revenue-001",
+        "legacy_row": {
+          "evidence_id": "ev-revenue-001",
+          "value": 4440492457000.0,
+          "provider": "YahooFinance+YahooFinanceFundamentals",
+          "source": "Input data",
+          "source_url": null,
+          "as_of": "2026-09-28",
+          "unit": "USD",
+          "currency": "USD",
+          "definition": "Observed trailing revenue. Never synthesized.",
+          "source_type": "API_LIVE",
+          "quality": "Medium",
+          "traceability": "Medium"
+        },
+        "legacy_row_note": "the 2.2.3 presentation projection, retained because it stamps the instrument currency onto valuation multiples; the observation is the provenance",
+        "ref": "ev:ev-revenue-001",
+        "kind": "ev",
+        "operand_field": "value"
+      },
+      "obs:cmp-cash-yahoo-undated": {
+        "observation_id": "cmp-cash-yahoo-undated",
+        "metric": "cash",
+        "value": 3518010228736.0,
+        "unit": "currency",
+        "currency": null,
+        "currency_basis": "UNDECLARED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/TSM",
+        "definition": "Cash and cash equivalents at a balance sheet date. Never synthesized. Vendor 'total cash' may include short-term investments, which is a different concept.",
+        "methodology": "Yahoo quoteSummary financialData.totalCash; the module states no currency and no balance-sheet date for this figure, so neither is asserted",
+        "retrieved_at": "2026-09-29T05:02:06.437614+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "security_type": "UNDECLARED",
+          "reporting_currency": "UNDECLARED",
+          "source_declared": false
+        },
+        "ref": "obs:cmp-cash-yahoo-undated",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-debt-yahoo-undated": {
+        "observation_id": "cmp-debt-yahoo-undated",
+        "metric": "debt",
+        "value": 1068558516224.0,
+        "unit": "currency",
+        "currency": null,
+        "currency_basis": "UNDECLARED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/TSM",
+        "definition": "Total debt at a balance sheet date, composed from the filer's current and non-current debt concepts. Never synthesized.",
+        "methodology": "Yahoo quoteSummary financialData.totalDebt; the module states no currency and no balance-sheet date for this figure, so neither is asserted",
+        "retrieved_at": "2026-09-29T05:02:06.437614+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "security_type": "UNDECLARED",
+          "reporting_currency": "UNDECLARED",
+          "source_declared": false
+        },
+        "ref": "obs:cmp-debt-yahoo-undated",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-eps_diluted-yahoo-2026-06-30": {
+        "observation_id": "cmp-eps_diluted-yahoo-2026-06-30",
+        "metric": "eps_diluted",
+        "value": 427.45,
+        "unit": "per_share",
+        "currency": "TWD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": "2026-06-30",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Diluted earnings per share. Never synthesized. Per-share amounts are not strictly additive across periods.",
+        "methodology": "Yahoo fundamentals-timeseries trailingDilutedEPS; a trailing aggregate whose window the vendor does not publish",
+        "retrieved_at": "2026-09-29T05:02:06.437614+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "measurement_basis": "TRAILING_AGGREGATE",
+          "reporting_currency": "TWD",
+          "period_window": "UNDECLARED_BY_SOURCE",
+          "source_declared": true
+        },
+        "ref": "obs:cmp-eps_diluted-yahoo-2026-06-30",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-net_income-yahoo-2026-06-30": {
+        "observation_id": "cmp-net_income-yahoo-2026-06-30",
+        "metric": "net_income",
+        "value": 2216808460000.0,
+        "unit": "currency",
+        "currency": "TWD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": "2026-06-30",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Net income attributable to the parent. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingNetIncomeCommonStockholders; a trailing aggregate whose window the vendor does not publish",
+        "retrieved_at": "2026-09-29T05:02:06.437614+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "measurement_basis": "TRAILING_AGGREGATE",
+          "reporting_currency": "TWD",
+          "period_window": "UNDECLARED_BY_SOURCE",
+          "source_declared": true
+        },
+        "ref": "obs:cmp-net_income-yahoo-2026-06-30",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-revenue-yahoo-2026-06-30": {
+        "observation_id": "cmp-revenue-yahoo-2026-06-30",
+        "metric": "revenue",
+        "value": 4440492457000.0,
+        "unit": "currency",
+        "currency": "TWD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": "2026-06-30",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Observed trailing revenue. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingTotalRevenue; a trailing aggregate whose window the vendor does not publish",
+        "retrieved_at": "2026-09-29T05:02:06.437614+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "measurement_basis": "TRAILING_AGGREGATE",
+          "reporting_currency": "TWD",
+          "period_window": "UNDECLARED_BY_SOURCE",
+          "source_declared": true
+        },
+        "ref": "obs:cmp-revenue-yahoo-2026-06-30",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2018-12-31-000119312519108390": {
+        "observation_id": "cmp-shares_outstanding-sec-2018-12-31-000119312519108390",
+        "metric": "shares_outstanding",
+        "value": 25930380458.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2018-12-31",
+        "as_of": "2018-12-31",
+        "available_at": "2019-04-17T11:21:35.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-19-108390",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2018-12-31-000119312519108390",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2019-12-31-000119312520107579": {
+        "observation_id": "cmp-shares_outstanding-sec-2019-12-31-000119312520107579",
+        "metric": "shares_outstanding",
+        "value": 25930380458.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2019-12-31",
+        "as_of": "2019-12-31",
+        "available_at": "2020-04-15T10:35:58.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-20-107579",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2019-12-31-000119312520107579",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2020-12-31-000119312521118512": {
+        "observation_id": "cmp-shares_outstanding-sec-2020-12-31-000119312521118512",
+        "metric": "shares_outstanding",
+        "value": 25930380458.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2020-12-31",
+        "as_of": "2020-12-31",
+        "available_at": "2021-04-16T11:58:57.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-21-118512",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2020-12-31-000119312521118512",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2021-12-31-000119312522104891": {
+        "observation_id": "cmp-shares_outstanding-sec-2021-12-31-000119312522104891",
+        "metric": "shares_outstanding",
+        "value": 25930380458.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2021-12-31",
+        "as_of": "2021-12-31",
+        "available_at": "2022-04-14T10:49:10.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-22-104891",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2021-12-31-000119312522104891",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2022-12-31-000119312523107214": {
+        "observation_id": "cmp-shares_outstanding-sec-2022-12-31-000119312523107214",
+        "metric": "shares_outstanding",
+        "value": 25930380458.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2022-12-31",
+        "as_of": "2022-12-31",
+        "available_at": "2023-04-20T10:19:24.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-23-107214",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2022-12-31-000119312523107214",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2023-12-31-000119312524099840": {
+        "observation_id": "cmp-shares_outstanding-sec-2023-12-31-000119312524099840",
+        "metric": "shares_outstanding",
+        "value": 25932070992.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2023-12-31",
+        "as_of": "2023-12-31",
+        "available_at": "2024-04-18T10:27:53.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-24-099840",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2023-12-31-000119312524099840",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2024-12-31-000119312525083423": {
+        "observation_id": "cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+        "metric": "shares_outstanding",
+        "value": 25932733242.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2024-12-31",
+        "as_of": "2024-12-31",
+        "available_at": "2025-04-17T10:16:18.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001193125-25-083423",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-sec-2025-12-31-000162828026025362": {
+        "observation_id": "cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+        "metric": "shares_outstanding",
+        "value": 25932524521.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": "2025-12-31",
+        "as_of": "2025-12-31",
+        "available_at": "2026-04-16T10:05:49.000Z",
+        "available_at_basis": "ACCEPTANCE_DATETIME",
+        "provider": "SecEdgar",
+        "source_type": "REGULATORY_FILING",
+        "source_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001046179/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "SEC XBRL dei:EntityCommonStockSharesOutstanding as reported in 20-F accession 0001628280-26-025362",
+        "retrieved_at": "2026-09-29T05:02:07.092712+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [
+          "a single official source cannot cross-validate itself"
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "reporting_currency": "UNDECLARED",
+          "source_declared": true,
+          "taxonomy": "dei",
+          "concept": "EntityCommonStockSharesOutstanding",
+          "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+          "security_type": "REGISTERED_SECURITY",
+          "excludes_listing_adjustment": true
+        },
+        "ref": "obs:cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:cmp-shares_outstanding-yahoo-undated": {
+        "observation_id": "cmp-shares_outstanding-yahoo-undated",
+        "metric": "shares_outstanding",
+        "value": 5186474013.0,
+        "unit": "count",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/TSM",
+        "definition": "Shares outstanding at a stated date. Never synthesized. A period average diluted share count is a different concept.",
+        "methodology": "Yahoo quoteSummary defaultKeyStatistics.sharesOutstanding; undated, and sourced from the same regulatory cover page the filing source reads, so agreement is not independent corroboration",
+        "retrieved_at": "2026-09-29T05:02:06.437614+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": {
+          "security_type": "UNDECLARED",
+          "shares_basis": "UNDECLARED",
+          "source_declared": false
+        },
+        "ref": "obs:cmp-shares_outstanding-yahoo-undated",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-consensus-eps-001": {
+        "observation_id": "ev-consensus-eps-001",
+        "metric": "consensus_forward_eps",
+        "value": 21.9251,
+        "unit": "per_share",
+        "currency": "USD",
+        "currency_basis": "INSTRUMENT_DEFAULT",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/TSM",
+        "definition": "Consensus forward EPS. Never synthesized.",
+        "methodology": "Yahoo quoteSummary earningsTrend trend[period].earningsEstimate.avg",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-consensus-eps-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-current-eps-001": {
+        "observation_id": "ev-current-eps-001",
+        "metric": "trailing_eps",
+        "value": 13.5,
+        "unit": "per_share",
+        "currency": "USD",
+        "currency_basis": "INSTRUMENT_DEFAULT",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/TSM",
+        "definition": "Current/trailing EPS. Never synthesized.",
+        "methodology": "Yahoo quoteSummary defaultKeyStatistics.trailingEps",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-current-eps-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-ebitda-001": {
+        "observation_id": "ev-ebitda-001",
+        "metric": "ebitda",
+        "value": null,
+        "unit": "currency",
+        "currency": "TWD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Observed trailing EBITDA. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingEBITDA",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNAVAILABLE",
+        "status_reasons": [
+          "ebitda was requested but not provided by YahooFinanceFundamentals"
+        ],
+        "inputs": [],
+        "raw_preserved": false,
+        "basis": null,
+        "ref": "obs:ev-ebitda-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-enterprise-value-001": {
+        "observation_id": "ev-enterprise-value-001",
+        "metric": "enterprise_value",
+        "value": 1928367260763.0,
+        "unit": "currency",
+        "currency": "USD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": "2026-09-22",
+        "as_of": "2026-09-22",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Observed enterprise value. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingEnterpriseValue",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-enterprise-value-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-ev-ebitda-band-001": {
+        "observation_id": "ev-ev-ebitda-band-001",
+        "metric": "ev_ebitda_band",
+        "value": {
+          "10th": 11.08864,
+          "25th": 13.6138,
+          "median": 13.8035,
+          "75th": 17.8008,
+          "90th": 17.97018,
+          "observations": 9
+        },
+        "unit": "multiple",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": "2024-06-10",
+        "period_end": "2026-09-22",
+        "as_of": "2026-09-22",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Historical EV/EBITDA reference band.",
+        "methodology": "percentile band over Yahoo fundamentals-timeseries trailingEnterprisesValueEBITDARatio samples",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": 9,
+        "status": "INSUFFICIENT_OBSERVATIONS",
+        "status_reasons": [
+          "ev_ebitda_band carries 9 samples, below the 20 required for a reference multiple."
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-ev-ebitda-band-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-fcf-001": {
+        "observation_id": "ev-fcf-001",
+        "metric": "free_cash_flow",
+        "value": null,
+        "unit": "currency",
+        "currency": "TWD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Observed trailing free cash flow. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingFreeCashFlow",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNAVAILABLE",
+        "status_reasons": [
+          "free_cash_flow was requested but not provided by YahooFinanceFundamentals"
+        ],
+        "inputs": [],
+        "raw_preserved": false,
+        "basis": null,
+        "ref": "obs:ev-fcf-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-forward-eps-001": {
+        "observation_id": "ev-forward-eps-001",
+        "metric": "forward_eps",
+        "value": 21.9251,
+        "unit": "per_share",
+        "currency": "USD",
+        "currency_basis": "INSTRUMENT_DEFAULT",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/TSM",
+        "definition": "Forward EPS. Used only when explicitly supplied.",
+        "methodology": "Yahoo quoteSummary defaultKeyStatistics.forwardEps",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-forward-eps-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-market-cap-001": {
+        "observation_id": "ev-market-cap-001",
+        "metric": "market_cap",
+        "value": 2008084460181.0,
+        "unit": "currency",
+        "currency": "USD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": "2026-09-22",
+        "as_of": "2026-09-22",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Observed market capitalization. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingMarketCap",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-market-cap-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-metrics-001": {
+        "observation_id": "ev-metrics-001",
+        "metric": "price_volume_metrics",
+        "value": {
+          "return_1d": 0.005037659184314203,
+          "return_5d": 0.017387765601095007,
+          "return_20d": 0.084690593982514,
+          "return_60d": 0.04311774705823024,
+          "realized_volatility_annualized": 0.3859758022034984,
+          "average_volume": 11974381.25,
+          "latest_volume_vs_average": -0.3429639631692869,
+          "observations": 64
+        },
+        "unit": "ratio",
+        "currency": "USD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": "2026-09-28",
+        "available_at_basis": "OBSERVATION_INSTANT",
+        "provider": "Python",
+        "source_type": "DETERMINISTIC_CALCULATION",
+        "source_url": null,
+        "definition": "Price and volume metrics calculated from observed history.",
+        "methodology": "deterministic-python price and volume statistics from observed history",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "VALID",
+        "status_reasons": [],
+        "inputs": [
+          "obs-price-history-001",
+          "obs-volume-history-001"
+        ],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-metrics-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-pe-band-001": {
+        "observation_id": "ev-pe-band-001",
+        "metric": "pe_band",
+        "value": {
+          "10th": 29.2605381,
+          "25th": 31.434897749999998,
+          "median": 31.9665355,
+          "75th": 32.64076525,
+          "90th": 34.4892664,
+          "observations": 8
+        },
+        "unit": "multiple",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": "2024-06-10",
+        "period_end": "2026-09-22",
+        "as_of": "2026-09-22",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Historical P/E reference band.",
+        "methodology": "percentile band over Yahoo fundamentals-timeseries trailingPeRatio samples",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": 8,
+        "status": "INSUFFICIENT_OBSERVATIONS",
+        "status_reasons": [
+          "pe_band carries 8 samples, below the 20 required for a reference multiple."
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-pe-band-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-pfcf-band-001": {
+        "observation_id": "ev-pfcf-band-001",
+        "metric": "pfcf_band",
+        "value": null,
+        "unit": "multiple",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": null,
+        "period_end": null,
+        "as_of": null,
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Historical P/FCF reference band.",
+        "methodology": "percentile band over Yahoo fundamentals-timeseries trailingMarketCap / trailingFreeCashFlow samples",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNAVAILABLE",
+        "status_reasons": [
+          "pfcf_band was requested but not provided by YahooFinanceFundamentals"
+        ],
+        "inputs": [],
+        "raw_preserved": false,
+        "basis": null,
+        "ref": "obs:ev-pfcf-band-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-price-001": {
+        "observation_id": "ev-price-001",
+        "metric": "price",
+        "value": 452.88,
+        "unit": "currency",
+        "currency": "USD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": "2026-09-28",
+        "as_of": "2026-09-28",
+        "available_at": "2026-09-28",
+        "available_at_basis": "OBSERVATION_INSTANT",
+        "provider": "YahooFinance+YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/TSM?range=3mo&interval=1d",
+        "definition": "Observed current or latest market price.",
+        "methodology": "Yahoo Finance chart API",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "UNVERIFIABLE",
+        "status_reasons": [],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-price-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-ps-band-001": {
+        "observation_id": "ev-ps-band-001",
+        "metric": "ps_band",
+        "value": {
+          "10th": 11.4331327,
+          "25th": 12.38452,
+          "median": 13.748383,
+          "75th": 15.947895749999999,
+          "90th": 16.2302142,
+          "observations": 8
+        },
+        "unit": "multiple",
+        "currency": null,
+        "currency_basis": "NOT_APPLICABLE",
+        "period_start": "2024-06-10",
+        "period_end": "2026-09-22",
+        "as_of": "2026-09-22",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Historical P/S reference band.",
+        "methodology": "percentile band over Yahoo fundamentals-timeseries trailingPsRatio samples",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": 8,
+        "status": "INSUFFICIENT_OBSERVATIONS",
+        "status_reasons": [
+          "ps_band carries 8 samples, below the 20 required for a reference multiple."
+        ],
+        "inputs": [],
+        "raw_preserved": true,
+        "basis": null,
+        "ref": "obs:ev-ps-band-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "obs:ev-revenue-001": {
+        "observation_id": "ev-revenue-001",
+        "metric": "revenue",
+        "value": 4440492457000.0,
+        "unit": "currency",
+        "currency": "TWD",
+        "currency_basis": "REPORTED",
+        "period_start": null,
+        "period_end": "2026-06-30",
+        "as_of": "2026-06-30",
+        "available_at": null,
+        "available_at_basis": "UNDECLARED",
+        "provider": "YahooFinanceFundamentals",
+        "source_type": "API_LIVE",
+        "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/TSM",
+        "definition": "Observed trailing revenue. Never synthesized.",
+        "methodology": "Yahoo fundamentals-timeseries trailingTotalRevenue",
+        "retrieved_at": "2026-09-29T05:02:06.415548+00:00",
+        "observation_count": null,
+        "status": "CURRENCY_MISMATCH",
+        "status_reasons": [
+          "Revenue currency does not match market cap currency."
+        ],
+        "inputs": [],
+        "raw_preserved": false,
+        "basis": null,
+        "ref": "obs:ev-revenue-001",
+        "kind": "obs",
+        "operand_field": "value"
+      },
+      "refc:ev_ebitda_reference": {
+        "metric": "ev_ebitda",
+        "multiple": null,
+        "basis": "NONE",
+        "operand_field": "multiple",
+        "provenance_kind": "UNAVAILABLE",
+        "source_ref": null,
+        "source_statistic": "median",
+        "source_observation_count": 9,
+        "eligible_as_reference": false,
+        "eligibility_rule": "a band needs at least 20 usable observations",
+        "eligibility_reason": "9 observations is below the required count",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "selection_method": "none",
+        "user_overridden": false,
+        "ref": "refc:ev_ebitda_reference",
+        "kind": "refc"
+      },
+      "refc:horizon_years": {
+        "multiple": 1.0,
+        "operand_field": "multiple",
+        "meaning": "the horizon used for the required EPS CAGR, in years",
+        "provenance_kind": "OBSERVED",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "ref": "refc:horizon_years",
+        "kind": "refc"
+      },
+      "refc:one": {
+        "multiple": 1.0,
+        "operand_field": "multiple",
+        "meaning": "the additive identity, used where the 2.2.3 engine writes 'x / y - 1' as a ratio and a subtraction",
+        "provenance_kind": "OBSERVED",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "ref": "refc:one",
+        "kind": "refc"
+      },
+      "refc:pfcf_reference": {
+        "metric": "pfcf",
+        "multiple": null,
+        "basis": "NONE",
+        "operand_field": "multiple",
+        "provenance_kind": "UNAVAILABLE",
+        "source_ref": null,
+        "source_statistic": "median",
+        "source_observation_count": null,
+        "eligible_as_reference": false,
+        "eligibility_rule": "a band needs at least 20 usable observations",
+        "eligibility_reason": "the band declares no observation count and is treated as usable",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "selection_method": "none",
+        "user_overridden": false,
+        "ref": "refc:pfcf_reference",
+        "kind": "refc"
+      },
+      "refc:ps_reference": {
+        "metric": "ps",
+        "multiple": null,
+        "basis": "NONE",
+        "operand_field": "multiple",
+        "provenance_kind": "UNAVAILABLE",
+        "source_ref": null,
+        "source_statistic": "median",
+        "source_observation_count": 8,
+        "eligible_as_reference": false,
+        "eligibility_rule": "a band needs at least 20 usable observations",
+        "eligibility_reason": "8 observations is below the required count",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "selection_method": "none",
+        "user_overridden": false,
+        "ref": "refc:ps_reference",
+        "kind": "refc"
+      },
+      "refc:trading_periods": {
+        "multiple": 252.0,
+        "operand_field": "multiple",
+        "meaning": "trading days per year, the annualisation convention applied to realised volatility",
+        "provenance_kind": "OBSERVED",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "ref": "refc:trading_periods",
+        "kind": "refc"
+      },
+      "refc:valuation_reference": {
+        "metric": "pe",
+        "multiple": null,
+        "basis": "NONE",
+        "operand_field": "multiple",
+        "provenance_kind": "UNAVAILABLE",
+        "source_ref": null,
+        "source_statistic": "median",
+        "source_observation_count": 8,
+        "eligible_as_reference": false,
+        "eligibility_rule": "a band needs at least 20 usable observations",
+        "eligibility_reason": "8 observations is below the required count",
+        "selected_at": "2026-09-29T05:02:11.026029+00:00",
+        "selection_method": "none",
+        "user_overridden": false,
+        "ref": "refc:valuation_reference",
+        "kind": "refc"
+      },
+      "val:assets:cross_source": {
+        "metric": "assets",
+        "status": "UNAVAILABLE",
+        "comparable": false,
+        "left_observation_id": null,
+        "right_observation_id": null,
+        "right_observation_ids": [],
+        "validation": {
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "no usable value from the vendor side; no usable value from the filing side"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "assets",
+            "vendor_observation": null,
+            "filing_observation": null,
+            "period_window_days": 7,
+            "independence": "NOT_INDEPENDENT",
+            "required_unit": "currency",
+            "required_period_type": "instant",
+            "required_measurement_basis": "INSTANT",
+            "known_caveats": [
+              "The vendor publishes no total-assets counterpart; its fundamentals-timeseries request for total assets returns HTTP 404."
+            ]
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.005,
+            "absolute": 50000000.0,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "assets could not be cross-checked: vendor and filing side unavailable. Neither side is treated as the correct answer.",
+          "references": []
+        },
+        "independence": "NOT_INDEPENDENT",
+        "ref": "val:assets:cross_source",
+        "kind": "val"
+      },
+      "val:cash:cross_source": {
+        "metric": "cash",
+        "status": "UNAVAILABLE",
+        "comparable": false,
+        "left_observation_id": "cmp-cash-yahoo-undated",
+        "right_observation_id": null,
+        "right_observation_ids": [],
+        "validation": {
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "no usable value from the filing side"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "cash",
+            "vendor_observation": "cmp-cash-yahoo-undated",
+            "filing_observation": null,
+            "period_window_days": 7,
+            "independence": "UNVERIFIED_INDEPENDENCE",
+            "required_unit": "currency",
+            "required_period_type": "instant",
+            "required_measurement_basis": "INSTANT",
+            "known_caveats": [
+              "The vendor's totalCash includes short-term investments; the filing-side cash concept does not. The two are different quantities."
+            ]
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.01,
+            "absolute": 50000000.0,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "cash could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+          "references": [
+            "cmp-cash-yahoo-undated"
+          ]
+        },
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "ref": "val:cash:cross_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2018-12-31-000119312519108390:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2018-12-31-000119312519108390",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 2721 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2018-12-31",
+        "period_start": null,
+        "period_end": "2018-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2018-12-31-000119312519108390:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2019-12-31-000119312520107579:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2019-12-31-000119312520107579",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 2357 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2019-12-31",
+        "period_start": null,
+        "period_end": "2019-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2019-12-31-000119312520107579:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2020-12-31-000119312521118512:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2020-12-31-000119312521118512",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 1991 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2020-12-31",
+        "period_start": null,
+        "period_end": "2020-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2020-12-31-000119312521118512:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2021-12-31-000119312522104891:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2021-12-31-000119312522104891",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 1628 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2021-12-31",
+        "period_start": null,
+        "period_end": "2021-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2021-12-31-000119312522104891:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2022-12-31-000119312523107214:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2022-12-31-000119312523107214",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 1257 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2022-12-31",
+        "period_start": null,
+        "period_end": "2022-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2022-12-31-000119312523107214:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2023-12-31-000119312524099840:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2023-12-31-000119312524099840",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 893 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2023-12-31",
+        "period_start": null,
+        "period_end": "2023-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2023-12-31-000119312524099840:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2024-12-31-000119312525083423:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2024-12-31-000119312525083423",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 529 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2024-12-31",
+        "period_start": null,
+        "period_end": "2024-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2024-12-31-000119312525083423:single_source",
+        "kind": "val"
+      },
+      "val:cmp-shares_outstanding-sec-2025-12-31-000162828026025362:single_source": {
+        "subject": "obs:cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+        "status": "STALE",
+        "reasons": [
+          "the source published this observation 165 days before the context's as-of date, past the 120-day freshness window for its cadence"
+        ],
+        "checked_at": "2026-09-29T05:02:07.092712+00:00",
+        "value_snapshot": null,
+        "as_of": "2025-12-31",
+        "period_start": null,
+        "period_end": "2025-12-31",
+        "ref": "val:cmp-shares_outstanding-sec-2025-12-31-000162828026025362:single_source",
+        "kind": "val"
+      },
+      "val:debt:cross_source": {
+        "metric": "debt",
+        "status": "UNAVAILABLE",
+        "comparable": false,
+        "left_observation_id": "cmp-debt-yahoo-undated",
+        "right_observation_id": null,
+        "right_observation_ids": [],
+        "validation": {
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "no usable value from the filing side"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "debt",
+            "vendor_observation": "cmp-debt-yahoo-undated",
+            "filing_observation": null,
+            "period_window_days": 7,
+            "independence": "UNVERIFIED_INDEPENDENCE",
+            "required_unit": "currency",
+            "required_period_type": "instant",
+            "required_measurement_basis": "INSTANT",
+            "known_caveats": [
+              "The filing taxonomy publishes no single total-debt concept. The figure is composed from the filer's current and non-current debt concepts, and filers compose debt differently."
+            ]
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.01,
+            "absolute": 50000000.0,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "debt could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+          "references": [
+            "cmp-debt-yahoo-undated"
+          ]
+        },
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "ref": "val:debt:cross_source",
+        "kind": "val"
+      },
+      "val:eps_diluted:cross_source": {
+        "metric": "eps_diluted",
+        "status": "UNAVAILABLE",
+        "comparable": false,
+        "left_observation_id": "cmp-eps_diluted-yahoo-2026-06-30",
+        "right_observation_id": null,
+        "right_observation_ids": [],
+        "validation": {
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "no usable value from the filing side"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "eps_diluted",
+            "vendor_observation": "cmp-eps_diluted-yahoo-2026-06-30",
+            "filing_observation": null,
+            "period_window_days": 7,
+            "independence": "UNVERIFIED_INDEPENDENCE",
+            "required_unit": "per_share",
+            "required_period_type": "duration",
+            "required_measurement_basis": "TTM",
+            "known_caveats": [
+              "Per-share amounts are not strictly additive: summing four quarterly diluted EPS figures only reproduces a trailing figure while the share denominator is constant."
+            ]
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.01,
+            "absolute": 0.01,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "eps_diluted could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+          "references": [
+            "cmp-eps_diluted-yahoo-2026-06-30"
+          ]
+        },
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "ref": "val:eps_diluted:cross_source",
+        "kind": "val"
+      },
+      "val:net_income:cross_source": {
+        "metric": "net_income",
+        "status": "UNAVAILABLE",
+        "comparable": false,
+        "left_observation_id": "cmp-net_income-yahoo-2026-06-30",
+        "right_observation_id": null,
+        "right_observation_ids": [],
+        "validation": {
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "no usable value from the filing side"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "net_income",
+            "vendor_observation": "cmp-net_income-yahoo-2026-06-30",
+            "filing_observation": null,
+            "period_window_days": 7,
+            "independence": "UNVERIFIED_INDEPENDENCE",
+            "required_unit": "currency",
+            "required_period_type": "duration",
+            "required_measurement_basis": "TTM",
+            "known_caveats": [
+              "The vendor does not publish the trailing window it used; the match rests on the as-of date, not on a declared period."
+            ],
+            "independence_note": "The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified."
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.005,
+            "absolute": 50000000.0,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "net_income could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+          "references": [
+            "cmp-net_income-yahoo-2026-06-30"
+          ]
+        },
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "ref": "val:net_income:cross_source",
+        "kind": "val"
+      },
+      "val:revenue:cross_source": {
+        "metric": "revenue",
+        "status": "UNAVAILABLE",
+        "comparable": false,
+        "left_observation_id": "cmp-revenue-yahoo-2026-06-30",
+        "right_observation_id": null,
+        "right_observation_ids": [],
+        "validation": {
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "no usable value from the filing side"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "revenue",
+            "vendor_observation": "cmp-revenue-yahoo-2026-06-30",
+            "filing_observation": null,
+            "period_window_days": 7,
+            "independence": "UNVERIFIED_INDEPENDENCE",
+            "required_unit": "currency",
+            "required_period_type": "duration",
+            "required_measurement_basis": "TTM",
+            "known_caveats": [
+              "The vendor does not publish the trailing window it used; the match rests on the as-of date, not on a declared period."
+            ],
+            "independence_note": "The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified."
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.005,
+            "absolute": 50000000.0,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "revenue could not be cross-checked: filing side unavailable. Neither side is treated as the correct answer.",
+          "references": [
+            "cmp-revenue-yahoo-2026-06-30"
+          ]
+        },
+        "independence": "UNVERIFIED_INDEPENDENCE",
+        "ref": "val:revenue:cross_source",
+        "kind": "val"
+      },
+      "val:shares_outstanding:cross_source": {
+        "metric": "shares_outstanding",
+        "status": "METHODOLOGY_MISMATCH",
+        "comparable": false,
+        "left_observation_id": "cmp-shares_outstanding-yahoo-undated",
+        "right_observation_id": "cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+        "right_observation_ids": [],
+        "validation": {
+          "status": "METHODOLOGY_MISMATCH",
+          "reasons": [
+            "the two counts differ by a factor of 5.0000 and one source does not declare its share basis"
+          ],
+          "checked_at": "",
+          "comparison_basis": {
+            "metric": "shares_outstanding",
+            "vendor_observation": "cmp-shares_outstanding-yahoo-undated",
+            "filing_observation": "cmp-shares_outstanding-sec-2025-12-31-000162828026025362",
+            "period_window_days": 7,
+            "independence": "NOT_INDEPENDENT",
+            "required_unit": "count",
+            "required_period_type": "instant",
+            "required_measurement_basis": "INSTANT",
+            "known_caveats": [
+              "The vendor publishes no date for this count, so the two figures cannot be confirmed to be contemporaneous.",
+              "A period-average diluted share count is a different concept from a cover-page count outstanding."
+            ],
+            "independence_note": "The vendor's share count is taken from the same regulatory cover page the filing source reads, so agreement here is not independent corroboration. It confirms the plumbing, not the number.",
+            "vendor_value": 5186474013.0,
+            "filing_value": 25932524521.0,
+            "vendor_unit": "count",
+            "filing_unit": "count",
+            "vendor_currency": null,
+            "filing_currency": null,
+            "vendor_as_of": null,
+            "filing_period_end": "2025-12-31",
+            "vendor_period": null,
+            "filing_period": null,
+            "vendor_available_at": null,
+            "filing_available_at": "2026-04-16T10:05:49.000Z",
+            "vendor_basis_declared": {
+              "security_type": "UNDECLARED",
+              "shares_basis": "UNDECLARED",
+              "source_declared": false
+            },
+            "filing_basis_declared": {
+              "reporting_currency": "UNDECLARED",
+              "source_declared": true,
+              "taxonomy": "dei",
+              "concept": "EntityCommonStockSharesOutstanding",
+              "shares_basis": "FILING_COVER_PAGE_REGISTERED_SECURITY",
+              "security_type": "REGISTERED_SECURITY",
+              "excludes_listing_adjustment": true
+            },
+            "value_ratio": 5.000029780540617,
+            "basis_differences": null,
+            "ratio_interpretation": "NOT_EXPLAINED. The counts differ by a factor of 5.0000, which is far more than a rounding difference. One source declares the security or share basis it counts and the other does not, so the two cannot be shown to be counting the same thing. ST-EVA does not infer what the factor represents."
+          },
+          "tolerance": {
+            "kind": "RELATIVE_AND_ABSOLUTE_BOUND",
+            "relative": 0.001,
+            "absolute": 10000.0,
+            "rule": "difference must satisfy both bounds"
+          },
+          "explanation": "shares_outstanding could not be compared. The two sources report counts differing by a factor of 5.0000, and one of them does not declare the security or share basis it is counting, so the two cannot be shown to be the same quantity. Both values are retained unchanged, no numeric verdict is issued, and no listing or share-class relationship is inferred.",
+          "references": [
+            "cmp-shares_outstanding-yahoo-undated",
+            "cmp-shares_outstanding-sec-2025-12-31-000162828026025362"
+          ]
+        },
+        "independence": "NOT_INDEPENDENT",
+        "ref": "val:shares_outstanding:cross_source",
+        "kind": "val"
+      }
+    },
+    "derivations": {
+      "der:consensus_forward_pe": {
+        "ref": "der:consensus_forward_pe",
+        "depends_on": [
+          "obs:ev-price-001",
+          "obs:ev-consensus-eps-001"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-price-001",
+            "obs:ev-consensus-eps-001"
+          ]
+        },
+        "expression": "obs:ev-price-001 / obs:ev-consensus-eps-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-28"
+        ],
+        "conditional_on": []
+      },
+      "der:consensus_price_at_median": {
+        "ref": "der:consensus_price_at_median",
+        "depends_on": [
+          "obs:ev-consensus-eps-001",
+          "refc:valuation_reference"
+        ],
+        "operation": {
+          "op": "multiply",
+          "version": "1",
+          "operands": [
+            "obs:ev-consensus-eps-001",
+            "refc:valuation_reference"
+          ]
+        },
+        "expression": "obs:ev-consensus-eps-001 * refc:valuation_reference",
+        "deterministic": true,
+        "inputs_observed_at": [],
+        "conditional_on": [
+          "refc:valuation_reference"
+        ]
+      },
+      "der:current_ev_ebitda": {
+        "ref": "der:current_ev_ebitda",
+        "depends_on": [
+          "obs:ev-enterprise-value-001",
+          "obs:ev-ebitda-001"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-enterprise-value-001",
+            "obs:ev-ebitda-001"
+          ]
+        },
+        "expression": "obs:ev-enterprise-value-001 / obs:ev-ebitda-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": []
+      },
+      "der:current_pe": {
+        "ref": "der:current_pe",
+        "depends_on": [
+          "obs:ev-price-001",
+          "obs:ev-current-eps-001"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-price-001",
+            "obs:ev-current-eps-001"
+          ]
+        },
+        "expression": "obs:ev-price-001 / obs:ev-current-eps-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-28"
+        ],
+        "conditional_on": []
+      },
+      "der:current_pfcf": {
+        "ref": "der:current_pfcf",
+        "depends_on": [
+          "obs:ev-market-cap-001",
+          "obs:ev-fcf-001"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-market-cap-001",
+            "obs:ev-fcf-001"
+          ]
+        },
+        "expression": "obs:ev-market-cap-001 / obs:ev-fcf-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": []
+      },
+      "der:current_ps": {
+        "ref": "der:current_ps",
+        "depends_on": [
+          "obs:ev-market-cap-001",
+          "obs:ev-revenue-001"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-market-cap-001",
+            "obs:ev-revenue-001"
+          ]
+        },
+        "expression": "obs:ev-market-cap-001 / obs:ev-revenue-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-06-30",
+          "2026-09-22"
+        ],
+        "conditional_on": []
+      },
+      "der:ev_ebitda_percentile": {
+        "ref": "der:ev_ebitda_percentile",
+        "depends_on": [
+          "der:current_ev_ebitda",
+          "obs:ev-ev-ebitda-band-001"
+        ],
+        "operation": {
+          "op": "percentile_position",
+          "version": "1",
+          "operands": [
+            "der:current_ev_ebitda",
+            "obs:ev-ev-ebitda-band-001"
+          ]
+        },
+        "expression": "percentile_position(der:current_ev_ebitda, obs:ev-ev-ebitda-band-001)",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": []
+      },
+      "der:forward_pe": {
+        "ref": "der:forward_pe",
+        "depends_on": [
+          "obs:ev-price-001",
+          "obs:ev-forward-eps-001"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-price-001",
+            "obs:ev-forward-eps-001"
+          ]
+        },
+        "expression": "obs:ev-price-001 / obs:ev-forward-eps-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-28"
+        ],
+        "conditional_on": []
+      },
+      "der:implied_ebitda": {
+        "ref": "der:implied_ebitda",
+        "depends_on": [
+          "obs:ev-enterprise-value-001",
+          "refc:ev_ebitda_reference"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-enterprise-value-001",
+            "refc:ev_ebitda_reference"
+          ]
+        },
+        "expression": "obs:ev-enterprise-value-001 / refc:ev_ebitda_reference",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": [
+          "refc:ev_ebitda_reference"
+        ]
+      },
+      "der:implied_fcf": {
+        "ref": "der:implied_fcf",
+        "depends_on": [
+          "obs:ev-market-cap-001",
+          "refc:pfcf_reference"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-market-cap-001",
+            "refc:pfcf_reference"
+          ]
+        },
+        "expression": "obs:ev-market-cap-001 / refc:pfcf_reference",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": [
+          "refc:pfcf_reference"
+        ]
+      },
+      "der:implied_forward_eps": {
+        "ref": "der:implied_forward_eps",
+        "depends_on": [
+          "obs:ev-price-001",
+          "refc:valuation_reference"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-price-001",
+            "refc:valuation_reference"
+          ]
+        },
+        "expression": "obs:ev-price-001 / refc:valuation_reference",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-28"
+        ],
+        "conditional_on": [
+          "refc:valuation_reference"
+        ]
+      },
+      "der:implied_revenue": {
+        "ref": "der:implied_revenue",
+        "depends_on": [
+          "obs:ev-market-cap-001",
+          "refc:ps_reference"
+        ],
+        "operation": {
+          "op": "divide",
+          "version": "1",
+          "operands": [
+            "obs:ev-market-cap-001",
+            "refc:ps_reference"
+          ]
+        },
+        "expression": "obs:ev-market-cap-001 / refc:ps_reference",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": [
+          "refc:ps_reference"
+        ]
+      },
+      "der:implied_shares": {
+        "ref": "der:implied_shares",
+        "depends_on": [
+          "obs:ev-market-cap-001",
+          "obs:ev-price-001"
+        ],
+        "operation": {
+          "op": "shares_from_market_cap",
+          "version": "1",
+          "operands": [
+            "obs:ev-market-cap-001",
+            "obs:ev-price-001"
+          ]
+        },
+        "expression": "obs:ev-market-cap-001 / obs:ev-price-001",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22",
+          "2026-09-28"
+        ],
+        "conditional_on": []
+      },
+      "der:pe_percentile": {
+        "ref": "der:pe_percentile",
+        "depends_on": [
+          "refc:valuation_reference",
+          "obs:ev-pe-band-001"
+        ],
+        "operation": {
+          "op": "percentile_position",
+          "version": "1",
+          "operands": [
+            "refc:valuation_reference",
+            "obs:ev-pe-band-001"
+          ]
+        },
+        "expression": "percentile_position(refc:valuation_reference, obs:ev-pe-band-001)",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": [
+          "refc:valuation_reference"
+        ]
+      },
+      "der:ps_percentile": {
+        "ref": "der:ps_percentile",
+        "depends_on": [
+          "der:current_ps",
+          "obs:ev-ps-band-001"
+        ],
+        "operation": {
+          "op": "percentile_position",
+          "version": "1",
+          "operands": [
+            "der:current_ps",
+            "obs:ev-ps-band-001"
+          ]
+        },
+        "expression": "percentile_position(der:current_ps, obs:ev-ps-band-001)",
+        "deterministic": true,
+        "inputs_observed_at": [
+          "2026-09-22"
+        ],
+        "conditional_on": []
+      },
+      "der:required_eps_cagr": {
+        "ref": "der:required_eps_cagr",
+        "depends_on": [
+          "der:implied_forward_eps",
+          "obs:ev-current-eps-001",
+          "refc:horizon_years"
+        ],
+        "operation": {
+          "op": "compound_growth_rate",
+          "version": "1",
+          "operands": [
+            "der:implied_forward_eps",
+            "obs:ev-current-eps-001",
+            "refc:horizon_years"
+          ]
+        },
+        "expression": "(der:implied_forward_eps / obs:ev-current-eps-001) ** (1 / refc:horizon_years) - 1",
+        "deterministic": true,
+        "inputs_observed_at": [],
+        "conditional_on": [
+          "refc:valuation_reference"
+        ]
+      }
+    },
+    "operation_registry": {
+      "registry_version": "1",
+      "operations": [
+        {
+          "operation_id": "add",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": [
+            "currency",
+            "per_share",
+            "multiple",
+            "ratio",
+            "count"
+          ],
+          "output_unit": "the operands' shared unit",
+          "formula": "a + b",
+          "unit_rule": "both operands must share a unit; the result is that unit. Mismatched units are a UnitRuleError, which is what stops a subtraction across currencies.",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "amount_per_share",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "per_share",
+          "formula": "amount / shares",
+          "unit_rule": "both operands are monetary and a share count, and the result is an amount per share. A separate operation from divide because the operand units alone cannot distinguish a price per share from a valuation multiple",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "annualized_volatility",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "stdev * sqrt(periods)",
+          "unit_rule": "periods is a traced ref so the annualisation convention is visible in the document rather than buried in the code",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "compound_growth_rate",
+          "version": "1",
+          "arity": 3,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "(end / start) ** (1 / years) - 1",
+          "unit_rule": "years is an operand, not a parameter, so the horizon is a traced input rather than an ambient assumption: it materially changes the answer",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "deviation_from_average",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "value / average - 1",
+          "unit_rule": "the average must be strictly positive",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "divide",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": [
+            "currency",
+            "per_share",
+            "multiple",
+            "ratio",
+            "count"
+          ],
+          "output_unit": "per the DIVIDE_UNITS table",
+          "formula": "a / b",
+          "unit_rule": "the result unit is looked up in DIVIDE_UNITS by (numerator unit, denominator unit); an absent pair is a UnitRuleError",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "enterprise_value",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "currency",
+          "formula": "market_cap + net_debt",
+          "unit_rule": "both operands must be currency; the 2.2.3 engine reads enterprise value as observed rather than computing it, so this entry is declared vocabulary",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "VOCABULARY"
+        },
+        {
+          "operation_id": "log_return",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "ln(to / from)",
+          "unit_rule": "both operands must be strictly positive",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "log_returns",
+          "version": "1",
+          "arity": 1,
+          "arity_range": null,
+          "input_kinds": [
+            "list"
+          ],
+          "output_kind": "list",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "[ln(x[i] / x[i - 1]) for i in 1..n - 1]",
+          "unit_rule": "the operand is a price list; a list-valued result is a legal operand of sample_standard_deviation",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "market_cap_from_price_shares",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "currency",
+          "formula": "price * shares",
+          "unit_rule": "operand units must be (currency, count); the 2.2.3 engine does not currently compute this, so the entry exists as declared vocabulary",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "VOCABULARY"
+        },
+        {
+          "operation_id": "mean",
+          "version": "1",
+          "arity": 1,
+          "arity_range": null,
+          "input_kinds": [
+            "list"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "the operand's unit",
+          "formula": "sum(x) / n",
+          "unit_rule": "the result carries the operand's unit",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "median",
+          "version": "1",
+          "arity": 1,
+          "arity_range": null,
+          "input_kinds": [
+            "list"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "the operand's unit",
+          "formula": "the ordinary sample median",
+          "unit_rule": "the result carries the operand's unit",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "multiply",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": [
+            "currency",
+            "per_share",
+            "multiple",
+            "ratio",
+            "count"
+          ],
+          "output_unit": "per the MULTIPLY_UNITS table",
+          "formula": "a * b",
+          "unit_rule": "the result unit is looked up in MULTIPLY_UNITS by operand units; an absent pair is a UnitRuleError",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "percentile",
+          "version": "1",
+          "arity": 1,
+          "arity_range": null,
+          "input_kinds": [
+            "list"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "the operand's unit",
+          "formula": "sort ascending, then linear interpolation at position (n - 1) * fraction",
+          "unit_rule": "the result carries the operand's unit",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [
+            {
+              "name": "fraction",
+              "type": "float",
+              "required": true,
+              "default": null,
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          ],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "percentile_position",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "list"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "locate a value within the band by linear interpolation between the 10th/25th/median/75th/90th points",
+          "unit_rule": "the second operand must be a band figure carrying all of ['10th', '25th', 'median', '75th', '90th']; a band missing any of them is a ParameterError rather than an interpolation against whatever keys happen to exist",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "price_return",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "to / from - 1",
+          "unit_rule": "both operands must be strictly positive",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "ratio",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "ratio",
+          "formula": "a / b",
+          "unit_rule": "the result is declared a ratio regardless of operand units, so use divide when the result unit matters",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "sample_standard_deviation",
+          "version": "1",
+          "arity": 1,
+          "arity_range": null,
+          "input_kinds": [
+            "list"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "the operand's unit",
+          "formula": "sqrt(sum((x - mean(x)) ** 2) / (n - 1))",
+          "unit_rule": "the result carries the operand's unit",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "shares_from_market_cap",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "count",
+          "formula": "market_cap / price",
+          "unit_rule": "both operands are monetary and the result is a share count. It is a separate operation from divide because divide maps two monetary amounts to a valuation multiple, and mixing the two would make an implied share count look like a ratio",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "subtract",
+          "version": "1",
+          "arity": 2,
+          "arity_range": null,
+          "input_kinds": [
+            "number",
+            "number"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": [
+            "currency",
+            "per_share",
+            "multiple",
+            "ratio",
+            "count"
+          ],
+          "output_unit": "the operands' shared unit",
+          "formula": "a - b",
+          "unit_rule": "both operands must share a unit; the result is that unit. Mismatched units are a UnitRuleError, which is what stops a subtraction across currencies.",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        },
+        {
+          "operation_id": "sum_periods",
+          "version": "1",
+          "arity": 1,
+          "arity_range": null,
+          "input_kinds": [
+            "list"
+          ],
+          "output_kind": "number",
+          "accepted_input_units": null,
+          "output_unit": "the operand's unit",
+          "formula": "sum(x)",
+          "unit_rule": "the result carries the operand's unit",
+          "missing_value_rule": "PROPAGATE",
+          "parameters": [],
+          "rationale": "ENGINE"
+        }
+      ],
+      "unit_rules": {
+        "divide": {
+          "count / count": "ratio",
+          "currency / currency": "multiple",
+          "currency / multiple": "per_share",
+          "currency / per_share": "multiple",
+          "multiple / multiple": "ratio",
+          "per_share / per_share": "ratio"
+        },
+        "multiply": {
+          "currency * count": "currency",
+          "currency * per_share": "ratio",
+          "multiple * per_share": "currency",
+          "multiple * ratio": "multiple",
+          "per_share * multiple": "currency",
+          "ratio * ratio": "ratio"
+        }
+      }
+    }
+  }
+}

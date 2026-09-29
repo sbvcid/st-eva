@@ -61,6 +61,39 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# Period-length bounds.
+#
+# A duration fact is discrete when it is a quarter or a year long, and two
+# observations may only be differenced when they fall in the same bucket. Those
+# are the same question, so the bounds live here rather than in the provider
+# that filters and the document that compares: two copies of these numbers
+# would eventually disagree, and a disagreement about what counts as a quarter
+# is a disagreement about what a period means.
+#
+# The SEC's own frame definition uses 91 days +/- 30 for quarters and 365 days
+# +/- 30 for years, widened here to keep a filer's 13-week and 52/53-week
+# calendars on the discrete side.
+QUARTER_MIN_DAYS = 60
+QUARTER_MAX_DAYS = 130
+YEAR_MIN_DAYS = 330
+YEAR_MAX_DAYS = 400
+
+
+def duration_days(start: Optional[str], end: Optional[str]) -> Optional[int]:
+    """
+    Whole days between two ISO dates, or None if either is unreadable.
+
+    A pure date helper on the contract layer, because period length is a
+    property of an observation rather than of the source that reported it. Both
+    the providers and the document need it, and it belongs to neither.
+    """
+    start_date = parse_iso_date(start)
+    end_date = parse_iso_date(end)
+    if start_date is None or end_date is None:
+        return None
+    return (end_date - start_date).days
+
+
 def parse_iso_date(value: Optional[str]) -> Optional[date]:
     """
     Parse an ISO-8601 date or date-time into a date.

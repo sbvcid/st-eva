@@ -66,8 +66,9 @@ describe the analytical rules, which none of 2.3-A, 2.3-B or 2.3-C modifies.
 | 2.3-C | Investment Context: one agent-consumable, fully traceable document | done |
 | 2.4 | Point-in-time archive and replay | done |
 | 2.4.1 | Source-document capture | done |
-| 2.4.2 | Input-compatibility and freshness findings from the six-company audit | done |
-| 2.5 | Agent experiments over a shared context | not started |
+| 2.4.2 | Input compatibility and freshness, from a six-company context audit | done |
+| 2.4.3 | Series comparability, machine-readable refusals, figure traceability | done |
+| 2.5 | Agent consumption experiment | experiment 001 done; cold-start 002 not started |
 
 2.4 depends on contexts being replay-safe, which 2.3-C establishes; 2.5 tests
 the claim that a formalised context leaves the remaining intelligence free to
@@ -150,6 +151,58 @@ count against a reported market capitalisation — and a breach is reported unde
 `data_quality.identity_conflicts` with both values, the expression, the periods,
 and `NO_WINNER_SELECTED`. These are properties of how a quoted price relates to
 a count, not statements about any issuer, and no ticker is named in any rule.
+
+## 0.5 What a consumption experiment found, and what it changed (2.4.3)
+
+An experiment that asked a general-capability model to read six Investment
+Contexts produced no new analysis and three defects in how the Context presents
+itself. All three were about *explanation*, not about numbers: no figure the
+engine produces changed.
+
+**A derived series may only be differenced within one series key.** Two points
+are comparable only when their period span, their observation type, and their
+construction all match. A quarterly observation and an annual one are not two
+points on a line, and differencing them measures the filing calendar rather than
+the business. Where a metric's points fall into more than one key, the Context
+reports `series_status: NOT_COMPARABLE` with
+`series_status_reason: PERIOD_SPAN_MISMATCH` and the groups it holds, instead
+of producing a change. Two versions of one period are reported separately as a
+restatement pair rather than as a step.
+
+Measured on the six experiment contexts, reported discontinuities fell from 78
+to 36, and the reduction is entirely spurious ones: AAPL 21 to 5, MSFT 16 to
+1, NVDA 19 to 9, MU 22 to 21. MU's remaining 21 are all *within* a single
+group and are genuine reported moves, correctly left unexplained. The one real
+finding in the set — a 2.94x move in one issuer's debt — survives untouched,
+because it is a real discontinuity inside one comparable series.
+
+**A refusal must carry a reason code, not only prose.** Every absent figure now
+carries `reason_kind` and `reason_code` from closed vocabularies, the
+`input_ref` and `input_value` responsible, and a `condition` where one applies,
+with the human-readable explanation retained alongside and never alone. A
+refusal that omits its cause is a guess waiting to happen, and the earlier
+wording — *the engine produced no value* — did not say that the divisor was
+negative, which is why a reader had to go and find it.
+
+**A figure must be able to reach its own state.** A derived figure now carries
+`state_flags` when, and only when, something about its inputs needs saying: a
+stale input, an input whose source declared no publication time, or inputs no
+cross-source check judged. The flags are pointers to the affected ref and to the
+section holding the detail, rather than a second copy of the freshness and
+validation blocks, because a duplicated fact is a fact that can disagree with
+itself.
+
+The experiment's most transferable result was not a defect. It was that **a ref
+is not a verification**: a model wrote a number next to a perfectly valid ref
+and the number was wrong, and only recomputing the figure from its operands
+caught it. Requiring a ref prevents an unsourced claim; it does not prevent a
+miscount, and any later consumer-facing workflow needs mechanical comparison
+of a claim against the value its ref points to.
+
+`context_schema_version` moves to `2.3-C.2`, a MINOR bump, because the document
+shape changed. An archive written by `2.3-C.1` and replayed by this version will
+report `DIVERGED`, which is the correct outcome for a changed document and not a
+defect.
 
 
 2.4 and 2.5 are deliberately not begun. 2.4 depends on contexts being

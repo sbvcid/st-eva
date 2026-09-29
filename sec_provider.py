@@ -58,7 +58,12 @@ from data_contract import (
     SourceType,
     Unit,
     ValidationStatus,
+    QUARTER_MAX_DAYS,
+    QUARTER_MIN_DAYS,
+    YEAR_MAX_DAYS,
+    YEAR_MIN_DAYS,
     comparable_observation_id,
+    duration_days,
     is_number,
     parse_iso_date,
     utc_now,
@@ -79,15 +84,6 @@ SAFE_REQUEST_INTERVAL_SECONDS = 1.0 / 4.0
 DEFAULT_USER_AGENT = (
     "ST-EVA/2.3 (research; contact st-eva@example.com)"
 )
-
-# A duration fact is discrete when it is a quarter or a year long. The SEC's own
-# frame definition uses 91 days +/- 30 for quarters and 365 days +/- 30 for
-# years, so the bounds are widened slightly to keep a filer's 13-week and 52/53
-# week calendars on the discrete side.
-QUARTER_MIN_DAYS = 60
-QUARTER_MAX_DAYS = 130
-YEAR_MIN_DAYS = 330
-YEAR_MAX_DAYS = 400
 
 # The number of discrete quarters summed to build a trailing-twelve-month view
 # on the SEC side, because Yahoo reports a trailing figure and the SEC does not.
@@ -331,14 +327,6 @@ def normalize_cik(value: Any) -> str:
 
 def xbrl_unit_to_contract_unit(unit: str) -> Optional[str]:
     return XBRL_UNIT_TO_CONTRACT_UNIT.get(unit)
-
-
-def duration_days(start: str, end: str) -> Optional[int]:
-    start_date = parse_iso_date(start)
-    end_date = parse_iso_date(end)
-    if start_date is None or end_date is None:
-        return None
-    return (end_date - start_date).days
 
 
 def _basis_for(fact: SecFact) -> Dict[str, Any]:
