@@ -29,6 +29,8 @@ Three properties this module holds deliberately.
     reading.
 """
 
+import base64
+import binascii
 import json
 import sqlite3
 from dataclasses import dataclass, field
@@ -104,6 +106,41 @@ def _validate_order(order: Optional[str]) -> str:
     return order
 
 
+def _encode_cursor(offset: int) -> str:
+    """An opaque page cursor. Its shape is not part of the contract."""
+    return base64.urlsafe_b64encode(
+        f"offset:{offset}".encode("utf-8")
+    ).decode("ascii")
+
+
+def _decode_cursor(cursor: str) -> int:
+    """
+    Read a cursor this surface issued.
+
+    An empty or absent cursor is refused rather than treated as the first page.
+    Silently accepting "" would make a caller that lost its cursor believe it
+    had read the whole series while holding the first page of it — the exact
+    silent truncation this exists to prevent, reached by a different route.
+    """
+    if cursor is None:
+        raise QueryError(
+            "cursor is required. Start from the first page with cursor=None on "
+            "`query_observations`, or call `page()` without one."
+        )
+    try:
+        decoded = base64.urlsafe_b64decode(cursor.encode("ascii")).decode("utf-8")
+        if not decoded.startswith("offset:"):
+            raise ValueError("not a cursor")
+        offset = int(decoded.split(":", 1)[1])
+        if offset < 0:
+            raise ValueError("negative offset")
+        return offset
+    except (ValueError, UnicodeDecodeError, binascii.Error) as error:
+        raise QueryError(
+            f"cursor is not a cursor returned by this surface: {cursor!r}"
+        ) from error
+
+
 def _loads(payload: Optional[str], fallback: Any = None) -> Any:
     if not payload:
         return fallback
@@ -157,6 +194,11 @@ class EvidenceQuery:
         object.__setattr__(self, "connection", connection)
         # The registry is a cache rather than part of the value.
         object.__setattr__(self, "_registry", None)
+        # How many rows the last query matched before its limit. Kept on the
+        # instance because the count is a property of the filter, not of the
+        # rows returned, and a caller that cannot see it is being told a
+        # truncated series is a whole one.
+        object.__setattr__(self, "_last_result_total", 0)
         # Writing __init__ suppresses the generated one, and the generated one
         # is what calls __post_init__. Without this the read-only guarantee is
         # silently inactive and the tests still pass, because the append-only
@@ -387,7 +429,64 @@ class EvidenceQuery:
             ):
                 continue
             results.append(result)
+        object.__setattr__(
+            self, "_last_result_total", self._count_matching(clause, params)
+        )
         return results
+    def _count_matching(self, clause: str, params: List[Any]) -> int:
+        """
+        How many rows the filter matches, ignoring the limit.
+
+        Without this a caller cannot tell a complete series from a truncated
+        one. A limit of 200 on a 338-point series returns 200 rows, and a count
+        that reports 200 is a claim that the series has 200 points — which is
+        exactly the kind of quiet falsehood an evidence database exists to
+        prevent, and it is invisible precisely because the JSON looks complete.
+        """
+        return self.connection.execute(
+            "SELECT COUNT(*) AS n FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id" + clause,
+            tuple(params),
+        ).fetchone()["n"]
+
+    def page(
+        self,
+        cursor: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """
+        A page of observations that says whether it is the whole answer.
+
+        `query_observations` keeps its list return and its silent limit, because
+        changing it would break every caller that already depends on it. This is
+        the honest form: `total_count` is the size of the series, `returned_count`
+        is what arrived, and `truncated` is the difference stated outright.
+        """
+        offset = _decode_cursor(cursor) if cursor is not None else 0
+        limit = kwargs.pop("limit", None)
+        bounded = _validate_limit(limit)
+        rows = self.query_observations(limit=offset + bounded + 1, **kwargs)
+        window = rows[offset : offset + bounded]
+        has_more = len(rows) > offset + bounded
+        return {
+            **self._result_envelope(kwargs),
+            "total_count": self._last_result_total,
+            "returned_count": len(window),
+            "truncated": has_more or offset > 0,
+            "next_cursor": (
+                _encode_cursor(offset + len(window)) if has_more else None
+            ),
+            "results": window,
+        }
+
+    @staticmethod
+    def _result_envelope(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "asset": kwargs.get("asset"),
+            "metric": kwargs.get("metric"),
+            "period_start": kwargs.get("period_start"),
+            "period_end": kwargs.get("period_end"),
+        }
 
     def get_observation(
         self,
@@ -556,7 +655,13 @@ class EvidenceQuery:
             }
 
         resolved = self.registry().resolve(
-            concept_id, as_of=row["period_end"]
+            concept_id,
+            as_of=row["period_end"],
+            # The filer matters here and nowhere else. A concept's meaning is
+            # filer-independent; when a filer used it is not. Resolving without
+            # this reported a filer's own filing as unmapped whenever the
+            # concept's window had been seeded from a different company.
+            asset_id=row["asset_id"],
         )
         payload = resolved.contract_dict()
         payload["observation_id"] = row["observation_id"]
@@ -925,6 +1030,8 @@ class EvidenceQuery:
             order=ORDER_ASC,
             limit=limit,
         )
+        total = self._last_result_total
+        truncated = total > len(observations)
         states = self._state_map(asset)
         # A metric with a value in hand is reported, even when the state table
         # says nothing about it. A metric with observations but no value is
@@ -988,7 +1095,21 @@ class EvidenceQuery:
             "asset": asset,
             "metric": metric,
             "state": state,
-            "point_count": len(points),
+            # What the series holds, not what this call returned. A truncated
+            # page that reported 200 for a 338-point series would be a JSON
+            # document that looks complete and is not, which is the one failure
+            # an evidence surface cannot afford: a reader cannot detect it.
+            "point_count": total,
+            "returned_count": len(observations),
+            "truncated": truncated,
+            "truncation_note": (
+                "This series holds %d points and this response carries %d. "
+                "The series is not complete; ask again with a higher limit or "
+                "page through `page()` to reach the rest."
+                % (total, len(observations))
+                if truncated
+                else None
+            ),
             "series_comparability": {
                 "reporting_frameworks": bases,
                 "single_framework": reporting_framworks is not None,

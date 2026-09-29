@@ -33,6 +33,8 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+from data_contract import utc_now
+
 # Business models a metric can be excluded for. A model is a property of the
 # issuer, not of the metric, and it is recorded only when a concept genuinely
 # does not exist for that kind of business.
@@ -73,6 +75,15 @@ MAPPING_TYPES = (
 # narrower aggregate, and NON_COMPARABLE is a different quantity, so splicing
 # across either would splice two different numbers into one line.
 CONTINUING_MAPPINGS = frozenset({MAPPING_EXACT, MAPPING_EQUIVALENT})
+
+# The adoption basis, closed for the same reason every other vocabulary here is
+# closed. `OBSERVED_ADOPTION` is the only honest claim available from a filing:
+# "this filer's own filings reported this concept in these periods". It is not
+# the taxonomy's validity period and not a statement that the filer intends to
+# stop, and a value that let a stronger claim in would make "how much do we
+# actually know here?" unanswerable.
+OBSERVED_ADOPTION = "OBSERVED_ADOPTION"
+ADOPTION_BASES = (OBSERVED_ADOPTION,)
 
 
 class RegistryError(Exception):
@@ -206,6 +217,58 @@ class ConceptMapping:
 
 
 @dataclass(frozen=True)
+class ConceptAdoption:
+    """
+    One filer's observed use of one concept, over a period.
+
+    The counterpart to `ConceptMapping`, and the reason that class cannot answer
+    every question. A mapping says what a concept means; this says when one
+    company was seen using it. They differ, and conflating them is what produced
+    a global window that was really AAPL's filing history.
+
+    `basis` is `OBSERVED_ADOPTION` and nothing else. These are the periods that
+    filer's filings reported, which is a weaker claim than a statement of intent:
+    a filer that stopped reporting in 2018 has not necessarily retired the
+    concept, and this record must never be read as saying that it has.
+    """
+
+    asset_id: str
+    concept_id: str
+    first_used: Optional[str]
+    last_used: Optional[str]
+    fact_count: int
+    filing_count: int
+    basis: str = OBSERVED_ADOPTION
+
+    def covers(self, when: Optional[str]) -> bool:
+        """
+        Whether this filer was observed using the concept on a date.
+
+        No date means no time filter, matching `ConceptMapping.applies_on`. An
+        unobserved date is not evidence of non-use, so a caller asking about a
+        date with no adoption record must not read this as a refusal.
+        """
+        if not when:
+            return True
+        if self.first_used and when < self.first_used:
+            return False
+        if self.last_used and when > self.last_used:
+            return False
+        return True
+
+    def contract_dict(self) -> Dict[str, Any]:
+        return {
+            "asset_id": self.asset_id,
+            "concept_id": self.concept_id,
+            "first_used": self.first_used,
+            "last_used": self.last_used,
+            "fact_count": self.fact_count,
+            "filing_count": self.filing_count,
+            "basis": self.basis,
+        }
+
+
+@dataclass(frozen=True)
 class ResolvedEvidence:
     """
     An observation resolved through the registry.
@@ -221,6 +284,14 @@ class ResolvedEvidence:
     metric: Optional[Metric]
     mappings: Tuple[ConceptMapping, ...] = ()
     series_breaks: Tuple[Dict[str, Any], ...] = ()
+    # What the filing evidence says this filer did with the concept, when it has
+    # been ingested. None means "not observed", which is a gap in what we hold
+    # and never a claim that the filer did not use the concept.
+    adoption: Optional[ConceptAdoption] = None
+    # True when adoption supplied a period the mapping window did not cover. It
+    # is surfaced rather than silently absorbed, because a figure that resolves
+    # outside its concept's stated window is worth a reader knowing about.
+    adopted_outside_mapping_window: bool = False
 
     @property
     def is_resolved(self) -> bool:
@@ -237,6 +308,12 @@ class ResolvedEvidence:
             ),
             "mappings": [mapping.contract_dict() for mapping in self.mappings],
             "series_breaks": [dict(break_) for break_ in self.series_breaks],
+            "issuer_adoption": (
+                self.adoption.contract_dict() if self.adoption else None
+            ),
+            "adopted_outside_mapping_window": (
+                self.adopted_outside_mapping_window
+            ),
         }
         if not self.is_resolved:
             payload["reason"] = (
@@ -346,6 +423,117 @@ class CoreRegistry:
             ),
         )
         self.connection.commit()
+
+    def record_adoption(
+        self,
+        asset_id: str,
+        concept_id: str,
+        first_used: Optional[str],
+        last_used: Optional[str],
+        fact_count: int = 0,
+        filing_count: int = 0,
+        observed_at: Optional[str] = None,
+    ) -> None:
+        """
+        Record that one filer was observed using one concept.
+
+        Evidence, not a claim about intent. `first_used` and `last_used` are the
+        periods that filer's own filings reported; they say nothing about
+        whether the filer intends to continue, and a filer that stopped in 2018
+        is recorded as having stopped in 2018 rather than as having retired the
+        concept. The basis column is `OBSERVED_ADOPTION` and only that, enforced
+        by trigger.
+
+        Idempotent and monotone: re-observing a period extends the window rather
+        than replacing it, so a later ingestion covering more history widens what
+        is known instead of silently narrowing it.
+        """
+        stamp = observed_at or utc_now()
+        self.connection.execute(
+            "INSERT INTO issuer_concept_adoption (asset_id, concept_id,"
+            " first_used, last_used, fact_count, filing_count, basis,"
+            " first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?,"
+            " 'OBSERVED_ADOPTION', ?, ?)"
+            " ON CONFLICT(asset_id, concept_id) DO UPDATE SET"
+            "   first_used = CASE"
+            "     WHEN issuer_concept_adoption.first_used IS NULL THEN excluded.first_used"
+            "     WHEN excluded.first_used IS NULL THEN issuer_concept_adoption.first_used"
+            "     WHEN excluded.first_used < issuer_concept_adoption.first_used"
+            "       THEN excluded.first_used"
+            "     ELSE issuer_concept_adoption.first_used END,"
+            "   last_used = CASE"
+            "     WHEN excluded.last_used IS NULL THEN issuer_concept_adoption.last_used"
+            "     WHEN issuer_concept_adoption.last_used IS NULL THEN excluded.last_used"
+            "     WHEN excluded.last_used > issuer_concept_adoption.last_used"
+            "       THEN excluded.last_used"
+            "     ELSE issuer_concept_adoption.last_used END,"
+            "   fact_count = issuer_concept_adoption.fact_count + excluded.fact_count,"
+            "   filing_count = issuer_concept_adoption.filing_count + excluded.filing_count,"
+            "   last_seen_at = excluded.last_seen_at",
+            (
+                asset_id,
+                concept_id,
+                first_used,
+                last_used,
+                fact_count,
+                filing_count,
+                stamp,
+                stamp,
+            ),
+        )
+        self.connection.commit()
+
+    def adoption_for(
+        self,
+        asset_id: str,
+        concept_id: str,
+    ) -> Optional[ConceptAdoption]:
+        """
+        What one filer was observed doing with one concept.
+
+        None means *not observed*, which is not the same as *not used*: a filer
+        whose evidence has not been ingested has no adoption record, and that is
+        a gap in what we hold rather than a fact about the filer. Callers must
+        treat None as unknown and must not read it as "never used".
+        """
+        row = self.connection.execute(
+            "SELECT * FROM issuer_concept_adoption"
+            " WHERE asset_id = ? AND concept_id = ?",
+            (asset_id, concept_id),
+        ).fetchone()
+        if row is None:
+            return None
+        return ConceptAdoption(
+            asset_id=row["asset_id"],
+            concept_id=row["concept_id"],
+            first_used=row["first_used"],
+            last_used=row["last_used"],
+            fact_count=row["fact_count"],
+            filing_count=row["filing_count"],
+            basis=row["basis"],
+        )
+
+    def adoptions_for_asset(
+        self,
+        asset_id: str,
+    ) -> List[ConceptAdoption]:
+        rows = self.connection.execute(
+            "SELECT * FROM issuer_concept_adoption WHERE asset_id = ?"
+            " ORDER BY concept_id",
+            (asset_id,),
+        ).fetchall()
+        return [
+            ConceptAdoption(
+                asset_id=row["asset_id"],
+                concept_id=row["concept_id"],
+                first_used=row["first_used"],
+                last_used=row["last_used"],
+                fact_count=row["fact_count"],
+                filing_count=row["filing_count"],
+                basis=row["basis"],
+            )
+            for row in rows
+        ]
 
     # -- reads -----------------------------------------------------------
 
@@ -469,6 +657,7 @@ class CoreRegistry:
         self,
         concept_id: str,
         as_of: Optional[str] = None,
+        asset_id: Optional[str] = None,
     ) -> ResolvedEvidence:
         """
         Resolve a concept to the metric it means.
@@ -476,13 +665,46 @@ class CoreRegistry:
         An unmapped concept resolves to nothing. It is not attached to the
         metric whose name looks nearest, because that is precisely the inference
         this registry exists to make explicit and to refuse to make silently.
+
+        `asset_id` separates the two questions that were previously one. The
+        mapping window answers *what the concept means*; a filer's observed
+        adoption answers *when this filer used it*. When both are available the
+        adoption window widens the mapping rather than replacing it, so a filer
+        that used a concept outside the seeded window is no longer reported as
+        unmapped — which was a fact about the seed, not about the filer.
         """
-        candidates = self.metrics_for_concept(concept_id, as_of=as_of)
+        mappings = [
+            mapping
+            for mapping, _ in self.metrics_for_concept(concept_id, as_of=None)
+        ]
+        adoption = (
+            self.adoption_for(asset_id, concept_id) if asset_id else None
+        )
+
+        # Adoption governs when it covers the period, and the mapping governs
+        # everything else. It replaces the window rather than deferring to it,
+        # because the window was seeded from one filer's filings and is that
+        # filer's timeline: NVDA reported `Revenues` through 2026, long after
+        # the 2018 close that AAPL's last period produced. A real filing from
+        # the filer being asked about is better evidence than another filer's
+        # inferred boundary. The mapping's *fidelity* is untouched — a PARTIAL
+        # concept is still PARTIAL and still breaks the series — so adoption
+        # widens when a concept applied and never how faithfully it applied.
+        effective = [
+            mapping
+            for mapping in mappings
+            if mapping.applies_on(as_of)
+            or (adoption is not None and adoption.covers(as_of))
+        ]
+        candidates = [
+            (mapping, self.metric(mapping.metric_id)) for mapping in effective
+        ]
         if not candidates:
             return ResolvedEvidence(
                 observation_id="",
                 concept_id=concept_id if self.concept(concept_id) else None,
                 metric=None,
+                adoption=adoption,
             )
 
         # A concept that maps to more than one metric is a registry question,
@@ -516,6 +738,12 @@ class CoreRegistry:
             concept_id=concept_id,
             metric=metric,
             mappings=(mapping,),
+            adoption=adoption,
+            adopted_outside_mapping_window=bool(
+                adoption is not None
+                and not mapping.applies_on(as_of)
+                and as_of
+            ),
         )
 
     def series_breaks(

@@ -259,12 +259,113 @@ class Ingestor:
 
         for entry in new_entries:
             self._record_filing(asset_id, entry, "")
+        self._record_adoption(asset_id)
         self.connection.commit()
         self._count_fetches(report)
         self._write_run(
             asset_id, report, "OK" if not report.errors else "PARTIAL"
         )
         return report
+
+    def coverage(self, ticker: str) -> Dict[str, Any]:
+        """
+        How much of this filer's history the archive holds, stated honestly.
+
+        Evidence coverage and filing-ledger coverage are different things and the
+        difference is not small. The company-concept endpoint reaches back to
+        2006; the submissions index that populates the ledger carries roughly the
+        last year to 1,000 filings. So a large share of the facts held have an
+        accession the ledger has never seen.
+
+        Nothing is missing from the archive — the facts are there and they trace
+        to a real accession. What is missing is the *incremental* view of that
+        history. The ledger answers "what is new since the last run", and beyond
+        the index window it cannot answer it, because it does not know those
+        filings exist. Stating the two numbers side by side is the honest form;
+        a single "coverage" figure would be an interpretation.
+        """
+        asset_id = self.store.record_asset(ticker.upper())
+        held = self.connection.execute(
+            "SELECT COUNT(*) AS n FROM observations WHERE asset_id = ?",
+            (asset_id,),
+        ).fetchone()["n"]
+        with_accession = self.connection.execute(
+            "SELECT COUNT(*) AS n FROM observations"
+            " WHERE asset_id = ? AND accession IS NOT NULL",
+            (asset_id,),
+        ).fetchone()["n"]
+        unledgered = self.connection.execute(
+            "SELECT COUNT(*) AS n FROM observations o"
+            " WHERE o.asset_id = ? AND o.accession IS NOT NULL"
+            " AND NOT EXISTS (SELECT 1 FROM held_filings h"
+            " WHERE h.accession = o.accession AND h.asset_id = o.asset_id)",
+            (asset_id,),
+        ).fetchone()["n"]
+        ledgers = self.connection.execute(
+            "SELECT MIN(filed_at) AS earliest, MAX(filed_at) AS latest,"
+            " COUNT(*) AS n FROM held_filings WHERE asset_id = ?",
+            (asset_id,),
+        ).fetchone()
+        fact_span = self.connection.execute(
+            "SELECT MIN(period_end) AS earliest, MAX(period_end) AS latest"
+            " FROM observations WHERE asset_id = ? AND period_end IS NOT NULL",
+            (asset_id,),
+        ).fetchone()
+        return {
+            "asset": ticker.upper(),
+            "evidence": {
+                "observations": held,
+                "with_accession": with_accession,
+                "earliest_period": fact_span["earliest"],
+                "latest_period": fact_span["latest"],
+            },
+            "filing_ledger": {
+                "filings": ledgers["n"] or 0,
+                "earliest_filing": ledgers["earliest"],
+                "latest_filing": ledgers["latest"],
+            },
+            "observations_outside_the_ledger": unledgered,
+            "ledger_covers_all_evidence": unledgered == 0,
+            "note": (
+                "The submissions index carries only recent filings, so the "
+                "ledger is a recent-filing view. Facts older than the index are "
+                "held and traceable but are not in the incremental diff, which "
+                "means 'what changed' is answerable only inside the index "
+                "window. Closing this needs SEC's historical submission files or "
+                "the EDGAR full-index, not a wider company-concept call."
+            ),
+        }
+
+    def _record_adoption(self, asset_id: str) -> None:
+        """
+        Derive what this filer was observed doing with each concept.
+
+        Read back out of the stored facts rather than carried alongside the run,
+        so adoption is a property of the evidence and not of one execution. Two
+        runs that stored the same facts agree; a run that stored fewer does not
+        shrink the record.
+
+        This is what separates "the concept means revenue" from "MSFT reported
+        it as revenue from 2007". The former is the mapping; the latter is this
+        row, and only the second one is specific to a filer.
+        """
+        rows = self.connection.execute(
+            "SELECT source_concept_ref AS concept_id,"
+            " MIN(period_end) AS first_used, MAX(period_end) AS last_used,"
+            " COUNT(*) AS fact_count, COUNT(DISTINCT accession) AS filing_count"
+            " FROM observations WHERE asset_id = ?"
+            " AND source_concept_ref IS NOT NULL GROUP BY source_concept_ref",
+            (asset_id,),
+        ).fetchall()
+        for row in rows:
+            self.registry.record_adoption(
+                asset_id=asset_id,
+                concept_id=row["concept_id"],
+                first_used=row["first_used"],
+                last_used=row["last_used"],
+                fact_count=row["fact_count"],
+                filing_count=row["filing_count"],
+            )
 
     def _count_fetches(self, report: IngestionReport) -> None:
         report.network_fetches = self.provider.network_fetches

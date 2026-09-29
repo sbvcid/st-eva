@@ -55,20 +55,18 @@ them:
 
 MSFT filed `Revenues` nine years before AAPL's window opens. NVDA still files it
 in 2026, eight years after AAPL's window closed. **565 facts across the four
-issuers fall outside a registry window.**
+issuers fall outside a registry window**, and at the time of this run they were
+reported `resolved: false` with `NOT_EXPLAINED` — true of the table, false about
+MSFT.
 
-The system's response is correct: those figures are reported
-`resolved: false` with `NOT_EXPLAINED`, and left unattached. The failure this
-guards against is the convenient one — resolving by name, or widening the window
-until nothing is unresolved — which would attach a figure to a metric its filer
-never claimed for that period.
+**Resolved in 2.5.1** by separating a concept's meaning from a filer's use of it:
+`issuer_concept_adoption` records `OBSERVED_ADOPTION` per filer, and resolution
+consults it. All four filers' revenue series now resolve completely, with
+PARTIAL fidelity and the series breaks untouched. See
+[ST-EVA-2.5.1-HARDENING.md](ST-EVA-2.5.1-HARDENING.md).
 
-**This is a known gap, not fixed at this stage.** The fix is deliberately *not* a
-company column on the mapping: that would make every query issuer-aware and put
-filer trivia into the semantic layer, which is the thing the registry exists to
-keep out. The right shape is a separate per-issuer adoption record that the
-window is checked against, so the semantic layer stays filer-agnostic while the
-filing layer carries the filer's own clock.
+The lesson stands regardless of the fix: a window on a concept is a claim about
+an observed filer, and one company's filing history is not a general rule.
 
 ## A second, smaller limitation: filings held vs filings known
 
@@ -86,16 +84,22 @@ longer lists the original. Not a defect today; a limit on how far back
 "incremental" is meaningful, and worth stating before the archive is expected to
 be authoritative for a decade of history.
 
+**Made mechanical in 2.5.1:** `Ingestor.coverage(ticker)` reports the evidence
+span and the ledger span side by side with `ledger_covers_all_evidence: false`,
+rather than leaving the distinction in prose.
+
 ## A third observation, in the sealed query surface
 
-`get_metric_history` applies a default limit of 200 and reports
+`get_metric_history` applied a default limit of 200 and reported
 `point_count: 200` for a series that actually holds 338 points. A caller that
-does not pass `limit` cannot distinguish a truncated series from a complete one
-— `point_count` reports the page size, not the series length.
+did not pass `limit` could not distinguish a truncated series from a complete
+one — `point_count` reported the page size, not the series length.
 
-This is in the sealed 2.5 Query Surface and is **not changed here**. Flagged
-because it matters more once the archive holds a decade: an LLM reading
-`point_count` would believe it has the whole series when it has 59% of it.
+**Fixed in 2.5.1:** `point_count` is the series length, with `returned_count`,
+`truncated` and a `truncation_note` alongside, plus a `page()` method for
+walking a series with a cursor. It mattered more once the archive held a decade:
+an LLM reading `point_count` would have believed it had the whole series when it
+had 59% of it.
 
 ## What was checked, and where
 

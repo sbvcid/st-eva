@@ -207,10 +207,11 @@ class TestCrossCompanyIngestion(unittest.TestCase):
 
         cls.first = {}
         cls.second = {}
+        cls.ingestor = Ingestor(cls.store, SECProvider(), cls.registry)
         for issuer in ISSUERS:
-            cls.first[issuer] = Ingestor(
-                cls.store, SECProvider(), cls.registry
-            ).ingest(issuer, metrics=DEFAULT_METRICS)
+            cls.first[issuer] = cls.ingestor.ingest(
+                issuer, metrics=DEFAULT_METRICS
+            )
         for issuer in ISSUERS:
             cls.second[issuer] = Ingestor(
                 cls.store, SECProvider(), cls.registry
@@ -480,58 +481,132 @@ class TestCrossCompanyIngestion(unittest.TestCase):
         self,
     ):
         """
-        The cross-company finding, asserted as behaviour.
+        The limitation the cross-company run found, and what closed it.
 
-        `metric_concept_mapping` carries one global window per concept, seeded
-        from AAPL. Filers adopt concepts on their own schedules, so a global
-        window is wrong for some of them: MSFT filed `us-gaap:Revenues` from
-        2007, nine years before AAPL's window opens, and NVDA still files it in
-        2026, eight years after AAPL's window closed.
+        `metric_concept_mapping` carried one global window per concept, seeded
+        from AAPL, so MSFT's `us-gaap:Revenues` from 2007 — nine years before
+        AAPL's window opens — and NVDA's 2026 usage — eight years after it
+        closes — were reported unmapped. 565 facts across four filers.
 
-        The correct response is to leave those figures unresolved and say so. The
-        failure this guards against is the convenient one — resolving by name, or
-        widening the window until nothing is unresolved — which would attach a
-        figure to a metric its filer never claimed for that period.
+        `issuer_concept_adoption` now records what each filer was observed
+        doing, and resolution consults it. Every revenue figure these four filers
+        reported must now resolve, and none may be attached to a metric by
+        anything other than a mapping the registry already stated.
         """
-        unresolved = {}
         for issuer in ISSUERS:
             rows = self.query.query_observations(
                 asset=issuer, metric="revenue",
                 order="PERIOD_ASCENDING", limit=5000,
             )
-            unresolved[issuer] = [
+            self.assertTrue(rows, f"{issuer} has no revenue series")
+            unresolved = [
                 row for row in rows if not row["semantic"].get("resolved")
             ]
+            self.assertEqual(
+                unresolved,
+                [],
+                f"{issuer}: {len(unresolved)} revenue figures are still "
+                "unresolved after adoption was recorded",
+            )
 
-        # At least one issuer must actually hit this, or the guard is vacuous.
-        self.assertTrue(
-            any(unresolved.values()),
-            "no issuer fell outside a registry window; the claim that filers "
-            "adopt concepts on their own schedules is untested here",
-        )
-        for issuer, rows in unresolved.items():
+    def test_a_filer_outside_the_seeded_window_is_resolved_through_adoption(
+        self,
+    ):
+        """
+        The specific case that was wrong, asserted positively rather than by
+        counting zeroes. MSFT used `us-gaap:Revenues` from 2007 and AAPL's
+        window opens in 2016, so at least one MSFT figure must resolve through
+        adoption and say that it did.
+        """
+        for issuer in ISSUERS:
+            rows = self.query.query_observations(
+                asset=issuer, metric="revenue", limit=5000
+            )
             for row in rows:
-                self.assertIsNone(
-                    row["semantic"].get("metric"),
-                    f"{issuer}: a figure outside its window was attached to a "
-                    "metric anyway",
+                if not row["semantic"].get("adopted_outside_mapping_window"):
+                    continue
+                adoption = row["semantic"]["issuer_adoption"]
+                self.assertIsNotNone(
+                    adoption,
+                    f"{issuer}: resolved outside the window with no adoption "
+                    "evidence attached",
                 )
-                self.assertIn(
-                    "NOT_EXPLAINED", row["semantic"].get("reason", "")
+                self.assertEqual(adoption["basis"], "OBSERVED_ADOPTION")
+                self.assertEqual(
+                    adoption["asset_id"],
+                    self._asset_id(issuer),
+                    f"{issuer}: adoption evidence from another filer",
                 )
+                self.assertGreaterEqual(
+                    adoption["fact_count"], 1
+                )
+                break
+
+        msft_outside = [
+            row
+            for row in self.query.query_observations(
+                asset="MSFT", metric="revenue", limit=5000
+            )
+            if row["semantic"].get("adopted_outside_mapping_window")
+        ]
+        self.assertTrue(
+            msft_outside,
+            "MSFT used Revenues in 2007 and AAPL's window opens in 2016; "
+            "nothing resolving outside the window means adoption is not being "
+            "consulted",
+        )
+
+    def _asset_id(self, ticker):
+        return self.store.connection.execute(
+            "SELECT asset_id FROM assets WHERE ticker = ?", (ticker,)
+        ).fetchone()["asset_id"]
+
+    def test_every_issuer_has_recorded_its_own_adoption(self):
+        """
+        Adoption is per filer and derived from that filer's evidence. One
+        filer's history must never stand in for another's.
+        """
+        for issuer in ISSUERS:
+            adoptions = self.registry.adoptions_for_asset(
+                self._asset_id(issuer)
+            )
+            self.assertTrue(adoptions, f"{issuer} has no adoption record")
+            for adoption in adoptions:
+                self.assertEqual(adoption.basis, "OBSERVED_ADOPTION")
+                self.assertIn(":", adoption.concept_id)
+                self.assertGreater(adoption.fact_count, 0)
+
+    def test_adoption_did_not_change_how_faithfully_a_concept_reads(self):
+        """
+        Adoption widened *when* a concept applied. It must not have changed
+        *how* it applied, or a PARTIAL aggregate would have been promoted into
+        the same series as the EXACT one.
+        """
+        for issuer in ISSUERS:
+            rows = self.query.query_observations(
+                asset=issuer, metric="revenue", limit=5000
+            )
+            for row in rows:
+                for mapping in row["semantic"].get("mappings", []):
+                    self.assertIn(
+                        mapping["mapping_type"], ("EXACT", "PARTIAL")
+                    )
+                    if mapping["mapping_type"] == "PARTIAL":
+                        self.assertFalse(
+                            mapping["series_continues"],
+                            f"{issuer}: adoption made a PARTIAL mapping "
+                            "continue a series",
+                        )
+            breaks = rows[0]["semantic"].get("series_breaks", [])
+            self.assertTrue(
+                breaks, f"{issuer}: the revenue series lost its breaks"
+            )
 
     def test_a_window_is_a_registry_fact_not_a_filer_specific_one(self):
         """
-        The limitation stated plainly, so it cannot be forgotten by whoever
-        reads the next registry change.
-
-        The mapping table has no issuer dimension, by design: the registry
-        describes a concept and a metric, not a company. That is right for the
-        mapping *type* and wrong for the *window*, because adoption is per
-        filer. The fix is not a company column on the mapping — it would make
-        every query issuer-aware and put filer trivia into the semantic layer —
-        but a separate per-issuer adoption record the window is checked against.
-        Recorded here as a known gap, deliberately not fixed at this stage.
+        The semantic layer still does not know the filer, and that is what makes
+        the separation worth having. The issuer dimension lives in the adoption
+        table beside the registry, not inside the mapping.
         """
         columns = {
             row["name"]
@@ -545,19 +620,106 @@ class TestCrossCompanyIngestion(unittest.TestCase):
             "the mapping gained an issuer dimension; the semantic layer is "
             "not supposed to know the filer",
         )
-        # And the consequence is real and measured: a filer outside the window
-        # is left unresolved rather than mis-resolved.
-        outside = self.store.connection.execute(
-            "SELECT COUNT(*) AS n FROM observations o"
-            " JOIN metric_concept_mapping m"
-            " ON m.concept_id = o.source_concept_ref"
-            " WHERE m.effective_from IS NOT NULL"
-            " AND o.period_end < m.effective_from"
-        ).fetchone()["n"]
-        self.assertGreater(
-            outside, 0,
-            "no fact falls outside a window, so the gap above is theoretical",
+        self.assertIn(
+            "asset_id",
+            {
+                row["name"]
+                for row in self.store.connection.execute(
+                    "PRAGMA table_info(issuer_concept_adoption)"
+                )
+            },
         )
+
+    def test_evidence_coverage_is_not_ledger_coverage(self):
+        """
+        The two are different claims and the archive reports them separately.
+
+        The company-concept endpoint reaches back to 2006. The submissions index
+        that populates the ledger carries roughly the last year to 1,000
+        filings. So most of the facts held for a filer have an accession the
+        ledger has never seen: they are present and traceable, but they are not
+        in the incremental diff.
+
+        This is not asserted as a defect, because nothing is missing from the
+        archive. It is asserted as a *distinction the surface must keep making*,
+        because the failure mode is a single number labelled "coverage" that
+        reads as a promise about the whole history.
+        """
+        for issuer in ISSUERS:
+            coverage = self.ingestor.coverage(issuer)
+            self.assertGreater(coverage["evidence"]["observations"], 0)
+            self.assertGreater(
+                coverage["filing_ledger"]["earliest_filing"],
+                coverage["evidence"]["earliest_period"],
+                f"{issuer}: the ledger now reaches back as far as the evidence, "
+                "so the distinction below is no longer being exercised and the "
+                "claim should be revisited",
+            )
+            self.assertGreater(
+                coverage["observations_outside_the_ledger"], 0
+            )
+            self.assertFalse(coverage["ledger_covers_all_evidence"])
+            self.assertIn("submissions index", coverage["note"])
+            self.assertIn(
+                "historical submission files", coverage["note"]
+            )
+
+    def test_every_ingested_fact_still_traces_to_a_real_accession(self):
+        """
+        Being outside the ledger is not being unsupported. A fact the index
+        never listed still carries the accession the filer filed it under, and
+        that is what makes it evidence rather than a number.
+        """
+        for issuer in ISSUERS:
+            missing = self.store.connection.execute(
+                "SELECT COUNT(*) AS n FROM observations o"
+                " JOIN assets a ON a.asset_id = o.asset_id"
+                " WHERE a.ticker = ?"
+                " AND (o.accession IS NULL OR o.source_fact_id IS NULL"
+                " OR o.source_concept_ref IS NULL)",
+                (issuer,),
+            ).fetchone()["n"]
+            self.assertEqual(missing, 0, f"{issuer}")
+
+    def test_a_truncated_series_says_so(self):
+        """
+        A decade of filings produces more points than the default page, so these
+        series really are truncated. What matters is that the response says so
+        and reports the true length: returning 200 of 338 and reporting 200
+        would be indistinguishable from a complete answer, and that is the shape
+        of mistake an LLM reading the JSON cannot catch.
+        """
+        for issuer in ISSUERS:
+            history = self.query.get_metric_history(issuer, "revenue")
+            self.assertGreater(
+                history["point_count"], 200, f"{issuer}: nothing to truncate"
+            )
+            self.assertTrue(history["truncated"], f"{issuer}")
+            self.assertEqual(history["returned_count"], 200, f"{issuer}")
+            self.assertIn(
+                str(history["point_count"]), history["truncation_note"]
+            )
+            self.assertIn("not complete", history["truncation_note"])
+
+            complete = self.query.get_metric_history(
+                issuer, "revenue", limit=5000
+            )
+            self.assertEqual(
+                complete["point_count"], history["point_count"]
+            )
+            self.assertEqual(complete["returned_count"], complete["point_count"])
+            self.assertFalse(complete["truncated"])
+            self.assertIsNone(complete["truncation_note"])
+
+    def test_a_short_series_is_not_marked_truncated(self):
+        """
+        A flag that is always on teaches a reader to ignore it, which is the
+        opposite of what it is for.
+        """
+        history = self.query.get_metric_history("MSFT", "shares_outstanding")
+        if history["point_count"] < 200:
+            self.assertFalse(history["truncated"])
+            self.assertIsNone(history["truncation_note"])
 
     def test_the_evidence_grows_monotonically(self):
         """
