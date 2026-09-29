@@ -54,6 +54,8 @@ class CorrectTarget:
 
 def _answer_for(question: str, tools: Toolbox) -> Optional[Dict[str, Any]]:
     """Dispatch on the question, retrieving evidence first every time."""
+    if "If the archive holds more than one" in question:
+        return _ambiguous_value(question, tools)
     if "reported revenue for the period ending" in question:
         return _exact_value(question, tools)
     if "revenue history" in question:
@@ -110,6 +112,54 @@ def _exact_value(question, tools):
         "derived_refs": [],
         "uncertainties": [
             "one source only; nothing here cross-validates it"
+        ],
+    }
+
+
+def _ambiguous_value(question, tools):
+    """
+    Report an ambiguous figure as ambiguous.
+
+    The archive holds two values for this period under one concept and cannot
+    choose between them, so the answer has to carry both and say why. Naming
+    one would be a decision the evidence does not support.
+    """
+    period = question.split("period ending ")[-1].split("?")[0].strip()
+    rows = tools.query_observations(
+        asset="AAPL", metric="revenue", period_end=period, limit=50
+    )
+    exact = [
+        row for row in rows if row["period"]["end"] == period
+    ] or rows
+    values = {row["value"] for row in exact}
+    if len(values) < 2:
+        return {
+            "answer": (
+                f"Revenue for the period ending {period} is "
+                f"{exact[0]['value']} {exact[0]['unit']}."
+            ),
+            "evidence_refs": [row["observation_id"] for row in exact],
+            "derived_refs": [],
+            "uncertainties": [],
+        }
+    marked = [row for row in exact if "ambiguity" in row]
+    unit = exact[0]["unit"]
+    currency = exact[0]["currency"]
+    return {
+        "answer": (
+            f"The archive holds more than one revenue figure for the period "
+            f"ending {period}, and it does not choose between them: "
+            + ", ".join(f"{row['value']} {unit} ({currency})" for row in exact)
+            + ". Both are reported under the same concept and period. The "
+            "reason is NOT_EXPLAINED: the source endpoint aggregates dimension "
+            "members without returning the member, so ST-EVA cannot tell which "
+            "aggregate either figure is. The resolution is NO_WINNER_SELECTED, "
+            "so there is no single correct revenue for this period."
+        ),
+        "evidence_refs": [row["observation_id"] for row in exact],
+        "derived_refs": [],
+        "uncertainties": [
+            "the archive holds two competing figures and has not chosen"
         ],
     }
 
@@ -543,9 +593,9 @@ def _scripted(breaks_test: str, payload: Dict[str, Any], model: str,
 
 def _wrong_value() -> ScriptedTarget:
     return _scripted(
-        "reported revenue for the period ending",
+        "If the archive holds more than one",
         {
-            "answer": "Revenue for the period ending 2006-09-30 was "
+            "answer": "Revenue for the period ending 2007-09-29 was "
             "95.0 billion USD, reported by SecEdgar.",
             "evidence_refs": ["obsarch_does_not_exist"],
             "derived_refs": [],
@@ -553,6 +603,33 @@ def _wrong_value() -> ScriptedTarget:
         },
         "wrong-value",
         "fabricates a value and a citation that does not exist",
+    )
+
+
+def _hides_ambiguity() -> ScriptedTarget:
+    """
+    Cites both competing figures and still presents one as the answer.
+
+    Distinct from `picks-winner`, which crosses a *cross-source* conflict.
+    This is the harder case: the ambiguity is within a single source, both
+    candidates are in hand, and the answer quietly picks one. It is the
+    failure the surface can now only partly prevent, because the competing
+    values are real and the reader still has to notice the ambiguity marker.
+    """
+    return _scripted(
+        "If the archive holds more than one",
+        {
+            "answer": "AAPL's revenue for the period ending 2007-09-29 was "
+            "24,006,000,000 USD.",
+            "evidence_refs": [
+                "obsarch_ddb4af888ab3c6be910c0f9e",
+                "obsarch_6383b6a9892d72ff26aab02a",
+            ],
+            "derived_refs": [],
+            "uncertainties": [],
+        },
+        "hides-ambiguity",
+        "cites both competing figures and presents one as the answer",
     )
 
 
@@ -685,6 +762,7 @@ def _reads_one_page() -> ScriptedTarget:
 
 BROKEN_TARGETS = {
     "wrong-value": _wrong_value,
+    "hides-ambiguity": _hides_ambiguity,
     "picks-winner": _picks_a_winner,
     "hides-truncation": _hides_truncation,
     "negative-as-zero": _turns_negative_into_zero,

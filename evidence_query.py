@@ -748,7 +748,77 @@ class EvidenceQuery:
                     if ref
                 ],
             }
+        ambiguity = self._ambiguity_for(row)
+        if ambiguity is not None:
+            package["ambiguity"] = ambiguity
+
         return package
+
+    def _ambiguity_for(
+        self,
+        row: sqlite3.Row,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Whether this figure is one of several ST-EVA cannot choose between.
+
+        An observation is identified by its filing, its concept, its period and
+        its context, so two rows for the same concept and period with different
+        values are not a duplicate -- they are two facts the archive holds and
+        cannot tell apart. The company-concept endpoint is the usual cause: it
+        aggregates across dimension members and does not return the member, so
+        for AAPL's FY2007 revenue the archive holds 24.006B and 24.578B under
+        one concept and one period and can say nothing about which aggregate
+        either figure is.
+
+        A consumer that reads only one of them has no way to know the other
+        exists. That is the same failure as an unknown metric returning an
+        empty list -- an answer that looks complete and is not -- so the
+        competing rows are named here, with the archive declining to choose.
+
+        The reason is `NOT_EXPLAINED` and the resolution is
+        `NO_WINNER_SELECTED`, which is the discipline the archive applies to a
+        cross-source conflict, applied to its own inability to distinguish two
+        of its own rows.
+        """
+        siblings = self.connection.execute(
+            "SELECT observation_id, value_json FROM observations"
+            " WHERE metric = ? AND asset_id = ?"
+            " AND period_start IS ? AND period_end IS ?"
+            " AND observation_id != ?",
+            (
+                row["metric"],
+                row["asset_id"],
+                row["period_start"],
+                row["period_end"],
+                row["observation_id"],
+            ),
+        ).fetchall()
+        if not siblings:
+            return None
+        values = {
+            (row["value_json"] or "").strip() for row in [row, *siblings]
+        }
+        if len(values) < 2:
+            # Same value from the same period: a restatement or a duplicate
+            # filing, not an ambiguity about which figure is meant.
+            return None
+        return {
+            "competing_observation_ids": sorted(
+                sibling["observation_id"] for sibling in siblings
+            ),
+            "competing_values": sorted(
+                value for value in values if value
+            ),
+            "reason": (
+                "NOT_EXPLAINED. Several observations share this metric, period "
+                "and source concept but report different values. ST-EVA does "
+                "not know which one is meant and has not chosen: the source "
+                "endpoint aggregates dimension members without returning the "
+                "member, so the aggregate is not identifiable from the "
+                "evidence held."
+            ),
+            "resolution": "NO_WINNER_SELECTED",
+        }
 
     def _semantic_for(
         self,

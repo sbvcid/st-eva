@@ -119,6 +119,7 @@ class TestTheHarnessCatchesEachSpecificFailure(unittest.TestCase):
 
     CASES = {
         "wrong-value": "T1_exact_value",
+        "hides-ambiguity": "T1_exact_value",
         "picks-winner": "T8_conflict",
         "hides-truncation": "T14_truncation_trap",
         "negative-as-zero": "T9_unavailable",

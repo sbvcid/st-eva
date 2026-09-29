@@ -99,29 +99,47 @@ def build_dataset(snapshot_path: str, asset: str = "AAPL") -> Dataset:
 
     tests: List[Test] = []
 
-    # -- T1: one exact historical value ---------------------------------
+    # The observation T5 and T13 trace. Deliberately the oldest reported figure
+    # rather than an ambiguous one, so those tests are about attribution and
+    # provenance and not about the ambiguity T1 covers.
     target = _oldest_observation(connection, asset, "revenue")
-    if target is not None:
+
+    # -- T1: an ambiguous figure, and whether it is read as one ----------
+    # This was originally "give me the revenue for the period ending X", and
+    # the expectation was one of the two stored values picked by
+    # `ORDER BY period_end LIMIT 1`. That manufactured ground truth: AAPL's
+    # FY2007 revenue is held twice under one concept and one period, because
+    # the company-concept endpoint aggregates dimension members without
+    # returning the member, so neither value is more correct than the other.
+    # The model retrieved the second and was recorded as wrong.
+    #
+    # Asking instead whether the figure is ambiguous tests the thing worth
+    # testing: an evidence database must not let a reader take one of two
+    # figures and believe it is the whole answer.
+    ambiguous = _ambiguous_period(connection, asset, "revenue")
+    if ambiguous is not None:
+        period_end = ambiguous["period_end"]
         tests.append(
             Test(
                 test_id="T1_exact_value",
                 class_name="T1",
                 capability="F1",
                 question=(
-                    f"What was {asset}'s reported revenue for the period ending "
-                    f"{target['period_end']}? Give the figure with its unit and "
-                    f"the source that reported it."
+                    f"What was {asset}'s reported revenue for the period "
+                    f"ending {period_end}? If the archive holds more than one "
+                    f"figure for that period, say so rather than choosing one."
                 ),
                 expectations={
-                    "observation_id": target["observation_id"],
-                    "value": json.loads(target["value_json"]),
-                    "period_end": target["period_end"],
-                    "unit": target["unit"],
-                    "currency": target["currency"],
-                    "accession": target["accession"],
-                    "source_concept_ref": target["source_concept_ref"],
-                    "source_fact_id": target["source_fact_id"],
-                    "provider": target["provider"],
+                    "period_end": period_end,
+                    "observation_ids": sorted(
+                        ambiguous["observation_ids"]
+                    ),
+                    "values": sorted(ambiguous["values"]),
+                    "unit": ambiguous["unit"],
+                    "currency": ambiguous["currency"],
+                    "is_ambiguous": True,
+                    "resolution": "NO_WINNER_SELECTED",
+                    "reason": "NOT_EXPLAINED",
                 },
                 audit=_audit_t1,
             )
@@ -500,27 +518,114 @@ def build_dataset(snapshot_path: str, asset: str = "AAPL") -> Dataset:
 
 
 def _audit_t1(auditor, audit, answer, tools, retrieved):
-    auditor.check_citations_exist(audit, set(answer.evidence_refs))
-    auditor.check_citations_were_retrieved(
-        audit, set(answer.evidence_refs), set(retrieved)
+    """
+    Does the answer report an ambiguous figure as ambiguous?
+
+    The failure this catches is a reader taking one of two stored values and
+    believing it is the answer. The archive declines to choose, so an answer
+    that chooses is making a decision the evidence does not support -- the
+    same class of overstatement as picking a side in a cross-source conflict,
+    and the surface now names the competing rows so the reader can see it.
+    """
+    expected_ids = set(audit.expected("observation_ids") or [])
+    cited = set(answer.evidence_refs)
+    # A citation to an id the archive does not hold is a fabricated
+    # provenance reference, which is worse than no citation: it looks
+    # checkable. Checked here as well as on the competing-set test, because
+    # a fabricated id is a different failure from a real one cited alone.
+    auditor.check_citations_exist(audit, cited)
+    auditor.check_citations_were_retrieved(audit, cited, set(retrieved))
+    auditor.check_evidence_was_retrieved(
+        audit, len(expected_ids), set(retrieved), cited
     )
-    auditor.check_value(audit, audit.expected("value"),
-                        set(answer.evidence_refs))
-    auditor.check_metadata(
-        audit, audit.expected("observation_id"), "unit",
-        audit.expected("unit"),
-        _claim_unit(answer), "F3",
+
+    if expected_ids:
+        all_cited = expected_ids <= cited
+        audit.checks.append(
+            _check(
+                "F1", "cites every competing observation", all_cited,
+                sorted(expected_ids), sorted(cited & expected_ids),
+                detail=(
+                    "the archive holds more than one figure for this period "
+                    "and the answer cited only "
+                    f"{sorted(cited & expected_ids)}, so the choice looks "
+                    "like the answer"
+                ),
+                classification=None if all_cited else "B",
+            )
+        )
+
+    flags_ambiguity = bool(
+        re.search(
+            r"ambiguous|more than one|multiple|several|"
+            r"two (?:figures|values|observations)|"
+            r"competing|distinct (?:figures|values)|"
+            r"cannot (?:determine|tell|choose)|do not know which|"
+            r"not (?:able to )?(?:determine|identify) which|"
+            r"no winner|neither",
+            answer.answer,
+            re.I,
+        )
     )
-    auditor.check_metadata(
-        audit, audit.expected("observation_id"), "currency",
-        audit.expected("currency"),
-        _claim_currency(answer), "F3",
+    audit.checks.append(
+        _check(
+            "F1",
+            "says the figure is ambiguous",
+            flags_ambiguity,
+            "an explicit statement that the archive holds more than one figure",
+            "stated" if flags_ambiguity else "not stated",
+            detail=(
+                "the archive declined to choose between competing figures and "
+                "the answer did not say so"
+            ),
+            classification=None if flags_ambiguity else "B",
+        )
     )
-    auditor.check_metadata(
-        audit, audit.expected("observation_id"), "period_end",
-        audit.expected("period_end"),
-        _mentions(answer.answer, str(audit.expected("period_end"))),
-        "F2",
+
+    unit = exact_unit(audit)
+    if unit:
+        audit.checks.append(
+            _check(
+                "F3", "states the unit", _claims_unit(answer),
+                unit, "stated" if _claims_unit(answer) else "not stated",
+                detail="the unit was not stated, and a currency figure and a "
+                "ratio are different things",
+                classification=None if _claims_unit(answer) else "B",
+            )
+        )
+        audit.checks.append(
+            _check(
+                "F3", "states the currency", _claims_currency(answer),
+                "USD", "stated" if _claims_currency(answer) else "not stated",
+                detail="the currency was not stated",
+                classification=None if _claims_currency(answer) else "B",
+            )
+        )
+
+    # Naming one value as *the* value is the overstatement, as distinct from
+    # mentioning it as one of several.
+    picks_winner = bool(
+        re.search(
+            r"the (?:revenue|value|figure) (?:is|was) \$?[\d,]+|"
+            r"the correct (?:value|figure|revenue)|"
+            r"the actual (?:value|figure)",
+            answer.answer,
+            re.I,
+        )
+    )
+    audit.checks.append(
+        _check(
+            "F1",
+            "does not present one of the competing values as the answer",
+            not picks_winner,
+            "no single figure presented as the revenue",
+            picks_winner,
+            detail=(
+                "a figure was stated as the revenue when the archive holds two "
+                "and cannot choose"
+            ),
+            classification=None if not picks_winner else "B",
+        )
     )
 
 
@@ -907,6 +1012,25 @@ def _check(capability, name, passed, expected, actual, detail="",
     )
 
 
+def _claims_unit(answer: TargetAnswer) -> bool:
+    return bool(_claim_unit(answer))
+
+
+def _claims_currency(answer: TargetAnswer) -> bool:
+    return bool(_claim_currency(answer))
+
+
+def exact_unit(audit: Any) -> Optional[str]:
+    """
+    The unit the archive declares for the figures under discussion.
+
+    Read from the expectations rather than the database so a check reads one
+    source: the dataset resolved it when it was built, and the audit compares
+    against that rather than re-deriving it while grading.
+    """
+    return (audit.expectations or {}).get("unit")
+
+
 def _claim(text: str, value: Optional[str]) -> bool:
     return bool(value) and str(value) in text
 
@@ -973,6 +1097,67 @@ def _document_hash(connection, observation_id):
         (observation_id,),
     ).fetchone()
     return row["content_hash"] if row is not None else None
+
+
+def _ambiguous_period(connection, asset, metric):
+    """
+    A period the archive holds more than one distinct value for.
+
+    Found by asking the data rather than by hard-coding a date, so the test
+    still finds its subject if the archive is rebuilt. Grouped on period *and*
+    value, and it requires at least two distinct values -- two rows for one
+    period that agree are a restatement, not an ambiguity.
+    """
+    row = connection.execute(
+        "SELECT o.period_end AS period_end FROM observations o"
+        " JOIN assets a ON a.asset_id = o.asset_id"
+        " WHERE a.ticker = ? AND o.metric = ? AND o.period_end IS NOT NULL"
+        " GROUP BY o.period_end HAVING COUNT(DISTINCT o.value_json) > 1"
+        " ORDER BY o.period_end LIMIT 1",
+        (asset, metric),
+    ).fetchone()
+    if row is None:
+        return None
+    period_end = row["period_end"]
+    values = [
+        r["value_json"]
+        for r in connection.execute(
+            "SELECT o.value_json FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id"
+            " WHERE a.ticker = ? AND o.metric = ? AND o.period_end = ?"
+            " GROUP BY o.value_json ORDER BY o.value_json",
+            (asset, metric, period_end),
+        )
+    ]
+    ids = [
+        r["observation_id"]
+        for r in connection.execute(
+            "SELECT o.observation_id FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id"
+            " WHERE a.ticker = ? AND o.metric = ? AND o.period_end = ?"
+            " ORDER BY o.observation_id",
+            (asset, metric, period_end),
+        )
+    ]
+    return {
+        "period_end": period_end,
+        "values": values,
+        "observation_ids": ids,
+        "unit": connection.execute(
+            "SELECT o.unit FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id"
+            " WHERE a.ticker = ? AND o.metric = ? AND o.period_end = ?"
+            " LIMIT 1",
+            (asset, metric, period_end),
+        ).fetchone()["unit"],
+        "currency": connection.execute(
+            "SELECT o.currency FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id"
+            " WHERE a.ticker = ? AND o.metric = ? AND o.period_end = ?"
+            " LIMIT 1",
+            (asset, metric, period_end),
+        ).fetchone()["currency"],
+    }
 
 
 def _oldest_observation(connection, asset, metric):
