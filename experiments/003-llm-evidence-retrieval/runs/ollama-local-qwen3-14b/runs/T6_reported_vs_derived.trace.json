@@ -1,0 +1,60 @@
+{
+  "answer": {
+    "answer": "No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": [
+      "Metric 'price_to_sales_ratio' may not exist for AAPL",
+      "Need to verify metric name or data availability"
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": "1",
+        "metric": "price_to_sales_ratio",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": "QueryError: limit must be an integer",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "price_to_sales_ratio",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "sequence": 2
+    }
+  ]
+}

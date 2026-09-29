@@ -1,0 +1,31 @@
+{
+  "answer": {
+    "answer": "The data shows two distinct values for Sales Revenue Net: 131,247 million USD (full-year period: 2016-09-25 to 2017-04-01) and 52,896 million USD (first-quarter period: 2017-01-01 to 2017-04-01). The full-year value appears in two 10-Q filings (accessions 0001628280-17-004790 and 0000320193-18-000070), while the first-quarter value is reported in three filings (accessions 0001628280-17-004790, 0000320193-17-000070, and 0000320193-18-000070). The consistency of the first-quarter value across filings suggests reliability, whereas the full-year value's presence in 10-Qs (typically for quarterly data) may indicate metadata errors or re-filing.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "0001628280-17-004790",
+      "0000320193-18-000070",
+      "0000320193-17-000070"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The full-year value in 10-Q filings may be incorrect due to mismatched form-period conventions.",
+      "The duplication of the full-year value across 2017 and 2018 filings requires verification for re-filing or amendment context."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "sequence": 1
+    }
+  ]
+}

@@ -1,0 +1,2054 @@
+{
+  "by_capability": [
+    {
+      "capability": "F1",
+      "failed_tests": [
+        "T1_exact_value"
+      ],
+      "name": "value accuracy",
+      "passed": 0,
+      "total": 1
+    },
+    {
+      "capability": "F2",
+      "failed_tests": [
+        "T1_exact_value",
+        "T2_series",
+        "T13_provenance_chain"
+      ],
+      "name": "period accuracy",
+      "passed": 0,
+      "total": 3
+    },
+    {
+      "capability": "F3",
+      "failed_tests": [
+        "T1_exact_value"
+      ],
+      "name": "unit, currency and basis",
+      "passed": 0,
+      "total": 1
+    },
+    {
+      "capability": "F4",
+      "failed_tests": [
+        "T1_exact_value",
+        "T5_source_attribution"
+      ],
+      "name": "source attribution",
+      "passed": 1,
+      "total": 3
+    },
+    {
+      "capability": "F5",
+      "failed_tests": [
+        "T1_exact_value",
+        "T13_provenance_chain"
+      ],
+      "name": "provenance tracing",
+      "passed": 0,
+      "total": 2
+    },
+    {
+      "capability": "F6",
+      "failed_tests": [
+        "T6_reported_vs_derived"
+      ],
+      "name": "reported versus derived",
+      "passed": 0,
+      "total": 1
+    },
+    {
+      "capability": "F7",
+      "failed_tests": [
+        "T7_validation",
+        "T9_unavailable"
+      ],
+      "name": "unavailable handling",
+      "passed": 0,
+      "total": 2
+    },
+    {
+      "capability": "F8",
+      "failed_tests": [
+        "T8_conflict"
+      ],
+      "name": "conflict handling",
+      "passed": 0,
+      "total": 1
+    },
+    {
+      "capability": "F9",
+      "failed_tests": [
+        "T10_concept_evolution",
+        "T11_partial_mapping",
+        "T12_non_comparable"
+      ],
+      "name": "concept and mapping handling",
+      "passed": 0,
+      "total": 3
+    },
+    {
+      "capability": "F10",
+      "failed_tests": [
+        "T2_series",
+        "T3_pagination"
+      ],
+      "name": "pagination and truncation",
+      "passed": 1,
+      "total": 3
+    },
+    {
+      "capability": "F11",
+      "failed_tests": [
+        "T15_inference_boundary"
+      ],
+      "name": "inference discipline",
+      "passed": 1,
+      "total": 2
+    }
+  ],
+  "dataset_id": "steva-003-aapl-evidence",
+  "failures": [
+    {
+      "actual": false,
+      "answer": "Apple Inc.'s reported revenue for the period ending September 29, 2007, was $24,006,000,000.00 (USD). This figure is sourced from a SEC Edgar 10-K filing (accession number 0001193125-09-214859) and corresponds to the US-GAAP concept 'SalesRevenueNet'.",
+      "capability": "F2",
+      "capability_name": "period accuracy",
+      "check": "obsarch_ddb4af888ab3c6be910c0f9e declares period_end",
+      "classification": "B",
+      "detail": "the answer's framing differs from what the observation declares",
+      "evidence_refs": [
+        "obsarch_ddb4af888ab3c6be910c0f9e"
+      ],
+      "expected": "2007-09-29",
+      "test_id": "T1_exact_value",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[1]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": false,
+      "answer": "The data shows two distinct values for Sales Revenue Net: 131,247 million USD (full-year period: 2016-09-25 to 2017-04-01) and 52,896 million USD (first-quarter period: 2017-01-01 to 2017-04-01). The full-year value appears in two 10-Q filings (accessions 0001628280-17-004790 and 0000320193-18-000070), while the first-quarter value is reported in three filings (accessions 0001628280-17-004790, 0000320193-17-000070, and 0000320193-18-000070). The consistency of the first-quarter value across filings suggests reliability, whereas the full-year value's presence in 10-Qs (typically for quarterly data) may indicate metadata errors or re-filing.",
+      "capability": "F10",
+      "capability_name": "pagination and truncation",
+      "check": "truncation is acknowledged in the answer",
+      "classification": "B",
+      "detail": "a truncated series was presented as complete",
+      "evidence_refs": [
+        "0001628280-17-004790",
+        "0000320193-18-000070",
+        "0000320193-17-000070"
+      ],
+      "expected": "the answer states the series is partial",
+      "test_id": "T2_series",
+      "trace": [
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": null,
+            "metric": "revenue",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": null,
+          "operation": "get_metric_history",
+          "result_shape": "series(point_count=339,returned=200,truncated=True)",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": 100,
+      "answer": "The numerical value of the revenue reported in the provided JSON data is **54,512,000,000.0** (or **$54.512 billion** in USD). Key context: metric `revenue` (total revenue from sales, net of returns and discounts), currency USD, period September 30, 2012, to December 29, 2012, source SEC filing (`10-Q` for Q1 2014). Validation status: **UNVERIFIABLE** (no cross-validation possible due to reliance on a single source). Notes: Value aligns with Apple's historical revenue figures for 2012, but discrepancy in fiscal year (2014 in filing metadata vs. 2012 reporting period) may reflect a delayed filing or correction.",
+      "capability": "F10",
+      "capability_name": "pagination and truncation",
+      "check": "the series was paged to completion",
+      "classification": "B",
+      "detail": "read 100 of 339 points",
+      "evidence_refs": [],
+      "expected": 339,
+      "test_id": "T3_pagination",
+      "trace": [
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "cursor": null,
+            "limit": "100",
+            "metric": "revenue",
+            "order": "period_start",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "page",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "cursor": null,
+            "limit": 100,
+            "metric": "revenue",
+            "order": "period_start",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": "QueryError: order must be one of ['PERIOD_ASCENDING', 'PERIOD_DESCENDING', 'AVAILABLE_AT_ASCENDING'], got 'period_start'",
+          "operation": "page",
+          "result_shape": "unknown",
+          "sequence": 2
+        },
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "cursor": null,
+            "limit": 100,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": null,
+          "operation": "page",
+          "result_shape": "page(total=339,returned=100,truncated=True)",
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "actual": [],
+      "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+      "capability": "F4",
+      "capability_name": "source attribution",
+      "check": "every cited observation exists",
+      "classification": "B",
+      "detail": "not in the archive: ['sfid_52493188959d0d442076337871e8951b', 'sfid_b5229f1711c68622f937916d70285775']",
+      "evidence_refs": [
+        "sfid_b5229f1711c68622f937916d70285775",
+        "sfid_52493188959d0d442076337871e8951b"
+      ],
+      "expected": [
+        "sfid_52493188959d0d442076337871e8951b",
+        "sfid_b5229f1711c68622f937916d70285775"
+      ],
+      "test_id": "T5_source_attribution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[2]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": false,
+      "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+      "capability": "F4",
+      "capability_name": "source attribution",
+      "check": "obsarch_ddb4af888ab3c6be910c0f9e declares provider",
+      "classification": "B",
+      "detail": "the answer's framing differs from what the observation declares",
+      "evidence_refs": [
+        "sfid_b5229f1711c68622f937916d70285775",
+        "sfid_52493188959d0d442076337871e8951b"
+      ],
+      "expected": "SecEdgar",
+      "test_id": "T5_source_attribution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[2]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": false,
+      "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+      "capability": "F4",
+      "capability_name": "source attribution",
+      "check": "obsarch_ddb4af888ab3c6be910c0f9e declares accession",
+      "classification": "B",
+      "detail": "the answer's framing differs from what the observation declares",
+      "evidence_refs": [
+        "sfid_b5229f1711c68622f937916d70285775",
+        "sfid_52493188959d0d442076337871e8951b"
+      ],
+      "expected": "0001193125-09-214859",
+      "test_id": "T5_source_attribution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[2]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": false,
+      "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+      "capability": "F4",
+      "capability_name": "source attribution",
+      "check": "obsarch_ddb4af888ab3c6be910c0f9e declares document content hash",
+      "classification": "B",
+      "detail": "the answer's framing differs from what the observation declares",
+      "evidence_refs": [
+        "sfid_b5229f1711c68622f937916d70285775",
+        "sfid_52493188959d0d442076337871e8951b"
+      ],
+      "expected": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+      "test_id": "T5_source_attribution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[2]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "not cited",
+      "answer": "No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.",
+      "capability": "F6",
+      "capability_name": "reported versus derived",
+      "check": "cites the derived reference",
+      "classification": "B",
+      "detail": "the derived reference was never named",
+      "evidence_refs": [],
+      "expected": "der:current_ps",
+      "test_id": "T6_reported_vs_derived",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "price_to_sales_ratio",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "price_to_sales_ratio",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.",
+      "capability": "F6",
+      "capability_name": "reported versus derived",
+      "check": "states that it is not a reported figure",
+      "classification": "B",
+      "detail": "the answer did not distinguish derived from reported",
+      "evidence_refs": [],
+      "expected": "an explicit statement that the value is derived",
+      "test_id": "T6_reported_vs_derived",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "price_to_sales_ratio",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "price_to_sales_ratio",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "none",
+      "answer": "No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.",
+      "capability": "F6",
+      "capability_name": "reported versus derived",
+      "check": "inspected the derivation",
+      "classification": "B",
+      "detail": "the derivation was asserted without reading it",
+      "evidence_refs": [],
+      "expected": "a get_lineage call on the derived reference",
+      "test_id": "T6_reported_vs_derived",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "price_to_sales_ratio",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "price_to_sales_ratio",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "The requested information is not available in the ST-EVA database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "preserves the independence metadata",
+      "classification": "B",
+      "detail": "independence was dropped from the answer",
+      "evidence_refs": [],
+      "expected": "NOT_INDEPENDENT",
+      "test_id": "T7_validation",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": null,
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[200]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "The requested information is not available in the ST-EVA database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "reports the recorded status",
+      "classification": "B",
+      "detail": "the validation status was not reported",
+      "evidence_refs": [],
+      "expected": "DISCREPANT",
+      "test_id": "T7_validation",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": null,
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[200]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": [],
+      "answer": "There is no evidence available to determine the competing values or which one is correct for AAPL.",
+      "capability": "F8",
+      "capability_name": "conflict handling",
+      "check": "both sides of the conflict are cited",
+      "classification": "B",
+      "detail": "missing: ['obsarch_a6efc0f926c63aa25f356fd5', 'obsarch_b31513334af56d3a649cf7b8']",
+      "evidence_refs": [],
+      "expected": [
+        "obsarch_a6efc0f926c63aa25f356fd5",
+        "obsarch_b31513334af56d3a649cf7b8"
+      ],
+      "test_id": "T8_conflict",
+      "trace": []
+    },
+    {
+      "actual": false,
+      "answer": "There is no evidence available to determine the competing values or which one is correct for AAPL.",
+      "capability": "F8",
+      "capability_name": "conflict handling",
+      "check": "the disagreement is stated as a disagreement",
+      "classification": "B",
+      "detail": "the answer did not report the disagreement",
+      "evidence_refs": [],
+      "expected": "the answer names the conflict",
+      "test_id": "T8_conflict",
+      "trace": []
+    },
+    {
+      "actual": false,
+      "answer": "No observations were found for AAPL's operating margin. The metric may not be available or could be named differently in the database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "operating_margin_bank is reported as NOT_APPLICABLE",
+      "classification": "B",
+      "detail": "the answer did not name the state NOT_APPLICABLE",
+      "evidence_refs": [],
+      "expected": "NOT_APPLICABLE",
+      "test_id": "T9_unavailable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": false,
+      "answer": "No observations were found for AAPL's operating margin. The metric may not be available or could be named differently in the database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "operating_margin_bank preserves its reason code",
+      "classification": "B",
+      "detail": "the answer did not preserve why the state applies",
+      "evidence_refs": [],
+      "expected": "BUSINESS_MODEL_NOT_MEANINGFUL",
+      "test_id": "T9_unavailable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not distinguished",
+      "answer": "No observations were found for AAPL's operating margin. The metric may not be available or could be named differently in the database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "distinguishes dividend_per_share (SOURCE_DID_NOT_REPORT)",
+      "classification": "B",
+      "detail": "a different negative state was reported for this metric",
+      "evidence_refs": [],
+      "expected": "dividend_per_share is SOURCE_DID_NOT_REPORT, not the metric asked about",
+      "test_id": "T9_unavailable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not distinguished",
+      "answer": "No observations were found for AAPL's operating margin. The metric may not be available or could be named differently in the database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "distinguishes guidance (STALE)",
+      "classification": "B",
+      "detail": "a different negative state was reported for this metric",
+      "evidence_refs": [],
+      "expected": "guidance is STALE, not the metric asked about",
+      "test_id": "T9_unavailable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not distinguished",
+      "answer": "No observations were found for AAPL's operating margin. The metric may not be available or could be named differently in the database.",
+      "capability": "F7",
+      "capability_name": "unavailable handling",
+      "check": "distinguishes segment_revenue (UNAVAILABLE)",
+      "classification": "B",
+      "detail": "a different negative state was reported for this metric",
+      "evidence_refs": [],
+      "expected": "segment_revenue is UNAVAILABLE, not the metric asked about",
+      "test_id": "T9_unavailable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "operating margin",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not named",
+      "answer": "No observations were found for AAPL's revenue series under XBRL concepts in the archive. This may indicate either that the data is not present or that the query parameters did not match any stored concepts.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "names us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+      "classification": "B",
+      "detail": "a concept the archive holds was not mentioned",
+      "evidence_refs": [],
+      "expected": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+      "test_id": "T10_concept_evolution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": "XBRL",
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "not named",
+      "answer": "No observations were found for AAPL's revenue series under XBRL concepts in the archive. This may indicate either that the data is not present or that the query parameters did not match any stored concepts.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "names us-gaap:Revenues",
+      "classification": "B",
+      "detail": "a concept the archive holds was not mentioned",
+      "evidence_refs": [],
+      "expected": "us-gaap:Revenues",
+      "test_id": "T10_concept_evolution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": "XBRL",
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "not named",
+      "answer": "No observations were found for AAPL's revenue series under XBRL concepts in the archive. This may indicate either that the data is not present or that the query parameters did not match any stored concepts.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "names us-gaap:SalesRevenueNet",
+      "classification": "B",
+      "detail": "a concept the archive holds was not mentioned",
+      "evidence_refs": [],
+      "expected": "us-gaap:SalesRevenueNet",
+      "test_id": "T10_concept_evolution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": "XBRL",
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "No observations were found for AAPL's revenue series under XBRL concepts in the archive. This may indicate either that the data is not present or that the query parameters did not match any stored concepts.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "says the series breaks at a PARTIAL concept",
+      "classification": "B",
+      "detail": "the answer did not say the series must break there",
+      "evidence_refs": [],
+      "expected": "an explicit break",
+      "test_id": "T10_concept_evolution",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": "XBRL",
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "The SalesRevenueNet metric for AAPL is marked as UNAVAILABLE due to retrieval failure, with no data points returned. There are no other revenue-related metrics found for AAPL in the database. The fidelity of SalesRevenueNet to 'revenue' cannot be assessed due to missing evidence, and comparability to other concepts is not possible as no alternative metrics were retrieved.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "reports the fidelity as partial",
+      "classification": "B",
+      "detail": "the mapping's fidelity was not stated",
+      "evidence_refs": [],
+      "expected": "PARTIAL",
+      "test_id": "T11_partial_mapping",
+      "trace": [
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": null,
+            "metric": "SalesRevenueNet",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": null,
+          "operation": "get_metric_history",
+          "result_shape": "series(point_count=0,returned=0,truncated=False)",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": null,
+            "metric": "Revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "UNVERIFIABLE",
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        }
+      ]
+    },
+    {
+      "actual": "not named",
+      "answer": "No capital-expenditure concepts were found for AAPL in the database. The query returned no results for both 'Capital Expenditure' and 'Capital Expenditures'.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "names us-gaap:PaymentsToAcquireProductiveAssets",
+      "classification": "B",
+      "detail": "a capex concept the archive holds was not mentioned",
+      "evidence_refs": [],
+      "expected": "us-gaap:PaymentsToAcquireProductiveAssets",
+      "test_id": "T12_non_comparable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "50",
+            "metric": "Capital Expenditure",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 50,
+            "metric": "Capital Expenditure",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 50,
+            "metric": "Capital Expenditures",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "actual": "not named",
+      "answer": "No capital-expenditure concepts were found for AAPL in the database. The query returned no results for both 'Capital Expenditure' and 'Capital Expenditures'.",
+      "capability": "F9",
+      "capability_name": "concept and mapping handling",
+      "check": "names us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+      "classification": "B",
+      "detail": "a capex concept the archive holds was not mentioned",
+      "evidence_refs": [],
+      "expected": "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+      "test_id": "T12_non_comparable",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "50",
+            "metric": "Capital Expenditure",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 50,
+            "metric": "Capital Expenditure",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": "AAPL",
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 50,
+            "metric": "Capital Expenditures",
+            "order": "PERIOD_ASCENDING",
+            "period_end": null,
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "actual": [
+        "obsarch_ddb4af888ab3c6be910c0f9e"
+      ],
+      "answer": "The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.",
+      "capability": "F5",
+      "capability_name": "provenance tracing",
+      "check": "cited observations were actually retrieved",
+      "classification": "B",
+      "detail": "cited without retrieving: ['0001193125-09-214859', 'https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json']",
+      "evidence_refs": [
+        "obsarch_ddb4af888ab3c6be910c0f9e",
+        "0001193125-09-214859",
+        "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json"
+      ],
+      "expected": [
+        "0001193125-09-214859",
+        "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json",
+        "obsarch_ddb4af888ab3c6be910c0f9e"
+      ],
+      "test_id": "T13_provenance_chain",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "SOURCE_REPORTED",
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "SOURCE_REPORTED",
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[1]",
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.",
+      "capability": "F5",
+      "capability_name": "provenance tracing",
+      "check": "cites source_fact_id for obsarch_ddb4af888ab3c6be910c0f9e",
+      "classification": "B",
+      "detail": "the answer omits source_fact_id",
+      "evidence_refs": [
+        "obsarch_ddb4af888ab3c6be910c0f9e",
+        "0001193125-09-214859",
+        "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json"
+      ],
+      "expected": "sfid_b5229f1711c68622f937916d70285775",
+      "test_id": "T13_provenance_chain",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "SOURCE_REPORTED",
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "SOURCE_REPORTED",
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[1]",
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "actual": "not stated",
+      "answer": "The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.",
+      "capability": "F2",
+      "capability_name": "period accuracy",
+      "check": "cites available_at for obsarch_ddb4af888ab3c6be910c0f9e",
+      "classification": "B",
+      "detail": "the answer omits available_at",
+      "evidence_refs": [
+        "obsarch_ddb4af888ab3c6be910c0f9e",
+        "0001193125-09-214859",
+        "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json"
+      ],
+      "expected": "2009-10-27T00:00:00+00:00",
+      "test_id": "T13_provenance_chain",
+      "trace": [
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": "1",
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "SOURCE_REPORTED",
+            "unit": null
+          },
+          "error": "QueryError: limit must be an integer",
+          "operation": "query_observations",
+          "result_shape": "unknown",
+          "sequence": 1
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": "SOURCE_REPORTED",
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[0]",
+          "sequence": 2
+        },
+        {
+          "arguments": {
+            "as_of": null,
+            "asset": null,
+            "basis_framework": null,
+            "currency": null,
+            "instant": null,
+            "knowable_at": null,
+            "limit": 1,
+            "metric": "revenue",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2007-09-29",
+            "period_start": null,
+            "provider": null,
+            "source_type": null,
+            "status": null,
+            "unit": null
+          },
+          "error": null,
+          "operation": "query_observations",
+          "result_shape": "list[1]",
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "actual": "none",
+      "answer": "The difference between the two sales figures is $78,351,000,000 (or $78.351 billion). The first figure ($131,247,000,000) covers September 25, 2016, to April 1, 2017, while the second ($52,896,000,000) covers January 1, 2017, to April 1, 2017. The difference corresponds to the period September 25, 2016, to December 31, 2016.",
+      "capability": "F11",
+      "capability_name": "inference discipline",
+      "check": "separates evidence from interpretation",
+      "classification": "B",
+      "detail": "the answer did not refer to what the archive holds",
+      "evidence_refs": [
+        "observation_id_1",
+        "observation_id_2"
+      ],
+      "expected": "an explicit reference to the evidence",
+      "test_id": "T15_inference_boundary",
+      "trace": [
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": null,
+            "metric": "revenue",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": null,
+          "operation": "get_metric_history",
+          "result_shape": "series(point_count=339,returned=200,truncated=True)",
+          "sequence": 1
+        }
+      ]
+    },
+    {
+      "actual": "none",
+      "answer": "The difference between the two sales figures is $78,351,000,000 (or $78.351 billion). The first figure ($131,247,000,000) covers September 25, 2016, to April 1, 2017, while the second ($52,896,000,000) covers January 1, 2017, to April 1, 2017. The difference corresponds to the period September 25, 2016, to December 31, 2016.",
+      "capability": "F11",
+      "capability_name": "inference discipline",
+      "check": "names what the archive cannot settle",
+      "classification": "B",
+      "detail": "the answer did not state the limit of the evidence",
+      "evidence_refs": [
+        "observation_id_1",
+        "observation_id_2"
+      ],
+      "expected": "an explicit statement of the limit",
+      "test_id": "T15_inference_boundary",
+      "trace": [
+        {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": null,
+            "metric": "revenue",
+            "period_end": null,
+            "period_start": null
+          },
+          "error": null,
+          "operation": "get_metric_history",
+          "result_shape": "series(point_count=339,returned=200,truncated=True)",
+          "sequence": 1
+        }
+      ]
+    }
+  ],
+  "failures_by_classification": {
+    "A": {
+      "count": 0,
+      "meaning": "ST-EVA defect: the archive or query surface is wrong"
+    },
+    "B": {
+      "count": 31,
+      "meaning": "target model error: the evidence supports a different answer"
+    },
+    "C": {
+      "count": 0,
+      "meaning": "evaluator defect: the check is wrong, not the answer"
+    },
+    "D": {
+      "count": 0,
+      "meaning": "dataset ambiguity: the question does not determine an answer"
+    },
+    "E": {
+      "count": 0,
+      "meaning": "source limitation: the evidence cannot support any answer"
+    }
+  },
+  "finished_at": "2026-09-29T17:49:26.050991+00:00",
+  "human_review": {
+    "purpose": "calibration: a sample of passes and all failures, so the evaluator can be checked against successes as well as failures",
+    "sample_of_passes": [
+      "T14_truncation_trap",
+      "T4_point_in_time"
+    ],
+    "sampled_failures": [
+      "T10_concept_evolution",
+      "T11_partial_mapping",
+      "T12_non_comparable",
+      "T13_provenance_chain",
+      "T15_inference_boundary",
+      "T1_exact_value",
+      "T2_series",
+      "T3_pagination",
+      "T5_source_attribution",
+      "T6_reported_vs_derived",
+      "T7_validation",
+      "T8_conflict",
+      "T9_unavailable"
+    ]
+  },
+  "model": {
+    "base_url": "http://127.0.0.1:11434/v1",
+    "max_tokens": 1600,
+    "model": "qwen3:14b",
+    "provider": "ollama-local",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "qwen3:14b"
+  },
+  "query_behaviour": [
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 63.3,
+      "failed_calls": 1,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 2,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T1_exact_value",
+      "tool_calls": 2,
+      "uncertainties": 1
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 185.52,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 200,
+      "operations": [
+        "get_metric_history"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T2_series",
+      "tool_calls": 1,
+      "uncertainties": 2
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 115.82,
+      "failed_calls": 2,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 200,
+      "operations": [
+        "page"
+      ],
+      "page_calls": 3,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T3_pagination",
+      "tool_calls": 3,
+      "uncertainties": 2
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 122.04,
+      "failed_calls": 1,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": true,
+      "stop_reason": "answered",
+      "test_id": "T4_point_in_time",
+      "tool_calls": 2,
+      "uncertainties": 3
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 127.04,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 4,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T5_source_attribution",
+      "tool_calls": 1,
+      "uncertainties": 2
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 44.31,
+      "failed_calls": 1,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T6_reported_vs_derived",
+      "tool_calls": 2,
+      "uncertainties": 2
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 135.08,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 400,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T7_validation",
+      "tool_calls": 1,
+      "uncertainties": 1
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 47.99,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T8_conflict",
+      "tool_calls": 0,
+      "uncertainties": 1
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 29.98,
+      "failed_calls": 1,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T9_unavailable",
+      "tool_calls": 2,
+      "uncertainties": 2
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 45.17,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T10_concept_evolution",
+      "tool_calls": 1,
+      "uncertainties": 1
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 31.27,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [
+        "get_metric_history",
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T11_partial_mapping",
+      "tool_calls": 2,
+      "uncertainties": 3
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 54.68,
+      "failed_calls": 1,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "observations_retrieved": 0,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T12_non_comparable",
+      "tool_calls": 3,
+      "uncertainties": 1
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 113.32,
+      "failed_calls": 1,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 2,
+      "operations": [
+        "query_observations"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T13_provenance_chain",
+      "tool_calls": 3,
+      "uncertainties": 2
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 111.44,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 200,
+      "operations": [
+        "get_metric_history"
+      ],
+      "page_calls": 0,
+      "passed": true,
+      "stop_reason": "answered",
+      "test_id": "T14_truncation_trap",
+      "tool_calls": 1,
+      "uncertainties": 3
+    },
+    {
+      "abandoned_pagination": false,
+      "cursors_used": 0,
+      "elapsed_seconds": 64.03,
+      "failed_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": true,
+      "observations_retrieved": 200,
+      "operations": [
+        "get_metric_history"
+      ],
+      "page_calls": 0,
+      "passed": false,
+      "stop_reason": "answered",
+      "test_id": "T15_inference_boundary",
+      "tool_calls": 1,
+      "uncertainties": 1
+    }
+  ],
+  "query_totals": {
+    "failed_calls": 8,
+    "first_reply_parse_failures": 0,
+    "format_repair_turns": 8,
+    "mean_tool_calls": 1.67,
+    "tests": 15,
+    "tests_with_no_evidence_retrieved": 7,
+    "tool_calls": 25
+  },
+  "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\ollama-local-qwen3-14b",
+  "scoring_note": "No overall quality score is produced. The capabilities are not interchangeable, and averaging them would let exact values buy invented provenance.",
+  "snapshot": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
+  "started_at": "2026-09-29T17:27:54.955208+00:00",
+  "totals": {
+    "failed": 13,
+    "passed": 2,
+    "tests": 15
+  },
+  "unverifiable_checks": [
+    {
+      "check": "does not present a derived value as a reported one",
+      "classification": null,
+      "detail": "the answer does not state the derived value, so there is nothing to check",
+      "test_id": "T6_reported_vs_derived"
+    }
+  ]
+}

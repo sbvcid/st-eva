@@ -1,0 +1,12 @@
+{
+  "answer": {
+    "answer": "There is no evidence available to determine the competing values or which one is correct for AAPL.",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": [
+      "The tools do not support querying for observations with a 'CONFLICTING' evidence state directly. No observations matching the criteria were found using available filters."
+    ]
+  },
+  "trace": []
+}

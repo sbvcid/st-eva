@@ -474,5 +474,149 @@ class TestTheAnswerContractIsAnEvaluationFormatOnly(unittest.TestCase):
         self.assertIn("uncertainties", ANSWER_CONTRACT)
 
 
+class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
+    """
+    Pinned so they cannot be forgotten.
+
+    Every item here was found by a real model running the sealed dataset, which
+    is the only way any of them could have been found: the scripted targets had
+    fixed answers, so they never depended on what the archive actually contained
+    at the moment.
+
+    These are written as *characterisations*, not as assertions that the defect
+    is fixed. A1 and A2 are open findings and the query surface is sealed, so a
+    test that demanded a fix would fail for a reason nobody is going to act on.
+    A characterisation that passes today and fails after a fix is the right
+    instrument: it turns a silent improvement into a visible change.
+    """
+
+    def test_a1_an_unknown_metric_is_indistinguishable_from_no_data(self):
+        """
+        A1: an empty list says nothing about why it is empty.
+
+        This produced 7 of 15 false negatives in the first real run, each
+        answered with "no data exists" when the archive held hundreds of rows.
+        The vocabulary exists in `coverage_report`; the surface just does not
+        offer it when a filter matches nothing.
+        """
+        from evidence_query import EvidenceQuery
+        from harness.snapshot import default_snapshot_path
+
+        query = EvidenceQuery.open(default_snapshot_path())
+        try:
+            real = query.query_observations(
+                asset="AAPL", metric="revenue", limit=1
+            )
+            misspelled = query.query_observations(
+                asset="AAPL", metric="operating margin", limit=1
+            )
+            well_formed_but_empty = query.query_observations(
+                asset="AAPL", metric="revenue", period_end="1900-01-01", limit=1
+            )
+            self.assertTrue(real, "the archive should hold revenue")
+            self.assertEqual(
+                misspelled, [],
+                "an unknown metric name no longer returns an empty list; check "
+                "whether it now names the metric it could not find, and update "
+                "this finding",
+            )
+            self.assertEqual(
+                misspelled, well_formed_but_empty,
+                "a misspelled metric and a metric with no rows became "
+                "distinguishable, which is the fix; update this finding",
+            )
+        finally:
+            query.close()
+
+    def test_a2_the_status_filter_does_not_accept_evidence_states(self):
+        """
+        A2: `status` filters validation status, not evidence state.
+
+        The model passed `SOURCE_REPORTED` — a term the documented vocabulary
+        teaches — and got zero rows. It still happened after the prompt was
+        corrected to spell the distinction out, which is what makes it a naming
+        collision rather than a misunderstanding.
+        """
+        from evidence_query import EvidenceQuery
+        from harness.snapshot import default_snapshot_path
+
+        query = EvidenceQuery.open(default_snapshot_path())
+        try:
+            unfiltered = query.query_observations(
+                asset="AAPL", metric="revenue", period_end="2007-09-29", limit=5
+            )
+            with_evidence_state = query.query_observations(
+                asset="AAPL", metric="revenue", period_end="2007-09-29",
+                status="SOURCE_REPORTED", limit=5,
+            )
+            with_validation_status = query.query_observations(
+                asset="AAPL", metric="revenue", period_end="2007-09-29",
+                status="UNVERIFIABLE", limit=5,
+            )
+            self.assertTrue(unfiltered)
+            self.assertEqual(
+                with_evidence_state, [],
+                "the status filter now accepts evidence states; update A2",
+            )
+            self.assertEqual(
+                len(with_validation_status), len(unfiltered),
+                "the status filter no longer matches validation status",
+            )
+        finally:
+            query.close()
+
+    def test_c1_a_check_satisfied_by_citing_nothing_is_recorded_as_weak(self):
+        """
+        C1: T4 passed vacuously.
+
+        Its checks were "the filter was present in the arguments" and
+        "citations <= knowable", both trivially satisfied by a model that
+        retrieved nothing and said the data was absent — the answer a check
+        should most punish.
+
+        The audit is not fixed in this run, so this characterises the current
+        behaviour. It passes today and fails after a fix, which is the point: it
+        turns a silent improvement into a visible change rather than leaving the
+        evaluator quietly over-permissive.
+        """
+        from harness.auditor import Audit, Auditor, Check
+        from harness.tools import Toolbox
+
+        class _Silent(Auditor):
+            """An auditor with no database, for a check that reads no data."""
+
+            def __init__(self) -> None:
+                self.connection = None
+                self.query = None
+
+        audit = Audit(
+            test_id="probe",
+            expectations={"knowable_count": 100, "metric": "revenue"},
+            answer_text="No observations were found. There is no data.",
+        )
+        cited = 0
+        # The exact comparison T4 used.
+        audit.checks.append(
+            Check(
+                capability="F4",
+                name="no later evidence smuggled in",
+                passed=cited <= audit.expected("knowable_count"),
+                expected=100,
+                actual=cited,
+                detail="satisfied by citing nothing",
+                classification=None,
+            )
+        )
+        self.assertTrue(
+            audit.checks[0].passed,
+            "T4's vacuous check no longer passes when nothing is cited; update "
+            "this finding and re-run",
+        )
+        self.assertEqual(
+            len(audit.unverifiable), 0,
+            "the check was decidable and decided the wrong way",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

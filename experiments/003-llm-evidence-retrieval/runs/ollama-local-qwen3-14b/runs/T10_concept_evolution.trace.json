@@ -1,0 +1,36 @@
+{
+  "answer": {
+    "answer": "No observations were found for AAPL's revenue series under XBRL concepts in the archive. This may indicate either that the data is not present or that the query parameters did not match any stored concepts.",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": [
+      "The absence of results could be due to no data existing for the specified criteria, or the XBRL concepts may not be tagged in a way that matches the query parameters."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": "XBRL",
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "sequence": 1
+    }
+  ]
+}

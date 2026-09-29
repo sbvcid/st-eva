@@ -1,0 +1,471 @@
+{
+  "answer": {
+    "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "sfid_b5229f1711c68622f937916d70285775",
+      "sfid_52493188959d0d442076337871e8951b"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The PARTIAL mapping of us-gaap:SalesRevenueNet may exclude certain revenue components.",
+      "The UNVERIFIABLE status indicates the value cannot be cross-checked against other sources."
+    ]
+  },
+  "audit": {
+    "answer_text": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+    "check_count": 4,
+    "checks": [
+      {
+        "actual": [],
+        "capability": "F4",
+        "classification": "B",
+        "detail": "not in the archive: ['sfid_52493188959d0d442076337871e8951b', 'sfid_b5229f1711c68622f937916d70285775']",
+        "expected": [
+          "sfid_52493188959d0d442076337871e8951b",
+          "sfid_b5229f1711c68622f937916d70285775"
+        ],
+        "name": "every cited observation exists",
+        "passed": false
+      },
+      {
+        "actual": false,
+        "capability": "F4",
+        "classification": "B",
+        "detail": "the answer's framing differs from what the observation declares",
+        "expected": "SecEdgar",
+        "name": "obsarch_ddb4af888ab3c6be910c0f9e declares provider",
+        "passed": false
+      },
+      {
+        "actual": false,
+        "capability": "F4",
+        "classification": "B",
+        "detail": "the answer's framing differs from what the observation declares",
+        "expected": "0001193125-09-214859",
+        "name": "obsarch_ddb4af888ab3c6be910c0f9e declares accession",
+        "passed": false
+      },
+      {
+        "actual": false,
+        "capability": "F4",
+        "classification": "B",
+        "detail": "the answer's framing differs from what the observation declares",
+        "expected": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+        "name": "obsarch_ddb4af888ab3c6be910c0f9e declares document content hash",
+        "passed": false
+      }
+    ],
+    "expectations": {
+      "accession": "0001193125-09-214859",
+      "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+      "document_id": "doc_24e188322f7c7d6939f9dc79",
+      "form": "10-K",
+      "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+      "provider": "SecEdgar"
+    },
+    "failed_count": 4,
+    "passed": false,
+    "test_id": "T5_source_attribution"
+  },
+  "capability": "F4",
+  "expectations": {
+    "accession": "0001193125-09-214859",
+    "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+    "document_id": "doc_24e188322f7c7d6939f9dc79",
+    "form": "10-K",
+    "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+    "provider": "SecEdgar"
+  },
+  "model": {
+    "base_url": "http://127.0.0.1:11434/v1",
+    "max_tokens": 1600,
+    "model": "qwen3:14b",
+    "provider": "ollama-local",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "qwen3:14b"
+  },
+  "question": "Where did the revenue figure for the period ending 2007-09-29 come from? Name the provider, the filing accession, and the source document's content hash.",
+  "retrieved_observations": [
+    "obs_sha256:43c39af362ff23422b95b02642e929822f14c148fe205378bd83174c21ad6d82",
+    "obs_sha256:a8630c2b5aa499ff899916e3c08a38d45ce14effdd7af83a4086a55acc4bcf0e",
+    "obsarch_6383b6a9892d72ff26aab02a",
+    "obsarch_ddb4af888ab3c6be910c0f9e"
+  ],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 127.04,
+    "error": null,
+    "exchanges": [
+      {
+        "elapsed_seconds": 24.93,
+        "index": 0,
+        "message_count": 2,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": "",
+                "reasoning": "Okay, let me try to figure out how to answer the user's question. They want to know where the revenue figure for the period ending 2007-09-29 came from, specifically asking for the provider, the filing accession, and the source document's content hash.\n\nFirst, I need to recall the tools available. The user mentioned using ST-EVA, which has functions like query_observations, get_observation, get_metric_history, etc. Since the question is about the source of a specific revenue figure, I should probably start by querying the observations related to that revenue metric and period.\n\nThe function query_observations can be used to find observations that match certain filters. The parameters include metrics, period_end, etc. So I can set the metric to \"revenue\" and period_end to \"2007-09-29\". However, the user also wants the provider, filing accession, and content hash, which might be part of the observation's metadata. \n\nBut wait, the query_observations function might return multiple results. To get detailed information about a specific observation, including the provider and other metadata, I might need to use the get_observation function once I have the observation ID. However, the user hasn't provided an observation ID, so I need to first use query_observations to find the relevant observation(s).\n\nAlternatively, the get_metric_history function could be useful here. It provides historical series with metadata, but the user is asking for a specific period, so maybe query_observations is more direct. \n\nAnother consideration is the parameters. The query_observations function has a parameter called \"provider\" which can be used to filter by the provider. But since the user is asking for the provider as part of the answer, perhaps the initial query should not filter by provider but retrieve that information from the results.\n\nSo, the plan is:\n\n1. Use query_observations with the metric as \"revenue\" and period_end as \"2007-09-29\" to get the relevant observations.\n2. From the results, extract the observation IDs, providers, filing accessions, and content hashes.\n3. If there are multiple entries, perhaps the user wants the primary source, but the answer needs to be based on the evidence returned by the tools.\n\nHowever, the user might be expecting a single source, so I need to check if there are multiple providers or if there's a primary one. If there's only one observation, then that's the one to use. If there are multiple, the answer might need to list them, but the question says \"the revenue figure\", implying a single source. \n\nAdditionally, the content hash is part of the source document metadata, which can be retrieved using get_source_document, but that requires the reference, which might be the observation's source document reference. \n\nAlternatively, the get_observation function may include the source document's details. So, once I have the observation ID from query_observations, I can call get_observation with that ID and include the source document information if available.\n\nBut the initial step is to find the observation(s) related to the revenue for that period. Let me structure the function calls accordingly.\n",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"metric\":\"revenue\",\"period_end\":\"2007-09-29\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call_vgx7swq5",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "created": 1790703386,
+          "id": "chatcmpl-295",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 697,
+            "prompt_tokens": 1518,
+            "prompt_tokens_details": {
+              "cached_tokens": 1458
+            },
+            "total_tokens": 2215
+          }
+        }
+      },
+      {
+        "index": 1,
+        "result_bytes": 8386,
+        "tool_call": {
+          "arguments": {
+            "metric": "revenue",
+            "period_end": "2007-09-29"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 76.48,
+        "index": 1,
+        "message_count": 4,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "The data provided represents two observations of **Apple Inc. (AAPL)**'s **revenue** for the financial period **2006-10-01 to 2007-09-29**, sourced from a **SEC Edgar** filing (10-K/A, accession number `0001193125-10-012091`). Below is a structured breakdown of the key details and implications:\n\n---\n\n### **1. Core Observation**\n- **Metric**: `revenue` (mapped to **us-gaap:SalesRevenueNet**)\n- **Value**: **$24,578,000,000 USD** (for the period)\n- **Timeframe**: \n  - **Reporting Period**: `2006-10-01` to `2007-09-29`\n  - **As of**: `2007-09-29` (end of the reporting period)\n- **Currency**: **USD** (reported basis)\n- **Unit**: **Currency** (standard for revenue metrics)\n\n---\n\n### **2. Source and Filing Details**\n- **Provider**: **SecEdgar** (SEC filings)\n- **Source Type**: **REGULATORY_FILING** (10-K/A amendment)\n- **Form**: **10-K/A** (Amended Annual Report)\n- **Accession Number**: `0001193125-10-012091`\n- **Fiscal Year**: **2009** (the filing is for a **fiscal year 2009** restatement, likely correcting prior reports)\n- **Concept Used**: **us-gaap:SalesRevenueNet** (GAAP-defined revenue from contracts with customers, excluding taxes)\n\n---\n\n### **3. Semantic and Mapping Context**\n- **Mapping Fidelity**: **PARTIAL**  \n  - The metric `revenue` is mapped to **us-gaap:SalesRevenueNet**, but the mapping is **partial** (i.e., the reported value may represent a **subset** of total revenue or a **component** of a broader metric).\n- **Definition**:\n  - **\"Total revenue from sale of goods and services... reduced by sales returns and allowances, and discounts.\"**\n  - The data is **not fully aligned** with the broader GAAP definition of revenue (due to partial mapping or adjustments in reporting).\n- **Series Breaks**:\n  - Notable changes or discontinuities in the metric's mapping (e.g., shifts in concept definitions or data classification) from **2007-09-29** to **2018-06-30**.\n  - Some breaks are marked as **\"NOT_EXPLAINED_BY_ST_EVA\"** (possibly unexplained by external validation systems or data sources).\n\n---\n\n### **4. Validation and Reliability**\n- **Validation Status**: **UNVERIFIABLE**  \n  - **Reason**: *\"A single official source cannot cross-validate itself.\"*  \n    - Since the data originates from a **single source** (SEC Edgar), it cannot be cross-checked internally, leading to reduced confidence in accuracy.\n- **Evidence State**: **SOURCE_REPORTED**  \n  - The value is based directly on the **filers' stated value** (GAAP concept **us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax**).\n\n---\n\n### **5. Availability and Timing**\n- **Available At**: **2010-01-25**  \n  - The data became accessible via **SEC's XBRL API** on this date, likely after the filing was processed and indexed.\n- **Retrieved At**: **2026-09-29** (the current observation timestamp).\n- **First Archived At**: **2026-09-29** (same as retrieval date).\n\n---\n\n### **6. Lineage and Data Provenance**\n- **Source_Fact_ID**: Unique identifiers (`sfid_b5229f1711c68622f937916d70285775` and `sfid_52493188959d0d442076337871e8951b`) link to **SEC filings**.\n- **Content Hash**: SHA-256 hashes ensure data integrity, with the same hash (`sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591`) referenced in both observations and documents.\n\n---\n\n### **7. Potential Issues and Notes**\n- **Discrepancy in Fiscal Year**:  \n  - The filing is for **2009**, but the data covers **2006\u20132007**. This may indicate a **restatement** or correction of prior financial periods.\n- **Partial Mapping Implications**:  \n  - The **PARTIAL** mapping suggests that **SalesRevenueNet** might exclude revenue components like **non-GAAP adjustments** or **unusual items**.\n- **Unverifiable Status**:  \n  - The lack of cross-validation could affect **reliability** for downstream analyses (e.g., financial modeling or benchmarks).\n\n---\n\n### **8. Summary**\nThis data reflects **Apple's revenue** for **2006\u20132007**, reported via a **SEC Edgar filing** (10-K/A). The value is **$24.58 billion USD**, sourced from **GAAP** and mapped to **us-gaap:SalesRevenueNet**. While the data appears **accurate in context**, its **PARTIAL mapping** and **UNVERIFIABLE status** suggest that further validation from external sources would enhance its reliability for analytical use.",
+                "reasoning": "Okay, let's try to make sense of this data. So, there are two observations here, both related to revenue for Apple (AAPL) from 2006-10-01 to 2007-09-29. The first one has a value of $24,578,000,000 USD. The second one is similar but with a different observation ID and source_fact_id.\n\nHmm, looking at the source information, both are from the SEC Edgar filings, specifically a 10-K/A form. The accession number is 0001193125-10-012091. The concept used is \"us-gaap:SalesRevenueNet\" which maps to the metric \"revenue\". \n\nWait, the status says validation_status is \"UNVERIFIABLE\" because a single source can't cross-validate itself. That makes sense since it's from one source, SecEdgar. The evidence_state is \"SOURCE_REPORTED\" and the reason is \"SOURCE_STATED_VALUE\" with the concept \"us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax\". \n\nThe semantic section has some mappings and series_breaks. The mappings are partial, which might mean that the revenue reported here is a component of a larger metric. Also, there are breaks in the concept mapping, but the explanations are \"NOT_EXPLAINED_BY_ST_EVA\", which I'm not sure about. Maybe it's a placeholder or an unknown reason.\n\nLooking at the methodology, it says \"us-gaap:SalesRevenueNet as filed in 10-K/A accession...\" and the basis has mapping_fidelity as PARTIAL. That might indicate that the mapping isn't complete, so the data is not fully aligned with the broader revenue metric. \n\nThe available_at date is 2010-01-25, which is later than the reporting period. That seems odd. Why would the data be available after the period it's covering? Maybe that's when the filing was accepted or processed.\n\nAlso, the fiscal_year is 2009 in the source, but the period is 2006-2007. That doesn't align. Maybe the filing is for a different fiscal year, but the data covers an earlier period. That could be due to restatements or corrections, especially since it's a 10-K/A (Amendment) form.\n\nThe definition of revenue here is \"Total revenue from sale of goods and services... reduced by sales returns...\" which is standard, but the note mentions it's a PARTIAL mapping. So maybe this revenue figure is a subset of the total revenue, or there are other components not captured here.\n\nI need to check if there are any discrepancies in the dates. The as_of date is 2007-09-29, which is the end of the reporting period. The available_at is 2010, which might be when the data became accessible through the SEC's database. That's plausible.\n\nIn terms of lineage, both observations have a source_fact_id and a content_hash. The follow_to entries point to the source_fact_id and the same content_hash as in the documents. That seems to link the observation back to the original filing's data.\n\nThe validation is empty, which might mean no issues were found, but the status is UNVERIFIABLE, so maybe it's just not possible to validate with one source.\n\nOverall, this data is about Apple's revenue as reported in a specific SEC filing, but with some limitations in validation and mapping. The key points are the source, the period covered, the mapping fidelity, and the unverifiable status due to single-source reliance.\n",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1790703463,
+          "id": "chatcmpl-994",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 2067,
+            "prompt_tokens": 2050,
+            "prompt_tokens_details": {
+              "cached_tokens": 4
+            },
+            "total_tokens": 4117
+          }
+        }
+      },
+      {
+        "elapsed_seconds": 25.63,
+        "index": 2,
+        "message_count": 6,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "{\n  \"answer\": \"The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.\",\n  \"evidence_refs\": [\"sfid_b5229f1711c68622f937916d70285775\", \"sfid_52493188959d0d442076337871e8951b\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"The PARTIAL mapping of us-gaap:SalesRevenueNet may exclude certain revenue components.\", \"The UNVERIFIABLE status indicates the value cannot be cross-checked against other sources.\"]\n}",
+                "reasoning": "Okay, the user is getting a JSONDecodeError because my previous response wasn't properly formatted as JSON. Let me check what I did wrong.\n\nIn the initial response, I wrote a detailed explanation in prose, which is not valid JSON. The user instructed to reply as a single JSON object with specific keys: answer, evidence_refs, derived_refs, and uncertainties. They also mentioned not to use prose or markdown.\n\nSo, I need to convert the previous content into a JSON structure. The \"answer\" field should be a string summarizing the key points, \"evidence_refs\" should list the observation IDs, \"derived_refs\" might be empty if there are no derived values, and \"uncertainties\" should mention the PARTIAL mapping and UNVERIFIABLE status.\n\nWait, the user's example in the rules shows that \"answer\" should be in prose but still part of the JSON. However, the error was due to the entire response not being JSON. So, I need to structure all the content into a JSON object as specified.\n\nI'll start by creating the JSON structure. The answer should be a concise summary of the key points from the original response. The evidence_refs would include the observation IDs from the example. Derived_refs is empty here. Uncertainties would mention the PARTIAL mapping and the UNVERIFIABLE status.\n\nI need to make sure that the JSON syntax is correct, with proper commas and brackets. Also, ensure that the answer is a string, even if it's a long paragraph. Let me put it all together now.\n",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1790703488,
+          "id": "chatcmpl-109",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 671,
+            "prompt_tokens": 2818,
+            "prompt_tokens_details": {
+              "cached_tokens": 1456
+            },
+            "total_tokens": 3489
+          }
+        }
+      }
+    ],
+    "first_reply_parsed": true,
+    "format_repair_used": true,
+    "stop_reason": "answered",
+    "tool_definitions": [
+      {
+        "function": {
+          "description": "Observations matching a filter, oldest first.\n\n        Note that `limit` truncates silently here. Use `page` when the length of\n        a series matters.",
+          "name": "query_observations",
+          "parameters": {
+            "properties": {
+              "as_of": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "basis_framework": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "instant": {
+                "type": "string"
+              },
+              "knowable_at": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One observation by its stable identity, with full metadata.",
+          "name": "get_observation",
+          "parameters": {
+            "properties": {
+              "include_lineage": {
+                "type": "string"
+              },
+              "include_validation": {
+                "type": "string"
+              },
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+          "name": "get_metric_history",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset",
+              "metric"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+          "name": "page",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+          "name": "get_lineage",
+          "parameters": {
+            "properties": {
+              "depth": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+          "name": "get_validation",
+          "parameters": {
+            "properties": {
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Source-document metadata by id, content hash or canonical URI.",
+          "name": "get_source_document",
+          "parameters": {
+            "properties": {
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+          "name": "coverage_report",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ]
+  },
+  "test_id": "T5_source_attribution",
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "sequence": 1
+    }
+  ]
+}

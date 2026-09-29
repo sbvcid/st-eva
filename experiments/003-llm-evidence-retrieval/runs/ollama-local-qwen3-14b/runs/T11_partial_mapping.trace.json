@@ -1,0 +1,51 @@
+{
+  "answer": {
+    "answer": "The SalesRevenueNet metric for AAPL is marked as UNAVAILABLE due to retrieval failure, with no data points returned. There are no other revenue-related metrics found for AAPL in the database. The fidelity of SalesRevenueNet to 'revenue' cannot be assessed due to missing evidence, and comparability to other concepts is not possible as no alternative metrics were retrieved.",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": [
+      "No data points available for SalesRevenueNet (status: UNAVAILABLE)",
+      "No other revenue concepts found for AAPL",
+      "Retrieval failure prevents assessment of metric fidelity"
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "SalesRevenueNet",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=0,returned=0,truncated=False)",
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "Revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": "UNVERIFIABLE",
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "sequence": 2
+    }
+  ]
+}

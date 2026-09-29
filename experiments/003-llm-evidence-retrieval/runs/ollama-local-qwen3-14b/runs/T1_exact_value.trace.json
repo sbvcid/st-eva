@@ -1,0 +1,61 @@
+{
+  "answer": {
+    "answer": "Apple Inc.'s reported revenue for the period ending September 29, 2007, was $24,006,000,000.00 (USD). This figure is sourced from a SEC Edgar 10-K filing (accession number 0001193125-09-214859) and corresponds to the US-GAAP concept 'SalesRevenueNet'.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The validation status is 'UNVERIFIABLE' as the figure comes from a single source without cross-verification."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": "1",
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": "QueryError: limit must be an integer",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "sequence": 2
+    }
+  ]
+}

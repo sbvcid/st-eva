@@ -1,0 +1,32 @@
+{
+  "answer": {
+    "answer": "The data shows Sales Revenue Net of $131.25 billion (131,247,000,000 USD) for the period 2016-09-25 to 2017-04-01 and $52.90 billion (52,896,000,000 USD) for 2017-01-01 to 2017-04-01, sourced from SEC filings (accession numbers 0001628280-17-004790, 0000320193-17-000070, 0000320193-18-000070). All entries are marked as SOURCE_REPORTED with UNVERIFIABLE status, and the values are derived from PARTIAL fidelity under US-GAAP. The same SHA-256 hash (sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591) appears across entries.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "0001628280-17-004790",
+      "0000320193-17-000070",
+      "0000320193-18-000070"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Status is UNVERIFIABLE (no cross-checking),",
+      "Duplicates may indicate updates or cross-referencing in filings,",
+      "PARTIAL fidelity means the metric may not be fully precise."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "sequence": 1
+    }
+  ]
+}

@@ -7,9 +7,17 @@
 snapshot.sqlite
 snapshot.sqlite-*
 
-# Run outputs: one directory per model, holding its full trace and audit. These
-# are the results of an experiment, not the experiment.
-runs/
-harness/runs/
+# Run outputs. A run of the *sealed* dataset against a real model is the
+# evidence this experiment exists to produce, so those are committed; the
+# verification runs of scripted targets are noise and are not.
+#
+#   committed:  runs/ollama-local-*/
+#   ignored:    runs/scripted-*/, runs/reference-*/, runs/unknown-*/
+snapshot.sqlite
+snapshot.sqlite-*
+
+runs/scripted-*/
+runs/reference-*/
+runs/unknown-*/
 
 __pycache__/

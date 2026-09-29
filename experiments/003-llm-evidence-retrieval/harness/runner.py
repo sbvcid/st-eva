@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -40,6 +41,10 @@ class TestResult:
     answer: TargetAnswer
     audit: Audit
     trace: List[Dict[str, Any]] = field(default_factory=list)
+    # The target's own record of the run, where it keeps one. A scripted target
+    # has none; a real model records every exchange, which is the part that
+    # cannot be reconstructed from the answers.
+    target_run: Optional[Dict[str, Any]] = None
     expectations: Dict[str, Any] = field(default_factory=dict)
     retrieved_observations: List[str] = field(default_factory=list)
     semantic_judgement: Optional[Dict[str, Any]] = None
@@ -53,6 +58,7 @@ class TestResult:
             "answer": self.answer.contract_dict(),
             "audit": self.audit.contract_dict(),
             "trace": self.trace,
+            "target_run": self.target_run,
             "expectations": self.expectations,
             "retrieved_observations": self.retrieved_observations,
             "semantic_judgement": self.semantic_judgement,
@@ -139,16 +145,16 @@ class Runner:
         for test in self.dataset.tests:
             result = self._run_one(test, target)
             run.results.append(result)
-            self._write(os.path.join(run.run_dir, AUDIT_DIRNAME,
+            _write(os.path.join(run.run_dir, AUDIT_DIRNAME,
                                      f"{test.test_id}.json"),
                         result.contract_dict())
-            self._write(os.path.join(run.run_dir, RUNS_DIRNAME,
+            _write(os.path.join(run.run_dir, RUNS_DIRNAME,
                                      f"{test.test_id}.trace.json"),
                         {"trace": result.trace,
                          "answer": result.answer.contract_dict()})
 
         run.finished_at = utc_now()
-        self._write(os.path.join(run.run_dir, "run.json"), run.contract_dict())
+        _write(os.path.join(run.run_dir, "run.json"), run.contract_dict())
         return run
 
     def _run_one(self, test: Any, target: Target) -> TestResult:
@@ -190,6 +196,7 @@ class Runner:
             answer=answer,
             audit=audit,
             trace=trace,
+            target_run=_target_run_record(target),
             expectations=test.expectations_for_review(),
             retrieved_observations=sorted(retrieved),
             semantic_judgement=semantic,
@@ -202,6 +209,10 @@ class Runner:
         A missing identity field is refused rather than filled with
         "unknown": a run directory called `unknown-wrong-value-unknown` is not
         attributable, and a result nobody can attribute is not evidence.
+
+        The name is also made safe for the filesystem. Model tags carry colons
+        ("qwen3:14b"), which Windows rejects outright ??and a run that cannot
+        write its own directory is a run that produced no evidence.
         """
         missing = [
             part for part in ("provider", "model", "version")
@@ -212,16 +223,41 @@ class Runner:
                 f"the target's identity is missing {missing}; a run cannot be "
                 "attributed to a model that does not say which model it is"
             )
-        name = "-".join(
-            str(identity[part]) for part in ("provider", "model", "version")
-        ).replace("/", "_")
+        parts = [str(identity[part]) for part in ("provider", "model", "version")]
+        # A tag is often both the model and its version; saying it twice makes
+        # the directory harder to read for no gain.
+        if parts[1] == parts[2]:
+            parts = parts[:2]
+        name = _safe_name("-".join(parts))
         return os.path.join(self.root, RUNS_DIRNAME, name)
 
-    @staticmethod
-    def _write(path: str, payload: Dict[str, Any]) -> None:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2, sort_keys=True, default=str)
+
+_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _safe_name(name: str) -> str:
+    """A filesystem-safe directory name that is still readable."""
+    return _UNSAFE.sub("-", name).strip("-")
+
+
+def _write(path: str, payload: Dict[str, Any]) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True, default=str)
+
+
+def _target_run_record(target: Any) -> Optional[Dict[str, Any]]:
+    """
+    The target's own per-test record, where it keeps one.
+
+    A real model records every exchange; a scripted target has nothing to
+    record. Read after `answer` returns, because that is when the record covers
+    the whole test.
+    """
+    run = getattr(target, "last_run", None)
+    if run is None or not hasattr(run, "contract_dict"):
+        return None
+    return run.contract_dict()
 
 
 def _query_connection(snapshot_path: str) -> Any:
@@ -238,3 +274,4 @@ def _query_connection(snapshot_path: str) -> Any:
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only = ON")
     return connection
+

@@ -1,0 +1,87 @@
+{
+  "answer": {
+    "answer": "The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "0001193125-09-214859",
+      "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The 'PARTIAL' mapping may imply the reported value excludes certain revenue streams or uses a narrower definition compared to broader revenue metrics.",
+      "The 'UNVERIFIABLE' validation status indicates no cross-validation was possible from a single source."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": "1",
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": "SOURCE_REPORTED",
+        "unit": null
+      },
+      "error": "QueryError: limit must be an integer",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": "SOURCE_REPORTED",
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "sequence": 3
+    }
+  ]
+}

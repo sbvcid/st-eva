@@ -1,0 +1,40 @@
+{
+  "answer": {
+    "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "sfid_b5229f1711c68622f937916d70285775",
+      "sfid_52493188959d0d442076337871e8951b"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The PARTIAL mapping of us-gaap:SalesRevenueNet may exclude certain revenue components.",
+      "The UNVERIFIABLE status indicates the value cannot be cross-checked against other sources."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "sequence": 1
+    }
+  ]
+}

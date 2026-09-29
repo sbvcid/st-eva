@@ -1,0 +1,668 @@
+{
+  "answer": {
+    "answer": "The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "0001193125-09-214859",
+      "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The 'PARTIAL' mapping may imply the reported value excludes certain revenue streams or uses a narrower definition compared to broader revenue metrics.",
+      "The 'UNVERIFIABLE' validation status indicates no cross-validation was possible from a single source."
+    ]
+  },
+  "audit": {
+    "answer_text": "The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.",
+    "check_count": 6,
+    "checks": [
+      {
+        "actual": {
+          "accession": "0001193125-09-214859",
+          "available_at": "2009-10-27T00:00:00+00:00",
+          "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+          "period_end": "2007-09-29",
+          "source_concept_ref": "us-gaap:SalesRevenueNet",
+          "source_fact_id": "sfid_b5229f1711c68622f937916d70285775"
+        },
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": {
+          "accession": "<present>",
+          "document_content_hash": "<present>",
+          "period_end": "<present>",
+          "source_fact_id": "<present>"
+        },
+        "name": "provenance chain is complete",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_ddb4af888ab3c6be910c0f9e"
+        ],
+        "capability": "F5",
+        "classification": "B",
+        "detail": "cited without retrieving: ['0001193125-09-214859', 'https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json']",
+        "expected": [
+          "0001193125-09-214859",
+          "https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json",
+          "obsarch_ddb4af888ab3c6be910c0f9e"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": false
+      },
+      {
+        "actual": "not stated",
+        "capability": "F5",
+        "classification": "B",
+        "detail": "the answer omits source_fact_id",
+        "expected": "sfid_b5229f1711c68622f937916d70285775",
+        "name": "cites source_fact_id for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": false
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "0001193125-09-214859",
+        "name": "cites accession for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "us-gaap:SalesRevenueNet",
+        "name": "cites source_concept_ref for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "not stated",
+        "capability": "F2",
+        "classification": "B",
+        "detail": "the answer omits available_at",
+        "expected": "2009-10-27T00:00:00+00:00",
+        "name": "cites available_at for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": false
+      }
+    ],
+    "expectations": {
+      "accession": "0001193125-09-214859",
+      "available_at": "2009-10-27T00:00:00+00:00",
+      "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+      "form": "10-K",
+      "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+      "period_end": "2007-09-29",
+      "period_start": "2006-10-01",
+      "source_concept_ref": "us-gaap:SalesRevenueNet",
+      "source_fact_id": "sfid_b5229f1711c68622f937916d70285775",
+      "taxonomy": "us-gaap"
+    },
+    "failed_count": 3,
+    "passed": false,
+    "test_id": "T13_provenance_chain"
+  },
+  "capability": "F5",
+  "expectations": {
+    "accession": "0001193125-09-214859",
+    "available_at": "2009-10-27T00:00:00+00:00",
+    "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+    "form": "10-K",
+    "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+    "period_end": "2007-09-29",
+    "period_start": "2006-10-01",
+    "source_concept_ref": "us-gaap:SalesRevenueNet",
+    "source_fact_id": "sfid_b5229f1711c68622f937916d70285775",
+    "taxonomy": "us-gaap"
+  },
+  "model": {
+    "base_url": "http://127.0.0.1:11434/v1",
+    "max_tokens": 1600,
+    "model": "qwen3:14b",
+    "provider": "ollama-local",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "qwen3:14b"
+  },
+  "question": "Take the revenue figure for the period ending 2007-09-29 and trace it all the way back: observation, source fact, source document, accession, concept, period, and when it became available.",
+  "retrieved_observations": [
+    "obs_sha256:a8630c2b5aa499ff899916e3c08a38d45ce14effdd7af83a4086a55acc4bcf0e",
+    "obsarch_ddb4af888ab3c6be910c0f9e"
+  ],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 113.32,
+    "error": null,
+    "exchanges": [
+      {
+        "elapsed_seconds": 17.32,
+        "index": 0,
+        "message_count": 2,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": "",
+                "reasoning": "Okay, let's break down the user's request. They want to trace the revenue figure for the period ending 2007-09-29 all the way back, including the observation, source fact, source document, accession, concept, period, and when it became available.\n\nFirst, I need to find the observation for that specific revenue figure. The function query_observations seems useful here. I'll set the filter to look for the metric 'revenue', the period_end as '2007-09-29', and check the status to ensure it's not stale. I'll start with a limit of 1 to get the most recent observation.\n\nOnce I have the observation ID, I can use get_observation to get more details about it. This function can provide the source fact, source document, and other metadata. I need to make sure to include lineage and validation information here.\n\nNext, the source document's details might require using get_source_document. The reference from the observation should point to the correct document. Also, checking the accession number and the concept used in the document is part of this step.\n\nThe period information is already part of the observation, so that should be available once we have the observation details. The 'knowable_at' field in the observation will tell us when the data became available.\n\nI should also check if there's any validation information using get_validation to see if there are cross-checks, but the user didn't mention conflicts, so maybe it's not necessary unless there's a conflict. However, the user wants a complete trace, so including validation status might help.\n\nIf the observation is derived, I need to use get_lineage to trace back the computation. But the user mentioned tracing back to the source document, so maybe the lineage is part of the observation's metadata.\n\nPutting this all together, the steps are: query for the observation, get its details, then get the source document, and collect all the required information. If there are multiple observations, I might need to handle that, but starting with the most recent makes sense.\n",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"status\":\"SOURCE_REPORTED\",\"limit\":\"1\",\"metric\":\"revenue\",\"period_end\":\"2007-09-29\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call_pn4lesck",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "created": 1790703894,
+          "id": "chatcmpl-116",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 483,
+            "prompt_tokens": 1526,
+            "prompt_tokens_details": {
+              "cached_tokens": 1458
+            },
+            "total_tokens": 2009
+          }
+        }
+      },
+      {
+        "index": 1,
+        "result_bytes": 49,
+        "tool_call": {
+          "arguments": {
+            "limit": "1",
+            "metric": "revenue",
+            "period_end": "2007-09-29",
+            "status": "SOURCE_REPORTED"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 8.63,
+        "index": 1,
+        "message_count": 4,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": "",
+                "reasoning": "Okay, the user tried to query observations with a limit of \"1\", but the system returned an error saying the limit must be an integer. I need to fix that.\n\nFirst, I should adjust the limit parameter to an integer. The original query had \"limit\":\"1\", which is a string. Changing it to 1 without quotes should resolve the error.\n\nLet me check the function signature again. The query_observations function's parameters include \"limit\":{\"type\":\"string\"}, but the error message says it must be an integer. Maybe the system expects a numeric value even though the type is listed as string. That's a bit confusing, but the error is clear: the limit needs to be an integer.\n\nSo, I'll correct the limit to 1 (as an integer) and resend the query. The other parameters like metric, period_end, and status remain the same. Hopefully, this time it works.\n",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"status\":\"SOURCE_REPORTED\",\"limit\":1,\"metric\":\"revenue\",\"period_end\":\"2007-09-29\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call_gqmr8o72",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "created": 1790703903,
+          "id": "chatcmpl-748",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 234,
+            "prompt_tokens": 2026,
+            "prompt_tokens_details": {
+              "cached_tokens": 1527
+            },
+            "total_tokens": 2260
+          }
+        }
+      },
+      {
+        "index": 3,
+        "result_bytes": 2,
+        "tool_call": {
+          "arguments": {
+            "limit": 1,
+            "metric": "revenue",
+            "period_end": "2007-09-29",
+            "status": "SOURCE_REPORTED"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 17.26,
+        "index": 2,
+        "message_count": 6,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": "",
+                "reasoning": "Okay, the user is trying to trace the revenue figure for the period ending 2007-09-29. They want information on the observation, source fact, source document, accession, concept, period, and availability date.\n\nFirst, I called the query_observations function with the parameters metric \"revenue\", period_end \"2007-09-29\", status \"SOURCE_REPORTED\", and limit 1. But the response was an empty array. That means there were no observations found matching those criteria.\n\nHmm, maybe the status filter was too restrictive. The user might not have specified the exact status, so perhaps there are observations with different statuses. I should try removing the status parameter to see if any observations exist for that metric and period.\n\nAlternatively, maybe the metric name is different. Could \"revenue\" be the correct metric? Maybe it's named something else in the system, like \"Revenue\" with a capital letter or a different term. But the user specified \"revenue\", so I'll assume that's correct unless there's an indication otherwise.\n\nAnother possibility is that the period_end format is incorrect. The date is given as \"2007-09-29\", which is in ISO format, so that should be fine. Unless the system uses a different date format, but that's unlikely.\n\nIf there are no observations, the next step is to check if the metric is applicable. The status could be NOT_APPLICABLE, but the user didn't mention that. However, the initial query didn't return any results, so maybe the metric isn't available for that period.\n\nI should also consider using the coverage_report function to check what's available for the asset. But the user didn't specify an asset, so that might not be helpful here.\n\nAlternatively, maybe the period is incorrect. The user might have the wrong end date. But without more information, I can't assume that.\n\nSince the first query returned nothing, I need to adjust the parameters. Removing the status filter to see if any observations exist, even if they have different statuses. Let's try that.\n",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"limit\":1,\"metric\":\"revenue\",\"period_end\":\"2007-09-29\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call_7yxa78g1",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "created": 1790703920,
+          "id": "chatcmpl-768",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 476,
+            "prompt_tokens": 2272,
+            "prompt_tokens_details": {
+              "cached_tokens": 2027
+            },
+            "total_tokens": 2748
+          }
+        }
+      },
+      {
+        "index": 5,
+        "result_bytes": 4191,
+        "tool_call": {
+          "arguments": {
+            "limit": 1,
+            "metric": "revenue",
+            "period_end": "2007-09-29"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 47.87,
+        "index": 3,
+        "message_count": 8,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "Here is the detailed information for the revenue figure ending 2007-09-29:\n\n---\n\n### **Observation Details**\n- **Observation ID**: `obsarch_ddb4af888ab3c6be910c0f9e`  \n- **Contract ID**: `ingest|revenue|SalesRevenueNet|0001193125-09-214859|2006-10-01|2007-09-29|USD`  \n- **Asset**: `AAPL` (Apple Inc.)  \n- **Metric**: `revenue`  \n- **Value**: **$24,006,000,000** (USD)  \n- **Period**:  \n  - **Start**: `2006-10-01`  \n  - **End**: `2007-09-29`  \n- **Availability Date**: `2009-10-27` (source acceptance datetime)  \n\n---\n\n### **Source Information**\n- **Provider**: `SecEdgar` (U.S. Securities and Exchange Commission)  \n- **Source Type**: `REGULATORY_FILING` (Form 10-K)  \n- **Accession Number**: `0001193125-09-214859`  \n- **Fiscal Year**: `2009` (reporting period covers fiscal year 2008)  \n- **Concept**: `us-gaap:SalesRevenueNet` (GAAP concept for sales revenue net of returns and discounts)  \n- **Document**:  \n  - **URI**: [https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json](https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json)  \n  - **Content Hash**: `sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591`  \n\n---\n\n### **Semantic & Mapping Details**\n- **Metric Definition**:  \n  *\"Total revenue from sale of goods and services rendered during the reporting period, in the normal course of business, reduced by sales returns and allowances, and sales discounts.\"*  \n- **Concept Mapping**:  \n  - **GAAP Concept**: `us-gaap:SalesRevenueNet` (mapped to the `revenue` metric)  \n  - **Mapping Type**: `PARTIAL` (the reported value may represent a component of total revenue, not the full amount)  \n  - **Series Breaks**:  \n    - Breaks in 2007\u20132018 due to concept mapping changes (not fully explained by ST/EVA).  \n\n---\n\n### **Validation & Status**\n- **Validation Status**: `UNVERIFIABLE` (no cross-validation possible from a single source).  \n- **Evidence State**: `SOURCE_REPORTED` (value derived directly from the source filing).  \n\n---\n\n### **Key Notes**\n- The value corresponds to **Apple's fiscal year 2008** (ending 2007-09-29).  \n- The `PARTIAL` mapping indicates the reported figure may exclude certain revenue streams or be aggregated differently compared to broader definitions.  \n- The source filing is available via the SEC's XBRL API and can be cross-referenced using the accession number.  \n\nLet me know if you need further clarification!",
+                "reasoning": "Okay, let's break this down. The user asked for the observation, source fact, source document, accession, concept, period, and availability date for the revenue figure ending 2007-09-29.\n\nFirst, the query returned an observation with ID \"obsarch_ddb4af888ab3c6be910c0f9e\". The contract ID is \"ingest|revenue|SalesRevenueNet|0001193125-09-214859|2006-10-01|2007-09-29|USD\". The asset is AAPL, and the metric is revenue with a value of $24,006,000,000. The currency is USD, and the period is from 2006-10-01 to 2007-09-29.\n\nLooking at the source, it's from SecEdgar, a regulatory filing (10-K form), with accession number 0001193125-09-214859. The concept used is us-gaap:SalesRevenueNet. The availability date is October 27, 2009, based on the acceptance datetime.\n\nThe status shows it's a SOURCE_REPORTED value, and the validation status is UNVERIFIABLE because it's from a single source. The semantic info mentions that the concept mapping is PARTIAL, meaning the reported figure might be a component of the total revenue, not the full amount. There's also a note about the definition being total revenue from sales, minus returns and discounts.\n\nSo, putting this all together, the answer should include the observation ID, value, source details, period, and the note about the partial mapping. Make sure to highlight the key points the user asked for and explain the partial mapping aspect clearly.\n",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1790703968,
+          "id": "chatcmpl-128",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 1227,
+            "prompt_tokens": 3949,
+            "prompt_tokens_details": {
+              "cached_tokens": 1458
+            },
+            "total_tokens": 5176
+          }
+        }
+      },
+      {
+        "elapsed_seconds": 22.23,
+        "index": 4,
+        "message_count": 10,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "{\n  \"answer\": \"The observation details include revenue of $24,006,000,000 (USD) for AAPL (Apple Inc.) for the period 2006-10-01 to 2007-09-29, sourced from a SEC Form 10-K filing (accession 0001193125-09-214859). The value maps to the GAAP concept 'us-gaap:SalesRevenueNet' with a 'PARTIAL' mapping, indicating potential aggregation differences. The validation status is 'UNVERIFIABLE' due to lack of cross-validation.\",\n  \"evidence_refs\": [\"obsarch_ddb4af888ab3c6be910c0f9e\", \"0001193125-09-214859\", \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"The 'PARTIAL' mapping may imply the reported value excludes certain revenue streams or uses a narrower definition compared to broader revenue metrics.\", \"The 'UNVERIFIABLE' validation status indicates no cross-validation was possible from a single source.\"]\n}",
+                "reasoning": "Okay, let me figure out how to fix this. The user said there was a JSONDecodeError, which probably means the previous response wasn't properly formatted as JSON. Looking back, the assistant's answer was in a markdown format with sections and lists, which isn't valid JSON.\n\nThe user is asking to reply again as a single JSON object with specific keys: answer, evidence_refs, derived_refs, and uncertainties. They want the content kept but formatted correctly. So I need to convert the detailed information into a JSON structure.\n\nFirst, the \"answer\" field should summarize the key points from the previous response. Then, \"evidence_refs\" would include the observation ID and other references. \"Derived_refs\" might be empty if there are no derived data points. \"Uncertainties\" should list any uncertainties mentioned, like the partial mapping and unverifiable status.\n\nI need to make sure all the data is correctly structured within the JSON object, ensuring proper syntax with commas and brackets. Also, check that there are no markdown elements left, just plain JSON. Let me piece this together step by step, ensuring each part is correctly placed.\n",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1790703990,
+          "id": "chatcmpl-877",
+          "model": "qwen3:14b",
+          "object": "chat.completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": {
+            "completion_tokens": 530,
+            "prompt_tokens": 4090,
+            "prompt_tokens_details": {
+              "cached_tokens": 1458
+            },
+            "total_tokens": 4620
+          }
+        }
+      }
+    ],
+    "first_reply_parsed": true,
+    "format_repair_used": true,
+    "stop_reason": "answered",
+    "tool_definitions": [
+      {
+        "function": {
+          "description": "Observations matching a filter, oldest first.\n\n        Note that `limit` truncates silently here. Use `page` when the length of\n        a series matters.",
+          "name": "query_observations",
+          "parameters": {
+            "properties": {
+              "as_of": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "basis_framework": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "instant": {
+                "type": "string"
+              },
+              "knowable_at": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One observation by its stable identity, with full metadata.",
+          "name": "get_observation",
+          "parameters": {
+            "properties": {
+              "include_lineage": {
+                "type": "string"
+              },
+              "include_validation": {
+                "type": "string"
+              },
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+          "name": "get_metric_history",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset",
+              "metric"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+          "name": "page",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+          "name": "get_lineage",
+          "parameters": {
+            "properties": {
+              "depth": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+          "name": "get_validation",
+          "parameters": {
+            "properties": {
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Source-document metadata by id, content hash or canonical URI.",
+          "name": "get_source_document",
+          "parameters": {
+            "properties": {
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+          "name": "coverage_report",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ]
+  },
+  "test_id": "T13_provenance_chain",
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": "1",
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": "SOURCE_REPORTED",
+        "unit": null
+      },
+      "error": "QueryError: limit must be an integer",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": "SOURCE_REPORTED",
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "status": null,
+        "unit": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "sequence": 3
+    }
+  ]
+}
