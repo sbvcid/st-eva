@@ -1,11 +1,14 @@
 {
   "answer": {
-    "answer": "No observations were found for AAPL's revenue series under XBRL concepts in the archive. This may indicate either that the data is not present or that the query parameters did not match any stored concepts.",
+    "answer": "The observation confirms that Apple Inc. (AAPL) reported $54.512 billion in revenue for the period ending December 29, 2012, from SEC Edgar filing 0001193125-14-024487 (Form 10-Q for Q1 2014). The metric 'revenue' (us-gaap:SalesRevenueNet) has a value of 54512000000.0, with status UNVERIFIABLE.",
     "derived_refs": [],
-    "evidence_refs": [],
+    "evidence_refs": [
+      "0001193125-14-024487"
+    ],
     "parse_error": null,
     "uncertainties": [
-      "The absence of results could be due to no data existing for the specified criteria, or the XBRL concepts may not be tagged in a way that matches the query parameters."
+      "No observation IDs were explicitly returned in the tool response to cite",
+      "The discrepancy between the 2012 revenue period and 2014 filing requires clarification"
     ]
   },
   "trace": [
@@ -17,19 +20,20 @@
         "currency": null,
         "instant": null,
         "knowable_at": null,
-        "limit": null,
+        "limit": 100,
         "metric": "revenue",
         "order": "PERIOD_ASCENDING",
         "period_end": null,
         "period_start": null,
         "provider": null,
-        "source_type": "XBRL",
-        "status": null,
-        "unit": null
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
       },
       "error": null,
       "operation": "query_observations",
-      "result_shape": "list[0]",
+      "result_shape": "list[100]",
+      "returned_count": 100,
       "sequence": 1
     }
   ]

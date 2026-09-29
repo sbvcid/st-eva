@@ -29,6 +29,7 @@ EXPERIMENT = os.path.join(
 if EXPERIMENT not in sys.path:
     sys.path.insert(0, EXPERIMENT)
 
+from evidence_query import EvidenceQuery  # noqa: E402
 from harness import reference  # noqa: E402
 from harness.auditor import (  # noqa: E402
     CLASS_A_DEFECT,
@@ -36,14 +37,18 @@ from harness.auditor import (  # noqa: E402
     CLASS_EVALUATOR,
     CLASS_SOURCE,
     CLASS_TARGET,
+    Audit,
+    Auditor,
+    Check,
     _asserts_certification,
     _asserts_sameness,
     _numbers_equal,
+    acknowledges_truncation,
 )
 from harness.dataset import build_dataset  # noqa: E402
 from harness.judge import SemanticJudge  # noqa: E402
 from harness.report import build_report, render  # noqa: E402
-from harness.runner import Runner  # noqa: E402
+from harness.runner import Runner, _query_connection  # noqa: E402
 from harness.snapshot import (  # noqa: E402
     SnapshotError,
     build_snapshot,
@@ -676,37 +681,94 @@ class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
         ):
             self.assertTrue(acknowledges_truncation(honest, 339), honest)
 
-    def test_the_recorded_run_re_audits_to_zero(self):
+    def test_a_recorded_run_re_audits_to_its_published_score(self):
         """
-        The published first-run score was 2/15, and both passes were false.
+        Re-grading a stored run must reproduce its published score.
 
-        The recorded answers are re-graded with the corrected auditor. This is
-        the check that the correction does what the report claims, and it costs
-        nothing: no model, no network, and the new evaluator is held against
-        real behaviour rather than against a target written to please it.
+        This is how the first run's 2/15 was corrected to 0/15: the stored
+        answers do not change when the evaluator does, so re-auditing them is
+        the cheapest possible test of a change to the grader -- no model, no
+        network, and the new evaluator held against real behaviour rather than
+        against a target written to please it.
+
+        It is an invariant rather than a fixed number, because the run directory
+        holds the most recent run and a hard-coded 2 would rot the moment a
+        second run lands. The correction itself is recorded in
+        reports/REAL_MODEL_RUN.md.
         """
         import json
+        import os
 
-        run_dir = os.path.join(
+        from harness.auditor import Audit, Auditor
+        from harness.target import TargetAnswer
+        from harness.tools import Call, Toolbox
+
+        experiment = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "experiments", "003-llm-evidence-retrieval", "runs",
-            "ollama-local-qwen3-14b",
+            "experiments", "003-llm-evidence-retrieval",
         )
-        if not os.path.isdir(run_dir):
-            self.skipTest("the recorded real-model run is not present")
-        report = os.path.join(run_dir, "reports", "report.json")
-        if not os.path.exists(report):
-            self.skipTest("the recorded run has no report")
+        run_dir = os.path.join(
+            experiment, "runs", "ollama-local-qwen3-14b"
+        )
+        report_path = os.path.join(run_dir, "reports", "report.json")
+        if not os.path.exists(report_path):
+            self.skipTest("no recorded real-model run to re-audit")
+        published = json.load(open(report_path, encoding="utf-8"))
+        expected = {
+            t["test_id"]: t["passed"] for t in published["query_behaviour"]
+        }
 
-        before = json.load(open(report, encoding="utf-8"))
-        published = {t["test_id"]: t["passed"] for t in before["query_behaviour"]}
-        # The score as published, which the report states was overstated.
-        self.assertEqual(sum(1 for v in published.values() if v), 2)
-        self.assertTrue(
-            published["T4_point_in_time"],
-            "the recorded run is not the one this finding is about",
-        )
-        self.assertTrue(published["T14_truncation_trap"])
+        snapshot = default_snapshot_path()
+        dataset = build_dataset(snapshot)
+        connection = _query_connection(snapshot)
+        query = EvidenceQuery.open(snapshot)
+        auditor = Auditor(connection, query)
+        try:
+            for test in dataset.tests:
+                path = os.path.join(
+                    run_dir, "audit", f"{test.test_id}.json"
+                )
+                if not os.path.exists(path):
+                    continue
+                stored = json.load(open(path, encoding="utf-8"))
+                answer = TargetAnswer.parse(json.dumps({
+                    "answer": stored["answer"]["answer"],
+                    "evidence_refs": stored["answer"]["evidence_refs"],
+                    "derived_refs": stored["answer"]["derived_refs"],
+                    "uncertainties": stored["answer"]["uncertainties"],
+                }))
+                tools = Toolbox(_query=query)
+                tools.calls = [
+                    Call(
+                        sequence=c["sequence"],
+                        operation=c["operation"],
+                        arguments=c["arguments"],
+                        error=c.get("error"),
+                        result_shape=c.get("result_shape", "unknown"),
+                        stored_returned_count=c.get("returned_count"),
+                    )
+                    for c in stored["trace"]
+                ]
+                audit = Audit(
+                    test_id=test.test_id,
+                    expectations=dict(test.expectations),
+                    answer_text=answer.answer,
+                )
+                test.audit(
+                    auditor, audit, answer, tools,
+                    set(stored["retrieved_observations"]),
+                )
+                self.assertEqual(
+                    audit.passed,
+                    expected[test.test_id],
+                    f"{test.test_id}: the stored run was published as "
+                    f"{expected[test.test_id]} and re-audits as "
+                    f"{audit.passed}, so the run's report and its evidence "
+                    "disagree",
+                )
+        finally:
+            query.close()
+            connection.close()
 
 
 if __name__ == "__main__":

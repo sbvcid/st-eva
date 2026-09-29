@@ -1,61 +1,41 @@
 {
   "answer": {
-    "answer": "No revenue observations for AAPL as of 2026-07-31 were found in the database. The query was structured using the 'as_of' parameter for the date, but no matching data exists for this asset/metric combination.",
+    "answer": "The provided data contains a revenue figure of $52,896,000,000 (USD) for Apple (AAPL) for the period January 1, 2017, to April 1, 2017. The metric is defined as total revenue from sales, reduced by returns and discounts, under the concept us-gaap:SalesRevenueNet (GAAP standard for net sales revenue). The source is the SEC filing (10-Q for Q2 2018, accession 0000320193-18-000070). The period covered is Q1 2017. The validation status is unverifiable (single source, SEC filing). The concept is mapped as partial (SalesRevenueNet may not fully capture all revenue components).",
     "derived_refs": [],
     "evidence_refs": [],
     "parse_error": null,
     "uncertainties": [
-      "The 'knowable_at' parameter is not supported for range queries (only exact dates)",
-      "No data may exist for AAPL revenue in this timeframe",
-      "The query may need to be restructured using different parameters or date ranges"
+      "Period mismatch: The 10-Q filing is for Q2 2018, but the data period is Q1 2017. This may indicate an error in metadata or historical reporting.",
+      "Revenue value discrepancy: The figure ($52.9B) is higher than Apple's actual Q1 2017 revenue (~$50.0B). This could reflect a data entry error, different reporting standards, or a misinterpretation of the period.",
+      "Mapping limitation: The concept SalesRevenueNet is mapped as partial, meaning it may exclude non-GAAP items or other revenue streams.",
+      "Validation status: Unverifiable (no cross-validation possible) but source-reported (SEC filing). Cross-verification with other filings is recommended.",
+      "Issuer adoption: The concept SalesRevenueNet was used from 2007\u20132018 with 210 facts in 40 filings, indicating historical consistency."
     ]
   },
   "trace": [
     {
       "arguments": {
-        "as_of": "2026-07-31",
+        "as_of": null,
         "asset": "AAPL",
         "basis_framework": null,
         "currency": null,
         "instant": null,
-        "knowable_at": "<=2026-07-31",
+        "knowable_at": "2026-07-31",
         "limit": null,
         "metric": "revenue",
         "order": "PERIOD_ASCENDING",
-        "period_end": null,
+        "period_end": "2026-07-31",
         "period_start": null,
         "provider": null,
         "source_type": null,
-        "status": null,
-        "unit": null
-      },
-      "error": "QueryError: knowable_at must be an ISO-8601 date, got '<=2026-07-31'",
-      "operation": "query_observations",
-      "result_shape": "unknown",
-      "sequence": 1
-    },
-    {
-      "arguments": {
-        "as_of": "2026-07-31",
-        "asset": "AAPL",
-        "basis_framework": null,
-        "currency": null,
-        "instant": null,
-        "knowable_at": null,
-        "limit": null,
-        "metric": "revenue",
-        "order": "PERIOD_ASCENDING",
-        "period_end": null,
-        "period_start": null,
-        "provider": null,
-        "source_type": null,
-        "status": null,
-        "unit": null
+        "unit": null,
+        "validation_status": null
       },
       "error": null,
       "operation": "query_observations",
-      "result_shape": "list[0]",
-      "sequence": 2
+      "result_shape": "list[200]",
+      "returned_count": 200,
+      "sequence": 1
     }
   ]
 }

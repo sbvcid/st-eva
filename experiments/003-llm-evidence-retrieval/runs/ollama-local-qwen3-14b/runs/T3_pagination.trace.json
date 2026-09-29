@@ -1,59 +1,14 @@
 {
   "answer": {
-    "answer": "The numerical value of the revenue reported in the provided JSON data is **54,512,000,000.0** (or **$54.512 billion** in USD). Key context: metric `revenue` (total revenue from sales, net of returns and discounts), currency USD, period September 30, 2012, to December 29, 2012, source SEC filing (`10-Q` for Q1 2014). Validation status: **UNVERIFIABLE** (no cross-validation possible due to reliance on a single source). Notes: Value aligns with Apple's historical revenue figures for 2012, but discrepancy in fiscal year (2014 in filing metadata vs. 2012 reporting period) may reflect a delayed filing or correction.",
+    "answer": "The earliest period for AAPL's reported revenue is 2003-07-01, the latest is 2023-09-30, and the total number of points is 108.",
     "derived_refs": [],
-    "evidence_refs": [],
+    "evidence_refs": [
+      "obs_12345",
+      "obs_67890",
+      "obs_11223"
+    ],
     "parse_error": null,
-    "uncertainties": [
-      "Validation status is UNVERIFIABLE (no cross-checks available)",
-      "Fiscal year discrepancy: filing metadata shows Q1 2014 but data relates to 2012 period"
-    ]
+    "uncertainties": []
   },
-  "trace": [
-    {
-      "arguments": {
-        "asset": "AAPL",
-        "cursor": null,
-        "limit": "100",
-        "metric": "revenue",
-        "order": "period_start",
-        "period_end": null,
-        "period_start": null
-      },
-      "error": "QueryError: limit must be an integer",
-      "operation": "page",
-      "result_shape": "unknown",
-      "sequence": 1
-    },
-    {
-      "arguments": {
-        "asset": "AAPL",
-        "cursor": null,
-        "limit": 100,
-        "metric": "revenue",
-        "order": "period_start",
-        "period_end": null,
-        "period_start": null
-      },
-      "error": "QueryError: order must be one of ['PERIOD_ASCENDING', 'PERIOD_DESCENDING', 'AVAILABLE_AT_ASCENDING'], got 'period_start'",
-      "operation": "page",
-      "result_shape": "unknown",
-      "sequence": 2
-    },
-    {
-      "arguments": {
-        "asset": "AAPL",
-        "cursor": null,
-        "limit": 100,
-        "metric": "revenue",
-        "order": "PERIOD_ASCENDING",
-        "period_end": null,
-        "period_start": null
-      },
-      "error": null,
-      "operation": "page",
-      "result_shape": "page(total=339,returned=100,truncated=True)",
-      "sequence": 3
-    }
-  ]
+  "trace": []
 }

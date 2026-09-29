@@ -1,13 +1,16 @@
 {
   "answer": {
-    "answer": "Apple Inc.'s reported revenue for the period ending September 29, 2007, was $24,006,000,000.00 (USD). This figure is sourced from a SEC Edgar 10-K filing (accession number 0001193125-09-214859) and corresponds to the US-GAAP concept 'SalesRevenueNet'.",
+    "answer": "The ambiguity arises from two competing observations for Apple's (AAPL) revenue during the fiscal year ending 2007-09-29, both reporting different values for the us-gaap:SalesRevenueNet metric: Observations A: 24,006,000,000.0 (obsarch_ddb4af888ab3c6be910c0f9e) and B: 24,578,000,000.0 (obsarch_6383b6a9892d72ff26aab02a). Key causes include aggregation without member identification, restatement in a 10-K/A filing, and partial mapping/concept breaks. Resolution paths involve checking original filings, analyzing component breakdowns, and cross-referencing with other sources. The 24,578,000,000.0 value is likely the correct, restated figure but requires manual verification.",
     "derived_refs": [],
     "evidence_refs": [
-      "obsarch_ddb4af888ab3c6be910c0f9e"
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a"
     ],
     "parse_error": null,
     "uncertainties": [
-      "The validation status is 'UNVERIFIABLE' as the figure comes from a single source without cross-verification."
+      "Aggregation without member identification prevents resolution of discrepancies.",
+      "Restatement in a 10-K/A filing may reflect corrections or changes in accounting standards.",
+      "Partial mapping of us-gaap:SalesRevenueNet to revenue metric introduces classification inconsistencies."
     ]
   },
   "trace": [
@@ -19,43 +22,21 @@
         "currency": null,
         "instant": null,
         "knowable_at": null,
-        "limit": "1",
+        "limit": 10,
         "metric": "revenue",
         "order": "PERIOD_ASCENDING",
         "period_end": "2007-09-29",
         "period_start": null,
         "provider": null,
         "source_type": null,
-        "status": null,
-        "unit": null
-      },
-      "error": "QueryError: limit must be an integer",
-      "operation": "query_observations",
-      "result_shape": "unknown",
-      "sequence": 1
-    },
-    {
-      "arguments": {
-        "as_of": null,
-        "asset": "AAPL",
-        "basis_framework": null,
-        "currency": null,
-        "instant": null,
-        "knowable_at": null,
-        "limit": 1,
-        "metric": "revenue",
-        "order": "PERIOD_ASCENDING",
-        "period_end": "2007-09-29",
-        "period_start": null,
-        "provider": null,
-        "source_type": null,
-        "status": null,
-        "unit": null
+        "unit": null,
+        "validation_status": null
       },
       "error": null,
       "operation": "query_observations",
-      "result_shape": "list[1]",
-      "sequence": 2
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
     }
   ]
 }

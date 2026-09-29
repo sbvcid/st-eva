@@ -1,11 +1,12 @@
 {
   "answer": {
-    "answer": "There is no evidence available to determine the competing values or which one is correct for AAPL.",
+    "answer": "There is a disagreement about the figure for AAPL, but the competing values are not available in the evidence. The evidence does not establish which value is correct.",
     "derived_refs": [],
     "evidence_refs": [],
     "parse_error": null,
     "uncertainties": [
-      "The tools do not support querying for observations with a 'CONFLICTING' evidence state directly. No observations matching the criteria were found using available filters."
+      "The specific competing values are not retrievable with current tools",
+      "The correctness of either value is not determined by the evidence"
     ]
   },
   "trace": []

@@ -1,15 +1,15 @@
 {
   "answer": {
-    "answer": "The data includes two observations of Apple Inc.'s revenue for the period 2006-10-01 to 2007-09-29, sourced from a SEC Edgar filing (accession number 0001193125-10-012091). The value reported is $24,578,000,000 USD, mapped to us-gaap:SalesRevenueNet. The metric is marked as PARTIAL, indicating the mapping may not fully represent total revenue. The validation status is UNVERIFIABLE due to reliance on a single source. The observations are associated with source_fact_ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b.",
+    "answer": "For the period 2006-10-01 to 2007-09-29, Apple's revenue was reported as $24,006,000,000 USD. This figure is sourced from a SEC filing (10-K accession 0001193125-09-214859) and marked as SOURCE_REPORTED. However, there is a conflicting observation reporting $24,578,000,000 for the same metric and period, with no resolution determined by ST-EVA. The validation status is UNVERIFIABLE due to lack of cross-checking.",
     "derived_refs": [],
     "evidence_refs": [
-      "sfid_b5229f1711c68622f937916d70285775",
-      "sfid_52493188959d0d442076337871e8951b"
+      "obsarch_ddb4af888ab3c6be910c0f9e"
     ],
     "parse_error": null,
     "uncertainties": [
-      "The PARTIAL mapping of us-gaap:SalesRevenueNet may exclude certain revenue components.",
-      "The UNVERIFIABLE status indicates the value cannot be cross-checked against other sources."
+      "Conflicting values exist for the same metric and period ($24,006M vs $24,578M)",
+      "Validation status is UNVERIFIABLE due to single source",
+      "Concept mapping is PARTIAL (us-gaap:SalesRevenueNet)"
     ]
   },
   "trace": [
@@ -21,19 +21,20 @@
         "currency": null,
         "instant": null,
         "knowable_at": null,
-        "limit": null,
+        "limit": 1,
         "metric": "revenue",
-        "order": "PERIOD_ASCENDING",
+        "order": "PERIOD_DESCENDING",
         "period_end": "2007-09-29",
         "period_start": null,
         "provider": null,
         "source_type": null,
-        "status": null,
-        "unit": null
+        "unit": null,
+        "validation_status": null
       },
       "error": null,
       "operation": "query_observations",
-      "result_shape": "list[2]",
+      "result_shape": "list[1]",
+      "returned_count": 1,
       "sequence": 1
     }
   ]

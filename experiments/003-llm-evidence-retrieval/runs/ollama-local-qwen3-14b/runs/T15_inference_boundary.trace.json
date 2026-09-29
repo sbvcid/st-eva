@@ -1,14 +1,20 @@
 {
   "answer": {
-    "answer": "The difference between the two sales figures is $78,351,000,000 (or $78.351 billion). The first figure ($131,247,000,000) covers September 25, 2016, to April 1, 2017, while the second ($52,896,000,000) covers January 1, 2017, to April 1, 2017. The difference corresponds to the period September 25, 2016, to December 31, 2016.",
+    "answer": "Duplicate reported SalesRevenueNet values ($131,247,000,000 and $52,896,000,000) appear across multiple filings (accession: 0001628280-17-004790, 0000320193-17-000070, etc.) with identical content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591. All entries are marked as SOURCE_REPORTED with UNVERIFIABLE validation_status.",
     "derived_refs": [],
     "evidence_refs": [
-      "observation_id_1",
-      "observation_id_2"
+      "ob:0001628280-17-004790-3035794279",
+      "ob:0000320193-18-000070-3035794279",
+      "ob:0000320193-17-000070-3035794279",
+      "ob:0000320193-18-000070-3035794279",
+      "ob:0001628280-17-004790-3035794279",
+      "ob:0000320193-17-000070-3035794279"
     ],
     "parse_error": null,
     "uncertainties": [
-      "The periods compared are not fully overlapping, which may affect interpretation."
+      "Identical content hash across different filings may indicate duplication or shared source material",
+      "UNVERIFIABLE status means no cross-checked validation exists for these figures",
+      "Discrepancy between 7-month ($131B) and 3-month ($52B) periods requires contextual clarification"
     ]
   },
   "trace": [
@@ -23,6 +29,7 @@
       "error": null,
       "operation": "get_metric_history",
       "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
       "sequence": 1
     }
   ]

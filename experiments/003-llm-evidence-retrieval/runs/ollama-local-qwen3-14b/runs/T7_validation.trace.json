@@ -1,36 +1,12 @@
 {
   "answer": {
-    "answer": "The requested information is not available in the ST-EVA database.",
+    "answer": "The status of the cross-source validation record for AAPL's figure is not available in the provided evidence.",
     "derived_refs": [],
     "evidence_refs": [],
     "parse_error": null,
     "uncertainties": [
-      "No observations matched the query for Apple Inc.'s capital expenditures. The database may lack relevant filings, or the query parameters may require adjustment."
+      "No specific validation records or observation IDs were returned to check the status or independence of sources."
     ]
   },
-  "trace": [
-    {
-      "arguments": {
-        "as_of": null,
-        "asset": "AAPL",
-        "basis_framework": null,
-        "currency": null,
-        "instant": null,
-        "knowable_at": null,
-        "limit": null,
-        "metric": null,
-        "order": "PERIOD_ASCENDING",
-        "period_end": null,
-        "period_start": null,
-        "provider": null,
-        "source_type": null,
-        "status": null,
-        "unit": null
-      },
-      "error": null,
-      "operation": "query_observations",
-      "result_shape": "list[200]",
-      "sequence": 1
-    }
-  ]
+  "trace": []
 }

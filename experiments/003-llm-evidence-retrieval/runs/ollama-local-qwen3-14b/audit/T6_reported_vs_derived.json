@@ -1,16 +1,15 @@
 {
   "answer": {
-    "answer": "No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.",
+    "answer": "The price-to-sales (PS) ratio for AAPL is not directly available in ST-EVA. The metric 'price_to_sales' is not among the known metrics. Available metrics include revenue, shares_outstanding, and others, but none provide direct access to the PS ratio. Calculating it would require external data (e.g., market cap) or assumptions not supported by the current toolset.",
     "derived_refs": [],
     "evidence_refs": [],
     "parse_error": null,
     "uncertainties": [
-      "Metric 'price_to_sales_ratio' may not exist for AAPL",
-      "Need to verify metric name or data availability"
+      "The PS ratio cannot be derived from available metrics without additional data"
     ]
   },
   "audit": {
-    "answer_text": "No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.",
+    "answer_text": "The price-to-sales (PS) ratio for AAPL is not directly available in ST-EVA. The metric 'price_to_sales' is not among the known metrics. Available metrics include revenue, shares_outstanding, and others, but none provide direct access to the PS ratio. Calculating it would require external data (e.g., market cap) or assumptions not supported by the current toolset.",
     "check_count": 5,
     "checks": [
       {
@@ -97,11 +96,11 @@
   "retrieved_observations": [],
   "semantic_judgement": null,
   "target_run": {
-    "elapsed_seconds": 44.31,
+    "elapsed_seconds": 35.63,
     "error": null,
     "exchanges": [
       {
-        "elapsed_seconds": 15.52,
+        "elapsed_seconds": 15.57,
         "index": 0,
         "message_count": 2,
         "response": {
@@ -111,15 +110,15 @@
               "index": 0,
               "message": {
                 "content": "",
-                "reasoning": "Okay, let me try to figure this out. The user is asking whether the current price-to-sales (PS) ratio for Apple (AAPL) was reported by a source or calculated. If it's calculated, they want to know what it was derived from.\n\nFirst, I need to check if there's any observation for AAPL's PS ratio. Using the query_observations function, I can look for metrics related to PS ratio. The metric might be something like \"price_to_sales_ratio\" or similar. I'll set the asset to \"AAPL\" and the metric to \"price_to_sales_ratio\". Also, I need to check the status.evidence_state.state to see if it's SOURCE_REPORTED or DERIVED.\n\nIf the evidence state is DERIVED, then I need to find out what it was calculated from. For that, I can use the get_lineage function with the observation_id obtained from the first query. The lineage should show the operands and the expression used to calculate the PS ratio.\n\nAlternatively, if the status is SOURCE_REPORTED, then the value was directly reported by a source, and I don't need to look into derived calculations. However, if there's a conflict or other states, I need to handle those as well, but the user specifically asked about reported vs calculated.\n\nSo the steps are:\n1. Use query_observations to find the current PS ratio for AAPL.\n2. Check the evidence_state.state of the observation.\n3. If DERIVED, use get_lineage to find the sources.\n4. If SOURCE_REPORTED, state that it's reported.\n5. If there's no data, mention that it's unavailable.\n\nI should also make sure to include the evidence_refs with the observation IDs and any derived references. If there are uncertainties, like if the data isn't available, I need to note that in the uncertainties array.\n",
+                "reasoning": "Okay, let's tackle this question. The user is asking whether the current price-to-sales (PS) ratio for Apple (AAPL) was reported by a source or calculated, and if calculated, what it's based on.\n\nFirst, I need to check if ST-EVA has any observations for the PS ratio metric for AAPL. The metric name might be something like \"price_to_sales\" or similar. I'll use the query_observations function to search for this. The parameters would include the metric name, asset (AAPL), and maybe the period. But since the user is asking about the current value, I should look for the most recent data.\n\nWait, the function requires the metric to be known. I need to make sure \"price_to_sales\" is a valid metric. If not, the tool will return the list of real metrics. Let's proceed with querying.\n\nAssuming the metric is valid, the query_observations function will return observations. Each observation has a status with evidence_state. If the state is SOURCE_REPORTED, then it's from a source. If DERIVED, it's calculated from other metrics. I need to check the evidence_state.state for each observation.\n\nIf it's DERIVED, then I should look into the lineage using get_lineage to see what it's calculated from. The derived_refs in the answer would include the operands.\n\nBut first, let's call query_observations with the right parameters. Let me structure the function call with metric \"price_to_sales\", asset \"AAPL\", and maybe limit 1 to get the latest. The order could be PERIOD_DESCENDING to get the most recent first.\n\nAfter getting the observations, check their evidence_state. If it's DERIVED, then get the lineage. If it's SOURCE_REPORTED, then it's from a source. If there are no observations, maybe check the coverage report to see if the metric is applicable.\n\nAlso, need to handle cases where the metric might not be available, but the user's question assumes it exists. So proceed with the query.\n",
                 "role": "assistant",
                 "tool_calls": [
                   {
                     "function": {
-                      "arguments": "{\"asset\":\"AAPL\",\"metric\":\"price_to_sales_ratio\",\"limit\":\"1\"}",
+                      "arguments": "{\"metric\":\"price_to_sales\",\"asset\":\"AAPL\",\"limit\":1,\"order\":\"PERIOD_DESCENDING\"}",
                       "name": "query_observations"
                     },
-                    "id": "call_bdtv4y2w",
+                    "id": "call_41kaqa3z",
                     "index": 0,
                     "type": "function"
                   }
@@ -127,115 +126,62 @@
               }
             }
           ],
-          "created": 1790703504,
-          "id": "chatcmpl-248",
+          "created": 1790716084,
+          "id": "chatcmpl-658",
           "model": "qwen3:14b",
           "object": "chat.completion",
           "system_fingerprint": "fp_ollama",
           "usage": {
-            "completion_tokens": 421,
-            "prompt_tokens": 1505,
+            "completion_tokens": 467,
+            "prompt_tokens": 1662,
             "prompt_tokens_details": {
-              "cached_tokens": 1458
+              "cached_tokens": 1615
             },
-            "total_tokens": 1926
+            "total_tokens": 2129
           }
         }
       },
       {
         "index": 1,
-        "result_bytes": 49,
-        "tool_call": {
-          "arguments": {
-            "asset": "AAPL",
-            "limit": "1",
-            "metric": "price_to_sales_ratio"
-          },
-          "name": "query_observations"
-        }
-      },
-      {
-        "elapsed_seconds": 4.6,
-        "index": 1,
-        "message_count": 4,
-        "response": {
-          "choices": [
-            {
-              "finish_reason": "tool_calls",
-              "index": 0,
-              "message": {
-                "content": "",
-                "reasoning": "Okay, the user asked about the current PS ratio for AAPL and whether it was reported or calculated. I first tried to use the query_observations function but got an error because the limit wasn't an integer. I need to fix that by using a valid integer for the limit. Let me adjust the arguments to set the limit to 1, which should work. Then, I'll proceed with the corrected function call.\n",
-                "role": "assistant",
-                "tool_calls": [
-                  {
-                    "function": {
-                      "arguments": "{\"asset\":\"AAPL\",\"limit\":1,\"metric\":\"price_to_sales_ratio\"}",
-                      "name": "query_observations"
-                    },
-                    "id": "call_qxrp5gwt",
-                    "index": 0,
-                    "type": "function"
-                  }
-                ]
-              }
-            }
-          ],
-          "created": 1790703508,
-          "id": "chatcmpl-1",
-          "model": "qwen3:14b",
-          "object": "chat.completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": {
-            "completion_tokens": 121,
-            "prompt_tokens": 1945,
-            "prompt_tokens_details": {
-              "cached_tokens": 1506
-            },
-            "total_tokens": 2066
-          }
-        }
-      },
-      {
-        "index": 3,
-        "result_bytes": 2,
+        "result_bytes": 400,
         "tool_call": {
           "arguments": {
             "asset": "AAPL",
             "limit": 1,
-            "metric": "price_to_sales_ratio"
+            "metric": "price_to_sales",
+            "order": "PERIOD_DESCENDING"
           },
           "name": "query_observations"
         }
       },
       {
-        "elapsed_seconds": 24.18,
-        "index": 2,
-        "message_count": 6,
+        "elapsed_seconds": 20.06,
+        "index": 1,
+        "message_count": 4,
         "response": {
           "choices": [
             {
               "finish_reason": "stop",
               "index": 0,
               "message": {
-                "content": "{\"answer\": \"No observations found for AAPL's price_to_sales_ratio. The metric may not be available in the database or may require a different query parameter.\",\"evidence_refs\":[],\"derived_refs\":[],\"uncertainties\":[\"Metric 'price_to_sales_ratio' may not exist for AAPL\",\"Need to verify metric name or data availability\"]}",
-                "reasoning": "Okay, let me try to figure out what's going on here. The user is asking whether the current price-to-sales (PS) ratio for Apple (AAPL) was reported by a source or calculated. If it was calculated, they want to know what it was derived from.\n\nFirst, I used the `query_observations` function to look for any observations related to AAPL's PS ratio. The initial attempt had an error because the limit was set to a string instead of an integer. I corrected that by setting the limit to 1, which is a valid integer. However, the response came back as an empty array, which means there were no observations found that matched the query.\n\nNow, I need to consider why no observations were returned. There are a few possibilities here. One is that there's no data available for AAPL's PS ratio in the database. Another possibility is that the metric name I used, \"price_to_sales_ratio,\" doesn't match the exact metric name used in the database. Maybe the correct metric name is different, such as \"PS Ratio\" or another variation.\n\nI should check if there are any other metrics related to PS ratio that might be present in the database. Alternatively, maybe the data isn't available for the current period, or the asset identifier \"AAPL\" isn't recognized. It's also possible that the database doesn't include PS ratio data at all, or it's stored under a different framework or basis.\n\nSince the initial query didn't return any results, I might need to use a different approach. Perhaps using the `get_metric_history` function to check the historical data for AAPL's PS ratio. This function could provide information on whether the metric has been recorded in the past and if there are any issues with the data, such as incomparability or incompleteness.\n\nAlternatively, I could use the `coverage_report` function to check what data is available for AAPL in general. This might give insight into why the PS ratio isn't showing up in the observations. If the coverage report indicates that PS ratio data isn't available, then the answer would be that the data is unavailable. If there's a different issue, like the metric being named differently, I might need to adjust the query parameters accordingly.\n\nAnother angle is to check if the PS ratio is a derived metric. If it's calculated from other metrics like market capitalization and sales, then the `get_lineage` function could be used once the relevant observation IDs are found. However, since the initial query didn't return any observations, there's nothing to pass to `get_lineage` yet.\n\nIn summary, the lack of results from `query_observations` suggests that either the data isn't available, the metric name is incorrect, or the asset identifier isn't recognized. Further investigation using other functions like `get_metric_history` or `coverage_report` might be necessary to determine the exact cause and provide a more accurate answer to the user's question.\n",
+                "content": "{\n  \"answer\": \"The price-to-sales (PS) ratio for AAPL is not directly available in ST-EVA. The metric 'price_to_sales' is not among the known metrics. Available metrics include revenue, shares_outstanding, and others, but none provide direct access to the PS ratio. Calculating it would require external data (e.g., market cap) or assumptions not supported by the current toolset.\",\n  \"evidence_refs\": [],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"The PS ratio cannot be derived from available metrics without additional data\"]\n}",
+                "reasoning": "Okay, the user asked about the current price-to-sales (PS) ratio for AAPL, but the query_observations function returned an error saying the metric \"price_to_sales\" is unknown. The known metrics listed don't include PS ratio. So, ST-EVA doesn't have that specific metric.\n\nI need to check if there's a way to calculate PS ratio using available metrics. The PS ratio is typically calculated as Market Capitalization divided by Annual Sales Revenue. Let me see if ST-EVA has access to those components.\n\nLooking at the known metrics, there's \"revenue\" which is Annual Sales Revenue. Market Capitalization isn't listed, but \"shares_outstanding\" and \"dividend_per_share\" are there. Wait, Market Cap is Shares Outstanding multiplied by Share Price. However, Share Price isn't directly available. But maybe \"dividend_per_share\" can be used with payout ratios? That seems indirect.\n\nAlternatively, maybe \"price_to_sales\" is a derived metric that ST-EVA computes from available data. But since the metric isn't recognized, the system can't derive it either. The user might need to use external data for Market Cap or find another way to calculate it using existing metrics. Since the tools don't support it, I should inform the user that the metric isn't available and suggest possible workarounds.\n",
                 "role": "assistant"
               }
             }
           ],
-          "created": 1790703533,
-          "id": "chatcmpl-404",
+          "created": 1790716104,
+          "id": "chatcmpl-835",
           "model": "qwen3:14b",
           "object": "chat.completion",
           "system_fingerprint": "fp_ollama",
           "usage": {
-            "completion_tokens": 677,
-            "prompt_tokens": 2078,
+            "completion_tokens": 398,
+            "prompt_tokens": 2233,
             "prompt_tokens_details": {
-              "cached_tokens": 1946
+              "cached_tokens": 1663
             },
-            "total_tokens": 2755
+            "total_tokens": 2631
           }
         }
       }
@@ -246,7 +192,7 @@
     "tool_definitions": [
       {
         "function": {
-          "description": "Observations matching a filter, oldest first.\n\n        Note that `limit` truncates silently here. Use `page` when the length of\n        a series matters.",
+          "description": "Observations matching a filter, oldest first.\n\n        `metric` must be one ST-EVA knows. An unknown name is refused with the\n        list of real ones rather than returning an empty result, because an\n        empty result is what a genuinely absent figure looks like and the two\n        were indistinguishable.\n\n        `limit` truncates silently. Use `page` when the length of a series\n        matters.",
           "name": "query_observations",
           "parameters": {
             "properties": {
@@ -263,18 +209,24 @@
                 "type": "string"
               },
               "instant": {
-                "type": "string"
+                "type": "boolean"
               },
               "knowable_at": {
                 "type": "string"
               },
               "limit": {
-                "type": "string"
+                "type": "integer"
               },
               "metric": {
                 "type": "string"
               },
               "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
                 "type": "string"
               },
               "period_end": {
@@ -289,10 +241,10 @@
               "source_type": {
                 "type": "string"
               },
-              "status": {
+              "unit": {
                 "type": "string"
               },
-              "unit": {
+              "validation_status": {
                 "type": "string"
               }
             },
@@ -309,10 +261,10 @@
           "parameters": {
             "properties": {
               "include_lineage": {
-                "type": "string"
+                "type": "boolean"
               },
               "include_validation": {
-                "type": "string"
+                "type": "boolean"
               },
               "observation_id": {
                 "type": "string"
@@ -336,7 +288,7 @@
                 "type": "string"
               },
               "limit": {
-                "type": "string"
+                "type": "integer"
               },
               "metric": {
                 "type": "string"
@@ -370,12 +322,18 @@
                 "type": "string"
               },
               "limit": {
-                "type": "string"
+                "type": "integer"
               },
               "metric": {
                 "type": "string"
               },
               "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
                 "type": "string"
               },
               "period_end": {
@@ -398,7 +356,7 @@
           "parameters": {
             "properties": {
               "depth": {
-                "type": "string"
+                "type": "integer"
               },
               "reference": {
                 "type": "string"
@@ -478,43 +436,21 @@
         "currency": null,
         "instant": null,
         "knowable_at": null,
-        "limit": "1",
-        "metric": "price_to_sales_ratio",
-        "order": "PERIOD_ASCENDING",
+        "limit": 1,
+        "metric": "price_to_sales",
+        "order": "PERIOD_DESCENDING",
         "period_end": null,
         "period_start": null,
         "provider": null,
         "source_type": null,
-        "status": null,
-        "unit": null
+        "unit": null,
+        "validation_status": null
       },
-      "error": "QueryError: limit must be an integer",
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'price_to_sales'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
       "operation": "query_observations",
       "result_shape": "unknown",
+      "returned_count": null,
       "sequence": 1
-    },
-    {
-      "arguments": {
-        "as_of": null,
-        "asset": "AAPL",
-        "basis_framework": null,
-        "currency": null,
-        "instant": null,
-        "knowable_at": null,
-        "limit": 1,
-        "metric": "price_to_sales_ratio",
-        "order": "PERIOD_ASCENDING",
-        "period_end": null,
-        "period_start": null,
-        "provider": null,
-        "source_type": null,
-        "status": null,
-        "unit": null
-      },
-      "error": null,
-      "operation": "query_observations",
-      "result_shape": "list[0]",
-      "sequence": 2
     }
   ]
 }

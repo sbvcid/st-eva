@@ -656,8 +656,14 @@ def _audit_t3(auditor, audit, answer, tools, retrieved):
     total = audit.expected("total_count")
     read = 0
     for call in tools.calls:
-        if call.operation == "page" and call.result:
-            read += len(call.result.get("results", []))
+        if call.operation != "page":
+            continue
+        # `returned_count` is preferred and the live result is the fallback, so
+        # a re-audit of a stored trace counts the same points the run did.
+        count = call.returned_count()
+        if count is None and isinstance(call.result, dict):
+            count = len(call.result.get("results", []))
+        read += count or 0
     auditor.check_pagination_completeness(audit, read, total or 0)
 
 
@@ -676,13 +682,16 @@ def _audit_t4(auditor, audit, answer, tools, retrieved):
     total = audit.expected("total_count")
 
     # The call has to have happened and returned, not merely been attempted.
+    # `succeeded` rather than `call.result`, so a re-audit of a stored trace
+    # reaches the same verdict: the trace keeps the outcome's shape, not the
+    # outcome itself, and a check that needed the payload would re-audit
+    # differently from the run it came from.
     filtered_calls = [
         call
         for call in tools.calls
         if call.operation == "query_observations"
         and call.arguments.get("knowable_at")
-        and not call.error
-        and call.result
+        and call.succeeded
     ]
     audit.checks.append(
         _check(
@@ -700,13 +709,17 @@ def _audit_t4(auditor, audit, answer, tools, retrieved):
     )
 
     if knowable is not None and total is not None:
-        overreach = _count_observation_refs(answer.answer) > knowable
+        cited = _count_observation_refs(answer.answer)
+        overreach = cited > knowable
         audit.checks.append(
             _check(
                 "F4", "no later evidence smuggled in", not overreach,
                 f"at most {knowable} knowable observations",
-                _count_observation_refs(answer.answer),
-                detail="more observations cited than were knowable at the date",
+                cited,
+                # Only on failure. A detail that describes a failure attached
+                # to a passing check reads as a contradiction in the report.
+                detail="more observations cited than were knowable at the date"
+                if overreach else "",
                 classification=None if not overreach else "B",
             )
         )

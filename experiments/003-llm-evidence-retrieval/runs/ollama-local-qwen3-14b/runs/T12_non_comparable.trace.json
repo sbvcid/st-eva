@@ -1,12 +1,10 @@
 {
   "answer": {
-    "answer": "No capital-expenditure concepts were found for AAPL in the database. The query returned no results for both 'Capital Expenditure' and 'Capital Expenditures'.",
+    "answer": "The archive holds one capital-expenditure concept for AAPL named 'capex'. There is no second concept for AAPL with a distinct measure. The query for 'capital expenditure' was invalid; the correct metric name is 'capex'.",
     "derived_refs": [],
     "evidence_refs": [],
     "parse_error": null,
-    "uncertainties": [
-      "It's possible the metric names differ from standard terms, but no matching concepts were retrieved."
-    ]
+    "uncertainties": []
   },
   "trace": [
     {
@@ -17,66 +15,21 @@
         "currency": null,
         "instant": null,
         "knowable_at": null,
-        "limit": "50",
-        "metric": "Capital Expenditure",
+        "limit": 2,
+        "metric": "capital expenditure",
         "order": "PERIOD_ASCENDING",
         "period_end": null,
         "period_start": null,
         "provider": null,
         "source_type": null,
-        "status": null,
-        "unit": null
+        "unit": null,
+        "validation_status": null
       },
-      "error": "QueryError: limit must be an integer",
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'capital expenditure'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
       "operation": "query_observations",
       "result_shape": "unknown",
+      "returned_count": null,
       "sequence": 1
-    },
-    {
-      "arguments": {
-        "as_of": null,
-        "asset": "AAPL",
-        "basis_framework": null,
-        "currency": null,
-        "instant": null,
-        "knowable_at": null,
-        "limit": 50,
-        "metric": "Capital Expenditure",
-        "order": "PERIOD_ASCENDING",
-        "period_end": null,
-        "period_start": null,
-        "provider": null,
-        "source_type": null,
-        "status": null,
-        "unit": null
-      },
-      "error": null,
-      "operation": "query_observations",
-      "result_shape": "list[0]",
-      "sequence": 2
-    },
-    {
-      "arguments": {
-        "as_of": null,
-        "asset": "AAPL",
-        "basis_framework": null,
-        "currency": null,
-        "instant": null,
-        "knowable_at": null,
-        "limit": 50,
-        "metric": "Capital Expenditures",
-        "order": "PERIOD_ASCENDING",
-        "period_end": null,
-        "period_start": null,
-        "provider": null,
-        "source_type": null,
-        "status": null,
-        "unit": null
-      },
-      "error": null,
-      "operation": "query_observations",
-      "result_shape": "list[0]",
-      "sequence": 3
     }
   ]
 }

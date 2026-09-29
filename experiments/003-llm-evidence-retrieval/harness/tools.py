@@ -51,15 +51,59 @@ class Call:
     result: Any = None
     error: Optional[str] = None
     result_shape: str = "unknown"
+    # Set when a call is rebuilt from a stored trace, where the result itself
+    # is not kept but the count it returned is.
+    stored_returned_count: Optional[int] = None
 
     def contract_dict(self) -> Dict[str, Any]:
+        """
+        The trace: what was asked, in order, and what shape came back.
+
+        `returned_count` is kept because a trace that records only a shape
+        cannot reproduce the audit. The pagination check counts how many points
+        the target actually read, which is a property of the result and not of
+        the call -- and a trace that dropped it would re-audit differently from
+        the run it came from, which is the one thing a trace must never do.
+        """
         return {
             "sequence": self.sequence,
             "operation": self.operation,
             "arguments": self.arguments,
             "error": self.error,
             "result_shape": self.result_shape,
+            "returned_count": self.returned_count(),
         }
+
+    @property
+    def succeeded(self) -> bool:
+        """
+        Whether the call ran and returned something.
+
+        Derived from fields that survive into a stored trace. A check that
+        reads `self.result` cannot be re-audited from the trace, because the
+        trace deliberately does not keep every result -- and a check that
+        cannot be reproduced from the artefact the run produced is a check whose
+        verdict changes when nobody re-ran the model.
+        """
+        if self.error is not None:
+            return False
+        if self.result is not None:
+            return True
+        return self.result_shape != "unknown" and self.result_shape != "null"
+
+    def returned_count(self) -> Optional[int]:
+        """How many items came back, where that is well defined."""
+        if self.stored_returned_count is not None:
+            return self.stored_returned_count
+        if self.result is None:
+            return None
+        if isinstance(self.result, list):
+            return len(self.result)
+        if isinstance(self.result, dict):
+            for key in ("returned_count", "point_count"):
+                if key in self.result:
+                    return self.result[key]
+        return None
 
 
 @dataclass
