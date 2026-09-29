@@ -563,8 +563,14 @@ class TestAapplIngestion(unittest.TestCase):
 
     def test_2_second_run_makes_no_unnecessary_fetches(self):
         """
-        The index must be re-read, because it is the only way to learn whether
-        anything changed. A document must not be.
+        The criterion is one bounded discovery request and nothing else.
+
+        Zero requests is not achievable and was the wrong target. The submissions
+        API *is* the live filing history, so the only way to learn that nothing
+        was newly accepted is to ask; skipping that would mean assuming nothing
+        changed, which is how an incremental pipeline silently stops ingesting.
+        What must hold is that the answer costs one request and re-downloads
+        nothing.
         """
         self.assertEqual(
             self.second.concept_fetches,
