@@ -70,19 +70,34 @@ no source states profitability as a fact about a company.
 For any company and any Core item, exactly one of these is true. All are
 normal results and none is an error.
 
-| State | Meaning |
-|---|---|
-| `SOURCE_REPORTED` | a source stated it; the value exists |
-| `SOURCE_DID_NOT_REPORT` | the source was asked and did not state it |
-| `NOT_APPLICABLE` | the concept does not exist for this business and saying so is the correct answer |
-| `UNAVAILABLE` | the source could not be reached, or the value was not extractable |
-| `CONFLICTING` | two or more sources state materially different values, and no winner is selected |
-| `STALE` | the newest observation for the item predates the source's cadence |
+| State | Meaning | Distinct from |
+|---|---|---|
+| `SOURCE_REPORTED` | a source stated it; the value exists | — |
+| `SOURCE_DID_NOT_REPORT` | the source was consulted and does not state it | `UNAVAILABLE`: we failed to ask, not the source |
+| `NOT_APPLICABLE` | the concept does not exist for this business | a missing value: the correct answer is that there is nothing to report |
+| `UNAVAILABLE` | the source could not be reached, or the value was not extractable | `SOURCE_DID_NOT_REPORT`: the answer is unknown, not negative |
+| `CONFLICTING` | two or more sources state materially different values, and no winner is selected | `DISCREPANT`: a discrepancy assumes comparability, a conflict does not |
+| `STALE` | the newest observation for the item predates the source's cadence | the value is retained and recomputable; only its currency is absent |
 
-`NOT_APPLICABLE` is the one the current model cannot express (§16.1) and it
-matters: a bank has no operating-income line, and a mining company has no
-inventory. Recording that as a fact is more useful than a null, because a null
-cannot be distinguished from a retrieval failure.
+**Why each distinction earns its place.** A single "missing" cannot tell a
+consumer whether the company lacks the item, the source omits it, or our
+retrieval failed, and those imply different next actions:
+
+```
+NU   EBITDA   NOT_APPLICABLE       BUSINESS_MODEL_NOT_MEANINGFUL
+MU   debt      STALE                NO_RECENT_VALUE, newest filing 2013-05-30
+NU   revenue   SOURCE_DID_NOT_REPORT the filing exists and omits the tag
+AAPL whatever  UNAVAILABLE           the request failed
+```
+
+The first says *ask a different question*. The second says *go back to the
+filings*. The third says *ask the filer*. The fourth says *retry us*.
+
+`NOT_APPLICABLE` is the one state the current model cannot express, and it is
+the most important addition. A bank has no operating-income tag and a mining
+company has no inventory; recorded as a null, both are indistinguishable from
+retrieval failure, and a database full of indistinguishable nulls is not
+queryable.
 
 ## 2. What ST-EVA must retain
 
@@ -168,8 +183,61 @@ register both as separate metrics, because a filer that switches tags has not
 changed the fact, only the name. Merging them would produce a series with a
 silent discontinuity — the defect 2.4.3 exists to prevent.
 
-### 3.2 Three count families that must never be conflated
+### 3.2 A metric is not a concept, and the two are related by a mapping
 
+**This is a normative decision and it replaces the earlier "fork" phrasing.**
+
+A **metric** is a semantic meaning, named by ST-EVA, stable over time. A
+**source concept** is what a source calls it: an XBRL tag, a vendor field, a
+line-item label. The two are related by an explicit mapping, and the mapping
+carries a fidelity:
+
+| Mapping fidelity | Meaning |
+|---|---|
+| `EXACT` | the source states this concept and it means exactly the metric |
+| `EQUIVALENT` | a different name, an equal meaning; the series continues |
+| `PARTIAL` | the source states a component or a wider aggregate; the series is not comparable across the switch |
+| `NON_COMPARABLE` | related but not the same quantity; a new metric |
+
+The registry therefore has three tables, not one wide table:
+
+```
+metric_registry           metric_id, statement, semantic_definition,
+                          applicability, comparable_group, is_core
+
+source_concept_registry   taxonomy, concept, label, source_definition
+
+metric_source_mapping     metric_id, taxonomy, concept, fidelity, valid_from,
+                          valid_to, source_id
+```
+
+**The rule that replaces "fork everything":**
+
+> A concept may change. A metric keeps one series only while its definition
+> stays equivalent.
+
+So `operating_expense_sga` mapped to
+`us-gaap:SellingGeneralAndAdministrativeExpense` by one source and to a
+differently-named tag by another, both `EQUIVALENT`, is **one metric with two
+source concepts**, not two metrics. The series continues unbroken, and the
+cross-source comparison is between concepts, not between metrics.
+
+`total_debt`, `long_term_debt` and `current_debt` are **three metrics**, because
+no concept of one is `EQUIVALENT` to any other. A filer that moves from
+`LongTermDebtNoncurrent` to a composed total has changed the quantity, not its
+name.
+
+`receivables` is the instructive middle case. `ReceivablesNetCurrent` excludes
+contract assets and `ReceivablesNet` does not. Those are `PARTIAL`, not
+`EQUIVALENT`, so a filer switching between them produces a discontinuity at that
+date rather than a silent splice. Same for total versus parent-only equity.
+
+This is the 2.4.3 rule applied upward: names may be similar and the quantities
+may not be, and 2.4.3 already removed the cross-span differencing that would
+otherwise hide the switch. The mapping table is where a name change is recorded
+explicitly rather than inferred from a matching label.
+
+### 3.3 Three count families that must never be conflated
 The 2.4.2 audit found a 5.85x difference for TSM and a 1.41x difference for
 NU between share counts. The Core scope must make the conflation impossible:
 
@@ -182,7 +250,7 @@ NU between share counts. The Core scope must make the conflation impossible:
 Each is its own metric. A period average is not an instant count, and an
 ADS-equivalent count is neither.
 
-### 3.3 What becomes Derived rather than Evidence
+### 3.4 What becomes Derived rather than Evidence
 
 EBITDA, net debt, enterprise value, margins, growth, and multiples are all
 Derived. They are legitimate ST-EVA outputs and all of them already exist in
@@ -393,6 +461,63 @@ classification is stored on the Source row.
 
 ## 13. Incremental ingestion
 
+### 13.1 Identity, and why there are two kinds
+
+**This is a normative decision, and it is the one that could most damage the
+2.3-B validation model if implemented carelessly.**
+
+The tempting fix for "two adapters name the same filed fact differently" is to
+derive one identity from the fact's content and deduplicate on it. That must not
+be done, because it destroys the structure 2.3-B exists to provide:
+
+```
+SEC filing  -> Observation A (100)
+Vendor      -> Observation B (100)
+                      dedupe on value
+           -> Observation   (100)      WRONG
+```
+
+Collapsing A and B because the numbers agree deletes the only evidence that two
+independent readings existed, and with it the `independence` field, the
+`CONSISTENT` verdict, and any future `DISCREPANT` or `CONFLICTING` finding. The
+whole cross-source layer is a record of *disagreement between named sources*, and
+a database that keeps one row cannot represent disagreement.
+
+**There are therefore two identities, and they are not interchangeable:**
+
+| Identity | Scope | Answers |
+|---|---|---|
+| `source_fact_id` | one fact, **within one source document** | "have I already parsed *this* fact out of *this* filing?" |
+| `observation_id` | one source's claim, in ST-EVA's model | "which source said this, for which period, and under what basis?" |
+
+```
+source_fact_id   = sha256(source | document | taxonomy | concept
+                                     | fact_period | fact_context)
+observation_id   = distinct per source, never merged across sources
+```
+
+Deduplication happens **only** where the two refer to the same raw fact in the
+same document:
+
+- the same filing fetched twice by one ingestion run
+- the same filing parsed by two different adapters
+
+Both yield the same `source_fact_id`, and the second is recognised as already
+held. That is a genuine duplicate and collapsing it loses nothing.
+
+Two sources reporting the same value are **not** duplicates. They remain two
+observations, linked by a `ValidationRecord`. This is already what 2.3-B does
+and what the 2.4.2 audit relied on: TSM's 5.85x share discrepancy and NU's
+1.41x discrepancy were only findable because both sides were kept.
+
+`0008` carries this rule because it is the one migration that could silently
+undo a sealed semantic. The invariant to assert is simple and worth stating as
+an acceptance criterion of its own: **after any 2.5 ingestion, two sources
+reporting the same number still produce two observations and one validation
+record.**
+
+### 13.2 The loop
+
 The pipeline becomes a loop rather than a one-shot fetch.
 
 ```
@@ -559,13 +684,18 @@ or a documented semantic, and none of them should change
 ## 17. Scope of the first implementation experiment
 
 One company, one full chain, end to end. Not six companies, and not the whole
-Core list.
+Core list. The chain is proven with the seven most basic metrics first —
+revenue, net income, diluted EPS, cash, debt, total assets, shares outstanding
+— because once identity, registry, filing provenance, incremental ingestion and
+query all work for seven metrics, adding R&D, CapEx, SBC or segment revenue is
+adding evidence *mappings* rather than redesigning the database.
 
 ```
 AAPL
   multi-year SEC filings
     -> SourceDocument  (content-addressed, stored)
-    -> Observation    (Income Statement subset)
+    -> Observation    (with concept, taxonomy, accession, statement, period,
+                       available_at, source_fact_id)
     -> Validation     (where a second source agrees or does not)
     -> database       (incremental; a second run adds nothing)
     -> exported Context
@@ -584,9 +714,21 @@ Core schema to make six companies uniform. They are the natural second
 experiment, and their taxonomy is a reason to extend the registry, never a
 reason to bend the model.
 
-**The first experiment succeeds when** a figure in the exported Context can be
-followed, mechanically, to an accession number, a concept, a period and a
-publication time, and when re-running the ingestion adds zero rows.
+### 17.1 The first experiment's acceptance criteria
+
+The chain, not a page count. All five must hold.
+
+| # | Criterion | Proves |
+|---|---|---|
+| 1 | A second ingestion of the same filing adds **0** new observations | the identity and dedupe rules work |
+| 2 | The same filing parsed twice, by two paths, produces **no** duplicate source fact | `source_fact_id` deduplicates within a source document |
+| 3 | Two sources reporting the same number keep **two** observations and one validation record | cross-source evidence survives, per §13.1 |
+| 4 | A concept rename with an `EQUIVALENT` definition keeps **one** continuous metric series | the mapping fidelity rules work, per §3.2 |
+| 5 | Two similarly-named concepts with different definitions produce a **discontinuity or non-comparable**, never a silent splice | 2.4.3's rule holds upward |
+
+Criteria 4 and 5 are what make the "fork" question answerable rather than
+debatable, and they are the reason they are acceptance criteria rather than a
+design note.
 
 ## 18. Explicit non-goals for 2.5
 

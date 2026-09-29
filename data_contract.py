@@ -142,10 +142,15 @@ class ValidationStatus(str, Enum):
     CONSISTENT = "CONSISTENT"
     DISCREPANT = "DISCREPANT"
     METHODOLOGY_MISMATCH = "METHODOLOGY_MISMATCH"
-    # Two reliable sources disagree, or a derived quantity cannot be reconciled
-    # with a reported one. Neither side is a winner: the conflict is the
-    # finding, and collapsing it would destroy the evidence.
+    # Two reliable sources disagree, or a derived quantity cannot be
+    # reconciled with a reported one. Neither side is a winner: the conflict is
+    # the finding, and collapsing it would destroy the evidence.
     CONFLICTING = "CONFLICTING"
+    # The concept does not exist for this business. Added in 2.5 so that a
+    # bank with no operating-income tag is distinguishable from a retrieval
+    # that failed. A null cannot carry that distinction, and a database of
+    # indistinguishable nulls is not queryable.
+    NOT_APPLICABLE = "NOT_APPLICABLE"
 
     def __str__(self) -> str:  # pragma: no cover - trivial
         return self.value
@@ -176,6 +181,11 @@ _STATUS_SEVERITY: Dict[ValidationStatus, int] = {
     # the same thing, which a discrepancy does.
     ValidationStatus.DISCREPANT: 6,
     ValidationStatus.CONFLICTING: 6,
+    # Not applicable is not unavailable. A concept that does not exist for
+    # this business is a statement, and it ranks with a positive finding
+    # rather than with a missing one: the answer is that there is nothing to
+    # report, not that we failed to find it.
+    ValidationStatus.NOT_APPLICABLE: 6,
     ValidationStatus.UNAVAILABLE: 7,
 }
 
