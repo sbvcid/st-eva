@@ -683,6 +683,34 @@ class SECProvider:
         self._document_hashes: set = set()
         self._concept_cache: Dict[str, Tuple[Optional[Dict[str, Any]], Tuple[str, ...]]] = {}
         self._submissions_hashes: Dict[str, Optional[str]] = {}
+        # Every network request this provider instance made. The 2.5.1
+        # incremental-ingestion acceptance test asserts on this count, so it has
+        # to be the transport's own tally rather than an inference from what
+        # happened to be stored.
+        self._fetch_log: List[str] = []
+
+    @property
+    def network_fetches(self) -> int:
+        """How many requests this provider actually made."""
+        return len(self._fetch_log)
+
+    @property
+    def concept_fetches(self) -> int:
+        """
+        Requests for concept documents, as opposed to indexes.
+
+        The index has to be re-read on every run, because it is the only way
+        to learn whether anything changed. A concept document is only fetched
+        when a new filing has been accepted, and a run that finds nothing new
+        must fetch none of them.
+        """
+        return sum(
+            1 for url in self._fetch_log if "/companyconcept/" in url
+        )
+
+    @property
+    def fetch_log(self) -> Tuple[str, ...]:
+        return tuple(self._fetch_log)
 
     # -- transport ---------------------------------------------------------
 
@@ -709,6 +737,7 @@ class SECProvider:
         concept. `allow_missing` returns None for it instead of raising.
         """
         self._throttle()
+        self._fetch_log.append(url)
         request = urllib.request.Request(
             url,
             headers={
@@ -1113,6 +1142,77 @@ class SECProvider:
         return [], (
             f"{metric} is not reported under any of: {', '.join(attempted)}"
         ), None
+
+    def document_hashes(self) -> Tuple[str, ...]:
+        return tuple(document.content_hash for document in self._documents)
+
+    def documents_for(
+        self,
+        taxonomy: str,
+        concept: str,
+    ) -> Tuple[SECDocument, ...]:
+        """
+        Captured documents for one concept, in fetch order.
+
+        The ingestion path stores what the parser actually read rather than
+        reading the endpoint a second time, because a second read is a second
+        version and the point is to keep the one the fact came from.
+        """
+        return tuple(
+            document
+            for document in self._documents
+            if document.uri.endswith(f"/{taxonomy}/{concept}.json")
+        )
+
+    def filing_index(self, cik: str) -> List[Dict[str, Any]]:
+        """
+        The submissions index: one entry per filing, as EDGAR publishes it.
+
+        A filing's identity is its accession number, and this is where they
+        come from. The 2.5.1 ingestion diffs this against the filings the
+        archive holds, so a run with nothing new accepted fetches no documents
+        at all. An amendment arrives under a new accession, which is exactly why
+        the accession is the thing that diffs: a restatement is a new filing,
+        not a change to an old one.
+        """
+        recent = (self.submissions(cik).get("filings") or {}).get("recent") or {}
+        accessions = recent.get("accessionNumber") or []
+        entries: List[Dict[str, Any]] = []
+        for position, accession in enumerate(accessions):
+            def column(name: str) -> Optional[str]:
+                values = recent.get(name) or []
+                if position < len(values):
+                    return values[position]
+                return None
+
+            entries.append(
+                {
+                    "accession": str(accession),
+                    "form": column("form"),
+                    "filing_date": column("filingDate"),
+                    "report_date": column("reportDate"),
+                    "acceptance_datetime": column("acceptanceDateTime"),
+                    "primary_document": column("primaryDocument"),
+                    "is_xbrl": column("isXBRL"),
+                }
+            )
+        return entries
+
+    def concept_history(
+        self,
+        cik: str,
+        taxonomy: str,
+        concept: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Every fact a source has published for one concept, across all history.
+
+        The ingestion path uses this rather than `fetch`, because an archive
+        needs the whole series and `fetch` deliberately keeps only a recent
+        window. Returns None when the concept is not reported at all, which is
+        an answer rather than a failure.
+        """
+        return self.company_concept(cik, taxonomy, concept)
 
     def _concept_payload(
         self,

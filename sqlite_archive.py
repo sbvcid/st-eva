@@ -32,6 +32,7 @@ from archive import (
     UNDECLARED,
     ArchiveError,
     ArchiveStore,
+    FilingRef,
     StoredDocument,
     document_hash,
     utc_now,
@@ -479,6 +480,7 @@ class SQLiteArchive(ArchiveStore):
         replay_eligible_from: Optional[str] = None,
         document_hashes: Sequence[str] = (),
         accession: Optional[str] = None,
+        filing: Optional[FilingRef] = None,
     ) -> str:
         """
         Append one observation.
@@ -560,6 +562,26 @@ class SQLiteArchive(ArchiveStore):
             _canonical(observation.raw) if observation.raw is not None else None,
             content_hash,
         )
+        if filing is not None:
+            # The filing identity is part of the row, not a correction to it. The
+            # archive rejects every UPDATE, which is correct: an observation that
+            # could be amended after the fact would not be evidence of what was
+            # known when it was written.
+            columns += (
+                "taxonomy", "accession", "form", "fiscal_year", "fiscal_period",
+                "statement", "instant", "source_fact_id", "source_concept_ref",
+            )
+            values += (
+                filing.taxonomy,
+                filing.accession or _accession_of(observation),
+                filing.form,
+                filing.fiscal_year,
+                filing.fiscal_period,
+                filing.statement,
+                filing.instant,
+                filing.source_fact_id,
+                filing.source_concept,
+            )
         placeholders = ", ".join("?" for _ in columns)
         self.connection.execute(
             f"INSERT INTO observations ({', '.join(columns)})"

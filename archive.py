@@ -125,6 +125,46 @@ class ArchiveStats:
 
 
 @dataclass(frozen=True)
+class FilingRef:
+    """
+    The filing a stored fact came from, written at insert time.
+
+    An observation cannot learn its filing identity after the fact. The archive
+    is append-only by trigger, which is the whole point of it, so the fields that
+    make a fact traceable back to a filing have to arrive with the row rather
+    than be patched onto it afterwards.
+
+    `source_concept` is qualified as `taxonomy:concept` and is None when the
+    observation has no filing concept at all — a vendor aggregate, a derived
+    figure. None means "no concept", not "concept not yet identified"; the
+    second is a gap in the registry, which resolves to nothing and says so.
+    """
+
+    accession: Optional[str] = None
+    form: Optional[str] = None
+    taxonomy: Optional[str] = None
+    fiscal_year: Optional[int] = None
+    fiscal_period: Optional[str] = None
+    statement: Optional[str] = None
+    instant: Optional[int] = None
+    source_fact_id: Optional[str] = None
+    source_concept: Optional[str] = None
+
+    def contract_dict(self) -> Dict[str, Any]:
+        return {
+            "accession": self.accession,
+            "form": self.form,
+            "taxonomy": self.taxonomy,
+            "fiscal_year": self.fiscal_year,
+            "fiscal_period": self.fiscal_period,
+            "statement": self.statement,
+            "instant": self.instant,
+            "source_fact_id": self.source_fact_id,
+            "source_concept": self.source_concept,
+        }
+
+
+@dataclass(frozen=True)
 class StoredDocument:
     """A captured source document, addressed by the hash of its bytes."""
 
@@ -232,6 +272,7 @@ class ArchiveStore:
         replay_eligible_from: Optional[str],
         document_hashes: Sequence[str] = (),
         accession: Optional[str] = None,
+        filing: Optional["FilingRef"] = None,
     ) -> str:
         raise NotImplementedError
 
