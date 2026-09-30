@@ -1,0 +1,59 @@
+{
+  "answer": {
+    "answer": "{\n  \"answer\": \"As of 2026-07-31, ST-EVA holds 500 reported revenue observations for AAPL with knowable_at dates on or before that cutoff. These span fiscal periods from 2006-10-01/2007-09-29 through 2025-12-28/2026-03-28. All observations carry evidence_state SOURCE_REPORTED and validation_status UNVERIFIABLE (single SEC source). Many periods have multiple filings (10-K, 10-Q, 8-K) reporting different values for the same concept, flagged as MULTIPLE_FILINGS ambiguity with NO_WINNER_SELECTED. Three source concepts are used: us-gaap:SalesRevenueNet (PARTIAL mapping, through 2018-06-30), us-gaap:Revenues (PARTIAL, 2016-09-24 onward), and us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (EXACT mapping, from 2017-09-30 onward). Key annual revenue figures (latest filing per period) knowable by 2026-07-31 include:\\n\\n- FY2007 (2006-10-01 to 2007-09-29): $24.0B (10-K) vs $24.6B (10-K/A) \u2014 knowable 2009-10-27 / 2010-01-25\\n- FY2008: $32.5B (10-K) vs $37.5B (10-K/A, 10-K) \u2014 knowable 2009-10-27 / 2010-01-25 / 2010-10-27\\n- FY2009: $36.5B (10-K) vs $42.9B (10-K/A, 10-K, 10-K) \u2014 knowable 2009-10-27 / 2010-01-25 / 2010-10-27 / 2011-10-26\\n- FY2010: $65.2B (10-K, 10-K, 8-K) \u2014 knowable 2010-10-27 / 2011-10-26 / 2013-04-24\\n- FY2011: $108.2B (10-K, 10-K, 8-K, 10-K) \u2014 knowable 2011-10-26 / 2012-10-31 / 2013-04-24 / 2013-10-30\\n- FY2012: $156.5B (10-K, 8-K, 10-K, 8-K) \u2014 knowable 2012-10-31 / 2013-04-24 / 2013-10-30 / 2015-01-28\\n- FY2013: $170.9B (10-K, 10-K, 8-K, 10-K) \u2014 knowable 2013-10-30 / 2014-10-27 / 2015-01-28 / 2016-10-26\\n- FY2014: $182.8B (10-K, 10-K, 10-K, 10-K) \u2014 knowable 2014-10-27 / 2015-10-28 / 2017-11-03 / 2016-10-26\\n- FY2015: $233.7B (10-K, 10-K, 10-K, 10-K) \u2014 knowable 2015-10-28 / 2016-10-26 / 2017-11-03 / 2017-11-03\\n- FY2016: $215.6B (10-K, 10-K, 10-K) \u2014 knowable 2016-10-26 / 2017-11-03 / 2018-11-05\\n- FY2017: $229.2B (10-K, 10-K, 10-K, 10-K) \u2014 knowable 2017-11-03 / 2018-11-05 / 2019-10-30 / 2021-10-28\\n- FY2018: $265.6B (10-K, 10-K) \u2014 knowable 2018-11-05\\n- FY2019: $260.2B (10-K, 10-K) \u2014 knowable 2019-10-30\\n- FY2020: $274.5B (10-K, 10-K, 10-K, 10-K) \u2014 knowable 2020-10\",\n  \"evidence_refs\": [\n    \"obsarch_ddb4af888ab3c6be910c0f9",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "JSONDecodeError: Unterminated string starting at: line 4 column 5 (char 2147)",
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": "2026-07-31",
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[100]",
+      "returned_count": 100,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": "2026-07-31",
+        "limit": 500,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[334]",
+      "returned_count": 334,
+      "sequence": 2
+    }
+  ]
+}

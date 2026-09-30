@@ -65,6 +65,30 @@ KIND_DERIVED = "DERIVED"
 KIND_UNAVAILABLE = "UNAVAILABLE"
 KIND_CONFLICTING = "CONFLICTING"
 
+# Why several figures share one metric and one period.
+#
+# A closed vocabulary, and every member of it is decidable from the rows
+# themselves. The point of a closed set is that a consumer can branch on it: a
+# `MULTIPLE_SOURCE_CONCEPTS` case is not a disagreement at all, and code that
+# treats every reason alike will pick a figure it was never offered a choice
+# between.
+AMBIGUITY_CROSS_PROVIDER = "CROSS_PROVIDER_DISCREPANCY"
+AMBIGUITY_MULTIPLE_CONCEPTS = "MULTIPLE_SOURCE_CONCEPTS"
+AMBIGUITY_DIMENSION = "DIMENSION_COLLISION"
+AMBIGUITY_MULTIPLE_FILINGS = "MULTIPLE_FILINGS"
+AMBIGUITY_MULTIPLE_OBSERVATIONS = "MULTIPLE_OBSERVATIONS"
+AMBIGUITY_REASONS: Tuple[str, ...] = (
+    AMBIGUITY_CROSS_PROVIDER,
+    AMBIGUITY_MULTIPLE_CONCEPTS,
+    AMBIGUITY_DIMENSION,
+    AMBIGUITY_MULTIPLE_FILINGS,
+    AMBIGUITY_MULTIPLE_OBSERVATIONS,
+)
+# The archive declining to choose. Unchanged by 2.6.3: whatever the cause, the
+# resolution is the same, and a run of this experiment already showed that
+# weakening it is how a model ends up asserting a winner.
+AMBIGUITY_NO_WINNER = "NO_WINNER_SELECTED"
+
 # Ordering is a closed vocabulary, not a free string, so it cannot become a way
 # to smuggle an expression into the SQL layer.
 ORDER_ASC = "PERIOD_ASCENDING"
@@ -261,6 +285,126 @@ def _read_only(connection: sqlite3.Connection) -> sqlite3.Connection:
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only = ON")
     return connection
+
+
+def classify_ambiguity(basis: Dict[str, Any]) -> str:
+    """
+    Which kind of ambiguity this is, decided from the gathered evidence alone.
+
+    A pure function of `basis`, deliberately separated from the SQL that gathers
+    it. Two reasons. A classification that can only be tested through a
+    database is a classification nobody will test, and this one decides whether
+    a consumer is offered a choice at all. And keeping it pure makes the rule
+    inspectable as a rule: each branch below is a claim about the rows, in the
+    order the claims are made, and the order is part of the contract.
+
+    The order is not arbitrary:
+
+    1. **Different providers subsume everything.** Two figures from two sources
+       are not two readings of one source's aggregate, whatever else is true of
+       them, and a cross-source pair may carry a recorded cross-check.
+    2. **Different concepts come before filing identity.** If the rows measure
+       different things, no amount of agreement about which filing or which
+       dimension member made them a choice between comparable figures. This is
+       the branch the old prose got wrong for 68 of 107 groups, calling two
+       different measures "the same source concept".
+    3. **One concept, one filing, two values** is the only shape that licenses
+       the dimension-aggregation story: a single filing reporting one concept
+       for one period twice can only be reporting an aggregate over members it
+       did not return. `accessions` is the set of *known* accessions, so
+       exactly one means every row names that same filing.
+    4. **Several filings, one concept** is a restatement or a re-filing, and the
+       archive cannot say which filing a question was about.
+    5. **Nothing identifiable** falls back to saying only that the archive holds
+       more than one figure. That is the honest answer when the evidence
+       supports no better, and it is the only branch that is a fallback.
+
+    `unmapped_observations` is not a branch. A row with no source concept is
+    reported in the basis but does not make two named concepts into one case,
+    because "one row says nothing" is not "both rows say the same thing".
+    """
+    if len(basis.get("providers", [])) > 1:
+        return AMBIGUITY_CROSS_PROVIDER
+    if len(basis.get("source_concepts", [])) > 1:
+        return AMBIGUITY_MULTIPLE_CONCEPTS
+    accessions = basis.get("accessions", [])
+    if len(accessions) == 1:
+        return AMBIGUITY_DIMENSION
+    if len(accessions) > 1:
+        return AMBIGUITY_MULTIPLE_FILINGS
+    return AMBIGUITY_MULTIPLE_OBSERVATIONS
+
+
+def same_measure_established(basis: Dict[str, Any]) -> bool:
+    """
+    Whether the evidence establishes that the competing figures measure the same
+    thing.
+
+    Stated as a field rather than left to be inferred from the reason, because
+    the inference is the failure. Two figures that measure different things are
+    not a disagreement, and a reader who treats them as one is choosing between
+    a question they did not ask and an answer that may not fit it.
+
+    An unmapped row makes this False. A row whose concept the archive does not
+    hold cannot be shown to measure the same thing as one whose concept it does,
+    and "cannot be shown" is the honest reading.
+    """
+    if basis.get("unmapped_observations"):
+        return False
+    return len(basis.get("source_concepts", [])) <= 1
+
+
+def _ambiguity_explanation(reason: str, basis: Dict[str, Any]) -> str:
+    """
+    The prose for a classification, written from the class and the evidence.
+
+    Generated rather than asserted, so it cannot drift from the code. Every
+    branch names what the archive can see and stops there: an explanation that
+    went past the evidence is exactly the defect 2.6.3 exists to remove.
+    """
+    concepts = ", ".join(basis.get("source_concepts", [])) or "no named concept"
+    providers = ", ".join(basis.get("providers", [])) or "no named provider"
+    filings = ", ".join(basis.get("accessions", [])) or "no identified filing"
+    count = basis.get("observation_count", 0)
+    if reason == AMBIGUITY_CROSS_PROVIDER:
+        return (
+            f"Different sources report different values for this metric and "
+            f"period: {providers}. The figures come from different providers, so "
+            f"they are not two readings of one source's aggregate. ST-EVA has "
+            f"not selected one. Any recorded cross-check between them is carried "
+            f"in `recorded_cross_check`."
+        )
+    if reason == AMBIGUITY_MULTIPLE_CONCEPTS:
+        return (
+            "Different source concepts report different values for this metric "
+            f"and period: {concepts}. These are different measures, not two "
+            "readings of one measure, so the evidence does not establish that "
+            "either is the figure a question about this metric was asking for. "
+            "ST-EVA has not selected one and does not claim either is a "
+            "candidate."
+        )
+    if reason == AMBIGUITY_DIMENSION:
+        return (
+            f"One filing ({filings}) and one source concept ({concepts}) report "
+            f"more than one value for this period. A single filing reporting one "
+            f"concept for one period twice can only be an aggregate over "
+            f"dimension members it does not return, and the member is not "
+            f"identified in the evidence held. ST-EVA has not selected one."
+        )
+    if reason == AMBIGUITY_MULTIPLE_FILINGS:
+        return (
+            f"The same source concept ({concepts}) is reported with different "
+            f"values by {len(basis.get('accessions', []))} filings: {filings}. "
+            f"The figures may be a restatement, a re-filing or two different "
+            f"periods of coverage, and the evidence held does not establish "
+            f"which filing a question was about. ST-EVA has not selected one."
+        )
+    return (
+        f"ST-EVA holds {count} observations for this metric and period reporting "
+        f"different values, and the evidence held does not identify what "
+        f"distinguishes them. ST-EVA has not selected one and is not offering a "
+        f"choice between them on the basis of anything it can see."
+    )
 
 
 def _strip_ref_prefix(reference: str) -> str:
@@ -761,27 +905,56 @@ class EvidenceQuery:
         """
         Whether this figure is one of several ST-EVA cannot choose between.
 
-        An observation is identified by its filing, its concept, its period and
-        its context, so two rows for the same concept and period with different
-        values are not a duplicate -- they are two facts the archive holds and
-        cannot tell apart. The company-concept endpoint is the usual cause: it
-        aggregates across dimension members and does not return the member, so
-        for AAPL's FY2007 revenue the archive holds 24.006B and 24.578B under
-        one concept and one period and can say nothing about which aggregate
-        either figure is.
+        Two observations for one metric and one period with different values are
+        not a duplicate. They are two facts the archive holds, and the block says
+        so, because a consumer that reads only one of them has no way to know the
+        other exists — the same failure as an unknown metric returning an empty
+        list, an answer that looks complete and is not.
 
-        A consumer that reads only one of them has no way to know the other
-        exists. That is the same failure as an unknown metric returning an
-        empty list -- an answer that looks complete and is not -- so the
-        competing rows are named here, with the archive declining to choose.
+        **The reason is read out of the evidence, never assumed.**
 
-        The reason is `NOT_EXPLAINED` and the resolution is
-        `NO_WINNER_SELECTED`, which is the discipline the archive applies to a
-        cross-source conflict, applied to its own inability to distinguish two
-        of its own rows.
+        This method used to return one sentence for every case: that the
+        observations "share this metric, period and source concept" and that "the
+        source endpoint aggregates dimension members without returning the
+        member". That sentence is a story, and it was wrong for every ambiguity
+        in the AAPL snapshot:
+
+        ==========================  ===================================
+        reason                      how it was established
+        ==========================  ===================================
+        CROSS_PROVIDER_DISCREPANCY  the rows carry different providers
+        MULTIPLE_SOURCE_CONCEPTS    the rows carry different concepts
+        MULTIPLE_FILINGS            one concept, several accessions
+        DIMENSION_COLLISION         one concept, one filing, two values
+        MULTIPLE_OBSERVATIONS       the evidence identifies nothing
+        ==========================  ===================================
+
+        68 of 107 groups were `MULTIPLE_SOURCE_CONCEPTS` — `cash` reported as
+        both `CashAndCashEquivalentsAtCarryingValue` and
+        `CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents`, which
+        are two different measures, not two readings of one. 38 were
+        `MULTIPLE_FILINGS`, including the FY2007 revenue the old docstring used
+        as its own worked example: a 10-K and a 10-K/A, two filings, not two
+        dimension members. The one `CROSS_PROVIDER_DISCREPANCY` was a filing
+        against a vendor figure, which the archive's own DISCREPANT validation
+        record describes as two sources disagreeing.
+
+        Both free cloud models read that sentence and repeated it to their users
+        as the archive's finding. A wrong explanation offered confidently is
+        worse than no explanation, because it is checkable-looking and it
+        contaminates the capability the evidence exists to support: whether a
+        consumer can tell a genuine disagreement from two different measures.
+
+        So the classification is a pure function of the gathered evidence
+        (`classify_ambiguity`), the explanation is written from the class rather
+        than asserted, and `same_measure_established` says outright whether the
+        evidence establishes that the competing figures measure the same thing.
+        For `MULTIPLE_SOURCE_CONCEPTS` it is False, and a reader who wanted one
+        number is being told that neither of these may be it.
         """
         siblings = self.connection.execute(
-            "SELECT observation_id, value_json FROM observations"
+            "SELECT observation_id, value_json, source_concept_ref, provider,"
+            " source_type, accession FROM observations"
             " WHERE metric = ? AND asset_id = ?"
             " AND period_start IS ? AND period_end IS ?"
             " AND observation_id != ?",
@@ -795,30 +968,77 @@ class EvidenceQuery:
         ).fetchall()
         if not siblings:
             return None
-        values = {
-            (row["value_json"] or "").strip() for row in [row, *siblings]
-        }
+        rows = [row, *siblings]
+        values = {(member["value_json"] or "").strip() for member in rows}
         if len(values) < 2:
             # Same value from the same period: a restatement or a duplicate
             # filing, not an ambiguity about which figure is meant.
             return None
-        return {
-            "competing_observation_ids": sorted(
-                sibling["observation_id"] for sibling in siblings
+
+        concepts = sorted({
+            member["source_concept_ref"]
+            for member in rows
+            if member["source_concept_ref"]
+        })
+        basis = {
+            "source_concepts": concepts,
+            "unmapped_observations": sum(
+                1 for member in rows if not member["source_concept_ref"]
             ),
-            "competing_values": sorted(
-                value for value in values if value
-            ),
-            "reason": (
-                "NOT_EXPLAINED. Several observations share this metric, period "
-                "and source concept but report different values. ST-EVA does "
-                "not know which one is meant and has not chosen: the source "
-                "endpoint aggregates dimension members without returning the "
-                "member, so the aggregate is not identifiable from the "
-                "evidence held."
-            ),
-            "resolution": "NO_WINNER_SELECTED",
+            "providers": sorted({member["provider"] for member in rows
+                                 if member["provider"]}),
+            "source_types": sorted({member["source_type"] for member in rows
+                                    if member["source_type"]}),
+            "accessions": sorted({member["accession"] for member in rows
+                                  if member["accession"]}),
+            "observation_count": len(rows),
+            "distinct_value_count": len({v for v in values if v}),
         }
+
+        reason = classify_ambiguity(basis)
+        block: Dict[str, Any] = {
+            "competing_observation_ids": sorted(
+                member["observation_id"] for member in siblings
+            ),
+            "competing_values": sorted(value for value in values if value),
+            # The code, not a sentence. A prose reason cannot be checked; a code
+            # can be asserted against the evidence in `basis`, and a consumer can
+            # tell a genuine disagreement from two different measures without
+            # parsing English.
+            "reason": reason,
+            "determination": "FROM_EVIDENCE",
+            "resolution": AMBIGUITY_NO_WINNER,
+            "same_measure_established": same_measure_established(basis),
+            "basis": basis,
+            "explanation": _ambiguity_explanation(reason, basis),
+        }
+        # Only a cross-provider pair can have a recorded cross-check behind it,
+        # and only that one case pays for the lookup. A validation record is the
+        # archive knowing why, which is strictly better evidence than the rows
+        # alone, so where one exists it is quoted rather than re-derived.
+        if reason == AMBIGUITY_CROSS_PROVIDER:
+            records: List[Dict[str, Any]] = []
+            seen: set = set()
+            for member in rows:
+                for record in self.get_validation(member["observation_id"]):
+                    if record.get("record_id") in seen:
+                        continue
+                    seen.add(record.get("record_id"))
+                    records.append(
+                        {
+                            "record_id": record.get("record_id"),
+                            "status": record.get("status"),
+                            "kind": record.get("kind"),
+                            "explanation": record.get("explanation"),
+                            "independence": (record.get("comparison") or {}).get(
+                                "independence"
+                            ),
+                        }
+                    )
+            if records:
+                block["recorded_cross_check"] = records
+                block["determination"] = "FROM_RECORDED_EVIDENCE"
+        return block
 
     def _semantic_for(
         self,
@@ -1179,11 +1399,29 @@ class EvidenceQuery:
             "kind": KIND_DERIVED,
             "state": KIND_DERIVED,
             "context_id": derived["context_id"],
+            # The stored value, at the top level, next to the operands it was
+            # stored with.
+            #
+            # It was already in the chain at step DERIVED, and a consumer that
+            # wanted "what is this derived figure, and how was it made" had to
+            # walk the chain to get it -- which meant the one question the
+            # reference exists to answer could not be answered from the payload
+            # that names the reference. Both cloud models in 2.6.2 asked exactly
+            # that question, and neither reached for `get_lineage` at all.
+            #
+            # This is the archived value read back, not a recalculation. The
+            # database value and the authoritative calculation stay separate, and
+            # `recomputation.recomputed_by_query` says so in the same payload so
+            # that cannot be misread as the query layer having computed it.
+            "value": _loads(derived["value_json"], None),
+            "unit": derived["unit"],
+            "expression": derived["expression"],
             "operands": resolved,
             "recomputation": {
                 "expression": derived["expression"],
                 "operation": operation,
                 "recomputed_by_query": False,
+                "value_source": "STORED_DERIVED_VALUE",
                 "note": (
                     "The stored derived value is returned as archived. The "
                     "query surface does not recompute it; the database value "

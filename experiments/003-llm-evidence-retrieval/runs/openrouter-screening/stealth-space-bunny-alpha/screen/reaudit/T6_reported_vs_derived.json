@@ -28,7 +28,7 @@
         "passed": null
       },
       {
-        "actual": "{'obsarch_6685d2b420f3010dbeb6217b', 'obsarch_6c51f19548b73d401bf1aee0', 'obsarch_8b16a09f918ead49d6a5167f'}",
+        "actual": "{'obsarch_8b16a09f918ead49d6a5167f', 'obsarch_6c51f19548b73d401bf1aee0', 'obsarch_6685d2b420f3010dbeb6217b'}",
         "capability": "F6",
         "classification": null,
         "detail": "",

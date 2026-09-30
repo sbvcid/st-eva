@@ -1,0 +1,164 @@
+{
+  "answer": {
+    "answer": "The us-gaap:SalesRevenueNet concept expresses 'revenue' only PARTIALLY, not EXACTLY, per ST-EVA's registry mapping. The mapping from SalesRevenueNet to the ST-EVA 'revenue' metric is explicitly typed as PARTIAL with notes stating 'net sales revenue, a third concept and a third window' (effective 2007-09-29 to 2018-06-30). There are two CONCEPT_MAPPING_BREAK series breaks recorded for the revenue metric: one for SalesRevenueNet (PARTIAL, 2007-09-29 to 2018-06-30) and another for us-gaap:Revenues (PARTIAL, 2016-09-24 to 2018-09-29), confirming these are distinct concepts that do not continue as the same measure. AAPL used SalesRevenueNet from 2007-09-29 to 2018-06-30 (210 facts across 40 filings). Since 2017-09-30, AAPL has used us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, which maps EXACTLY to the revenue metric. The two concepts differ in definition: SalesRevenueNet is 'total revenue from sale of goods and services... reduced by sales returns and allowances, and sales discounts,' while RevenueFromContractWithCustomerExcludingAssessedTax excludes 'tax collected from customer' from contract revenue. Additionally, multiple filings report different values for the same SalesRevenueNet period (MULTIPLE_FILINGS ambiguity), and ST-EVA has not selected a winner.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "obsarch_93fee51aaa69c96c6f90fdcc",
+      "obsarch_8b16a09f918ead49d6a5167f",
+      "obsarch_34eea668c1419afbb7caccf2"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The exact reason for the PARTIAL mapping of SalesRevenueNet is NOT_EXPLAINED_BY_ST_EVA per the series break records",
+      "Whether the MULTIPLE_FILINGS discrepancies for SalesRevenueNet represent restatements, re-filings, or different coverage periods is not established by the evidence"
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "SalesRevenueNet",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'SalesRevenueNet'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[10]",
+      "returned_count": 10,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 50,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[50]",
+      "returned_count": 50,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[20]",
+      "returned_count": 20,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "segment_revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": "REGULATORY_FILING",
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[10]",
+      "returned_count": 10,
+      "sequence": 6
+    }
+  ]
+}

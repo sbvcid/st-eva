@@ -42,39 +42,11 @@
       }
     ],
     "expectations": {
-      "alternative_side_set_count": 217,
+      "alternative_side_set_count": 76,
       "alternative_side_sets": [
-        [
-          "obsarch_017e3def6ef271ec882b15a8",
-          "obsarch_e08d2c3198b50d02b9d7792c"
-        ],
-        [
-          "obsarch_01c755222f4cd7d5abeafd54",
-          "obsarch_658e2ea9e6a5c690c0349691"
-        ],
         [
           "obsarch_02ed245037e9ba705e25a0eb",
           "obsarch_b7f67720ed3d88bc3977294d"
-        ],
-        [
-          "obsarch_02f165cdb335193e7efd7f7f",
-          "obsarch_1d27741329a9e8f7f278661f"
-        ],
-        [
-          "obsarch_0346579eff028f83b25a451e",
-          "obsarch_3c5d0b29337556724433cd35"
-        ],
-        [
-          "obsarch_0346579eff028f83b25a451e",
-          "obsarch_e0a6c681a34b6c0e9c2f9b3c"
-        ],
-        [
-          "obsarch_03e75316d01f9d6e490de4fd",
-          "obsarch_47e93be49abd4aa97de2bfdb"
-        ],
-        [
-          "obsarch_03e75316d01f9d6e490de4fd",
-          "obsarch_536ad7ac351148796a34baf2"
         ],
         [
           "obsarch_04e8e7f3b2fc35ac2d9b5214",
@@ -85,60 +57,12 @@
           "obsarch_4c7daf9835ddc1fd26225f32"
         ],
         [
-          "obsarch_05c1302be13e55c59a34cccf",
-          "obsarch_d2ba08720c6ccd2cbed04446"
-        ],
-        [
           "obsarch_06142ad2acb06304af78a9e6",
           "obsarch_b3992f4e19725abcfef539bd"
         ],
         [
-          "obsarch_096c14819cf4297655863e22",
-          "obsarch_630c8ed02afdbf8a13941457"
-        ],
-        [
-          "obsarch_096c14819cf4297655863e22",
-          "obsarch_856a50f587050a51ef246427"
-        ],
-        [
-          "obsarch_096c14819cf4297655863e22",
-          "obsarch_95fe78772b8c6df01954ff74"
-        ],
-        [
-          "obsarch_096c14819cf4297655863e22",
-          "obsarch_bf9f3faf2e0c31534a7f1f52"
-        ],
-        [
-          "obsarch_09e6fb249389d4e4d48d2be7",
-          "obsarch_2766381c863fd9f2c21b042d"
-        ],
-        [
-          "obsarch_09e6fb249389d4e4d48d2be7",
-          "obsarch_e5b34372765e8645064f0f8f"
-        ],
-        [
-          "obsarch_0b4f245ca2e37c5195455bb4",
-          "obsarch_5d4574cc6f6364b36ac95cfa"
-        ],
-        [
-          "obsarch_0b879519a987829106d60bcd",
-          "obsarch_a44078d061f2b4f661ef3ba1"
-        ],
-        [
-          "obsarch_0b879519a987829106d60bcd",
-          "obsarch_d12a04e538e0e855ea540f54"
-        ],
-        [
           "obsarch_0bb3f08380aa9ff599f5cf87",
           "obsarch_934b05b2be9a6f9bdebdf928"
-        ],
-        [
-          "obsarch_0bba0f5e427e574b06d4c589",
-          "obsarch_f5890e241f0050e0853d7824"
-        ],
-        [
-          "obsarch_0ce61b7150f1481a2b31a186",
-          "obsarch_5ad24926a158da6e0e85834f"
         ],
         [
           "obsarch_0d2939610694a17af4e32c0e",
@@ -149,10 +73,6 @@
           "obsarch_ad3df788fc17606baa7d18d7"
         ],
         [
-          "obsarch_0da41dd17846c14e04749a09",
-          "obsarch_76204c6b34342257a6b79df0"
-        ],
-        [
           "obsarch_0e832eb4fce3985a40ebd30c",
           "obsarch_cc20bf9d3f45b726581d2a9c"
         ],
@@ -161,76 +81,12 @@
           "obsarch_cf23e64dcd3421e31ccbc63e"
         ],
         [
-          "obsarch_0fbc789c472a7211faa820f7",
-          "obsarch_e08d2c3198b50d02b9d7792c"
-        ],
-        [
-          "obsarch_0feb45e792e2229a815356e0",
-          "obsarch_f234134689276b526fdc6663"
-        ],
-        [
-          "obsarch_10555e0dd4efbfac9a3f0ab6",
-          "obsarch_64599875f10d855c23e60614"
-        ],
-        [
-          "obsarch_10555e0dd4efbfac9a3f0ab6",
-          "obsarch_d55c1b2e22c0cf67f21c36f6"
-        ],
-        [
-          "obsarch_10ea09b8b33a80d03eeebf04",
-          "obsarch_47e93be49abd4aa97de2bfdb"
-        ],
-        [
-          "obsarch_10ea09b8b33a80d03eeebf04",
-          "obsarch_536ad7ac351148796a34baf2"
-        ],
-        [
-          "obsarch_1187d83634d1db5bbe5c0050",
-          "obsarch_4ef3f7c0fb2b9af3b2ab8869"
-        ],
-        [
-          "obsarch_1187d83634d1db5bbe5c0050",
-          "obsarch_4f40560efa4e6d8d9c855ed1"
-        ],
-        [
-          "obsarch_13eb37b8624c4709e0295315",
-          "obsarch_7f0ac59579278c753c7dc344"
-        ],
-        [
-          "obsarch_1467d9617aa6cfe42d748f6c",
-          "obsarch_5ad24926a158da6e0e85834f"
-        ],
-        [
-          "obsarch_15d7e84118152b10664b0588",
-          "obsarch_5298223c4bbe11261a6eeca4"
-        ],
-        [
-          "obsarch_15d7e84118152b10664b0588",
-          "obsarch_736147a242781aeb4fbd8194"
-        ],
-        [
           "obsarch_18b2402c3ab64179d845be62",
           "obsarch_4809efda5bef8370f33f218e"
         ],
         [
           "obsarch_18b2402c3ab64179d845be62",
           "obsarch_e35777d49543e71c1b10432f"
-        ],
-        [
-          "obsarch_1a0392193e0e8cf222862a09",
-          "obsarch_7ca8a8c9789e4cab8a0d86d4"
-        ],
-        [
-          "obsarch_1a0392193e0e8cf222862a09",
-          "obsarch_b429b2441c8b2346efa35eb1"
-        ],
-        [
-          "obsarch_1a9ae57fbc8037bfa721f628",
-          "obsarch_8603d3e2f9c81e2935ce1903"
-        ],
-        [
-          "obsarch_1a9ae57fbc8037bfa721f628",
-          "obsarch_c9f9673dba87ff2e1e0dfb5b"
         ],
         [
           "obsarch_1c25e97a5c456ecf45ced788",
@@ -257,14 +113,6 @@
           "obsarch_3d4c57076f18bf172b92b5af"
         ],
         [
-          "obsarch_213ceddc27265933a59e5a52",
-          "obsarch_5993870e7d5c533cbd1dcb92"
-        ],
-        [
-          "obsarch_213ceddc27265933a59e5a52",
-          "obsarch_dc99cc41bc44febd0780a786"
-        ],
-        [
           "obsarch_21d249e580102aee609dbb45",
           "obsarch_73e6f609902b57da9b765a1d"
         ],
@@ -273,60 +121,16 @@
           "obsarch_be414b162154be1d9e3f4cfd"
         ],
         [
-          "obsarch_222e26082431b83a30044b49",
-          "obsarch_2766381c863fd9f2c21b042d"
-        ],
-        [
-          "obsarch_222e26082431b83a30044b49",
-          "obsarch_e5b34372765e8645064f0f8f"
-        ],
-        [
           "obsarch_225ce1b165e9487902b46990",
           "obsarch_8b61c67f773f969d1eabcdea"
-        ],
-        [
-          "obsarch_226b7e98515b17f98e4bbb00",
-          "obsarch_8d9b2f2c6582b20727520851"
-        ],
-        [
-          "obsarch_226b7e98515b17f98e4bbb00",
-          "obsarch_b12fd3452704751b8f10c4eb"
         ],
         [
           "obsarch_2382f91af29997664667a5f5",
           "obsarch_5eeff7dc4857edef5dbec3a5"
         ],
         [
-          "obsarch_23b98ceb56bd63358d75c512",
-          "obsarch_6482d8563dc8e81dfdd740f9"
-        ],
-        [
-          "obsarch_23b98ceb56bd63358d75c512",
-          "obsarch_808c6b2bdfc9374ab41669b4"
-        ],
-        [
-          "obsarch_24004dd8dffd2b5032ad42cf",
-          "obsarch_e88d2896b679289268c87442"
-        ],
-        [
-          "obsarch_26beb567b38b68457673f82a",
-          "obsarch_e3ddcf48d6e1c8b9fdb2a9b1"
-        ],
-        [
-          "obsarch_26beb567b38b68457673f82a",
-          "obsarch_e6df810114f94d7893dd9252"
-        ],
-        [
           "obsarch_277360d8c352ae3ac20c806c",
           "obsarch_dd410d4bef67ee1abac2e3db"
-        ],
-        [
-          "obsarch_27b0e15d1bd750795d196a50",
-          "obsarch_2b50643466e308ddc0d8b0d6"
-        ],
-        [
-          "obsarch_28fea3f9a5d2b479bfc6cf2f",
-          "obsarch_d00fc154eaf971387c5c55a4"
         ],
         [
           "obsarch_2a326d3cedf9da185692118e",
@@ -335,46 +139,6 @@
         [
           "obsarch_2ae6bcb4935c42038779326a",
           "obsarch_3a96c0402833a442a16cd649"
-        ],
-        [
-          "obsarch_2b232fc23eea07587f954f86",
-          "obsarch_75f05467a9974c6d11c62fbd"
-        ],
-        [
-          "obsarch_2b4431c50ea9feabc244e730",
-          "obsarch_d4c4aaef7f257d19bce59d21"
-        ],
-        [
-          "obsarch_2b50643466e308ddc0d8b0d6",
-          "obsarch_95f582194d59075b3640df61"
-        ],
-        [
-          "obsarch_2c01af5a5ac7ab0d045bc373",
-          "obsarch_7074abc3a9237c3997584d79"
-        ],
-        [
-          "obsarch_2ea1c7f2881864e7bdf15fc4",
-          "obsarch_5519f912efc5db02ef2b852b"
-        ],
-        [
-          "obsarch_2ea1c7f2881864e7bdf15fc4",
-          "obsarch_d035013ce7bb5e370d287d5d"
-        ],
-        [
-          "obsarch_331478dc18475ed5545b7991",
-          "obsarch_7ca8a8c9789e4cab8a0d86d4"
-        ],
-        [
-          "obsarch_331478dc18475ed5545b7991",
-          "obsarch_b429b2441c8b2346efa35eb1"
-        ],
-        [
-          "obsarch_33c2f5a316418a1305dd81f9",
-          "obsarch_77a787351c9a264acbe207c7"
-        ],
-        [
-          "obsarch_33c2f5a316418a1305dd81f9",
-          "obsarch_91c1051e6ada064b0bf0b764"
         ],
         [
           "obsarch_34155bccb663701230ac4b8a",
@@ -389,24 +153,12 @@
           "obsarch_6cd7c30a1927b4204d10c01b"
         ],
         [
-          "obsarch_37d5e7a5b4c85cd7ca8c962b",
-          "obsarch_fc87e872ce3eea03b64ae52f"
-        ],
-        [
           "obsarch_37f4ce8a9a52187e9d54cd34",
           "obsarch_8b61c67f773f969d1eabcdea"
         ],
         [
           "obsarch_3a96c0402833a442a16cd649",
           "obsarch_e0e65aa0f65e6c15f218b403"
-        ],
-        [
-          "obsarch_3b7be905fbd714979485b01f",
-          "obsarch_f3fadf4d01e44338521c5246"
-        ],
-        [
-          "obsarch_3bf05aa9037b0e43d7cd6f30",
-          "obsarch_78034a021eec5f94b45e0cd4"
         ],
         [
           "obsarch_3c5188f60763c88d0f5beeaa",
@@ -417,24 +169,8 @@
           "obsarch_c1fd36a1fce42bee827fd793"
         ],
         [
-          "obsarch_3c94e606dec015ddedbd3d07",
-          "obsarch_470191551fdd28bf11e8a51c"
-        ],
-        [
           "obsarch_3d4c57076f18bf172b92b5af",
           "obsarch_6025da0fd9c8200f3ac30a11"
-        ],
-        [
-          "obsarch_3d4ebc85e8f8e1139fb7266a",
-          "obsarch_87ae4323d3de086e8037ff77"
-        ],
-        [
-          "obsarch_3e157524e83d0e3873aa782e",
-          "obsarch_50c30813e689ef4aa63d4570"
-        ],
-        [
-          "obsarch_3e1bf9c6f7f1ad6bb2d30940",
-          "obsarch_836b5b4e4b37ea31b7b8b97e"
         ],
         [
           "obsarch_3e99e6ab8ccf12acdad814d1",
@@ -453,30 +189,6 @@
           "obsarch_e35777d49543e71c1b10432f"
         ],
         [
-          "obsarch_43835d09353b72634a400743",
-          "obsarch_f259a794dd3b848cc23ce868"
-        ],
-        [
-          "obsarch_43f314aa9ebb0a89f6af0700",
-          "obsarch_b5c4287f8fc2b2c74cc8f941"
-        ],
-        [
-          "obsarch_43f314aa9ebb0a89f6af0700",
-          "obsarch_db7b382041e5bfaa652a0f10"
-        ],
-        [
-          "obsarch_43fa5e503f95b3e4af93a24c",
-          "obsarch_7eeaf8e6230beb201bfcb408"
-        ],
-        [
-          "obsarch_43fa5e503f95b3e4af93a24c",
-          "obsarch_b4b537a6b7e4b4fd204e773f"
-        ],
-        [
-          "obsarch_4496ba189e53a9ebaae2080c",
-          "obsarch_72f88785f5a85446d06dcac6"
-        ],
-        [
           "obsarch_44fb786f4739eff5be0e31d3",
           "obsarch_55d61f0c60e4bac86cc695c7"
         ],
@@ -489,18 +201,6 @@
           "obsarch_9876bb7ff70888195c271bda"
         ],
         [
-          "obsarch_4732afd7c705957236e50782",
-          "obsarch_be214ee3a677b97ddaace103"
-        ],
-        [
-          "obsarch_4856261a8b1ee757796a77f0",
-          "obsarch_a44078d061f2b4f661ef3ba1"
-        ],
-        [
-          "obsarch_4856261a8b1ee757796a77f0",
-          "obsarch_d12a04e538e0e855ea540f54"
-        ],
-        [
           "obsarch_4a97fb398a6d5d745765e50d",
           "obsarch_8af592cabb11624240c8a6ee"
         ],
@@ -509,40 +209,8 @@
           "obsarch_5bf1baca0e97e565f858a96b"
         ],
         [
-          "obsarch_4e68de7a3ab51ca476f59043",
-          "obsarch_bd90d37f61acbffe66ae809c"
-        ],
-        [
-          "obsarch_4e68de7a3ab51ca476f59043",
-          "obsarch_f05953bc96c57d69bd94f66b"
-        ],
-        [
-          "obsarch_500918097a3070a93fd5ef6e",
-          "obsarch_6482d8563dc8e81dfdd740f9"
-        ],
-        [
-          "obsarch_500918097a3070a93fd5ef6e",
-          "obsarch_808c6b2bdfc9374ab41669b4"
-        ],
-        [
-          "obsarch_50c30813e689ef4aa63d4570",
-          "obsarch_b333ec60406695685cd81abc"
-        ],
-        [
           "obsarch_51e534872e122c415583ef47",
           "obsarch_b36f7d829b4741998929725e"
-        ],
-        [
-          "obsarch_525d89b0ec1f360a4f9b6e3b",
-          "obsarch_92c2fbd3109a0e70ec500b6a"
-        ],
-        [
-          "obsarch_525d89b0ec1f360a4f9b6e3b",
-          "obsarch_abe00bc83c959dca2fbecae4"
-        ],
-        [
-          "obsarch_5298223c4bbe11261a6eeca4",
-          "obsarch_6f466cd0bf967ef7e232e7df"
         ],
         [
           "obsarch_54d335e9f22ce46d8f96134b",
@@ -553,32 +221,8 @@
           "obsarch_d1d898817b7ce25467cbdc1b"
         ],
         [
-          "obsarch_580ddd1da42f78cfd35e10f6",
-          "obsarch_f5ae603c80be67d5582b7d92"
-        ],
-        [
-          "obsarch_594cfbc2cf3ab9660e6ab3f5",
-          "obsarch_b5d7df5c0513d1680b1319c1"
-        ],
-        [
-          "obsarch_5993870e7d5c533cbd1dcb92",
-          "obsarch_89b3bca109daad1ab81ae69b"
-        ],
-        [
           "obsarch_59b77c38fc827f0131574a97",
           "obsarch_b21bb38c53a4e423b1640b62"
-        ],
-        [
-          "obsarch_5c9cd3aed4e10cb36576a659",
-          "obsarch_5db0995e68522f6f94270320"
-        ],
-        [
-          "obsarch_5c9cd3aed4e10cb36576a659",
-          "obsarch_696098a70a64d11d2587f8d7"
-        ],
-        [
-          "obsarch_5db0995e68522f6f94270320",
-          "obsarch_9edb851911e239f925855e9b"
         ],
         [
           "obsarch_5e5a3feb01de198f477039b2",
@@ -589,20 +233,8 @@
           "obsarch_6a0c1200a4d255c3fdefab5b"
         ],
         [
-          "obsarch_61fe8d30690097ea8b40ef60",
-          "obsarch_a89047d854f3c099b1f4ceb5"
-        ],
-        [
           "obsarch_629f3c4a29a402afdd86a69e",
           "obsarch_802a155333e2f1d53a0ff398"
-        ],
-        [
-          "obsarch_630c8ed02afdbf8a13941457",
-          "obsarch_856a50f587050a51ef246427"
-        ],
-        [
-          "obsarch_630c8ed02afdbf8a13941457",
-          "obsarch_bf9f3faf2e0c31534a7f1f52"
         ],
         [
           "obsarch_6370e8120d8462c622a7b37f",
@@ -629,36 +261,8 @@
           "obsarch_dfc6cfd6db3431bdf6c67029"
         ],
         [
-          "obsarch_673faf420f3820a7b1927513",
-          "obsarch_ed9995517bb45f0d5accd935"
-        ],
-        [
-          "obsarch_696098a70a64d11d2587f8d7",
-          "obsarch_9edb851911e239f925855e9b"
-        ],
-        [
-          "obsarch_69b43d85c4efa82a49225a0a",
-          "obsarch_f5ae603c80be67d5582b7d92"
-        ],
-        [
-          "obsarch_6c5fbdc9586142304d1c37e2",
-          "obsarch_75f05467a9974c6d11c62fbd"
-        ],
-        [
-          "obsarch_6cd0008329dc3661bc6d8eb6",
-          "obsarch_9f8606a7373617322866ffc6"
-        ],
-        [
           "obsarch_6d99387e6de3e56cc1f1232c",
           "obsarch_a40e6bc587993dda661628bf"
-        ],
-        [
-          "obsarch_6f466cd0bf967ef7e232e7df",
-          "obsarch_736147a242781aeb4fbd8194"
-        ],
-        [
-          "obsarch_71c6c29a988acb32f6ddc586",
-          "obsarch_a15099f43cedee8981bdfeb8"
         ],
         [
           "obsarch_721618783ca451a0ebad7e23",
@@ -689,56 +293,12 @@
           "obsarch_d05120e362bdb2c2a7b6a7e0"
         ],
         [
-          "obsarch_797921acd597466c23df4148",
-          "obsarch_f74006339f17818fbc124026"
-        ],
-        [
-          "obsarch_7b283793b4eec34bc14afe79",
-          "obsarch_ca0d6103805a375ae5bd6d14"
-        ],
-        [
-          "obsarch_7b567d5f204f7fdd07dbc218",
-          "obsarch_bf36a8dda7c63d8527255051"
-        ],
-        [
           "obsarch_7d463a88e41b26b1421d19b8",
           "obsarch_d1d898817b7ce25467cbdc1b"
         ],
         [
-          "obsarch_7eeaf8e6230beb201bfcb408",
-          "obsarch_e42ea3ea27c738b1c3222913"
-        ],
-        [
-          "obsarch_7f66d48dbe5fb91076349bca",
-          "obsarch_d99ec7c3a0ced2adc3b22b91"
-        ],
-        [
-          "obsarch_8005ad0d8cba138da9bf0764",
-          "obsarch_94f10516adc920c06c4ef94d"
-        ],
-        [
-          "obsarch_82b3b09ef0961c9cce1b51e9",
-          "obsarch_b3ea4180ac2a0a492742dd04"
-        ],
-        [
-          "obsarch_836a7cd96b5d8eea48e89c19",
-          "obsarch_eeeaab3e4049332947114f40"
-        ],
-        [
-          "obsarch_83c55e007326c8f5e1e0ea74",
-          "obsarch_e5a4cce3f413224a52c0e84a"
-        ],
-        [
           "obsarch_84ac0d3f6cf4db65db46c5ed",
           "obsarch_b3992f4e19725abcfef539bd"
-        ],
-        [
-          "obsarch_856a50f587050a51ef246427",
-          "obsarch_95fe78772b8c6df01954ff74"
-        ],
-        [
-          "obsarch_87ae4323d3de086e8037ff77",
-          "obsarch_d1b8b7eb4ea20ece0a77a3b0"
         ],
         [
           "obsarch_87fdfeeeef2f4ddf6d6104a6",
@@ -749,76 +309,16 @@
           "obsarch_b0858ccaab6d48c465137618"
         ],
         [
-          "obsarch_89b3bca109daad1ab81ae69b",
-          "obsarch_dc99cc41bc44febd0780a786"
-        ],
-        [
           "obsarch_8af592cabb11624240c8a6ee",
           "obsarch_9925745fd35d724e9cbc7351"
-        ],
-        [
-          "obsarch_8d9b2f2c6582b20727520851",
-          "obsarch_acc498a9a316c8e67e6fd1da"
-        ],
-        [
-          "obsarch_92c2fbd3109a0e70ec500b6a",
-          "obsarch_efc9275a33fd90732657d45b"
         ],
         [
           "obsarch_92e266403de5c8be574f6ad9",
           "obsarch_c7c975383c7c3649dde7b6d7"
         ],
         [
-          "obsarch_94f10516adc920c06c4ef94d",
-          "obsarch_f5829ce481d57f259ee2c825"
-        ],
-        [
-          "obsarch_95fe78772b8c6df01954ff74",
-          "obsarch_bf9f3faf2e0c31534a7f1f52"
-        ],
-        [
-          "obsarch_999b24fe0e973c462bb0a8ab",
-          "obsarch_a8350feffbb82eabf7c82934"
-        ],
-        [
-          "obsarch_999b24fe0e973c462bb0a8ab",
-          "obsarch_d5e49e0c4eec895dbec9be5a"
-        ],
-        [
-          "obsarch_9b9300ac534326733cb1fe21",
-          "obsarch_d2ba08720c6ccd2cbed04446"
-        ],
-        [
-          "obsarch_9c988bcc9cd3d898607478c5",
-          "obsarch_af9891e8c32cd691fe8c8b60"
-        ],
-        [
-          "obsarch_9c988bcc9cd3d898607478c5",
-          "obsarch_bc60606a6676ca9086f0f5fd"
-        ],
-        [
           "obsarch_a2d98bc89a4f6329f99d1e10",
           "obsarch_ad3df788fc17606baa7d18d7"
-        ],
-        [
-          "obsarch_a59671f783a594645493a681",
-          "obsarch_b5c4287f8fc2b2c74cc8f941"
-        ],
-        [
-          "obsarch_a59671f783a594645493a681",
-          "obsarch_db7b382041e5bfaa652a0f10"
-        ],
-        [
-          "obsarch_a656e997b93dcbc4909e7dc2",
-          "obsarch_e9cf7ee24ba855cef968f9b3"
-        ],
-        [
-          "obsarch_a6efc0f926c63aa25f356fd5",
-          "obsarch_b31513334af56d3a649cf7b8"
-        ],
-        [
-          "obsarch_a8350feffbb82eabf7c82934",
-          "obsarch_e08da8021c3127c8cd91dc65"
         ],
         [
           "obsarch_a967224404aedcaa33713a49",
@@ -829,18 +329,6 @@
           "obsarch_c4a6a2a30684a5e7076467f0"
         ],
         [
-          "obsarch_abe00bc83c959dca2fbecae4",
-          "obsarch_efc9275a33fd90732657d45b"
-        ],
-        [
-          "obsarch_acc498a9a316c8e67e6fd1da",
-          "obsarch_b12fd3452704751b8f10c4eb"
-        ],
-        [
-          "obsarch_af9891e8c32cd691fe8c8b60",
-          "obsarch_eae8019d131b542f0b4c6ff8"
-        ],
-        [
           "obsarch_b21bb38c53a4e423b1640b62",
           "obsarch_be33811d023524041536808a"
         ],
@@ -849,68 +337,16 @@
           "obsarch_f3938a12c933eb18fea4960d"
         ],
         [
-          "obsarch_b3ea4180ac2a0a492742dd04",
-          "obsarch_bf62612d7f7b5e2c8164a9da"
-        ],
-        [
-          "obsarch_b4b537a6b7e4b4fd204e773f",
-          "obsarch_e42ea3ea27c738b1c3222913"
-        ],
-        [
-          "obsarch_bc60606a6676ca9086f0f5fd",
-          "obsarch_eae8019d131b542f0b4c6ff8"
-        ],
-        [
-          "obsarch_bd23037c47887a558cfbc0da",
-          "obsarch_fcb63cf17e6ea9e4f1341cc4"
-        ],
-        [
-          "obsarch_bd90d37f61acbffe66ae809c",
-          "obsarch_c768a3d76535b03799abbf8e"
-        ],
-        [
           "obsarch_c13859f83c1c3a944c4d6858",
           "obsarch_d05120e362bdb2c2a7b6a7e0"
-        ],
-        [
-          "obsarch_c13d5ea5a02b72c2563ac512",
-          "obsarch_eefa24ba390ec12fd3627151"
         ],
         [
           "obsarch_c4a6a2a30684a5e7076467f0",
           "obsarch_ddf3ce47b380aa71739f40c2"
         ],
         [
-          "obsarch_c768a3d76535b03799abbf8e",
-          "obsarch_f05953bc96c57d69bd94f66b"
-        ],
-        [
-          "obsarch_cae24d156f70d5cccbe33cd9",
-          "obsarch_e3b5f5c5c6067faa4b18a20c"
-        ],
-        [
           "obsarch_cc0e9661c76afc6de5286337",
           "obsarch_e2ff4bbf939be161ef1c6350"
-        ],
-        [
-          "obsarch_cc58c3a46bcdb630ff335c27",
-          "obsarch_e5a4cce3f413224a52c0e84a"
-        ],
-        [
-          "obsarch_d5e49e0c4eec895dbec9be5a",
-          "obsarch_e08da8021c3127c8cd91dc65"
-        ],
-        [
-          "obsarch_db73ce1b5f4c2651562791e4",
-          "obsarch_f8de1bce2d8f90cf88e2dfee"
-        ],
-        [
-          "obsarch_e3ddcf48d6e1c8b9fdb2a9b1",
-          "obsarch_e81a29f8c0d1b05880dbd3fc"
-        ],
-        [
-          "obsarch_e6df810114f94d7893dd9252",
-          "obsarch_e81a29f8c0d1b05880dbd3fc"
         ]
       ],
       "no_winner": true,

@@ -1,0 +1,173 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "the model used all 8 exchanges without producing an answer",
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VALIDATED"
+      },
+      "error": "QueryError: validation_status must be one of CONFLICTING, CONSISTENT, CURRENCY_MISMATCH, DISCREPANT, DUPLICATE_OBSERVATION, INSUFFICIENT_OBSERVATIONS, METHODOLOGY_MISMATCH, MISSING_METADATA, NOT_APPLICABLE, PERIOD_INVALID, PERIOD_MISMATCH, SINGLE_SOURCE, STALE, UNAVAILABLE, UNVERIFIABLE, VALID, VERIFIED, got 'VALIDATED'",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONSISTENT"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VERIFIED"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VALID"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 5,
+        "metric": "Revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'Revenue'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "get_metric_history",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 5,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=5,truncated=True)",
+      "returned_count": 5,
+      "sequence": 6
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 5,
+        "metric": "net_income",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=338,returned=5,truncated=True)",
+      "returned_count": 5,
+      "sequence": 7
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONFLICTING"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 8
+    }
+  ]
+}

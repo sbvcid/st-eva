@@ -681,6 +681,98 @@ class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
         ):
             self.assertTrue(acknowledges_truncation(honest, 339), honest)
 
+    def test_a_request_budget_stops_the_run_rather_than_the_provider(self):
+        """
+        A refused request is not a model failure, and a budget is not a model
+        failure either.
+
+        The failure this guards against is quiet: a rate limit turns the tail of
+        a run into `FAIL`s on tests the model never saw, and a run that was
+        mostly passing quietly stops being one. So the budget stops the phase,
+        the stop is reported, and no test is graded.
+        """
+        from harness.budget import RequestBudget
+
+        budget = RequestBudget(3, label="test/full")
+        budget.record_sent("T1")
+        budget.record_answer("T1", {"total_tokens": 10})
+        self.assertEqual(budget.remaining, 2)
+
+        budget.record_sent("T2")
+        budget.record_refusal("rate_limited", "T2", "HTTP 429 upstream pool")
+        self.assertTrue(budget.should_retry("rate_limited"))
+        self.assertEqual(budget.signals["rate_limited"], 1)
+        self.assertFalse(budget.stopped_because)
+
+        budget.record_sent("T3")
+        self.assertFalse(budget.can_start("T4"))
+        self.assertIn("budget of 3", budget.stopped_because)
+
+    def test_a_withdrawn_model_is_not_retried(self):
+        """
+        Retrying a model that no longer exists is how a run loses its whole
+        allowance, so the signal that means "never" is distinct from the ones
+        that mean "later".
+        """
+        from harness.budget import RequestBudget
+
+        budget = RequestBudget(None)
+        budget.record_sent("T1")
+        budget.record_refusal(
+            "model_unavailable", "T1", "no endpoints found for /models/gone:free"
+        )
+        self.assertFalse(budget.should_retry("model_unavailable"))
+        self.assertIn("model_unavailable", budget.stopped_because)
+        self.assertEqual(budget.summary()["model_finding_refusals"], 0)
+
+    def test_a_run_of_refusals_ends_the_phase(self):
+        """
+        Three in a row is the endpoint, not the request. Continuing past that
+        is the documented way to spend the rest of the day's allowance on a
+        provider that has already said no.
+        """
+        from harness.budget import RequestBudget
+
+        budget = RequestBudget(None)
+        for index in range(3):
+            budget.record_sent(f"T{index}")
+            budget.record_refusal("provider_error", f"T{index}", "HTTP 502")
+        self.assertIn("refusals with no answer", budget.stopped_because)
+        self.assertFalse(budget.can_start("next"))
+
+    def test_the_client_records_every_request_it_sends(self):
+        """
+        Counted on the way out, not on the way back.
+
+        A refused request can still spend an allowance, and a budget that counts
+        only successes is exactly the one that runs out unexpectedly.
+        """
+        from harness.budget import RequestBudget
+        from harness.providers import (
+            OpenAICompatibleClient,
+            ProviderConfig,
+            TransportError,
+        )
+
+        budget = RequestBudget(None)
+        client = OpenAICompatibleClient(
+            ProviderConfig(
+                base_url="https://example.invalid/v1", model="m", provider="p"
+            ),
+            api_key="not-a-real-key",
+        )
+        client.budget = budget
+        client.current_test = "T1"
+
+        with self.assertRaises(TransportError):
+            client.complete([{"role": "user", "content": "hi"}])
+
+        self.assertEqual(budget.spent, 1)
+        outcomes = [attempt["outcome"] for attempt in budget.attempts]
+        self.assertEqual(outcomes[0], "sent")
+        self.assertTrue(outcomes[-1].startswith("refused:"))
+        self.assertEqual(budget.attempts[-1]["is_model_finding"], False)
+
     def test_a_recorded_run_re_audits_to_its_published_score(self):
         """
         Re-grading a stored run must reproduce its published score.

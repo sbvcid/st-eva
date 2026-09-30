@@ -1,0 +1,26 @@
+[
+  {
+    "elapsed_seconds": 0.4,
+    "error": "no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790741501-rNBwXwu6HasiKKj3Ohch\", \"error\": {\"message\": \"Upstream error from Nvidia: Service temporarily overloaded\", \"code\": 503, \"metadata\": {\"error_type\": \"provider_overloaded\"}}}",
+    "index": 0,
+    "provider_generation_id": null,
+    "test_id": "T1_exact_value",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 0.38,
+    "error": "no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790741502-12YQKDYvi3XzepvivLnG\", \"error\": {\"message\": \"Upstream error from Nvidia: Service temporarily overloaded\", \"code\": 503, \"metadata\": {\"error_type\": \"provider_overloaded\"}}}",
+    "index": 0,
+    "provider_generation_id": null,
+    "test_id": "T2_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 0.44,
+    "error": "no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790741502-esj4yQ0OoU4LyQnIF0rl\", \"error\": {\"message\": \"Upstream error from Nvidia: Service temporarily overloaded\", \"code\": 503, \"metadata\": {\"error_type\": \"provider_overloaded\"}}}",
+    "index": 0,
+    "provider_generation_id": null,
+    "test_id": "T3_pagination",
+    "usage": null
+  }
+]

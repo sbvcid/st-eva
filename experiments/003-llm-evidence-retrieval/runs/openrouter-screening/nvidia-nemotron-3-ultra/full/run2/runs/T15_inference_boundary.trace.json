@@ -1,0 +1,49 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "TRANSPORT: no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790741488-CQ8FMqGPe8I0lk3pXjNN\", \"error\": {\"message\": \"Upstream error from Nvidia: Service temporarily overloaded\", \"code\": 503, \"metadata\": {\"error_type\": \"provider_overloaded\"}}}",
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[100]",
+      "returned_count": 100,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 200,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
+      "sequence": 2
+    }
+  ]
+}

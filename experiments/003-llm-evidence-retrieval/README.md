@@ -207,10 +207,43 @@ regenerates them.
 `openrouter_screening.py` drives the same dataset, snapshot, tool surface and
 auditor against an OpenAI-compatible endpoint, in three phases — one-question
 smoke, five-test screening, full 15 — with a capability gate between the last
-two, and a `reaudit` phase that re-grades a stored run without spending a
-request. `harness/providers.py` takes the credential from the environment and
-never writes it into a config, a trace or a run directory. See
-`reports/OPENROUTER_SCREENING.md`.
+two.
+
+It has four subcommands that send nothing, and they are the ones to reach for
+first:
+
+```
+python openrouter_screening.py reaudit  --model <m> --reaudit-phase full
+    Re-grade a stored run with the current evaluator. No network. This is how
+    every correction in this project was verified: the stored answers do not
+    change when the evaluator does, so re-auditing them is the cheapest possible
+    test of a change to the grader.
+
+python openrouter_screening.py variance --model <m> --reaudit-phase full
+    Read a run series and report what held up. A pass count is the wrong
+    summary; this groups by what the capability is *for*, calls a test that moved
+    between runs unstable instead of averaging it, and excludes any attempt in
+    which the model answered nothing -- by rule, and visibly.
+
+python openrouter_screening.py full --model <m> --run-label run2 --request-budget 120
+    A numbered run. Repeated runs go in their own directories, never over each
+    other: a variance figure needs all of them to still exist.
+```
+
+`harness/budget.py` owns the request allowance. It counts every request on the
+way out, so a refused request spends it too, and it classifies refusals
+(`rate_limited`, `provider_error`, `model_unavailable`, `malformed_response`,
+`network`) so a 429 can never be recorded as a model failure. `model_unavailable`
+is not retried; three refusals of one kind with no answer in between end the
+phase and the untested remainder is recorded as not run. Each run directory gets
+a `budget.json` saying exactly that.
+
+`harness/providers.py` takes the credential from the environment and never writes
+it into a config, a trace or a run directory.
+
+Reports: `reports/OPENROUTER_SCREENING.md` (2.6.2, the first cloud-model round)
+and `reports/AMBIGUITY_SEMANTICS_AND_VARIANCE.md` (2.6.3, the surface fix and
+the first run series).
 
 ## What building this found in the evaluator
 

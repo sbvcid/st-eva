@@ -36,12 +36,19 @@ from evidence_model import (
     EvidenceStateError,
 )
 from evidence_query import (
+    AMBIGUITY_CROSS_PROVIDER,
+    AMBIGUITY_DIMENSION,
+    AMBIGUITY_MULTIPLE_CONCEPTS,
+    AMBIGUITY_MULTIPLE_FILINGS,
+    AMBIGUITY_MULTIPLE_OBSERVATIONS,
+    AMBIGUITY_REASONS,
     ORDER_ASC,
     ORDER_AVAILABLE,
     ORDER_DESC,
     EvidenceQuery,
     QueryError,
     UnknownMetricError,
+    classify_ambiguity,
 )
 from sqlite_archive import SQLiteArchive
 
@@ -52,6 +59,145 @@ ACME = "BANKCO"
 FILING_ACCESSION = "0000320193-24-000069"
 DOC_HASH = "sha256:" + "ab" * 32
 OTHER_DOC_HASH = "sha256:" + "cd" * 32
+
+
+def add_observation(
+    connection,
+    contract_id,
+    metric,
+    value_json,
+    *,
+    asset="asset_aapl",
+    unit="currency",
+    currency="USD",
+    period_start="2023-12-31",
+    period_end="2024-03-30",
+    available_at="2024-05-02T22:04:25.000Z",
+    available_basis="ACCEPTANCE_DATETIME",
+    availability_class="SOURCE_DECLARED",
+    replay_eligible="2024-05-02T22:04:25.000Z",
+    first_archived="2024-05-03T00:00:00+00:00",
+    provider="SecEdgar",
+    source_type="REGULATORY_FILING",
+    status="UNVERIFIABLE",
+    concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+    source_concept_ref="same-as-concept",
+    accession=FILING_ACCESSION,
+    form="10-Q",
+    taxonomy="us-gaap",
+    statement="INCOME",
+    source_fact=None,
+    raw=None,
+    document="doc_filing",
+):
+    """
+    One observation, built from a column tuple.
+
+    Module level rather than a closure inside `build_archive`, because a test that
+    needs a case the shared fixture does not contain should add the case to the
+    same fixture rather than grow a second copy of a forty-column insert. A
+    second copy is a second thing to keep in step, and this one has a
+    `source_concept_ref` that the ambiguity classification depends on.
+    """
+    # Each fact in the fixture is a distinct raw fact, so each gets its
+    # own source_fact_id. Reusing one would trip the unique index, which
+    # is exactly the deduplication rule under test.
+    fact_id = source_fact or ("sfid_" + contract_id)
+    payload = {
+        "sec_fact": {
+            "taxonomy": taxonomy,
+            "tag": concept.split(":")[-1] if concept else None,
+            "accession": accession,
+            "form": form,
+            "fy": 2024,
+            "fp": "Q2",
+        }
+    }
+    if raw is not None:
+        payload = raw
+    # Built from a column tuple rather than counted: a hand-written
+    # placeholder list is a silent way to shift every value by one.
+    columns = (
+        "observation_id", "contract_id", "asset_id", "lineage_id", "metric",
+        "provider", "source_type", "source_url", "concept", "value_json",
+        "unit", "currency", "currency_basis", "period_start", "period_end",
+        "as_of", "available_at", "available_at_basis",
+        "availability_class", "retrieved_at", "first_archived_at",
+        "replay_eligible_from", "definition", "methodology", "status",
+        "status_reasons_json", "inputs_json", "observation_count",
+        "raw_json", "content_hash", "basis_json", "taxonomy", "accession",
+        "form", "fiscal_year", "fiscal_period", "statement", "instant",
+        "source_fact_id", "source_concept_ref",
+    )
+    values = {
+        "observation_id": "obs_" + contract_id,
+        "contract_id": contract_id,
+        "asset_id": asset,
+        "lineage_id": "line_1",
+        "metric": metric,
+        "provider": provider,
+        "source_type": source_type,
+        "source_url": None,
+        "concept": concept,
+        "value_json": value_json,
+        "unit": unit,
+        "currency": currency,
+        "currency_basis": "REPORTED" if currency else "NOT_APPLICABLE",
+        "period_start": period_start,
+        "period_end": period_end,
+        "as_of": period_end,
+        "available_at": available_at,
+        "available_at_basis": available_basis,
+        "availability_class": availability_class,
+        "retrieved_at": "2024-05-03T00:00:00+00:00",
+        "first_archived_at": first_archived,
+        "replay_eligible_from": replay_eligible,
+        "definition": "def",
+        "methodology": "m",
+        "status": status,
+        "status_reasons_json": "[]",
+        "inputs_json": "[]",
+        "observation_count": None,
+        "raw_json": json.dumps(payload),
+        "content_hash": "h_" + contract_id,
+        "basis_json": json.dumps(
+            {
+                "reporting_framework": taxonomy,
+                "statement": statement,
+                "source_declared": True,
+            }
+        ),
+        "taxonomy": taxonomy,
+        "accession": accession,
+        "form": form,
+        "fiscal_year": 2024,
+        "fiscal_period": "Q2",
+        "statement": statement,
+        "instant": 0 if period_start else 1,
+        "source_fact_id": fact_id,
+        # The registry-resolved source concept, which is not the same thing as
+        # the filed tag and is NULL whenever nothing was mapped. A vendor figure
+        # gets no concept at all rather than a borrowed one, and the ambiguity
+        # classification relies on that distinction.
+        "source_concept_ref": (
+            concept if source_concept_ref == "same-as-concept"
+            else source_concept_ref
+        ),
+    }
+    connection.execute(
+        "INSERT INTO observations ({}) VALUES ({})".format(
+            ", ".join(columns),
+            ", ".join("?" for _ in columns),
+        ),
+        tuple(values[column] for column in columns),
+    )
+    if document:
+        connection.execute(
+            "INSERT INTO observation_sources (observation_id, document_id,"
+            " accession) VALUES (?, ?, ?)",
+            ("obs_" + contract_id, document, accession),
+        )
+    return "obs_" + contract_id
 
 
 def build_archive() -> SQLiteArchive:
@@ -112,124 +258,11 @@ def build_archive() -> SQLiteArchive:
          b"vendor-bytes"),
     )
 
-    def observation(
-        contract_id,
-        metric,
-        value_json,
-        *,
-        asset=aapl,
-        unit="currency",
-        currency="USD",
-        period_start="2023-12-31",
-        period_end="2024-03-30",
-        available_at="2024-05-02T22:04:25.000Z",
-        available_basis="ACCEPTANCE_DATETIME",
-        availability_class="SOURCE_DECLARED",
-        replay_eligible="2024-05-02T22:04:25.000Z",
-        first_archived="2024-05-03T00:00:00+00:00",
-        provider="SecEdgar",
-        source_type="REGULATORY_FILING",
-        status="UNVERIFIABLE",
-        concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
-        accession=FILING_ACCESSION,
-        form="10-Q",
-        taxonomy="us-gaap",
-        statement="INCOME",
-        source_fact=None,
-        raw=None,
-        document="doc_filing",
-    ):
-        # Each fact in the fixture is a distinct raw fact, so each gets its
-        # own source_fact_id. Reusing one would trip the unique index, which
-        # is exactly the deduplication rule under test.
-        fact_id = source_fact or ("sfid_" + contract_id)
-        payload = {
-            "sec_fact": {
-                "taxonomy": taxonomy,
-                "tag": concept.split(":")[-1],
-                "accession": accession,
-                "form": form,
-                "fy": 2024,
-                "fp": "Q2",
-            }
-        }
-        if raw is not None:
-            payload = raw
-        # Built from a column tuple rather than counted: a hand-written
-        # placeholder list is a silent way to shift every value by one.
-        columns = (
-            "observation_id", "contract_id", "asset_id", "lineage_id", "metric",
-            "provider", "source_type", "source_url", "concept", "value_json",
-            "unit", "currency", "currency_basis", "period_start", "period_end",
-            "as_of", "available_at", "available_at_basis",
-            "availability_class", "retrieved_at", "first_archived_at",
-            "replay_eligible_from", "definition", "methodology", "status",
-            "status_reasons_json", "inputs_json", "observation_count",
-            "raw_json", "content_hash", "basis_json", "taxonomy", "accession",
-            "form", "fiscal_year", "fiscal_period", "statement", "instant",
-            "source_fact_id",
+    def observation(contract_id, metric, value_json, **kwargs):
+        kwargs.setdefault("asset", aapl)
+        return add_observation(
+            connection, contract_id, metric, value_json, **kwargs
         )
-        values = {
-            "observation_id": "obs_" + contract_id,
-            "contract_id": contract_id,
-            "asset_id": asset,
-            "lineage_id": "line_1",
-            "metric": metric,
-            "provider": provider,
-            "source_type": source_type,
-            "source_url": None,
-            "concept": concept,
-            "value_json": value_json,
-            "unit": unit,
-            "currency": currency,
-            "currency_basis": "REPORTED" if currency else "NOT_APPLICABLE",
-            "period_start": period_start,
-            "period_end": period_end,
-            "as_of": period_end,
-            "available_at": available_at,
-            "available_at_basis": available_basis,
-            "availability_class": availability_class,
-            "retrieved_at": "2024-05-03T00:00:00+00:00",
-            "first_archived_at": first_archived,
-            "replay_eligible_from": replay_eligible,
-            "definition": "def",
-            "methodology": "m",
-            "status": status,
-            "status_reasons_json": "[]",
-            "inputs_json": "[]",
-            "observation_count": None,
-            "raw_json": json.dumps(payload),
-            "content_hash": "h_" + contract_id,
-            "basis_json": json.dumps(
-                {
-                    "reporting_framework": taxonomy,
-                    "statement": statement,
-                    "source_declared": True,
-                }
-            ),
-            "taxonomy": taxonomy,
-            "accession": accession,
-            "form": form,
-            "fiscal_year": 2024,
-            "fiscal_period": "Q2",
-            "statement": statement,
-            "instant": 0 if period_start else 1,
-            "source_fact_id": fact_id,
-        }
-        connection.execute(
-            "INSERT INTO observations ({}) VALUES ({})".format(
-                ", ".join(columns),
-                ", ".join("?" for _ in columns),
-            ),
-            tuple(values[column] for column in columns),
-        )
-        if document:
-            connection.execute(
-                "INSERT INTO observation_sources (observation_id, document_id,"
-                " accession) VALUES (?, ?, ?)",
-                ("obs_" + contract_id, document, accession),
-            )
-        return "obs_" + contract_id
 
     # A reported quarterly revenue series, one declared filing each.
     for index, (period, value) in enumerate(
@@ -443,6 +476,31 @@ class QueryFixture(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.store.close()
+
+    def add(self, contract_id, metric, value_json, **kwargs):
+        """
+        Add a case the shared fixture does not contain.
+
+        A test that needs a case should add it to the fixture it already has.
+        Writing its own forty-column insert instead is how two copies drift.
+        """
+        kwargs.setdefault("asset", self.connection.execute(
+            "SELECT asset_id FROM assets WHERE ticker = ?", (AAPL,)
+        ).fetchone()["asset_id"])
+        # `EvidenceQuery` puts the shared connection into `query_only`, which is
+        # the right guarantee for the read surface and the wrong one for a test
+        # that is building the archive it will read. Lifted for the write and
+        # put straight back, so the guarantee the rest of these tests rely on is
+        # exactly the one the production surface provides.
+        self.connection.execute("PRAGMA query_only = OFF")
+        try:
+            observation_id = add_observation(
+                self.connection, contract_id, metric, value_json, **kwargs
+            )
+            self.connection.commit()
+        finally:
+            self.connection.execute("PRAGMA query_only = ON")
+        return observation_id
 
 
 class TestSingleObservation(QueryFixture):
@@ -821,6 +879,181 @@ class TestLineage(QueryFixture):
     def test_lineage_depth_is_validated(self):
         with self.assertRaises(QueryError):
             self.query.get_lineage("obs_cmp-revenue-sec-q-2023-12-31-0", depth=0)
+
+    def test_a_derived_value_states_its_stored_value_at_the_top_level(self):
+        """
+        The reference names a number, so the payload names the number.
+
+        It was already in the chain at step DERIVED, one level down, and both
+        2.6.2 cloud models asked "what is this derived figure and how was it
+        made" without reaching for this operation. A consumer should not have to
+        walk a chain to read the value the reference is for.
+        """
+        lineage = self.query.get_lineage("der:current_ps")
+        chain_value = lineage["chain"][0]["value"]
+        self.assertIsNotNone(lineage["value"])
+        self.assertEqual(lineage["value"], chain_value)
+        self.assertEqual(lineage["expression"], lineage["chain"][0]["expression"])
+        self.assertEqual(lineage["unit"], lineage["chain"][0]["unit"])
+
+    def test_returning_the_stored_value_is_not_recomputing_it(self):
+        """
+        Reading the archived value back must not read as calculating it.
+        """
+        lineage = self.query.get_lineage("der:current_ps")
+        self.assertFalse(lineage["recomputation"]["recomputed_by_query"])
+        self.assertEqual(
+            lineage["recomputation"]["value_source"], "STORED_DERIVED_VALUE"
+        )
+
+
+class TestAmbiguityIsClassified(QueryFixture):
+    """
+    Why two figures share a metric and a period, decided from the rows.
+
+    The block used to return one sentence for every case — that the rows "share
+    this metric, period and source concept" and that "the source endpoint
+    aggregates dimension members". Against the AAPL snapshot that sentence was
+    wrong for all 107 ambiguity groups, including the FY2007 revenue its own
+    docstring used as the worked example, which is a 10-K against a 10-K/A and
+    therefore two filings rather than two dimension members. Both free cloud
+    models repeated it as the archive's finding.
+
+    These tests pin the classification as a function of evidence, so the
+    sentence cannot come back without one of them failing.
+    """
+
+    def ambiguity_for(self, observation_id):
+        found = self.query.get_observation(observation_id)
+        self.assertIsNotNone(found)
+        return found.get("ambiguity")
+
+    def test_two_filings_of_one_concept_are_not_a_dimension_collision(self):
+        """
+        The case the old sentence got wrong, and the one it was written for.
+
+        A 10-K and a 10-K/A are two filings. Reading them as one aggregate over
+        dimension members the filing never returned is a fabricated mechanism.
+        """
+        observation_id = self.add(
+            "amb-filings", "revenue", "24006000000.0",
+            accession="0001193125-09-214859", form="10-K",
+        )
+        self.add(
+            "amb-filings-amended", "revenue", "24578000000.0",
+            accession="0001193125-10-012091", form="10-K/A",
+        )
+        block = self.ambiguity_for(observation_id)
+        self.assertEqual(block["reason"], AMBIGUITY_MULTIPLE_FILINGS)
+        self.assertNotEqual(block["reason"], AMBIGUITY_DIMENSION)
+        self.assertIn("0001193125-10-012091", block["basis"]["accessions"])
+
+    def test_different_concepts_are_different_measures_not_a_choice(self):
+        """
+        The 68-group case: two concepts mapped to one metric.
+
+        This is the change with the most weight. The figures are not competing
+        answers, and the block has to say so, or a consumer picks one of them
+        and reports it as the value of a metric it is a component of.
+        """
+        observation_id = self.add(
+            "amb-concepts-a", "cash", "37988000000.0",
+            concept="us-gaap:CashAndCashEquivalentsAtCarryingValue",
+            source_concept_ref="us-gaap:CashAndCashEquivalentsAtCarryingValue",
+        )
+        self.add(
+            "amb-concepts-b", "cash", "39817000000.0",
+            concept="us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCash"
+                    "Equivalents",
+            source_concept_ref="us-gaap:CashCashEquivalentsRestrictedCashAnd"
+                               "RestrictedCashEquivalents",
+        )
+        block = self.ambiguity_for(observation_id)
+        self.assertEqual(block["reason"], AMBIGUITY_MULTIPLE_CONCEPTS)
+        self.assertFalse(block["same_measure_established"])
+        self.assertEqual(len(block["basis"]["source_concepts"]), 2)
+        self.assertIn("different measures", block["explanation"])
+
+    def test_one_filing_reporting_one_concept_twice_is_a_dimension_collision(self):
+        """
+        The only shape that licenses the aggregation story, kept because it is
+        real and provable rather than because it is the easy answer.
+        """
+        observation_id = self.add(
+            "amb-dimension-a", "revenue", "100.0", accession="0001193125-09-1",
+        )
+        self.add(
+            "amb-dimension-b", "revenue", "200.0", accession="0001193125-09-1",
+        )
+        block = self.ambiguity_for(observation_id)
+        self.assertEqual(block["reason"], AMBIGUITY_DIMENSION)
+        self.assertEqual(block["basis"]["accessions"], ["0001193125-09-1"])
+        self.assertTrue(block["same_measure_established"])
+
+    def test_different_providers_outrank_everything_else(self):
+        """
+        Two sources are not two readings of one source's aggregate, whatever
+        else is true of them, so this branch is taken first.
+        """
+        observation_id = self.add(
+            "amb-cross-provider-filing", "shares_outstanding", "15504000000.0",
+            concept="dei:EntityCommonStockSharesOutstanding",
+            source_concept_ref="dei:EntityCommonStockSharesOutstanding",
+        )
+        self.add(
+            "amb-cross-provider-vendor", "shares_outstanding", "14640000000.0",
+            provider="VendorApi", source_type="API_LIVE",
+            # The vendor's own column holds the metric id rather than an XBRL
+            # tag, and the registry mapped no concept for it. That is exactly
+            # what production does, and it is why the classification reads
+            # `source_concept_ref` and not `concept`: a borrowed metric id is not
+            # a source concept, and treating it as one would invent a second
+            # measure that does not exist.
+            concept="shares_outstanding", source_concept_ref=None,
+            taxonomy=None, accession=None, form=None, document=None,
+        )
+        block = self.ambiguity_for(observation_id)
+        self.assertEqual(block["reason"], AMBIGUITY_CROSS_PROVIDER)
+        # The vendor figure has no source concept, so the evidence does not
+        # establish that the two measure the same thing, and saying so is
+        # better than inferring it from their sharing a metric.
+        self.assertFalse(block["same_measure_established"])
+
+    def test_the_archive_never_names_a_cause_it_cannot_see(self):
+        """
+        The explanation is written from the class, so it cannot claim a
+        mechanism the classification did not establish.
+        """
+        self.add("amb-explain-a", "revenue", "100.0", accession="acc-1")
+        self.add("amb-explain-b", "revenue", "200.0", accession="acc-2")
+        block = self.ambiguity_for("obs_amb-explain-a")
+        self.assertNotIn("aggregates dimension members", block["explanation"])
+        self.assertEqual(block["determination"], "FROM_EVIDENCE")
+        self.assertEqual(block["resolution"], "NO_WINNER_SELECTED")
+
+    def test_same_values_are_not_an_ambiguity(self):
+        """
+        A restatement is not a choice, and the block has to stay quiet.
+        """
+        self.add("amb-restate-a", "revenue", "100.0", accession="acc-3")
+        self.add("amb-restate-b", "revenue", "100.0", accession="acc-4")
+        self.assertIsNone(self.ambiguity_for("obs_amb-restate-a"))
+
+    def test_the_classification_is_a_closed_vocabulary(self):
+        for basis in (
+            {"providers": ["a", "b"], "source_concepts": ["x"]},
+            {"providers": ["a"], "source_concepts": ["x", "y"]},
+            {"providers": ["a"], "source_concepts": ["x"], "accessions": ["1"]},
+            {"providers": ["a"], "source_concepts": ["x"], "accessions": []},
+        ):
+            self.assertIn(classify_ambiguity(basis), AMBIGUITY_REASONS)
+
+    def test_a_missing_basis_does_not_raise(self):
+        """
+        The classifier is called on whatever was gathered, and an evidence
+        database must not raise because a row is thin.
+        """
+        self.assertEqual(classify_ambiguity({}), AMBIGUITY_MULTIPLE_OBSERVATIONS)
 
 
 class TestUnresolvedConflicts(QueryFixture):

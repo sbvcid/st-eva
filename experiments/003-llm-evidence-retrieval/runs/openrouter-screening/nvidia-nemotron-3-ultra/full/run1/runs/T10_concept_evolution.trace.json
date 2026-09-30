@@ -1,0 +1,126 @@
+{
+  "answer": {
+    "answer": "The ST-EVA archive holds AAPL's revenue under four distinct XBRL concepts across the series: (1) us-gaap:SalesRevenueNet (used 2006-10-01 through 2018-06-30), (2) us-gaap:Revenues (used 2016-09-24 through 2018-09-29, overlapping with SalesRevenueNet), (3) us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (used from 2017-09-30 onward, reflecting ASC 606 adoption), and (4) a vendor-reported 'revenue' concept from YahooFinance for one period (2023-07-01 to 2024-06-30). The series_comparability assessment for the revenue metric explicitly states: single_framework=false, comparable=false, with reason 'points on this series declare different reporting frameworks, so they are not one comparable series and have not been merged'. Additionally, the semantic metadata records CONCEPT_MAPPING_BREAK for both SalesRevenueNet and Revenues, each with mapping_type PARTIAL and series_continues=false. Therefore, the revenue observations cannot be read as one continuous comparable series; they represent multiple concept windows with partial mappings and a framework change.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "obsarch_93fee51aaa69c96c6f90fdcc",
+      "obsarch_e90aab2f3452c07e59d7b0b0",
+      "obsarch_9876bb7ff70888195c271bda",
+      "obsarch_466ad08feeef461d885a0874",
+      "obsarch_72b5391df7aeb2c42e5b188b",
+      "obsarch_db148bf773b240c90cd669a3",
+      "obsarch_12d6d60b9014e06cad9be0a3",
+      "obsarch_3c647ded1d2977e1521e195c",
+      "obsarch_105e11ea98a8cd6d8de5148b",
+      "obsarch_4645df21da35b534af07fe01",
+      "obsarch_1eb988c2c9029d70da7dca19",
+      "obsarch_45ad4ed4bc9d89165817b57c",
+      "obsarch_73e6f609902b57da9b765a1d",
+      "obsarch_21d249e580102aee609dbb45",
+      "obsarch_b4f5ec8d9f4d993340abbe34",
+      "obsarch_5eeff7dc4857edef5dbec3a5",
+      "obsarch_2382f91af29997664667a5f5",
+      "obsarch_6a0c1200a4d255c3fdefab5b"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The full list of 339 observations is not enumerated here; later periods may include additional concept changes not captured in this sample."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[10]",
+      "returned_count": 10,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 50,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[50]",
+      "returned_count": 50,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 100,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=100,truncated=True)",
+      "returned_count": 100,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": "100",
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": "QueryError: cursor is not a cursor returned by this surface: '100'",
+      "operation": "page",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 339,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=339,truncated=False)",
+      "returned_count": 339,
+      "sequence": 5
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "answer": {
+    "answer": "ST-EVA does not have a metric named 'SalesRevenueNet'. That name is a US GAAP concept (us-gaap:SalesRevenueNet) which AAPL used in its filings from 2007 through 2018. In ST-EVA's revenue metric, that concept is mapped with PARTIAL fidelity \u2014 meaning it expresses 'revenue' only as a wider or narrower aggregate, not exactly. The series breaks recorded for the revenue metric show us-gaap:SalesRevenueNet mapped as PARTIAL from 2007-09-29 to 2018-06-30 (obsarch_8b16a09f918ead49d6a5167f, obsarch_ddb4af888ab3c6be910c0f9e). Since 2017-09-30, AAPL has filed us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, which maps to the revenue metric with EXACT fidelity (obsarch_8b16a09f918ead49d6a5167f). A third concept, us-gaap:Revenues, was also mapped as PARTIAL from 2016-09-24 to 2018-09-29 (obsarch_8b16a09f918ead49d6a5167f). Therefore, the historical SalesRevenueNet figures are not the same measure as the current revenue concept; they are a different US GAAP concept with a PARTIAL mapping, while the current concept has an EXACT mapping.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_8b16a09f918ead49d6a5167f",
+      "obsarch_ddb4af888ab3c6be910c0f9e"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The exact definition difference between us-gaap:SalesRevenueNet and us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax is not explained by ST-EVA (series break explanations are 'NOT_EXPLAINED_BY_ST_EVA').",
+      "Whether the PARTIAL mapping means SalesRevenueNet is a narrower or wider aggregate than the revenue metric is not specified in the evidence."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "SalesRevenueNet",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'SalesRevenueNet'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[20]",
+      "returned_count": 20,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "segment_revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 50,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=50,truncated=True)",
+      "returned_count": 50,
+      "sequence": 5
+    }
+  ]
+}

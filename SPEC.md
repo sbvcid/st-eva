@@ -210,6 +210,111 @@ replay-safe, which 2.3-C establishes; 2.5 tests the claim that a formalised
 context leaves the remaining intelligence free to delegate, which is only
 meaningful once 2.4 can replay the same question across time.
 
+## 0.6 What a cloud-model experiment found, and what it changed (2.6.3)
+
+The 2.4.3 section above came from asking a model to read investment contexts.
+This one came from asking a cloud model to consume evidence through the query
+surface, against the sealed AAPL snapshot, with a mechanical auditor deciding
+every verdict. It found one production defect, and the defect is the same *kind*
+of thing 2.4.3 found: not a wrong number, a wrong **explanation offered as
+evidence**.
+
+**An ambiguity must name its cause, and the cause must come from the rows.**
+`EvidenceQuery` reports, on any figure that is one of several it will not choose
+between, the competing observation ids, the competing values, and
+`resolution: NO_WINNER_SELECTED`. Until 2.6.3 it also returned a single sentence
+for all of them: that the rows "share this metric, period and source concept" and
+that "the source endpoint aggregates dimension members without returning the
+member". That sentence was false for **107 of 107** ambiguity groups in the
+snapshot, including the one its own docstring offered as the worked example.
+Sixty-eight groups are two different US-GAAP concepts mapped to one metric
+(`cash` as `CashAndCashEquivalentsAtCarryingValue` and
+`CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents`; `debt` as
+`LongTermDebtCurrent` and `LongTermDebtNoncurrent`); thirty-eight are one concept
+reported by two filings; one is a filing against a vendor quote. **Zero** are a
+dimension collision, which is the only shape that sentence fits.
+
+The cost was measurable rather than theoretical. Before the fix, five of ten
+model answers asserted the dimension-aggregation mechanism as the archive's
+finding. After it, none of thirty-eight did, and eight quoted the correct
+classification. The models were not making the mistake; they were reporting what
+the surface told them.
+
+So the block now carries a `reason` drawn from a closed vocabulary, decided by a
+pure function of the evidence gathered — `CROSS_PROVIDER_DISCREPANCY`,
+`MULTIPLE_SOURCE_CONCEPTS`, `DIMENSION_COLLISION`, `MULTIPLE_FILINGS`,
+`MULTIPLE_OBSERVATIONS` — together with the `basis` it was decided from, and
+`same_measure_established`, which is **false** wherever the competing rows are
+known to measure different things. That last field is the one that matters
+downstream: two figures that measure different things are not a disagreement, and
+a consumer who is not told so will pick one and report it as a fact about the
+metric. Where the archive holds a recorded cross-check behind a cross-provider
+pair, the record is quoted and `determination` becomes
+`FROM_RECORDED_EVIDENCE` rather than a re-derivation.
+
+`NO_WINNER_SELECTED` is unchanged, and deliberately so. The experiment showed
+that softening it is how a consumer ends up asserting a winner, and the fix
+changed what the archive *knows* about a disagreement, never whether it chooses.
+
+**A derived figure must be readable from the reference that names it.**
+`get_lineage("der:current_ps")` returned 31.42 only inside `chain[0]`, one level
+down in a payload whose whole purpose is to answer what the figure is and how it
+was made. Value, unit and expression are now at the top level beside the
+operands, and `recomputation` states `recomputed_by_query: false` with
+`value_source: STORED_DERIVED_VALUE` in the same payload. The value is read back
+from the archive. The query layer is still not a second calculation engine, and
+both halves of that are asserted.
+
+The experiment's own result is a limit worth recording. The same model that
+failed to distinguish a derived value from a reported one — three runs, three
+failures — never called `get_lineage` at all, so the fix did not change its
+behaviour. A missing capability in the surface and a missing capability in the
+consumer look identical from the outside and need different fixes, and only the
+trace tells them apart.
+
+**A refusal is never a finding about the model, and a harness should not need a
+human to know that.** `harness/budget.py` counts every request on the way out —
+a refused request spends the allowance — classifies refusals by kind
+(`rate_limited`, `provider_error`, `model_unavailable`, `malformed_response`,
+`network`), and stops the phase rather than letting a loop decide. `provider_error`
+and `rate_limited` may be retried; `model_unavailable` may not, because a
+withdrawn model is not a transient condition. Three refusals of one kind with no
+answer in between end the run, and the untested remainder is recorded as *not
+run*, which is a different fact from *failed*. It mattered within an hour: a
+three-request `503 provider_overloaded` storm cut one of three runs off at 0/15,
+and without the guard that number would have been averaged into the variance
+series as a model result.
+
+## 0.7 What that experiment measured about the model (2.6.3)
+
+Three runs of one fixed model on one fixed snapshot, dataset, tool schema, prompt
+and evaluator. Recorded here because the shape is the transferable part, and
+because one run is not a measurement.
+
+| capability | three runs |
+|---|---|
+| evidence retrieval, pagination, temporal discipline | 15/15, stable |
+| concept semantics | 6/8, one unstable |
+| provenance | split — attribution stable, full chain unstable |
+| conflict handling | 1/3, flips between runs |
+| reported vs derived | 0/3 decided |
+| negative states | 0/3 |
+
+**Zero fabricated identifiers in 79 citations across 45 test-attempts**, and zero
+off-surface tool calls. The dividing line is layer, not difficulty: everything
+requiring the model to *find and cite* evidence was stable at 100%, and everything
+requiring it to *classify* what the evidence means was where it failed. The
+product is grounding, so the capability gate is written that way — a model with a
+high pass count and a habit of inventing observation ids is worse than useless as
+a consumer, because an invented citation looks checkable to whoever reads the
+answer.
+
+Seven of fifteen tests were stable across three runs, four were stable failures,
+and three flip between PASS and FAIL on an identical configuration. That last
+number is the argument for run series: a single run of this model is a number
+with no error bar, and 9/15 and 10/15 out of the same configuration are both
+consistent with the same model.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

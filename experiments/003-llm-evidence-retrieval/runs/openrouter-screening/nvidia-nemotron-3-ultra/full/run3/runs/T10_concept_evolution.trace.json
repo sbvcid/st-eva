@@ -1,0 +1,54 @@
+{
+  "answer": {
+    "answer": "The archive holds two XBRL concepts for AAPL's revenue metric: us-gaap:SalesRevenueNet and us-gaap:Revenues. Both are mapped to the ST-EVA 'revenue' metric with mapping_type PARTIAL (not EXACT), and both have series_continues: false. The semantic metadata records CONCEPT_MAPPING_BREAK series breaks for each concept: us-gaap:SalesRevenueNet effective 2007-09-29 to 2018-06-30, and us-gaap:Revenues effective 2016-09-24 to 2018-09-29. Because the mappings are partial, the series do not continue across the concept boundary, and explicit concept-mapping breaks are recorded, the two concept series cannot be read as one continuous comparable series.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_aea878acdf7f37c0b6d160b6"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The exact date when AAPL switched from reporting us-gaap:SalesRevenueNet to us-gaap:Revenues in its primary filings is not explicitly stated; the mapping windows overlap from 2016-09-24 to 2018-06-30."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[10]",
+      "returned_count": 10,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
+      "sequence": 2
+    }
+  ]
+}

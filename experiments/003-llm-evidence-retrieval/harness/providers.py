@@ -218,8 +218,36 @@ class OpenAICompatibleClient:
         # rate-limit and retry-after signals can be recorded with the run instead
         # of guessed at afterwards. Read-only bookkeeping; never sent anywhere.
         self.last_response_headers: Dict[str, str] = {}
+        # A request allowance to account against, if the caller has one. Set from
+        # the outside rather than configured here, because how much a run may
+        # spend is the caller's decision and this class has no business guessing
+        # it. Every request is recorded on the way out, so a refused request
+        # spends the allowance too -- which is the case that actually bites.
+        self.budget: Any = None
+        # Which test the next request belongs to, for the ledger. A label, not a
+        # control: nothing here branches on it.
+        self.current_test: str = ""
 
     def complete(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        if self.budget is not None:
+            self.budget.record_sent(self.current_test)
+        try:
+            payload = self._complete(messages, tools)
+        except TransportError as error:
+            if self.budget is not None:
+                self.budget.record_refusal(
+                    error.kind, self.current_test, str(error)
+                )
+            raise
+        if self.budget is not None:
+            self.budget.record_answer(self.current_test, payload.get("usage"))
+        return payload
+
+    def _complete(
         self,
         messages: List[Dict[str, Any]],
         tools: Optional[List[Dict[str, Any]]] = None,
@@ -267,9 +295,11 @@ class OpenAICompatibleClient:
             # crash would be recorded as a model failure. It is a transport
             # failure, which is what the caller needs to be able to tell.
             if isinstance(payload, dict) and "choices" not in payload:
+                body_text = json.dumps(payload)
                 raise TransportError(
                     f"no completion in the response from {self.config.endpoint}: "
-                    f"{json.dumps(payload)[:800]}"
+                    f"{body_text[:800]}",
+                    classify_error_body(body_text),
                 )
             return payload
         except urllib.error.HTTPError as error:
@@ -278,7 +308,8 @@ class OpenAICompatibleClient:
             } if error.headers else {}
             detail = error.read().decode("utf-8", "replace")[:800]
             raise TransportError(
-                f"HTTP {error.code} from {self.config.endpoint}: {detail}"
+                f"HTTP {error.code} from {self.config.endpoint}: {detail}",
+                classify_http_failure(error.code, detail),
             ) from error
         except urllib.error.URLError as error:
             raise TransportError(
@@ -294,4 +325,56 @@ class TransportError(Exception):
     "transport error" tells the reader the experiment did not happen, and
     grading it as though the model had answered would put a fault in the model
     column that belongs to the network.
+
+    `kind` says *which* network fact, because the three that matter call for
+    different behaviour and none of them is a finding about the model:
+
+        rate_limited        a quota or an upstream shared pool. Wait.
+        provider_error      the provider behind the model failed. Retry later.
+        model_unavailable   the model or its endpoint is gone. Stop on it.
+        malformed_response  a 200 that is not a completion. Treat as suspect.
+        network             no answer at all. Retry within reason.
+
+    A caller that retries all five the same way will turn a saturated free pool
+    into an hour of burned quota, and a deleted model into an infinite loop.
     """
+
+    def __init__(self, message: str, kind: str = "network") -> None:
+        super().__init__(message)
+        self.kind = kind
+
+
+def classify_http_failure(status: int, body: str) -> str:
+    """
+    Which kind of failure an HTTP status is, from the status and the body.
+
+    Deliberately coarse. The point is not to diagnose the provider but to
+    separate "this will never work" from "this will work later", because those
+    two need opposite handling and a harness that cannot tell them apart either
+    gives up on a model that was about to recover or hammers one that is gone.
+    """
+    if status == 429:
+        return "rate_limited"
+    if status in (404, 408):
+        return "model_unavailable"
+    if 500 <= status < 600:
+        return "provider_error"
+    return "network"
+
+
+def classify_error_body(body: str) -> str:
+    """
+    The same judgement for a 200 that carried an error instead of a completion.
+
+    A gateway that answers 200 with an `error` object is reporting an upstream
+    failure through a success status, so the status code cannot be trusted on
+    its own and the body's own error metadata is what says what happened.
+    """
+    lowered = body.lower()
+    if "rate-limit" in lowered or "rate_limit" in lowered or "429" in lowered:
+        return "rate_limited"
+    if "no endpoints found" in lowered or "model not found" in lowered:
+        return "model_unavailable"
+    if "provider" in lowered:
+        return "provider_error"
+    return "malformed_response"

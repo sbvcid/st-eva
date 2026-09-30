@@ -1,0 +1,55 @@
+{
+  "answer": {
+    "answer": "The ST-EVA archive holds two XBRL concepts for AAPL's revenue metric: `us-gaap:SalesRevenueNet` and `us-gaap:Revenues`. They cannot be read as one continuous comparable series. Both concepts are mapped to the revenue metric with `mapping_type: PARTIAL` (not EXACT), and the semantic metadata records `CONCEPT_MAPPING_BREAK` series breaks for each. The `us-gaap:SalesRevenueNet` mapping is effective from 2007-09-29 to 2018-06-30, while `us-gaap:Revenues` is effective from 2016-09-24 to 2018-09-29, with an overlap period where both were reported. The PARTIAL fidelity means each concept expresses the metric only partially (as a wider or narrower aggregate), and the explicit series breaks indicate the series must break at the concept change; they are not directly chainable into a single comparable time series.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_aea878acdf7f37c0b6d160b6",
+      "obsarch_25e4225dced5bf2457f2bde5"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The exact semantic difference between SalesRevenueNet and Revenues for AAPL is not explained by ST-EVA (explanation: NOT_EXPLAINED_BY_ST_EVA). The overlap period (2016-09-24 to 2018-06-30) has observations for both concepts, but the evidence does not state whether they represent the same underlying measure or differ in scope."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[100]",
+      "returned_count": 100,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
+      "sequence": 2
+    }
+  ]
+}

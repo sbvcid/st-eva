@@ -1,0 +1,80 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "TRANSPORT: not run: 3 provider_error refusals with no answer in between",
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "",
+    "check_count": 1,
+    "checks": [
+      {
+        "actual": "none",
+        "capability": "F10",
+        "classification": "E",
+        "detail": "not run: 3 provider_error refusals with no answer in between",
+        "expected": "a completion from the provider",
+        "name": "the test was run",
+        "passed": null
+      }
+    ],
+    "expectations": {
+      "concepts": [
+        "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+        "us-gaap:Revenues",
+        "us-gaap:SalesRevenueNet"
+      ],
+      "mapping_types": {
+        "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax": "EXACT",
+        "us-gaap:Revenues": "PARTIAL",
+        "us-gaap:SalesRevenueNet": "PARTIAL"
+      }
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "T10_concept_evolution"
+  },
+  "capability": "F9",
+  "expectations": {
+    "concepts": [
+      "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+      "us-gaap:Revenues",
+      "us-gaap:SalesRevenueNet"
+    ],
+    "mapping_types": {
+      "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax": "EXACT",
+      "us-gaap:Revenues": "PARTIAL",
+      "us-gaap:SalesRevenueNet": "PARTIAL"
+    }
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "question": "AAPL's revenue series was reported under more than one XBRL concept. Name the concepts the archive holds, and say whether they can be read as one continuous comparable series.",
+  "retrieved_observations": [],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 0.0,
+    "error": "not run: 3 provider_error refusals with no answer in between",
+    "exchanges": [],
+    "first_reply_parsed": null,
+    "format_repair_used": false,
+    "initial_messages": [],
+    "stop_reason": "budget_exhausted",
+    "test_attempts": 0,
+    "tool_definitions": [],
+    "tool_results": [],
+    "unreached_kind": "budget"
+  },
+  "test_id": "T10_concept_evolution",
+  "trace": []
+}

@@ -1,0 +1,59 @@
+{
+  "answer": {
+    "answer": "{\n  \"answer\": \"As of 2026-07-31, ST-EVA holds 200+ reported revenue observations for AAPL (metric: revenue) with knowable_at dates on or before that cutoff. All are SOURCE_REPORTED from SEC filings (10-K, 10-Q, 8-K) via the us-gaap:SalesRevenueNet concept (mapping fidelity PARTIAL) and a few from us-gaap:Revenues (also PARTIAL). Every observation carries validation_status UNVERIFIABLE (single source, no cross-check). Many periods have multiple filings reporting different values (MULTIPLE_FILINGS ambiguity), and ST-EVA has not selected a winner.\\n\\nKey fiscal periods and the range of reported values knowable by 2026-07-31:\\n\\n- FY2007 (2006-10-01 to 2007-09-29): $24.0B (obsarch_ddb4af888ab3c6be910c0f9e) and $24.6B (obsarch_6383b6a9892d72ff26aab02a) \u2014 two 10-K filings differ.\\n- FY2008 (2007-09-30 to 2008-09-27): $32.5B (obsarch_9876bb7ff70888195c271bda) and $37.5B (obsarch_466ad08feeef461d885a0874, obsarch_72b5391df7aeb2c42e5b188b) \u2014 three filings, two values.\\n- FY2009 (2008-09-28 to 2009-09-26): $36.5B (obsarch_5eeff7dc4857edef5dbec3a5) and $42.9B (obsarch_2382f91af29997664",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "JSONDecodeError: Unterminated string starting at: line 2 column 13 (char 14)",
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": "2026-07-31",
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[100]",
+      "returned_count": 100,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": "2026-07-31",
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": "2013-01-01",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[100]",
+      "returned_count": 100,
+      "sequence": 2
+    }
+  ]
+}

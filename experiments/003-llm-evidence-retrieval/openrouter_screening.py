@@ -31,6 +31,7 @@ of it down.
 from __future__ import annotations
 
 import argparse
+import glob
 import hashlib
 import json
 import os
@@ -111,6 +112,31 @@ MODELS: List[Dict[str, Any]] = [
 ]
 
 SMOKE_TEST_ID = "S0_tool_call_smoke"
+
+# What each test is for, in the language a consumer of the evidence would use.
+#
+# The sealed dataset classifies by check id (F1..F11), which is right for a
+# grader and wrong for a decision: nobody decides whether to use a model by
+# asking which F-numbers it satisfies. These are the questions that actually get
+# asked of a model reading financial evidence, and the rollup is reported in
+# them, with the F-ids left in the per-test detail.
+CONSUMER_CAPABILITY: Dict[str, str] = {
+    "T1_exact_value": "evidence retrieval",
+    "T2_series": "evidence retrieval",
+    "T3_pagination": "pagination",
+    "T4_point_in_time": "temporal discipline",
+    "T5_source_attribution": "provenance",
+    "T6_reported_vs_derived": "reported vs derived",
+    "T7_validation": "provenance",
+    "T8_conflict": "conflict handling",
+    "T9_unavailable": "negative states",
+    "T10_concept_evolution": "concept semantics",
+    "T11_partial_mapping": "concept semantics",
+    "T12_non_comparable": "concept semantics",
+    "T13_provenance_chain": "provenance",
+    "T14_truncation_trap": "pagination",
+    "T15_inference_boundary": "reported vs derived",
+}
 
 # Retries are for the transport, never for the model. A refused request and a
 # wrong answer are both results; an unreachable endpoint is neither, and only the
@@ -218,7 +244,26 @@ class ScreeningRunner(Runner):
     TEST_TRANSPORT_RETRIES = 1
 
     def _run_one(self, test, target):
+        from harness.budget import RequestBudget
         from harness.providers import TransportError
+
+        budget = getattr(target.client, "budget", None)
+        if isinstance(budget, RequestBudget):
+            budget.current_label = test.test_id
+        if target.client is not None:
+            target.client.current_test = test.test_id
+        if budget is not None and not budget.can_start(test.test_id):
+            # The allowance is gone. The test is recorded as not run, which is a
+            # different thing from failed: nothing here says anything about the
+            # model, and marking it failed would spend the run's credibility on
+            # a fact about the provider.
+            return self._unreached(
+                test,
+                target,
+                f"not run: {budget.stopped_because or 'request budget reached'}",
+                0,
+                kind="budget",
+            )
 
         attempts = 0
         while True:
@@ -229,11 +274,28 @@ class ScreeningRunner(Runner):
                 result.target_run["test_attempts"] = attempts
                 return result
             except TransportError as failure:
-                if attempts > self.TEST_TRANSPORT_RETRIES:
-                    return self._unreached(test, target, str(failure), attempts)
-                time.sleep(5)
+                self._last_refusal_kind = failure.kind
+                retryable = (
+                    budget is None
+                    or budget.should_retry(failure.kind)
+                ) and attempts <= self.TEST_TRANSPORT_RETRIES
+                if retryable:
+                    time.sleep(
+                        budget.retry_after(failure.kind) if budget else 5
+                    )
+                    continue
+                return self._unreached(
+                    test, target, str(failure), attempts, kind="transport_error"
+                )
 
-    def _unreached(self, test, target, detail: str, attempts: int) -> Any:
+    def _unreached(
+        self,
+        test,
+        target,
+        detail: str,
+        attempts: int,
+        kind: str = "transport_error",
+    ) -> Any:
         """
         Record a test the model never answered, without inventing a verdict.
 
@@ -241,6 +303,11 @@ class ScreeningRunner(Runner):
         unreachable model has not been shown to be right or wrong, and grading
         it either way would put a transport fact into the model column — which
         is the specific confusion the classification scheme exists to prevent.
+
+        A budget stop and a transport error are the same kind of fact: the
+        experiment did not happen. They are kept apart in the record so a reader
+        can tell a provider problem from a spending decision, and both are
+        reported as E.
         """
         from harness.tools import Toolbox
 
@@ -252,7 +319,11 @@ class ScreeningRunner(Runner):
         audit.checks.append(
             Check(
                 capability="F10",
-                name="the model was reached",
+                name=(
+                    "the model was reached"
+                    if kind == "transport_error"
+                    else "the test was run"
+                ),
                 passed=None,
                 expected="a completion from the provider",
                 actual="none",
@@ -261,7 +332,9 @@ class ScreeningRunner(Runner):
             )
         )
         record = {
-            "stop_reason": "transport_error",
+            "stop_reason": "budget_exhausted" if kind == "budget"
+            else "transport_error",
+            "unreached_kind": kind,
             "elapsed_seconds": 0.0,
             "error": detail,
             "first_reply_parsed": None,
@@ -434,6 +507,8 @@ def run_phase(
     api_key: str,
     snapshot_path: str,
     env: Dict[str, Any],
+    request_budget: Optional[int] = None,
+    run_label: str = "",
 ) -> Dict[str, Any]:
     """
     One phase, one model, one run directory.
@@ -442,6 +517,7 @@ def run_phase(
     environment inside the harness, so that it exists as a value in this frame
     and is not reachable from anything that gets serialised.
     """
+    from harness.budget import RequestBudget
     from harness.providers import OpenAICompatibleClient, TransportError
 
     dataset = build_dataset(snapshot_path)
@@ -452,9 +528,15 @@ def run_phase(
     elif phase != "full":
         raise SystemExit(f"unknown phase {phase!r}")
 
-    run_dir = os.path.join(HERE, "runs", SCREENING_DIRNAME, model["dir"], phase)
+    run_dir = os.path.join(
+        HERE, "runs", SCREENING_DIRNAME, model["dir"], phase, run_label
+    ) if run_label else os.path.join(
+        HERE, "runs", SCREENING_DIRNAME, model["dir"], phase
+    )
     target = make_target(model, api_key)
     client = OpenAICompatibleClient(target.config, api_key=api_key)
+    budget = RequestBudget(request_budget, label=f"{model['name']}/{phase}")
+    client.budget = budget
     target.client = client
 
     started = time.time()
@@ -476,17 +558,20 @@ def run_phase(
                 {
                     "phase": phase,
                     "attempt": attempts,
-                    "outcome": "transport_error",
+                    "outcome": f"transport_error:{failure.kind}",
                     "detail": error,
                 }
             )
-            print(f"  transport error (attempt {attempts}): {error}", flush=True)
+            print(f"  {failure.kind} (attempt {attempts}): {error}", flush=True)
+            if not budget.should_retry(failure.kind):
+                break
             if attempts <= TRANSPORT_RETRIES:
-                time.sleep(5 * attempts)
+                time.sleep(budget.retry_after(failure.kind))
     elapsed = time.time() - started
 
     metadata = {
         "phase": phase,
+        "run_label": run_label or None,
         "provider": PROVIDER,
         "base_url": BASE_URL,
         "requested_slug": model["requested_slug"],
@@ -506,12 +591,20 @@ def run_phase(
         with open(os.path.join(run_dir, "run_metadata.json"), "w",
                   encoding="utf-8") as handle:
             json.dump(metadata, handle, indent=2, sort_keys=True, default=str)
+        budget.write(
+            os.path.join(run_dir, "budget.json"),
+            getattr(client, "last_response_headers", {}),
+        )
         return {"phase": phase, "model": model, "run": None, "metadata": metadata}
 
     report = _build_report(run)
     report_module.write_report(HERE, report, run.run_dir)
     _write(os.path.join(run.run_dir, "run_metadata.json"), metadata)
     _write(os.path.join(run.run_dir, "usage_ledger.json"), _usage_ledger(run))
+    written = budget.write(
+        os.path.join(run.run_dir, "budget.json"),
+        getattr(client, "last_response_headers", {}),
+    )
 
     return {
         "phase": phase,
@@ -519,6 +612,7 @@ def run_phase(
         "run": run,
         "report": report,
         "metadata": metadata,
+        "budget": written,
     }
 
 
@@ -539,11 +633,13 @@ def _build_report(run) -> Dict[str, Any]:
             {
                 "test_id": result.test_id,
                 "verdict": verdict_of(
-                    result.audit, record.get("stop_reason") == "transport_error"
+                    result.audit,
+                    record.get("stop_reason")
+                    in ("transport_error", "budget_exhausted"),
                 ),
                 "stop_reason": record.get("stop_reason"),
                 "interrupted_by_transport": record.get("stop_reason")
-                == "transport_error",
+                in ("transport_error", "budget_exhausted"),
                 "failed_checks": [c.name for c in result.audit.failed_checks],
                 "unverifiable": [c.name for c in result.audit.unverifiable],
                 "tool_calls": len(result.trace),
@@ -747,11 +843,221 @@ def reaudit_phase(model: Dict[str, Any], phase: str, snapshot_path: str) -> Dict
     }
 
 
+def variance_phase(
+    model: Dict[str, Any],
+    phase: str,
+    snapshot_path: str,
+) -> Dict[str, Any]:
+    """
+    What held up across repeated runs, and what the model is actually for.
+
+    A pass count is the wrong summary of a run series. 9/15 says less than "it
+    paged correctly in three runs out of three and fabricated an identifier in
+    none", and the second is the thing a consumer of an evidence database is
+    actually buying. So the rows are grouped by what the capability is *for*, a
+    run series is read as a distribution rather than a score, and a test that
+    moved between runs is called unstable instead of being averaged into it.
+
+    Read from the recorded runs, with no requests sent: three runs of the same
+    configuration is the only kind of evidence that can say anything about
+    stability, and gathering more of it here would change nothing.
+    """
+    base = os.path.join(HERE, "runs", SCREENING_DIRNAME, model["dir"], phase)
+    candidates = sorted(
+        d for d in glob.glob(os.path.join(base, "run*"))
+        if os.path.isdir(os.path.join(d, "audit"))
+    )
+    # A directory where the model never answered is not a run of the model.
+    #
+    # The 2.6.3 attempt-1 directory is the case: three consecutive upstream
+    # overloads, the budget stopped the phase, and fifteen tests were recorded
+    # as not run. Averaging that in as a fourth run would turn every stable
+    # result into "unstable" and would be a pure artefact of a provider having a
+    # bad minute. Excluded, and *listed* in the output — an exclusion that
+    # leaves no trace is indistinguishable from one that never happened.
+    run_dirs: List[str] = []
+    excluded: List[Dict[str, Any]] = []
+    for candidate in candidates:
+        answered = 0
+        for path in glob.glob(os.path.join(candidate, "audit", "*.json")):
+            stored = json.load(open(path, encoding="utf-8"))
+            if (stored.get("target_run") or {}).get("stop_reason") not in (
+                "transport_error", "budget_exhausted"
+            ):
+                answered += 1
+        if answered:
+            run_dirs.append(candidate)
+        else:
+            budget_path = os.path.join(candidate, "budget.json")
+            budget = (
+                json.load(open(budget_path, encoding="utf-8"))
+                if os.path.exists(budget_path) else {}
+            )
+            excluded.append({
+                "run": os.path.basename(candidate),
+                "reason": "the model answered no test in this attempt",
+                "requests_sent": budget.get("requests_sent"),
+                "refusals_by_kind": budget.get("refusals_by_kind", {}),
+                "stopped_because": budget.get("stopped_because"),
+            })
+    if len(run_dirs) < 2:
+        return {
+            "phase": "variance",
+            "model": model,
+            "status": "NOT_ENOUGH_RUNS",
+            "detail": (
+                f"{len(run_dirs)} of {len(candidates)} attempts produced at "
+                f"least one answer; a series needs two"
+            ),
+            "excluded_attempts": excluded,
+        }
+
+    runs: List[Dict[str, Any]] = []
+    for run_dir in run_dirs:
+        rows: Dict[str, Dict[str, Any]] = {}
+        for path in sorted(glob.glob(os.path.join(run_dir, "audit", "*.json"))):
+            stored = json.load(open(path, encoding="utf-8"))
+            stop = (stored.get("target_run") or {}).get("stop_reason")
+            rows[stored["test_id"]] = {
+                "verdict": verdict_of_unread(
+                    stored["audit"]["passed"],
+                    stop in ("transport_error", "budget_exhausted"),
+                ),
+                "stop_reason": stop,
+                "failed_checks": [
+                    c["name"] for c in stored["audit"]["checks"]
+                    if c["passed"] is False
+                ],
+                "refusals": [
+                    c["name"] for c in stored["audit"]["checks"]
+                    if c["passed"] is None
+                ],
+                "tool_calls": len(stored.get("trace", [])),
+                "evidence_refs": len(stored["answer"]["evidence_refs"]),
+            }
+        budget = {}
+        budget_path = os.path.join(run_dir, "budget.json")
+        if os.path.exists(budget_path):
+            budget = json.load(open(budget_path, encoding="utf-8"))
+        runs.append({
+            "run": os.path.basename(run_dir),
+            "run_dir": os.path.relpath(run_dir, HERE).replace("\\", "/"),
+            "requests": budget.get("requests_sent"),
+            "refusals_by_kind": budget.get("refusals_by_kind", {}),
+            "stopped_because": budget.get("stopped_because"),
+            "tests": rows,
+        })
+
+    tests: List[Dict[str, Any]] = []
+    for test_id in sorted({t for run in runs for t in run["tests"]}):
+        observed = [run["tests"].get(test_id) for run in runs]
+        verdicts = [row["verdict"] if row else "NOT_RUN" for row in observed]
+        decided = [v for v in verdicts if v in ("PASS", "FAIL")]
+        passed = verdicts.count("PASS")
+        tests.append({
+            "test_id": test_id,
+            "consumer_capability": CONSUMER_CAPABILITY.get(test_id, "unclassified"),
+            "verdicts": verdicts,
+            "passes": passed,
+            "fails": verdicts.count("FAIL"),
+            "interrupted": verdicts.count("E"),
+            "stability": (
+                "stable_pass" if decided and passed == len(decided)
+                and len(decided) == len(verdicts)
+                else "stable_fail" if decided and not passed
+                and len(decided) == len(verdicts)
+                else "unstable"
+            ),
+            "failed_checks": sorted({
+                name for row in observed if row
+                for name in row["failed_checks"]
+            }),
+        })
+
+    capability: Dict[str, Dict[str, Any]] = {}
+    for test in tests:
+        entry = capability.setdefault(
+            test["consumer_capability"],
+            {"tests": [], "passes": 0, "failures": 0, "interrupted": 0,
+             "stable_pass": 0, "unstable": 0},
+        )
+        entry["tests"].append(test["test_id"])
+        entry["passes"] += test["passes"]
+        entry["failures"] += test["fails"]
+        entry["interrupted"] += test["interrupted"]
+        entry["stable_pass"] += 1 if test["stability"] == "stable_pass" else 0
+        entry["unstable"] += 1 if test["stability"] == "unstable" else 0
+
+    out = {
+        "phase": "variance",
+        "model_id": model["model_id"],
+        "phase_under_test": phase,
+        "run_count": len(runs),
+        "excluded_attempts": excluded,
+        "runs": runs,
+        "tests": tests,
+        "by_consumer_capability": capability,
+        "grounding": _grounding_summary(runs),
+    }
+    path = os.path.join(
+        base, f"variance-{model['dir']}-{phase}.json"
+    )
+    _write(path, out)
+    out["status"] = "RAN"
+    out["path"] = os.path.relpath(path, HERE).replace("\\", "/")
+    return out
+
+
+def verdict_of_unread(passed: bool, interrupted: bool) -> str:
+    """
+    The same verdict rule as `verdict_of`, for a run read back from disk.
+
+    Kept as a second entry point rather than reconstructing an `Audit` from a
+    JSON file, because a variance table is about what the runs recorded and the
+    recorded verdict is the fact. `verdict_of` remains the rule for a live audit,
+    and the two agreeing is itself worth a test.
+    """
+    if interrupted:
+        return "E"
+    return "PASS" if passed else "FAIL"
+
+
+def _grounding_summary(runs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    The two numbers that decide whether this model may read ST-EVA evidence.
+
+    Cited identifiers, and whether the ones it cited exist. A model can pass
+    eight tests and be useless as a consumer if any of its citations are
+    invented, because an invented citation is worse than none: it looks
+    checkable to the person reading the answer. That is why this is measured
+    over every run rather than summarised as a pass count.
+    """
+    cited = 0
+    per_run = []
+    for run in runs:
+        total = sum(row["evidence_refs"] for row in run["tests"].values())
+        cited += total
+        per_run.append({"run": run["run"], "identifiers_cited": total})
+    return {
+        "identifiers_cited": cited,
+        "per_run": per_run,
+        "note": (
+            "Existence and retrieval of every cited identifier are checked "
+            "mechanically by the auditor on each run; a failure there would "
+            "appear in that run's audit as a B-class check."
+        ),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "phase", choices=("smoke", "screen", "full", "reaudit"),
-        help="which phase to run; reaudit re-grades a stored run, no requests",
+        "phase",
+        choices=("smoke", "screen", "full", "reaudit", "variance"),
+        help=(
+            "which phase to run; reaudit re-grades a stored run and variance "
+            "reads a run series -- neither sends a request"
+        ),
     )
     parser.add_argument(
         "--reaudit-phase", default="screen",
@@ -761,10 +1067,28 @@ def main() -> int:
         "--model", action="append", dest="models", help="restrict to a model name"
     )
     parser.add_argument("--summary", help="write a phase summary json here")
+    parser.add_argument(
+        "--request-budget",
+        type=int,
+        help=(
+            "ceiling on requests for this phase, counted on the way out so a "
+            "refused request spends it too; the phase stops and says so rather "
+            "than continuing into a rate limit"
+        ),
+    )
+    parser.add_argument(
+        "--run-label",
+        default="",
+        help=(
+            "subdirectory under the phase, for a repeated run. Run 1, run 2 and "
+            "run 3 of one configuration belong side by side, not overwriting "
+            "each other -- a variance figure needs all three to still exist."
+        ),
+    )
     args = parser.parse_args()
 
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if args.phase != "reaudit" and not api_key:
+    if args.phase not in ("reaudit", "variance") and not api_key:
         print(
             "OPENROUTER_API_KEY is not set in this process; the screening "
             "needs it and will not run without it",
@@ -788,6 +1112,42 @@ def main() -> int:
 
     summary = []
     for model in select_models(args.models):
+        if args.phase == "variance":
+            outcome = variance_phase(model, args.reaudit_phase, snapshot_path)
+            print(f"== {model['name']}  {outcome['status']}", flush=True)
+            if outcome["status"] != "RAN":
+                print(f"   {outcome.get('detail')}\n", flush=True)
+                summary.append(outcome)
+                continue
+            print(f"   {outcome['run_count']} runs of {model['model_id']}\n")
+            for dropped in outcome.get("excluded_attempts", []):
+                print(
+                    f"   (excluded {dropped['run']}: {dropped['reason']}"
+                    f" -- {dropped['stopped_because']})\n"
+                )
+            for test in outcome["tests"]:
+                marks = " ".join(
+                    f"{v:<5}" for v in test["verdicts"]
+                )
+                print(
+                    f"   {test['test_id']:<26} {marks} {test['stability']:<13}"
+                    f" {test['consumer_capability']}"
+                )
+            print("\n   by consumer capability:")
+            for name, entry in sorted(outcome["by_consumer_capability"].items()):
+                print(
+                    f"   {name:<22} {entry['passes']:>2} pass "
+                    f"{entry['failures']:>2} fail  {entry['interrupted']:>2} "
+                    f"interrupted  ({entry['stable_pass']} stable, "
+                    f"{entry['unstable']} unstable)"
+                )
+            print(
+                f"\n   identifiers cited across runs: "
+                f"{outcome['grounding']['identifiers_cited']}\n"
+            )
+            print(f"   written to {outcome['path']}\n", flush=True)
+            summary.append(outcome)
+            continue
         if args.phase == "reaudit":
             outcome = reaudit_phase(model, args.reaudit_phase, snapshot_path)
             print(f"== {model['name']}  {outcome['status']}", flush=True)
@@ -815,7 +1175,15 @@ def main() -> int:
             )
             print("   UNAVAILABLE — not in the catalogue, skipped\n", flush=True)
             continue
-        outcome = run_phase(args.phase, model, api_key, snapshot_path, env)
+        outcome = run_phase(
+            args.phase,
+            model,
+            api_key,
+            snapshot_path,
+            env,
+            request_budget=args.request_budget,
+            run_label=args.run_label,
+        )
         if outcome["run"] is None:
             summary.append(
                 {
@@ -839,13 +1207,32 @@ def main() -> int:
                 f"   {row['test_id']:<28} {row['verdict']:<10} "
                 f"calls={row['tool_calls']} stop={row['stop_reason']}"
             )
+        spent = outcome.get("budget") or {}
+        print(
+            f"   budget: {spent.get('requests_sent')} requests, "
+            f"{spent.get('remaining_budget')} left"
+            + (
+                f", refusals {json.dumps(spent.get('refusals_by_kind'))}"
+                if spent.get("refusals_by_kind") else ""
+            )
+            + (
+                f"  STOPPED: {spent['stopped_because']}"
+                if spent.get("stopped_because") else ""
+            ),
+            flush=True,
+        )
         summary.append(
             {
                 "phase": args.phase,
+                "run_label": args.run_label or None,
                 "model": model,
                 "status": "RAN",
                 "totals": totals,
                 "quota_after": quota_snapshot(api_key),
+                "budget": {
+                    key: value for key, value in spent.items()
+                    if key != "attempts"
+                },
                 "rows": [
                     {k: v for k, v in row.items() if k != "answer"}
                     for row in report.get("screening_rows", [])

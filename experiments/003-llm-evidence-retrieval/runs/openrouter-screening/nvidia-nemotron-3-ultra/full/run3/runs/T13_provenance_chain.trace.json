@@ -1,0 +1,76 @@
+{
+  "answer": {
+    "answer": "For the period ending 2007-09-29, ST-EVA holds two competing revenue observations for AAPL, both sourced from the same SEC Company Concept document (us-gaap:SalesRevenueNet for CIK 0000320193) but from different source facts corresponding to different SEC accessions. Neither has been selected as authoritative.\n\nObservation 1 (obsarch_ddb4af888ab3c6be910c0f9e):\n- Value: $24,006,000,000 USD\n- Source fact: sfid_b5229f1711c68622f937916d70285775\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT, https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\n- Accession: 0001193125-09-214859 (Form 10-K, fiscal year 2009)\n- Concept: us-gaap:SalesRevenueNet\n- Period: 2006-10-01 to 2007-09-29\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME)\n- Evidence state: SOURCE_REPORTED\n- Validation status: UNVERIFIABLE (single official source cannot cross-validate itself)\n- Mapping fidelity: PARTIAL (net sales revenue, a third concept and a third window)\n\nObservation 2 (obsarch_6383b6a9892d72ff26aab02a):\n- Value: $24,578,000,000 USD\n- Source fact: sfid_52493188959d0d442076337871e8951b\n- Source document: doc_24e188322f7c7d6939f9dc79 (same SEC_COMPANY_CONCEPT document)\n- Accession: 0001193125-10-012091 (Form 10-K/A, fiscal year 2009)\n- Concept: us-gaap:SalesRevenueNet\n- Period: 2006-10-01 to 2007-09-29\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME)\n- Evidence state: SOURCE_REPORTED\n- Validation status: UNVERIFIABLE\n- Mapping fidelity: PARTIAL\n\nThe ambiguity record indicates these are competing values from multiple filings (MULTIPLE_FILINGS) \u2014 possibly a restatement or re-filing \u2014 and ST-EVA has not selected a winner (resolution: NO_WINNER_SELECTED).",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of the two competing revenue values ($24.006B vs $24.578B) is the correct figure for the period ending 2007-09-29; ST-EVA has not selected a winner.",
+      "Whether the difference represents a restatement, a re-filing, or two different periods of coverage; the evidence does not establish this.",
+      "The mapping fidelity is PARTIAL, meaning us-gaap:SalesRevenueNet is not an exact match for the revenue metric.",
+      "Both observations are UNVERIFIABLE because a single official source cannot cross-validate itself.",
+      "The source document is an SEC Company Concept API response, not the original filed XBRL instance; the exact filing date of each accession is not provided in the evidence."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "depth": 10,
+        "reference": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "depth": 10,
+        "reference": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "reference": "doc_24e188322f7c7d6939f9dc79"
+      },
+      "error": null,
+      "operation": "get_source_document",
+      "result_shape": "object[19]",
+      "returned_count": null,
+      "sequence": 4
+    }
+  ]
+}

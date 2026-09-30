@@ -860,36 +860,50 @@ def _audit_t7(auditor, audit, answer, tools, retrieved):
 
 def _ambiguity_side_sets(connection, asset: str, limit: int = 400):
     """
-    Every pair of figures the archive itself will not choose between.
+    Every pair of figures the archive will not choose between *and* has
+    established measure the same thing.
 
-    Read from the same rows and with the same rule the query surface uses to
-    attach an `ambiguity` block: same asset, metric and period, different value.
-    It is re-derived here rather than imported so the grader does not depend on
-    the surface it is grading, and it is read from the archive rather than typed
-    in so it cannot drift from what a model was actually shown.
+    Re-derived from the rows rather than imported, so the grader does not depend
+    on the surface it is grading, and read from the archive rather than typed in,
+    so it cannot drift from what a model was shown.
 
-    Capped, and the cap is recorded, because the answer to "which pairs could a
-    model have cited" is otherwise unbounded and a grader that grows a
-    thousand-line expectation is harder to read than the thing it grades.
+    The same-measure restriction is the 2.6.3 correction, and it is the whole
+    point. The first version of this took any two figures for one metric and
+    period with different values, which is 107 groups in the AAPL snapshot. 68
+    of those are two different source concepts — `debt` reported as both
+    `LongTermDebtCurrent` and `LongTermDebtNoncurrent` — and offering those to a
+    model as a disagreement to preserve is asking it to pick between two
+    different measures. The archive now says `same_measure_established: false`
+    for them, and the grader has to agree or it is grading against a rule the
+    surface no longer holds itself to.
     """
     rows = connection.execute(
         "SELECT o.observation_id, o.metric, o.period_start, o.period_end,"
-        " o.value_json FROM observations o"
+        " o.value_json, o.source_concept_ref FROM observations o"
         " JOIN assets a ON a.asset_id = o.asset_id"
         " WHERE a.ticker = ?",
         (asset,),
     ).fetchall()
     groups: Dict[Any, Dict[str, List[str]]] = {}
+    unmapped: Dict[Any, int] = {}
+    concepts: Dict[Any, set] = {}
     for row in rows:
         key = (row["metric"], row["period_start"], row["period_end"])
         groups.setdefault(key, {}).setdefault(
             (row["value_json"] or "").strip(), []
         ).append(row["observation_id"])
+        if not row["source_concept_ref"]:
+            unmapped[key] = unmapped.get(key, 0) + 1
+        else:
+            concepts.setdefault(key, set()).add(row["source_concept_ref"])
     pairs: List[List[str]] = []
-    for by_value in groups.values():
-        values = [v for v, ids in by_value.items() if v]
+    for key, by_value in groups.items():
+        values = [v for v in by_value if v]
         if len(values) < 2:
             # The same figure filed twice is a restatement, not a disagreement.
+            continue
+        if unmapped.get(key) or len(concepts.get(key, set())) > 1:
+            # Two different measures, or a row whose measure is not established.
             continue
         for index, left in enumerate(values):
             for right in values[index + 1:]:

@@ -1,0 +1,40 @@
+{
+  "answer": {
+    "answer": "For the period ending 2007-09-29, ST-EVA holds two revenue observations for Apple (AAPL), both sourced from SEC filings via the SecEdgar provider. The first observation (obsarch_ddb4af888ab3c6be910c0f9e) comes from filing accession 0001193125-09-214859 (a 10-K) and reports revenue of $24,006,000,000. The second observation (obsarch_6383b6a9892d72ff26aab02a) comes from filing accession 0001193125-10-012091 (a 10-K/A) and reports revenue of $24,578,000,000. Both observations reference the same source document, which has the content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591. The two filings report different values for the same concept (us-gaap:SalesRevenueNet) and period; ST-EVA has not selected a winner and flags this as an ambiguity due to multiple filings.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of the two filings (original 10-K or amended 10-K/A) represents the authoritative revenue figure for the period is not settled by the evidence. The two values differ by $572 million."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    }
+  ]
+}

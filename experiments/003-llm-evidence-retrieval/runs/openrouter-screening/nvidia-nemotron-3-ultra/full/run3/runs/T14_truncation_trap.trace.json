@@ -1,0 +1,49 @@
+{
+  "answer": {
+    "answer": "AAPL's reported revenue history in ST-EVA spans 339 observations from fiscal 2007 (period ending 2007-09-29) through the quarter ended 2026-06-27. The series is not truncated and contains both quarterly and annual data points, with multiple filings (10-K, 10-K/A, 10-Q, 8-K) for many periods reflecting restatements and different acceptance dates. Revenue grew from $24.0\u202fbillion in FY2007 to $416.2\u202fbillion in FY2025 (latest annual filing). The reporting framework changes over time: early points use us-gaap:SalesRevenueNet (mapping_fidelity PARTIAL), while later points use us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (mapping_fidelity EXACT). A single vendor-sourced point (YahooFinance) for the trailing twelve months ended 2024-06-30 is also present. Because points declare different reporting frameworks (us-gaap and vendor), the series is not considered a single comparable series and has not been merged. All observations are SOURCE_REPORTED and UNVERIFIABLE (no cross-check validation).",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_34eea668c1419afbb7caccf2",
+      "obsarch_6685d2b420f3010dbeb6217b",
+      "obsarch_7429c7068c9299b29190bfba"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The series mixes quarterly and annual periods without a single consistent periodicity.",
+      "Multiple filings for the same period exist (e.g., 10-K, 10-K/A, 10-Q, 8-K) with identical or slightly different values; the database does not designate a single authoritative filing.",
+      "The change from us-gaap:SalesRevenueNet to us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax may affect comparability across the framework boundary.",
+      "The vendor-sourced point (YahooFinance) is not directly comparable to SEC-filed values."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 500,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=339,truncated=False)",
+      "returned_count": 339,
+      "sequence": 2
+    }
+  ]
+}

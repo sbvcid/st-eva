@@ -1,0 +1,10 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "TRANSPORT: not run: 3 provider_error refusals with no answer in between",
+    "uncertainties": []
+  },
+  "trace": []
+}

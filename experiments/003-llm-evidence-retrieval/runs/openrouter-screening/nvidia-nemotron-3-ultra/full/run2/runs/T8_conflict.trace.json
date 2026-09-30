@@ -1,0 +1,74 @@
+{
+  "answer": {
+    "answer": "ST-EVA records a cross-provider discrepancy for AAPL shares_outstanding as of 2023-11-03. Two sources report different values: SecEdgar (REGULATORY_FILING) reports 15,504,000,000 shares (observation obsarch_b31513334af56d3a649cf7b8), while YahooFinance (API_LIVE) reports 14,640,000,000 shares (observation obsarch_a6efc0f926c63aa25f356fd5). A recorded cross-check (validation record val_eval_conflict) flags this as DISCREPANT with a 5.9% difference and notes the sources are NOT_INDEPENDENT. ST-EVA has not selected either value; the resolution is NO_WINNER_SELECTED, meaning the evidence does not establish which figure is correct.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_b31513334af56d3a649cf7b8",
+      "obsarch_a6efc0f926c63aa25f356fd5"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which source, if either, reflects the true shares outstanding on 2023-11-03. The cross-check is marked NOT_INDEPENDENT, so agreement would not be strong corroboration even if they matched."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[20]",
+      "returned_count": 20,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "shares_outstanding",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[20]",
+      "returned_count": 20,
+      "sequence": 3
+    }
+  ]
+}
