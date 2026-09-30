@@ -1,0 +1,53 @@
+{
+  "attempts": 1,
+  "base_url": "https://openrouter.ai/api/v1",
+  "elapsed_seconds": 458.0,
+  "environment": {
+    "dataset_id": "steva-003-aapl-evidence",
+    "dataset_sha256": "4e34405d07b74e49d6c2f0fca22497e1c8b9a3aa702f411e509865d8de3d8230",
+    "dataset_test_count": 15,
+    "dataset_version": "1",
+    "evaluator_sha256": "949fb2dde3a113d3f030a6ff45147e1b0e4f2eec51e85dc4ece097ce10f6c46c",
+    "evaluator_version": "",
+    "harness_commit": "c7f7c28236cd40cb1eef4579a6af1d053be69171",
+    "harness_dirty": true,
+    "max_exchanges": 8,
+    "provider": "openrouter",
+    "snapshot_path": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
+    "snapshot_sha256": "ce603a5588cef067c151c54a291a4499d9839f39927c75bcd1c91921d918dddc",
+    "tool_operations": [
+      "query_observations",
+      "get_observation",
+      "get_metric_history",
+      "page",
+      "get_lineage",
+      "get_validation",
+      "get_source_document",
+      "coverage_report"
+    ],
+    "tool_schema_sha256": "5a2784a6dc7d7a9b54c2913bc7fa9d105d811ec464cfb1ce28b3feb9336b31b9"
+  },
+  "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "phase": "screen",
+  "provider": "openrouter",
+  "rate_limit_headers": {
+    "access-control-allow-origin": "*",
+    "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+    "cf-ray": "a42fc8229dc44a1b-TPE",
+    "connection": "close",
+    "content-type": "application/json",
+    "date": "Wed, 30 Sep 2026 02:26:16 GMT",
+    "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+    "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+    "server": "cloudflare",
+    "server-timing": "cfEdge;dur=39,cfOrigin;dur=0,cfWorker;dur=481",
+    "set-cookie": "__cf_bm=eisBm1bIvJCv1rLTbMw6_Vrx67aUcl3YdZUr9LmCzmE-1790735176.100103-1.0.1.1-PDTPqnidoBCYfHWALG2hj7O52ObpfeFLoelZojqQNepPdvWX55Elwz2CbgDLbTsakmzvUwsfX9Ewb9AYFxPM7dP_liA.6C7VF3QTFeFC9oSSi038heoTCjTIg8ipo6PK; HttpOnly; SameSite=None; Secure; Path=/; Domain=openrouter.ai; Expires=Wed, 30 Sep 2026 02:56:16 GMT",
+    "transfer-encoding": "chunked",
+    "x-content-type-options": "nosniff",
+    "x-generation-id": "gen-1790735176-xj42oG9kneUiphapx5ZW"
+  },
+  "requested_slug": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "seed": 7,
+  "transport_error": null,
+  "transport_ledger": []
+}

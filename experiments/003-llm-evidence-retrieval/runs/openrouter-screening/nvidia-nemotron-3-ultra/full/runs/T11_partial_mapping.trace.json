@@ -1,0 +1,105 @@
+{
+  "answer": {
+    "answer": "The concept 'SalesRevenueNet' (us-gaap:SalesRevenueNet) is a US GAAP taxonomy concept that AAPL filed in its SEC submissions. ST-EVA maps this concept to its 'revenue' metric, but with PARTIAL mapping fidelity \u2014 meaning it expresses 'revenue' only partially, not exactly. This PARTIAL mapping applied from 2007-09-29 through 2018-06-30. Since 2017-09-30, AAPL has filed under a different concept, us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, which ST-EVA maps to 'revenue' with EXACT fidelity. There was also a third concept, us-gaap:Revenues, mapped as PARTIAL from 2016-09-24 to 2018-09-29. Therefore, SalesRevenueNet is not the same measure as the current revenue concept; it is a narrower or wider aggregate that ST-EVA treats as only partially comparable to the general 'revenue' metric.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_8b16a09f918ead49d6a5167f",
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_942316ef20c27d04097d566a",
+      "obsarch_aea878acdf7f37c0b6d160b6"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The exact definitional difference between us-gaap:SalesRevenueNet and us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax is not explained by ST-EVA (series break explanations are 'NOT_EXPLAINED_BY_ST_EVA').",
+      "Whether the PARTIAL mapping means SalesRevenueNet systematically understates, overstates, or differs in composition from the EXACT concept cannot be determined from the evidence."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "SalesRevenueNet",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'SalesRevenueNet'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[20]",
+      "returned_count": 20,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "segment_revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
+      "sequence": 4
+    }
+  ]
+}

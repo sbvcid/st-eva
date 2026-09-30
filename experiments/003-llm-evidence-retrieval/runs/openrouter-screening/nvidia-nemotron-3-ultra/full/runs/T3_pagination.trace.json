@@ -1,0 +1,43 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "TRANSPORT: HTTP 503 from https://openrouter.ai/api/v1/chat/completions: {\"error\":{\"message\":\"Provider returned error\",\"code\":503,\"metadata\":{\"raw\":\"{\\\"error\\\":{\\\"message\\\":\\\"Service is not ready\\\",\\\"type\\\":\\\"Service Unavailable\\\",\\\"code\\\":503}}\",\"provider_name\":\"Nvidia\",\"is_byok\":false,\"provider_error_code\":\"503\"}},\"user_id\":\"user_3JEi7KIykua2ix3BlMEF9irhd8s\"}",
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=100,truncated=True)",
+      "returned_count": 100,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": "b2Zmc2V0OjEwMA==",
+        "limit": 100,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=100,truncated=True)",
+      "returned_count": 100,
+      "sequence": 2
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "answer": {
+    "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": [
+      "No source document reference was provided in the coverage report to check for filing text availability."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 1
+    }
+  ]
+}

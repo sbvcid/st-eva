@@ -120,6 +120,17 @@ class ProviderConfig:
     max_tokens: int = 1600
     timeout_seconds: int = 600
     seed: Optional[int] = 7
+    # "ollama" nests temperature/seed/max_tokens under `options`, which is the
+    # shape Ollama's OpenAI-compatible endpoint accepts. "openai" puts them at
+    # the top level, which is what a hosted OpenAI-compatible gateway expects
+    # and what OpenRouter requires: a gateway that does not see `temperature`
+    # at the top level will not apply it, and a run that claims temperature 0
+    # while the model sampled at its default is a mislabelled run.
+    #
+    # This is a transport detail and nothing more. It changes no prompt, no tool
+    # schema, no dataset, no expectation and no check, so two providers still
+    # differ in exactly one variable: which model answered.
+    wire_style: str = "ollama"
 
     @property
     def endpoint(self) -> str:
@@ -141,6 +152,7 @@ class ProviderConfig:
             "max_tokens": self.max_tokens,
             "seed": self.seed,
             "base_url": self.base_url,
+            "wire_style": self.wire_style,
         }
 
 
@@ -202,6 +214,10 @@ class OpenAICompatibleClient:
         # Read from the environment and never stored on the config, so a config
         # can be logged, written to a run directory, and committed.
         self._api_key = api_key or os.environ.get("ST_EVA_LLM_API_KEY", "")
+        # Response headers from the most recent call, so a hosted provider's
+        # rate-limit and retry-after signals can be recorded with the run instead
+        # of guessed at afterwards. Read-only bookkeeping; never sent anywhere.
+        self.last_response_headers: Dict[str, str] = {}
 
     def complete(
         self,
@@ -212,12 +228,18 @@ class OpenAICompatibleClient:
             "model": self.config.model,
             "messages": messages,
             "stream": False,
-            "options": {
+        }
+        if self.config.wire_style == "openai":
+            request["temperature"] = self.config.temperature
+            request["max_tokens"] = self.config.max_tokens
+            if self.config.seed is not None:
+                request["seed"] = self.config.seed
+        else:
+            request["options"] = {
                 "temperature": self.config.temperature,
                 "seed": self.config.seed,
                 "num_predict": self.config.max_tokens,
-            },
-        }
+            }
         if tools:
             request["tools"] = tools
         return self._post(request)
@@ -234,8 +256,26 @@ class OpenAICompatibleClient:
             with urllib.request.urlopen(
                 http_request, timeout=self.config.timeout_seconds
             ) as response:
-                return json.loads(response.read().decode("utf-8"))
+                self.last_response_headers = {
+                    key.lower(): value for key, value in response.headers.items()
+                }
+                payload = json.loads(response.read().decode("utf-8"))
+            # A gateway can answer 200 and still not have an answer: an upstream
+            # provider that was unavailable comes back as a body carrying an
+            # `error` and no choices. Passing that on as a completion would have
+            # the harness read `choices[0]` out of a body that has none, and the
+            # crash would be recorded as a model failure. It is a transport
+            # failure, which is what the caller needs to be able to tell.
+            if isinstance(payload, dict) and "choices" not in payload:
+                raise TransportError(
+                    f"no completion in the response from {self.config.endpoint}: "
+                    f"{json.dumps(payload)[:800]}"
+                )
+            return payload
         except urllib.error.HTTPError as error:
+            self.last_response_headers = {
+                key.lower(): value for key, value in error.headers.items()
+            } if error.headers else {}
             detail = error.read().decode("utf-8", "replace")[:800]
             raise TransportError(
                 f"HTTP {error.code} from {self.config.endpoint}: {detail}"

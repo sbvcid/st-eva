@@ -1,0 +1,499 @@
+{
+  "dataset_id": "steva-003-openrouter-smoke",
+  "finished_at": "2026-09-30T02:18:18.516916+00:00",
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "passed": 1,
+  "results": [
+    {
+      "answer": {
+        "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+        "derived_refs": [],
+        "evidence_refs": [],
+        "parse_error": null,
+        "uncertainties": [
+          "No source document reference was provided in the coverage report to check for filing text availability."
+        ]
+      },
+      "audit": {
+        "answer_text": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+        "check_count": 3,
+        "checks": [
+          {
+            "actual": 1,
+            "capability": "F10",
+            "classification": null,
+            "detail": "",
+            "expected": ">= 1 tool call that returned",
+            "name": "the model used the tool surface",
+            "passed": true
+          },
+          {
+            "actual": "parsed",
+            "capability": "F4",
+            "classification": null,
+            "detail": "",
+            "expected": "a JSON answer object",
+            "name": "the answer parsed into the contract",
+            "passed": true
+          },
+          {
+            "actual": "skipped: the tool returned no observations",
+            "capability": "F4",
+            "classification": null,
+            "detail": "",
+            "expected": "applied, or skipped because no observation was returned",
+            "name": "citation checks applied",
+            "passed": true
+          }
+        ],
+        "expectations": {},
+        "failed_count": 0,
+        "passed": true,
+        "test_id": "S0_tool_call_smoke"
+      },
+      "capability": "F10",
+      "expectations": {},
+      "model": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "max_tokens": 1600,
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "provider": "openrouter",
+        "seed": 7,
+        "temperature": 0.0,
+        "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "wire_style": "openai"
+      },
+      "question": "Run the coverage_report tool for AAPL. Then state how many metrics ST-EVA holds for AAPL. If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available.",
+      "retrieved_observations": [],
+      "semantic_judgement": null,
+      "target_run": {
+        "elapsed_seconds": 17.55,
+        "error": null,
+        "exchanges": [
+          {
+            "elapsed_seconds": 2.39,
+            "index": 0,
+            "message_count": 2,
+            "response": {
+              "choices": [
+                {
+                  "finish_reason": "tool_calls",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "content": null,
+                    "reasoning": "The user wants me to:\n1. Run coverage_report for AAPL\n2. State how many metrics ST-EVA holds for AAPL\n3. If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available\n\nLet me start with the coverage_report tool",
+                    "reasoning_details": [
+                      {
+                        "format": "unknown",
+                        "index": 0,
+                        "text": "The user wants me to:\n1. Run coverage_report for AAPL\n2. State how many metrics ST-EVA holds for AAPL\n3. If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available\n\nLet me start with the coverage_report tool",
+                        "type": "reasoning.text"
+                      }
+                    ],
+                    "refusal": null,
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"asset\":\"AAPL\"}",
+                          "name": "coverage_report"
+                        },
+                        "id": "call-9fcd5fc8-3189-440c-b990-5054ede05b8c",
+                        "index": 0,
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "native_finish_reason": "tool_calls"
+                }
+              ],
+              "created": 1790734679,
+              "id": "gen-1790734679-07wmvgfHosUizQAz9RVl",
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "object": "chat.completion",
+              "provider": "Nvidia",
+              "service_tier": null,
+              "system_fingerprint": null,
+              "usage": {
+                "completion_tokens": 95,
+                "completion_tokens_details": {
+                  "audio_tokens": 0,
+                  "image_tokens": 0,
+                  "reasoning_tokens": 71
+                },
+                "cost": 0,
+                "cost_details": {
+                  "upstream_inference_completions_cost": 0,
+                  "upstream_inference_cost": 0,
+                  "upstream_inference_prompt_cost": 0
+                },
+                "is_byok": false,
+                "prompt_tokens": 2438,
+                "prompt_tokens_details": {
+                  "audio_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "cached_tokens": 0,
+                  "video_tokens": 0
+                },
+                "total_tokens": 2533
+              }
+            }
+          },
+          {
+            "index": 1,
+            "result_bytes": 2207,
+            "tool_call": {
+              "arguments": {
+                "asset": "AAPL"
+              },
+              "name": "coverage_report"
+            }
+          },
+          {
+            "elapsed_seconds": 15.15,
+            "index": 1,
+            "message_count": 4,
+            "response": {
+              "choices": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "content": "{\n  \"answer\": \"ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.\",\n  \"evidence_refs\": [],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"No source document reference was provided in the coverage report to check for filing text availability.\"]\n}",
+                    "reasoning": "The coverage report shows 12 metrics for AAPL. The report doesn't explicitly name a source document reference - it just shows metrics and their states. There's no specific source document reference mentioned that I need to fetch with get_source_document.\n\nLet me check if there's any source document reference in the response. Looking at the response, I see metrics with their states, observations_held, reason_codes, etc., but no explicit source document reference like a filing ID or document ID.\n\nThe user asked: \"If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available.\"\n\nSince the coverage_report doesn't name a specific source document reference (it just shows metric-level summary), I don't need to call get_source_document.\n\nNow I need to reply with the JSON object. The answer should state how many metrics ST-EVA holds for AAPL (12), and note that no source document reference was named in the report.",
+                    "reasoning_details": [
+                      {
+                        "format": "unknown",
+                        "index": 0,
+                        "text": "The coverage report shows 12 metrics for AAPL. The report doesn't explicitly name a source document reference - it just shows metrics and their states. There's no specific source document reference mentioned that I need to fetch with get_source_document.\n\nLet me check if there's any source document reference in the response. Looking at the response, I see metrics with their states, observations_held, reason_codes, etc., but no explicit source document reference like a filing ID or document ID.\n\nThe user asked: \"If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available.\"\n\nSince the coverage_report doesn't name a specific source document reference (it just shows metric-level summary), I don't need to call get_source_document.\n\nNow I need to reply with the JSON object. The answer should state how many metrics ST-EVA holds for AAPL (12), and note that no source document reference was named in the report.",
+                        "type": "reasoning.text"
+                      }
+                    ],
+                    "refusal": null,
+                    "role": "assistant"
+                  },
+                  "native_finish_reason": "stop"
+                }
+              ],
+              "created": 1790734682,
+              "id": "gen-1790734682-Ef3JagZmIMKBkNjlJ6fr",
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "object": "chat.completion",
+              "provider": "Nvidia",
+              "service_tier": null,
+              "system_fingerprint": null,
+              "usage": {
+                "completion_tokens": 374,
+                "completion_tokens_details": {
+                  "audio_tokens": 0,
+                  "image_tokens": 0,
+                  "reasoning_tokens": 248
+                },
+                "cost": 0,
+                "cost_details": {
+                  "upstream_inference_completions_cost": 0,
+                  "upstream_inference_cost": 0,
+                  "upstream_inference_prompt_cost": 0
+                },
+                "is_byok": false,
+                "prompt_tokens": 3239,
+                "prompt_tokens_details": {
+                  "audio_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "cached_tokens": 0,
+                  "video_tokens": 0
+                },
+                "total_tokens": 3613
+              }
+            }
+          }
+        ],
+        "first_reply_parsed": true,
+        "format_repair_used": false,
+        "initial_messages": [
+          {
+            "content": "You are answering questions using ST-EVA, an evidence database of filed financial data. You answer only from what its query tools return.\n\nYou cannot see the database directly. You have tools that read it. Use them.\n\nThe evidence carries states, and each one means something different:\n\nSOURCE_REPORTED  a value a source stated. The ordinary case.\nDERIVED          computed by ST-EVA from named operands, not reported by\n                 anyone. It is a calculation and it says so.\nVALIDATED        cross-checked against another source. Agreement between two\n                 comparable sources is not proof the figure is correct.\nUNAVAILABLE      retrieval failed. Not zero, and not \"no data exists\".\nCONFLICTING      two sources disagree. Neither is selected.\nNOT_APPLICABLE   the measure is not meaningful for this business. Different\n                 from UNAVAILABLE, and different from a zero.\nSTALE            what is held has gone out of date. Not historically false.\nNOT_COMPARABLE   the series must break here; the measure changed.\nPARTIAL          a source concept that expresses the metric only partially, as\n                 a wider or narrower aggregate. Never the same as EXACT.\nEXACT            a source concept that expresses the metric exactly.\n\nEach observation carries a `status` with two separate parts:\n\n- `status.evidence_state.state` is one of the states above.\n- `status.validation_status` says whether cross-checking found anything, and\n  is `UNVERIFIABLE` for a figure only one source has reported.\n\nTo filter on either, the parameter names it. `query_observations` takes\n`validation_status` for the cross-check status; the evidence state is not\nfilterable and is read from each observation.\n\nAn unknown metric is refused by name, with the real ones attached. A metric\nST-EVA knows but has no rows for your filter returns an empty list, which is a\ndifferent answer and means the data is not there for that period.\n\nRules:\n\n- Use a tool before making a factual claim. Do not state a number no tool\n  returned.\n- An empty result means your filter matched nothing. Widen the filter before\n  concluding that evidence is absent.\n- Report a figure's state when the state changes how it may be read. A PARTIAL\n  concept is not an EXACT one. A disagreement is not settled. A derived value\n  is not a reported one.\n- If a series is truncated, say so. Do not present part of a series as the\n  whole of it.\n- If evidence is missing, say what is missing. Do not fill a gap with a\n  plausible value, and do not report a negative state as a number.\n- Report what the evidence establishes and stop there. Do not explain why\n  something happened unless the evidence states why.\n- Cite the observation ids the tools gave you, in `evidence_refs`.\n\nYour reply must be a single JSON object and nothing else. No prose before it,\nno prose after it, no markdown fence:\n\n{\n  \"answer\": \"the answer in prose, with every claim traceable to evidence\",\n  \"evidence_refs\": [\"the observation ids the tools returned\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"anything the evidence does not settle\"]\n}\n\nBoth `answer` and `evidence_refs` are required. If you cannot cite evidence,\nthat belongs in `uncertainties`, not in `answer`.",
+            "role": "system"
+          },
+          {
+            "content": "Run the coverage_report tool for AAPL. Then state how many metrics ST-EVA holds for AAPL. If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available.\n\nReply with the JSON object described in your instructions, and nothing else.",
+            "role": "user"
+          }
+        ],
+        "stop_reason": "answered",
+        "test_attempts": 1,
+        "tool_definitions": [
+          {
+            "function": {
+              "description": "Observations matching a filter, oldest first.\n\n        `metric` must be one ST-EVA knows. An unknown name is refused with the\n        list of real ones rather than returning an empty result, because an\n        empty result is what a genuinely absent figure looks like and the two\n        were indistinguishable.\n\n        `limit` truncates silently. Use `page` when the length of a series\n        matters.",
+              "name": "query_observations",
+              "parameters": {
+                "properties": {
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "asset": {
+                    "type": "string"
+                  },
+                  "basis_framework": {
+                    "type": "string"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "instant": {
+                    "type": "boolean"
+                  },
+                  "knowable_at": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "metric": {
+                    "type": "string"
+                  },
+                  "order": {
+                    "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                    "enum": [
+                      "PERIOD_ASCENDING",
+                      "PERIOD_DESCENDING",
+                      "AVAILABLE_AT_ASCENDING"
+                    ],
+                    "type": "string"
+                  },
+                  "period_end": {
+                    "type": "string"
+                  },
+                  "period_start": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "source_type": {
+                    "type": "string"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "validation_status": {
+                    "type": "string"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "One observation by its stable identity, with full metadata.",
+              "name": "get_observation",
+              "parameters": {
+                "properties": {
+                  "include_lineage": {
+                    "type": "boolean"
+                  },
+                  "include_validation": {
+                    "type": "boolean"
+                  },
+                  "observation_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "observation_id"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+              "name": "get_metric_history",
+              "parameters": {
+                "properties": {
+                  "asset": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "metric": {
+                    "type": "string"
+                  },
+                  "period_end": {
+                    "type": "string"
+                  },
+                  "period_start": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "asset",
+                  "metric"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+              "name": "page",
+              "parameters": {
+                "properties": {
+                  "asset": {
+                    "type": "string"
+                  },
+                  "cursor": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "metric": {
+                    "type": "string"
+                  },
+                  "order": {
+                    "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                    "enum": [
+                      "PERIOD_ASCENDING",
+                      "PERIOD_DESCENDING",
+                      "AVAILABLE_AT_ASCENDING"
+                    ],
+                    "type": "string"
+                  },
+                  "period_end": {
+                    "type": "string"
+                  },
+                  "period_start": {
+                    "type": "string"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+              "name": "get_lineage",
+              "parameters": {
+                "properties": {
+                  "depth": {
+                    "type": "integer"
+                  },
+                  "reference": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+              "name": "get_validation",
+              "parameters": {
+                "properties": {
+                  "observation_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "observation_id"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "Source-document metadata by id, content hash or canonical URI.",
+              "name": "get_source_document",
+              "parameters": {
+                "properties": {
+                  "reference": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          },
+          {
+            "function": {
+              "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+              "name": "coverage_report",
+              "parameters": {
+                "properties": {
+                  "asset": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "asset"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          }
+        ],
+        "tool_results": [
+          {
+            "content": "{\"asset\": \"AAPL\", \"metric_count\": 12, \"state_counts\": {\"SOURCE_REPORTED\": 8, \"SOURCE_DID_NOT_REPORT\": 1, \"NOT_APPLICABLE\": 1, \"UNAVAILABLE\": 1, \"CONFLICTING\": 0, \"STALE\": 1}, \"metrics\": [{\"metric\": \"assets\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 146, \"resolved_from\": \"observation_status\"}, {\"metric\": \"capex\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 164, \"resolved_from\": \"observation_status\"}, {\"metric\": \"cash\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 348, \"resolved_from\": \"observation_status\"}, {\"metric\": \"debt\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 180, \"resolved_from\": \"observation_status\"}, {\"metric\": \"dividend_per_share\", \"state\": \"SOURCE_DID_NOT_REPORT\", \"reason_code\": \"SOURCE_OMITS_CONCEPT\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"eps_diluted\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 338, \"resolved_from\": \"observation_status\"}, {\"metric\": \"guidance\", \"state\": \"STALE\", \"reason_code\": \"NO_RECENT_VALUE\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"net_income\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 338, \"resolved_from\": \"observation_status\"}, {\"metric\": \"operating_margin_bank\", \"state\": \"NOT_APPLICABLE\", \"reason_code\": \"BUSINESS_MODEL_NOT_MEANINGFUL\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"revenue\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 339, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"segment_revenue\", \"state\": \"UNAVAILABLE\", \"reason_code\": \"RETRIEVAL_FAILED\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"shares_outstanding\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 72, \"resolved_from\": \"observation_status\"}], \"note\": \"States are counted, not scored. A single completeness figure would be an interpretation and would hide which distinct negative applies to which metric.\"}",
+            "name": "coverage_report",
+            "tool_call_id": "call-9fcd5fc8-3189-440c-b990-5054ede05b8c"
+          }
+        ]
+      },
+      "test_id": "S0_tool_call_smoke",
+      "trace": [
+        {
+          "arguments": {
+            "asset": "AAPL"
+          },
+          "error": null,
+          "operation": "coverage_report",
+          "result_shape": "object[5]",
+          "returned_count": null,
+          "sequence": 1
+        }
+      ]
+    }
+  ],
+  "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\nvidia-nemotron-3-ultra\\smoke",
+  "snapshot": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
+  "started_at": "2026-09-30T02:18:00.961048+00:00",
+  "total": 1
+}

@@ -543,6 +543,7 @@ class Auditor:
         answer: str,
         claims: Set[str],
         expected_side_ids: List[str],
+        also_acceptable_side_sets: Optional[List[List[str]]] = None,
     ) -> None:
         """
         A disagreement is reported as a disagreement.
@@ -550,9 +551,26 @@ class Auditor:
         Three separate failures, checked separately because they are different
         mistakes: dropping one side, choosing a winner, or describing the
         disagreement as settled.
+
+        `also_acceptable_side_sets` exists because the archive holds more than
+        one way for a figure to be in dispute. Besides a cross-source
+        validation record, two of the archive's own rows can be indistinguishable
+        from each other, which the surface reports with the same discipline and
+        the same `NO_WINNER_SELECTED` resolution. A test that names one of those
+        records and requires exactly its two ids would fail a model that
+        preserved a different disagreement just as faithfully, and would be
+        grading the row the question happened to resolve to rather than the
+        capability. The alternative sets carry the same test -- two figures the
+        archive will not choose between, both cited -- and nothing weaker.
         """
         side_ids = set(expected_side_ids)
-        both_cited = side_ids <= claims
+        acceptable = [side_ids] + [
+            set(sides) for sides in (also_acceptable_side_sets or [])
+        ]
+        satisfied = next(
+            (sides for sides in acceptable if sides and sides <= claims), None
+        )
+        both_cited = satisfied is not None
         audit.checks.append(
             Check(
                 capability="F8",
@@ -561,9 +579,10 @@ class Auditor:
                 expected=sorted(side_ids),
                 actual=sorted(claims),
                 detail=(
-                    f"missing: {sorted(side_ids - claims)}"
-                    if not both_cited
-                    else ""
+                    ""
+                    if both_cited
+                    else f"missing: {sorted(side_ids - claims)}, and no other "
+                    "disagreement the archive records was cited in full"
                 ),
                 classification=CLASS_TARGET if not both_cited else None,
             )

@@ -1,0 +1,158 @@
+{
+  "models": [
+    {
+      "model": {
+        "dir": "stealth-space-bunny-alpha",
+        "model_id": "stealth/space-bunny-alpha",
+        "name": "stealth-space-bunny-alpha",
+        "requested_slug": "stealth/space-bunny-alpha:free",
+        "seed": null
+      },
+      "phase": "smoke",
+      "quota_after": {
+        "is_free_tier": false,
+        "limit": 2,
+        "limit_daily": null,
+        "limit_weekly": null,
+        "usage": 0,
+        "usage_daily": 0,
+        "usage_weekly": 0
+      },
+      "rows": [
+        {
+          "answer_parsed": true,
+          "checks": 3,
+          "derived_refs": [],
+          "elapsed_seconds": 14.76,
+          "evidence_refs": [],
+          "exchanges": 3,
+          "failed_checks": [],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "off_surface_calls": [],
+          "operations": [
+            "coverage_report"
+          ],
+          "parse_error": null,
+          "retrieved_observations": [],
+          "stop_reason": "answered",
+          "test_id": "S0_tool_call_smoke",
+          "tool_calls": 1,
+          "uncertainties": [
+            "The coverage_report returned no observation ids, so the counts and state labels above cannot be cited to specific observations; every claim rests on the report payload alone.",
+            "No source document reference is named anywhere in the report, so filing-text availability for AAPL is not established. Establishing it would require an observation-level source reference, which the report does not supply.",
+            "The state label SOURCE_DID_NOT_REPORT appears in the report for dividend_per_share; it is not among the states described in my operating instructions, so I report it as returned rather than interpreting it.",
+            "The report gives observations_held per metric but no period coverage, so those counts cannot be read as complete or truncated series, and I do not know their period ranges.",
+            "segment_revenue being UNAVAILABLE means retrieval failed for this filter set; it does not establish that no segment revenue data exists for AAPL.",
+            "The reason codes (for example SOURCE_OMITS_CONCEPT, BUSINESS_MODEL_NOT_MEANINGFUL) are the tool's characterisations; the evidence does not state the underlying reasoning in more detail."
+          ],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 1453,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 0
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 2836,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 2197,
+              "video_tokens": 0
+            },
+            "total_tokens": 4289
+          },
+          "verdict": "PASS"
+        }
+      ],
+      "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\stealth-space-bunny-alpha\\smoke",
+      "status": "RAN",
+      "totals": {
+        "failed": 0,
+        "passed": 1,
+        "tests": 1
+      }
+    },
+    {
+      "model": {
+        "dir": "google-gemma-4-26b-a4b-it",
+        "model_id": "google/gemma-4-26b-a4b-it:free",
+        "name": "google-gemma-4-26b-a4b-it",
+        "requested_slug": "google/gemma-4-26b-a4b-it:free",
+        "seed": 7
+      },
+      "phase": "smoke",
+      "quota_after": {
+        "is_free_tier": false,
+        "limit": 2,
+        "limit_daily": null,
+        "limit_weekly": null,
+        "usage": 0,
+        "usage_daily": 0,
+        "usage_weekly": 0
+      },
+      "rows": [
+        {
+          "answer_parsed": false,
+          "checks": 3,
+          "derived_refs": [],
+          "elapsed_seconds": 0.22,
+          "evidence_refs": [],
+          "exchanges": 1,
+          "failed_checks": [
+            "the model used the tool surface",
+            "the answer parsed into the contract"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "off_surface_calls": [],
+          "operations": [],
+          "parse_error": "TRANSPORT: HTTP 429 from https://openrouter.ai/api/v1/chat/completions: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Google AI Studio\",\"is_byok\":false,\"provider_error_code\":\"429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\"}},\"user_id\":\"user_3JEi7KIykua2ix3BlMEF9irhd8s\"}",
+          "retrieved_observations": [],
+          "stop_reason": "transport_error",
+          "test_id": "S0_tool_call_smoke",
+          "tool_calls": 0,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": null,
+          "verdict": "FAIL"
+        }
+      ],
+      "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\google-gemma-4-26b-a4b-it\\smoke",
+      "status": "RAN",
+      "totals": {
+        "failed": 1,
+        "passed": 0,
+        "tests": 1
+      }
+    }
+  ],
+  "quota_after": {
+    "is_free_tier": false,
+    "limit": 2,
+    "limit_daily": null,
+    "limit_weekly": null,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0
+  },
+  "quota_before": {
+    "is_free_tier": false,
+    "limit": 2,
+    "limit_daily": null,
+    "limit_weekly": null,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0
+  }
+}

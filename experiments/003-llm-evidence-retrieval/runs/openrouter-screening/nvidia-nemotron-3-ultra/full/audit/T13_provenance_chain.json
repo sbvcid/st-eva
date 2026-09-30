@@ -1,0 +1,1128 @@
+{
+  "answer": {
+    "answer": "For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\n\nObservation 1 (original 10-K):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000 USD\n- Source: SEC 10-K filing, accession 0001193125-09-214859\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_b5229f1711c68622f937916d70285775\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\n\nObservation 2 (amended 10-K/A):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000 USD\n- Source: SEC 10-K/A filing, accession 0001193125-10-012091\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_52493188959d0d442076337871e8951b\n- Source document: same doc_24e188322f7c7d6939f9dc79 (the SEC company concept endpoint aggregates multiple filings)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.187458+00:00\n\nBoth observations share the same source document (the SEC company concept JSON for us-gaap:SalesRevenueNet) but reference different accessions (original vs amended filing). ST-EVA flags an ambiguity: competing values exist for the same metric, period, and source concept, and no winner has been selected because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "doc_24e188322f7c7d6939f9dc79"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of the two competing revenue values ($24.006B vs $24.578B) is the intended figure for the period ending 2007-09-29; ST-EVA has not selected a winner and the ambiguity remains unresolved.",
+      "The PARTIAL mapping fidelity means us-gaap:SalesRevenueNet is not an exact match for the revenue metric; it is a narrower or wider aggregate."
+    ]
+  },
+  "audit": {
+    "answer_text": "For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\n\nObservation 1 (original 10-K):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000 USD\n- Source: SEC 10-K filing, accession 0001193125-09-214859\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_b5229f1711c68622f937916d70285775\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\n\nObservation 2 (amended 10-K/A):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000 USD\n- Source: SEC 10-K/A filing, accession 0001193125-10-012091\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_52493188959d0d442076337871e8951b\n- Source document: same doc_24e188322f7c7d6939f9dc79 (the SEC company concept endpoint aggregates multiple filings)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.187458+00:00\n\nBoth observations share the same source document (the SEC company concept JSON for us-gaap:SalesRevenueNet) but reference different accessions (original vs amended filing). ST-EVA flags an ambiguity: competing values exist for the same metric, period, and source concept, and no winner has been selected because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.",
+    "check_count": 6,
+    "checks": [
+      {
+        "actual": {
+          "accession": "0001193125-09-214859",
+          "available_at": "2009-10-27T00:00:00+00:00",
+          "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+          "period_end": "2007-09-29",
+          "source_concept_ref": "us-gaap:SalesRevenueNet",
+          "source_fact_id": "sfid_b5229f1711c68622f937916d70285775"
+        },
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": {
+          "accession": "<present>",
+          "document_content_hash": "<present>",
+          "period_end": "<present>",
+          "source_fact_id": "<present>"
+        },
+        "name": "provenance chain is complete",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_6383b6a9892d72ff26aab02a",
+          "obsarch_ddb4af888ab3c6be910c0f9e"
+        ],
+        "capability": "F5",
+        "classification": "B",
+        "detail": "cited without retrieving: ['doc_24e188322f7c7d6939f9dc79']",
+        "expected": [
+          "doc_24e188322f7c7d6939f9dc79",
+          "obsarch_6383b6a9892d72ff26aab02a",
+          "obsarch_ddb4af888ab3c6be910c0f9e"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": false
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "sfid_b5229f1711c68622f937916d70285775",
+        "name": "cites source_fact_id for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "0001193125-09-214859",
+        "name": "cites accession for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "us-gaap:SalesRevenueNet",
+        "name": "cites source_concept_ref for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F2",
+        "classification": null,
+        "detail": "",
+        "expected": "2009-10-27T00:00:00+00:00",
+        "name": "cites available_at for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "accession": "0001193125-09-214859",
+      "available_at": "2009-10-27T00:00:00+00:00",
+      "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+      "form": "10-K",
+      "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+      "period_end": "2007-09-29",
+      "period_start": "2006-10-01",
+      "source_concept_ref": "us-gaap:SalesRevenueNet",
+      "source_fact_id": "sfid_b5229f1711c68622f937916d70285775",
+      "taxonomy": "us-gaap"
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "T13_provenance_chain"
+  },
+  "capability": "F5",
+  "expectations": {
+    "accession": "0001193125-09-214859",
+    "available_at": "2009-10-27T00:00:00+00:00",
+    "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+    "form": "10-K",
+    "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+    "period_end": "2007-09-29",
+    "period_start": "2006-10-01",
+    "source_concept_ref": "us-gaap:SalesRevenueNet",
+    "source_fact_id": "sfid_b5229f1711c68622f937916d70285775",
+    "taxonomy": "us-gaap"
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "question": "Take the revenue figure for the period ending 2007-09-29 and trace it all the way back: observation, source fact, source document, accession, concept, period, and when it became available.",
+  "retrieved_observations": [
+    "obs_sha256:43c39af362ff23422b95b02642e929822f14c148fe205378bd83174c21ad6d82",
+    "obs_sha256:a8630c2b5aa499ff899916e3c08a38d45ce14effdd7af83a4086a55acc4bcf0e",
+    "obsarch_007394295d4c321a995c995b",
+    "obsarch_03b289e8f1ced4474736e75a",
+    "obsarch_049fc38b6188801abe2d376e",
+    "obsarch_08ac3ea30be7132e9e6b72af",
+    "obsarch_09173ba8b9ac624c0d1a08f0",
+    "obsarch_0e5227e2884a7dfff98593e0",
+    "obsarch_0f070d3e4e0527557d7c61ad",
+    "obsarch_1058bf22d5159731bf10fd93",
+    "obsarch_105e11ea98a8cd6d8de5148b",
+    "obsarch_11ca7a92dcd46da07e9e4776",
+    "obsarch_12d6d60b9014e06cad9be0a3",
+    "obsarch_140501fd73a77c0968bef3a9",
+    "obsarch_14565ee927ca5e42f9cd91f0",
+    "obsarch_16012b05b2cc6e74bf0a5b4d",
+    "obsarch_1807929e126bb7d1c7bd55fa",
+    "obsarch_188a943b925712068eaa20fc",
+    "obsarch_18c860e856a6fbdfe1200f35",
+    "obsarch_18e654ab50f66fcaaad89590",
+    "obsarch_1da8e8570f0c94a6a2bdfd58",
+    "obsarch_1eb988c2c9029d70da7dca19",
+    "obsarch_21d249e580102aee609dbb45",
+    "obsarch_21e7dc56ce923544ece31941",
+    "obsarch_21f2c3c83f937cb55445317f",
+    "obsarch_237ac133437f1fd552e33331",
+    "obsarch_2382f91af29997664667a5f5",
+    "obsarch_23d031ee781b4c5f2d38ea75",
+    "obsarch_25e752a9b470e55013848b44",
+    "obsarch_28100001de916e66be312136",
+    "obsarch_296c3fb8278dfbeb15549734",
+    "obsarch_29e80f765f39ccca7e07dc5f",
+    "obsarch_2a95689c99f98881cb66c136",
+    "obsarch_2d7683c7069c4289254bb5e9",
+    "obsarch_2dc3d55b7b7b5e39fea01888",
+    "obsarch_2df65eebe68924321408167e",
+    "obsarch_306afbb586f6cf7bfd381f1e",
+    "obsarch_3195932b3cd1b8b975e569a9",
+    "obsarch_32e86505947199350b750776",
+    "obsarch_332f740d271654356e8219ae",
+    "obsarch_33b83551da5a8d1d25724ee1",
+    "obsarch_33e53a78796b85f651ab5c2d",
+    "obsarch_35c3cb6c51339e273bbf9bc7",
+    "obsarch_38bbf0b15cee65fc9c09211a",
+    "obsarch_38fbbaefe5e2402ff5c80b18",
+    "obsarch_39b9fe88ef875f125e3208cc",
+    "obsarch_3b16e325248a9085a6cd8326",
+    "obsarch_3c647ded1d2977e1521e195c",
+    "obsarch_3e85b58a089fab357c5d7f4e",
+    "obsarch_3f60084986f0ce99b4b76ae2",
+    "obsarch_404477478863f51ed3dd4467",
+    "obsarch_40b63248e5b427780527ac1d",
+    "obsarch_4149c62a789523256fbb90d1",
+    "obsarch_4184b3b46811ae730223f691",
+    "obsarch_4281e4260dde8195face2eac",
+    "obsarch_43d3f85a08ca9fd98e34d948",
+    "obsarch_45ad4ed4bc9d89165817b57c",
+    "obsarch_462d289d02085468ffa50e7a",
+    "obsarch_4645df21da35b534af07fe01",
+    "obsarch_466ad08feeef461d885a0874",
+    "obsarch_46caaee7f34a06ec7e334a6b",
+    "obsarch_481ac6df6aee97792dc674ca",
+    "obsarch_4bb8df1be06c4a4a0c7ce796",
+    "obsarch_4d91a9aba8efa078ac4a8043",
+    "obsarch_4da100bb80f1702de54100e4",
+    "obsarch_4ede423d0085f9e0f64a5c11",
+    "obsarch_4f7a8d4745bcc2a26b12a3d3",
+    "obsarch_527f481f78370447ce4e50c1",
+    "obsarch_535302e7d57561255e55935a",
+    "obsarch_557acf7939f6963f0c91dc06",
+    "obsarch_55ea836fbde508a0fe0c1186",
+    "obsarch_562bf9fa699a14a18a926e31",
+    "obsarch_567df6cf558088dc077f4d27",
+    "obsarch_56f48d4eeed4ac88e0b15a43",
+    "obsarch_57ac6ada2bfcd5b45fe4b394",
+    "obsarch_5904f209aa5010feb4edd894",
+    "obsarch_59be6d1bc7b5260b5d19f7ac",
+    "obsarch_5a8379273b4232e61b44e894",
+    "obsarch_5a87b9715cbcb61d2250fdd2",
+    "obsarch_5b372c44a1488c07b1176b2f",
+    "obsarch_5b3b3adf02bcfd5a07933aaf",
+    "obsarch_5ce097360a7cd0a4205bd721",
+    "obsarch_5d702612d3be8e7cd2a609bc",
+    "obsarch_5dc918337e466abfbac963f3",
+    "obsarch_5eeff7dc4857edef5dbec3a5",
+    "obsarch_5fbaa45dd9cfec33b6634deb",
+    "obsarch_61bcaa984ed81bbc20989ac8",
+    "obsarch_61d2ae501c81206aa602bd79",
+    "obsarch_6383b6a9892d72ff26aab02a",
+    "obsarch_64066a451c6810950ac6dbd4",
+    "obsarch_6457db10864cafc3a3f5adc4",
+    "obsarch_6577417b5622e80147ed9cae",
+    "obsarch_68501dd28ec9d7913d73dd64",
+    "obsarch_68a5f9b68b50a4f92cf8213c",
+    "obsarch_68d417d6167a0ef8f5a18e5a",
+    "obsarch_6a04aa48c87cc6272cbda3ba",
+    "obsarch_6a0c1200a4d255c3fdefab5b",
+    "obsarch_6b2821663a18f6e04bb5c328",
+    "obsarch_6c1bab27c3d01a553060502d",
+    "obsarch_6e3aa02891ccb66240bd0fb3",
+    "obsarch_6f8f7190a98c3bd6026f74c3",
+    "obsarch_70b52729c330521a4b585baf",
+    "obsarch_711ce22a1d4c0a5dc217dbff",
+    "obsarch_72b5391df7aeb2c42e5b188b",
+    "obsarch_73e6f609902b57da9b765a1d",
+    "obsarch_7840cae9d93cfdd3de0a342f",
+    "obsarch_799438086f2c045bdf206394",
+    "obsarch_7ad21f683377b5764bb19376",
+    "obsarch_7cae5db62ab2def21b8749d7",
+    "obsarch_81e81f41b3e42a27fc960113",
+    "obsarch_8247961b1a70412525f20b32",
+    "obsarch_839372c9666a212bb019ebb9",
+    "obsarch_872d6db0f1726688146b0d90",
+    "obsarch_87a063240debefa1d03f661e",
+    "obsarch_87b0a51e4d5f929d823f7d1f",
+    "obsarch_87f0a1e742243d59eb86df9b",
+    "obsarch_88f98af29f2d033dfe5d83a4",
+    "obsarch_89a43ac123d1f2300a42d830",
+    "obsarch_8e37a61d9da84801c8d753dd",
+    "obsarch_8f2a205e6d9f668e2c623c72",
+    "obsarch_90c7004bb164b3189aa1255b",
+    "obsarch_91b87b9f053dda43e9a6a72e",
+    "obsarch_91c2aefaab7becd4991072d2",
+    "obsarch_92b6db685a6d7c000b19f645",
+    "obsarch_938afc1f5228da6f096f87c4",
+    "obsarch_93fee51aaa69c96c6f90fdcc",
+    "obsarch_942316ef20c27d04097d566a",
+    "obsarch_96c6baa88d6f561ade765294",
+    "obsarch_9871d2fb737985be8af39b86",
+    "obsarch_9876bb7ff70888195c271bda",
+    "obsarch_989043c92a5390bcacba91e2",
+    "obsarch_98b440a0ea616781f4406349",
+    "obsarch_98ffde4dadbba38d2eb92b5f",
+    "obsarch_9a0216c724832182a4ce24d6",
+    "obsarch_9a9de8cf9044ceaf189f9670",
+    "obsarch_9aab181f2a8a1e5825c07552",
+    "obsarch_9aac7c9cc516bdee6b25c564",
+    "obsarch_9d96b4b77c2e39da429cc82b",
+    "obsarch_9ec9f6cd1034bb97da8e3683",
+    "obsarch_9f28c6fd9f0b4d854e5f448b",
+    "obsarch_a2d7cef955f96710afaac00d",
+    "obsarch_a307ae29a24cc78b621136ef",
+    "obsarch_a46a2eb744fe636ee378ee60",
+    "obsarch_a5a791b6e0ec17c5179f34b8",
+    "obsarch_a7dd4319fd8f4f31704ab6b2",
+    "obsarch_a8c3536012b850e312b0576d",
+    "obsarch_aa0f99a657e14eb792afa21b",
+    "obsarch_ab369432be96d4aa3becbf71",
+    "obsarch_abfea334cded6eb38cf00d3a",
+    "obsarch_ad3fd43035b4c0be2444e9c0",
+    "obsarch_ae30a20e8ac7e99039d69c5f",
+    "obsarch_af4001bf524fd5398a1cf327",
+    "obsarch_b09af5c99e76fbfd665ff931",
+    "obsarch_b109433867267dfc24b49e16",
+    "obsarch_b11814215976ef145bd9d2a5",
+    "obsarch_b16ba5ab1a6e47889f23791c",
+    "obsarch_b28921f7ea98b4167c066030",
+    "obsarch_b330adc1d37cf982ffdca0a8",
+    "obsarch_b4f5ec8d9f4d993340abbe34",
+    "obsarch_b5975a8007f7bdc8a7b3343f",
+    "obsarch_b6ce8db7dd223d708805882b",
+    "obsarch_b7d5fe6fc2a4a1b3e37ba7de",
+    "obsarch_bb37cc4a86e3c1b75d61b283",
+    "obsarch_bc5559e3ff043ea4aa408db7",
+    "obsarch_bcc08416d812bae52cc7cc7f",
+    "obsarch_bdb38df162768f4025e8db6c",
+    "obsarch_be0475f207b2fec1c70a2c37",
+    "obsarch_bebeb86d2f3aa56630d872c2",
+    "obsarch_c05c308f094807dca1dc6596",
+    "obsarch_c1f4e46ac2c4e9878b125eb5",
+    "obsarch_c2391956f856d06249283da1",
+    "obsarch_c2aa5553365a24de4e502492",
+    "obsarch_c56056a59193288565bec89c",
+    "obsarch_c815fa87aae629842bd26bba",
+    "obsarch_c81aba945c45b994d6378366",
+    "obsarch_c999c3c7f7af471fd97a0301",
+    "obsarch_ca177bea9ba46bbbc43e3429",
+    "obsarch_ca74f0bf2325fb64fc7646c1",
+    "obsarch_cbc816b86b61e65485be1462",
+    "obsarch_cc1bf2fe2fc90794fd3618f5",
+    "obsarch_ccc5a7c39702f1d9b7a21d9a",
+    "obsarch_d07706a79d95f17b9c05a996",
+    "obsarch_d311f2749243d92343c7bc2e",
+    "obsarch_d339bc67b0b0fc139740c354",
+    "obsarch_d4233dacd05205876b6d492a",
+    "obsarch_d472b66005e8623ceae39112",
+    "obsarch_d4d4a39585a6aea2cbb8239c",
+    "obsarch_d4f3cee06691e697a22eddf8",
+    "obsarch_d51eed9588819fa48490c41e",
+    "obsarch_d5ff7b0054666b3e5b10c189",
+    "obsarch_d96158f58369e4ba1bbe2e88",
+    "obsarch_db148bf773b240c90cd669a3",
+    "obsarch_dc50ff235e1a50cbf1251e70",
+    "obsarch_dd6bfb3c7c3ff9a4689d7067",
+    "obsarch_ddb4af888ab3c6be910c0f9e",
+    "obsarch_e12191b03d031a7f9b635057",
+    "obsarch_e17b3ae2387febe8fd09f276",
+    "obsarch_e19a3184c0d67c98df73e5f8",
+    "obsarch_e5c8a438f33e9addc795f0b2",
+    "obsarch_e90aab2f3452c07e59d7b0b0",
+    "obsarch_ecf50113d9d4b83f53184916",
+    "obsarch_ef7b793945c051805e8ff765",
+    "obsarch_f25881863bed6249afef2e13",
+    "obsarch_f3e8002d0aed3de2b74a1036",
+    "obsarch_f4c7a6427dad72ac6734b1fb",
+    "obsarch_f525be9503b014428875e94b",
+    "obsarch_f715eae2ab063b77d6e2b501",
+    "obsarch_f7c447186364819e7defac67",
+    "obsarch_f8d797c14bbc1ee964d613d3",
+    "obsarch_fb5da2318a62c2abc60df83f",
+    "obsarch_fbd6155d3ed7a89726103076",
+    "obsarch_fbe5d14910bf03843d0f8a0d"
+  ],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 66.6,
+    "error": null,
+    "exchanges": [
+      {
+        "elapsed_seconds": 4.69,
+        "index": 0,
+        "message_count": 2,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The user wants me to trace the revenue figure for the period ending 2007-09-29 all the way back through the evidence chain. I need to:\n\n1. First find the revenue observation for that period\n2. Then trace its lineage back to the source document, accession, concept, period, and when it became available\n\nLet me start by querying for revenue observations for that period. I need to know what asset this is for - the user didn't specify. Let me check if there's a common asset or if I need to ask. Actually, the user said \"the revenue figure\" which suggests there's a specific one in context. Let me try querying for revenue with that period end date.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The user wants me to trace the revenue figure for the period ending 2007-09-29 all the way back through the evidence chain. I need to:\n\n1. First find the revenue observation for that period\n2. Then trace its lineage back to the source document, accession, concept, period, and when it became available\n\nLet me start by querying for revenue observations for that period. I need to know what asset this is for - the user didn't specify. Let me check if there's a common asset or if I need to ask. Actually, the user said \"the revenue figure\" which suggests there's a specific one in context. Let me try querying for revenue with that period end date.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"period_end\":\"2007-09-29\",\"limit\":10,\"metric\":\"revenue\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-9cb7029e-71d8-49ac-988f-d033c88b0fb7",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790736730,
+          "id": "gen-1790736730-bEyeIX8Qo3MJl26zYRvp",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 208,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 164
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 2437,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 2645
+          }
+        }
+      },
+      {
+        "index": 1,
+        "result_bytes": 9380,
+        "tool_call": {
+          "arguments": {
+            "limit": 10,
+            "metric": "revenue",
+            "period_end": "2007-09-29"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 5.12,
+        "index": 1,
+        "message_count": 4,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "I found two competing observations for revenue for the period ending 2007-09-29 for AAPL. Both are from SEC filings but different accessions:\n1. obsarch_ddb4af888ab3c6be910c0f9e - from accession 0001193125-09-214859 (10-K), value $24,006,000,000, available_at 2009-10-27\n2. obsarch_6383b6a9892d72ff26aab02a - from accession 0001193125-10-012091 (10-K/A), value $24,578,000,000, available_at 2010-01-25\n\nThe user wants me to trace \"the revenue figure\" back. Since there are two competing figures, I should trace both or explain the ambiguity. Let me get the lineage for both observations to trace them back to source facts, source documents, etc.\n\nLet me start with the first observation and get its full lineage.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "I found two competing observations for revenue for the period ending 2007-09-29 for AAPL. Both are from SEC filings but different accessions:\n1. obsarch_ddb4af888ab3c6be910c0f9e - from accession 0001193125-09-214859 (10-K), value $24,006,000,000, available_at 2009-10-27\n2. obsarch_6383b6a9892d72ff26aab02a - from accession 0001193125-10-012091 (10-K/A), value $24,578,000,000, available_at 2010-01-25\n\nThe user wants me to trace \"the revenue figure\" back. Since there are two competing figures, I should trace both or explain the ambiguity. Let me get the lineage for both observations to trace them back to source facts, source documents, etc.\n\nLet me start with the first observation and get its full lineage.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"depth\":5,\"reference\":\"obsarch_ddb4af888ab3c6be910c0f9e\"}",
+                      "name": "get_lineage"
+                    },
+                    "id": "call-57b1a436-316f-41d0-a6ae-6ec888bbb8f1",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790736735,
+          "id": "gen-1790736735-vdCu4ozNepCOYDvDtlQc",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 332,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 180
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 6640,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 6972
+          }
+        }
+      },
+      {
+        "index": 3,
+        "result_bytes": 748,
+        "tool_call": {
+          "arguments": {
+            "depth": 5,
+            "reference": "obsarch_ddb4af888ab3c6be910c0f9e"
+          },
+          "name": "get_lineage"
+        }
+      },
+      {
+        "elapsed_seconds": 2.12,
+        "index": 2,
+        "message_count": 6,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "Now let me get the lineage for the second observation as well.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "Now let me get the lineage for the second observation as well.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"depth\":5,\"reference\":\"obsarch_6383b6a9892d72ff26aab02a\"}",
+                      "name": "get_lineage"
+                    },
+                    "id": "call-1b728675-5cc0-4952-b6e4-43a1f8020498",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790736740,
+          "id": "gen-1790736740-1rajsqWhEzHNHJ0jSmEr",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 73,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 16
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 7343,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 7416
+          }
+        }
+      },
+      {
+        "index": 5,
+        "result_bytes": 748,
+        "tool_call": {
+          "arguments": {
+            "depth": 5,
+            "reference": "obsarch_6383b6a9892d72ff26aab02a"
+          },
+          "name": "get_lineage"
+        }
+      },
+      {
+        "elapsed_seconds": 2.65,
+        "index": 3,
+        "message_count": 8,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "Now let me get the source document details to understand the accession, concept, period, and when it became available. The document is the same for both (doc_24e188322f7c7d6939f9dc79), but they come from different accessions (0001193125-09-214859 and 0001193125-10-012091). Let me get the source document details.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "Now let me get the source document details to understand the accession, concept, period, and when it became available. The document is the same for both (doc_24e188322f7c7d6939f9dc79), but they come from different accessions (0001193125-09-214859 and 0001193125-10-012091). Let me get the source document details.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"reference\":\"doc_24e188322f7c7d6939f9dc79\"}",
+                      "name": "get_source_document"
+                    },
+                    "id": "call-692bac2e-b341-48f2-b847-00582b031c37",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790736742,
+          "id": "gen-1790736742-ZtTNU5vDHEbFsBktpGys",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 166,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 79
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 7792,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 7958
+          }
+        }
+      },
+      {
+        "index": 7,
+        "result_bytes": 20430,
+        "tool_call": {
+          "arguments": {
+            "reference": "doc_24e188322f7c7d6939f9dc79"
+          },
+          "name": "get_source_document"
+        }
+      },
+      {
+        "elapsed_seconds": 20.69,
+        "index": 4,
+        "message_count": 10,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "length",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "{\n  \"answer\": \"For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\\n\\nObservation 1 (original 10-K):\\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\\n- Value: $24,006,000,000 USD\\n- Source: SEC 10-K filing, accession 0001193125-09-214859\\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\\n- Source fact: sfid_b5229f1711c68622f937916d70285775\\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\\n- Evidence state: SOURCE_REPORTED\\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\\n\\nObservation 2 (amended 10-K/A):\\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\\n- Value: $24,578,000,000 USD\\n- Source: SEC 10-K/A filing, accession 00",
+                "reasoning": "Now I have a comprehensive view. Let me also get the individual observations with full details to capture all the trace information. I already have the key details from the query_observations results. Let me compile the full trace for both competing observations.\n\nFor obsarch_ddb4af888ab3c6be910c0f9e (the first one):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000\n- Asset: AAPL\n- Metric: revenue\n- Period: 2006-10-01 to 2007-09-29\n- As of: 2007-09-29\n- Available at: 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Status: SOURCE_REPORTED, UNVERIFIABLE\n- Source: SecEdgar, REGULATORY_FILING\n- Taxonomy: us-gaap\n- Concept: us-gaap:SalesRevenueNet\n- Accession: 0001193125-09-214859\n- Form: 10-K\n- Fiscal year: 2009, Fiscal period: FY\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json)\n- Source fact ID: sfid_b5229f1711c68622f937916d70285775\n- Mapping: PARTIAL (us-gaap:SalesRevenueNet maps to revenue metric as PARTIAL)\n- First archived: 2026-09-29T16:47:58.185503+00:00\n\nFor obsarch_6383b6a9892d72ff26aab02a (the second one):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000\n- Asset: AAPL\n- Metric: revenue\n- Period: 2006-10-01 to 2007-09-29\n- As of: 2007-09-29\n- Available at: 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Status: SOURCE_REPORTED, UNVERIFIABLE\n- Source: SecEdgar, REGULATORY_FILING\n- Taxonomy: us-gaap\n- Concept: us-gaap:SalesRevenueNet\n- Accession: 0001193125-10-012091\n- Form: 10-K/A\n- Fiscal year: 2009, Fiscal period: FY\n- Source document: doc_24e188322f7c7d6939f9dc79 (same SEC_COMPANY_CONCEPT document)\n- Source fact ID: sfid_52493188959d0d442076337871e8951b\n- Mapping: PARTIAL (same)\n- First archived: 2026-09-29T16:47:58.187458+00:00\n\nThe ambiguity is noted: two competing observations with different values from different filings (original 10-K vs amended 10-K/A). ST-EVA has not selected a winner.\n\nNow I need to provide the JSON response with the answer, evidence_refs, derived_refs, and uncertainties.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "Now I have a comprehensive view. Let me also get the individual observations with full details to capture all the trace information. I already have the key details from the query_observations results. Let me compile the full trace for both competing observations.\n\nFor obsarch_ddb4af888ab3c6be910c0f9e (the first one):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000\n- Asset: AAPL\n- Metric: revenue\n- Period: 2006-10-01 to 2007-09-29\n- As of: 2007-09-29\n- Available at: 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Status: SOURCE_REPORTED, UNVERIFIABLE\n- Source: SecEdgar, REGULATORY_FILING\n- Taxonomy: us-gaap\n- Concept: us-gaap:SalesRevenueNet\n- Accession: 0001193125-09-214859\n- Form: 10-K\n- Fiscal year: 2009, Fiscal period: FY\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json)\n- Source fact ID: sfid_b5229f1711c68622f937916d70285775\n- Mapping: PARTIAL (us-gaap:SalesRevenueNet maps to revenue metric as PARTIAL)\n- First archived: 2026-09-29T16:47:58.185503+00:00\n\nFor obsarch_6383b6a9892d72ff26aab02a (the second one):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000\n- Asset: AAPL\n- Metric: revenue\n- Period: 2006-10-01 to 2007-09-29\n- As of: 2007-09-29\n- Available at: 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Status: SOURCE_REPORTED, UNVERIFIABLE\n- Source: SecEdgar, REGULATORY_FILING\n- Taxonomy: us-gaap\n- Concept: us-gaap:SalesRevenueNet\n- Accession: 0001193125-10-012091\n- Form: 10-K/A\n- Fiscal year: 2009, Fiscal period: FY\n- Source document: doc_24e188322f7c7d6939f9dc79 (same SEC_COMPANY_CONCEPT document)\n- Source fact ID: sfid_52493188959d0d442076337871e8951b\n- Mapping: PARTIAL (same)\n- First archived: 2026-09-29T16:47:58.187458+00:00\n\nThe ambiguity is noted: two competing observations with different values from different filings (original 10-K vs amended 10-K/A). ST-EVA has not selected a winner.\n\nNow I need to provide the JSON response with the answer, evidence_refs, derived_refs, and uncertainties.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant"
+              },
+              "native_finish_reason": "length"
+            }
+          ],
+          "created": 1790736745,
+          "id": "gen-1790736745-bPsIalluzbt1QZVIEKDT",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 1600,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 546
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 20386,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 21986
+          }
+        }
+      },
+      {
+        "elapsed_seconds": 31.33,
+        "index": 5,
+        "message_count": 12,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "{\n  \"answer\": \"For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\\n\\nObservation 1 (original 10-K):\\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\\n- Value: $24,006,000,000 USD\\n- Source: SEC 10-K filing, accession 0001193125-09-214859\\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\\n- Source fact: sfid_b5229f1711c68622f937916d70285775\\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\\n- Evidence state: SOURCE_REPORTED\\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\\n\\nObservation 2 (amended 10-K/A):\\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\\n- Value: $24,578,000,000 USD\\n- Source: SEC 10-K/A filing, accession 0001193125-10-012091\\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\\n- Source fact: sfid_52493188959d0d442076337871e8951b\\n- Source document: same doc_24e188322f7c7d6939f9dc79 (the SEC company concept endpoint aggregates multiple filings)\\n- Evidence state: SOURCE_REPORTED\\n- First archived in ST-EVA: 2026-09-29T16:47:58.187458+00:00\\n\\nBoth observations share the same source document (the SEC company concept JSON for us-gaap:SalesRevenueNet) but reference different accessions (original vs amended filing). ST-EVA flags an ambiguity: competing values exist for the same metric, period, and source concept, and no winner has been selected because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.\",\n  \"evidence_refs\": [\"obsarch_ddb4af888ab3c6be910c0f9e\", \"obsarch_6383b6a9892d72ff26aab02a\", \"doc_24e188322f7c7d6939f9dc79\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"Which of the two competing revenue values ($24.006B vs $24.578B) is the intended figure for the period ending 2007-09-29; ST-EVA has not selected a winner and the ambiguity remains unresolved.\", \"The PARTIAL mapping fidelity means us-gaap:SalesRevenueNet is not an exact match for the revenue metric; it is a narrower or wider aggregate.\"]\n}",
+                "reasoning": "The user wants me to reply with a single JSON object with keys: answer, evidence_refs, derived_refs, uncertainties. My previous answer was cut off and not valid JSON. I need to provide a complete JSON object with the answer string, evidence_refs array, derived_refs array, and uncertainties array.\n\nI have the evidence from the tools: two observations, their lineage, and source document. I need to cite observation IDs in evidence_refs. The answer should be in prose but traceable to evidence. I'll include both observation IDs and the source document ID.\n\nLet me construct the JSON. The answer should summarize the trace for both observations. I'll include the key details: observation IDs, values, accessions, concept, period, knowable_at, source fact IDs, source document ID, and note the ambiguity.\n\nI'll set derived_refs empty, uncertainties include the competing values and that ST-EVA hasn't selected a winner.\n\nNow produce the JSON.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The user wants me to reply with a single JSON object with keys: answer, evidence_refs, derived_refs, uncertainties. My previous answer was cut off and not valid JSON. I need to provide a complete JSON object with the answer string, evidence_refs array, derived_refs array, and uncertainties array.\n\nI have the evidence from the tools: two observations, their lineage, and source document. I need to cite observation IDs in evidence_refs. The answer should be in prose but traceable to evidence. I'll include both observation IDs and the source document ID.\n\nLet me construct the JSON. The answer should summarize the trace for both observations. I'll include the key details: observation IDs, values, accessions, concept, period, knowable_at, source fact IDs, source document ID, and note the ambiguity.\n\nI'll set derived_refs empty, uncertainties include the competing values and that ST-EVA hasn't selected a winner.\n\nNow produce the JSON.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant"
+              },
+              "native_finish_reason": "stop"
+            }
+          ],
+          "created": 1790736766,
+          "id": "gen-1790736766-zS77JthvCDoR5235TKwF",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 1376,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 238
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 20544,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 21920
+          }
+        }
+      }
+    ],
+    "first_reply_parsed": true,
+    "format_repair_used": true,
+    "initial_messages": [
+      {
+        "content": "You are answering questions using ST-EVA, an evidence database of filed financial data. You answer only from what its query tools return.\n\nYou cannot see the database directly. You have tools that read it. Use them.\n\nThe evidence carries states, and each one means something different:\n\nSOURCE_REPORTED  a value a source stated. The ordinary case.\nDERIVED          computed by ST-EVA from named operands, not reported by\n                 anyone. It is a calculation and it says so.\nVALIDATED        cross-checked against another source. Agreement between two\n                 comparable sources is not proof the figure is correct.\nUNAVAILABLE      retrieval failed. Not zero, and not \"no data exists\".\nCONFLICTING      two sources disagree. Neither is selected.\nNOT_APPLICABLE   the measure is not meaningful for this business. Different\n                 from UNAVAILABLE, and different from a zero.\nSTALE            what is held has gone out of date. Not historically false.\nNOT_COMPARABLE   the series must break here; the measure changed.\nPARTIAL          a source concept that expresses the metric only partially, as\n                 a wider or narrower aggregate. Never the same as EXACT.\nEXACT            a source concept that expresses the metric exactly.\n\nEach observation carries a `status` with two separate parts:\n\n- `status.evidence_state.state` is one of the states above.\n- `status.validation_status` says whether cross-checking found anything, and\n  is `UNVERIFIABLE` for a figure only one source has reported.\n\nTo filter on either, the parameter names it. `query_observations` takes\n`validation_status` for the cross-check status; the evidence state is not\nfilterable and is read from each observation.\n\nAn unknown metric is refused by name, with the real ones attached. A metric\nST-EVA knows but has no rows for your filter returns an empty list, which is a\ndifferent answer and means the data is not there for that period.\n\nRules:\n\n- Use a tool before making a factual claim. Do not state a number no tool\n  returned.\n- An empty result means your filter matched nothing. Widen the filter before\n  concluding that evidence is absent.\n- Report a figure's state when the state changes how it may be read. A PARTIAL\n  concept is not an EXACT one. A disagreement is not settled. A derived value\n  is not a reported one.\n- If a series is truncated, say so. Do not present part of a series as the\n  whole of it.\n- If evidence is missing, say what is missing. Do not fill a gap with a\n  plausible value, and do not report a negative state as a number.\n- Report what the evidence establishes and stop there. Do not explain why\n  something happened unless the evidence states why.\n- Cite the observation ids the tools gave you, in `evidence_refs`.\n\nYour reply must be a single JSON object and nothing else. No prose before it,\nno prose after it, no markdown fence:\n\n{\n  \"answer\": \"the answer in prose, with every claim traceable to evidence\",\n  \"evidence_refs\": [\"the observation ids the tools returned\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"anything the evidence does not settle\"]\n}\n\nBoth `answer` and `evidence_refs` are required. If you cannot cite evidence,\nthat belongs in `uncertainties`, not in `answer`.",
+        "role": "system"
+      },
+      {
+        "content": "Take the revenue figure for the period ending 2007-09-29 and trace it all the way back: observation, source fact, source document, accession, concept, period, and when it became available.\n\nReply with the JSON object described in your instructions, and nothing else.",
+        "role": "user"
+      }
+    ],
+    "stop_reason": "answered",
+    "test_attempts": 1,
+    "tool_definitions": [
+      {
+        "function": {
+          "description": "Observations matching a filter, oldest first.\n\n        `metric` must be one ST-EVA knows. An unknown name is refused with the\n        list of real ones rather than returning an empty result, because an\n        empty result is what a genuinely absent figure looks like and the two\n        were indistinguishable.\n\n        `limit` truncates silently. Use `page` when the length of a series\n        matters.",
+          "name": "query_observations",
+          "parameters": {
+            "properties": {
+              "as_of": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "basis_framework": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "instant": {
+                "type": "boolean"
+              },
+              "knowable_at": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "validation_status": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One observation by its stable identity, with full metadata.",
+          "name": "get_observation",
+          "parameters": {
+            "properties": {
+              "include_lineage": {
+                "type": "boolean"
+              },
+              "include_validation": {
+                "type": "boolean"
+              },
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+          "name": "get_metric_history",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset",
+              "metric"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+          "name": "page",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+          "name": "get_lineage",
+          "parameters": {
+            "properties": {
+              "depth": {
+                "type": "integer"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+          "name": "get_validation",
+          "parameters": {
+            "properties": {
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Source-document metadata by id, content hash or canonical URI.",
+          "name": "get_source_document",
+          "parameters": {
+            "properties": {
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+          "name": "coverage_report",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ],
+    "tool_results": [
+      {
+        "content": "[{\"observation_id\": \"obsarch_ddb4af888ab3c6be910c0f9e\", \"contract_id\": \"ingest|revenue|SalesRevenueNet|0001193125-09-214859|2006-10-01|2007-09-29|USD\", \"asset\": \"AAPL\", \"metric\": \"revenue\", \"value\": 24006000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2006-10-01\", \"end\": \"2007-09-29\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2007-09-29\", \"available_at\": {\"instant\": \"2009-10-27T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2009-10-27T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": \"us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax\", \"as_of\": null, \"resolved_from\": \"evidence_state\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:SalesRevenueNet\", \"accession\": \"0001193125-09-214859\", \"form\": \"10-K\", \"fiscal_year\": 2009, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_24e188322f7c7d6939f9dc79\", \"content_hash\": \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 31766, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:47:58.183552+00:00\", \"first_seen_at\": \"2026-09-29T16:47:58.183552+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_ddb4af888ab3c6be910c0f9e\", \"resolved\": true, \"concept\": \"us-gaap:SalesRevenueNet\", \"metric\": \"revenue\", \"metric_definition\": \"Revenue recognised in the reporting period from the filer's ordinary activities. Where a source reports a narrower concept than this, the mapping records that the figure is a component or a wider aggregate rather than treating the two as the same.\", \"mappings\": [{\"metric_id\": \"revenue\", \"concept_id\": \"us-gaap:SalesRevenueNet\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2018-06-30\", \"notes\": \"net sales revenue, a third concept and a third window\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"revenue\", \"concept_id\": \"us-gaap:SalesRevenueNet\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2018-06-30\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}, {\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"revenue\", \"concept_id\": \"us-gaap:Revenues\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2016-09-24\", \"effective_to\": \"2018-09-29\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:SalesRevenueNet\", \"first_used\": \"2007-09-29\", \"last_used\": \"2018-06-30\", \"fact_count\": 210, \"filing_count\": 40, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"Total revenue from sale of goods and services rendered during the reporting period, in the normal course of business, reduced by sales returns and allowances, and sales discounts.\", \"methodology\": \"us-gaap:SalesRevenueNet as filed in 10-K accession 0001193125-09-214859; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:47:58.185503+00:00\", \"first_archived_at\": \"2026-09-29T16:47:58.185503+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_b5229f1711c68622f937916d70285775\", \"content_hash\": \"obs_sha256:a8630c2b5aa499ff899916e3c08a38d45ce14effdd7af83a4086a55acc4bcf0e\", \"follow_to\": [\"sfid_b5229f1711c68622f937916d70285775\", \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\"]}, \"ambiguity\": {\"competing_observation_ids\": [\"obsarch_6383b6a9892d72ff26aab02a\"], \"competing_values\": [\"24006000000.0\", \"24578000000.0\"], \"reason\": \"NOT_EXPLAINED. Several observations share this metric, period and source concept but report different values. ST-EVA does not know which one is meant and has not chosen: the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.\", \"resolution\": \"NO_WINNER_SELECTED\"}}, {\"observation_id\": \"obsarch_6383b6a9892d72ff26aab02a\", \"contract_id\": \"ingest|revenue|SalesRevenueNet|0001193125-10-012091|2006-10-01|2007-09-29|USD\", \"asset\": \"AAPL\", \"metric\": \"revenue\", \"value\": 24578000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2006-10-01\", \"end\": \"2007-09-29\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2007-09-29\", \"available_at\": {\"instant\": \"2010-01-25T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2010-01-25T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": \"us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax\", \"as_of\": null, \"resolved_from\": \"evidence_state\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:SalesRevenueNet\", \"accession\": \"0001193125-10-012091\", \"form\": \"10-K/A\", \"fiscal_year\": 2009, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_24e188322f7c7d6939f9dc79\", \"content_hash\": \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 31766, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:47:58.183552+00:00\", \"first_seen_at\": \"2026-09-29T16:47:58.183552+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_6383b6a9892d72ff26aab02a\", \"resolved\": true, \"concept\": \"us-gaap:SalesRevenueNet\", \"metric\": \"revenue\", \"metric_definition\": \"Revenue recognised in the reporting period from the filer's ordinary activities. Where a source reports a narrower concept than this, the mapping records that the figure is a component or a wider aggregate rather than treating the two as the same.\", \"mappings\": [{\"metric_id\": \"revenue\", \"concept_id\": \"us-gaap:SalesRevenueNet\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2018-06-30\", \"notes\": \"net sales revenue, a third concept and a third window\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"revenue\", \"concept_id\": \"us-gaap:SalesRevenueNet\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2018-06-30\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}, {\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"revenue\", \"concept_id\": \"us-gaap:Revenues\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2016-09-24\", \"effective_to\": \"2018-09-29\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:SalesRevenueNet\", \"first_used\": \"2007-09-29\", \"last_used\": \"2018-06-30\", \"fact_count\": 210, \"filing_count\": 40, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"Total revenue from sale of goods and services rendered during the reporting period, in the normal course of business, reduced by sales returns and allowances, and sales discounts.\", \"methodology\": \"us-gaap:SalesRevenueNet as filed in 10-K/A accession 0001193125-10-012091; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:47:58.187458+00:00\", \"first_archived_at\": \"2026-09-29T16:47:58.187458+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_52493188959d0d442076337871e8951b\", \"content_hash\": \"obs_sha256:43c39af362ff23422b95b02642e929822f14c148fe205378bd83174c21ad6d82\", \"follow_to\": [\"sfid_52493188959d0d442076337871e8951b\", \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\"]}, \"ambiguity\": {\"competing_observation_ids\": [\"obsarch_ddb4af888ab3c6be910c0f9e\"], \"competing_values\": [\"24006000000.0\", \"24578000000.0\"], \"reason\": \"NOT_EXPLAINED. Several observations share this metric, period and source concept but report different values. ST-EVA does not know which one is meant and has not chosen: the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.\", \"resolution\": \"NO_WINNER_SELECTED\"}}]",
+        "name": "query_observations",
+        "tool_call_id": "call-9cb7029e-71d8-49ac-988f-d033c88b0fb7"
+      },
+      {
+        "content": "{\"reference\": \"obsarch_ddb4af888ab3c6be910c0f9e\", \"kind\": \"OBSERVED\", \"state\": \"SOURCE_REPORTED\", \"chain\": [{\"step\": \"SOURCE_DOCUMENT\", \"id\": \"doc_24e188322f7c7d6939f9dc79\", \"content_hash\": \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"content_available\": 1, \"redistribution_tier\": null}, {\"step\": \"SOURCE_FACT\", \"id\": \"sfid_b5229f1711c68622f937916d70285775\", \"scope\": \"one raw fact inside one source document; the only identity deduplication may use\"}, {\"step\": \"OBSERVATION\", \"id\": \"obsarch_ddb4af888ab3c6be910c0f9e\", \"metric\": \"revenue\", \"state\": \"SOURCE_REPORTED\"}]}",
+        "name": "get_lineage",
+        "tool_call_id": "call-57b1a436-316f-41d0-a6ae-6ec888bbb8f1"
+      },
+      {
+        "content": "{\"reference\": \"obsarch_6383b6a9892d72ff26aab02a\", \"kind\": \"OBSERVED\", \"state\": \"SOURCE_REPORTED\", \"chain\": [{\"step\": \"SOURCE_DOCUMENT\", \"id\": \"doc_24e188322f7c7d6939f9dc79\", \"content_hash\": \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"content_available\": 1, \"redistribution_tier\": null}, {\"step\": \"SOURCE_FACT\", \"id\": \"sfid_52493188959d0d442076337871e8951b\", \"scope\": \"one raw fact inside one source document; the only identity deduplication may use\"}, {\"step\": \"OBSERVATION\", \"id\": \"obsarch_6383b6a9892d72ff26aab02a\", \"metric\": \"revenue\", \"state\": \"SOURCE_REPORTED\"}]}",
+        "name": "get_lineage",
+        "tool_call_id": "call-1b728675-5cc0-4952-b6e4-43a1f8020498"
+      },
+      {
+        "content": "{\"source_document_id\": \"doc_24e188322f7c7d6939f9dc79\", \"content_hash\": \"sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json\", \"http_status\": 200, \"media_type\": \"application/json\", \"byte_size\": 31766, \"fetched_at\": \"2026-09-29T16:47:58.183552+00:00\", \"first_seen_at\": \"2026-09-29T16:47:58.183552+00:00\", \"compression\": \"gzip\", \"content_available\": true, \"redistribution_tier\": \"B\", \"fair_access_policy\": null, \"contact_identity\": null, \"content_returned\": false, \"content_note\": \"The payload is not returned by the query surface. Reference the content_hash to verify a copy you already hold.\", \"observations\": [{\"observation_id\": \"obsarch_007394295d4c321a995c995b\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_03b289e8f1ced4474736e75a\", \"accession\": \"0001193125-11-010144\"}, {\"observation_id\": \"obsarch_049fc38b6188801abe2d376e\", \"accession\": \"0001193125-16-439878\"}, {\"observation_id\": \"obsarch_08ac3ea30be7132e9e6b72af\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_09173ba8b9ac624c0d1a08f0\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_0e5227e2884a7dfff98593e0\", \"accession\": \"0001193125-12-182321\"}, {\"observation_id\": \"obsarch_0f070d3e4e0527557d7c61ad\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_1058bf22d5159731bf10fd93\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_105e11ea98a8cd6d8de5148b\", \"accession\": \"0001193125-10-088957\"}, {\"observation_id\": \"obsarch_11ca7a92dcd46da07e9e4776\", \"accession\": \"0001193125-12-314552\"}, {\"observation_id\": \"obsarch_12d6d60b9014e06cad9be0a3\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_140501fd73a77c0968bef3a9\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_14565ee927ca5e42f9cd91f0\", \"accession\": \"0001193125-16-559625\"}, {\"observation_id\": \"obsarch_16012b05b2cc6e74bf0a5b4d\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_1807929e126bb7d1c7bd55fa\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_188a943b925712068eaa20fc\", \"accession\": \"0001193125-14-157311\"}, {\"observation_id\": \"obsarch_18c860e856a6fbdfe1200f35\", \"accession\": \"0001193125-14-277160\"}, {\"observation_id\": \"obsarch_18e654ab50f66fcaaad89590\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_1da8e8570f0c94a6a2bdfd58\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_1eb988c2c9029d70da7dca19\", \"accession\": \"0001193125-09-153165\"}, {\"observation_id\": \"obsarch_21d249e580102aee609dbb45\", \"accession\": \"0001193125-10-162840\"}, {\"observation_id\": \"obsarch_21e7dc56ce923544ece31941\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_21f2c3c83f937cb55445317f\", \"accession\": \"0001193125-11-010144\"}, {\"observation_id\": \"obsarch_237ac133437f1fd552e33331\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_2382f91af29997664667a5f5\", \"accession\": \"0001193125-10-012091\"}, {\"observation_id\": \"obsarch_23d031ee781b4c5f2d38ea75\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_25e752a9b470e55013848b44\", \"accession\": \"0001193125-12-023398\"}, {\"observation_id\": \"obsarch_28100001de916e66be312136\", \"accession\": \"0001193125-13-300670\"}, {\"observation_id\": \"obsarch_296c3fb8278dfbeb15549734\", \"accession\": \"0001193125-15-259935\"}, {\"observation_id\": \"obsarch_29e80f765f39ccca7e07dc5f\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_2a95689c99f98881cb66c136\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_2d7683c7069c4289254bb5e9\", \"accession\": \"0001193125-15-259935\"}, {\"observation_id\": \"obsarch_2dc3d55b7b7b5e39fea01888\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_2df65eebe68924321408167e\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_306afbb586f6cf7bfd381f1e\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_3195932b3cd1b8b975e569a9\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_32e86505947199350b750776\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_332f740d271654356e8219ae\", \"accession\": \"0001193125-14-277160\"}, {\"observation_id\": \"obsarch_33b83551da5a8d1d25724ee1\", \"accession\": \"0001193125-15-153166\"}, {\"observation_id\": \"obsarch_33e53a78796b85f651ab5c2d\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_35c3cb6c51339e273bbf9bc7\", \"accession\": \"0001628280-17-004790\"}, {\"observation_id\": \"obsarch_38bbf0b15cee65fc9c09211a\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_38fbbaefe5e2402ff5c80b18\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_39b9fe88ef875f125e3208cc\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_3b16e325248a9085a6cd8326\", \"accession\": \"0001193125-15-153166\"}, {\"observation_id\": \"obsarch_3c647ded1d2977e1521e195c\", \"accession\": \"0001193125-10-088957\"}, {\"observation_id\": \"obsarch_3e85b58a089fab357c5d7f4e\", \"accession\": \"0001193125-12-314552\"}, {\"observation_id\": \"obsarch_3f60084986f0ce99b4b76ae2\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_404477478863f51ed3dd4467\", \"accession\": \"0000320193-18-000100\"}, {\"observation_id\": \"obsarch_40b63248e5b427780527ac1d\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_4149c62a789523256fbb90d1\", \"accession\": \"0001193125-13-300670\"}, {\"observation_id\": \"obsarch_4184b3b46811ae730223f691\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_4281e4260dde8195face2eac\", \"accession\": \"0001193125-13-300670\"}, {\"observation_id\": \"obsarch_43d3f85a08ca9fd98e34d948\", \"accession\": \"0001193125-12-182321\"}, {\"observation_id\": \"obsarch_45ad4ed4bc9d89165817b57c\", \"accession\": \"0001193125-10-162840\"}, {\"observation_id\": \"obsarch_462d289d02085468ffa50e7a\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_4645df21da35b534af07fe01\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_466ad08feeef461d885a0874\", \"accession\": \"0001193125-10-012091\"}, {\"observation_id\": \"obsarch_46caaee7f34a06ec7e334a6b\", \"accession\": \"0001628280-17-000717\"}, {\"observation_id\": \"obsarch_481ac6df6aee97792dc674ca\", \"accession\": \"0001193125-11-104388\"}, {\"observation_id\": \"obsarch_4bb8df1be06c4a4a0c7ce796\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_4d91a9aba8efa078ac4a8043\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_4da100bb80f1702de54100e4\", \"accession\": \"0001193125-12-314552\"}, {\"observation_id\": \"obsarch_4ede423d0085f9e0f64a5c11\", \"accession\": \"0001193125-15-153166\"}, {\"observation_id\": \"obsarch_4f7a8d4745bcc2a26b12a3d3\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_527f481f78370447ce4e50c1\", \"accession\": \"0001628280-16-017809\"}, {\"observation_id\": \"obsarch_535302e7d57561255e55935a\", \"accession\": \"0000320193-17-000009\"}, {\"observation_id\": \"obsarch_557acf7939f6963f0c91dc06\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_55ea836fbde508a0fe0c1186\", \"accession\": \"0000320193-18-000070\"}, {\"observation_id\": \"obsarch_562bf9fa699a14a18a926e31\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_567df6cf558088dc077f4d27\", \"accession\": \"0001193125-10-088957\"}, {\"observation_id\": \"obsarch_56f48d4eeed4ac88e0b15a43\", \"accession\": \"0000320193-17-000009\"}, {\"observation_id\": \"obsarch_57ac6ada2bfcd5b45fe4b394\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_5904f209aa5010feb4edd894\", \"accession\": \"0001193125-15-259935\"}, {\"observation_id\": \"obsarch_59be6d1bc7b5260b5d19f7ac\", \"accession\": \"0001193125-15-153166\"}, {\"observation_id\": \"obsarch_5a8379273b4232e61b44e894\", \"accession\": \"0000320193-18-000100\"}, {\"observation_id\": \"obsarch_5a87b9715cbcb61d2250fdd2\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_5b372c44a1488c07b1176b2f\", \"accession\": \"0001628280-17-004790\"}, {\"observation_id\": \"obsarch_5b3b3adf02bcfd5a07933aaf\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_5ce097360a7cd0a4205bd721\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_5d702612d3be8e7cd2a609bc\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_5dc918337e466abfbac963f3\", \"accession\": \"0000320193-17-000009\"}, {\"observation_id\": \"obsarch_5eeff7dc4857edef5dbec3a5\", \"accession\": \"0001193125-09-214859\"}, {\"observation_id\": \"obsarch_5fbaa45dd9cfec33b6634deb\", \"accession\": \"0001193125-13-022339\"}, {\"observation_id\": \"obsarch_61bcaa984ed81bbc20989ac8\", \"accession\": \"0000320193-18-000070\"}, {\"observation_id\": \"obsarch_61d2ae501c81206aa602bd79\", \"accession\": \"0001193125-15-023697\"}, {\"observation_id\": \"obsarch_6383b6a9892d72ff26aab02a\", \"accession\": \"0001193125-10-012091\"}, {\"observation_id\": \"obsarch_64066a451c6810950ac6dbd4\", \"accession\": \"0000320193-18-000100\"}, {\"observation_id\": \"obsarch_6457db10864cafc3a3f5adc4\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_6577417b5622e80147ed9cae\", \"accession\": \"0001193125-14-277160\"}, {\"observation_id\": \"obsarch_68501dd28ec9d7913d73dd64\", \"accession\": \"0001193125-15-259935\"}, {\"observation_id\": \"obsarch_68a5f9b68b50a4f92cf8213c\", \"accession\": \"0001193125-10-162840\"}, {\"observation_id\": \"obsarch_68d417d6167a0ef8f5a18e5a\", \"accession\": \"0001193125-13-022339\"}, {\"observation_id\": \"obsarch_6a04aa48c87cc6272cbda3ba\", \"accession\": \"0001193125-11-192493\"}, {\"observation_id\": \"obsarch_6a0c1200a4d255c3fdefab5b\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_6b2821663a18f6e04bb5c328\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_6c1bab27c3d01a553060502d\", \"accession\": \"0001193125-13-168288\"}, {\"observation_id\": \"obsarch_6e3aa02891ccb66240bd0fb3\", \"accession\": \"0001628280-16-017809\"}, {\"observation_id\": \"obsarch_6f8f7190a98c3bd6026f74c3\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_70b52729c330521a4b585baf\", \"accession\": \"0001628280-17-000717\"}, {\"observation_id\": \"obsarch_711ce22a1d4c0a5dc217dbff\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_72b5391df7aeb2c42e5b188b\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_73e6f609902b57da9b765a1d\", \"accession\": \"0001193125-09-153165\"}, {\"observation_id\": \"obsarch_7840cae9d93cfdd3de0a342f\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_799438086f2c045bdf206394\", \"accession\": \"0001193125-11-192493\"}, {\"observation_id\": \"obsarch_7ad21f683377b5764bb19376\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_7cae5db62ab2def21b8749d7\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_81e81f41b3e42a27fc960113\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_8247961b1a70412525f20b32\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_839372c9666a212bb019ebb9\", \"accession\": \"0001193125-11-192493\"}, {\"observation_id\": \"obsarch_872d6db0f1726688146b0d90\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_87a063240debefa1d03f661e\", \"accession\": \"0001193125-12-182321\"}, {\"observation_id\": \"obsarch_87b0a51e4d5f929d823f7d1f\", \"accession\": \"0001193125-13-168288\"}, {\"observation_id\": \"obsarch_87f0a1e742243d59eb86df9b\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_88f98af29f2d033dfe5d83a4\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_89a43ac123d1f2300a42d830\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_8e37a61d9da84801c8d753dd\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_8f2a205e6d9f668e2c623c72\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_90c7004bb164b3189aa1255b\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_91b87b9f053dda43e9a6a72e\", \"accession\": \"0001193125-10-088957\"}, {\"observation_id\": \"obsarch_91c2aefaab7becd4991072d2\", \"accession\": \"0001193125-12-023398\"}, {\"observation_id\": \"obsarch_92b6db685a6d7c000b19f645\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_938afc1f5228da6f096f87c4\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_93fee51aaa69c96c6f90fdcc\", \"accession\": \"0001193125-09-153165\"}, {\"observation_id\": \"obsarch_942316ef20c27d04097d566a\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_96c6baa88d6f561ade765294\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_9871d2fb737985be8af39b86\", \"accession\": \"0001193125-14-157311\"}, {\"observation_id\": \"obsarch_9876bb7ff70888195c271bda\", \"accession\": \"0001193125-09-214859\"}, {\"observation_id\": \"obsarch_989043c92a5390bcacba91e2\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_98b440a0ea616781f4406349\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_98ffde4dadbba38d2eb92b5f\", \"accession\": \"0001193125-16-559625\"}, {\"observation_id\": \"obsarch_9a0216c724832182a4ce24d6\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_9a9de8cf9044ceaf189f9670\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_9aab181f2a8a1e5825c07552\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_9aac7c9cc516bdee6b25c564\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_9d96b4b77c2e39da429cc82b\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_9ec9f6cd1034bb97da8e3683\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_9f28c6fd9f0b4d854e5f448b\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_a2d7cef955f96710afaac00d\", \"accession\": \"0001193125-16-439878\"}, {\"observation_id\": \"obsarch_a307ae29a24cc78b621136ef\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_a46a2eb744fe636ee378ee60\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_a5a791b6e0ec17c5179f34b8\", \"accession\": \"0001193125-11-104388\"}, {\"observation_id\": \"obsarch_a7dd4319fd8f4f31704ab6b2\", \"accession\": \"0001193125-16-559625\"}, {\"observation_id\": \"obsarch_a8c3536012b850e312b0576d\", \"accession\": \"0001193125-14-157311\"}, {\"observation_id\": \"obsarch_aa0f99a657e14eb792afa21b\", \"accession\": \"0001628280-17-004790\"}, {\"observation_id\": \"obsarch_ab369432be96d4aa3becbf71\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_abfea334cded6eb38cf00d3a\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_ad3fd43035b4c0be2444e9c0\", \"accession\": \"0000320193-18-000007\"}, {\"observation_id\": \"obsarch_ae30a20e8ac7e99039d69c5f\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_af4001bf524fd5398a1cf327\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_b09af5c99e76fbfd665ff931\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_b109433867267dfc24b49e16\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_b11814215976ef145bd9d2a5\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_b16ba5ab1a6e47889f23791c\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_b28921f7ea98b4167c066030\", \"accession\": \"0001193125-12-444068\"}, {\"observation_id\": \"obsarch_b330adc1d37cf982ffdca0a8\", \"accession\": \"0001193125-14-277160\"}, {\"observation_id\": \"obsarch_b4f5ec8d9f4d993340abbe34\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_b5975a8007f7bdc8a7b3343f\", \"accession\": \"0001193125-13-300670\"}, {\"observation_id\": \"obsarch_b6ce8db7dd223d708805882b\", \"accession\": \"0001628280-17-004790\"}, {\"observation_id\": \"obsarch_b7d5fe6fc2a4a1b3e37ba7de\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_bb37cc4a86e3c1b75d61b283\", \"accession\": \"0000320193-18-000070\"}, {\"observation_id\": \"obsarch_bc5559e3ff043ea4aa408db7\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_bcc08416d812bae52cc7cc7f\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_bdb38df162768f4025e8db6c\", \"accession\": \"0000320193-18-000100\"}, {\"observation_id\": \"obsarch_be0475f207b2fec1c70a2c37\", \"accession\": \"0001628280-16-017809\"}, {\"observation_id\": \"obsarch_bebeb86d2f3aa56630d872c2\", \"accession\": \"0000320193-17-000009\"}, {\"observation_id\": \"obsarch_c05c308f094807dca1dc6596\", \"accession\": \"0001193125-11-192493\"}, {\"observation_id\": \"obsarch_c1f4e46ac2c4e9878b125eb5\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_c2391956f856d06249283da1\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_c2aa5553365a24de4e502492\", \"accession\": \"0001193125-14-157311\"}, {\"observation_id\": \"obsarch_c56056a59193288565bec89c\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_c815fa87aae629842bd26bba\", \"accession\": \"0001193125-14-024487\"}, {\"observation_id\": \"obsarch_c81aba945c45b994d6378366\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_c999c3c7f7af471fd97a0301\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_ca177bea9ba46bbbc43e3429\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_ca74f0bf2325fb64fc7646c1\", \"accession\": \"0001193125-14-383437\"}, {\"observation_id\": \"obsarch_cbc816b86b61e65485be1462\", \"accession\": \"0001193125-12-182321\"}, {\"observation_id\": \"obsarch_cc1bf2fe2fc90794fd3618f5\", \"accession\": \"0000320193-18-000070\"}, {\"observation_id\": \"obsarch_ccc5a7c39702f1d9b7a21d9a\", \"accession\": \"0001193125-13-170623\"}, {\"observation_id\": \"obsarch_d07706a79d95f17b9c05a996\", \"accession\": \"0001193125-10-012085\"}, {\"observation_id\": \"obsarch_d311f2749243d92343c7bc2e\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_d339bc67b0b0fc139740c354\", \"accession\": \"0001193125-11-104388\"}, {\"observation_id\": \"obsarch_d4233dacd05205876b6d492a\", \"accession\": \"0000320193-18-000007\"}, {\"observation_id\": \"obsarch_d472b66005e8623ceae39112\", \"accession\": \"0001193125-14-024487\"}, {\"observation_id\": \"obsarch_d4d4a39585a6aea2cbb8239c\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_d4f3cee06691e697a22eddf8\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_d51eed9588819fa48490c41e\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_d5ff7b0054666b3e5b10c189\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_d96158f58369e4ba1bbe2e88\", \"accession\": \"0001193125-15-356351\"}, {\"observation_id\": \"obsarch_db148bf773b240c90cd669a3\", \"accession\": \"0001193125-10-012085\"}, {\"observation_id\": \"obsarch_dc50ff235e1a50cbf1251e70\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_dd6bfb3c7c3ff9a4689d7067\", \"accession\": \"0001193125-15-023697\"}, {\"observation_id\": \"obsarch_ddb4af888ab3c6be910c0f9e\", \"accession\": \"0001193125-09-214859\"}, {\"observation_id\": \"obsarch_e12191b03d031a7f9b635057\", \"accession\": \"0001193125-11-104388\"}, {\"observation_id\": \"obsarch_e17b3ae2387febe8fd09f276\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_e19a3184c0d67c98df73e5f8\", \"accession\": \"0001193125-15-023732\"}, {\"observation_id\": \"obsarch_e5c8a438f33e9addc795f0b2\", \"accession\": \"0001193125-12-314552\"}, {\"observation_id\": \"obsarch_e90aab2f3452c07e59d7b0b0\", \"accession\": \"0001193125-09-153165\"}, {\"observation_id\": \"obsarch_ecf50113d9d4b83f53184916\", \"accession\": \"0001628280-16-017809\"}, {\"observation_id\": \"obsarch_ef7b793945c051805e8ff765\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_f25881863bed6249afef2e13\", \"accession\": \"0001193125-16-559625\"}, {\"observation_id\": \"obsarch_f3e8002d0aed3de2b74a1036\", \"accession\": \"0001193125-13-168288\"}, {\"observation_id\": \"obsarch_f4c7a6427dad72ac6734b1fb\", \"accession\": \"0001193125-13-168288\"}, {\"observation_id\": \"obsarch_f525be9503b014428875e94b\", \"accession\": \"0001193125-11-282113\"}, {\"observation_id\": \"obsarch_f715eae2ab063b77d6e2b501\", \"accession\": \"0001193125-10-162840\"}, {\"observation_id\": \"obsarch_f7c447186364819e7defac67\", \"accession\": \"0001193125-10-238044\"}, {\"observation_id\": \"obsarch_f8d797c14bbc1ee964d613d3\", \"accession\": \"0000320193-17-000070\"}, {\"observation_id\": \"obsarch_fb5da2318a62c2abc60df83f\", \"accession\": \"0001628280-16-020309\"}, {\"observation_id\": \"obsarch_fbd6155d3ed7a89726103076\", \"accession\": \"0001193125-13-416534\"}, {\"observation_id\": \"obsarch_fbe5d14910bf03843d0f8a0d\", \"accession\": \"0001628280-16-020309\"}]}",
+        "name": "get_source_document",
+        "tool_call_id": "call-692bac2e-b341-48f2-b847-00582b031c37"
+      }
+    ]
+  },
+  "test_id": "T13_provenance_chain",
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "depth": 5,
+        "reference": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "depth": 5,
+        "reference": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "reference": "doc_24e188322f7c7d6939f9dc79"
+      },
+      "error": null,
+      "operation": "get_source_document",
+      "result_shape": "object[19]",
+      "returned_count": null,
+      "sequence": 4
+    }
+  ]
+}

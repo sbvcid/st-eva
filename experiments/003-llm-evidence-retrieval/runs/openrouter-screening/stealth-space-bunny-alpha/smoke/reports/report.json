@@ -1,0 +1,190 @@
+{
+  "by_capability": [
+    {
+      "capability": "F1",
+      "failed_tests": [],
+      "name": "value accuracy",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F2",
+      "failed_tests": [],
+      "name": "period accuracy",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F3",
+      "failed_tests": [],
+      "name": "unit, currency and basis",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F4",
+      "failed_tests": [],
+      "name": "source attribution",
+      "passed": 1,
+      "total": 1
+    },
+    {
+      "capability": "F5",
+      "failed_tests": [],
+      "name": "provenance tracing",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F6",
+      "failed_tests": [],
+      "name": "reported versus derived",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F7",
+      "failed_tests": [],
+      "name": "unavailable handling",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F8",
+      "failed_tests": [],
+      "name": "conflict handling",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F9",
+      "failed_tests": [],
+      "name": "concept and mapping handling",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F10",
+      "failed_tests": [],
+      "name": "pagination and truncation",
+      "passed": 1,
+      "total": 1
+    },
+    {
+      "capability": "F11",
+      "failed_tests": [],
+      "name": "inference discipline",
+      "passed": 0,
+      "total": 0
+    }
+  ],
+  "dataset_id": "steva-003-openrouter-smoke",
+  "failures": [],
+  "failures_by_classification": {
+    "A": {
+      "count": 0,
+      "meaning": "ST-EVA defect: the archive or query surface is wrong"
+    },
+    "B": {
+      "count": 0,
+      "meaning": "target model error: the evidence supports a different answer"
+    },
+    "C": {
+      "count": 0,
+      "meaning": "evaluator defect: the check is wrong, not the answer"
+    },
+    "D": {
+      "count": 0,
+      "meaning": "dataset ambiguity: the question does not determine an answer"
+    },
+    "E": {
+      "count": 0,
+      "meaning": "source limitation: the evidence cannot support any answer"
+    }
+  },
+  "finished_at": "2026-09-30T02:38:07.555165+00:00",
+  "human_review": {
+    "purpose": "calibration: a sample of passes and all failures, so the evaluator can be checked against successes as well as failures",
+    "sample_of_passes": [
+      "S0_tool_call_smoke"
+    ],
+    "sampled_failures": []
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "stealth/space-bunny-alpha",
+    "provider": "openrouter",
+    "seed": null,
+    "temperature": 0.0,
+    "version": "stealth/space-bunny-alpha",
+    "wire_style": "openai"
+  },
+  "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\stealth-space-bunny-alpha\\smoke",
+  "scoring_note": "No overall quality score is produced. The capabilities are not interchangeable, and averaging them would let exact values buy invented provenance.",
+  "screening_rows": [
+    {
+      "answer": "The coverage_report for AAPL returned metric_count 12. Breaking that down by state as the report counts them: 8 SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 SOURCE_DID_NOT_REPORT (dividend_per_share, reason code SOURCE_OMITS_CONCEPT, 0 observations held), 1 NOT_APPLICABLE (operating_margin_bank, reason code BUSINESS_MODEL_NOT_MEANINGFUL, 0 observations held), 1 UNAVAILABLE (segment_revenue, reason code RETRIEVAL_FAILED, 0 observations held), 1 STALE (guidance, reason code NO_RECENT_VALUE, 0 observations held), and 0 CONFLICTING. The report notes explicitly that these are counts by state, not a completeness score, and that a single completeness figure would be an interpretation hiding which distinct negative applies to which metric. Four of the twelve metrics hold zero observations, and each of those four carries a different negative state, so they are not interchangeable and none of them is a zero value. The report does not name any source document reference: it contains no source-document id, content hash or canonical URI field. Because of that, I did not call get_source_document, and the evidence returned makes no statement either way about whether filing text is available for AAPL \u2014 that is undetermined here, not absent.",
+      "answer_parsed": true,
+      "checks": 3,
+      "derived_refs": [],
+      "elapsed_seconds": 14.76,
+      "evidence_refs": [],
+      "exchanges": 3,
+      "failed_checks": [],
+      "failed_tool_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "off_surface_calls": [],
+      "operations": [
+        "coverage_report"
+      ],
+      "parse_error": null,
+      "retrieved_observations": [],
+      "stop_reason": "answered",
+      "test_id": "S0_tool_call_smoke",
+      "tool_calls": 1,
+      "uncertainties": [
+        "The coverage_report returned no observation ids, so the counts and state labels above cannot be cited to specific observations; every claim rests on the report payload alone.",
+        "No source document reference is named anywhere in the report, so filing-text availability for AAPL is not established. Establishing it would require an observation-level source reference, which the report does not supply.",
+        "The state label SOURCE_DID_NOT_REPORT appears in the report for dividend_per_share; it is not among the states described in my operating instructions, so I report it as returned rather than interpreting it.",
+        "The report gives observations_held per metric but no period coverage, so those counts cannot be read as complete or truncated series, and I do not know their period ranges.",
+        "segment_revenue being UNAVAILABLE means retrieval failed for this filter set; it does not establish that no segment revenue data exists for AAPL.",
+        "The reason codes (for example SOURCE_OMITS_CONCEPT, BUSINESS_MODEL_NOT_MEANINGFUL) are the tool's characterisations; the evidence does not state the underlying reasoning in more detail."
+      ],
+      "unverifiable": [],
+      "usage": {
+        "completion_tokens": 1453,
+        "completion_tokens_details": {
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "cost_details": {
+          "upstream_inference_completions_cost": 0,
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0
+        },
+        "is_byok": false,
+        "prompt_tokens": 2836,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 2197,
+          "video_tokens": 0
+        },
+        "total_tokens": 4289
+      },
+      "verdict": "PASS"
+    }
+  ],
+  "snapshot": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
+  "started_at": "2026-09-30T02:37:52.794298+00:00",
+  "totals": {
+    "failed": 0,
+    "passed": 1,
+    "tests": 1
+  },
+  "unverifiable_checks": []
+}

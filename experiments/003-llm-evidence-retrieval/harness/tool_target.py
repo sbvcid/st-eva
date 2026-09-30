@@ -47,6 +47,17 @@ class TargetRun:
 
     exchanges: List[Dict[str, Any]] = field(default_factory=list)
     tool_definitions: List[Dict[str, Any]] = field(default_factory=list)
+    # Enough of the conversation to rebuild every request that was sent, and to
+    # read every tool result in full.
+    #
+    # The exchanges record the raw responses, but a response only says what the
+    # model said. Without the tool results, a trace cannot be re-audited: a
+    # reviewer can see which operations ran and what shape came back, and cannot
+    # see whether the evidence the model reasoned over was the evidence the
+    # surface actually returned. `result_shape` is not a substitute for that,
+    # which is exactly why both are kept.
+    initial_messages: List[Dict[str, Any]] = field(default_factory=list)
+    tool_results: List[Dict[str, Any]] = field(default_factory=list)
     stop_reason: str = ""
     elapsed_seconds: float = 0.0
     error: Optional[str] = None
@@ -67,6 +78,8 @@ class TargetRun:
             "format_repair_used": self.format_repair_used,
             "exchanges": self.exchanges,
             "tool_definitions": self.tool_definitions,
+            "initial_messages": self.initial_messages,
+            "tool_results": self.tool_results,
         }
 
 
@@ -107,6 +120,9 @@ class ToolCallingTarget:
                 ),
             },
         ]
+        # Copied, not referenced: the loop appends to `messages`, and a trace
+        # that changed while it was being written would not be a trace.
+        run.initial_messages = [dict(message) for message in messages]
 
         try:
             for index in range(self.max_exchanges):
@@ -202,6 +218,22 @@ class ToolCallingTarget:
         call: Dict[str, Any],
         tools: Toolbox,
         messages: List[Dict[str, Any]],
+        run: TargetRun,
+    ) -> Dict[str, Any]:
+        message = self._invoke_and_answer(call, tools, run)
+        run.tool_results.append(
+            {
+                "tool_call_id": message.get("tool_call_id"),
+                "name": message.get("name"),
+                "content": message.get("content"),
+            }
+        )
+        return message
+
+    def _invoke_and_answer(
+        self,
+        call: Dict[str, Any],
+        tools: Toolbox,
         run: TargetRun,
     ) -> Dict[str, Any]:
         """

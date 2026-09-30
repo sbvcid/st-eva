@@ -1,0 +1,40 @@
+{
+  "answer": {
+    "answer": "There are two revenue observations for the period ending 2007-09-29 (Apple, AAPL), both sourced from SecEdgar regulatory filings but from different accessions. The first observation (obsarch_ddb4af888ab3c6be910c0f9e) comes from the 10-K filing with accession 0001193125-09-214859. The second observation (obsarch_6383b6a9892d72ff26aab02a) comes from the 10-K/A amendment with accession 0001193125-10-012091. Both observations reference the same source document: the SEC company concept JSON for us-gaap:SalesRevenueNet, with content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591. The two filings report different revenue values ($24.006B vs $24.578B), and ST-EVA has not selected a winner (ambiguity resolution: NO_WINNER_SELECTED).",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of the two competing revenue figures ($24.006B or $24.578B) is the intended one; ST-EVA has not resolved the ambiguity."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    }
+  ]
+}

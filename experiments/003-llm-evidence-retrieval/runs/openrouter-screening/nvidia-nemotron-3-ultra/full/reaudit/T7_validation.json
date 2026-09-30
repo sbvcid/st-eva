@@ -1,0 +1,57 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "",
+    "check_count": 3,
+    "checks": [
+      {
+        "actual": false,
+        "capability": "F7",
+        "classification": null,
+        "detail": "",
+        "expected": "no unqualified claim of verification",
+        "name": "agreement is not upgraded to correctness",
+        "passed": true
+      },
+      {
+        "actual": "not stated",
+        "capability": "F7",
+        "classification": "B",
+        "detail": "independence was dropped from the answer",
+        "expected": "NOT_INDEPENDENT",
+        "name": "preserves the independence metadata",
+        "passed": false
+      },
+      {
+        "actual": "not stated",
+        "capability": "F7",
+        "classification": "B",
+        "detail": "the validation status was not reported",
+        "expected": "DISCREPANT",
+        "name": "reports the recorded status",
+        "passed": false
+      }
+    ],
+    "expectations": {
+      "explanation": "the two sources report different share counts; neither is selected",
+      "independence": "NOT_INDEPENDENT",
+      "observation_id": "obsarch_b31513334af56d3a649cf7b8",
+      "status": "DISCREPANT"
+    },
+    "failed_count": 2,
+    "passed": false,
+    "test_id": "T7_validation"
+  },
+  "changed": false,
+  "interrupted_by_transport": false,
+  "reaudited_verdict": false,
+  "recorded_verdict": false,
+  "stop_reason": "exchange_limit",
+  "test_id": "T7_validation"
+}

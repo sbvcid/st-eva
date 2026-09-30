@@ -1,0 +1,248 @@
+{
+  "models": [
+    {
+      "model": {
+        "dir": "stealth-space-bunny-alpha",
+        "model_id": "stealth/space-bunny-alpha",
+        "name": "stealth-space-bunny-alpha",
+        "requested_slug": "stealth/space-bunny-alpha:free",
+        "seed": null
+      },
+      "phase": "smoke",
+      "quota_after": {
+        "is_free_tier": false,
+        "limit": 2,
+        "limit_daily": null,
+        "limit_weekly": null,
+        "usage": 0,
+        "usage_daily": 0,
+        "usage_weekly": 0
+      },
+      "rows": [
+        {
+          "answer_parsed": false,
+          "checks": 4,
+          "derived_refs": [],
+          "elapsed_seconds": 12.26,
+          "evidence_refs": [],
+          "exchanges": 5,
+          "failed_checks": [
+            "the answer parsed into the contract",
+            "cites at least one observation"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "off_surface_calls": [],
+          "operations": [
+            "coverage_report",
+            "query_observations"
+          ],
+          "parse_error": "TRANSPORT: no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790734676-LS8I4iKI3klGJt3O12gl\", \"error\": {\"message\": \"Provider returned an empty response\", \"code\": 502, \"metadata\": {\"error_type\": \"provider_unavailable\"}}}",
+          "retrieved_observations": [
+            "obs_sha256:a8630c2b5aa499ff899916e3c08a38d45ce14effdd7af83a4086a55acc4bcf0e",
+            "obsarch_6383b6a9892d72ff26aab02a",
+            "obsarch_ddb4af888ab3c6be910c0f9e"
+          ],
+          "stop_reason": "transport_error",
+          "test_id": "S0_tool_call_smoke",
+          "tool_calls": 2,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 390,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 0
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 2843,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 2841,
+              "video_tokens": 0
+            },
+            "total_tokens": 3233
+          },
+          "verdict": "FAIL"
+        }
+      ],
+      "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\stealth-space-bunny-alpha\\smoke",
+      "status": "RAN",
+      "totals": {
+        "failed": 1,
+        "passed": 0,
+        "tests": 1
+      }
+    },
+    {
+      "model": {
+        "dir": "nvidia-nemotron-3-ultra",
+        "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "name": "nvidia-nemotron-3-ultra",
+        "requested_slug": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "seed": 7
+      },
+      "phase": "smoke",
+      "quota_after": {
+        "is_free_tier": false,
+        "limit": 2,
+        "limit_daily": null,
+        "limit_weekly": null,
+        "usage": 0,
+        "usage_daily": 0,
+        "usage_weekly": 0
+      },
+      "rows": [
+        {
+          "answer_parsed": true,
+          "checks": 3,
+          "derived_refs": [],
+          "elapsed_seconds": 17.55,
+          "evidence_refs": [],
+          "exchanges": 3,
+          "failed_checks": [],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "off_surface_calls": [],
+          "operations": [
+            "coverage_report"
+          ],
+          "parse_error": null,
+          "retrieved_observations": [],
+          "stop_reason": "answered",
+          "test_id": "S0_tool_call_smoke",
+          "tool_calls": 1,
+          "uncertainties": [
+            "No source document reference was provided in the coverage report to check for filing text availability."
+          ],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 374,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 248
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3239,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 3613
+          },
+          "verdict": "PASS"
+        }
+      ],
+      "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\nvidia-nemotron-3-ultra\\smoke",
+      "status": "RAN",
+      "totals": {
+        "failed": 0,
+        "passed": 1,
+        "tests": 1
+      }
+    },
+    {
+      "model": {
+        "dir": "google-gemma-4-26b-a4b-it",
+        "model_id": "google/gemma-4-26b-a4b-it:free",
+        "name": "google-gemma-4-26b-a4b-it",
+        "requested_slug": "google/gemma-4-26b-a4b-it:free",
+        "seed": 7
+      },
+      "phase": "smoke",
+      "quota_after": {
+        "is_free_tier": false,
+        "limit": 2,
+        "limit_daily": null,
+        "limit_weekly": null,
+        "usage": 0,
+        "usage_daily": 0,
+        "usage_weekly": 0
+      },
+      "rows": [
+        {
+          "answer_parsed": false,
+          "checks": 3,
+          "derived_refs": [],
+          "elapsed_seconds": 0.22,
+          "evidence_refs": [],
+          "exchanges": 1,
+          "failed_checks": [
+            "the model used the tool surface",
+            "the answer parsed into the contract"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "off_surface_calls": [],
+          "operations": [],
+          "parse_error": "TRANSPORT: HTTP 429 from https://openrouter.ai/api/v1/chat/completions: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Google AI Studio\",\"is_byok\":false,\"provider_error_code\":\"429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\"}},\"user_id\":\"user_3JEi7KIykua2ix3BlMEF9irhd8s\"}",
+          "retrieved_observations": [],
+          "stop_reason": "transport_error",
+          "test_id": "S0_tool_call_smoke",
+          "tool_calls": 0,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": null,
+          "verdict": "FAIL"
+        }
+      ],
+      "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\google-gemma-4-26b-a4b-it\\smoke",
+      "status": "RAN",
+      "totals": {
+        "failed": 1,
+        "passed": 0,
+        "tests": 1
+      }
+    },
+    {
+      "detail": "inclusionai/ling-3.0-flash-fin:free is not in the OpenRouter catalogue; no other model was substituted",
+      "model": {
+        "dir": "inclusionai-ling-3-0-flash-fin",
+        "model_id": null,
+        "name": "inclusionai-ling-3-0-flash-fin",
+        "requested_slug": "inclusionai/ling-3.0-flash-fin:free",
+        "seed": 7
+      },
+      "phase": "smoke",
+      "status": "UNAVAILABLE"
+    }
+  ],
+  "quota_after": {
+    "is_free_tier": false,
+    "limit": 2,
+    "limit_daily": null,
+    "limit_weekly": null,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0
+  },
+  "quota_before": {
+    "is_free_tier": false,
+    "limit": 2,
+    "limit_daily": null,
+    "limit_weekly": null,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0
+  }
+}

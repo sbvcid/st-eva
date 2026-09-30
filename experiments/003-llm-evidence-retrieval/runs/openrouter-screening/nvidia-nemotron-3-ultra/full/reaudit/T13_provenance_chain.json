@@ -1,0 +1,116 @@
+{
+  "answer": {
+    "answer": "For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\n\nObservation 1 (original 10-K):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000 USD\n- Source: SEC 10-K filing, accession 0001193125-09-214859\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_b5229f1711c68622f937916d70285775\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\n\nObservation 2 (amended 10-K/A):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000 USD\n- Source: SEC 10-K/A filing, accession 0001193125-10-012091\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_52493188959d0d442076337871e8951b\n- Source document: same doc_24e188322f7c7d6939f9dc79 (the SEC company concept endpoint aggregates multiple filings)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.187458+00:00\n\nBoth observations share the same source document (the SEC company concept JSON for us-gaap:SalesRevenueNet) but reference different accessions (original vs amended filing). ST-EVA flags an ambiguity: competing values exist for the same metric, period, and source concept, and no winner has been selected because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "doc_24e188322f7c7d6939f9dc79"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of the two competing revenue values ($24.006B vs $24.578B) is the intended figure for the period ending 2007-09-29; ST-EVA has not selected a winner and the ambiguity remains unresolved.",
+      "The PARTIAL mapping fidelity means us-gaap:SalesRevenueNet is not an exact match for the revenue metric; it is a narrower or wider aggregate."
+    ]
+  },
+  "audit": {
+    "answer_text": "For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\n\nObservation 1 (original 10-K):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000 USD\n- Source: SEC 10-K filing, accession 0001193125-09-214859\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_b5229f1711c68622f937916d70285775\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\n\nObservation 2 (amended 10-K/A):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000 USD\n- Source: SEC 10-K/A filing, accession 0001193125-10-012091\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_52493188959d0d442076337871e8951b\n- Source document: same doc_24e188322f7c7d6939f9dc79 (the SEC company concept endpoint aggregates multiple filings)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.187458+00:00\n\nBoth observations share the same source document (the SEC company concept JSON for us-gaap:SalesRevenueNet) but reference different accessions (original vs amended filing). ST-EVA flags an ambiguity: competing values exist for the same metric, period, and source concept, and no winner has been selected because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.",
+    "check_count": 6,
+    "checks": [
+      {
+        "actual": {
+          "accession": "0001193125-09-214859",
+          "available_at": "2009-10-27T00:00:00+00:00",
+          "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+          "period_end": "2007-09-29",
+          "source_concept_ref": "us-gaap:SalesRevenueNet",
+          "source_fact_id": "sfid_b5229f1711c68622f937916d70285775"
+        },
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": {
+          "accession": "<present>",
+          "document_content_hash": "<present>",
+          "period_end": "<present>",
+          "source_fact_id": "<present>"
+        },
+        "name": "provenance chain is complete",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_6383b6a9892d72ff26aab02a",
+          "obsarch_ddb4af888ab3c6be910c0f9e"
+        ],
+        "capability": "F5",
+        "classification": "B",
+        "detail": "cited without retrieving: ['doc_24e188322f7c7d6939f9dc79']",
+        "expected": [
+          "doc_24e188322f7c7d6939f9dc79",
+          "obsarch_6383b6a9892d72ff26aab02a",
+          "obsarch_ddb4af888ab3c6be910c0f9e"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": false
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "sfid_b5229f1711c68622f937916d70285775",
+        "name": "cites source_fact_id for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "0001193125-09-214859",
+        "name": "cites accession for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": "us-gaap:SalesRevenueNet",
+        "name": "cites source_concept_ref for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      },
+      {
+        "actual": "stated",
+        "capability": "F2",
+        "classification": null,
+        "detail": "",
+        "expected": "2009-10-27T00:00:00+00:00",
+        "name": "cites available_at for obsarch_ddb4af888ab3c6be910c0f9e",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "accession": "0001193125-09-214859",
+      "available_at": "2009-10-27T00:00:00+00:00",
+      "document_content_hash": "sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591",
+      "form": "10-K",
+      "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e",
+      "period_end": "2007-09-29",
+      "period_start": "2006-10-01",
+      "source_concept_ref": "us-gaap:SalesRevenueNet",
+      "source_fact_id": "sfid_b5229f1711c68622f937916d70285775",
+      "taxonomy": "us-gaap"
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "T13_provenance_chain"
+  },
+  "changed": false,
+  "interrupted_by_transport": false,
+  "reaudited_verdict": false,
+  "recorded_verdict": false,
+  "stop_reason": "answered",
+  "test_id": "T13_provenance_chain"
+}

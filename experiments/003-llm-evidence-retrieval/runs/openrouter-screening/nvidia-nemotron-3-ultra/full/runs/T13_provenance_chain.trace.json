@@ -1,0 +1,74 @@
+{
+  "answer": {
+    "answer": "For the period ending 2007-09-29 (fiscal year 2007, period 2006-10-01 to 2007-09-29), ST-EVA holds two competing revenue observations for AAPL, both mapped from the us-gaap:SalesRevenueNet concept with PARTIAL mapping fidelity. Neither has been cross-validated (UNVERIFIABLE).\n\nObservation 1 (original 10-K):\n- Observation ID: obsarch_ddb4af888ab3c6be910c0f9e\n- Value: $24,006,000,000 USD\n- Source: SEC 10-K filing, accession 0001193125-09-214859\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2009-10-27T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_b5229f1711c68622f937916d70285775\n- Source document: doc_24e188322f7c7d6939f9dc79 (SEC_COMPANY_CONCEPT from https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, content hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.185503+00:00\n\nObservation 2 (amended 10-K/A):\n- Observation ID: obsarch_6383b6a9892d72ff26aab02a\n- Value: $24,578,000,000 USD\n- Source: SEC 10-K/A filing, accession 0001193125-10-012091\n- Concept: us-gaap:SalesRevenueNet (PARTIAL mapping to revenue metric)\n- Period: 2006-10-01 to 2007-09-29, as_of 2007-09-29\n- Became available (knowable_at): 2010-01-25T00:00:00+00:00 (ACCEPTANCE_DATETIME, SOURCE_DECLARED)\n- Source fact: sfid_52493188959d0d442076337871e8951b\n- Source document: same doc_24e188322f7c7d6939f9dc79 (the SEC company concept endpoint aggregates multiple filings)\n- Evidence state: SOURCE_REPORTED\n- First archived in ST-EVA: 2026-09-29T16:47:58.187458+00:00\n\nBoth observations share the same source document (the SEC company concept JSON for us-gaap:SalesRevenueNet) but reference different accessions (original vs amended filing). ST-EVA flags an ambiguity: competing values exist for the same metric, period, and source concept, and no winner has been selected because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "doc_24e188322f7c7d6939f9dc79"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of the two competing revenue values ($24.006B vs $24.578B) is the intended figure for the period ending 2007-09-29; ST-EVA has not selected a winner and the ambiguity remains unresolved.",
+      "The PARTIAL mapping fidelity means us-gaap:SalesRevenueNet is not an exact match for the revenue metric; it is a narrower or wider aggregate."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "depth": 5,
+        "reference": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "depth": 5,
+        "reference": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "reference": "doc_24e188322f7c7d6939f9dc79"
+      },
+      "error": null,
+      "operation": "get_source_document",
+      "result_shape": "object[19]",
+      "returned_count": null,
+      "sequence": 4
+    }
+  ]
+}

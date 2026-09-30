@@ -1,0 +1,185 @@
+{
+  "by_capability": [
+    {
+      "capability": "F1",
+      "failed_tests": [],
+      "name": "value accuracy",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F2",
+      "failed_tests": [],
+      "name": "period accuracy",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F3",
+      "failed_tests": [],
+      "name": "unit, currency and basis",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F4",
+      "failed_tests": [],
+      "name": "source attribution",
+      "passed": 1,
+      "total": 1
+    },
+    {
+      "capability": "F5",
+      "failed_tests": [],
+      "name": "provenance tracing",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F6",
+      "failed_tests": [],
+      "name": "reported versus derived",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F7",
+      "failed_tests": [],
+      "name": "unavailable handling",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F8",
+      "failed_tests": [],
+      "name": "conflict handling",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F9",
+      "failed_tests": [],
+      "name": "concept and mapping handling",
+      "passed": 0,
+      "total": 0
+    },
+    {
+      "capability": "F10",
+      "failed_tests": [],
+      "name": "pagination and truncation",
+      "passed": 1,
+      "total": 1
+    },
+    {
+      "capability": "F11",
+      "failed_tests": [],
+      "name": "inference discipline",
+      "passed": 0,
+      "total": 0
+    }
+  ],
+  "dataset_id": "steva-003-openrouter-smoke",
+  "failures": [],
+  "failures_by_classification": {
+    "A": {
+      "count": 0,
+      "meaning": "ST-EVA defect: the archive or query surface is wrong"
+    },
+    "B": {
+      "count": 0,
+      "meaning": "target model error: the evidence supports a different answer"
+    },
+    "C": {
+      "count": 0,
+      "meaning": "evaluator defect: the check is wrong, not the answer"
+    },
+    "D": {
+      "count": 0,
+      "meaning": "dataset ambiguity: the question does not determine an answer"
+    },
+    "E": {
+      "count": 0,
+      "meaning": "source limitation: the evidence cannot support any answer"
+    }
+  },
+  "finished_at": "2026-09-30T02:18:18.516916+00:00",
+  "human_review": {
+    "purpose": "calibration: a sample of passes and all failures, so the evaluator can be checked against successes as well as failures",
+    "sample_of_passes": [
+      "S0_tool_call_smoke"
+    ],
+    "sampled_failures": []
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\nvidia-nemotron-3-ultra\\smoke",
+  "scoring_note": "No overall quality score is produced. The capabilities are not interchangeable, and averaging them would let exact values buy invented provenance.",
+  "screening_rows": [
+    {
+      "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+      "answer_parsed": true,
+      "checks": 3,
+      "derived_refs": [],
+      "elapsed_seconds": 17.55,
+      "evidence_refs": [],
+      "exchanges": 3,
+      "failed_checks": [],
+      "failed_tool_calls": 0,
+      "first_reply_parsed": true,
+      "format_repair_used": false,
+      "off_surface_calls": [],
+      "operations": [
+        "coverage_report"
+      ],
+      "parse_error": null,
+      "retrieved_observations": [],
+      "stop_reason": "answered",
+      "test_id": "S0_tool_call_smoke",
+      "tool_calls": 1,
+      "uncertainties": [
+        "No source document reference was provided in the coverage report to check for filing text availability."
+      ],
+      "unverifiable": [],
+      "usage": {
+        "completion_tokens": 374,
+        "completion_tokens_details": {
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 248
+        },
+        "cost": 0,
+        "cost_details": {
+          "upstream_inference_completions_cost": 0,
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0
+        },
+        "is_byok": false,
+        "prompt_tokens": 3239,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0,
+          "video_tokens": 0
+        },
+        "total_tokens": 3613
+      },
+      "verdict": "PASS"
+    }
+  ],
+  "snapshot": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
+  "started_at": "2026-09-30T02:18:00.961048+00:00",
+  "totals": {
+    "failed": 0,
+    "passed": 1,
+    "tests": 1
+  },
+  "unverifiable_checks": []
+}

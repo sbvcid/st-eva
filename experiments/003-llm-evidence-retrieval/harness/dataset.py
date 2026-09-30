@@ -309,13 +309,19 @@ def build_dataset(snapshot_path: str, asset: str = "AAPL") -> Dataset:
     # -- T8: a conflict, and whether a side is picked -------------------
     conflict = connection.execute(
         "SELECT observation_id, references_json FROM validation_records"
-        " WHERE status = 'DISCREPANT' LIMIT 1"
+        " WHERE status = 'DISCREPANT' ORDER BY record_id LIMIT 1"
     ).fetchone()
     if conflict is not None:
+        side_sets, side_set_count = _ambiguity_side_sets(connection, asset)
         # Both sides, from the record's own reference list rather than by
         # re-deriving which observations belong together. The record is where
         # the archive states that these two figures are in dispute, so asking
         # it is the same discipline the auditor applies to the target.
+        #
+        # Ordered, because an unordered `LIMIT 1` makes the graded pair depend
+        # on SQLite's row order: two runs of the same snapshot could ask about
+        # different conflicts and score a model for answering the one it was
+        # asked.
         sides = sorted(set(json.loads(conflict["references_json"])))
         tests.append(
             Test(
@@ -331,6 +337,17 @@ def build_dataset(snapshot_path: str, asset: str = "AAPL") -> Dataset:
                     "observation_ids": sides,
                     "status": "DISCREPANT",
                     "no_winner": True,
+                    # The question says "a recorded disagreement" and the
+                    # archive holds two kinds: a cross-source validation
+                    # record, and rows of its own that it cannot tell apart.
+                    # Both carry the same discipline and the same
+                    # `NO_WINNER_SELECTED` resolution, so a model that
+                    # preserved either one has done what this test asks. Only
+                    # the pairs the archive itself presents as competing are
+                    # listed, so this widens which disagreement counts, not
+                    # what counts as preserving one.
+                    "alternative_side_sets": side_sets,
+                    "alternative_side_set_count": side_set_count,
                 },
                 audit=_audit_t8,
             )
@@ -558,11 +575,21 @@ def _audit_t1(auditor, audit, answer, tools, retrieved):
     flags_ambiguity = bool(
         re.search(
             r"ambiguous|more than one|multiple|several|"
-            r"two (?:figures|values|observations)|"
+            # "two different reported revenue figures", "two of the competing
+            # values". The original list required the count to sit directly
+            # against the noun, which is a phrasing rule rather than a meaning
+            # rule: a model that names two figures and calls them different was
+            # recorded as having said nothing about the ambiguity, and the
+            # failure looked like a reading failure rather than the evaluator's.
+            r"two\s+(?:\w+[\s-]+){0,4}?(?:figures|values|observations|"
+            r"estimates|amounts)|"
             r"competing|distinct (?:figures|values)|"
             r"cannot (?:determine|tell|choose)|do not know which|"
             r"not (?:able to )?(?:determine|identify) which|"
-            r"no winner|neither",
+            # The archive declining to choose, in the words it uses.
+            r"no winner|neither|has not (?:selected|chosen)|"
+            r"declined to choose|does not choose|"
+            r"(?:figures|values)\s+that\s+differ",
             answer.answer,
             re.I,
         )
@@ -831,10 +858,52 @@ def _audit_t7(auditor, audit, answer, tools, retrieved):
         )
 
 
+def _ambiguity_side_sets(connection, asset: str, limit: int = 400):
+    """
+    Every pair of figures the archive itself will not choose between.
+
+    Read from the same rows and with the same rule the query surface uses to
+    attach an `ambiguity` block: same asset, metric and period, different value.
+    It is re-derived here rather than imported so the grader does not depend on
+    the surface it is grading, and it is read from the archive rather than typed
+    in so it cannot drift from what a model was actually shown.
+
+    Capped, and the cap is recorded, because the answer to "which pairs could a
+    model have cited" is otherwise unbounded and a grader that grows a
+    thousand-line expectation is harder to read than the thing it grades.
+    """
+    rows = connection.execute(
+        "SELECT o.observation_id, o.metric, o.period_start, o.period_end,"
+        " o.value_json FROM observations o"
+        " JOIN assets a ON a.asset_id = o.asset_id"
+        " WHERE a.ticker = ?",
+        (asset,),
+    ).fetchall()
+    groups: Dict[Any, Dict[str, List[str]]] = {}
+    for row in rows:
+        key = (row["metric"], row["period_start"], row["period_end"])
+        groups.setdefault(key, {}).setdefault(
+            (row["value_json"] or "").strip(), []
+        ).append(row["observation_id"])
+    pairs: List[List[str]] = []
+    for by_value in groups.values():
+        values = [v for v, ids in by_value.items() if v]
+        if len(values) < 2:
+            # The same figure filed twice is a restatement, not a disagreement.
+            continue
+        for index, left in enumerate(values):
+            for right in values[index + 1:]:
+                for left_id in by_value[left][:2]:
+                    for right_id in by_value[right][:2]:
+                        pairs.append(sorted([left_id, right_id]))
+    return sorted(pairs)[:limit], len(pairs)
+
+
 def _audit_t8(auditor, audit, answer, tools, retrieved):
     auditor.check_conflict_preserved(
         audit, answer.answer, set(answer.evidence_refs),
         audit.expected("observation_ids"),
+        also_acceptable_side_sets=audit.expected("alternative_side_sets") or [],
     )
 
 
@@ -1064,9 +1133,27 @@ def _count_observation_refs(text: str) -> int:
     return len(set(re.findall(r"obs(?:arch)?_[A-Za-z0-9]+", text)))
 
 
+_CURRENCY_MARK = re.compile(r"[$€£¥]\s?\d")
+
+
+def _states_currency(text: str) -> bool:
+    """
+    Whether the answer writes a currency symbol against a number.
+
+    "$24,006,000,000" is a statement that the figure is money, and which money
+    is carried by the archive's own declared `currency` field, which is checked
+    against the database elsewhere. Requiring the word "USD" or "dollar" as well
+    made this a spelling test: the first cloud model run answered the ambiguous
+    value question correctly, with both figures written as currency, and was
+    recorded as having stated neither the unit nor the currency. That is the
+    evaluator's blind spot, not the model's.
+    """
+    return bool(_CURRENCY_MARK.search(text))
+
+
 def _claim_unit(answer: TargetAnswer) -> Optional[str]:
     text = answer.answer.lower()
-    if "usd" in text or "dollar" in text:
+    if "usd" in text or "dollar" in text or _states_currency(text):
         return "currency"
     if "per_share" in text or "per share" in text:
         return "per_share"
@@ -1076,7 +1163,10 @@ def _claim_unit(answer: TargetAnswer) -> Optional[str]:
 
 
 def _claim_currency(answer: TargetAnswer) -> Optional[str]:
-    return "USD" if "usd" in answer.answer.lower() else None
+    text = answer.answer.lower()
+    if "usd" in text or "dollar" in text or _states_currency(text):
+        return "USD"
+    return None
 
 
 def query_document(auditor, observation_id):

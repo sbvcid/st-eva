@@ -1,0 +1,91 @@
+{
+  "dataset_id": "steva-003-aapl-evidence",
+  "evaluator_sha256": "de3ffd713c76fe28ebf4d0f8b67655c4d2bdb8256b2f44b0276634736db41686",
+  "model_id": "stealth/space-bunny-alpha",
+  "phase": "screen",
+  "rows": [
+    {
+      "changed": false,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": true,
+      "stop_reason": "answered",
+      "test_id": "T1_exact_value",
+      "unverifiable": [],
+      "verdict": "PASS"
+    },
+    {
+      "changed": false,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": true,
+      "stop_reason": "answered",
+      "test_id": "T3_pagination",
+      "unverifiable": [],
+      "verdict": "PASS"
+    },
+    {
+      "changed": false,
+      "failed_checks": [
+        {
+          "capability": "F6",
+          "classification": null,
+          "detail": "the answer does not state the derived value, so there is nothing to check",
+          "name": "does not present a derived value as a reported one"
+        },
+        {
+          "capability": "F6",
+          "classification": "B",
+          "detail": "the derived reference was never named",
+          "name": "cites the derived reference"
+        },
+        {
+          "capability": "F6",
+          "classification": "B",
+          "detail": "the derivation was asserted without reading it",
+          "name": "inspected the derivation"
+        }
+      ],
+      "interrupted_by_transport": false,
+      "reaudited": false,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "T6_reported_vs_derived",
+      "unverifiable": [
+        "does not present a derived value as a reported one"
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "changed": false,
+      "failed_checks": [
+        {
+          "capability": "F8",
+          "classification": "B",
+          "detail": "missing: ['obsarch_a6efc0f926c63aa25f356fd5', 'obsarch_b31513334af56d3a649cf7b8'], and no other disagreement the archive records was cited in full",
+          "name": "both sides of the conflict are cited"
+        }
+      ],
+      "interrupted_by_transport": false,
+      "reaudited": false,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "T8_conflict",
+      "unverifiable": [],
+      "verdict": "FAIL"
+    },
+    {
+      "changed": false,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": true,
+      "stop_reason": "answered",
+      "test_id": "T13_provenance_chain",
+      "unverifiable": [],
+      "verdict": "PASS"
+    }
+  ]
+}

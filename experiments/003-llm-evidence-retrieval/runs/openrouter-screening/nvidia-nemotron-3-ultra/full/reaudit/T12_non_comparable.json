@@ -1,0 +1,61 @@
+{
+  "answer": {
+    "answer": "The archive holds two distinct US GAAP concepts mapped to the 'capex' metric for AAPL:\n\n1. **us-gaap:PaymentsToAcquireProductiveAssets** \u2014 used for periods 2007-09-29 through 2014-09-27, with a PARTIAL mapping fidelity.\n2. **us-gaap:PaymentsToAcquirePropertyPlantAndEquipment** \u2014 used from 2013-09-28 onward, with an EXACT mapping fidelity.\n\nTheir figures are **not the same measure**. The registry mapping notes explicitly state that PaymentsToAcquireProductiveAssets \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change.\" A CONCEPT_MAPPING_BREAK is recorded at the transition, confirming the series break.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_5e8e3b741876732ecddb59b4",
+      "obsarch_cf4f1346ee46ad8e8ddfbd28"
+    ],
+    "parse_error": null,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "The archive holds two distinct US GAAP concepts mapped to the 'capex' metric for AAPL:\n\n1. **us-gaap:PaymentsToAcquireProductiveAssets** \u2014 used for periods 2007-09-29 through 2014-09-27, with a PARTIAL mapping fidelity.\n2. **us-gaap:PaymentsToAcquirePropertyPlantAndEquipment** \u2014 used from 2013-09-28 onward, with an EXACT mapping fidelity.\n\nTheir figures are **not the same measure**. The registry mapping notes explicitly state that PaymentsToAcquireProductiveAssets \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change.\" A CONCEPT_MAPPING_BREAK is recorded at the transition, confirming the series break.",
+    "check_count": 3,
+    "checks": [
+      {
+        "actual": "named",
+        "capability": "F9",
+        "classification": null,
+        "detail": "a capex concept the archive holds was not mentioned",
+        "expected": "us-gaap:PaymentsToAcquireProductiveAssets",
+        "name": "names us-gaap:PaymentsToAcquireProductiveAssets",
+        "passed": true
+      },
+      {
+        "actual": "named",
+        "capability": "F9",
+        "classification": null,
+        "detail": "a capex concept the archive holds was not mentioned",
+        "expected": "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+        "name": "names us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+        "passed": true
+      },
+      {
+        "actual": "distinguished, or not asserted as one measure",
+        "capability": "F9",
+        "classification": null,
+        "detail": "",
+        "expected": "the two measures are distinguished",
+        "name": "the measures are kept distinct",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "concepts": [
+        "us-gaap:PaymentsToAcquireProductiveAssets",
+        "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment"
+      ],
+      "distinct_measures": true
+    },
+    "failed_count": 0,
+    "passed": true,
+    "test_id": "T12_non_comparable"
+  },
+  "changed": false,
+  "interrupted_by_transport": false,
+  "reaudited_verdict": true,
+  "recorded_verdict": true,
+  "stop_reason": "answered",
+  "test_id": "T12_non_comparable"
+}

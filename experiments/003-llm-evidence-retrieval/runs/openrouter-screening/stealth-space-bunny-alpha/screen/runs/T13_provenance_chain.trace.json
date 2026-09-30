@@ -1,0 +1,168 @@
+{
+  "answer": {
+    "answer": "The revenue figure for the period ending 2007-09-29 (fiscal year start 2006-10-01) is not a single value in ST-EVA. Two observations share this metric, period and source concept and report different values, and ST-EVA records the ambiguity as NOT_EXPLAINED with resolution NO_WINNER_SELECTED, so neither is selected over the other. Observation A: obsarch_ddb4af888ab3c6be910c0f9e, value 24,006,000,000 USD, evidence state SOURCE_REPORTED (reason code SOURCE_STATED_VALUE), validation status UNVERIFIABLE (a single official source cannot cross-validate itself), cross-checks returned empty. Observation B: obsarch_6383b6a9892d72ff26aab02a, value 24,578,000,000 USD, same evidence state and same UNVERIFIABLE validation status, also with no cross-checks. Neither observation's evidence_state is CONFLICTING, but the record itself declares the pair unresolvable, so the disagreement is not settled. Tracing each chain: both are kind OBSERVED, resting on the same single source document, doc_24e188322f7c7d6939f9dc79, content_hash sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591, canonical URI https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/SalesRevenueNet.json, an SEC_COMPANY_CONCEPT JSON payload of 31,766 bytes fetched 2026-09-29 with HTTP 200 and content available (the query surface does not return the payload itself; the hash is given to verify a copy already held). That one document backs 200-odd observations across many accessions. Each observation then points to a distinct raw source fact inside that document: sfid_b5229f1711c68622f937916d70285775 for observation A and sfid_52493188959d0d442076337871e8951b for observation B, each scoped as one raw fact inside one source document. The lineage step SOURCE_FACT is where the two values separate, and the stated reason the dimension member is not recoverable is that the source endpoint aggregates dimension members without returning the member. On the filing side the accessions differ: A comes from 10-K accession 0001193125-09-214859, fiscal_year 2009, fiscal_period FY; B comes from 10-K/A accession 0001193125-10-012091, same fiscal year and period. Provider is SecEdgar, source_type REGULATORY_FILING, taxonomy us-gaap, concept us-gaap:SalesRevenueNet, and the declared basis is a registered security reported under a source-declared USD currency. On concept mapping the registry records a PARTIAL mapping, not EXACT: us-gaap:SalesRevenueNet to metric revenue, effective from 2007-09-29 to 2018-06-30, notes reading 'net sales revenue, a third concept and a third window', with series_continues false. Two CONCEPT_MAPPING_BREAKs are flagged, one for us-gaap:SalesRevenueNet over 2007-09-29 to 2018-06-30 and one for us-gaap:Revenues over 2016-09-24 to 2018-09-29, both with explanation NOT_EXPLAINED_BY_ST_EVA. The metric definition held is total revenue from sale of goods and services rendered during the reporting period in the normal course of business, reduced by sales returns and allowances and sales discounts, and the methodology string reads 'us-gaap:SalesRevenueNet as filed in 10-K accession 0001193125-09-214859; registry mapping PARTIAL' for A and the 10-K/A equivalent for B. Issuer adoption of this concept is recorded on an observed basis as first_used 2007-09-29, last_used 2018-06-30, 210 facts across 40 filings, with adopted_outside_mapping_window false. On period, both observations carry start 2006-10-01, end 2007-09-29, instant null, start_is_instant false, as_of 2007-09-29, unit currency, currency USD, currency_basis REPORTED. On availability they differ again, and each date is SOURCE_DECLARED on an ACCEPTANCE_DATETIME basis with knowable_at equal to the same instant: A became available 2009-10-27T00:00:00+00:00; B became available 2010-01-25T00:00:00+00:00. The history for this metric over the same window returns point_count 2, returned_count 2, truncated false, so these two points are the whole series held here, not a truncated part of a longer one; series comparability is reported as single-framework and comparable, on reporting_frameworks us-gaap.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which of 24,006,000,000 USD (10-K, accession 0001193125-09-214859) and 24,578,000,000 USD (10-K/A, accession 0001193125-10-012091) is the revenue figure for the period ending 2007-09-29 is not settled; ST-EVA records NO_WINNER_SELECTED and gives the reason as NOT_EXPLAINED, because the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held.",
+      "Both observations carry validation_status UNVERIFIABLE and returned zero cross-checks, so neither has been corroborated against a second source.",
+      "The registry mapping to metric 'revenue' is PARTIAL, not EXACT, and carries a CONCEPT_MAPPING_BREAK at 2007-09-29, so this figure expresses the metric only partially and the series is flagged as not continuing; the break explanations are NOT_EXPLAINED_BY_ST_EVA.",
+      "The source fact ids sfid_b5229f1711c68622f937916d70285775 and sfid_52493188959d0d442076337871e8951b could not be retrieved directly: get_lineage on each returned UNAVAILABLE, and their only evidence is as chain steps returned through the lineage of the two observations.",
+      "The document payload behind sha256:8b37365a7f187479d40d872ed51551ca40a3981268248b91ba2643cbfb152591 is not returned by the query surface, so the two values cannot be checked against the source text from within ST-EVA."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": "2007-09-29",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": null,
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-30",
+        "period_start": "2007-09-01",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "depth": 3,
+        "reference": "sfid_b5229f1711c68622f937916d70285775"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(UNAVAILABLE)",
+      "returned_count": null,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "depth": 3,
+        "reference": "sfid_52493188959d0d442076337871e8951b"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(UNAVAILABLE)",
+      "returned_count": null,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "reference": "doc_24e188322f7c7d6939f9dc79"
+      },
+      "error": null,
+      "operation": "get_source_document",
+      "result_shape": "object[19]",
+      "returned_count": null,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 6
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 7
+    },
+    {
+      "arguments": {
+        "include_lineage": true,
+        "include_validation": true,
+        "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_observation",
+      "result_shape": "object[23]",
+      "returned_count": null,
+      "sequence": 8
+    },
+    {
+      "arguments": {
+        "depth": 3,
+        "reference": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 9
+    },
+    {
+      "arguments": {
+        "depth": 3,
+        "reference": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(OBSERVED)",
+      "returned_count": null,
+      "sequence": 10
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 6,
+        "metric": "revenue",
+        "period_end": "2007-09-29",
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=2,returned=2,truncated=False)",
+      "returned_count": 2,
+      "sequence": 11
+    }
+  ]
+}

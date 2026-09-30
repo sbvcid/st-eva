@@ -176,15 +176,17 @@ exactly one question and answer correctly everywhere else:
 ```
 target                   failed       classified             caught by
 reference (correct)      0/15         -                      none, as it should be
+
 asserts-causation        1/15         B=3                    T15_inference_boundary
 derived-as-reported      1/15         B=5                    T6_reported_vs_derived
-hides-truncation         1/15         B=1                    T14_truncation_trap
+hides-ambiguity          1/15         B=2                    T1_exact_value
+hides-truncation         1/15         B=2                    T14_truncation_trap
 invents-provenance       1/15         B=3                    T5_source_attribution
 negative-as-zero         1/15         B=5                    T9_unavailable
 picks-winner             1/15         B=2                    T8_conflict
 reads-one-page           1/15         B=1                    T3_pagination
 upgrades-partial         1/15         B=1                    T11_partial_mapping
-wrong-value              1/15         B=3                    T1_exact_value
+wrong-value              1/15         B=4                    T1_exact_value
 ```
 
 Two properties, and the second is the one that is easy to skip. **Sensitivity**:
@@ -193,6 +195,22 @@ fail. A target that failed everything would show only that something works;
 one that fails exactly its own test shows the check is measuring what it claims
 to. And every failure is B — none is A, so nothing here suggests ST-EVA is
 wrong.
+
+This table is re-derived rather than trusted: it changed twice after the first
+cloud-model round, when two checks were found to fail a correct answer for its
+phrasing (`reports/OPENROUTER_SCREENING.md`, section 7). The counts are the
+grader's current behaviour, not a historical record, and `verify_harness.py`
+regenerates them.
+
+## Running it against a hosted model
+
+`openrouter_screening.py` drives the same dataset, snapshot, tool surface and
+auditor against an OpenAI-compatible endpoint, in three phases — one-question
+smoke, five-test screening, full 15 — with a capability gate between the last
+two, and a `reaudit` phase that re-grades a stored run without spending a
+request. `harness/providers.py` takes the credential from the environment and
+never writes it into a config, a trace or a run directory. See
+`reports/OPENROUTER_SCREENING.md`.
 
 ## What building this found in the evaluator
 

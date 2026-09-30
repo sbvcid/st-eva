@@ -1,0 +1,175 @@
+{
+  "answer": {
+    "answer": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": "the model used all 8 exchanges without producing an answer",
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 50,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[50]",
+      "returned_count": 50,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONSISTENT"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONFLICTING"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VALIDATED"
+      },
+      "error": "QueryError: validation_status must be one of CONFLICTING, CONSISTENT, CURRENCY_MISMATCH, DISCREPANT, DUPLICATE_OBSERVATION, INSUFFICIENT_OBSERVATIONS, METHODOLOGY_MISMATCH, MISSING_METADATA, NOT_APPLICABLE, PERIOD_INVALID, PERIOD_MISMATCH, SINGLE_SOURCE, STALE, UNAVAILABLE, UNVERIFIABLE, VALID, VERIFIED, got 'VALIDATED'",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VALID"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VERIFIED"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 6
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_3c02b7058f1098a46a8d9e81"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 7
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_5e5a3feb01de198f477039b2"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 8
+    }
+  ]
+}

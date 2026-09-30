@@ -1,0 +1,288 @@
+{
+  "answer": {
+    "answer": "There is no recorded disagreement about any AAPL figure in this evidence base, so there are no competing values to report and no basis for saying which one is correct. The premise does not hold.\n\nThe coverage report for AAPL counts CONFLICTING at 0. Its 1,925 held observations across 12 metrics resolve to 8 metrics in SOURCE_REPORTED state, one SOURCE_DID_NOT_REPORT (dividend_per_share, 0 observations held, reason SOURCE_OMITS_CONCEPT), one NOT_APPLICABLE (operating_margin_bank, reason BUSINESS_MODEL_NOT_MEANINGFUL), one UNAVAILABLE (segment_revenue, reason RETRIEVAL_FAILED) and one STALE (guidance, reason NO_RECENT_VALUE). No metric carries a CONFLICTING state.\n\nA disagreement could in principle be recorded either in the evidence state or in the cross-check layer, so both were tested. Filtering on validation_status for CONFLICTING, DISCREPANT, METHODOLOGY_MISMATCH, PERIOD_MISMATCH, CURRENCY_MISMATCH, DUPLICATE_OBSERVATION, CONSISTENT and VERIFIED all returned empty lists for AAPL. The observations I inspected carry validation_status UNVERIFIABLE with the reason that a single official source cannot cross-validate itself, and an empty validation array. No cross-check of any kind, agreement or disagreement, has been recorded against AAPL figures, so there is no two-source dispute present in the data.\n\nThe closest things to a disagreement in the AAPL record are series and mapping breaks, which are not disputes between two values. The cash series carries a CONCEPT_MAPPING_BREAK from 2016-09-24, where the mapping moves to CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents, a PARTIAL concept that is a different measure from the EXACT CashAndCashEquivalentsAtCarryingValue used before it. The capex series carries a CONCEPT_MAPPING_BREAK from 2007-09-29 to 2014-09-27, also a PARTIAL mapping, recorded because that concept includes software and other intangibles that the property-and-equipment concept does not. Both breaks are marked NOT_EXPLAINED_BY_ST_EVA.\n\nWhere AAPL figures do appear twice for the same period, the two sources agree rather than compete: cash at 2006-09-30 is 6,392,000,000 USD in both a 10-K and a 10-K/A, and capex for 2006-10-01 to 2007-09-29 is 735,000,000 USD in both the 10-K and the 10-K/A. Neither pair is a disagreement, and because both come from the same underlying SEC company-concept document they are not independent confirmations either.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_3c02b7058f1098a46a8d9e81",
+      "obsarch_9b5d195bba3b2b2dc7230755",
+      "obsarch_5e8e3b741876732ecddb59b4",
+      "obsarch_3b90094a8dc637252a324239"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "The question names no metric and no period, so if a specific figure was meant, I could not identify it; the negative above holds for all 12 AAPL metrics and all periods held.",
+      "The evidence state is not filterable by query parameter, so the CONFLICTING count of 0 comes from the coverage report rather than from a filtered observation query.",
+      "The AAPL observation page I inspected was truncated, returning 5 of 1,925 observations; the conclusion about absence of any conflict rests on the coverage report and the empty validation_status filters, not on that five-row sample alone.",
+      "The cash and capex duplicate pairs cited agree, but both draw on a single underlying SEC company-concept document, so their agreement is not independent corroboration.",
+      "The two concept mapping breaks on cash and capex are marked NOT_EXPLAINED_BY_ST_EVA, and the evidence does not settle whether the pre- and post-2016 cash figures describe the same thing."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONFLICTING"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "DISAGREES"
+      },
+      "error": "QueryError: validation_status must be one of CONFLICTING, CONSISTENT, CURRENCY_MISMATCH, DISCREPANT, DUPLICATE_OBSERVATION, INSUFFICIENT_OBSERVATIONS, METHODOLOGY_MISMATCH, MISSING_METADATA, NOT_APPLICABLE, PERIOD_INVALID, PERIOD_MISMATCH, SINGLE_SOURCE, STALE, UNAVAILABLE, UNVERIFIABLE, VALID, VERIFIED, got 'DISAGREES'",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "DISCREPANT"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "METHODOLOGY_MISMATCH"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "PERIOD_MISMATCH"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 6
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CURRENCY_MISMATCH"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 7
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 5,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=1925,returned=5,truncated=True)",
+      "returned_count": 5,
+      "sequence": 8
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 5,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "SINGLE_SOURCE"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 9
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 3,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "DUPLICATE_OBSERVATION"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 10
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 3,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONSISTENT"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 11
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 3,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "VERIFIED"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 12
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "answer": {
+    "answer": "The coverage_report for AAPL returned metric_count 12. Breaking that down by state as the report counts them: 8 SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 SOURCE_DID_NOT_REPORT (dividend_per_share, reason code SOURCE_OMITS_CONCEPT, 0 observations held), 1 NOT_APPLICABLE (operating_margin_bank, reason code BUSINESS_MODEL_NOT_MEANINGFUL, 0 observations held), 1 UNAVAILABLE (segment_revenue, reason code RETRIEVAL_FAILED, 0 observations held), 1 STALE (guidance, reason code NO_RECENT_VALUE, 0 observations held), and 0 CONFLICTING. The report notes explicitly that these are counts by state, not a completeness score, and that a single completeness figure would be an interpretation hiding which distinct negative applies to which metric. Four of the twelve metrics hold zero observations, and each of those four carries a different negative state, so they are not interchangeable and none of them is a zero value. The report does not name any source document reference: it contains no source-document id, content hash or canonical URI field. Because of that, I did not call get_source_document, and the evidence returned makes no statement either way about whether filing text is available for AAPL \u2014 that is undetermined here, not absent.",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "parse_error": null,
+    "uncertainties": [
+      "The coverage_report returned no observation ids, so the counts and state labels above cannot be cited to specific observations; every claim rests on the report payload alone.",
+      "No source document reference is named anywhere in the report, so filing-text availability for AAPL is not established. Establishing it would require an observation-level source reference, which the report does not supply.",
+      "The state label SOURCE_DID_NOT_REPORT appears in the report for dividend_per_share; it is not among the states described in my operating instructions, so I report it as returned rather than interpreting it.",
+      "The report gives observations_held per metric but no period coverage, so those counts cannot be read as complete or truncated series, and I do not know their period ranges.",
+      "segment_revenue being UNAVAILABLE means retrieval failed for this filter set; it does not establish that no segment revenue data exists for AAPL.",
+      "The reason codes (for example SOURCE_OMITS_CONCEPT, BUSINESS_MODEL_NOT_MEANINGFUL) are the tool's characterisations; the evidence does not state the underlying reasoning in more detail."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 1
+    }
+  ]
+}

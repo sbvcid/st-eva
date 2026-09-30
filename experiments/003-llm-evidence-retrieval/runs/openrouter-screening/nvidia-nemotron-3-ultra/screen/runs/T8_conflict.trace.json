@@ -1,0 +1,69 @@
+{
+  "answer": {
+    "answer": "ST-EVA records multiple disagreements for AAPL where different filings report different values for the same metric, period, and source concept. The system has not selected a winner in any case (resolution: NO_WINNER_SELECTED). The competing values are: (1) net_income FY2007 (2006-10-01 to 2007-09-29): 3,496,000,000 vs 3,495,000,000; (2) revenue FY2007: 24,006,000,000 vs 24,578,000,000; (3) assets 2008-09-27: 39,572,000,000 vs 36,171,000,000; (4) eps_diluted FY2008 (2007-09-30 to 2008-09-27): 5.36 vs 6.78; (5) net_income FY2008: 4,834,000,000 vs 6,119,000,000; (6) revenue FY2008: 32,479,000,000 vs 37,491,000,000; (7) eps_diluted 2008-09-28 to 2009-06-27: 4.47 vs 6.3; (8) eps_diluted Q3 2009 (2009-03-29 to 2009-06-27): 1.35 vs 2.01; (9) net_income 2008-09-28 to 2009-06-27: 4,039,000,000 vs 5,703,000,000; (10) net_income Q3 2009: 1,229,000,000 vs 1,828,000,000; (11) revenue 2008-09-28 to 2009-06-27: 26,667,000,000 vs 30,698,000,000. In each case the reason is NOT_EXPLAINED: the source endpoint aggregates dimension members without returning the member, so the aggregate is not identifiable from the evidence held. ST-EVA does not know which value is correct and has not chosen.",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_5e5a3feb01de198f477039b2",
+      "obsarch_86488195f0eebd3c19b4ecb1",
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "obsarch_c7c975383c7c3649dde7b6d7",
+      "obsarch_34155bccb663701230ac4b8a",
+      "obsarch_92e266403de5c8be574f6ad9",
+      "obsarch_a967224404aedcaa33713a49",
+      "obsarch_8b61c67f773f969d1eabcdea",
+      "obsarch_37f4ce8a9a52187e9d54cd34",
+      "obsarch_225ce1b165e9487902b46990",
+      "obsarch_8af592cabb11624240c8a6ee",
+      "obsarch_9925745fd35d724e9cbc7351",
+      "obsarch_4a97fb398a6d5d745765e50d",
+      "obsarch_9876bb7ff70888195c271bda",
+      "obsarch_466ad08feeef461d885a0874",
+      "obsarch_72b5391df7aeb2c42e5b188b",
+      "obsarch_2a326d3cedf9da185692118e",
+      "obsarch_e019e31db415dc3a48355806",
+      "obsarch_6651a9a0c7f04262dfa18968",
+      "obsarch_7fcdf9a3c4a64b08fd2d0ee8",
+      "obsarch_dfc6cfd6db3431bdf6c67029",
+      "obsarch_6cd7c30a1927b4204d10c01b",
+      "obsarch_3512988b85b2b2fb78476db3",
+      "obsarch_7745dcea23ce7a7307fe7f84",
+      "obsarch_1dd628d37fee48149f3adc4f",
+      "obsarch_883c7e63f287d4f611c2461c",
+      "obsarch_1eb988c2c9029d70da7dca19",
+      "obsarch_45ad4ed4bc9d89165817b57c"
+    ],
+    "parse_error": null,
+    "uncertainties": [
+      "Which filing represents the correct restated or amended value in each disagreement",
+      "Whether the differences reflect amendments, corrections, or different aggregation methods",
+      "The specific dimension members that cause the aggregation differences"
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 100,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[100]",
+      "returned_count": 100,
+      "sequence": 1
+    }
+  ]
+}
