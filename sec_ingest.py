@@ -82,6 +82,7 @@ DEFAULT_FORMS = ("10-K", "10-Q")
 SIC_GROUPS: Tuple[Tuple[int, int, str], ...] = (
     (10, 14, "MINING"),
     (20, 39, "MANUFACTURING"),
+    (70, 89, "SERVICES"),
     (60, 67, "FINANCE_SERVICES"),
 )
 

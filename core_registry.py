@@ -65,15 +65,44 @@ FINANCE_SERVICES = "FINANCE_SERVICES"
 OPERATING = "OPERATING"
 MANUFACTURING = "MANUFACTURING"
 TECHNOLOGY = "TECHNOLOGY"
+# SIC major group 70-89: services. Added in 2.10 because the 2.9 collection gates
+# failed for one issuer on all twenty of its metrics, and the reason was not a
+# wrong ruling -- it was that there were none, because a services classification
+# fell outside the rule and an unrecognised classification deliberately makes
+# none.
+#
+# It carries no exclusion of its own, and that is the point. A business model
+# earns a place in this vocabulary by carrying a ruling, and this one currently
+# does not, so adding it closes a metadata gap and deliberately moves no
+# coverage. Had the collection numbers moved, that would have been the first
+# thing to check rather than a result.
+SERVICES = "SERVICES"
 BUSINESS_MODELS = (
     OPERATING,
     MANUFACTURING,
     TECHNOLOGY,
+    SERVICES,
     FINANCE_SERVICES,
     BANK,
     INSURANCE,
     REIT,
     MINING,
+)
+
+# Why a taxonomy carries no semantic metric. The distinctions are not decoration:
+# a taxonomy of transaction mechanics needs no work, an industry taxonomy might,
+# and a reader who cannot tell those apart gets a number with no remedy attached.
+UNMODELLED_TRANSACTION_DISCLOSURE = "TRANSACTION_DISCLOSURE"
+UNMODELLED_EXECUTIVE_COMPENSATION = "EXECUTIVE_COMPENSATION"
+UNMODELLED_NARRATIVE_TEXT = "NARRATIVE_TEXT"
+UNMODELLED_INDUSTRY_SPECIFIC = "INDUSTRY_SPECIFIC"
+UNMODELLED_OUT_OF_SCOPE = "OUT_OF_SCOPE"
+UNMODELLED_KINDS = (
+    UNMODELLED_TRANSACTION_DISCLOSURE,
+    UNMODELLED_EXECUTIVE_COMPENSATION,
+    UNMODELLED_NARRATIVE_TEXT,
+    UNMODELLED_INDUSTRY_SPECIFIC,
+    UNMODELLED_OUT_OF_SCOPE,
 )
 
 # Metric vocabularies, mirroring the migration's triggers.
@@ -554,6 +583,84 @@ class CoreRegistry:
             (asset_id, business_model, basis, source, utc_now()),
         )
         self.connection.commit()
+
+    def mark_taxonomy_unmodelled(
+        self,
+        taxonomy: str,
+        kind: str,
+        reason: str,
+    ) -> None:
+        """
+        Declare that a source taxonomy carries no semantic metric, and say why.
+
+        2.8 could not answer "what does a filer report that we have no mapping
+        for?", and the answer turned out to be worth having: across six issuers
+        the unmodelled part of a filer's XBRL is nineteen concepts in four
+        taxonomies, and reading them shows they are the mechanics of securities
+        offerings, executive compensation, narrative tagging and one industry
+        namespace. None is a financial-statement metric.
+
+        So the record is a *declaration about a taxonomy*, not a decline per
+        concept and certainly not a coverage gap. A table rather than a name
+        rule in the ledger, because a taxonomy is the unit at which the answer
+        exists and because a name-based rule would have to match a concept to a
+        metric -- the "similar label" problem 2.7 spent a phase refusing to
+        solve by name.
+        """
+        if kind not in UNMODELLED_KINDS:
+            raise RegistryError(
+                f"unmodelled taxonomy kind {kind!r} is not in "
+                f"{list(UNMODELLED_KINDS)}"
+            )
+        if not (reason or "").strip():
+            raise RegistryError(
+                "a taxonomy declared unmodelled must say why; a reader cannot "
+                "tell whether it needs work without it"
+            )
+        self.connection.execute(
+            "INSERT OR REPLACE INTO unmodelled_taxonomies (taxonomy, kind,"
+            " reason, recorded_at) VALUES (?, ?, ?, ?)",
+            (taxonomy, kind, reason, utc_now()),
+        )
+        self.connection.commit()
+
+    def unmodelled_taxonomies(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Every taxonomy the semantic layer declares nothing against, with its
+        reason. Empty on an archive predating migration 0013, which is correct:
+        such an archive has made no such declaration.
+        """
+        if self.connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table'"
+            " AND name = 'unmodelled_taxonomies'"
+        ).fetchone() is None:
+            return {}
+        return {
+            row["taxonomy"]: {
+                "kind": row["kind"],
+                "reason": row["reason"],
+            }
+            for row in self.connection.execute(
+                "SELECT taxonomy, kind, reason FROM unmodelled_taxonomies"
+                " ORDER BY taxonomy"
+            )
+        }
+
+    def modelled_taxonomies(self) -> List[str]:
+        """
+        The taxonomies the semantic layer does model.
+
+        Read from the concepts themselves rather than from a configured list, so
+        it cannot fall behind a mapping that was added. A taxonomy is modelled
+        when something in it has been given a definition.
+        """
+        return [
+            row["taxonomy"]
+            for row in self.connection.execute(
+                "SELECT DISTINCT taxonomy FROM concept_registry"
+                " ORDER BY taxonomy"
+            )
+        ]
 
     def decline_concept_mapping(
         self,

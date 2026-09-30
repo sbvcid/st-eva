@@ -283,6 +283,27 @@ def scoped_ledger(
     inventory = set(source_inventory or ())
     inventory_known = source_inventory is not None
 
+    # What the filer reports, split three ways. The third is the one 2.8 could
+    # not produce and 2.9 showed was worth having: a concept in a taxonomy the
+    # semantic layer has *declared* it does not model is outside the layer by
+    # decision, while a concept in a modelled taxonomy that no mapping claims is
+    # genuinely unmapped. Both are "not collected" and they are different
+    # pieces of work -- the first needs no work at all, and only the second is
+    # a backlog item.
+    modelled = set(registry.modelled_taxonomies())
+    unmodelled = registry.unmodelled_taxonomies()
+    inventory_split: Dict[str, List[str]] = {
+        "modelled": [], "declared_unmodelled": [], "unrepresented": [],
+    }
+    for concept in sorted(inventory):
+        taxonomy = concept.split(":", 1)[0]
+        if taxonomy in modelled:
+            inventory_split["modelled"].append(concept)
+        elif taxonomy in unmodelled:
+            inventory_split["declared_unmodelled"].append(concept)
+        else:
+            inventory_split["unrepresented"].append(concept)
+
     # A decline explains a metric's status only for issuers whose filings could
     # have contained the concept.
     #
@@ -330,6 +351,7 @@ def scoped_ledger(
             declines=declines.get(metric_id, []),
             inventory=inventory,
             inventory_known=inventory_known,
+            unrepresented=inventory_split["unrepresented"],
         )
         rows.append({
             "metric": metric_id,
@@ -371,6 +393,24 @@ def scoped_ledger(
         "business_model": model,
         "source_inventory_known": inventory_known,
         "source_inventory_size": len(inventory) if inventory_known else None,
+        "source_inventory_split": {
+            "counts": {k: len(v) for k, v in inventory_split.items()}
+            if inventory_known else None,
+            "declared_unmodelled_taxonomies": unmodelled,
+            # A concept in a modelled taxonomy that no mapping claims is the only
+            # kind that is a real question. The other two are a decision and an
+            # oversight respectively.
+            "unrepresented_concepts": inventory_split["unrepresented"][:200],
+            "unrepresented_total": len(inventory_split["unrepresented"]),
+            "note": (
+                "A filer's XBRL splits three ways. Concepts in a taxonomy the "
+                "semantic layer models are what collection is about. Concepts in "
+                "a taxonomy it has declared unmodelled are outside the layer by "
+                "decision, and the declaration says why. Concepts in a "
+                "taxonomy that is neither are the only genuinely unmapped "
+                "population, and they are the only one that is work."
+            ),
+        },
         "scope_known": scope_known,
         "metrics_total": len(rows),
         "metrics_applicable": len(scored),
@@ -400,6 +440,7 @@ def _status(
     declines: List[Dict[str, Any]],
     inventory,
     inventory_known: bool,
+    unrepresented: Optional[List[str]] = None,
 ):
     """
     The derivation, in one place, and ordered so the answer is the *strongest*
@@ -454,6 +495,12 @@ def _status(
             return SOURCE_UNAVAILABLE, (
                 "the source inventory records no concept for this metric for "
                 "this filer"
+            )
+        if unrepresented:
+            return UNMAPPED, (
+                f"the filer reports {len(unrepresented)} concepts in "
+                "taxonomies the semantic layer neither models nor declares "
+                "unmodelled, and none is mapped to this metric"
             )
     if not scope_known:
         return UNDETERMINED, (

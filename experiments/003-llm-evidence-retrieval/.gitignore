@@ -16,6 +16,13 @@ snapshot.sqlite-*
 snapshot-crossframework.sqlite
 snapshot-crossframework.sqlite-*
 
+# Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
+# extract like the archives above, and gitignored for the same reason: the
+# *derived* numbers are committed (in the collection chains, the reports and the
+# ledger output) and the responses are reproducible with one command per issuer.
+inventory/
+inventory/*
+
 # Run outputs. A run of the *sealed* dataset against a real model is the
 # evidence this experiment exists to produce, so those are committed; the
 # verification runs of scripted targets are noise and are not.

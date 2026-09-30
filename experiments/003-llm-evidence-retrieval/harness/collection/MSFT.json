@@ -1,6 +1,6 @@
 {
   "asset": "MSFT",
-  "business_model": null,
+  "business_model": "SERVICES",
   "metrics": {
     "assets": {
       "adopted_concepts": 1,

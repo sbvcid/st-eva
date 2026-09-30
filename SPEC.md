@@ -947,6 +947,82 @@ nowhere. Those are filer-specific concepts, and the right answer for them is a
 recorded "not a standard concept" — a decline reason the vocabulary does not
 have yet.
 
+## 0.14 Completing the coverage surface (2.10)
+
+The two gaps 2.9's own gates reported, closed. **No collection work, and nothing
+in this round changes what is collectible** — which was the constraint on it, and
+which is measured below rather than asserted.
+
+### A services business model, and the check it had to pass
+
+Gate 6 failed for one issuer on all twenty of its metrics. Not a wrong ruling:
+**no ruling**, because the filer's SIC falls outside the recognised groups and an
+unrecognised classification deliberately makes none.
+
+Adding `SERVICES` for SIC major group 70–89 is a one-line change that makes
+twenty gates pass. It was made deliberately, under a stated constraint:
+
+> **adding `SERVICES` must not make any metric more collectible.**
+
+A business model earns a place in the vocabulary by carrying a ruling — some
+metric whose meaning changes for that kind of company. Services carries none, so
+nothing is excluded for it and every metric stays applicable.
+
+And the constraint held. On the same archive rebuilt from the same filings:
+applicability 100/120 → **120/120**, observations **97/120 → 97/120**, and every
+collected count identical. **Twenty gates fixed and not one row of data moved.**
+If the collection numbers had moved, that would have been the first thing to
+check rather than a result.
+
+### What a filer reports that the semantic layer does not model
+
+2.8 could not answer this and 2.9 showed the answer was worth having. Across
+six issuers reporting 2,836 concepts between them, the unmodelled part is
+**20 concepts in four taxonomies**:
+
+```
+ffd     filing-fee disclosure -- fee amounts, offering amounts, offsets
+ecd     executive compensation, pay-versus-performance
+srt     supplementary narrative tagging
+invest  an industry taxonomy
+```
+
+**None of them is a financial-statement metric.** No consumer asking about
+revenue, assets or equity wanted any of them. So the record is a declaration
+that these taxonomies are outside the layer, with the reason — not a decline per
+concept, and not a coverage gap. A table rather than a name-based rule, because a
+name rule has to match a concept to a metric, which is the "similar label"
+problem 2.7 spent a phase refusing to solve by name; and because a taxonomy is
+the unit at which the answer exists.
+
+A filer's XBRL now splits three ways, and the third column is the only work:
+
+| | modelled | declared-unmodelled | **unrepresented** |
+| --- | --- | --- | --- |
+| six issuers, 2,836 concepts | 2,816 | 20 | **0** |
+
+That is a better answer than the question assumed. It is not a coverage hole; it
+is twenty concepts about offering mechanics, executive pay and narrative
+tagging, and the right response to every one is nothing.
+
+### Two of eight gates were the whole story
+
+Seven are now complete, and the eighth — observations, 97/120 — fails only on
+metrics the archive is *right* not to have: a bank reports no capital expenditure
+element, an IFRS filer has no diluted share count, and the debt components hold
+nothing because their 90, 116 and 142 facts are stored under the composed
+`debt` metric.
+
+The coverage surface is complete for the Core universe. What remains is **scale**,
+and the instruments for it already exist: the per-run collection chain, the
+per-issuer ledger, the gate scorer across a population, and the source inventory
+for the one number the archive cannot know. At ten thousand companies those four
+answer *which Core metrics are thin, for which kinds of company, and why* — a
+sort order for work rather than a percentage. There is no ambiguity left about
+what a number means, and the remaining risk is doing a thousand companies badly
+rather than getting one right. Which is the better problem, and is where this
+stops.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

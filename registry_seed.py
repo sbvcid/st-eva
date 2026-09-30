@@ -37,6 +37,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 from core_registry import (
     MAPPING_EQUIVALENT,
+    UNMODELLED_EXECUTIVE_COMPENSATION,
+    UNMODELLED_INDUSTRY_SPECIFIC,
+    UNMODELLED_NARRATIVE_TEXT,
+    UNMODELLED_TRANSACTION_DISCLOSURE,
     MAPPING_EXACT,
     MAPPING_NON_COMPARABLE,
     MAPPING_PARTIAL,
@@ -360,6 +364,54 @@ VENDOR = "vendor"
 # module may branch on it, and the mappings below are declared against the
 # metric definitions rather than against any issuer's filing.
 IFRS_FULL = "ifrs-full"
+
+# Taxonomies the semantic layer does not model, and why.
+#
+# 2.8 could not answer "what does a filer report that we have no mapping for?"
+# and 2.9 showed the answer is worth having: across six issuers the unmodelled
+# part of a filer's XBRL is nineteen concepts in four taxonomies, and reading
+# them says something no count would. They are the mechanics of a securities
+# offering, executive compensation, narrative tagging, and one industry
+# namespace. **None of them is a financial-statement metric**, so the honest
+# record is a declaration that these taxonomies are outside the layer, with the
+# reason -- not a backlog item and not a coverage gap.
+#
+# Each reason below is from reading the elements these filers actually report
+# under that namespace, not from the namespace's name.
+UNMODELLED_TAXONOMIES: Tuple[Tuple[str, str, str], ...] = (
+    (
+        "ffd",
+        "TRANSACTION_DISCLOSURE",
+        "Filing-fee disclosure. The elements filers report here are fee "
+        "amounts, total offering amounts, offering price maxima and offsets -- "
+        "the mechanics of a securities offering, not a measure of a business. "
+        "There is no semantic metric a consumer asking about revenue, assets or "
+        "equity would want from them.",
+    ),
+    (
+        "ecd",
+        "EXECUTIVE_COMPENSATION",
+        "Executive compensation, pay-versus-performance. The elements are "
+        "compensation actually paid and total shareholder return: measures of "
+        "remuneration and of a market index, not of the enterprise's results.",
+    ),
+    (
+        "srt",
+        "NARRATIVE_TEXT",
+        "SEC supplementary narrative tagging. The elements observed are share "
+        "repurchase programme authorisations, which exist so narrative "
+        "disclosure can be tagged at all. Not a statement line.",
+    ),
+    (
+        "invest",
+        "INDUSTRY_SPECIFIC",
+        "An industry taxonomy rather than a reporting standard. One derivative "
+        "notional element is reported under it in this archive. Declared "
+        "unmodelled as *not yet assessed* rather than out of scope, because an "
+        "industry namespace is the one kind here that could become worth "
+        "modelling.",
+    ),
+)
 
 CONCEPTS: Tuple[Concept, ...] = (
     Concept(
@@ -1682,9 +1734,12 @@ def seed(registry: CoreRegistry) -> Dict[str, int]:
             decline.framework_basis,
         )
         declines += 1
+    for taxonomy, kind, reason in UNMODELLED_TAXONOMIES:
+        registry.mark_taxonomy_unmodelled(taxonomy, kind, reason)
     return {
         "metrics": len(METRICS),
         "concepts": len(CONCEPTS),
         "mappings": len(MAPPINGS),
         "declines": declines,
+        "unmodelled_taxonomies": len(UNMODELLED_TAXONOMIES),
     }
