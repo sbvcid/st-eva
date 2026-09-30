@@ -1123,6 +1123,84 @@ work, ahead of a mega-cap-weighted resample and well ahead of 1,000.
 The risk at scale is no longer semantic. There is no ambiguity left about what a
 number means.
 
+## 0.16 Bulk bootstrap, reconciled (2.12)
+
+2.11 measured the incremental path at 23.4 requests per company with a second
+pass at zero, said that at 234,000 requests the SEC's own guidance is that bulk
+archives are the right mechanism, and said the reconciliation between the two was
+**documented but never exercised**. This is that exercise, and the result is
+better than a match.
+
+**7,956 observations, 7,956 matched, zero divergent values, zero one-sided.**
+
+### The abstraction held, and that is the finding
+
+A bulk source needs **no second ingestion path**, and that was verified before any
+code was written: a `companyconcept` payload is *exactly* a `companyfacts` slice
+plus four envelope fields, with **byte-identical fact rows** (117 = 117). So the
+bulk source is thin by construction, and the six-member provider interface
+`Ingestor` uses is satisfied by both. Had the bulk path needed its own ingestor,
+the two archives would have been different things sharing a name and
+reconciling them would have proved nothing.
+
+### What differs, and why it is not a disagreement
+
+**All 7,956 observations differ in `document_id` and in nothing else.** The API
+path reads a fact from that issuer's `companyconcept` document; the bulk path
+reads the same fact from the `companyfacts` document. Both are honest, and they
+are not the same bytes.
+
+Which is exactly why provenance is classified separately. **An archive rebuilt
+from a different source would otherwise look like it disagreed with itself**, and
+a diff reporting 7,956 differences would train a reader to ignore diffs.
+
+### The economics, now measured rather than asserted
+
+**23.4 requests per company becomes one document per company.** Twelve issuers in
+19.2 seconds with **zero network requests**. The 234,000-request bootstrap of
+2.11 becomes 10,000 documents.
+
+### Two things `companyfacts` does not carry
+
+**No SIC**, so an issuer classified from bulk alone is unclassified and every
+declared metric stays applicable — the safe default, and the same position 2.10
+measured for a filer whose SIC major group the rule does not recognise. The source
+reports `submissions_available: false` so a caller can tell *why* no ruling was
+made rather than inferring it from an empty metric.
+
+**No submissions index**, so the filing index is derived from the facts: every
+accession that contributed a fact becomes an accepted filing. Narrower than the
+API path's, and better for bootstrap, because every entry is a filing that
+actually carries evidence.
+
+### A bug this round refused to commit
+
+The first bulk source resolved a ticker by matching the company name. That is
+**exactly the guess the API provider explicitly refuses to make** — it resolved 2
+of 12 issuers, both accidentally, and would have attached filings to the wrong
+company. A bulk archive is keyed by CIK and says nothing about tickers, so the
+mapping comes from a `tickers.json` written beside the documents, and an unmapped
+ticker returns `None` — the already-classified `ISSUER_UNRESOLVED` rather than a
+guess.
+
+Had the reconciliation passed with that in place, it would have compared two wrong
+things consistently.
+
+### What is now settled, and what is not
+
+A ten-thousand-issuer corpus has **two working routes** that agree: bootstrap by
+bulk archive at one document per issuer and zero requests, and incremental at
+zero requests when nothing is new — the 2.11 second pass was exactly that.
+
+Still not settled: the per-company **constant** remains a floor, for the reason
+2.11 gave and this round did not change. And the bulk archive itself has not been
+downloaded — this exercises the *interface* one is read through, per-issuer
+documents fetched individually, because a delivery format is not where the
+semantic risk was. What is untested is reconciling a bulk bootstrap into an
+archive an incremental run has already touched, where the incremental run may hold
+observations the bulk payload predates. That is a question about append-only
+evidence, and it is now a small question rather than an unknown one.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

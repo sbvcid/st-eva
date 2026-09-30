@@ -1,0 +1,650 @@
+{
+  "bulk": {
+    "archive_bytes": 24743936,
+    "companies": 12,
+    "elapsed_seconds": 19.2,
+    "megabytes_per_company": 2.06,
+    "outcomes": {
+      "COLLECTED": 9,
+      "NOT_ATTEMPTED": 3
+    },
+    "reports": [
+      {
+        "asset": "LTRX",
+        "cik": "0001114925",
+        "concept_fetches": 12,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 4,
+        "documents_reused": 0,
+        "documents_stored": 12,
+        "elapsed_seconds": 2.468,
+        "errors": [],
+        "failures": [],
+        "filings_already_held": 0,
+        "filings_ingested": 60,
+        "filings_seen": 60,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 1168,
+        "outcome": "COLLECTED",
+        "outcomes": {},
+        "run_id": "run_95bd9252cbf84449",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 1168,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 12,
+          "documents_read": 1,
+          "documents_retained": 12,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "CHRN",
+        "cik": "0001549084",
+        "concept_fetches": 25,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 45,
+        "documents_reused": 0,
+        "documents_stored": 13,
+        "elapsed_seconds": 2.391,
+        "errors": [],
+        "failures": [],
+        "filings_already_held": 0,
+        "filings_ingested": 57,
+        "filings_seen": 57,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 1061,
+        "outcome": "COLLECTED",
+        "outcomes": {},
+        "run_id": "run_ec767e771e6143fe",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 1061,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 25,
+          "documents_read": 2,
+          "documents_retained": 25,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "RBC",
+        "cik": "0001324948",
+        "concept_fetches": 37,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 36,
+        "documents_reused": 0,
+        "documents_stored": 12,
+        "elapsed_seconds": 3.734,
+        "errors": [],
+        "failures": [],
+        "filings_already_held": 0,
+        "filings_ingested": 65,
+        "filings_seen": 65,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 1593,
+        "outcome": "COLLECTED",
+        "outcomes": {},
+        "run_id": "run_890ab155b1744eea",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 1593,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 37,
+          "documents_read": 3,
+          "documents_retained": 37,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "SSYS",
+        "cik": "0001517396",
+        "concept_fetches": 37,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 0,
+        "documents_reused": 0,
+        "documents_stored": 0,
+        "elapsed_seconds": 0.032,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "revenue"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "net_income"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "eps_diluted"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "assets"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "cash"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "debt"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "capex"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "shares_outstanding"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 0,
+        "filings_seen": 0,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 0,
+        "outcome": "NOT_ATTEMPTED",
+        "outcomes": {
+          "NOT_ATTEMPTED": 8
+        },
+        "run_id": "run_68dfaf3f82f7499e",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 0,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 37,
+          "documents_read": 4,
+          "documents_retained": 37,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "CMI",
+        "cik": "0000026172",
+        "concept_fetches": 48,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 3,
+        "documents_reused": 0,
+        "documents_stored": 11,
+        "elapsed_seconds": 3.234,
+        "errors": [],
+        "failures": [],
+        "filings_already_held": 0,
+        "filings_ingested": 69,
+        "filings_seen": 69,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 1326,
+        "outcome": "COLLECTED",
+        "outcomes": {},
+        "run_id": "run_da5144f2064045ca",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 1326,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 48,
+          "documents_read": 5,
+          "documents_retained": 48,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "TRSG",
+        "cik": "0001943444",
+        "concept_fetches": 48,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 0,
+        "documents_reused": 0,
+        "documents_stored": 0,
+        "elapsed_seconds": 0.0,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "revenue"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "net_income"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "eps_diluted"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "assets"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "cash"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "debt"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "capex"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "shares_outstanding"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 0,
+        "filings_seen": 0,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 0,
+        "outcome": "NOT_ATTEMPTED",
+        "outcomes": {
+          "NOT_ATTEMPTED": 8
+        },
+        "run_id": "run_76d1ddf486684889",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 0,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 48,
+          "documents_read": 6,
+          "documents_retained": 48,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "CCXIU",
+        "cik": "0002074973",
+        "concept_fetches": 51,
+        "concepts_unresolved": 5,
+        "dimension_collisions": 0,
+        "documents_reused": 0,
+        "documents_stored": 3,
+        "elapsed_seconds": 0.047,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "revenue"
+          },
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "eps_diluted"
+          },
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "debt"
+          },
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "capex"
+          },
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "shares_outstanding"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 3,
+        "filings_seen": 3,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 16,
+        "outcome": "COLLECTED",
+        "outcomes": {
+          "SOURCE_SILENT": 5
+        },
+        "run_id": "run_22c6f872bcd04022",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 16,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 51,
+          "documents_read": 7,
+          "documents_retained": 51,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "MAIR",
+        "cik": "0002098430",
+        "concept_fetches": 58,
+        "concepts_unresolved": 2,
+        "dimension_collisions": 1,
+        "documents_reused": 0,
+        "documents_stored": 7,
+        "elapsed_seconds": 0.078,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "debt"
+          },
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "shares_outstanding"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 2,
+        "filings_seen": 2,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 24,
+        "outcome": "COLLECTED",
+        "outcomes": {
+          "SOURCE_SILENT": 2
+        },
+        "run_id": "run_e348976a62d144c4",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 24,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 58,
+          "documents_read": 8,
+          "documents_retained": 58,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "KTCC",
+        "cik": "0000719733",
+        "concept_fetches": 69,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 54,
+        "documents_reused": 0,
+        "documents_stored": 11,
+        "elapsed_seconds": 3.906,
+        "errors": [],
+        "failures": [],
+        "filings_already_held": 0,
+        "filings_ingested": 60,
+        "filings_seen": 60,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 1508,
+        "outcome": "COLLECTED",
+        "outcomes": {},
+        "run_id": "run_57ef260e6b484f9c",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 1508,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 69,
+          "documents_read": 9,
+          "documents_retained": 69,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "STMEF",
+        "cik": "0000932787",
+        "concept_fetches": 69,
+        "concepts_unresolved": 0,
+        "dimension_collisions": 0,
+        "documents_reused": 0,
+        "documents_stored": 0,
+        "elapsed_seconds": 0.016,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "revenue"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "net_income"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "eps_diluted"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "assets"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "cash"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "debt"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "capex"
+          },
+          {
+            "detail": "the run found no new filings, so it asked nothing",
+            "outcome": "NOT_ATTEMPTED",
+            "subject": "shares_outstanding"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 0,
+        "filings_seen": 0,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 0,
+        "outcome": "NOT_ATTEMPTED",
+        "outcomes": {
+          "NOT_ATTEMPTED": 8
+        },
+        "run_id": "run_6a43a75843bf4554",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 0,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 69,
+          "documents_read": 10,
+          "documents_retained": 69,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "CONC",
+        "cik": "0000790273",
+        "concept_fetches": 76,
+        "concepts_unresolved": 2,
+        "dimension_collisions": 5,
+        "documents_reused": 0,
+        "documents_stored": 7,
+        "elapsed_seconds": 0.687,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "debt"
+          },
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "capex"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 15,
+        "filings_seen": 15,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 260,
+        "outcome": "COLLECTED",
+        "outcomes": {
+          "SOURCE_SILENT": 2
+        },
+        "run_id": "run_0422ff96756a4dea",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 260,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 76,
+          "documents_read": 11,
+          "documents_retained": 76,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      },
+      {
+        "asset": "NEON",
+        "cik": "0000087050",
+        "concept_fetches": 84,
+        "concepts_unresolved": 1,
+        "dimension_collisions": 29,
+        "documents_reused": 0,
+        "documents_stored": 8,
+        "elapsed_seconds": 2.579,
+        "errors": [],
+        "failures": [
+          {
+            "detail": "asked, and the source reported no figure for it",
+            "outcome": "SOURCE_SILENT",
+            "subject": "debt"
+          }
+        ],
+        "filings_already_held": 0,
+        "filings_ingested": 61,
+        "filings_seen": 61,
+        "network_fetches": 0,
+        "observations_skipped": 0,
+        "observations_stored": 1000,
+        "outcome": "COLLECTED",
+        "outcomes": {
+          "SOURCE_SILENT": 1
+        },
+        "run_id": "run_e6fae79017ad420c",
+        "source_facts_skipped": 0,
+        "source_facts_stored": 1000,
+        "transport": {
+          "bytes_downloaded": 23378721,
+          "concept_fetches": 84,
+          "documents_read": 12,
+          "documents_retained": 84,
+          "issuers_held": 13,
+          "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+          "requests_made": 0,
+          "source": "bulk"
+        }
+      }
+    ],
+    "seeded": {
+      "concepts": 46,
+      "declines": 19,
+      "mappings": 47,
+      "metrics": 20,
+      "unmodelled_taxonomies": 4
+    },
+    "target": "experiments/003-llm-evidence-retrieval/harness\\snapshot-bulk.sqlite",
+    "totals": {
+      "documents_stored": 84,
+      "filings_ingested": 392,
+      "observations_stored": 7956,
+      "source_facts_stored": 7956
+    },
+    "transport": {
+      "bytes_downloaded": 23378721,
+      "concept_fetches": 84,
+      "documents_read": 12,
+      "documents_retained": 84,
+      "issuers_held": 13,
+      "note": "A bulk source reads one local document per issuer and issues no network requests at all, so `requests_made` is zero by construction and the meaningful comparison is documents per issuer against the API path's requests per issuer.",
+      "requests_made": 0,
+      "source": "bulk"
+    }
+  },
+  "reconciliation": {
+    "api_observations": 54602,
+    "bulk_observations": 7956,
+    "differences_sample": [],
+    "issuers_compared": [
+      "CCXIU",
+      "CHRN",
+      "CMI",
+      "CONC",
+      "KTCC",
+      "LTRX",
+      "MAIR",
+      "NEON",
+      "RBC"
+    ],
+    "provenance_only_differences": 7956,
+    "unexplained": {
+      "divergent_values": 0,
+      "only_in_api": 0,
+      "only_in_bulk": 0
+    },
+    "verdicts": {
+      "MATCHED": 7956
+    }
+  }
+}

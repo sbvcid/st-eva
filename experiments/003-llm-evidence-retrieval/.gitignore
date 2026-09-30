@@ -23,6 +23,14 @@ snapshot-crossframework.sqlite-*
 snapshot-universe.sqlite
 snapshot-universe.sqlite-*
 
+# Bulk-path inputs and output. The companyfacts documents are a moving EDGAR
+# extract; the bulk archive is a build artefact of them. The *reconciliation* is
+# committed -- bulk-reconcile-212.json -- because the numbers in it are the
+# finding.
+bulkfacts/
+snapshot-bulk.sqlite
+snapshot-bulk.sqlite-*
+
 # Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
 # extract like the archives above: the *derived* numbers are committed (in the
 # collection chains, the reports and the ledger output) and the responses are
