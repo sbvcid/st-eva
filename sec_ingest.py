@@ -352,6 +352,26 @@ class Ingestor:
         )
         return report
 
+    def collection_chain(self, ticker: str) -> Dict[str, Any]:
+        """
+        The whole collection chain for one filer, per metric.
+
+        Written after every run so that "can collection coverage be maintained"
+        is answerable from a sequence of runs rather than from one measurement.
+        The four concept and fact counts move between runs for different reasons
+        -- a mapping is a decision, adoption is evidence about the filer,
+        observations are what is in hand -- and collapsing them into a percentage
+        is what makes a coverage figure impossible to act on.
+        """
+        from coverage_semantics import collection_chain
+
+        asset_id = self.store.record_asset(
+            ticker.upper(), cik=self.provider.resolve_company(ticker).cik
+        )
+        return collection_chain(
+            self.connection, self.registry, asset_id, ticker.upper()
+        )
+
     def coverage(self, ticker: str) -> Dict[str, Any]:
         """
         How much of this filer's history the archive holds, stated honestly.

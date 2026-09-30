@@ -267,6 +267,50 @@ METRICS: Tuple[Metric, ...] = (
         normal_period_type="INSTANT",
         comparability_group="share_counts",
     ),
+    # Added in 2.9, and it exists because `shares_outstanding` is not it.
+    #
+    # Three different share populations share almost identical names: shares
+    # outstanding at a date, the weighted-average count over a period, and the
+    # *diluted* version of that. The first was already registered and the
+    # definition says so; the other two are not the same quantity and folding
+    # them in would be a silent change of meaning.
+    #
+    # The diluted count is added separately because it is the denominator a
+    # research question about "shares" almost always means, and because its
+    # availability turns out to differ sharply by framework -- see the declines
+    # in 2.9, where the US-GAAP element is EXACT and the IFRS one is declined
+    # for being the basic count.
+    Metric(
+        metric_id="weighted_average_diluted_shares",
+        display_name="Weighted-average diluted shares",
+        statement="INCOME",
+        semantic_definition=(
+            "The weighted-average number of shares outstanding, diluted, used as "
+            "the denominator of diluted earnings per share for the reporting "
+            "period. Not shares outstanding at a date, and not the basic "
+            "weighted-average count: the diluted figure is larger whenever there "
+            "are dilutive instruments, and a series that mixed the two would be "
+            "a series of two different populations."
+        ),
+        unit_family="count",
+        normal_period_type="DURATION",
+        comparability_group="share_counts",
+    ),
+    Metric(
+        metric_id="equity",
+        display_name="Shareholders' equity",
+        statement="BALANCE_SHEET",
+        semantic_definition=(
+            "Total equity attributable to the owners of the parent at the "
+            "balance sheet date. Distinct from total equity including "
+            "non-controlling interests, which is a wider aggregate, and from "
+            "total assets, which several standards' balance-sheet labels "
+            "contain the word 'equity' in and which is not equity at all."
+        ),
+        unit_family="currency",
+        normal_period_type="INSTANT",
+        comparability_group="balance_sheet_totals",
+    ),
     Metric(
         metric_id="operating_cash_flow",
         display_name="Operating cash flow",
@@ -589,6 +633,246 @@ CONCEPTS: Tuple[Concept, ...] = (
             "the reporting date, excluding the current portion."
         ),
     ),
+    # -- 2.9: the Core metrics that had no declared concept ----------------
+    #
+    # Every concept below was found by inventorying what these filers actually
+    # report, not by matching a name. Seven Core metrics held nothing in 2.8
+    # because the registry declared no concept to ask the source about, and
+    # ingestion cannot close a registry gap no matter how hard it runs -- there
+    # is nothing to ask for.
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "GrossProfit"),
+        taxonomy=US_GAAP,
+        concept="GrossProfit",
+        label="Gross Profit",
+        source_definition=(
+            "Revenue less cost of revenue, as presented on the statement of "
+            "operations."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "OperatingIncomeLoss"),
+        taxonomy=US_GAAP,
+        concept="OperatingIncomeLoss",
+        label="Operating Income (Loss)",
+        source_definition=(
+            "The result of operating activities, before interest, taxes and "
+            "non-operating items, as presented by the filer."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "ResearchAndDevelopmentExpense"),
+        taxonomy=US_GAAP,
+        concept="ResearchAndDevelopmentExpense",
+        label="Research and Development Expense",
+        source_definition=(
+            "Costs incurred in research and development activities, as "
+            "presented on the statement of operations."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "InterestExpense"),
+        taxonomy=US_GAAP,
+        concept="InterestExpense",
+        label="Interest Expense",
+        source_definition=(
+            "Interest incurred on the filer's borrowings, as presented."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "InterestExpenseDebt"),
+        taxonomy=US_GAAP,
+        concept="InterestExpenseDebt",
+        label="Interest Expense, Debt",
+        source_definition=(
+            "Interest incurred on debt specifically, a component of total "
+            "interest expense."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "IncomeTaxExpenseBenefit"),
+        taxonomy=US_GAAP,
+        concept="IncomeTaxExpenseBenefit",
+        label="Income Tax Expense (Benefit)",
+        source_definition=(
+            "The income tax expense or benefit for the period, on an accrual "
+            "basis and as presented."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            US_GAAP, "NetCashProvidedByUsedInOperatingActivities"
+        ),
+        taxonomy=US_GAAP,
+        concept="NetCashProvidedByUsedInOperatingActivities",
+        label="Net Cash Provided by (Used in) Operating Activities",
+        source_definition=(
+            "The net cash inflow or outflow from operating activities for the "
+            "period, after adjustments for non-cash items."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "StockholdersEquity"),
+        taxonomy=US_GAAP,
+        concept="StockholdersEquity",
+        label="Stockholders' Equity Attributable to Parent",
+        source_definition=(
+            "Equity attributable to the parent, excluding non-controlling "
+            "interests."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            US_GAAP, "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"
+        ),
+        taxonomy=US_GAAP,
+        concept=(
+            "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"
+        ),
+        label="Stockholders Equity Including Portion Attributable to Noncontrolling Interest",
+        source_definition=(
+            "Total equity including the portion attributable to "
+            "non-controlling interests."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            US_GAAP, "WeightedAverageNumberOfDilutedSharesOutstanding"
+        ),
+        taxonomy=US_GAAP,
+        concept="WeightedAverageNumberOfDilutedSharesOutstanding",
+        label="Weighted Average Number of Shares Outstanding, Diluted",
+        source_definition=(
+            "The weighted-average shares outstanding used to compute diluted "
+            "earnings per share, including the dilutive effect of convertible "
+            "and other instruments."
+        ),
+    ),
+    # -- IFRS, for the same Core metrics ----------------------------------
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "GrossProfit"),
+        taxonomy=IFRS_FULL,
+        concept="GrossProfit",
+        label="Gross profit",
+        source_definition=(
+            "Revenue less cost of sales, as presented in the statement of "
+            "profit or loss."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "ResearchAndDevelopmentExpense"),
+        taxonomy=IFRS_FULL,
+        concept="ResearchAndDevelopmentExpense",
+        label="Research and development expense",
+        source_definition=(
+            "Expenses incurred on research and development activities, as "
+            "recognised in profit or loss."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "InterestExpense"),
+        taxonomy=IFRS_FULL,
+        concept="InterestExpense",
+        label="Finance costs -- interest expense",
+        source_definition=(
+            "Interest expense recognised in profit or loss, as presented."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "FinanceCosts"),
+        taxonomy=IFRS_FULL,
+        concept="FinanceCosts",
+        label="Finance costs",
+        source_definition=(
+            "Finance costs recognised in profit or loss, which may include "
+            "interest and items other than interest."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "IncomeTaxExpenseContinuingOperations"),
+        taxonomy=IFRS_FULL,
+        concept="IncomeTaxExpenseContinuingOperations",
+        label="Income tax expense continuing operations",
+        source_definition=(
+            "The income tax expense relating to continuing operations."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            IFRS_FULL, "CashFlowsFromUsedInOperatingActivities"
+        ),
+        taxonomy=IFRS_FULL,
+        concept="CashFlowsFromUsedInOperatingActivities",
+        label="Cash flows from used in operating activities",
+        source_definition=(
+            "The net cash inflow or outflow from operating activities, after "
+            "adjusting for non-cash items."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "EquityAttributableToOwnersOfParent"),
+        taxonomy=IFRS_FULL,
+        concept="EquityAttributableToOwnersOfParent",
+        label="Equity attributable to owners of parent",
+        source_definition=(
+            "The portion of equity attributable to the owners of the parent."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "Equity"),
+        taxonomy=IFRS_FULL,
+        concept="Equity",
+        label="Equity",
+        source_definition=(
+            "Total equity, including the portion attributable to "
+            "non-controlling interests."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "WeightedAverageShares"),
+        taxonomy=IFRS_FULL,
+        concept="WeightedAverageShares",
+        label="Weighted average number of ordinary shares",
+        source_definition=(
+            "The weighted-average number of ordinary shares outstanding during "
+            "the period. IFRS presents the basic count as a standard element; "
+            "the diluted count is disclosed in the earnings-per-share note "
+            "rather than as an element of its own."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            US_GAAP, "SellingGeneralAndAdministrativeExpense"
+        ),
+        taxonomy=US_GAAP,
+        concept="SellingGeneralAndAdministrativeExpense",
+        label="Selling, General and Administrative Expense",
+        source_definition=(
+            "Selling, general and administrative expenses, as presented on the "
+            "statement of operations."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "GeneralAndAdministrativeExpense"),
+        taxonomy=US_GAAP,
+        concept="GeneralAndAdministrativeExpense",
+        label="General and Administrative Expense",
+        source_definition=(
+            "General and administrative expenses, excluding selling costs "
+            "where the filer reports those separately."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "GeneralAndAdministrativeExpense"),
+        taxonomy=IFRS_FULL,
+        concept="GeneralAndAdministrativeExpense",
+        label="General and administrative expense",
+        source_definition=(
+            "General and administrative expenses recognised in profit or loss, "
+            "as presented. IFRS has no standard element combining selling and "
+            "administrative costs."
+        ),
+    ),
 )
 
 MAPPINGS: Tuple[ConceptMapping, ...] = (
@@ -871,6 +1155,257 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
             "reported period for the element across filers using the taxonomy"
         ),
     ),
+    # -- 2.9: the seven Core metrics that had no declared concept ---------
+    #
+    # Each of these was added because 2.8's ledger said the metric held nothing
+    # and the registry had no concept to ask the source about. The mapping types
+    # are decided against the metric definition and the source definition, and
+    # the interesting ones are the ones that are NOT exact.
+    #
+    # **`ifrs-full:WeightedAverageShares` is declined, not mapped, and that is
+    # the finding of this block.** Both IFRS filers in the archive report it, and
+    # it is nearly the name of the metric -- but IFRS presents the *basic*
+    # weighted-average count as a standard element, and discloses the diluted
+    # one in the earnings-per-share note instead. Mapping it would have given
+    # every IFRS issuer a diluted share count that is not diluted, and a
+    # research question about dilution would have been answered with the basic
+    # number and no error anywhere to notice it.
+    ConceptMapping(
+        metric_id="gross_profit",
+        concept_id=concept_id_for(US_GAAP, "GrossProfit"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "revenue less cost of revenue, as presented -- which is the metric's "
+            "own definition, in the same words"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="gross_profit",
+        concept_id=concept_id_for(IFRS_FULL, "GrossProfit"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the same construct in the second framework: revenue less cost of "
+            "sales as presented. The element exists in IFRS filings from a "
+            "financial institution, which does not make the metric meaningful "
+            "for one -- applicability is a statement about the metric, and a "
+            "filer tagging a similarly named element does not change that"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="operating_income",
+        concept_id=concept_id_for(US_GAAP, "OperatingIncomeLoss"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "operating activities before interest, taxes and non-operating "
+            "items, as presented. Declared inapplicable to a financial "
+            "institution, where the subtotal is not a construct the framework "
+            "provides and these filers report no element for it"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="r_and_d",
+        concept_id=concept_id_for(US_GAAP, "ResearchAndDevelopmentExpense"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "research and development expense as presented, and the metric is "
+            "that line and nothing else"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="r_and_d",
+        concept_id=concept_id_for(IFRS_FULL, "ResearchAndDevelopmentExpense"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the same line under the same name in the second framework, which "
+            "is a useful result: an IFRS element can be EXACT where an element "
+            "of the same name elsewhere is only PARTIAL"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="interest_expense",
+        concept_id=concept_id_for(US_GAAP, "InterestExpense"),
+        mapping_type=MAPPING_EXACT,
+        notes="interest incurred on borrowings, as presented, in total",
+    ),
+    ConceptMapping(
+        metric_id="interest_expense",
+        concept_id=concept_id_for(US_GAAP, "InterestExpenseDebt"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2013-06-29",
+        notes=(
+            "interest on debt specifically, which is one component of total "
+            "interest expense. A wider series would splice the two"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="interest_expense",
+        concept_id=concept_id_for(IFRS_FULL, "InterestExpense"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "interest expense as presented. Kept distinct from FinanceCosts, "
+            "which is the wider measure and maps only partially"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="interest_expense",
+        concept_id=concept_id_for(IFRS_FULL, "FinanceCosts"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2015-12-31",
+        notes=(
+            "finance costs may include items other than interest, so the "
+            "element is a wider measure than the metric. Mapping it EXACT would "
+            "answer 'what did interest cost' with a number that also contains "
+            "fair-value and currency movements. Window: earliest reported "
+            "period for the element across filers using the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="income_tax",
+        concept_id=concept_id_for(US_GAAP, "IncomeTaxExpenseBenefit"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "income tax expense on an accrual basis as presented. Distinct "
+            "from taxes paid, which is a cash figure and a different question"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="income_tax",
+        concept_id=concept_id_for(IFRS_FULL, "IncomeTaxExpenseContinuingOperations"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2015-12-31",
+        notes=(
+            "the element is scoped to continuing operations, so it is narrower "
+            "than 'income tax expense for the period' whenever a filer has "
+            "discontinued operations. PARTIAL rather than EXACT for that reason "
+            "and not for the framework. Window: earliest reported period across "
+            "filers using the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="operating_cash_flow",
+        concept_id=concept_id_for(
+            US_GAAP, "NetCashProvidedByUsedInOperatingActivities"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "net cash from operating activities after non-cash adjustments -- "
+            "the same construct under a different element name in each "
+            "framework, which is the clearest case in the registry of a metric "
+            "being framework-neutral"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="operating_cash_flow",
+        concept_id=concept_id_for(
+            IFRS_FULL, "CashFlowsFromUsedInOperatingActivities"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the same construct in the second framework; the IFRS element name "
+            "reads as the gross flows but the standard element is the net total"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="equity",
+        concept_id=concept_id_for(US_GAAP, "StockholdersEquity"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "equity attributable to the parent, which is what the metric defines"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="equity",
+        concept_id=concept_id_for(
+            US_GAAP, "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"
+        ),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2008-08-28",
+        notes=(
+            "total equity including non-controlling interests: a wider "
+            "aggregate of the metric, and the two differ by exactly the "
+            "non-controlling interest. Window: earliest reported period for the "
+            "element across filers"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="equity",
+        concept_id=concept_id_for(IFRS_FULL, "EquityAttributableToOwnersOfParent"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the IFRS element for the same claim as us-gaap:StockholdersEquity, "
+            "which is what makes this metric the cleanest cross-framework EXACT "
+            "in the registry"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="equity",
+        concept_id=concept_id_for(IFRS_FULL, "Equity"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2014-12-31",
+        notes=(
+            "total equity including non-controlling interests, a wider "
+            "aggregate than the metric. Declared as a component-of-attribution "
+            "matter rather than a framework one: TSM reports both elements and "
+            "they differ. Window: earliest reported period across filers using "
+            "the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="weighted_average_diluted_shares",
+        concept_id=concept_id_for(
+            US_GAAP, "WeightedAverageNumberOfDilutedSharesOutstanding"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the diluted weighted-average count as the filer computes it for "
+            "diluted earnings per share. The basic count is a different "
+            "population and is declined rather than mapped"
+        ),
+    ),
+    # -- sga, the last Core metric with no declared concept ----------------
+    #
+    # The metric's definition names selling, general *and* administrative. The
+    # US-GAAP element that matches is the one that says all three; the one that
+    # says only general and administrative is a narrower construct, and where a
+    # filer reports the narrower one the mapping is PARTIAL. IFRS has no standard
+    # element combining the three at all, so an IFRS filer's nearest element
+    # covers administration alone.
+    ConceptMapping(
+        metric_id="sga",
+        concept_id=concept_id_for(
+            US_GAAP, "SellingGeneralAndAdministrativeExpense"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "selling, general and administrative expenses as presented, which "
+            "is the metric's own definition in the same words"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="sga",
+        concept_id=concept_id_for(US_GAAP, "GeneralAndAdministrativeExpense"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2007-09-29",
+        notes=(
+            "general and administrative expenses without selling costs where "
+            "the filer reports those separately: a narrower construct than the "
+            "metric, and a wider one than administration alone. Window: "
+            "earliest reported period for the element across filers"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="sga",
+        concept_id=concept_id_for(IFRS_FULL, "GeneralAndAdministrativeExpense"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2015-12-31",
+        notes=(
+            "IFRS has no standard element combining selling and administrative "
+            "costs, so this element is administration alone and the metric is "
+            "narrower still. PARTIAL on that basis and not on the framework. "
+            "Window: earliest reported period for the element across filers "
+            "using the taxonomy"
+        ),
+    ),
 )
 
 # Concepts considered for a metric and declined, with the reason recorded where a
@@ -993,6 +1528,138 @@ DECLINES: Tuple[DeclinedConcept, ...] = (
             "different thing: interest, net of the cost of it."
         ),
         framework_basis=IFRS_FULL,
+    ),
+    # -- 2.9: the near misses that had to be declined ---------------------
+    #
+    # Every one of these was found by reading a candidate and asking whether it
+    # measures the same thing. The first is the one that would have been easiest
+    # to get wrong and the most damaging if it had been: an element whose name is
+    # almost the metric's, reported by every IFRS filer in the archive, and
+    # measuring a different population.
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "WeightedAverageShares"),
+        considered_for_metric="weighted_average_diluted_shares",
+        reason_code=REASON_IDENTITY_MISMATCH,
+        reason=(
+            "Almost the metric's name, and reported by both IFRS filers in the "
+            "archive -- but it is the *basic* weighted-average count. IFRS "
+            "presents the basic figure as a standard element and discloses the "
+            "diluted one in the earnings-per-share note, so there is no standard "
+            "element for the diluted count. Mapping this would have given every "
+            "IFRS issuer a diluted share count that is not diluted, and a "
+            "question about dilution would have been answered with the basic "
+            "number and no error anywhere to notice it."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(
+            US_GAAP, "WeightedAverageNumberOfSharesOutstandingBasic"
+        ),
+        considered_for_metric="weighted_average_diluted_shares",
+        reason_code=REASON_IDENTITY_MISMATCH,
+        reason=(
+            "The basic weighted-average count. A different population from the "
+            "diluted one by exactly the dilutive instruments, and the filer "
+            "reports both side by side, so the difference is visible in the "
+            "filing rather than inferable."
+        ),
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(
+            US_GAAP, "WeightedAverageNumberDilutedSharesOutstandingAdjustment"
+        ),
+        considered_for_metric="weighted_average_diluted_shares",
+        reason_code=REASON_COMPONENT_OF,
+        reason=(
+            "The *adjustment* from the basic to the diluted count -- an "
+            "increment, not a count. It is the difference between the two "
+            "populations, which is a different quantity from either."
+        ),
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(US_GAAP, "IncomeTaxesPaidNet"),
+        considered_for_metric="income_tax",
+        reason_code=REASON_DIFFERENT_QUANTITY,
+        reason=(
+            "Cash taxes paid during the period, on a cash basis. The metric is "
+            "the accrual expense, and the two differ by the movement in tax "
+            "payables and by the timing of every payment -- a question about "
+            "which one was asked deserves a different answer."
+        ),
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(
+            IFRS_FULL, "IncomeTaxesPaidClassifiedAsOperatingActivities"
+        ),
+        considered_for_metric="income_tax",
+        reason_code=REASON_DIFFERENT_QUANTITY,
+        reason=(
+            "Cash taxes paid, classified within the cash flow statement. A cash "
+            "figure where the metric is an accrual expense, on the same "
+            "reasoning as the US-GAAP cash-taxes element."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(US_GAAP, "LiabilitiesAndStockholdersEquity"),
+        considered_for_metric="equity",
+        reason_code=REASON_NOT_A_METRIC,
+        reason=(
+            "Total assets. The label contains 'equity' because the accounting "
+            "identity is assets = liabilities + equity, and a name search on "
+            "equity finds it readily. Mapping it would have reported the "
+            "balance sheet's largest number as shareholders' equity, which is "
+            "the kind of error no downstream check would catch."
+        ),
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "EquityAndLiabilities"),
+        considered_for_metric="equity",
+        reason_code=REASON_NOT_A_METRIC,
+        reason=(
+            "Total assets, for the same reason as the US-GAAP element. The two "
+            "frameworks even name it differently -- 'liabilities and "
+            "stockholders' equity' against 'equity and liabilities' -- and "
+            "neither of them means equity."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(
+            US_GAAP, "UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense"
+        ),
+        considered_for_metric="interest_expense",
+        reason_code=REASON_NOT_A_METRIC,
+        reason=(
+            "Interest accrued on tax positions, disclosed in the tax footnote. "
+            "It is interest, and it is nothing to do with the interest a "
+            "borrower pays, and a name search for interest expense finds it "
+            "readily."
+        ),
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(US_GAAP, "SegmentReportingInformationOperatingIncomeLoss"),
+        considered_for_metric="operating_income",
+        reason_code=REASON_COMPONENT_OF,
+        reason=(
+            "Operating income for one reportable segment, not for the entity. "
+            "A segment total and a consolidated total are the same *kind* of "
+            "number and different quantities, and a series that mixed them "
+            "would be a series of parts of a company."
+        ),
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(US_GAAP, "EquityMethodInvestments"),
+        considered_for_metric="equity",
+        reason_code=REASON_NOT_A_METRIC,
+        reason=(
+            "The carrying amount of investments accounted for under the equity "
+            "method. A filer whose business is largely joint ventures reports "
+            "it as a large share of its balance sheet, so it is the kind of "
+            "concept that a name search on 'equity' surfaces and the kind that "
+            "must be declined rather than mapped."
+        ),
     ),
 )
 

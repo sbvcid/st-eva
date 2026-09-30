@@ -1,0 +1,378 @@
+{
+  "asset": "AAPL",
+  "business_model": "MANUFACTURING",
+  "metrics": {
+    "assets": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 146,
+      "declared_concepts": 2,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "assets",
+      "observed_facts": 146,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "146 observations held for this metric"
+    },
+    "capex": {
+      "adopted_concepts": 2,
+      "applicability": "APPLICABLE",
+      "collected_observations": 164,
+      "declared_concepts": 2,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "capex",
+      "observed_facts": 164,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "164 observations held for this metric"
+    },
+    "cash": {
+      "adopted_concepts": 2,
+      "applicability": "APPLICABLE",
+      "collected_observations": 348,
+      "declared_concepts": 3,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "cash",
+      "observed_facts": 348,
+      "observed_filings": 102,
+      "status": "COLLECTED",
+      "why": "348 observations held for this metric"
+    },
+    "debt": {
+      "adopted_concepts": 2,
+      "applicability": "APPLICABLE",
+      "collected_observations": 180,
+      "declared_concepts": 4,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "debt",
+      "observed_facts": 180,
+      "observed_filings": 90,
+      "status": "COLLECTED",
+      "why": "180 observations held for this metric"
+    },
+    "eps_diluted": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 338,
+      "declared_concepts": 2,
+      "declined": [
+        {
+          "concept_id": "ifrs-full:DilutedEarningsLossPerShareFromContinuingOperations",
+          "reason_code": "DIFFERENT_QUANTITY"
+        }
+      ],
+      "declined_concepts": 1,
+      "is_backlog_item": false,
+      "metric": "eps_diluted",
+      "observed_facts": 338,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "338 observations held for this metric"
+    },
+    "equity": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 264,
+      "declared_concepts": 4,
+      "declined": [
+        {
+          "concept_id": "ifrs-full:EquityAndLiabilities",
+          "reason_code": "NOT_A_METRIC"
+        },
+        {
+          "concept_id": "us-gaap:EquityMethodInvestments",
+          "reason_code": "NOT_A_METRIC"
+        },
+        {
+          "concept_id": "us-gaap:LiabilitiesAndStockholdersEquity",
+          "reason_code": "NOT_A_METRIC"
+        }
+      ],
+      "declined_concepts": 3,
+      "is_backlog_item": false,
+      "metric": "equity",
+      "observed_facts": 264,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "264 observations held for this metric"
+    },
+    "gross_profit": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 338,
+      "declared_concepts": 2,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "gross_profit",
+      "observed_facts": 338,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "338 observations held for this metric"
+    },
+    "income_tax": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 234,
+      "declared_concepts": 2,
+      "declined": [
+        {
+          "concept_id": "ifrs-full:IncomeTaxesPaidClassifiedAsOperatingActivities",
+          "reason_code": "DIFFERENT_QUANTITY"
+        },
+        {
+          "concept_id": "us-gaap:IncomeTaxesPaidNet",
+          "reason_code": "DIFFERENT_QUANTITY"
+        }
+      ],
+      "declined_concepts": 2,
+      "is_backlog_item": false,
+      "metric": "income_tax",
+      "observed_facts": 234,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "234 observations held for this metric"
+    },
+    "interest_expense": {
+      "adopted_concepts": 2,
+      "applicability": "APPLICABLE",
+      "collected_observations": 209,
+      "declared_concepts": 4,
+      "declined": [
+        {
+          "concept_id": "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense",
+          "reason_code": "NOT_A_METRIC"
+        }
+      ],
+      "declined_concepts": 1,
+      "is_backlog_item": false,
+      "metric": "interest_expense",
+      "observed_facts": 209,
+      "observed_filings": 68,
+      "status": "COLLECTED",
+      "why": "209 observations held for this metric"
+    },
+    "long_term_debt_current": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 0,
+      "declared_concepts": 1,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "long_term_debt_current",
+      "observed_facts": 90,
+      "observed_filings": 45,
+      "status": "MAPPED_NO_CURRENT_OBSERVATION",
+      "why": "us-gaap:LongTermDebtCurrent was observed reported by this filer and the archive holds no observation for it now; the mapping window, or deduplication, or a later concept change accounts for the gap"
+    },
+    "long_term_debt_noncurrent": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 0,
+      "declared_concepts": 1,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "long_term_debt_noncurrent",
+      "observed_facts": 90,
+      "observed_filings": 45,
+      "status": "MAPPED_NO_CURRENT_OBSERVATION",
+      "why": "us-gaap:LongTermDebtNoncurrent was observed reported by this filer and the archive holds no observation for it now; the mapping window, or deduplication, or a later concept change accounts for the gap"
+    },
+    "net_income": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 338,
+      "declared_concepts": 3,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "net_income",
+      "observed_facts": 338,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "338 observations held for this metric"
+    },
+    "operating_cash_flow": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 134,
+      "declared_concepts": 2,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "operating_cash_flow",
+      "observed_facts": 134,
+      "observed_filings": 59,
+      "status": "COLLECTED",
+      "why": "134 observations held for this metric"
+    },
+    "operating_income": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 234,
+      "declared_concepts": 1,
+      "declined": [
+        {
+          "concept_id": "us-gaap:SegmentReportingInformationOperatingIncomeLoss",
+          "reason_code": "COMPONENT_OF"
+        }
+      ],
+      "declined_concepts": 1,
+      "is_backlog_item": false,
+      "metric": "operating_income",
+      "observed_facts": 234,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "234 observations held for this metric"
+    },
+    "r_and_d": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 234,
+      "declared_concepts": 2,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "r_and_d",
+      "observed_facts": 234,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "234 observations held for this metric"
+    },
+    "revenue": {
+      "adopted_concepts": 3,
+      "applicability": "APPLICABLE",
+      "collected_observations": 338,
+      "declared_concepts": 5,
+      "declined": [
+        {
+          "concept_id": "ifrs-full:InterestRevenueExpense",
+          "reason_code": "DIFFERENT_QUANTITY"
+        },
+        {
+          "concept_id": "ifrs-full:LoansAndAdvancesToCustomers",
+          "reason_code": "NOT_A_METRIC"
+        },
+        {
+          "concept_id": "ifrs-full:RevenueFromContractsWithCustomers",
+          "reason_code": "COMPONENT_OF"
+        },
+        {
+          "concept_id": "ifrs-full:RevenueFromDividends",
+          "reason_code": "COMPONENT_OF"
+        },
+        {
+          "concept_id": "ifrs-full:RevenueFromGovernmentGrants",
+          "reason_code": "COMPONENT_OF"
+        },
+        {
+          "concept_id": "ifrs-full:RevenueFromInterest",
+          "reason_code": "COMPONENT_OF"
+        }
+      ],
+      "declined_concepts": 6,
+      "is_backlog_item": false,
+      "metric": "revenue",
+      "observed_facts": 338,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "338 observations held for this metric"
+    },
+    "sbc": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 180,
+      "declared_concepts": 1,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "sbc",
+      "observed_facts": 180,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "180 observations held for this metric"
+    },
+    "sga": {
+      "adopted_concepts": 2,
+      "applicability": "APPLICABLE",
+      "collected_observations": 247,
+      "declared_concepts": 3,
+      "declined": [],
+      "declined_concepts": 0,
+      "is_backlog_item": false,
+      "metric": "sga",
+      "observed_facts": 247,
+      "observed_filings": 76,
+      "status": "COLLECTED",
+      "why": "247 observations held for this metric"
+    },
+    "shares_outstanding": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 70,
+      "declared_concepts": 2,
+      "declined": [
+        {
+          "concept_id": "ifrs-full:IssuedCapital",
+          "reason_code": "NOT_A_METRIC"
+        },
+        {
+          "concept_id": "ifrs-full:NumberOfSharesAuthorised",
+          "reason_code": "IDENTITY_MISMATCH"
+        }
+      ],
+      "declined_concepts": 2,
+      "is_backlog_item": false,
+      "metric": "shares_outstanding",
+      "observed_facts": 70,
+      "observed_filings": 70,
+      "status": "COLLECTED",
+      "why": "70 observations held for this metric"
+    },
+    "weighted_average_diluted_shares": {
+      "adopted_concepts": 1,
+      "applicability": "APPLICABLE",
+      "collected_observations": 234,
+      "declared_concepts": 1,
+      "declined": [
+        {
+          "concept_id": "ifrs-full:WeightedAverageShares",
+          "reason_code": "IDENTITY_MISMATCH"
+        },
+        {
+          "concept_id": "us-gaap:WeightedAverageNumberDilutedSharesOutstandingAdjustment",
+          "reason_code": "COMPONENT_OF"
+        },
+        {
+          "concept_id": "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic",
+          "reason_code": "IDENTITY_MISMATCH"
+        }
+      ],
+      "declined_concepts": 3,
+      "is_backlog_item": false,
+      "metric": "weighted_average_diluted_shares",
+      "observed_facts": 234,
+      "observed_filings": 72,
+      "status": "COLLECTED",
+      "why": "234 observations held for this metric"
+    }
+  },
+  "note": "Every status except UNDETERMINED is a result or a decision rather than a gap, and a NOT_APPLICABLE and a SOURCE_SILENT are both successes. The one status that is work to do is NOT_YET_COLLECTED, and it is the only one flagged `is_backlog_item`.",
+  "totals": {
+    "applicable": 20,
+    "backlog": 0,
+    "collected": 18,
+    "declined_concepts": 19,
+    "metrics": 20
+  }
+}

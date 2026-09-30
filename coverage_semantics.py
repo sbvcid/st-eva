@@ -62,6 +62,8 @@ from typing import Any, Dict, List, Optional
 from core_registry import CoreRegistry
 from evidence_model import NOT_APPLICABLE, SOURCE_REPORTED
 
+APPLICABLE = "APPLICABLE"
+
 COLLECTED = "COLLECTED"
 MAPPED_NO_CURRENT_OBSERVATION = "MAPPED_NO_CURRENT_OBSERVATION"
 SOURCE_SILENT = "SOURCE_SILENT"
@@ -101,6 +103,92 @@ COVERAGE_STATUSES = (
 # decision, and treating a decision as a backlog item is how an archive ends up
 # collecting things somebody already thought about and rejected.
 BACKLOG_STATUS = NOT_YET_COLLECTED
+
+
+def collection_chain(
+    connection,
+    registry: CoreRegistry,
+    asset_id: str,
+    ticker: str,
+) -> Dict[str, Any]:
+    """
+    The whole chain for one issuer, per metric, in one object.
+
+    Written after every ingestion run, because the question this phase exists for
+    is *"can collection coverage be maintained over ten thousand companies?"*
+    and a question about maintenance cannot be answered from a one-off
+    measurement. Each metric reports, as separate numbers:
+
+        declared concepts      what the registry says might express it
+        adopted concepts       what this filer was observed using
+        observed facts         how many facts produced that observation
+        collected observations what the archive holds now
+        declined               what was considered and rejected, with reasons
+        applicability          whether the metric applies to this issuer at all
+        status                 where it lands
+
+    The four concept and fact counts are the ones that move between runs, and
+    they move for different reasons: a mapping is a decision, adoption is
+    evidence about the filer, and observations are what is actually in hand.
+    Collapsing them into a coverage percentage is what makes a coverage figure
+    impossible to act on.
+    """
+    ledger = scoped_ledger(connection, registry, asset_id, ticker)
+    adoption = {
+        row["concept_id"]: row
+        for row in connection.execute(
+            "SELECT concept_id, first_used, last_used, fact_count, filing_count"
+            " FROM issuer_concept_adoption WHERE asset_id = ?", (asset_id,)
+        )
+    }
+    by_metric: Dict[str, Any] = {}
+    for row in ledger["rows"]:
+        metric = row["metric"]
+        used = row["expected_concepts_used"]
+        by_metric[metric] = {
+            "metric": metric,
+            "status": row["status"],
+            "is_backlog_item": row["is_backlog_item"],
+            "declared_concepts": len(row["expected_concepts"]),
+            "adopted_concepts": len(used),
+            "observed_facts": sum(
+                (adoption[c]["fact_count"] or 0) for c in used
+            ),
+            "observed_filings": sum(
+                (adoption[c]["filing_count"] or 0) for c in used
+            ),
+            "collected_observations": row["observations_held"],
+            "declined_concepts": len(row["declined"]),
+            "declined": [
+                {"concept_id": d["concept_id"], "reason_code": d["reason_code"]}
+                for d in row["declined"]
+            ],
+            "applicability": (
+                NOT_APPLICABLE_STATUS
+                if row["status"] == NOT_APPLICABLE_STATUS else APPLICABLE
+            ),
+            "why": row["why"],
+        }
+    return {
+        "asset": ticker.upper(),
+        "business_model": ledger["business_model"],
+        "metrics": by_metric,
+        "totals": {
+            "metrics": ledger["metrics_total"],
+            "applicable": ledger["metrics_applicable"],
+            "collected": ledger["status_counts"][COLLECTED],
+            "backlog": len(ledger["backlog_items"]),
+            "declined_concepts": sum(
+                len(r["declined"]) for r in ledger["rows"]
+            ),
+        },
+        "note": (
+            "Every status except UNDETERMINED is a result or a decision rather "
+            "than a gap, and a NOT_APPLICABLE and a SOURCE_SILENT are both "
+            "successes. The one status that is work to do is NOT_YET_COLLECTED, "
+            "and it is the only one flagged `is_backlog_item`."
+        ),
+    }
 
 
 def _scope_rows(connection, asset_id: str):
@@ -170,6 +258,7 @@ def scoped_ledger(
     declines: Dict[str, List[Dict[str, Any]]] = {}
     for row in registry.all_declines():
         declines.setdefault(row["considered_for_metric"], []).append(row)
+
     # The most recent run's scope, per metric, across all runs: "have we ever
     # looked" rather than "did the last run look", because a run that returned
     # early because nothing was new asked nothing and must not silence the
@@ -193,6 +282,34 @@ def scoped_ledger(
     }
     inventory = set(source_inventory or ())
     inventory_known = source_inventory is not None
+
+    # A decline explains a metric's status only for issuers whose filings could
+    # have contained the concept.
+    #
+    # A US-GAAP segment-reporting element declined for `operating_income` says
+    # nothing about an IFRS filer, which has no such element to decline -- and
+    # without this filter that filer reported its operating income as
+    # DELIBERATELY_DECLINED on the strength of a decision made about another
+    # framework's vocabulary. A decision is about a concept, and a concept
+    # belongs to a taxonomy; applying a taxonomy-scoped decision to an issuer
+    # that never uses that taxonomy attributes a judgement to somebody who did
+    # not make it.
+    #
+    # Filtered only when the taxonomies are actually known. Absent an inventory
+    # the declines are left in place, because a decline is a recorded fact about
+    # the metric and dropping it would hide a decision that was genuinely made.
+    issuer_taxonomies = {
+        concept.split(":", 1)[0] for concept in (inventory or ())
+    }
+    if inventory_known and issuer_taxonomies:
+        declines = {
+            metric: [
+                decline for decline in entries
+                if decline["concept_id"].split(":", 1)[0]
+                in issuer_taxonomies
+            ]
+            for metric, entries in declines.items()
+        }
 
     rows: List[Dict[str, Any]] = []
     for metric in metric_rows:
@@ -230,7 +347,10 @@ def scoped_ledger(
             # elements are declined; reporting only the first would say the
             # declines do not apply here, and they are framework judgements, not
             # per-issuer ones.
-            "declined": declines.get(metric_id, []),
+            "declined": declines.get(metric_id, []) or (
+                registry.declines_for_metric(metric_id)
+                if not inventory_known else []
+            ),
             "mapping_types": sorted({m.mapping_type for m in mappings}),
             "why": why,
         })

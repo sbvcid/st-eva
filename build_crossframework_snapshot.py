@@ -76,8 +76,38 @@ DEFAULT_METRICS = (
 # same registry demonstrably serves both frameworks in one file.
 DEFAULT_ISSUERS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("AAPL", ("10-K", "10-Q")),
+    ("MSFT", ("10-K", "10-Q")),
+    ("MU", ("10-K", "10-Q")),
+    ("NVDA", ("10-K", "10-Q")),
     ("TSM", ("20-F",)),
     ("NU", ("20-F",)),
+)
+
+# The full Core metric set, not the 2.7 subset. 2.9 is the round that fills the
+# database, and the seven metrics that held nothing in 2.8 had no declared
+# concept to ask the source about -- so this is a registry round as much as a
+# collection one.
+ALL_METRICS = (
+    "revenue",
+    "net_income",
+    "gross_profit",
+    "operating_income",
+    "r_and_d",
+    "interest_expense",
+    "income_tax",
+    "cash",
+    "debt",
+    "assets",
+    "equity",
+    "operating_cash_flow",
+    "capex",
+    "sbc",
+    "eps_diluted",
+    "weighted_average_diluted_shares",
+    "shares_outstanding",
+    "sga",
+    "long_term_debt_current",
+    "long_term_debt_noncurrent",
 )
 
 
@@ -94,6 +124,7 @@ def build(
     issuers: Sequence[Tuple[str, Sequence[str]]] = DEFAULT_ISSUERS,
     metrics: Sequence[str] = DEFAULT_METRICS,
     fresh: bool = True,
+    chain_dir: Optional[str] = None,
 ) -> Dict[str, Dict[str, object]]:
     if fresh and os.path.exists(target):
         os.remove(target)
@@ -102,10 +133,23 @@ def build(
     seeded = seed(registry)
     reports: Dict[str, Dict[str, object]] = {}
     for issuer, forms in issuers:
-        report = Ingestor(store, SECProvider(), registry).ingest(
+        ingestor = Ingestor(store, SECProvider(), registry)
+        report = ingestor.ingest(
             issuer, metrics=tuple(metrics), forms=tuple(forms)
         )
-        reports[issuer.upper()] = report.contract_dict()
+        # The collection chain is written per run, not summarised at the end, so
+        # that a later run can be compared with an earlier one rather than only
+        # with the current state of the archive.
+        chain = ingestor.collection_chain(issuer)
+        if chain_dir:
+            os.makedirs(chain_dir, exist_ok=True)
+            path = os.path.join(chain_dir, f"{issuer.upper()}.json")
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(chain, handle, indent=2, sort_keys=True, default=str)
+        reports[issuer.upper()] = {
+            **report.contract_dict(),
+            "collection_chain": chain["totals"],
+        }
     store.close()
     return {"seeded": seeded, "ingested": reports}
 
@@ -118,20 +162,46 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="add issuers to an existing archive instead of rebuilding",
     )
+    parser.add_argument(
+        "--chain-dir",
+        default=os.path.join(os.path.dirname(DEFAULT_TARGET), "collection"),
+        help="where to write the per-run collection chain, one file per issuer",
+    )
+    parser.add_argument(
+        "--metrics",
+        help="comma-separated metrics; defaults to the full Core set",
+    )
     parser.add_argument("--json", help="write the ingestion reports here")
     args = parser.parse_args(argv)
+
+    metrics = (
+        tuple(m.strip() for m in args.metrics.split(",") if m.strip())
+        if args.metrics else ALL_METRICS
+    )
 
     before = None
     if os.path.exists(SEALED):
         before = sha256(SEALED)
         print(f"sealed AAPL snapshot before: {before[:16]}")
 
-    result = build(args.target, fresh=not args.append)
+    result = build(
+        args.target, metrics=metrics, fresh=not args.append,
+        chain_dir=args.chain_dir,
+    )
     print(f"seeded: {result['seeded']}")
+    print(f"metrics in scope: {len(metrics)}")
     for issuer, report in sorted(result["ingested"].items()):
         print(f"\n=== {issuer}")
         for key in sorted(report):
-            print(f"  {key}: {report[key]}")
+            if key in ("errors", "concept_fetches", "network_fetches",
+                       "documents_reused", "documents_stored",
+                       "filings_already_held", "filings_ingested",
+                       "filings_seen", "source_facts_skipped",
+                       "source_facts_stored", "concepts_unresolved",
+                       "dimension_collisions", "observations_skipped",
+                       "observations_stored", "run_id", "status", "asset",
+                       "cik", "collection_chain"):
+                print(f"  {key}: {report[key]}")
 
     if before is not None:
         after = sha256(SEALED)

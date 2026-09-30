@@ -834,6 +834,119 @@ And collection is still the bottleneck, but it is now **measurable**: the eleven
 TSM backlog items and the nine for AAPL are the same list of Core metrics, so
 widening collection is one decision rather than three per-issuer negotiations.
 
+## 0.13 Core evidence collection, and the gates that are the real KPI (2.9)
+
+The first round that fills the database rather than exploring the architecture.
+2.8 said the Core promise was eighteen applicable metrics, seven collected and
+eleven backlog — and two of those numbers were wrong for the same reason: **seven
+of the eleven held nothing because the registry declared no concept to ask the
+source about.** Ingestion cannot close a registry gap however hard it runs,
+because there is nothing to ask for. So this was a registry round wearing a
+collection round's clothes, and the collection followed.
+
+The concepts were found by inventorying what the six filers **actually report**,
+not by matching a name. Two Core metrics did not exist, seven had no concept, and
+one had an obvious candidate that was wrong.
+
+### The finding worth the round
+
+**IFRS has no standard element for the diluted weighted-average share count.**
+
+Both IFRS filers report `ifrs-full:WeightedAverageShares` and it is almost the
+metric's name. It is the **basic** count. IFRS presents the basic figure as a
+standard element and discloses the diluted one in the earnings-per-share note, so
+there is nothing to map.
+
+Mapping it would have given every IFRS issuer a diluted share count that is not
+diluted, and a question about dilution would have been answered with the basic
+number **and no error anywhere to notice it** — the values are plausible, the
+label is nearly right, and the difference is one or two percent. It is declined
+as `IDENTITY_MISMATCH`, and the asymmetry is now visible in the ledger:
+
+```
+weighted_average_diluted_shares
+    AAPL MSFT MU  NVDA    COLLECTED
+    NU   TSM             DELIBERATELY_DECLINED -- no standard element exists
+```
+
+Nine other declines exist because a name was not enough, and three of them are
+the kind of error nothing downstream would catch:
+
+- **`LiabilitiesAndStockholdersEquity` → equity is total assets.** The label
+  contains "equity" because assets equal liabilities plus equity, and mapping it
+  would have reported a balance sheet's largest number as shareholders' equity.
+- **`EquityMethodInvestments` → equity** is an investment carrying amount, which
+  a filer whose business is largely joint ventures reports as a large share of
+  its balance sheet.
+- **`WeightedAverageNumberDilutedSharesOutstandingAdjustment` → diluted shares**
+  is the *increment* from basic to diluted, which is neither population.
+
+### The gates, not the count
+
+Eight per metric per issuer, 120 metric-issuers, computed from the archive by
+`score_collection_gates.py`:
+
+```
+ 1 definition     120/120      5 provenance     120/120
+ 2 mapping        120/120      6 applicability  100/120
+ 3 adoption       119/120      7 missingness    120/120
+ 4 observations    97/120      8 discoverable   120/120
+```
+
+Two of those are the ones a coverage percentage cannot see, and both are clean:
+**provenance complete for every figure**, and **no metric is blankly empty**.
+
+Gate 4's twenty-three failures are every one a metric the archive is *right* not
+to have — a bank reports no capital expenditure element, an IFRS filer has no
+diluted share count, and the two debt components hold nothing because the
+filers demonstrably reported 90, 116 and 142 facts which the archive stores
+under the composed `debt` metric. **Every backlog is now empty** across six
+issuers, two taxonomies and five business models: AAPL/MSFT/MU/NVDA 7 → 18
+collected, TSM 7 → 14, NU 5 → 10.
+
+Two of those are counter-intuitive and correct. **NU reports
+`ifrs-full:GrossProfit` and ST-EVA still rules the metric inapplicable to it** —
+a filer tagging an element called GrossProfit does not make "revenue less cost
+of revenue" meaningful for a bank, because applicability is a statement about the
+metric's meaning and the element is a statement about the filer's presentation.
+And **the debt components are empty because the data was collected**, under the
+composition the mapping declares them a part of.
+
+### Gate 6 found a real gap, and the gate was right to
+
+**MSFT has no recorded business model**, so all twenty of its applicability
+gates fail — not because any ruling is wrong, but because there are none. Its SIC
+is 7372, major group 73, and the classification rule covers manufacturing, finance
+and mining only. The safe default is what happened: an unrecognised
+classification makes no ruling, every declared metric stays applicable, and the
+issuer is asked about all of them.
+
+The rule was not widened to improve the number. A services company is
+classifiable and the rule should eventually say so, but **the finding is that the
+rule has a hole**, and a hole a number hides is what these gates exist to surface.
+
+### The standing order held
+
+```
+semantic correctness -> provenance -> applicability -> collection -> coverage
+```
+
+The registry was touched *before* ingesting, which is the right order, and only
+because every mapping was decided against the filings and the near misses were
+declined. Nine of the nineteen declines exist because a name was not enough. Had
+this round raised coverage by mapping the first plausible candidate for each
+unmapped metric, the number would be higher, the archive worse, and **nothing in
+the eight gates would have shown it.**
+
+### What remains
+
+The next work is not collection. It is the two gaps the gates found: the SIC rule
+has no services category, and the ledger still does no concept-level `UNMAPPED`
+matching, which is why the extension taxonomies MU and NVDA report appear
+nowhere. Those are filer-specific concepts, and the right answer for them is a
+recorded "not a standard concept" — a decline reason the vocabulary does not
+have yet.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.
