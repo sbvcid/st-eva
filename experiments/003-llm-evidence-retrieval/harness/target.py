@@ -138,6 +138,14 @@ class TargetAnswer:
             claim_type=_as_code(data.get("claim_type")),
             semantic_state=_as_code(data.get("semantic_state")),
             reason_code=_as_code(data.get("reason_code")),
+            # Case-folded like the other codes, and this was found by being
+            # wrong: a model read the operation id `divide` off the lineage and
+            # returned `DIVIDE`, and the probe failed on it in five runs out of
+            # five while getting the claim, the figure and the citation right in
+            # a single tool call. An operation id is an identifier, and the
+            # rationale for folding the others applies to it exactly as much --
+            # it was simply left off, which is what a rationale nobody re-reads
+            # looks like.
             operation_ref=_as_code(data.get("operation_ref")),
             stated_value=_as_number(data.get("stated_value")),
         )

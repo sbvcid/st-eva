@@ -1,0 +1,523 @@
+{
+  "models": [
+    {
+      "budget": {
+        "declared_limit": 60,
+        "elapsed_seconds": 273.9,
+        "label": "nvidia-nemotron-3-ultra/probes",
+        "model_finding_refusals": 0,
+        "rate_limit_headers": {},
+        "refusals_by_kind": {
+          "provider_error": 2
+        },
+        "remaining_budget": 38,
+        "requests_sent": 22,
+        "stopped_because": null
+      },
+      "model": {
+        "dir": "nvidia-nemotron-3-ultra",
+        "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "name": "nvidia-nemotron-3-ultra",
+        "requested_slug": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "seed": 7
+      },
+      "phase": "probes",
+      "quota_after": {
+        "is_free_tier": false,
+        "limit": 2,
+        "limit_daily": null,
+        "limit_weekly": null,
+        "usage": 0,
+        "usage_daily": 0,
+        "usage_weekly": 0
+      },
+      "rows": [
+        {
+          "answer_parsed": true,
+          "derived_refs": [
+            "der:current_ps"
+          ],
+          "elapsed_seconds": 91.65,
+          "evidence_refs": [
+            "obsarch_b31513334af56d3a649cf7b8"
+          ],
+          "exchanges": 3,
+          "failed_checks": [
+            "probe field operation_ref"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": false,
+          "off_surface_calls": [],
+          "operations": [
+            "get_lineage"
+          ],
+          "parse_error": null,
+          "retrieved_observations": [
+            "obsarch_b31513334af56d3a649cf7b8"
+          ],
+          "stop_reason": "answered",
+          "test_id": "probe-P1_reported_or_derived",
+          "tool_calls": 1,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 582,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 358
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3579,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 4161
+          },
+          "verdict": "FAIL"
+        },
+        {
+          "answer_parsed": true,
+          "derived_refs": [],
+          "elapsed_seconds": 29.28,
+          "evidence_refs": [],
+          "exchanges": 7,
+          "failed_checks": [
+            "cites at least one observation"
+          ],
+          "failed_tool_calls": 1,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": false,
+          "off_surface_calls": [],
+          "operations": [
+            "query_observations",
+            "query_observations",
+            "coverage_report"
+          ],
+          "parse_error": null,
+          "retrieved_observations": [],
+          "stop_reason": "answered",
+          "test_id": "probe-P2_negative_state_cause",
+          "tool_calls": 3,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 186,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 47
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3924,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 4110
+          },
+          "verdict": "FAIL"
+        },
+        {
+          "answer_parsed": true,
+          "derived_refs": [],
+          "elapsed_seconds": 30.37,
+          "evidence_refs": [
+            "obsarch_2b50643466e308ddc0d8b0d6",
+            "obsarch_27b0e15d1bd750795d196a50",
+            "obsarch_95f582194d59075b3640df61"
+          ],
+          "exchanges": 3,
+          "failed_checks": [],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": false,
+          "off_surface_calls": [],
+          "operations": [
+            "query_observations"
+          ],
+          "parse_error": null,
+          "retrieved_observations": [
+            "obs_sha256:0f70d7984d7bd63cac9824e3fcfd492abe385270c1a6f811371ce1505b2e34d9",
+            "obs_sha256:59523987ce454b14ab494e1c253f090a3370c09ee3ce098e4ace4f13552af82f",
+            "obs_sha256:5c35098afb91fd8914cd8e54a6ed4de41bab7f756ea05eabef6b8d1b1086829e",
+            "obsarch_27b0e15d1bd750795d196a50",
+            "obsarch_2b50643466e308ddc0d8b0d6",
+            "obsarch_95f582194d59075b3640df61"
+          ],
+          "stop_reason": "answered",
+          "test_id": "probe-P3_disagreement_meaning",
+          "tool_calls": 1,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 826,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 456
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 9535,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 10361
+          },
+          "verdict": "PASS"
+        },
+        {
+          "answer_parsed": false,
+          "derived_refs": [],
+          "elapsed_seconds": 0.49,
+          "evidence_refs": [],
+          "exchanges": 1,
+          "failed_checks": [
+            "probe field claim_type",
+            "probe field semantic_state",
+            "probe cites the subject's own identifiers",
+            "cites at least one observation",
+            "the answer parsed into the contract"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": true,
+          "off_surface_calls": [],
+          "operations": [],
+          "parse_error": "TRANSPORT: no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790759212-vsLJeH7Gaj7gn9gyN7bC\", \"error\": {\"message\": \"Upstream error from Nvidia: Service temporarily overloaded\", \"code\": 503, \"metadata\": {\"error_type\": \"provider_overloaded\"}}}",
+          "retrieved_observations": [],
+          "stop_reason": "transport_error",
+          "test_id": "probe-P4_partial_mapping_meaning",
+          "tool_calls": 0,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": null,
+          "verdict": "E"
+        },
+        {
+          "answer_parsed": true,
+          "derived_refs": [],
+          "elapsed_seconds": 64.62,
+          "evidence_refs": [
+            "obsarch_5e8e3b741876732ecddb59b4",
+            "obsarch_a85a20930bbf792ee8e60dbb"
+          ],
+          "exchanges": 8,
+          "failed_checks": [
+            "probe cites the subject's own identifiers"
+          ],
+          "failed_tool_calls": 2,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": false,
+          "off_surface_calls": [],
+          "operations": [
+            "query_observations",
+            "query_observations",
+            "query_observations",
+            "query_observations"
+          ],
+          "parse_error": null,
+          "retrieved_observations": [
+            "obs_sha256:28bcb9a18abd8d5edec6d0c2ad005ed8bc1d3bebdebe0babaf159d8cd57f6614",
+            "obs_sha256:4bf29aa679f13ac8fa978c8da1da1259c94158f1502334b97b83070b8efaa9fa",
+            "obs_sha256:557175476e4ac2ff9b99e10a663c4e74b606f50c7a842422e24f6bca80d10268",
+            "obs_sha256:635e41219013b0de2e961dd839da3b237d3e2ba07229ce130f1954a0175b7f87",
+            "obs_sha256:6a3229f90c2114fc6ba4451f32653b9bd6c8088115e28787d3be8aa0de89a33a",
+            "obs_sha256:72de33d8acdf658c288026a6dbb8c4e54914e2dd64a37fd5e3525a3ad2e847a0",
+            "obs_sha256:ae33ff111d74b8e64aaa6c06590da45dc6cb1b35e3b9a81c86c21ae3ba41d6e8",
+            "obs_sha256:ca9d5c0485bceeba5ddca59da119218cc900097ffa0183f0adc5fb3369ba6c19",
+            "obs_sha256:d8b245daab11e407a8cce6488e5ad3bd5ec3cd919edfa35627521589c8aeb95e",
+            "obs_sha256:ed72d0059879ed6b59b04d46f46f7639c2ab55b81f7bb43abaa581004d0b8cd0",
+            "obsarch_23742e564d814dd66db60132",
+            "obsarch_25d44ba44cc640441e8b40af",
+            "obsarch_34d6731aee9e0392fa508dab",
+            "obsarch_3b90094a8dc637252a324239",
+            "obsarch_5e8e3b741876732ecddb59b4",
+            "obsarch_608444332323026c927ab1d3",
+            "obsarch_7917df8d8f37bd19c54362a7",
+            "obsarch_a85a20930bbf792ee8e60dbb",
+            "obsarch_b6006362b79256840179fe6c",
+            "obsarch_e5c74ac6b31009cdf77ac7b0"
+          ],
+          "stop_reason": "answered",
+          "test_id": "probe-P5_two_concepts_one_series",
+          "tool_calls": 4,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 502,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 263
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 20979,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 21481
+          },
+          "verdict": "FAIL"
+        },
+        {
+          "answer_parsed": false,
+          "derived_refs": [],
+          "elapsed_seconds": 0.47,
+          "evidence_refs": [],
+          "exchanges": 1,
+          "failed_checks": [
+            "probe field claim_type",
+            "probe field stated_value",
+            "probe cites the subject's own identifiers",
+            "cites at least one observation",
+            "the answer parsed into the contract"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": true,
+          "off_surface_calls": [],
+          "operations": [],
+          "parse_error": "TRANSPORT: no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790759277-SVzK2r3dXRcd4BscF4HM\", \"error\": {\"message\": \"Upstream error from Nvidia: Service temporarily overloaded\", \"code\": 503, \"metadata\": {\"error_type\": \"provider_overloaded\"}}}",
+          "retrieved_observations": [],
+          "stop_reason": "transport_error",
+          "test_id": "probe-P6_point_in_time_availability",
+          "tool_calls": 0,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": null,
+          "verdict": "E"
+        },
+        {
+          "answer_parsed": false,
+          "derived_refs": [],
+          "elapsed_seconds": 56.96,
+          "evidence_refs": [],
+          "exchanges": 16,
+          "failed_checks": [
+            "probe field claim_type",
+            "probe field semantic_state",
+            "probe cites the subject's own identifiers",
+            "cites at least one observation",
+            "the answer parsed into the contract"
+          ],
+          "failed_tool_calls": 0,
+          "first_reply_parsed": true,
+          "format_repair_used": false,
+          "interrupted_by_transport": false,
+          "off_surface_calls": [],
+          "operations": [
+            "query_observations",
+            "query_observations",
+            "query_observations",
+            "get_validation",
+            "get_validation",
+            "get_validation",
+            "get_validation",
+            "get_validation"
+          ],
+          "parse_error": "the model used all 8 exchanges without producing an answer",
+          "retrieved_observations": [
+            "obs_sha256:008c940e645b93d01c06707b756f90ea3559ae755ad4ca9751591fa549240543",
+            "obs_sha256:019caff2c424b91cbbb317ceb4d9ce58c5a569a0b64e5cdf1ba9a52801358c74",
+            "obs_sha256:0a7586675ecec68a94412d371770256135f97fd7c64d8aa4f469d59f9c54abea",
+            "obs_sha256:0cd92af6a04375b2bb631f127186ffb036bc062a897fe1fc14650ca62dc1418a",
+            "obs_sha256:1044108fe83cde8ce8afb15848d56d786ea1df23a7886c4a928891a3e8e57840",
+            "obs_sha256:26d0b8acce7668a5a4aed04d07e39b66dbe8ddd3f7b1684b3d9660eb56c77474",
+            "obs_sha256:396c0bec62885f2fe3f8e676c32ff2ec841ccd675cd2c0df22d19af19a4e015d",
+            "obs_sha256:3a2e0fc9a32eaef7f20ecb47b5e3018bcf0224399ccfebf4e0c86737e7cde333",
+            "obs_sha256:3ba4aa90f9dc974f269ad05cc097558731e488cac0bf923dc5bee8bf5bead59f",
+            "obs_sha256:3d8fc88dc1c47c9b0811a4a84cae6ed2443d456e3447afaccef1021757a3f647",
+            "obs_sha256:41969a36b5c458175e6855bda8424646305329b94eadd1163c55f48da1a2284b",
+            "obs_sha256:43c39af362ff23422b95b02642e929822f14c148fe205378bd83174c21ad6d82",
+            "obs_sha256:479aa80471127b9807c329e78060e451871ab6c6dc2c23acc7dd09bb162d5958",
+            "obs_sha256:5096e3cc5a628592d51d2c1bf33d4d9436b2a182e618e10c6ef6758a18d25346",
+            "obs_sha256:557175476e4ac2ff9b99e10a663c4e74b606f50c7a842422e24f6bca80d10268",
+            "obs_sha256:5e292566d9514c76a56b95e6eadb13cf1cd4a0818ae379e37be6bdaad18f47c4",
+            "obs_sha256:5e932cfbc3a9527216bcfd20995e0fcaf3cbcf9dbb496feb48eae9ca9615b3db",
+            "obs_sha256:6041e749575bd4f4d97d8fa14525c3c03d06669cc8fb6dd3eaa28baee39b4ae5",
+            "obs_sha256:64cd5bd7ee2d0864f0be0aabe57d05b5a67f5806e58ab5d98b5d3f3e76659c0f",
+            "obs_sha256:674e36d7bc2a0ece39ce098987b63b550c2d7a52dbb8583b0103d75b2eeea511",
+            "obs_sha256:69a2c18141884d94039176bc9469b1f791dc7b36db580f35bf1b29befdba34d7",
+            "obs_sha256:6a3229f90c2114fc6ba4451f32653b9bd6c8088115e28787d3be8aa0de89a33a",
+            "obs_sha256:70b512689cc760d93be79ff7f1760d03fcc70fa14f3d344697e99babb9e73af1",
+            "obs_sha256:72d03cac0e74559c60e9fa748518ad479cd9da4435cb48f505e66ceaec188585",
+            "obs_sha256:72de33d8acdf658c288026a6dbb8c4e54914e2dd64a37fd5e3525a3ad2e847a0",
+            "obs_sha256:7aad764b557e694526536102955ad7556452fafc0b3b49ce58d76ceda6f2fc52",
+            "obs_sha256:8a5fe5b0dacda250f715b589073a67045bd0f6d2c2a60ac4bfc00c4cea6074a6",
+            "obs_sha256:8c34ab5b12d0c7b6feab7960b7c7965b858155c270a6192bb8e9cd486799c3b1",
+            "obs_sha256:93d1e1623c17a11e362cb0e6aa08fb221a820d4099ab9c3ddc03463955f3d0d6",
+            "obs_sha256:961bfe6e4521113cdd6b5bfa4a9858288593bf92a11817a12069b4d0fd41e8be",
+            "obs_sha256:9ebdbb6095534151a443fa219ae7f82b72b8e86d5979c022fc0b500a21c20617",
+            "obs_sha256:a1787174b79370604e10d5642246b425ebf7219e1680c37b05d0abe72a408d89",
+            "obs_sha256:a4ca0cb5c77442097d8997343275be616fdd050a1c8ed0b555ffdef9de0a545e",
+            "obs_sha256:a8630c2b5aa499ff899916e3c08a38d45ce14effdd7af83a4086a55acc4bcf0e",
+            "obs_sha256:aa9278e6a6e1383645860e56ff8ff7d15d71ed2dc51bf9cbf3aa933d910d92fd",
+            "obs_sha256:baacb21f71ae9fa47fb911d1add4f028016575027694e06f5dc387fed22b4d3d",
+            "obs_sha256:bcec2fb29ce376b7a671a5be053893a9ad3ca051ceff9e384fda8bc06cfc47ee",
+            "obs_sha256:be02981d8021c161c33107f2a31fe04c29cf09a981914125996dcd106be23287",
+            "obs_sha256:c1538ded71a28c76f6eda1b66f3e49a6755406aac91bb4e8001195aa0a5e3aee",
+            "obs_sha256:ca9d5c0485bceeba5ddca59da119218cc900097ffa0183f0adc5fb3369ba6c19",
+            "obs_sha256:d496b206f1b74dca86d20e90989f0b2aea39f66e7c952158f10cf7844bb84748",
+            "obs_sha256:def569e8b01a5b36c4411cc14a467271f165ee9eaecc24a50a6d586527a3e65a",
+            "obs_sha256:e56901ab96a91fd46da67de2bbc927911a3323c7a3c3f40a5856aa57501b5a00",
+            "obs_sha256:e5b50a850b3dc2027597a989ea923a41c028c73479a544e7b74ca3c05f8c9201",
+            "obs_sha256:eca238367a7c4664171652406d739f65c779720600c05a5478e39df349408b85",
+            "obs_sha256:ed72d0059879ed6b59b04d46f46f7639c2ab55b81f7bb43abaa581004d0b8cd0",
+            "obs_sha256:f70cde979830154db27837e06c04118fb2dd16cc16aa24f4fe138a8340321b54",
+            "obs_sha256:f85e401907e6170e83691a3209a6dae273bd4b83fa530196d035d25a81dbf2be",
+            "obs_sha256:f9eb549c2437726d028ab997647906e7366f70816d04a221d27e7fc65da3cfad",
+            "obs_sha256:fcd86f8f83a77995b6cb5c8d7db71830be9e3d82d6f628e2a457d63a5982be3d",
+            "obsarch_0121882e00bbf99077865e26",
+            "obsarch_0f93a6b7e3fadd938410119e",
+            "obsarch_10923f9782df464c6f574ad3",
+            "obsarch_19c56d93d7afd17e3789708d",
+            "obsarch_1a0afa1c188a15219611ed34",
+            "obsarch_225ce1b165e9487902b46990",
+            "obsarch_228574e06c857e19a76b3e60",
+            "obsarch_272fb06979775398e549ce5d",
+            "obsarch_2875ab9ca5d57ab7eeb02ca2",
+            "obsarch_34155bccb663701230ac4b8a",
+            "obsarch_37f4ce8a9a52187e9d54cd34",
+            "obsarch_3b90094a8dc637252a324239",
+            "obsarch_3c02b7058f1098a46a8d9e81",
+            "obsarch_466ad08feeef461d885a0874",
+            "obsarch_4a97fb398a6d5d745765e50d",
+            "obsarch_59ee09e0ad2dfc85288b6d37",
+            "obsarch_5e5a3feb01de198f477039b2",
+            "obsarch_5e8e3b741876732ecddb59b4",
+            "obsarch_608444332323026c927ab1d3",
+            "obsarch_6383b6a9892d72ff26aab02a",
+            "obsarch_72b5391df7aeb2c42e5b188b",
+            "obsarch_7917df8d8f37bd19c54362a7",
+            "obsarch_7940823549d1698e1c3043e1",
+            "obsarch_7ae5516bf3ade27472b6b2eb",
+            "obsarch_858126421907ed2d70a98a7b",
+            "obsarch_86488195f0eebd3c19b4ecb1",
+            "obsarch_88447947e13269486b072025",
+            "obsarch_89fe9ab90f84f7a4641ac244",
+            "obsarch_8af592cabb11624240c8a6ee",
+            "obsarch_8b61c67f773f969d1eabcdea",
+            "obsarch_92e266403de5c8be574f6ad9",
+            "obsarch_93fee51aaa69c96c6f90fdcc",
+            "obsarch_943b7a503ba61027a315e1b3",
+            "obsarch_94d44f0fe138e73da9000611",
+            "obsarch_9876bb7ff70888195c271bda",
+            "obsarch_9925745fd35d724e9cbc7351",
+            "obsarch_9ad9251f774aa05c838ae906",
+            "obsarch_9b5d195bba3b2b2dc7230755",
+            "obsarch_9be2e5f918710b7a4fdd963e",
+            "obsarch_a10e8bbe78485330d3b77693",
+            "obsarch_a967224404aedcaa33713a49",
+            "obsarch_b38b93b3fa060392cb5d92cb",
+            "obsarch_b6006362b79256840179fe6c",
+            "obsarch_c7c975383c7c3649dde7b6d7",
+            "obsarch_cf9cbba193bdbc3f4aa5d0b4",
+            "obsarch_cfd8128bce73667a31ec1173",
+            "obsarch_ddb4af888ab3c6be910c0f9e",
+            "obsarch_e90aab2f3452c07e59d7b0b0",
+            "obsarch_f21fe68be5b4a86802a8a95f",
+            "obsarch_f2fabeaf7f0994d9f6d647c7"
+          ],
+          "stop_reason": "exchange_limit",
+          "test_id": "probe-P7_source_consistency_not_truth",
+          "tool_calls": 8,
+          "uncertainties": [],
+          "unverifiable": [],
+          "usage": {
+            "completion_tokens": 59,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 14
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 95440,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 90720,
+              "video_tokens": 0
+            },
+            "total_tokens": 95499
+          },
+          "verdict": "FAIL"
+        }
+      ],
+      "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\nvidia-nemotron-3-ultra\\probes\\run2",
+      "run_label": "run2",
+      "status": "RAN",
+      "totals": {
+        "failed": 6,
+        "passed": 1,
+        "tests": 7
+      }
+    }
+  ],
+  "quota_after": {
+    "is_free_tier": false,
+    "limit": 2,
+    "limit_daily": null,
+    "limit_weekly": null,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0
+  },
+  "quota_before": {
+    "is_free_tier": false,
+    "limit": 2,
+    "limit_daily": null,
+    "limit_weekly": null,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0
+  }
+}

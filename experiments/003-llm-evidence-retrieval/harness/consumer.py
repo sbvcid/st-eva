@@ -181,7 +181,22 @@ SEMANTIC_CRITERIA: List[Dict[str, Any]] = [
                   "probe-P5_two_concepts_one_series",
                   "T10_concept_evolution", "T11_partial_mapping",
                   "T12_non_comparable"),
-        "min_passes": 4,
+    },
+    {
+        "id": "reads_point_in_time",
+        "question": (
+            "does it distinguish what was knowable at an instant from what the "
+            "archive holds now?"
+        ),
+        "tests": ("probe-P6_point_in_time_availability", "T4_point_in_time"),
+    },
+    {
+        "id": "reads_source_independence",
+        "question": (
+            "does it separate two sources disagreeing from two sources being "
+            "independent witnesses, and does it keep a disagreement unresolved?"
+        ),
+        "tests": ("probe-P7_source_consistency_not_truth",),
     },
 ]
 
@@ -439,26 +454,46 @@ def _decide_passes(
         passes = sum(1 for v in verdicts if v == "PASS")
         if passes < majority:
             weak.append(f"{test} ({passes}/{len(verdicts)})")
-    if not weak and absent:
+
+    if not detail or all(not v for v in detail.values()):
+        # Nothing in this criterion was exercised at all.
         return {
             "id": criterion["id"],
             "question": criterion["question"],
             "passed": None,
-            "observed": f"not exercised: {', '.join(absent)}",
+            "observed": f"not exercised: {', '.join(absent) or 'nothing in it'}",
             "threshold": f"each test >= {majority} passes",
             "per_test": detail,
             "not_applicable": absent,
         }
+    if not weak:
+        # Every test that *was* exercised reached a majority. A criterion that
+        # was only half run is weaker evidence than a fully run one and says so,
+        # but it is not a failure -- and reporting it as unexercised would throw
+        # away a probe that passed five times out of five because its sealed
+        # partner was not in the run set.
+        return {
+            "id": criterion["id"],
+            "question": criterion["question"],
+            "passed": True,
+            "observed": (
+                "every exercised test reached a majority of runs"
+                + (f"; not exercised: {', '.join(absent)}" if absent else "")
+            ),
+            "threshold": f"each exercised test >= {majority} passes",
+            "per_test": detail,
+            "not_applicable": absent,
+            "partial_coverage": bool(absent),
+        }
     return {
         "id": criterion["id"],
         "question": criterion["question"],
-        "passed": not weak,
+        "passed": False,
         "observed": (
-            "every applicable test reached a majority of runs"
-            if not weak else "short: " + ", ".join(weak)
+            "short: " + ", ".join(weak)
             + (f"; not exercised: {', '.join(absent)}" if absent else "")
         ),
-        "threshold": f"each applicable test >= {majority} passes",
+        "threshold": f"each exercised test >= {majority} passes",
         "per_test": detail,
         "not_applicable": absent,
     }

@@ -1,6 +1,6 @@
 {
   "dataset_id": "steva-003-openrouter-smoke",
-  "finished_at": "2026-09-30T02:18:18.516916+00:00",
+  "finished_at": "2026-09-30T08:59:31.325267+00:00",
   "model": {
     "base_url": "https://openrouter.ai/api/v1",
     "max_tokens": 1600,
@@ -15,16 +15,21 @@
   "results": [
     {
       "answer": {
-        "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+        "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report shows metric_count: 12 with the following state distribution: SOURCE_REPORTED (8 metrics), SOURCE_DID_NOT_REPORT (1), NOT_APPLICABLE (1), UNAVAILABLE (1), STALE (1), and CONFLICTING (0). The 12 metrics are: assets, capex, cash, debt, dividend_per_share, eps_diluted, guidance, net_income, operating_margin_bank, revenue, segment_revenue, and shares_outstanding. The report does not name a specific source document reference that can be fetched with get_source_document; the 'resolved_from' fields indicate internal resolution methods ('observation_status' or 'evidence_state') rather than source document identifiers.",
+        "claim_type": "",
         "derived_refs": [],
         "evidence_refs": [],
+        "operation_ref": "",
         "parse_error": null,
+        "reason_code": "",
+        "semantic_state": "",
+        "stated_value": null,
         "uncertainties": [
-          "No source document reference was provided in the coverage report to check for filing text availability."
+          "No source document reference was provided in the coverage report to fetch and check for filing text availability."
         ]
       },
       "audit": {
-        "answer_text": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+        "answer_text": "ST-EVA holds 12 metrics for AAPL. The coverage report shows metric_count: 12 with the following state distribution: SOURCE_REPORTED (8 metrics), SOURCE_DID_NOT_REPORT (1), NOT_APPLICABLE (1), UNAVAILABLE (1), STALE (1), and CONFLICTING (0). The 12 metrics are: assets, capex, cash, debt, dividend_per_share, eps_diluted, guidance, net_income, operating_margin_bank, revenue, segment_revenue, and shares_outstanding. The report does not name a specific source document reference that can be fetched with get_source_document; the 'resolved_from' fields indicate internal resolution methods ('observation_status' or 'evidence_state') rather than source document identifiers.",
         "check_count": 3,
         "checks": [
           {
@@ -76,11 +81,11 @@
       "retrieved_observations": [],
       "semantic_judgement": null,
       "target_run": {
-        "elapsed_seconds": 17.55,
+        "elapsed_seconds": 16.31,
         "error": null,
         "exchanges": [
           {
-            "elapsed_seconds": 2.39,
+            "elapsed_seconds": 2.03,
             "index": 0,
             "message_count": 2,
             "response": {
@@ -108,7 +113,7 @@
                           "arguments": "{\"asset\":\"AAPL\"}",
                           "name": "coverage_report"
                         },
-                        "id": "call-9fcd5fc8-3189-440c-b990-5054ede05b8c",
+                        "id": "call-ef4ddc6f-5ffa-4a4e-9bf1-58d446c43893",
                         "index": 0,
                         "type": "function"
                       }
@@ -117,8 +122,8 @@
                   "native_finish_reason": "tool_calls"
                 }
               ],
-              "created": 1790734679,
-              "id": "gen-1790734679-07wmvgfHosUizQAz9RVl",
+              "created": 1790758753,
+              "id": "gen-1790758753-ggaAEdFKdNRr15T3TNXF",
               "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
               "object": "chat.completion",
               "provider": "Nvidia",
@@ -160,7 +165,7 @@
             }
           },
           {
-            "elapsed_seconds": 15.15,
+            "elapsed_seconds": 14.27,
             "index": 1,
             "message_count": 4,
             "response": {
@@ -170,13 +175,13 @@
                   "index": 0,
                   "logprobs": null,
                   "message": {
-                    "content": "{\n  \"answer\": \"ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.\",\n  \"evidence_refs\": [],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"No source document reference was provided in the coverage report to check for filing text availability.\"]\n}",
-                    "reasoning": "The coverage report shows 12 metrics for AAPL. The report doesn't explicitly name a source document reference - it just shows metrics and their states. There's no specific source document reference mentioned that I need to fetch with get_source_document.\n\nLet me check if there's any source document reference in the response. Looking at the response, I see metrics with their states, observations_held, reason_codes, etc., but no explicit source document reference like a filing ID or document ID.\n\nThe user asked: \"If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available.\"\n\nSince the coverage_report doesn't name a specific source document reference (it just shows metric-level summary), I don't need to call get_source_document.\n\nNow I need to reply with the JSON object. The answer should state how many metrics ST-EVA holds for AAPL (12), and note that no source document reference was named in the report.",
+                    "content": "{\n  \"answer\": \"ST-EVA holds 12 metrics for AAPL. The coverage report shows metric_count: 12 with the following state distribution: SOURCE_REPORTED (8 metrics), SOURCE_DID_NOT_REPORT (1), NOT_APPLICABLE (1), UNAVAILABLE (1), STALE (1), and CONFLICTING (0). The 12 metrics are: assets, capex, cash, debt, dividend_per_share, eps_diluted, guidance, net_income, operating_margin_bank, revenue, segment_revenue, and shares_outstanding. The report does not name a specific source document reference that can be fetched with get_source_document; the 'resolved_from' fields indicate internal resolution methods ('observation_status' or 'evidence_state') rather than source document identifiers.\",\n  \"evidence_refs\": [],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"No source document reference was provided in the coverage report to fetch and check for filing text availability.\"]\n}",
+                    "reasoning": "The coverage report shows 12 metrics for AAPL. It doesn't appear to name any specific source document reference - it just shows metrics and their states. The report mentions \"resolved_from\" fields like \"observation_status\" and \"evidence_state\" but these aren't source document references that I can fetch with get_source_document.\n\nLet me check if there's any source document reference in the response. Looking at the JSON, I see:\n- metric_count: 12\n- state_counts with various states\n- metrics array with 12 metrics, each with metric name, state, reason_code, observations_held, and resolved_from\n\nThe \"resolved_from\" field says \"observation_status\" or \"evidence_state\" - these are not source document references that can be fetched with get_source_document. They appear to be internal resolution methods.\n\nSo I should report that there are 12 metrics, and note that no source document reference was named in the report that can be fetched.",
                     "reasoning_details": [
                       {
                         "format": "unknown",
                         "index": 0,
-                        "text": "The coverage report shows 12 metrics for AAPL. The report doesn't explicitly name a source document reference - it just shows metrics and their states. There's no specific source document reference mentioned that I need to fetch with get_source_document.\n\nLet me check if there's any source document reference in the response. Looking at the response, I see metrics with their states, observations_held, reason_codes, etc., but no explicit source document reference like a filing ID or document ID.\n\nThe user asked: \"If the report names a source document reference, fetch it with get_source_document and say whether the filing text is available.\"\n\nSince the coverage_report doesn't name a specific source document reference (it just shows metric-level summary), I don't need to call get_source_document.\n\nNow I need to reply with the JSON object. The answer should state how many metrics ST-EVA holds for AAPL (12), and note that no source document reference was named in the report.",
+                        "text": "The coverage report shows 12 metrics for AAPL. It doesn't appear to name any specific source document reference - it just shows metrics and their states. The report mentions \"resolved_from\" fields like \"observation_status\" and \"evidence_state\" but these aren't source document references that I can fetch with get_source_document.\n\nLet me check if there's any source document reference in the response. Looking at the JSON, I see:\n- metric_count: 12\n- state_counts with various states\n- metrics array with 12 metrics, each with metric name, state, reason_code, observations_held, and resolved_from\n\nThe \"resolved_from\" field says \"observation_status\" or \"evidence_state\" - these are not source document references that can be fetched with get_source_document. They appear to be internal resolution methods.\n\nSo I should report that there are 12 metrics, and note that no source document reference was named in the report that can be fetched.",
                         "type": "reasoning.text"
                       }
                     ],
@@ -186,19 +191,19 @@
                   "native_finish_reason": "stop"
                 }
               ],
-              "created": 1790734682,
-              "id": "gen-1790734682-Ef3JagZmIMKBkNjlJ6fr",
+              "created": 1790758755,
+              "id": "gen-1790758755-mP75H8UMw3hbKb5So5s4",
               "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
               "object": "chat.completion",
               "provider": "Nvidia",
               "service_tier": null,
               "system_fingerprint": null,
               "usage": {
-                "completion_tokens": 374,
+                "completion_tokens": 428,
                 "completion_tokens_details": {
                   "audio_tokens": 0,
                   "image_tokens": 0,
-                  "reasoning_tokens": 248
+                  "reasoning_tokens": 238
                 },
                 "cost": 0,
                 "cost_details": {
@@ -214,7 +219,7 @@
                   "cached_tokens": 0,
                   "video_tokens": 0
                 },
-                "total_tokens": 3613
+                "total_tokens": 3667
               }
             }
           }
@@ -473,7 +478,7 @@
           {
             "content": "{\"asset\": \"AAPL\", \"metric_count\": 12, \"state_counts\": {\"SOURCE_REPORTED\": 8, \"SOURCE_DID_NOT_REPORT\": 1, \"NOT_APPLICABLE\": 1, \"UNAVAILABLE\": 1, \"CONFLICTING\": 0, \"STALE\": 1}, \"metrics\": [{\"metric\": \"assets\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 146, \"resolved_from\": \"observation_status\"}, {\"metric\": \"capex\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 164, \"resolved_from\": \"observation_status\"}, {\"metric\": \"cash\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 348, \"resolved_from\": \"observation_status\"}, {\"metric\": \"debt\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 180, \"resolved_from\": \"observation_status\"}, {\"metric\": \"dividend_per_share\", \"state\": \"SOURCE_DID_NOT_REPORT\", \"reason_code\": \"SOURCE_OMITS_CONCEPT\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"eps_diluted\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 338, \"resolved_from\": \"observation_status\"}, {\"metric\": \"guidance\", \"state\": \"STALE\", \"reason_code\": \"NO_RECENT_VALUE\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"net_income\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 338, \"resolved_from\": \"observation_status\"}, {\"metric\": \"operating_margin_bank\", \"state\": \"NOT_APPLICABLE\", \"reason_code\": \"BUSINESS_MODEL_NOT_MEANINGFUL\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"revenue\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 339, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"segment_revenue\", \"state\": \"UNAVAILABLE\", \"reason_code\": \"RETRIEVAL_FAILED\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"shares_outstanding\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 72, \"resolved_from\": \"observation_status\"}], \"note\": \"States are counted, not scored. A single completeness figure would be an interpretation and would hide which distinct negative applies to which metric.\"}",
             "name": "coverage_report",
-            "tool_call_id": "call-9fcd5fc8-3189-440c-b990-5054ede05b8c"
+            "tool_call_id": "call-ef4ddc6f-5ffa-4a4e-9bf1-58d446c43893"
           }
         ]
       },
@@ -494,6 +499,6 @@
   ],
   "run_dir": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\runs\\openrouter-screening\\nvidia-nemotron-3-ultra\\smoke",
   "snapshot": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
-  "started_at": "2026-09-30T02:18:00.961048+00:00",
+  "started_at": "2026-09-30T08:59:15.009834+00:00",
   "total": 1
 }

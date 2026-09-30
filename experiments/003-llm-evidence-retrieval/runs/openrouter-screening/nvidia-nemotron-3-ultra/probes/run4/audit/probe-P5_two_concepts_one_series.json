@@ -1,0 +1,900 @@
+{
+  "answer": {
+    "answer": "The two capex concepts cannot be read as one continuous comparable series. The archive records a concept mapping break: PaymentsToAcquireProductiveAssets (used 2007\u20132014) maps to the capex metric with mapping_type PARTIAL and series_continues false, explicitly noting it \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change.\" PaymentsToAcquirePropertyPlantAndEquipment (used from 2013 onward) maps with mapping_type EXACT. The series break is documented in both concept's observations.",
+    "claim_type": "NOT_COMPARABLE",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_5e8e3b741876732ecddb59b4",
+      "obsarch_b98e5af9724c1f18a541187b"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "NOT_COMPARABLE",
+    "stated_value": null,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "The two capex concepts cannot be read as one continuous comparable series. The archive records a concept mapping break: PaymentsToAcquireProductiveAssets (used 2007\u20132014) maps to the capex metric with mapping_type PARTIAL and series_continues false, explicitly noting it \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change.\" PaymentsToAcquirePropertyPlantAndEquipment (used from 2013 onward) maps with mapping_type EXACT. The series break is documented in both concept's observations.",
+    "check_count": 5,
+    "checks": [
+      {
+        "actual": "NOT_COMPARABLE",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "NOT_COMPARABLE",
+        "name": "probe field claim_type",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_5e8e3b741876732ecddb59b4",
+          "obsarch_b98e5af9724c1f18a541187b"
+        ],
+        "capability": "S1",
+        "classification": "B",
+        "detail": "missing: ['obsarch_00d24b33a8acbbbdfc98e85d', 'obsarch_00ff94266c5e4da2dd611e6d']",
+        "expected": [
+          "obsarch_00d24b33a8acbbbdfc98e85d",
+          "obsarch_00ff94266c5e4da2dd611e6d"
+        ],
+        "name": "probe cites the subject's own identifiers",
+        "passed": false
+      },
+      {
+        "actual": [
+          "obsarch_5e8e3b741876732ecddb59b4",
+          "obsarch_b98e5af9724c1f18a541187b"
+        ],
+        "capability": "F4",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_5e8e3b741876732ecddb59b4",
+          "obsarch_b98e5af9724c1f18a541187b"
+        ],
+        "name": "every cited observation exists",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_5e8e3b741876732ecddb59b4",
+          "obsarch_b98e5af9724c1f18a541187b"
+        ],
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_5e8e3b741876732ecddb59b4",
+          "obsarch_b98e5af9724c1f18a541187b"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": true
+      },
+      {
+        "actual": "parsed",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "a JSON answer object",
+        "name": "the answer parsed into the contract",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "probe": {
+        "expected": {
+          "claim_type": "NOT_COMPARABLE"
+        },
+        "notes": "The complement of P4. P4 asks what a fidelity means; this asks whether two concepts can be joined, which is the question a consumer has to answer before splicing a series. A two-way answer with no citation is a coin toss, so the citations are required.",
+        "probe_id": "P5_two_concepts_one_series",
+        "question": "The archive holds two capex concepts for AAPL: PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment. Can figures from the two be read as one continuous comparable series? Answer with one code, and cite one observation from each.",
+        "reason_code_vocabulary": [],
+        "required_refs": [
+          "obsarch_00d24b33a8acbbbdfc98e85d",
+          "obsarch_00ff94266c5e4da2dd611e6d"
+        ],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "required_refs"
+        ],
+        "vocabulary": [
+          "COMPARABLE",
+          "NOT_COMPARABLE",
+          "UNKNOWN"
+        ]
+      }
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "probe-P5_two_concepts_one_series"
+  },
+  "capability": "S1",
+  "expectations": {
+    "probe": {
+      "expected": {
+        "claim_type": "NOT_COMPARABLE"
+      },
+      "notes": "The complement of P4. P4 asks what a fidelity means; this asks whether two concepts can be joined, which is the question a consumer has to answer before splicing a series. A two-way answer with no citation is a coin toss, so the citations are required.",
+      "probe_id": "P5_two_concepts_one_series",
+      "question": "The archive holds two capex concepts for AAPL: PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment. Can figures from the two be read as one continuous comparable series? Answer with one code, and cite one observation from each.",
+      "reason_code_vocabulary": [],
+      "required_refs": [
+        "obsarch_00d24b33a8acbbbdfc98e85d",
+        "obsarch_00ff94266c5e4da2dd611e6d"
+      ],
+      "semantic_state_vocabulary": [
+        "SOURCE_REPORTED",
+        "SOURCE_DID_NOT_REPORT",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE",
+        "STALE",
+        "CONFLICTING",
+        "EXACT",
+        "PARTIAL",
+        "NOT_COMPARABLE"
+      ],
+      "unguessable_fields": [
+        "required_refs"
+      ],
+      "vocabulary": [
+        "COMPARABLE",
+        "NOT_COMPARABLE",
+        "UNKNOWN"
+      ]
+    }
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "question": "The archive holds two capex concepts for AAPL: PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment. Can figures from the two be read as one continuous comparable series? Answer with one code, and cite one observation from each.\n\nThis question is answered with the same JSON object as every other question, plus\nthese additional keys. They are part of the answer format, not a hint about the\nanswer.\n\n{\n  \"claim_type\":      one code from: COMPARABLE, NOT_COMPARABLE, UNKNOWN\n  \"semantic_state\":  one code from: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING, EXACT, PARTIAL, NOT_COMPARABLE   (omit if the question does not ask)\n  \"reason_code\":     one code from: (not asked here)  (omit if the question does not ask)\n  \"operation_ref\":   the operation id, if the question asks how a figure was produced\n  \"stated_value\":    the number, if the question asks for a figure\n}\n\nThe codes above are every code the archive can emit for any figure. Choose the\none that matches this question. Do not copy a code that merely appears in the\ntool output if it does not answer what was asked.\n\nReport what the tools returned. If the tools do not settle the question, put the\nreason in \"uncertainties\" and leave the field you could not determine empty --\nan empty field is an honest answer and is scored as one.",
+  "retrieved_observations": [
+    "obs_sha256:0716ba518871a98aeeee5360ae5d6cecd6691f5a227268e4dbf12699ef945e69",
+    "obs_sha256:28380a26ab147bc821a3b1289553b355f3ebd6d40c3f5efe8d807505577f7bb7",
+    "obs_sha256:45f2dd45bf14a54c0c20d0012a0bc4a909dff2706344d8bae199820fb3002b0c",
+    "obs_sha256:557175476e4ac2ff9b99e10a663c4e74b606f50c7a842422e24f6bca80d10268",
+    "obs_sha256:6a3229f90c2114fc6ba4451f32653b9bd6c8088115e28787d3be8aa0de89a33a",
+    "obs_sha256:6b111d7c5e04563c0f1035aa80c2d444462de75879a6f0fcc94b643ab3403cc0",
+    "obs_sha256:72de33d8acdf658c288026a6dbb8c4e54914e2dd64a37fd5e3525a3ad2e847a0",
+    "obs_sha256:c3da03619a211a07effc4bea08ccfeeae34619c697324dc0949ce26e73ee1235",
+    "obs_sha256:ca9d5c0485bceeba5ddca59da119218cc900097ffa0183f0adc5fb3369ba6c19",
+    "obs_sha256:ed72d0059879ed6b59b04d46f46f7639c2ab55b81f7bb43abaa581004d0b8cd0",
+    "obsarch_3b90094a8dc637252a324239",
+    "obsarch_5e8e3b741876732ecddb59b4",
+    "obsarch_608444332323026c927ab1d3",
+    "obsarch_6ec98787704cad076106ac5e",
+    "obsarch_7917df8d8f37bd19c54362a7",
+    "obsarch_b6006362b79256840179fe6c",
+    "obsarch_b98e5af9724c1f18a541187b",
+    "obsarch_ddace7da960538c634d2afe9",
+    "obsarch_f270f57aae164db1e463d455",
+    "obsarch_f6bbd55228b1af0d9bfcf1ce"
+  ],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 62.9,
+    "error": null,
+    "exchanges": [
+      {
+        "elapsed_seconds": 11.56,
+        "index": 0,
+        "message_count": 2,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The user is asking whether two capex concepts for AAPL (PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment) can be read as one continuous comparable series. They want me to answer with one code (COMPARABLE, NOT_COMPARABLE, or UNKNOWN) and cite one observation from each.\n\nI need to query observations for both metrics for AAPL to see what the evidence states about their comparability. Let me start by querying observations for both metrics.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The user is asking whether two capex concepts for AAPL (PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment) can be read as one continuous comparable series. They want me to answer with one code (COMPARABLE, NOT_COMPARABLE, or UNKNOWN) and cite one observation from each.\n\nI need to query observations for both metrics for AAPL to see what the evidence states about their comparability. Let me start by querying observations for both metrics.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"order\":\"PERIOD_DESCENDING\",\"asset\":\"AAPL\",\"limit\":1,\"metric\":\"PaymentsToAcquireProductiveAssets\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-dc5b04e3-eb75-473a-8383-f6bbe0dd27ff",
+                    "index": 0,
+                    "type": "function"
+                  },
+                  {
+                    "function": {
+                      "arguments": "{\"asset\":\"AAPL\",\"metric\":\"PaymentsToAcquirePropertyPlantAndEquipment\",\"order\":\"PERIOD_DESCENDING\",\"limit\":1}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-f16a9d70-c665-4d11-8cf1-fc5ce260be0d",
+                    "index": 1,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790760010,
+          "id": "gen-1790760010-4jLj45BH4AO8a1d8Lmnb",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 246,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 119
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 2725,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 2971
+          }
+        }
+      },
+      {
+        "index": 1,
+        "result_bytes": 419,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": 1,
+            "metric": "PaymentsToAcquireProductiveAssets",
+            "order": "PERIOD_DESCENDING"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "index": 2,
+        "result_bytes": 428,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": 1,
+            "metric": "PaymentsToAcquirePropertyPlantAndEquipment",
+            "order": "PERIOD_DESCENDING"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 6.52,
+        "index": 1,
+        "message_count": 5,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The metrics the user mentioned don't exist in ST-EVA's known metrics. The known metrics include \"capex\" which might be the relevant metric. Let me check what \"capex\" represents and if there are observations for it",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The metrics the user mentioned don't exist in ST-EVA's known metrics. The known metrics include \"capex\" which might be the relevant metric. Let me check what \"capex\" represents and if there are observations for it",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"metric\":\"capex\",\"order\":\"PERIOD_DESCENDING\",\"asset\":\"AAPL\",\"limit\":5}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-54e21e52-d471-4314-b0a4-f184e65fc85c",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790760021,
+          "id": "gen-1790760021-pITMiHgnzcJygEyeTYrN",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 114,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 54
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3220,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 3334
+          }
+        }
+      },
+      {
+        "index": 4,
+        "result_bytes": 20386,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": 5,
+            "metric": "capex",
+            "order": "PERIOD_DESCENDING"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 14.13,
+        "index": 2,
+        "message_count": 7,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The query returned observations for the \"capex\" metric, which maps to \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\". The semantic information shows there's a series break with \"us-gaap:PaymentsToAcquireProductiveAssets\" which has a mapping_type of \"PARTIAL\" and effective_from \"2007-09-29\" to \"2014-09-27\". The explanation is \"NOT_EXPLAINED_BY_ST_EVA\".\n\nNow I need to find observations for the \"PaymentsToAcquireProductiveAssets\" concept. Since the metric \"capex\" maps to both concepts (with different mapping types and time periods), let me check if there are observations for the older concept. The series break indicates that PaymentsToAcquireProductiveAssets was used from 2007-09-29 to 2014-09-27 with a PARTIAL mapping, and then PaymentsToAcquirePropertyPlantAndEquipment took over from 2013-09-28 onwards with an EXACT mapping.\n\nLet me query for observations that might use the PaymentsToAcquireProductiveAssets concept. Since the metric is \"capex\" for both, I should look at older periods",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The query returned observations for the \"capex\" metric, which maps to \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\". The semantic information shows there's a series break with \"us-gaap:PaymentsToAcquireProductiveAssets\" which has a mapping_type of \"PARTIAL\" and effective_from \"2007-09-29\" to \"2014-09-27\". The explanation is \"NOT_EXPLAINED_BY_ST_EVA\".\n\nNow I need to find observations for the \"PaymentsToAcquireProductiveAssets\" concept. Since the metric \"capex\" maps to both concepts (with different mapping types and time periods), let me check if there are observations for the older concept. The series break indicates that PaymentsToAcquireProductiveAssets was used from 2007-09-29 to 2014-09-27 with a PARTIAL mapping, and then PaymentsToAcquirePropertyPlantAndEquipment took over from 2013-09-28 onwards with an EXACT mapping.\n\nLet me query for observations that might use the PaymentsToAcquireProductiveAssets concept. Since the metric is \"capex\" for both, I should look at older periods",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"metric\":\"capex\",\"asset\":\"AAPL\",\"order\":\"PERIOD_ASCENDING\",\"period_end\":\"2014-09-27\",\"limit\":5}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-91ef24d9-e84b-4a68-9378-7a77ca90c87c",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790760028,
+          "id": "gen-1790760028-8Eh6wP64wKidigbkNzq9",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 362,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 252
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 11991,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 12353
+          }
+        }
+      },
+      {
+        "index": 6,
+        "result_bytes": 20295,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL",
+            "limit": 5,
+            "metric": "capex",
+            "order": "PERIOD_ASCENDING",
+            "period_end": "2014-09-27"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 30.68,
+        "index": 3,
+        "message_count": 9,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "{\n  \"answer\": \"The two capex concepts cannot be read as one continuous comparable series. The archive records a concept mapping break: PaymentsToAcquireProductiveAssets (used 2007\u20132014) maps to the capex metric with mapping_type PARTIAL and series_continues false, explicitly noting it \\\"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change.\\\" PaymentsToAcquirePropertyPlantAndEquipment (used from 2013 onward) maps with mapping_type EXACT. The series break is documented in both concept's observations.\",\n  \"evidence_refs\": [\"obsarch_5e8e3b741876732ecddb59b4\", \"obsarch_b98e5af9724c1f18a541187b\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [],\n  \"claim_type\": \"NOT_COMPARABLE\",\n  \"semantic_state\": \"NOT_COMPARABLE\"\n}",
+                "reasoning": "Now I have clear evidence. The semantic information in both sets of observations shows:\n\n1. For PaymentsToAcquireProductiveAssets (observation obsarch_5e8e3b741876732ecddb59b4): The mapping_type is \"PARTIAL\" with series_continues: false, and the notes explicitly state: \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"\n\n2. For PaymentsToAcquirePropertyPlantAndEquipment (observation obsarch_b98e5af9724c1f18a541187b): The series_breaks section shows a CONCEPT_MAPPING_BREAK with the PaymentsToAcquireProductiveAssets concept, mapping_type: \"PARTIAL\", effective_from: \"2007-09-29\", effective_to: \"2014-09-27\", explanation: \"NOT_EXPLAINED_BY_ST_EVA\"\n\nThe evidence clearly indicates these two concepts are NOT_COMPARABLE as a continuous series because:\n- PaymentsToAcquireProductiveAssets includes software and other intangible assets\n- PaymentsToAcquirePropertyPlantAndEquipment does not include those\n- The mapping explicitly states \"series_continues: false\" and \"the series does not continue across the change\"\n\nSo the answer is NOT_COMPARABLE. I need to cite one observation from each concept.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "Now I have clear evidence. The semantic information in both sets of observations shows:\n\n1. For PaymentsToAcquireProductiveAssets (observation obsarch_5e8e3b741876732ecddb59b4): The mapping_type is \"PARTIAL\" with series_continues: false, and the notes explicitly state: \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"\n\n2. For PaymentsToAcquirePropertyPlantAndEquipment (observation obsarch_b98e5af9724c1f18a541187b): The series_breaks section shows a CONCEPT_MAPPING_BREAK with the PaymentsToAcquireProductiveAssets concept, mapping_type: \"PARTIAL\", effective_from: \"2007-09-29\", effective_to: \"2014-09-27\", explanation: \"NOT_EXPLAINED_BY_ST_EVA\"\n\nThe evidence clearly indicates these two concepts are NOT_COMPARABLE as a continuous series because:\n- PaymentsToAcquireProductiveAssets includes software and other intangible assets\n- PaymentsToAcquirePropertyPlantAndEquipment does not include those\n- The mapping explicitly states \"series_continues: false\" and \"the series does not continue across the change\"\n\nSo the answer is NOT_COMPARABLE. I need to cite one observation from each concept.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant"
+              },
+              "native_finish_reason": "stop"
+            }
+          ],
+          "created": 1790760042,
+          "id": "gen-1790760042-VpK7dUDNzoRyAvN4rKw3",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 560,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 302
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 21126,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 4320,
+              "video_tokens": 0
+            },
+            "total_tokens": 21686
+          }
+        }
+      }
+    ],
+    "first_reply_parsed": true,
+    "format_repair_used": false,
+    "initial_messages": [
+      {
+        "content": "You are answering questions using ST-EVA, an evidence database of filed financial data. You answer only from what its query tools return.\n\nYou cannot see the database directly. You have tools that read it. Use them.\n\nThe evidence carries states, and each one means something different:\n\nSOURCE_REPORTED  a value a source stated. The ordinary case.\nDERIVED          computed by ST-EVA from named operands, not reported by\n                 anyone. It is a calculation and it says so.\nVALIDATED        cross-checked against another source. Agreement between two\n                 comparable sources is not proof the figure is correct.\nUNAVAILABLE      retrieval failed. Not zero, and not \"no data exists\".\nCONFLICTING      two sources disagree. Neither is selected.\nNOT_APPLICABLE   the measure is not meaningful for this business. Different\n                 from UNAVAILABLE, and different from a zero.\nSTALE            what is held has gone out of date. Not historically false.\nNOT_COMPARABLE   the series must break here; the measure changed.\nPARTIAL          a source concept that expresses the metric only partially, as\n                 a wider or narrower aggregate. Never the same as EXACT.\nEXACT            a source concept that expresses the metric exactly.\n\nEach observation carries a `status` with two separate parts:\n\n- `status.evidence_state.state` is one of the states above.\n- `status.validation_status` says whether cross-checking found anything, and\n  is `UNVERIFIABLE` for a figure only one source has reported.\n\nTo filter on either, the parameter names it. `query_observations` takes\n`validation_status` for the cross-check status; the evidence state is not\nfilterable and is read from each observation.\n\nAn unknown metric is refused by name, with the real ones attached. A metric\nST-EVA knows but has no rows for your filter returns an empty list, which is a\ndifferent answer and means the data is not there for that period.\n\nRules:\n\n- Use a tool before making a factual claim. Do not state a number no tool\n  returned.\n- An empty result means your filter matched nothing. Widen the filter before\n  concluding that evidence is absent.\n- Report a figure's state when the state changes how it may be read. A PARTIAL\n  concept is not an EXACT one. A disagreement is not settled. A derived value\n  is not a reported one.\n- If a series is truncated, say so. Do not present part of a series as the\n  whole of it.\n- If evidence is missing, say what is missing. Do not fill a gap with a\n  plausible value, and do not report a negative state as a number.\n- Report what the evidence establishes and stop there. Do not explain why\n  something happened unless the evidence states why.\n- Cite the observation ids the tools gave you, in `evidence_refs`.\n\nYour reply must be a single JSON object and nothing else. No prose before it,\nno prose after it, no markdown fence:\n\n{\n  \"answer\": \"the answer in prose, with every claim traceable to evidence\",\n  \"evidence_refs\": [\"the observation ids the tools returned\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"anything the evidence does not settle\"]\n}\n\nBoth `answer` and `evidence_refs` are required. If you cannot cite evidence,\nthat belongs in `uncertainties`, not in `answer`.",
+        "role": "system"
+      },
+      {
+        "content": "The archive holds two capex concepts for AAPL: PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment. Can figures from the two be read as one continuous comparable series? Answer with one code, and cite one observation from each.\n\nThis question is answered with the same JSON object as every other question, plus\nthese additional keys. They are part of the answer format, not a hint about the\nanswer.\n\n{\n  \"claim_type\":      one code from: COMPARABLE, NOT_COMPARABLE, UNKNOWN\n  \"semantic_state\":  one code from: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING, EXACT, PARTIAL, NOT_COMPARABLE   (omit if the question does not ask)\n  \"reason_code\":     one code from: (not asked here)  (omit if the question does not ask)\n  \"operation_ref\":   the operation id, if the question asks how a figure was produced\n  \"stated_value\":    the number, if the question asks for a figure\n}\n\nThe codes above are every code the archive can emit for any figure. Choose the\none that matches this question. Do not copy a code that merely appears in the\ntool output if it does not answer what was asked.\n\nReport what the tools returned. If the tools do not settle the question, put the\nreason in \"uncertainties\" and leave the field you could not determine empty --\nan empty field is an honest answer and is scored as one.\n\nReply with the JSON object described in your instructions, and nothing else.",
+        "role": "user"
+      }
+    ],
+    "stop_reason": "answered",
+    "test_attempts": 1,
+    "tool_definitions": [
+      {
+        "function": {
+          "description": "Observations matching a filter, oldest first.\n\n        `metric` must be one ST-EVA knows. An unknown name is refused with the\n        list of real ones rather than returning an empty result, because an\n        empty result is what a genuinely absent figure looks like and the two\n        were indistinguishable.\n\n        `limit` truncates silently. Use `page` when the length of a series\n        matters.",
+          "name": "query_observations",
+          "parameters": {
+            "properties": {
+              "as_of": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "basis_framework": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "instant": {
+                "type": "boolean"
+              },
+              "knowable_at": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "validation_status": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One observation by its stable identity, with full metadata.",
+          "name": "get_observation",
+          "parameters": {
+            "properties": {
+              "include_lineage": {
+                "type": "boolean"
+              },
+              "include_validation": {
+                "type": "boolean"
+              },
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+          "name": "get_metric_history",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset",
+              "metric"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+          "name": "page",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+          "name": "get_lineage",
+          "parameters": {
+            "properties": {
+              "depth": {
+                "type": "integer"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+          "name": "get_validation",
+          "parameters": {
+            "properties": {
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Source-document metadata by id, content hash or canonical URI.",
+          "name": "get_source_document",
+          "parameters": {
+            "properties": {
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+          "name": "coverage_report",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ],
+    "tool_results": [
+      {
+        "content": "{\"error\": \"UnknownMetricError: UNKNOWN_METRIC: no metric named 'PaymentsToAcquireProductiveAssets'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding\"}",
+        "name": "query_observations",
+        "tool_call_id": "call-dc5b04e3-eb75-473a-8383-f6bbe0dd27ff"
+      },
+      {
+        "content": "{\"error\": \"UnknownMetricError: UNKNOWN_METRIC: no metric named 'PaymentsToAcquirePropertyPlantAndEquipment'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding\"}",
+        "name": "query_observations",
+        "tool_call_id": "call-f16a9d70-c665-4d11-8cf1-fc5ce260be0d"
+      },
+      {
+        "content": "[{\"observation_id\": \"obsarch_b98e5af9724c1f18a541187b\", \"contract_id\": \"ingest|capex|PaymentsToAcquirePropertyPlantAndEquipment|0000320193-26-000020|2025-09-28|2026-06-27|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 6799000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2025-09-28\", \"end\": \"2026-06-27\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2026-06-27\", \"available_at\": {\"instant\": \"2026-07-31T10:01:02.000Z\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2026-07-31T10:01:02.000Z\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"accession\": \"0000320193-26-000020\", \"form\": \"10-Q\", \"fiscal_year\": 2026, \"fiscal_period\": \"Q3\", \"documents\": [{\"document_id\": \"doc_786fee886656a028345697fd\", \"content_hash\": \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 16084, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:04.968025+00:00\", \"first_seen_at\": \"2026-09-29T16:48:04.968025+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_b98e5af9724c1f18a541187b\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"mapping_type\": \"EXACT\", \"series_continues\": true, \"effective_from\": \"2013-09-28\", \"effective_to\": null, \"notes\": null}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"first_used\": \"2013-09-28\", \"last_used\": \"2026-06-27\", \"fact_count\": 105, \"filing_count\": 47, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow associated with the acquisition of long-lived, physical assets that are used in the normal conduct of business to produce goods and services and not intended for resale; includes cash outflows to pay for construction of self-constructed assets.\", \"methodology\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment as filed in 10-Q accession 0000320193-26-000020; registry mapping EXACT\", \"basis\": {\"mapping_fidelity\": \"EXACT\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.243312+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.243312+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_96ac1311909de0ce05b9def115ca9995\", \"content_hash\": \"obs_sha256:c3da03619a211a07effc4bea08ccfeeae34619c697324dc0949ce26e73ee1235\", \"follow_to\": [\"sfid_96ac1311909de0ce05b9def115ca9995\", \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\"]}}, {\"observation_id\": \"obsarch_ddace7da960538c634d2afe9\", \"contract_id\": \"ingest|capex|PaymentsToAcquirePropertyPlantAndEquipment|0000320193-26-000013|2025-09-28|2026-03-28|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 4344000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2025-09-28\", \"end\": \"2026-03-28\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2026-03-28\", \"available_at\": {\"instant\": \"2026-05-01T10:01:00.000Z\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2026-05-01T10:01:00.000Z\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"accession\": \"0000320193-26-000013\", \"form\": \"10-Q\", \"fiscal_year\": 2026, \"fiscal_period\": \"Q2\", \"documents\": [{\"document_id\": \"doc_786fee886656a028345697fd\", \"content_hash\": \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 16084, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:04.968025+00:00\", \"first_seen_at\": \"2026-09-29T16:48:04.968025+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_ddace7da960538c634d2afe9\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"mapping_type\": \"EXACT\", \"series_continues\": true, \"effective_from\": \"2013-09-28\", \"effective_to\": null, \"notes\": null}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"first_used\": \"2013-09-28\", \"last_used\": \"2026-06-27\", \"fact_count\": 105, \"filing_count\": 47, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow associated with the acquisition of long-lived, physical assets that are used in the normal conduct of business to produce goods and services and not intended for resale; includes cash outflows to pay for construction of self-constructed assets.\", \"methodology\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment as filed in 10-Q accession 0000320193-26-000013; registry mapping EXACT\", \"basis\": {\"mapping_fidelity\": \"EXACT\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.226065+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.226065+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_b2525e2cf3a01de6f07e467168fecad3\", \"content_hash\": \"obs_sha256:45f2dd45bf14a54c0c20d0012a0bc4a909dff2706344d8bae199820fb3002b0c\", \"follow_to\": [\"sfid_b2525e2cf3a01de6f07e467168fecad3\", \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\"]}}, {\"observation_id\": \"obsarch_f270f57aae164db1e463d455\", \"contract_id\": \"ingest|capex|PaymentsToAcquirePropertyPlantAndEquipment|0000320193-26-000006|2025-09-28|2025-12-27|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 2373000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2025-09-28\", \"end\": \"2025-12-27\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2025-12-27\", \"available_at\": {\"instant\": \"2026-01-30T11:01:32.000Z\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2026-01-30T11:01:32.000Z\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"accession\": \"0000320193-26-000006\", \"form\": \"10-Q\", \"fiscal_year\": 2026, \"fiscal_period\": \"Q1\", \"documents\": [{\"document_id\": \"doc_786fee886656a028345697fd\", \"content_hash\": \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 16084, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:04.968025+00:00\", \"first_seen_at\": \"2026-09-29T16:48:04.968025+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_f270f57aae164db1e463d455\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"mapping_type\": \"EXACT\", \"series_continues\": true, \"effective_from\": \"2013-09-28\", \"effective_to\": null, \"notes\": null}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"first_used\": \"2013-09-28\", \"last_used\": \"2026-06-27\", \"fact_count\": 105, \"filing_count\": 47, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow associated with the acquisition of long-lived, physical assets that are used in the normal conduct of business to produce goods and services and not intended for resale; includes cash outflows to pay for construction of self-constructed assets.\", \"methodology\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment as filed in 10-Q accession 0000320193-26-000006; registry mapping EXACT\", \"basis\": {\"mapping_fidelity\": \"EXACT\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.223129+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.223129+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_664e6fd069da34b9034e81689d7b1a98\", \"content_hash\": \"obs_sha256:0716ba518871a98aeeee5360ae5d6cecd6691f5a227268e4dbf12699ef945e69\", \"follow_to\": [\"sfid_664e6fd069da34b9034e81689d7b1a98\", \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\"]}}, {\"observation_id\": \"obsarch_6ec98787704cad076106ac5e\", \"contract_id\": \"ingest|capex|PaymentsToAcquirePropertyPlantAndEquipment|0000320193-25-000079|2024-09-29|2025-09-27|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 12715000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2024-09-29\", \"end\": \"2025-09-27\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2025-09-27\", \"available_at\": {\"instant\": \"2025-10-31T10:01:26.000Z\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2025-10-31T10:01:26.000Z\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"accession\": \"0000320193-25-000079\", \"form\": \"10-K\", \"fiscal_year\": 2025, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_786fee886656a028345697fd\", \"content_hash\": \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 16084, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:04.968025+00:00\", \"first_seen_at\": \"2026-09-29T16:48:04.968025+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_6ec98787704cad076106ac5e\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"mapping_type\": \"EXACT\", \"series_continues\": true, \"effective_from\": \"2013-09-28\", \"effective_to\": null, \"notes\": null}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"first_used\": \"2013-09-28\", \"last_used\": \"2026-06-27\", \"fact_count\": 105, \"filing_count\": 47, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow associated with the acquisition of long-lived, physical assets that are used in the normal conduct of business to produce goods and services and not intended for resale; includes cash outflows to pay for construction of self-constructed assets.\", \"methodology\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment as filed in 10-K accession 0000320193-25-000079; registry mapping EXACT\", \"basis\": {\"mapping_fidelity\": \"EXACT\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.221145+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.221145+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_3ab10967f8aadf87ba7b0b08687071ed\", \"content_hash\": \"obs_sha256:6b111d7c5e04563c0f1035aa80c2d444462de75879a6f0fcc94b643ab3403cc0\", \"follow_to\": [\"sfid_3ab10967f8aadf87ba7b0b08687071ed\", \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\"]}}, {\"observation_id\": \"obsarch_f6bbd55228b1af0d9bfcf1ce\", \"contract_id\": \"ingest|capex|PaymentsToAcquirePropertyPlantAndEquipment|0000320193-25-000073|2024-09-29|2025-06-28|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 9473000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2024-09-29\", \"end\": \"2025-06-28\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2025-06-28\", \"available_at\": {\"instant\": \"2025-08-01T10:00:42.000Z\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2025-08-01T10:00:42.000Z\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"accession\": \"0000320193-25-000073\", \"form\": \"10-Q\", \"fiscal_year\": 2025, \"fiscal_period\": \"Q3\", \"documents\": [{\"document_id\": \"doc_786fee886656a028345697fd\", \"content_hash\": \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 16084, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:04.968025+00:00\", \"first_seen_at\": \"2026-09-29T16:48:04.968025+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_f6bbd55228b1af0d9bfcf1ce\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"mapping_type\": \"EXACT\", \"series_continues\": true, \"effective_from\": \"2013-09-28\", \"effective_to\": null, \"notes\": null}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment\", \"first_used\": \"2013-09-28\", \"last_used\": \"2026-06-27\", \"fact_count\": 105, \"filing_count\": 47, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow associated with the acquisition of long-lived, physical assets that are used in the normal conduct of business to produce goods and services and not intended for resale; includes cash outflows to pay for construction of self-constructed assets.\", \"methodology\": \"us-gaap:PaymentsToAcquirePropertyPlantAndEquipment as filed in 10-Q accession 0000320193-25-000073; registry mapping EXACT\", \"basis\": {\"mapping_fidelity\": \"EXACT\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.216227+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.216227+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_1070323a4d74b5d23057fe1c2dc52b0c\", \"content_hash\": \"obs_sha256:28380a26ab147bc821a3b1289553b355f3ebd6d40c3f5efe8d807505577f7bb7\", \"follow_to\": [\"sfid_1070323a4d74b5d23057fe1c2dc52b0c\", \"sha256:f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b\"]}}]",
+        "name": "query_observations",
+        "tool_call_id": "call-54e21e52-d471-4314-b0a4-f184e65fc85c"
+      },
+      {
+        "content": "[{\"observation_id\": \"obsarch_5e8e3b741876732ecddb59b4\", \"contract_id\": \"ingest|capex|PaymentsToAcquireProductiveAssets|0001193125-09-214859|2006-10-01|2007-09-29|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 735000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2006-10-01\", \"end\": \"2007-09-29\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2007-09-29\", \"available_at\": {\"instant\": \"2009-10-27T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2009-10-27T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"accession\": \"0001193125-09-214859\", \"form\": \"10-K\", \"fiscal_year\": 2009, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_b9cf6ad3542427e4792916f4\", \"content_hash\": \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 9075, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:05.532075+00:00\", \"first_seen_at\": \"2026-09-29T16:48:05.532075+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_5e8e3b741876732ecddb59b4\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"notes\": \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"first_used\": \"2007-09-29\", \"last_used\": \"2014-09-27\", \"fact_count\": 59, \"filing_count\": 25, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow for purchases of and capital improvements on property, plant and equipment (capital expenditures), software, and other intangible assets.\", \"methodology\": \"us-gaap:PaymentsToAcquireProductiveAssets as filed in 10-K accession 0001193125-09-214859; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.534064+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.534064+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_9e0f2f1283334a20a3963dc0c1cae86d\", \"content_hash\": \"obs_sha256:ed72d0059879ed6b59b04d46f46f7639c2ab55b81f7bb43abaa581004d0b8cd0\", \"follow_to\": [\"sfid_9e0f2f1283334a20a3963dc0c1cae86d\", \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\"]}}, {\"observation_id\": \"obsarch_3b90094a8dc637252a324239\", \"contract_id\": \"ingest|capex|PaymentsToAcquireProductiveAssets|0001193125-10-012091|2006-10-01|2007-09-29|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 735000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2006-10-01\", \"end\": \"2007-09-29\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2007-09-29\", \"available_at\": {\"instant\": \"2010-01-25T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2010-01-25T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"accession\": \"0001193125-10-012091\", \"form\": \"10-K/A\", \"fiscal_year\": 2009, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_b9cf6ad3542427e4792916f4\", \"content_hash\": \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 9075, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:05.532075+00:00\", \"first_seen_at\": \"2026-09-29T16:48:05.532075+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_3b90094a8dc637252a324239\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"notes\": \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"first_used\": \"2007-09-29\", \"last_used\": \"2014-09-27\", \"fact_count\": 59, \"filing_count\": 25, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow for purchases of and capital improvements on property, plant and equipment (capital expenditures), software, and other intangible assets.\", \"methodology\": \"us-gaap:PaymentsToAcquireProductiveAssets as filed in 10-K/A accession 0001193125-10-012091; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.535041+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.535041+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_11f7127ad5f3fcdff5cae75afe3b5830\", \"content_hash\": \"obs_sha256:ca9d5c0485bceeba5ddca59da119218cc900097ffa0183f0adc5fb3369ba6c19\", \"follow_to\": [\"sfid_11f7127ad5f3fcdff5cae75afe3b5830\", \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\"]}}, {\"observation_id\": \"obsarch_b6006362b79256840179fe6c\", \"contract_id\": \"ingest|capex|PaymentsToAcquireProductiveAssets|0001193125-09-153165|2007-09-30|2008-06-28|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 688000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2007-09-30\", \"end\": \"2008-06-28\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2008-06-28\", \"available_at\": {\"instant\": \"2009-07-22T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2009-07-22T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"accession\": \"0001193125-09-153165\", \"form\": \"10-Q\", \"fiscal_year\": 2009, \"fiscal_period\": \"Q3\", \"documents\": [{\"document_id\": \"doc_b9cf6ad3542427e4792916f4\", \"content_hash\": \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 9075, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:05.532075+00:00\", \"first_seen_at\": \"2026-09-29T16:48:05.532075+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_b6006362b79256840179fe6c\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"notes\": \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"first_used\": \"2007-09-29\", \"last_used\": \"2014-09-27\", \"fact_count\": 59, \"filing_count\": 25, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow for purchases of and capital improvements on property, plant and equipment (capital expenditures), software, and other intangible assets.\", \"methodology\": \"us-gaap:PaymentsToAcquireProductiveAssets as filed in 10-Q accession 0001193125-09-153165; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.537970+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.537970+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_cbe458124bc4623175ea5a11e775669a\", \"content_hash\": \"obs_sha256:72de33d8acdf658c288026a6dbb8c4e54914e2dd64a37fd5e3525a3ad2e847a0\", \"follow_to\": [\"sfid_cbe458124bc4623175ea5a11e775669a\", \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\"]}}, {\"observation_id\": \"obsarch_608444332323026c927ab1d3\", \"contract_id\": \"ingest|capex|PaymentsToAcquireProductiveAssets|0001193125-09-214859|2007-09-30|2008-09-27|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 1091000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2007-09-30\", \"end\": \"2008-09-27\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2008-09-27\", \"available_at\": {\"instant\": \"2009-10-27T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2009-10-27T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"accession\": \"0001193125-09-214859\", \"form\": \"10-K\", \"fiscal_year\": 2009, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_b9cf6ad3542427e4792916f4\", \"content_hash\": \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 9075, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:05.532075+00:00\", \"first_seen_at\": \"2026-09-29T16:48:05.532075+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_608444332323026c927ab1d3\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"notes\": \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"first_used\": \"2007-09-29\", \"last_used\": \"2014-09-27\", \"fact_count\": 59, \"filing_count\": 25, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow for purchases of and capital improvements on property, plant and equipment (capital expenditures), software, and other intangible assets.\", \"methodology\": \"us-gaap:PaymentsToAcquireProductiveAssets as filed in 10-K accession 0001193125-09-214859; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.539958+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.539958+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_5ba6a707e726483c416cf53f25dbc44d\", \"content_hash\": \"obs_sha256:557175476e4ac2ff9b99e10a663c4e74b606f50c7a842422e24f6bca80d10268\", \"follow_to\": [\"sfid_5ba6a707e726483c416cf53f25dbc44d\", \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\"]}}, {\"observation_id\": \"obsarch_7917df8d8f37bd19c54362a7\", \"contract_id\": \"ingest|capex|PaymentsToAcquireProductiveAssets|0001193125-10-012091|2007-09-30|2008-09-27|USD\", \"asset\": \"AAPL\", \"metric\": \"capex\", \"value\": 1091000000.0, \"has_value\": true, \"unit\": \"currency\", \"currency\": \"USD\", \"currency_basis\": \"REPORTED\", \"period\": {\"start\": \"2007-09-30\", \"end\": \"2008-09-27\", \"instant\": null, \"start_is_instant\": false}, \"as_of\": \"2008-09-27\", \"available_at\": {\"instant\": \"2010-01-25T00:00:00+00:00\", \"basis\": \"ACCEPTANCE_DATETIME\", \"class\": \"SOURCE_DECLARED\", \"knowable_at\": \"2010-01-25T00:00:00+00:00\"}, \"status\": {\"validation_status\": \"UNVERIFIABLE\", \"reasons\": [\"a single official source cannot cross-validate itself\"], \"evidence_state\": {\"state\": \"SOURCE_REPORTED\", \"reason_kind\": null, \"reason_code\": \"SOURCE_STATED_VALUE\", \"explanation\": null, \"as_of\": null, \"resolved_from\": \"observation_status\"}}, \"source\": {\"provider\": \"SecEdgar\", \"source_type\": \"REGULATORY_FILING\", \"source_url\": null, \"taxonomy\": \"us-gaap\", \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"accession\": \"0001193125-10-012091\", \"form\": \"10-K/A\", \"fiscal_year\": 2009, \"fiscal_period\": \"FY\", \"documents\": [{\"document_id\": \"doc_b9cf6ad3542427e4792916f4\", \"content_hash\": \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/PaymentsToAcquireProductiveAssets.json\", \"provider\": \"SecEdgar\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"media_type\": \"application/json\", \"byte_size\": 9075, \"http_status\": 200, \"fetched_at\": \"2026-09-29T16:48:05.532075+00:00\", \"first_seen_at\": \"2026-09-29T16:48:05.532075+00:00\", \"compression\": \"gzip\", \"content_available\": 1, \"redistribution_tier\": null}]}, \"semantic\": {\"observation_id\": \"obsarch_7917df8d8f37bd19c54362a7\", \"resolved\": true, \"concept\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"metric\": \"capex\", \"metric_definition\": \"Cash outflow to acquire long-lived assets used in the normal conduct of business. Sources differ on whether software and intangibles are included, which the mapping records.\", \"mappings\": [{\"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"series_continues\": false, \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"notes\": \"includes software and other intangible assets, which the property-and-equipment concept does not, so the series does not continue across the change\"}], \"series_breaks\": [{\"kind\": \"CONCEPT_MAPPING_BREAK\", \"metric_id\": \"capex\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"mapping_type\": \"PARTIAL\", \"effective_from\": \"2007-09-29\", \"effective_to\": \"2014-09-27\", \"explanation\": \"NOT_EXPLAINED_BY_ST_EVA\"}], \"issuer_adoption\": {\"asset_id\": \"asset_1eb44d625271a4eb7501\", \"concept_id\": \"us-gaap:PaymentsToAcquireProductiveAssets\", \"first_used\": \"2007-09-29\", \"last_used\": \"2014-09-27\", \"fact_count\": 59, \"filing_count\": 25, \"basis\": \"OBSERVED_ADOPTION\"}, \"adopted_outside_mapping_window\": false}, \"definition\": \"The cash outflow for purchases of and capital improvements on property, plant and equipment (capital expenditures), software, and other intangible assets.\", \"methodology\": \"us-gaap:PaymentsToAcquireProductiveAssets as filed in 10-K/A accession 0001193125-10-012091; registry mapping PARTIAL\", \"basis\": {\"mapping_fidelity\": \"PARTIAL\", \"reporting_framework\": \"us-gaap\", \"security_type\": \"REGISTERED_SECURITY\", \"source_declared\": true}, \"retrieved_at\": \"2026-09-29T16:48:05.542915+00:00\", \"first_archived_at\": \"2026-09-29T16:48:05.542915+00:00\", \"validation\": [], \"lineage\": {\"kind\": \"OBSERVED\", \"source_fact_id\": \"sfid_25b2455e94e18c76d8eeb75301c32186\", \"content_hash\": \"obs_sha256:6a3229f90c2114fc6ba4451f32653b9bd6c8088115e28787d3be8aa0de89a33a\", \"follow_to\": [\"sfid_25b2455e94e18c76d8eeb75301c32186\", \"sha256:b61e11ce1bfa96e593f77137be3b370c91db9f1ae4e17846d5d2705baf23e61c\"]}}]",
+        "name": "query_observations",
+        "tool_call_id": "call-91ef24d9-e84b-4a68-9378-7a77ca90c87c"
+      }
+    ]
+  },
+  "test_id": "probe-P5_two_concepts_one_series",
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "PaymentsToAcquireProductiveAssets",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'PaymentsToAcquireProductiveAssets'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "PaymentsToAcquirePropertyPlantAndEquipment",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'PaymentsToAcquirePropertyPlantAndEquipment'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 5,
+        "metric": "capex",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[5]",
+      "returned_count": 5,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 5,
+        "metric": "capex",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2014-09-27",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[5]",
+      "returned_count": 5,
+      "sequence": 4
+    }
+  ]
+}

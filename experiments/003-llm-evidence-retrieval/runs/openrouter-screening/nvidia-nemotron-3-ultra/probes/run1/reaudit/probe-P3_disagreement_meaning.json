@@ -1,0 +1,131 @@
+{
+  "answer": {
+    "answer": "The archive holds three observations for AAPL's cash as of 2019-03-30, with two distinct values: $37,988,000,000 (from us-gaap:CashAndCashEquivalentsAtCarryingValue, mapped EXACT) and $39,817,000,000 (from us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents, mapped PARTIAL, appearing in two filings). The ambiguity reason recorded is MULTIPLE_SOURCE_CONCEPTS. The archive explicitly states that the competing figures are not measuring the same thing: same_measure_established is false, and the explanation notes these are different measures, not two readings of one measure.",
+    "claim_type": "MULTIPLE_SOURCE_CONCEPTS",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_2b50643466e308ddc0d8b0d6",
+      "obsarch_27b0e15d1bd750795d196a50",
+      "obsarch_95f582194d59075b3640df61"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "The archive holds three observations for AAPL's cash as of 2019-03-30, with two distinct values: $37,988,000,000 (from us-gaap:CashAndCashEquivalentsAtCarryingValue, mapped EXACT) and $39,817,000,000 (from us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents, mapped PARTIAL, appearing in two filings). The ambiguity reason recorded is MULTIPLE_SOURCE_CONCEPTS. The archive explicitly states that the competing figures are not measuring the same thing: same_measure_established is false, and the explanation notes these are different measures, not two readings of one measure.",
+    "check_count": 5,
+    "checks": [
+      {
+        "actual": "MULTIPLE_SOURCE_CONCEPTS",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "MULTIPLE_SOURCE_CONCEPTS",
+        "name": "probe field claim_type",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "name": "probe cites the subject's own identifiers",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "capability": "F4",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "name": "every cited observation exists",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": true
+      },
+      {
+        "actual": "parsed",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "a JSON answer object",
+        "name": "the answer parsed into the contract",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "probe": {
+        "citation_required": true,
+        "expected": {
+          "claim_type": "MULTIPLE_SOURCE_CONCEPTS"
+        },
+        "notes": "The direct test of 2.6.3. Before the fix the surface called this 'the endpoint aggregates dimension members' and both cloud models repeated it; after the fix the surface names the concepts. This probe asks whether a consumer can read the corrected vocabulary, which is a different question from whether the surface is right -- and 2.6.3 could not answer it from prose answers at all.",
+        "probe_id": "P3_disagreement_meaning",
+        "question": "The archive holds more than one value for AAPL's cash for the period ending 2019-03-30, and it declines to choose between them. Which of the archive's ambiguity reasons applies, and are the competing figures measuring the same thing?",
+        "reason_code_vocabulary": [],
+        "required_concepts": [],
+        "required_refs": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "semantic_state_vocabulary": [],
+        "unguessable_fields": [
+          "required_refs"
+        ],
+        "vocabulary": [
+          "CROSS_PROVIDER_DISCREPANCY",
+          "MULTIPLE_SOURCE_CONCEPTS",
+          "DIMENSION_COLLISION",
+          "MULTIPLE_FILINGS",
+          "MULTIPLE_OBSERVATIONS"
+        ]
+      }
+    },
+    "failed_count": 0,
+    "passed": true,
+    "test_id": "probe-P3_disagreement_meaning"
+  },
+  "changed": false,
+  "interrupted_by_transport": false,
+  "reaudited_verdict": true,
+  "recorded_verdict": true,
+  "stop_reason": "answered",
+  "test_id": "probe-P3_disagreement_meaning"
+}

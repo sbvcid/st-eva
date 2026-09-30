@@ -217,23 +217,47 @@ class Auditor:
             )
         )
 
-    def check_citations_exist(self, audit: Audit, claims: Set[str]) -> None:
+    def check_citations_exist(
+        self,
+        audit: Audit,
+        claims: Set[str],
+        require_at_least_one: bool = True,
+    ) -> None:
         """
         Every observation the target cited is one the archive holds.
 
         A citation to an id that does not exist is a fabricated provenance
         reference, which is worse than an uncited answer: it looks checkable.
+
+        `require_at_least_one` is a scope, not a relaxation. An answer that
+        cites nothing has usually not looked at anything, and for a question
+        about a figure the archive holds, an uncited answer is unsupported. But
+        asked *why* a figure is absent, the correct answer cites nothing -- the
+        metric has no observations -- and a check that demands a citation makes
+        that question unanswerable rather than hard. Found by being wrong: five
+        runs of a model that answered a negative-state probe correctly on state,
+        reason code and both semantic fields, cited nothing because there was
+        nothing to cite, and were failed by this rule.
         """
         if not claims:
             audit.checks.append(
                 Check(
                     capability="F4",
                     name="cites at least one observation",
-                    passed=False,
-                    expected=">= 1 citation",
+                    passed=not require_at_least_one,
+                    expected=">= 1 citation" if require_at_least_one else (
+                        "no citation required: the archive holds no figure "
+                        "for this subject"
+                    ),
                     actual=0,
-                    detail="the answer referenced no evidence at all",
-                    classification=CLASS_TARGET,
+                    detail=(
+                        ""
+                        if not require_at_least_one
+                        else "no observation was cited"
+                    ),
+                    classification=(
+                        None if not require_at_least_one else CLASS_TARGET
+                    ),
                 )
             )
             return

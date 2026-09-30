@@ -1,0 +1,79 @@
+{
+  "attempts": [
+    {
+      "at": 0.0,
+      "outcome": "sent",
+      "test_id": "S0_tool_call_smoke"
+    },
+    {
+      "at": 2.0,
+      "outcome": "answered",
+      "test_id": "S0_tool_call_smoke",
+      "usage": {
+        "completion_tokens": 95,
+        "completion_tokens_details": {
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 71
+        },
+        "cost": 0,
+        "cost_details": {
+          "upstream_inference_completions_cost": 0,
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0
+        },
+        "is_byok": false,
+        "prompt_tokens": 2438,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0,
+          "video_tokens": 0
+        },
+        "total_tokens": 2533
+      }
+    },
+    {
+      "at": 2.0,
+      "outcome": "sent",
+      "test_id": "S0_tool_call_smoke"
+    },
+    {
+      "at": 16.3,
+      "outcome": "answered",
+      "test_id": "S0_tool_call_smoke",
+      "usage": {
+        "completion_tokens": 428,
+        "completion_tokens_details": {
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 238
+        },
+        "cost": 0,
+        "cost_details": {
+          "upstream_inference_completions_cost": 0,
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0
+        },
+        "is_byok": false,
+        "prompt_tokens": 3239,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0,
+          "video_tokens": 0
+        },
+        "total_tokens": 3667
+      }
+    }
+  ],
+  "declared_limit": null,
+  "elapsed_seconds": 16.3,
+  "label": "nvidia-nemotron-3-ultra/smoke",
+  "model_finding_refusals": 0,
+  "rate_limit_headers": {},
+  "refusals_by_kind": {},
+  "remaining_budget": null,
+  "requests_sent": 2,
+  "stopped_because": null
+}

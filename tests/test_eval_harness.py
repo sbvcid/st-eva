@@ -703,6 +703,161 @@ class TestSemanticProbes(unittest.TestCase):
             self.assertIn(code, text)
         self.assertNotIn("the answer is", text.lower())
 
+    def test_a_point_in_time_probe_cannot_be_answered_from_the_newest_figure(self):
+        """
+        The probe has to survive a model that simply retrieves.
+
+        Every figure is one call away, so a model that answers with the
+        archive's present-day value looks like it succeeded and has imported
+        hindsight. The check is that the expected value is the one that was
+        *knowable*, which is not the latest.
+        """
+        import sys
+
+        from evidence_query import EvidenceQuery
+        from harness.probes import _partial_knowable_period
+        from harness.runner import _query_connection
+        from harness.snapshot import default_snapshot_path
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        connection = _query_connection(snapshot)
+        try:
+            partial = _partial_knowable_period(connection, "AAPL")
+        finally:
+            connection.close()
+        self.assertIsNotNone(partial)
+        self.assertTrue(partial["not_yet_observation_ids"])
+        self.assertNotIn(
+            partial["knowable_observation_id"],
+            partial["not_yet_observation_ids"],
+        )
+        query = EvidenceQuery.open(snapshot)
+        try:
+            # And the surface agrees with the answer key about what was
+            # knowable, which is the property that makes the probe fair: a
+            # probe whose key disagreed with the surface would be measuring the
+            # harness, not the model.
+            #
+            # `knowable_at`, not `as_of`. `as_of` is an exact match on the
+            # observation's own reporting instant and shares a name with a
+            # point-in-time question, which is the defect recorded below.
+            knowable = query.query_observations(
+                asset="AAPL", metric=partial["metric"],
+                period_end=partial["period_end"],
+                knowable_at=partial["cutoff"],
+            )
+            ids = {row["observation_id"] for row in knowable}
+            self.assertIn(partial["knowable_observation_id"], ids)
+            for later in partial["not_yet_observation_ids"]:
+                self.assertNotIn(later, ids)
+        finally:
+            query.close()
+
+    def test_as_of_is_not_the_point_in_time_filter_its_name_suggests(self):
+        """
+        A recorded surface defect, pinned so it cannot be forgotten.
+
+        `query_observations` exposes both `as_of` and `knowable_at`, and neither
+        has a description in the tool schema -- eleven of its fifteen parameters
+        have none. `as_of` reads as a point-in-time filter and is an exact match
+        on the observation's own reporting instant, so a caller asking what was
+        knowable in 2009 uses it, gets an empty list, and cannot tell that from
+        "no evidence existed".
+
+        This is the same class 2.6.1 fixed when `status` was renamed
+        `validation_status`: a name that has to be disambiguated by prose is not
+        self-describing. The test asserts the current, *wrong* behaviour so that
+        changing it has to be a deliberate act with this test edited, rather than
+        a silent improvement nobody noticed had been made.
+        """
+        from evidence_query import EvidenceQuery
+        from harness.snapshot import default_snapshot_path
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        query = EvidenceQuery.open(snapshot)
+        try:
+            by_instant = query.query_observations(
+                asset="AAPL", metric="assets", period_end="2008-09-27",
+                as_of="2009-07-23",
+            )
+            self.assertEqual(
+                by_instant, [],
+                "if as_of has become a point-in-time filter, this defect is "
+                "fixed and the test should be replaced with one that pins the "
+                "new behaviour",
+            )
+            # The correct filter is knowable_at, and it is a different filter.
+            by_knowable = query.query_observations(
+                asset="AAPL", metric="assets", period_end="2008-09-27",
+                knowable_at="2009-07-23",
+            )
+            self.assertEqual(len(by_knowable), 1)
+        finally:
+            query.close()
+
+    def test_the_tool_schema_documents_fewer_parameters_than_it_exposes(self):
+        """
+        The scale of the documentation gap, recorded rather than asserted as
+        acceptable.
+        """
+        from evidence_query import EvidenceQuery
+        from harness.schemas import tool_schemas
+        from harness.snapshot import default_snapshot_path
+        from harness.tools import Toolbox
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        query = EvidenceQuery.open(snapshot)
+        try:
+            schemas = tool_schemas(Toolbox(_query=query))
+        finally:
+            query.close()
+        undocumented = []
+        for schema in schemas:
+            for name, spec in (
+                schema["function"]["parameters"]["properties"].items()
+            ):
+                if not spec.get("description"):
+                    undocumented.append(
+                        f"{schema['function']['name']}.{name}"
+                    )
+        self.assertIn(
+            "query_observations.knowable_at", undocumented,
+            "the point-in-time filter is exposed to the model with no "
+            "description, beside an `as_of` that looks like one",
+        )
+
+    def test_a_source_independence_probe_answers_from_the_record(self):
+        """
+        P7's answer key is the recorded independence value, not an inference
+        from which two providers appear.
+        """
+        import sys
+
+        from harness.probes import _cross_source_record
+        from harness.runner import _query_connection
+        from harness.snapshot import default_snapshot_path
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        connection = _query_connection(snapshot)
+        try:
+            cross = _cross_source_record(connection)
+        finally:
+            connection.close()
+        self.assertIsNotNone(cross)
+        self.assertIn(
+            cross["independence"], ("INDEPENDENT", "NOT_INDEPENDENT")
+        )
+        self.assertEqual(len(cross["observation_ids"]), 2)
+        self.assertEqual(cross["status"], "DISCREPANT")
+
     def test_the_probe_set_is_resolved_from_the_archive(self):
         """
         Every probe's answer key is read out of the snapshot, and every probe has
@@ -725,7 +880,7 @@ class TestSemanticProbes(unittest.TestCase):
         finally:
             query.close()
             connection.close()
-        self.assertGreaterEqual(len(probes), 5)
+        self.assertGreaterEqual(len(probes), 7)
         for probe in probes:
             self.assertTrue(
                 probe.unguessable_fields,
@@ -768,11 +923,11 @@ class TestTheTwoConsumerClasses(unittest.TestCase):
             ("T11_partial_mapping", "semantic"),
             ("T12_non_comparable", "semantic"),
             ("T13_provenance_chain", "provenance"),
-            ("probe:P1_reported_or_derived", "semantic"),
-            ("probe:P2_negative_state_cause", "semantic"),
-            ("probe:P3_disagreement_meaning", "semantic"),
-            ("probe:P4_partial_mapping_meaning", "semantic"),
-            ("probe:P5_two_concepts_one_series", "semantic"),
+            ("probe-P1_reported_or_derived", "semantic"),
+            ("probe-P2_negative_state_cause", "semantic"),
+            ("probe-P3_disagreement_meaning", "semantic"),
+            ("probe-P4_partial_mapping_meaning", "semantic"),
+            ("probe-P5_two_concepts_one_series", "semantic"),
         ):
             verdict = overrides.get(test_id, "PASS")
             single_run.append({
@@ -877,7 +1032,8 @@ class TestTheTwoConsumerClasses(unittest.TestCase):
 
     def test_a_test_the_run_set_never_contained_is_not_a_failure(self):
         """
-        A screening run carries five sealed tests, not fifteen.
+        A screening run carries five sealed tests, not fifteen, and a probe run
+        carries probes without their sealed partners.
 
         Without this the gate would report that a model fails point-in-time
         because point-in-time was never asked, and reject it for a question
@@ -898,6 +1054,28 @@ class TestTheTwoConsumerClasses(unittest.TestCase):
         self.assertEqual(
             result["evidence_consumer"]["verdict"], "ACCEPTED"
         )
+
+    def test_an_absent_partner_does_not_void_a_probe_that_passed(self):
+        """
+        A criterion is `n/a` when *nothing* in it was exercised.
+
+        Not when half of it was. A probe that passed five runs out of five does
+        not stop counting because its sealed partner was not in the run set --
+        that would throw away the measurement on a technicality, and the whole
+        point of a per-test rollup is that coverage is reported rather than
+        silently rounded either way.
+        """
+        rows = [r for r in self.series() if r["test_id"] != "T6_reported_vs_derived"]
+        result = self.assess(rows)
+        criterion = next(
+            c for c in result["semantic_consumer"]["criteria"]
+            if c["id"] == "reads_a_derived_figure"
+        )
+        self.assertTrue(criterion["passed"])
+        self.assertTrue(criterion["partial_coverage"])
+        self.assertIn("T6_reported_vs_derived", criterion["not_applicable"])
+        self.assertEqual(criterion["per_test"]["probe-P1_reported_or_derived"],
+                         ["PASS"] * 3)
 
     def test_a_single_off_surface_call_rejects(self):
         rows = self.series()
@@ -938,11 +1116,11 @@ class TestTheTwoConsumerClasses(unittest.TestCase):
         """
         rows = self.series()
         for row in rows:
-            if row["test_id"] == "probe:P1_reported_or_derived":
+            if row["test_id"] == "probe-P1_reported_or_derived":
                 continue
         seen = 0
         for row in rows:
-            if row["test_id"] == "probe:P1_reported_or_derived":
+            if row["test_id"] == "probe-P1_reported_or_derived":
                 seen += 1
                 row["verdict"] = "PASS" if seen == 1 else "FAIL"
                 row["stability"] = "unstable"

@@ -1,0 +1,595 @@
+{
+  "answer": {
+    "answer": "The figure behind reference `der:current_ps` is a derived (calculated) figure, not a source-reported one. ST-EVA computed it as 31.42 multiple using a division operation (operation_id: divide, version: 1) with the expression 'price / earnings per share'. The calculation used one operand observation: obsarch_b31513334af56d3a649cf7b8 (shares_outstanding, value 15,504,000,000, state SOURCE_REPORTED).",
+    "claim_type": "DERIVED",
+    "derived_refs": [
+      "der:current_ps"
+    ],
+    "evidence_refs": [
+      "obsarch_b31513334af56d3a649cf7b8"
+    ],
+    "operation_ref": "DIVIDE",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": 31.42,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "The figure behind reference `der:current_ps` is a derived (calculated) figure, not a source-reported one. ST-EVA computed it as 31.42 multiple using a division operation (operation_id: divide, version: 1) with the expression 'price / earnings per share'. The calculation used one operand observation: obsarch_b31513334af56d3a649cf7b8 (shares_outstanding, value 15,504,000,000, state SOURCE_REPORTED).",
+    "check_count": 7,
+    "checks": [
+      {
+        "actual": "DERIVED",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "DERIVED",
+        "name": "probe field claim_type",
+        "passed": true
+      },
+      {
+        "actual": "DIVIDE",
+        "capability": "S1",
+        "classification": "B",
+        "detail": "unguessable field wrong",
+        "expected": "divide",
+        "name": "probe field operation_ref",
+        "passed": false
+      },
+      {
+        "actual": 31.42,
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": 31.42,
+        "name": "probe field stated_value",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "name": "probe cites the subject's own identifiers",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "capability": "F4",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "name": "every cited observation exists",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": true
+      },
+      {
+        "actual": "parsed",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "a JSON answer object",
+        "name": "the answer parsed into the contract",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "probe": {
+        "expected": {
+          "claim_type": "DERIVED",
+          "operation_ref": "divide",
+          "stated_value": 31.42
+        },
+        "notes": "The probe that the 2.6.2 and 2.6.3 runs could not distinguish: three runs failed T6, and the trace showed the model never called get_lineage. 2.6.3 gave that operation a top-level stored value, so the question is now answerable in one call.",
+        "probe_id": "P1_reported_or_derived",
+        "question": "ST-EVA holds a reference `der:current_ps`. Is the figure behind that reference a figure the source reported, or one ST-EVA calculated? State the figure, name the operation that produced it, and cite the observation it was calculated from.",
+        "reason_code_vocabulary": [],
+        "required_refs": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "semantic_state_vocabulary": [],
+        "unguessable_fields": [
+          "operation_ref",
+          "stated_value"
+        ],
+        "vocabulary": [
+          "REPORTED",
+          "DERIVED",
+          "REPORTED_AND_ESTIMATED",
+          "REPORTED_AND_DERIVED",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "CONFLICTING"
+        ]
+      }
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "probe-P1_reported_or_derived"
+  },
+  "capability": "S1",
+  "expectations": {
+    "probe": {
+      "expected": {
+        "claim_type": "DERIVED",
+        "operation_ref": "divide",
+        "stated_value": 31.42
+      },
+      "notes": "The probe that the 2.6.2 and 2.6.3 runs could not distinguish: three runs failed T6, and the trace showed the model never called get_lineage. 2.6.3 gave that operation a top-level stored value, so the question is now answerable in one call.",
+      "probe_id": "P1_reported_or_derived",
+      "question": "ST-EVA holds a reference `der:current_ps`. Is the figure behind that reference a figure the source reported, or one ST-EVA calculated? State the figure, name the operation that produced it, and cite the observation it was calculated from.",
+      "reason_code_vocabulary": [],
+      "required_refs": [
+        "obsarch_b31513334af56d3a649cf7b8"
+      ],
+      "semantic_state_vocabulary": [],
+      "unguessable_fields": [
+        "operation_ref",
+        "stated_value"
+      ],
+      "vocabulary": [
+        "REPORTED",
+        "DERIVED",
+        "REPORTED_AND_ESTIMATED",
+        "REPORTED_AND_DERIVED",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE",
+        "CONFLICTING"
+      ]
+    }
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "question": "ST-EVA holds a reference `der:current_ps`. Is the figure behind that reference a figure the source reported, or one ST-EVA calculated? State the figure, name the operation that produced it, and cite the observation it was calculated from.\n\nThis question is answered with the same JSON object as every other question, plus\nthese additional keys. They are part of the answer format, not a hint about the\nanswer.\n\n{\n  \"claim_type\":      one code from: REPORTED, DERIVED, REPORTED_AND_ESTIMATED, REPORTED_AND_DERIVED, UNAVAILABLE, NOT_APPLICABLE, CONFLICTING\n  \"semantic_state\":  one code from: (not asked here)   (omit if the question does not ask)\n  \"reason_code\":     one code from: (not asked here)  (omit if the question does not ask)\n  \"operation_ref\":   the operation id, if the question asks how a figure was produced\n  \"stated_value\":    the number, if the question asks for a figure\n}\n\nThe codes above are every code the archive can emit for any figure. Choose the\none that matches this question. Do not copy a code that merely appears in the\ntool output if it does not answer what was asked.\n\nReport what the tools returned. If the tools do not settle the question, put the\nreason in \"uncertainties\" and leave the field you could not determine empty --\nan empty field is an honest answer and is scored as one.",
+  "retrieved_observations": [
+    "obsarch_b31513334af56d3a649cf7b8"
+  ],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 118.92,
+    "error": null,
+    "exchanges": [
+      {
+        "elapsed_seconds": 108.09,
+        "index": 0,
+        "message_count": 2,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The user is asking about a specific reference `der:current_ps` in ST-EVA. They want to know if the figure behind this reference is a reported figure or a calculated (derived) figure, and they want the figure value, the operation that produced it, and the observation it was calculated from.\n\nI need to use the `get_lineage` tool to examine this reference. The reference format `der:current_ps` suggests it's a derived value reference. Let me query it.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The user is asking about a specific reference `der:current_ps` in ST-EVA. They want to know if the figure behind this reference is a reported figure or a calculated (derived) figure, and they want the figure value, the operation that produced it, and the observation it was calculated from.\n\nI need to use the `get_lineage` tool to examine this reference. The reference format `der:current_ps` suggests it's a derived value reference. Let me query it.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"depth\":5,\"reference\":\"der:current_ps\"}",
+                      "name": "get_lineage"
+                    },
+                    "id": "call-1fe8c1b0-9c13-4a9e-9966-7c51e736bbd4",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790760237,
+          "id": "gen-1790760237-DwxzuUcHkAGyeEb43LzK",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 139,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 114
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 2714,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 2853
+          }
+        }
+      },
+      {
+        "index": 1,
+        "result_bytes": 1892,
+        "tool_call": {
+          "arguments": {
+            "depth": 5,
+            "reference": "der:current_ps"
+          },
+          "name": "get_lineage"
+        }
+      },
+      {
+        "elapsed_seconds": 10.83,
+        "index": 1,
+        "message_count": 4,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "{\n  \"answer\": \"The figure behind reference `der:current_ps` is a derived (calculated) figure, not a source-reported one. ST-EVA computed it as 31.42 multiple using a division operation (operation_id: divide, version: 1) with the expression 'price / earnings per share'. The calculation used one operand observation: obsarch_b31513334af56d3a649cf7b8 (shares_outstanding, value 15,504,000,000, state SOURCE_REPORTED).\",\n  \"evidence_refs\": [\"obsarch_b31513334af56d3a649cf7b8\"],\n  \"derived_refs\": [\"der:current_ps\"],\n  \"uncertainties\": [],\n  \"claim_type\": \"DERIVED\",\n  \"operation_ref\": \"divide\",\n  \"stated_value\": 31.42\n}",
+                "reasoning": "The lineage shows that `der:current_ps` is a DERIVED figure. It was calculated using the operation \"divide\" (version 1) with the expression \"price / earnings per share\". The operand is observation `obsarch_b31513334af56d3a649cf7b8` which has a value of 15,504,000,000 (shares outstanding). The derived value is 31.42 multiple.\n\nThe question asks:\n1. Is it a figure the source reported, or one ST-EVA calculated? - It's DERIVED (calculated by ST-EVA)\n2. State the figure - 31.42 multiple\n3. Name the operation that produced it - divide (version 1)\n4. Cite the observation it was calculated from - obsarch_b31513334af56d3a649cf7b8\n\nThe claim_type should be DERIVED since it's a derived figure. The operation_ref is \"divide\" (version 1). The stated_value is 31.42.\n\nLet me also check if there's more detail about the operation. The operation_id is \"divide\" with version \"1\". The operand observation is obsarch_b31513334af56d3a649cf7b8.\n\nI should provide the answer in the required JSON format with the additional keys.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The lineage shows that `der:current_ps` is a DERIVED figure. It was calculated using the operation \"divide\" (version 1) with the expression \"price / earnings per share\". The operand is observation `obsarch_b31513334af56d3a649cf7b8` which has a value of 15,504,000,000 (shares outstanding). The derived value is 31.42 multiple.\n\nThe question asks:\n1. Is it a figure the source reported, or one ST-EVA calculated? - It's DERIVED (calculated by ST-EVA)\n2. State the figure - 31.42 multiple\n3. Name the operation that produced it - divide (version 1)\n4. Cite the observation it was calculated from - obsarch_b31513334af56d3a649cf7b8\n\nThe claim_type should be DERIVED since it's a derived figure. The operation_ref is \"divide\" (version 1). The stated_value is 31.42.\n\nLet me also check if there's more detail about the operation. The operation_id is \"divide\" with version \"1\". The operand observation is obsarch_b31513334af56d3a649cf7b8.\n\nI should provide the answer in the required JSON format with the additional keys.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant"
+              },
+              "native_finish_reason": "stop"
+            }
+          ],
+          "created": 1790760346,
+          "id": "gen-1790760346-O44aC1FuG2GzeVmd8ZFy",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 538,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 257
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3582,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 4120
+          }
+        }
+      }
+    ],
+    "first_reply_parsed": true,
+    "format_repair_used": false,
+    "initial_messages": [
+      {
+        "content": "You are answering questions using ST-EVA, an evidence database of filed financial data. You answer only from what its query tools return.\n\nYou cannot see the database directly. You have tools that read it. Use them.\n\nThe evidence carries states, and each one means something different:\n\nSOURCE_REPORTED  a value a source stated. The ordinary case.\nDERIVED          computed by ST-EVA from named operands, not reported by\n                 anyone. It is a calculation and it says so.\nVALIDATED        cross-checked against another source. Agreement between two\n                 comparable sources is not proof the figure is correct.\nUNAVAILABLE      retrieval failed. Not zero, and not \"no data exists\".\nCONFLICTING      two sources disagree. Neither is selected.\nNOT_APPLICABLE   the measure is not meaningful for this business. Different\n                 from UNAVAILABLE, and different from a zero.\nSTALE            what is held has gone out of date. Not historically false.\nNOT_COMPARABLE   the series must break here; the measure changed.\nPARTIAL          a source concept that expresses the metric only partially, as\n                 a wider or narrower aggregate. Never the same as EXACT.\nEXACT            a source concept that expresses the metric exactly.\n\nEach observation carries a `status` with two separate parts:\n\n- `status.evidence_state.state` is one of the states above.\n- `status.validation_status` says whether cross-checking found anything, and\n  is `UNVERIFIABLE` for a figure only one source has reported.\n\nTo filter on either, the parameter names it. `query_observations` takes\n`validation_status` for the cross-check status; the evidence state is not\nfilterable and is read from each observation.\n\nAn unknown metric is refused by name, with the real ones attached. A metric\nST-EVA knows but has no rows for your filter returns an empty list, which is a\ndifferent answer and means the data is not there for that period.\n\nRules:\n\n- Use a tool before making a factual claim. Do not state a number no tool\n  returned.\n- An empty result means your filter matched nothing. Widen the filter before\n  concluding that evidence is absent.\n- Report a figure's state when the state changes how it may be read. A PARTIAL\n  concept is not an EXACT one. A disagreement is not settled. A derived value\n  is not a reported one.\n- If a series is truncated, say so. Do not present part of a series as the\n  whole of it.\n- If evidence is missing, say what is missing. Do not fill a gap with a\n  plausible value, and do not report a negative state as a number.\n- Report what the evidence establishes and stop there. Do not explain why\n  something happened unless the evidence states why.\n- Cite the observation ids the tools gave you, in `evidence_refs`.\n\nYour reply must be a single JSON object and nothing else. No prose before it,\nno prose after it, no markdown fence:\n\n{\n  \"answer\": \"the answer in prose, with every claim traceable to evidence\",\n  \"evidence_refs\": [\"the observation ids the tools returned\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"anything the evidence does not settle\"]\n}\n\nBoth `answer` and `evidence_refs` are required. If you cannot cite evidence,\nthat belongs in `uncertainties`, not in `answer`.",
+        "role": "system"
+      },
+      {
+        "content": "ST-EVA holds a reference `der:current_ps`. Is the figure behind that reference a figure the source reported, or one ST-EVA calculated? State the figure, name the operation that produced it, and cite the observation it was calculated from.\n\nThis question is answered with the same JSON object as every other question, plus\nthese additional keys. They are part of the answer format, not a hint about the\nanswer.\n\n{\n  \"claim_type\":      one code from: REPORTED, DERIVED, REPORTED_AND_ESTIMATED, REPORTED_AND_DERIVED, UNAVAILABLE, NOT_APPLICABLE, CONFLICTING\n  \"semantic_state\":  one code from: (not asked here)   (omit if the question does not ask)\n  \"reason_code\":     one code from: (not asked here)  (omit if the question does not ask)\n  \"operation_ref\":   the operation id, if the question asks how a figure was produced\n  \"stated_value\":    the number, if the question asks for a figure\n}\n\nThe codes above are every code the archive can emit for any figure. Choose the\none that matches this question. Do not copy a code that merely appears in the\ntool output if it does not answer what was asked.\n\nReport what the tools returned. If the tools do not settle the question, put the\nreason in \"uncertainties\" and leave the field you could not determine empty --\nan empty field is an honest answer and is scored as one.\n\nReply with the JSON object described in your instructions, and nothing else.",
+        "role": "user"
+      }
+    ],
+    "stop_reason": "answered",
+    "test_attempts": 1,
+    "tool_definitions": [
+      {
+        "function": {
+          "description": "Observations matching a filter, oldest first.\n\n        `metric` must be one ST-EVA knows. An unknown name is refused with the\n        list of real ones rather than returning an empty result, because an\n        empty result is what a genuinely absent figure looks like and the two\n        were indistinguishable.\n\n        `limit` truncates silently. Use `page` when the length of a series\n        matters.",
+          "name": "query_observations",
+          "parameters": {
+            "properties": {
+              "as_of": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "basis_framework": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "instant": {
+                "type": "boolean"
+              },
+              "knowable_at": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "validation_status": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One observation by its stable identity, with full metadata.",
+          "name": "get_observation",
+          "parameters": {
+            "properties": {
+              "include_lineage": {
+                "type": "boolean"
+              },
+              "include_validation": {
+                "type": "boolean"
+              },
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+          "name": "get_metric_history",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset",
+              "metric"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+          "name": "page",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+          "name": "get_lineage",
+          "parameters": {
+            "properties": {
+              "depth": {
+                "type": "integer"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+          "name": "get_validation",
+          "parameters": {
+            "properties": {
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Source-document metadata by id, content hash or canonical URI.",
+          "name": "get_source_document",
+          "parameters": {
+            "properties": {
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+          "name": "coverage_report",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ],
+    "tool_results": [
+      {
+        "content": "{\"reference\": \"der:current_ps\", \"kind\": \"DERIVED\", \"state\": \"DERIVED\", \"context_id\": \"ctx_eval_1\", \"value\": 31.42, \"unit\": \"multiple\", \"expression\": \"price / earnings per share\", \"operands\": [{\"ref\": \"obs:obsarch_b31513334af56d3a649cf7b8\", \"observation_id\": \"obsarch_b31513334af56d3a649cf7b8\", \"value\": 15504000000.0, \"unit\": \"count\"}], \"recomputation\": {\"expression\": \"price / earnings per share\", \"operation\": {\"op\": \"divide\", \"version\": \"1\", \"operands\": [\"obs:obsarch_b31513334af56d3a649cf7b8\"]}, \"recomputed_by_query\": false, \"value_source\": \"STORED_DERIVED_VALUE\", \"note\": \"The stored derived value is returned as archived. The query surface does not recompute it; the database value and the authoritative calculation stay separate.\"}, \"chain\": [{\"step\": \"DERIVED\", \"id\": \"der:current_ps\", \"value\": 31.42, \"unit\": \"multiple\", \"expression\": \"price / earnings per share\", \"deterministic\": true}, {\"step\": \"OPERATION\", \"operation_id\": \"divide\", \"operation_version\": \"1\", \"parameters\": null, \"operands\": [\"obs:obsarch_b31513334af56d3a649cf7b8\"]}, {\"step\": \"OPERAND\", \"ref\": \"obs:obsarch_b31513334af56d3a649cf7b8\", \"kind\": \"OBSERVED\", \"state\": \"SOURCE_REPORTED\", \"chain\": [{\"step\": \"SOURCE_DOCUMENT\", \"id\": \"doc_eval_filing\", \"content_hash\": \"sha256:eval-filing-shares\", \"canonical_uri\": \"https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/dei/EntityCommonStockSharesOutstanding.json\", \"document_type\": \"SEC_COMPANY_CONCEPT\", \"content_available\": 1, \"redistribution_tier\": null}, {\"step\": \"SOURCE_FACT\", \"id\": \"sfid_67da822ddf0635c4ea09ec5b833adadb\", \"scope\": \"one raw fact inside one source document; the only identity deduplication may use\"}, {\"step\": \"OBSERVATION\", \"id\": \"obsarch_b31513334af56d3a649cf7b8\", \"metric\": \"shares_outstanding\", \"state\": \"SOURCE_REPORTED\"}, {\"step\": \"VALIDATION\", \"id\": \"val_eval_conflict\", \"status\": \"DISCREPANT\", \"independence\": \"NOT_INDEPENDENT\"}]}]}",
+        "name": "get_lineage",
+        "tool_call_id": "call-1fe8c1b0-9c13-4a9e-9966-7c51e736bbd4"
+      }
+    ]
+  },
+  "test_id": "probe-P1_reported_or_derived",
+  "trace": [
+    {
+      "arguments": {
+        "depth": 5,
+        "reference": "der:current_ps"
+      },
+      "error": null,
+      "operation": "get_lineage",
+      "result_shape": "lineage(DERIVED)",
+      "returned_count": null,
+      "sequence": 1
+    }
+  ]
+}

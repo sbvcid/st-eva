@@ -1,0 +1,138 @@
+{
+  "answer": {
+    "answer": "",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "operation_ref": "",
+    "parse_error": "the model used all 8 exchanges without producing an answer",
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 50,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[50]",
+      "returned_count": 50,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONSISTENT"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 20,
+        "metric": null,
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": "CONFLICTING"
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_5e5a3feb01de198f477039b2"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_86488195f0eebd3c19b4ecb1"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 6
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 7
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_c7c975383c7c3649dde7b6d7"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 8
+    }
+  ]
+}

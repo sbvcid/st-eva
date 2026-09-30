@@ -1,0 +1,794 @@
+{
+  "answer": {
+    "answer": "For AAPL's operating_margin_bank metric, the archive's non-reported state is NOT_APPLICABLE with reason code BUSINESS_MODEL_NOT_MEANINGFUL. The coverage report shows this metric has zero observations held and its state is resolved from evidence_state as NOT_APPLICABLE because the measure is not meaningful for Apple's business model.",
+    "claim_type": "NOT_APPLICABLE",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "BUSINESS_MODEL_NOT_MEANINGFUL",
+    "semantic_state": "NOT_APPLICABLE",
+    "stated_value": null,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "For AAPL's operating_margin_bank metric, the archive's non-reported state is NOT_APPLICABLE with reason code BUSINESS_MODEL_NOT_MEANINGFUL. The coverage report shows this metric has zero observations held and its state is resolved from evidence_state as NOT_APPLICABLE because the measure is not meaningful for Apple's business model.",
+    "check_count": 4,
+    "checks": [
+      {
+        "actual": "NOT_APPLICABLE",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "NOT_APPLICABLE",
+        "name": "probe field claim_type",
+        "passed": true
+      },
+      {
+        "actual": "BUSINESS_MODEL_NOT_MEANINGFUL",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "BUSINESS_MODEL_NOT_MEANINGFUL",
+        "name": "probe field reason_code",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "capability": "F4",
+        "classification": "B",
+        "detail": "the answer referenced no evidence at all",
+        "expected": ">= 1 citation",
+        "name": "cites at least one observation",
+        "passed": false
+      },
+      {
+        "actual": "parsed",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "a JSON answer object",
+        "name": "the answer parsed into the contract",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "probe": {
+        "expected": {
+          "claim_type": "NOT_APPLICABLE",
+          "reason_code": "BUSINESS_MODEL_NOT_MEANINGFUL"
+        },
+        "notes": "Every negative state is a different claim about why a figure is absent. A model that reports the right number as zero has lost the distinction entirely.",
+        "probe_id": "P2_negative_state_cause",
+        "question": "ST-EVA holds no figure for AAPL's operating margin bank. Which of the archive's non-reported states applies, and what is the archive's reason code for it?",
+        "reason_code_vocabulary": [
+          "SOURCE_STATED_VALUE",
+          "SOURCE_OMITS_CONCEPT",
+          "RETRIEVAL_FAILED",
+          "NO_RECENT_VALUE",
+          "BUSINESS_MODEL_NOT_MEANINGFUL",
+          "STALE_SOURCE_VALUE",
+          "SOURCES_DISAGREE"
+        ],
+        "required_refs": [],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "reason_code"
+        ],
+        "vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING"
+        ]
+      }
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "probe-P2_negative_state_cause"
+  },
+  "capability": "S1",
+  "expectations": {
+    "probe": {
+      "expected": {
+        "claim_type": "NOT_APPLICABLE",
+        "reason_code": "BUSINESS_MODEL_NOT_MEANINGFUL"
+      },
+      "notes": "Every negative state is a different claim about why a figure is absent. A model that reports the right number as zero has lost the distinction entirely.",
+      "probe_id": "P2_negative_state_cause",
+      "question": "ST-EVA holds no figure for AAPL's operating margin bank. Which of the archive's non-reported states applies, and what is the archive's reason code for it?",
+      "reason_code_vocabulary": [
+        "SOURCE_STATED_VALUE",
+        "SOURCE_OMITS_CONCEPT",
+        "RETRIEVAL_FAILED",
+        "NO_RECENT_VALUE",
+        "BUSINESS_MODEL_NOT_MEANINGFUL",
+        "STALE_SOURCE_VALUE",
+        "SOURCES_DISAGREE"
+      ],
+      "required_refs": [],
+      "semantic_state_vocabulary": [
+        "SOURCE_REPORTED",
+        "SOURCE_DID_NOT_REPORT",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE",
+        "STALE",
+        "CONFLICTING",
+        "EXACT",
+        "PARTIAL",
+        "NOT_COMPARABLE"
+      ],
+      "unguessable_fields": [
+        "reason_code"
+      ],
+      "vocabulary": [
+        "SOURCE_REPORTED",
+        "SOURCE_DID_NOT_REPORT",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE",
+        "STALE",
+        "CONFLICTING"
+      ]
+    }
+  },
+  "model": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "max_tokens": 1600,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "openrouter",
+    "seed": 7,
+    "temperature": 0.0,
+    "version": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "wire_style": "openai"
+  },
+  "question": "ST-EVA holds no figure for AAPL's operating margin bank. Which of the archive's non-reported states applies, and what is the archive's reason code for it?\n\nThis question is answered with the same JSON object as every other question, plus\nthese additional keys. They are part of the answer format, not a hint about the\nanswer.\n\n{\n  \"claim_type\":      one code from: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING\n  \"semantic_state\":  one code from: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING, EXACT, PARTIAL, NOT_COMPARABLE   (omit if the question does not ask)\n  \"reason_code\":     one code from: SOURCE_STATED_VALUE, SOURCE_OMITS_CONCEPT, RETRIEVAL_FAILED, NO_RECENT_VALUE, BUSINESS_MODEL_NOT_MEANINGFUL, STALE_SOURCE_VALUE, SOURCES_DISAGREE  (omit if the question does not ask)\n  \"operation_ref\":   the operation id, if the question asks how a figure was produced\n  \"stated_value\":    the number, if the question asks for a figure\n}\n\nThe codes above are every code the archive can emit for any figure. Choose the\none that matches this question. Do not copy a code that merely appears in the\ntool output if it does not answer what was asked.\n\nReport what the tools returned. If the tools do not settle the question, put the\nreason in \"uncertainties\" and leave the field you could not determine empty --\nan empty field is an honest answer and is scored as one.",
+  "retrieved_observations": [],
+  "semantic_judgement": null,
+  "target_run": {
+    "elapsed_seconds": 39.82,
+    "error": null,
+    "exchanges": [
+      {
+        "elapsed_seconds": 6.43,
+        "index": 0,
+        "message_count": 2,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The user is asking about AAPL's \"operating margin bank\" - this seems like an unusual metric name. They want to know which non-reported state applies and what the reason code is. Let me first check what metrics are available for AAPL and see if \"operating margin bank\" exists or if it's a different metric name.\n\nI should query observations for AAPL to see what metrics are available, or try to query for this specific metric to see what happens.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The user is asking about AAPL's \"operating margin bank\" - this seems like an unusual metric name. They want to know which non-reported state applies and what the reason code is. Let me first check what metrics are available for AAPL and see if \"operating margin bank\" exists or if it's a different metric name.\n\nI should query observations for AAPL to see what metrics are available, or try to query for this specific metric to see what happens.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"asset\":\"AAPL\",\"metric\":\"operating margin bank\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-42dcebad-0fbe-4630-9698-49194bcb49fa",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790758800,
+          "id": "gen-1790758800-Ug6Mk8ga309CcfLAozEf",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 142,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 112
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 2772,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 2914
+          }
+        }
+      },
+      {
+        "index": 1,
+        "result_bytes": 407,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL",
+            "metric": "operating margin bank"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 7.35,
+        "index": 1,
+        "message_count": 4,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The metric is actually \"operating_margin_bank\" (with underscores), not \"operating margin bank\". Let me query for the correct metric name.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The metric is actually \"operating_margin_bank\" (with underscores), not \"operating margin bank\". Let me query for the correct metric name.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"metric\":\"operating_margin_bank\",\"asset\":\"AAPL\"}",
+                      "name": "query_observations"
+                    },
+                    "id": "call-3280e2df-bb62-482f-ad4d-5317547e9c46",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790758806,
+          "id": "gen-1790758806-Bggblnmte12fklNN9zfb",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 76,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 35
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3040,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 3116
+          }
+        }
+      },
+      {
+        "index": 3,
+        "result_bytes": 2,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL",
+            "metric": "operating_margin_bank"
+          },
+          "name": "query_observations"
+        }
+      },
+      {
+        "elapsed_seconds": 11.33,
+        "index": 2,
+        "message_count": 6,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "reasoning": "The query returned an empty list, meaning there are no observations for this metric for AAPL. Now I need to understand what state this represents. The user is asking about \"non-reported states\" and \"reason code\". Let me check the coverage report for AAPL to see what states are present for this metric, or check if there's any metadata about this metric.\n\nSince the query returned an empty list (not an error), this means the metric exists but has no data for AAPL. The question asks which \"non-reported state\" applies and what the \"reason code\" is. \n\nLooking at the evidence states: SOURCE_REPORTED, DERIVED, VALIDATED, UNAVAILABLE, CONFLICTING, NOT_APPLICABLE, STALE, NOT_COMPARABLE, PARTIAL, EXACT.\n\nAnd the claim_type codes: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING.\n\nAnd reason_code codes: SOURCE_STATED_VALUE, SOURCE_OMITS_CONCEPT, RETRIEVAL_FAILED, NO_RECENT_VALUE, BUSINESS_MODEL_NOT_MEANINGFUL, STALE_SOURCE_VALUE, SOURCES_DISAGREE.\n\nSince the metric exists but has no observations for AAPL, this could be:\n- SOURCE_DID_NOT_REPORT (the source didn't report this concept)\n- NOT_APPLICABLE (the measure is not meaningful for this business)\n- UNAVAILABLE (retrieval failed)\n\nBut the query returned an empty list, not an error. The metric \"operating_margin_bank\" exists in the known metrics list. An empty result means the filter matched nothing - no observations exist for this asset/metric combination.\n\nLet me check the coverage report for AAPL to see if there's any information about this metric's state.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The query returned an empty list, meaning there are no observations for this metric for AAPL. Now I need to understand what state this represents. The user is asking about \"non-reported states\" and \"reason code\". Let me check the coverage report for AAPL to see what states are present for this metric, or check if there's any metadata about this metric.\n\nSince the query returned an empty list (not an error), this means the metric exists but has no data for AAPL. The question asks which \"non-reported state\" applies and what the \"reason code\" is. \n\nLooking at the evidence states: SOURCE_REPORTED, DERIVED, VALIDATED, UNAVAILABLE, CONFLICTING, NOT_APPLICABLE, STALE, NOT_COMPARABLE, PARTIAL, EXACT.\n\nAnd the claim_type codes: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING.\n\nAnd reason_code codes: SOURCE_STATED_VALUE, SOURCE_OMITS_CONCEPT, RETRIEVAL_FAILED, NO_RECENT_VALUE, BUSINESS_MODEL_NOT_MEANINGFUL, STALE_SOURCE_VALUE, SOURCES_DISAGREE.\n\nSince the metric exists but has no observations for AAPL, this could be:\n- SOURCE_DID_NOT_REPORT (the source didn't report this concept)\n- NOT_APPLICABLE (the measure is not meaningful for this business)\n- UNAVAILABLE (retrieval failed)\n\nBut the query returned an empty list, not an error. The metric \"operating_margin_bank\" exists in the known metrics list. An empty result means the filter matched nothing - no observations exist for this asset/metric combination.\n\nLet me check the coverage report for AAPL to see if there's any information about this metric's state.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"asset\":\"AAPL\"}",
+                      "name": "coverage_report"
+                    },
+                    "id": "call-1447ecfb-9cea-4d4e-9da6-584e72322ef4",
+                    "index": 0,
+                    "type": "function"
+                  }
+                ]
+              },
+              "native_finish_reason": "tool_calls"
+            }
+          ],
+          "created": 1790758814,
+          "id": "gen-1790758814-mYdksh5zp9a8uOk4i4ml",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 428,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 395
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 3133,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 3561
+          }
+        }
+      },
+      {
+        "index": 5,
+        "result_bytes": 2207,
+        "tool_call": {
+          "arguments": {
+            "asset": "AAPL"
+          },
+          "name": "coverage_report"
+        }
+      },
+      {
+        "elapsed_seconds": 14.69,
+        "index": 3,
+        "message_count": 8,
+        "response": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "{\n  \"answer\": \"For AAPL's operating_margin_bank metric, the archive's non-reported state is NOT_APPLICABLE with reason code BUSINESS_MODEL_NOT_MEANINGFUL. The coverage report shows this metric has zero observations held and its state is resolved from evidence_state as NOT_APPLICABLE because the measure is not meaningful for Apple's business model.\",\n  \"evidence_refs\": [],\n  \"derived_refs\": [],\n  \"uncertainties\": [],\n  \"claim_type\": \"NOT_APPLICABLE\",\n  \"semantic_state\": \"NOT_APPLICABLE\",\n  \"reason_code\": \"BUSINESS_MODEL_NOT_MEANINGFUL\",\n  \"operation_ref\": \"\",\n  \"stated_value\": null\n}",
+                "reasoning": "The coverage report shows that for AAPL, the metric \"operating_margin_bank\" has:\n- state: \"NOT_APPLICABLE\"\n- reason_code: \"BUSINESS_MODEL_NOT_MEANINGFUL\"\n- observations_held: 0\n- resolved_from: \"evidence_state\"\n\nThis directly answers the question. The non-reported state that applies is NOT_APPLICABLE, and the reason code is BUSINESS_MODEL_NOT_MEANINGFUL.\n\nNow I need to format the answer according to the required JSON structure with the additional keys.",
+                "reasoning_details": [
+                  {
+                    "format": "unknown",
+                    "index": 0,
+                    "text": "The coverage report shows that for AAPL, the metric \"operating_margin_bank\" has:\n- state: \"NOT_APPLICABLE\"\n- reason_code: \"BUSINESS_MODEL_NOT_MEANINGFUL\"\n- observations_held: 0\n- resolved_from: \"evidence_state\"\n\nThis directly answers the question. The non-reported state that applies is NOT_APPLICABLE, and the reason code is BUSINESS_MODEL_NOT_MEANINGFUL.\n\nNow I need to format the answer according to the required JSON structure with the additional keys.",
+                    "type": "reasoning.text"
+                  }
+                ],
+                "refusal": null,
+                "role": "assistant"
+              },
+              "native_finish_reason": "stop"
+            }
+          ],
+          "created": 1790758825,
+          "id": "gen-1790758825-oTfD3SbAyUoFXLPswYZS",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "object": "chat.completion",
+          "provider": "Nvidia",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 280,
+            "completion_tokens_details": {
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "reasoning_tokens": 116
+            },
+            "cost": 0,
+            "cost_details": {
+              "upstream_inference_completions_cost": 0,
+              "upstream_inference_cost": 0,
+              "upstream_inference_prompt_cost": 0
+            },
+            "is_byok": false,
+            "prompt_tokens": 4268,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 4548
+          }
+        }
+      }
+    ],
+    "first_reply_parsed": true,
+    "format_repair_used": false,
+    "initial_messages": [
+      {
+        "content": "You are answering questions using ST-EVA, an evidence database of filed financial data. You answer only from what its query tools return.\n\nYou cannot see the database directly. You have tools that read it. Use them.\n\nThe evidence carries states, and each one means something different:\n\nSOURCE_REPORTED  a value a source stated. The ordinary case.\nDERIVED          computed by ST-EVA from named operands, not reported by\n                 anyone. It is a calculation and it says so.\nVALIDATED        cross-checked against another source. Agreement between two\n                 comparable sources is not proof the figure is correct.\nUNAVAILABLE      retrieval failed. Not zero, and not \"no data exists\".\nCONFLICTING      two sources disagree. Neither is selected.\nNOT_APPLICABLE   the measure is not meaningful for this business. Different\n                 from UNAVAILABLE, and different from a zero.\nSTALE            what is held has gone out of date. Not historically false.\nNOT_COMPARABLE   the series must break here; the measure changed.\nPARTIAL          a source concept that expresses the metric only partially, as\n                 a wider or narrower aggregate. Never the same as EXACT.\nEXACT            a source concept that expresses the metric exactly.\n\nEach observation carries a `status` with two separate parts:\n\n- `status.evidence_state.state` is one of the states above.\n- `status.validation_status` says whether cross-checking found anything, and\n  is `UNVERIFIABLE` for a figure only one source has reported.\n\nTo filter on either, the parameter names it. `query_observations` takes\n`validation_status` for the cross-check status; the evidence state is not\nfilterable and is read from each observation.\n\nAn unknown metric is refused by name, with the real ones attached. A metric\nST-EVA knows but has no rows for your filter returns an empty list, which is a\ndifferent answer and means the data is not there for that period.\n\nRules:\n\n- Use a tool before making a factual claim. Do not state a number no tool\n  returned.\n- An empty result means your filter matched nothing. Widen the filter before\n  concluding that evidence is absent.\n- Report a figure's state when the state changes how it may be read. A PARTIAL\n  concept is not an EXACT one. A disagreement is not settled. A derived value\n  is not a reported one.\n- If a series is truncated, say so. Do not present part of a series as the\n  whole of it.\n- If evidence is missing, say what is missing. Do not fill a gap with a\n  plausible value, and do not report a negative state as a number.\n- Report what the evidence establishes and stop there. Do not explain why\n  something happened unless the evidence states why.\n- Cite the observation ids the tools gave you, in `evidence_refs`.\n\nYour reply must be a single JSON object and nothing else. No prose before it,\nno prose after it, no markdown fence:\n\n{\n  \"answer\": \"the answer in prose, with every claim traceable to evidence\",\n  \"evidence_refs\": [\"the observation ids the tools returned\"],\n  \"derived_refs\": [],\n  \"uncertainties\": [\"anything the evidence does not settle\"]\n}\n\nBoth `answer` and `evidence_refs` are required. If you cannot cite evidence,\nthat belongs in `uncertainties`, not in `answer`.",
+        "role": "system"
+      },
+      {
+        "content": "ST-EVA holds no figure for AAPL's operating margin bank. Which of the archive's non-reported states applies, and what is the archive's reason code for it?\n\nThis question is answered with the same JSON object as every other question, plus\nthese additional keys. They are part of the answer format, not a hint about the\nanswer.\n\n{\n  \"claim_type\":      one code from: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING\n  \"semantic_state\":  one code from: SOURCE_REPORTED, SOURCE_DID_NOT_REPORT, UNAVAILABLE, NOT_APPLICABLE, STALE, CONFLICTING, EXACT, PARTIAL, NOT_COMPARABLE   (omit if the question does not ask)\n  \"reason_code\":     one code from: SOURCE_STATED_VALUE, SOURCE_OMITS_CONCEPT, RETRIEVAL_FAILED, NO_RECENT_VALUE, BUSINESS_MODEL_NOT_MEANINGFUL, STALE_SOURCE_VALUE, SOURCES_DISAGREE  (omit if the question does not ask)\n  \"operation_ref\":   the operation id, if the question asks how a figure was produced\n  \"stated_value\":    the number, if the question asks for a figure\n}\n\nThe codes above are every code the archive can emit for any figure. Choose the\none that matches this question. Do not copy a code that merely appears in the\ntool output if it does not answer what was asked.\n\nReport what the tools returned. If the tools do not settle the question, put the\nreason in \"uncertainties\" and leave the field you could not determine empty --\nan empty field is an honest answer and is scored as one.\n\nReply with the JSON object described in your instructions, and nothing else.",
+        "role": "user"
+      }
+    ],
+    "stop_reason": "answered",
+    "test_attempts": 1,
+    "tool_definitions": [
+      {
+        "function": {
+          "description": "Observations matching a filter, oldest first.\n\n        `metric` must be one ST-EVA knows. An unknown name is refused with the\n        list of real ones rather than returning an empty result, because an\n        empty result is what a genuinely absent figure looks like and the two\n        were indistinguishable.\n\n        `limit` truncates silently. Use `page` when the length of a series\n        matters.",
+          "name": "query_observations",
+          "parameters": {
+            "properties": {
+              "as_of": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "basis_framework": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "instant": {
+                "type": "boolean"
+              },
+              "knowable_at": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "validation_status": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One observation by its stable identity, with full metadata.",
+          "name": "get_observation",
+          "parameters": {
+            "properties": {
+              "include_lineage": {
+                "type": "boolean"
+              },
+              "include_validation": {
+                "type": "boolean"
+              },
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "A historical series with its state, comparability and completeness.\n\n        Read `point_count`, `returned_count` and `truncated` before describing\n        the series: a truncated series is not a whole one, and nothing in the\n        payload says so except those three fields.",
+          "name": "get_metric_history",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset",
+              "metric"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "One page of observations, with the total, what was returned, whether\n        more remains, and the cursor to continue from.",
+          "name": "page",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "order": {
+                "description": "one of PERIOD_ASCENDING, PERIOD_DESCENDING, AVAILABLE_AT_ASCENDING; anything else is refused",
+                "enum": [
+                  "PERIOD_ASCENDING",
+                  "PERIOD_DESCENDING",
+                  "AVAILABLE_AT_ASCENDING"
+                ],
+                "type": "string"
+              },
+              "period_end": {
+                "type": "string"
+              },
+              "period_start": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What a figure was computed from, or the chain of documents behind it.\n\n        A `der:` reference returns the derived value with its operands and the\n        stored expression. An observation reference returns its lineage chain.",
+          "name": "get_lineage",
+          "parameters": {
+            "properties": {
+              "depth": {
+                "type": "integer"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Every cross-check recorded for one observation.\n\n        `CONSISTENT` means two comparable sources agreed. It does not mean the\n        figure is correct, and `independence` says how much the agreement is\n        worth.",
+          "name": "get_validation",
+          "parameters": {
+            "properties": {
+              "observation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "observation_id"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "Source-document metadata by id, content hash or canonical URI.",
+          "name": "get_source_document",
+          "parameters": {
+            "properties": {
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "description": "What is held for one company and in what state.\n\n        Counts by state, never a completeness percentage.",
+          "name": "coverage_report",
+          "parameters": {
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ],
+    "tool_results": [
+      {
+        "content": "{\"error\": \"UnknownMetricError: UNKNOWN_METRIC: no metric named 'operating margin bank'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding\"}",
+        "name": "query_observations",
+        "tool_call_id": "call-42dcebad-0fbe-4630-9698-49194bcb49fa"
+      },
+      {
+        "content": "[]",
+        "name": "query_observations",
+        "tool_call_id": "call-3280e2df-bb62-482f-ad4d-5317547e9c46"
+      },
+      {
+        "content": "{\"asset\": \"AAPL\", \"metric_count\": 12, \"state_counts\": {\"SOURCE_REPORTED\": 8, \"SOURCE_DID_NOT_REPORT\": 1, \"NOT_APPLICABLE\": 1, \"UNAVAILABLE\": 1, \"CONFLICTING\": 0, \"STALE\": 1}, \"metrics\": [{\"metric\": \"assets\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 146, \"resolved_from\": \"observation_status\"}, {\"metric\": \"capex\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 164, \"resolved_from\": \"observation_status\"}, {\"metric\": \"cash\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 348, \"resolved_from\": \"observation_status\"}, {\"metric\": \"debt\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 180, \"resolved_from\": \"observation_status\"}, {\"metric\": \"dividend_per_share\", \"state\": \"SOURCE_DID_NOT_REPORT\", \"reason_code\": \"SOURCE_OMITS_CONCEPT\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"eps_diluted\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 338, \"resolved_from\": \"observation_status\"}, {\"metric\": \"guidance\", \"state\": \"STALE\", \"reason_code\": \"NO_RECENT_VALUE\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"net_income\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 338, \"resolved_from\": \"observation_status\"}, {\"metric\": \"operating_margin_bank\", \"state\": \"NOT_APPLICABLE\", \"reason_code\": \"BUSINESS_MODEL_NOT_MEANINGFUL\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"revenue\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 339, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"segment_revenue\", \"state\": \"UNAVAILABLE\", \"reason_code\": \"RETRIEVAL_FAILED\", \"observations_held\": 0, \"resolved_from\": \"evidence_state\"}, {\"metric\": \"shares_outstanding\", \"state\": \"SOURCE_REPORTED\", \"reason_code\": \"SOURCE_STATED_VALUE\", \"observations_held\": 72, \"resolved_from\": \"observation_status\"}], \"note\": \"States are counted, not scored. A single completeness figure would be an interpretation and would hide which distinct negative applies to which metric.\"}",
+        "name": "coverage_report",
+        "tool_call_id": "call-1447ecfb-9cea-4d4e-9da6-584e72322ef4"
+      }
+    ]
+  },
+  "test_id": "probe-P2_negative_state_cause",
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "operating margin bank",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'operating margin bank'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "operating_margin_bank",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 3
+    }
+  ]
+}

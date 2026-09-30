@@ -154,6 +154,8 @@ PROBE_CAPABILITY: Dict[str, str] = {
     "probe-P3_disagreement_meaning": "conflict handling",
     "probe-P4_partial_mapping_meaning": "concept semantics",
     "probe-P5_two_concepts_one_series": "concept semantics",
+    "probe-P6_point_in_time_availability": "temporal discipline",
+    "probe-P7_source_consistency_not_truth": "source independence",
 }
 
 # Retries are for the transport, never for the model. A refused request and a
@@ -569,6 +571,28 @@ def build_screen2(snapshot_path: str) -> Dataset:
     return dataset
 
 
+def _dataset_for_phase(phase: str, snapshot_path: str) -> Dataset:
+    """
+    The question set a phase was run with.
+
+    Needed because a `test_id` is both an identifier and a path, and a run is
+    only re-readable if the re-audit asks the same questions the run asked.
+    Re-auditing a probe run against the sealed fifteen is the same mistake the
+    filename bug made in a different place: the records are there and nothing
+    finds them.
+    """
+    if phase == "probes":
+        return build_probe_phase(snapshot_path)
+    if phase == "screen2":
+        return build_screen2(snapshot_path)
+    if phase == "smoke":
+        return build_smoke_dataset(snapshot_path)[0]
+    dataset = build_dataset(snapshot_path)
+    if phase == "screen":
+        dataset.tests = [t for t in dataset.tests if t.test_id in SCREENING_TESTS]
+    return dataset
+
+
 def run_phase(
     phase: str,
     model: Dict[str, Any],
@@ -588,17 +612,7 @@ def run_phase(
     from harness.budget import RequestBudget
     from harness.providers import OpenAICompatibleClient, TransportError
 
-    dataset = build_dataset(snapshot_path)
-    if phase == "smoke":
-        dataset, _ = build_smoke_dataset(snapshot_path)
-    elif phase == "screen":
-        dataset.tests = [t for t in dataset.tests if t.test_id in SCREENING_TESTS]
-    elif phase == "screen2":
-        dataset = build_screen2(snapshot_path)
-    elif phase == "probes":
-        dataset = build_probe_phase(snapshot_path)
-    elif phase != "full":
-        raise SystemExit(f"unknown phase {phase!r}")
+    dataset = _dataset_for_phase(phase, snapshot_path)
 
     run_dir = os.path.join(
         HERE, "runs", SCREENING_DIRNAME, model["dir"], phase, run_label
@@ -809,7 +823,12 @@ def _write(path: str, payload: Any) -> None:
         json.dump(payload, handle, indent=2, sort_keys=True, default=str)
 
 
-def reaudit_phase(model: Dict[str, Any], phase: str, snapshot_path: str) -> Dict[str, Any]:
+def reaudit_phase(
+    model: Dict[str, Any],
+    phase: str,
+    snapshot_path: str,
+    run_dir: str = "",
+) -> Dict[str, Any]:
     """
     Re-grade a stored run with the current evaluator, spending no requests.
 
@@ -825,12 +844,48 @@ def reaudit_phase(model: Dict[str, Any], phase: str, snapshot_path: str) -> Dict
     from harness.runner import _query_connection
     from harness.tools import Call
 
-    run_dir = os.path.join(HERE, "runs", SCREENING_DIRNAME, model["dir"], phase)
+    if not run_dir:
+        run_dir = os.path.join(
+            HERE, "runs", SCREENING_DIRNAME, model["dir"], phase
+        )
+    # A phase that holds a run series holds one directory per run, and a
+    # re-audit that only looks in the phase root finds nothing at all. Iterating
+    # the runs is the only useful reading once a model has been run more than
+    # once, which is the normal case now.
+    if not os.path.isdir(os.path.join(run_dir, "audit")):
+        series = sorted(
+            d for d in glob.glob(os.path.join(run_dir, "run*"))
+            if os.path.isdir(os.path.join(d, "audit"))
+        )
+        if series:
+            outcomes = []
+            for one in series:
+                # The run directory is handed over rather than re-derived from
+                # `model["dir"]` and `phase`: deriving it a second time
+                # appends the phase twice and lands one level below the run,
+                # where there is no audit directory to find.
+                outcomes.append(
+                    reaudit_phase(
+                        model, phase, snapshot_path, run_dir=one
+                    )
+                )
+            changed = [
+                row for outcome in outcomes
+                for row in outcome.get("rows", []) if row["changed"]
+            ]
+            return {
+                "phase": "reaudit",
+                "model": model,
+                "status": "RAN",
+                "runs": outcomes,
+                "flips": changed,
+                "run_dir": run_dir,
+            }
     audit_dir = os.path.join(run_dir, "audit")
     if not os.path.isdir(audit_dir):
         return {"phase": "reaudit", "model": model, "status": "NOT_FOUND"}
 
-    dataset = build_dataset(snapshot_path)
+    dataset = _dataset_for_phase(phase, snapshot_path)
     query = EvidenceQuery.open(snapshot_path)
     connection = _query_connection(snapshot_path)
     auditor = Auditor(connection, query)
@@ -844,11 +899,25 @@ def reaudit_phase(model: Dict[str, Any], phase: str, snapshot_path: str) -> Dict
             continue
         stored = json.load(open(stored_path, encoding="utf-8"))
         stop_reason = (stored.get("target_run") or {}).get("stop_reason")
+        # Rebuilt through the answer's own contract, not field by field.
+        #
+        # The first version copied the four sealed keys, which quietly dropped
+        # every probe field -- so a re-audit graded every probe as having stated
+        # no claim at all, and a probe that had passed came back failed. The
+        # stored record is the record; rebuilding it from a hand-written list of
+        # fields is how a re-audit starts disagreeing with the run it is
+        # re-reading.
+        recorded_answer = stored["answer"]
         answer = TargetAnswer.parse(json.dumps({
-            "answer": stored["answer"]["answer"],
-            "evidence_refs": stored["answer"]["evidence_refs"],
-            "derived_refs": stored["answer"]["derived_refs"],
-            "uncertainties": stored["answer"]["uncertainties"],
+            "answer": recorded_answer.get("answer", ""),
+            "evidence_refs": recorded_answer.get("evidence_refs", []),
+            "derived_refs": recorded_answer.get("derived_refs", []),
+            "uncertainties": recorded_answer.get("uncertainties", []),
+            "claim_type": recorded_answer.get("claim_type", ""),
+            "semantic_state": recorded_answer.get("semantic_state", ""),
+            "reason_code": recorded_answer.get("reason_code", ""),
+            "operation_ref": recorded_answer.get("operation_ref", ""),
+            "stated_value": recorded_answer.get("stated_value"),
         }))
         tools = Toolbox(_query=query)
         tools.calls = [
@@ -1060,21 +1129,48 @@ def variance_phase(
     for run_dir in run_dirs:
         rows: Dict[str, Dict[str, Any]] = {}
         for path in sorted(glob.glob(os.path.join(run_dir, "audit", "*.json"))):
-            stored = json.load(open(path, encoding="utf-8"))
-            stop = (stored.get("target_run") or {}).get("stop_reason")
+            recorded = json.load(open(path, encoding="utf-8"))
+            test_id = recorded["test_id"]
+            # Prefer the re-audit, and say which was used.
+            #
+            # A variance table that reads the *recorded* audit reports the
+            # verdict the grader gave at the time, not the one it gives now. Once
+            # the evaluator has been corrected -- and it has, three times in
+            # this project -- those are different numbers, and the summary would
+            # quietly contradict the artifacts sitting next to it. The answer
+            # the model gave does not change when the grader does, so the
+            # re-audit is strictly the more current reading of the same run.
+            regraded_path = os.path.join(
+                run_dir, "reaudit", f"{test_id}.json"
+            )
+            graded = recorded
+            source = "recorded"
+            if os.path.exists(regraded_path):
+                regraded = json.load(open(regraded_path, encoding="utf-8"))
+                graded = {
+                    "test_id": test_id,
+                    "audit": regraded["audit"],
+                    "answer": regraded["answer"],
+                    "trace": recorded.get("trace", []),
+                    "target_run": recorded.get("target_run", {}),
+                }
+                source = "reaudit"
+            stop = (graded.get("target_run") or {}).get("stop_reason")
             failed = [
-                c["name"] for c in stored["audit"]["checks"]
+                c["name"] for c in graded["audit"]["checks"]
                 if c["passed"] is False
             ]
-            cited = list(stored["answer"]["evidence_refs"])
+            cited = list(graded["answer"]["evidence_refs"])
             verdict_of_citation = [
                 (ref, classify_citation(ref, kinds)) for ref in cited
             ]
-            rows[stored["test_id"]] = {
+            rows[test_id] = {
                 "verdict": verdict_of_unread(
-                    stored["audit"]["passed"],
+                    graded["audit"]["passed"],
                     stop in ("transport_error", "budget_exhausted"),
                 ),
+                "verdict_source": source,
+                "recorded_verdict": recorded["audit"]["passed"],
                 "stop_reason": stop,
                 "failed_checks": failed,
                 # The two citation checks, by name. Kept, because they are the
@@ -1100,12 +1196,12 @@ def variance_phase(
                     ref for ref, kind in verdict_of_citation
                     if kind == "not_an_identifier"
                 ],
-                "tool_calls": len(stored.get("trace", [])),
+                "tool_calls": len(recorded.get("trace", [])),
                 "failed_tool_calls": len([
-                    call for call in stored.get("trace", []) if call.get("error")
+                    call for call in recorded.get("trace", []) if call.get("error")
                 ]),
                 "off_surface_calls": [
-                    call["operation"] for call in stored.get("trace", [])
+                    call["operation"] for call in recorded.get("trace", [])
                     if call.get("operation") not in OPERATIONS
                 ],
                 "evidence_refs": len(cited),
@@ -1135,6 +1231,9 @@ def variance_phase(
                 test_id, PROBE_CAPABILITY.get(test_id, "unclassified")
             ),
             "verdicts": verdicts,
+            "verdict_source": sorted({
+                row["verdict_source"] for row in observed if row
+            }),
             "passes": passed,
             "fails": verdicts.count("FAIL"),
             "interrupted": verdicts.count("E"),

@@ -1,0 +1,124 @@
+{
+  "dataset_id": "steva-003a-semantic-probes",
+  "evaluator_sha256": "5b3a4f3c87d97e7374a5d333d295ea46b2d07abea4947d9867cbaf601b4d3391",
+  "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "phase": "probes",
+  "rows": [
+    {
+      "changed": true,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "probe-P1_reported_or_derived",
+      "unverifiable": [],
+      "verdict": "PASS"
+    },
+    {
+      "changed": true,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "probe-P2_negative_state_cause",
+      "unverifiable": [],
+      "verdict": "PASS"
+    },
+    {
+      "changed": false,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": true,
+      "stop_reason": "answered",
+      "test_id": "probe-P3_disagreement_meaning",
+      "unverifiable": [],
+      "verdict": "PASS"
+    },
+    {
+      "changed": false,
+      "failed_checks": [
+        {
+          "capability": "S1",
+          "classification": "B",
+          "detail": "guessable field wrong",
+          "name": "probe field semantic_state"
+        }
+      ],
+      "interrupted_by_transport": false,
+      "reaudited": false,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "probe-P4_partial_mapping_meaning",
+      "unverifiable": [],
+      "verdict": "FAIL"
+    },
+    {
+      "changed": true,
+      "failed_checks": [],
+      "interrupted_by_transport": false,
+      "reaudited": true,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "probe-P5_two_concepts_one_series",
+      "unverifiable": [],
+      "verdict": "PASS"
+    },
+    {
+      "changed": false,
+      "failed_checks": [
+        {
+          "capability": "S1",
+          "classification": "B",
+          "detail": "guessable field wrong",
+          "name": "probe field claim_type"
+        }
+      ],
+      "interrupted_by_transport": false,
+      "reaudited": false,
+      "recorded": false,
+      "stop_reason": "answered",
+      "test_id": "probe-P6_point_in_time_availability",
+      "unverifiable": [],
+      "verdict": "FAIL"
+    },
+    {
+      "changed": false,
+      "failed_checks": [
+        {
+          "capability": "S1",
+          "classification": "B",
+          "detail": "the field was left empty, which is not an answer",
+          "name": "probe field claim_type"
+        },
+        {
+          "capability": "S1",
+          "classification": "B",
+          "detail": "the field was left empty, which is not an answer",
+          "name": "probe field semantic_state"
+        },
+        {
+          "capability": "S1",
+          "classification": "B",
+          "detail": "missing: ['obsarch_a6efc0f926c63aa25f356fd5', 'obsarch_b31513334af56d3a649cf7b8']",
+          "name": "probe cites the subject's own identifiers"
+        },
+        {
+          "capability": "F4",
+          "classification": "B",
+          "detail": "no observation was cited",
+          "name": "cites at least one observation"
+        }
+      ],
+      "interrupted_by_transport": false,
+      "reaudited": false,
+      "recorded": false,
+      "stop_reason": "exchange_limit",
+      "test_id": "probe-P7_source_consistency_not_truth",
+      "unverifiable": [],
+      "verdict": "FAIL"
+    }
+  ]
+}

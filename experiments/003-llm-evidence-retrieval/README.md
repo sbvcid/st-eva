@@ -243,8 +243,21 @@ it into a config, a trace or a run directory.
 
 Reports: `reports/OPENROUTER_SCREENING.md` (2.6.2, the first cloud-model round),
 `reports/AMBIGUITY_SEMANTICS_AND_VARIANCE.md` (2.6.3, the surface fix and the
-first run series) and `reports/SEMANTIC_CONSUMER_SCREENING.md` (2.6.4, two
-consumer classes and the semantic probes).
+first run series), `reports/SEMANTIC_CONSUMER_SCREENING.md` (2.6.4, two consumer
+classes) and `reports/SEMANTIC_CONSUMER_EVALUATION.md` (2.6.5, the probes run
+five times).
+
+```
+python openrouter_screening.py probes   --model <m> --run-label run1 --request-budget 60
+python openrouter_screening.py reaudit  --model <m> --reaudit-phase probes
+python openrouter_screening.py variance --model <m> --reaudit-phase probes
+```
+
+**`variance` reads the re-audit where one exists** and records which it used, so
+a summary table and the artifacts sitting beside it cannot disagree. **`reaudit`
+walks a run series** and rebuilds each answer through the full contract — an
+earlier version copied only the four sealed keys, dropped every probe field
+silently, and graded seven passing probes as failures.
 
 ## Two consumer classes
 

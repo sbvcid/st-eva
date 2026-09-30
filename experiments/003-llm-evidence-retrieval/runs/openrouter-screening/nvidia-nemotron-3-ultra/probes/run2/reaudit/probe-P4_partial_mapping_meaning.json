@@ -1,0 +1,111 @@
+{
+  "answer": {
+    "answer": "",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": []
+  },
+  "audit": {
+    "answer_text": "",
+    "check_count": 5,
+    "checks": [
+      {
+        "actual": "(not stated)",
+        "capability": "S1",
+        "classification": "B",
+        "detail": "the field was left empty, which is not an answer",
+        "expected": "PARTIAL",
+        "name": "probe field claim_type",
+        "passed": false
+      },
+      {
+        "actual": "(not stated)",
+        "capability": "S1",
+        "classification": "B",
+        "detail": "the field was left empty, which is not an answer",
+        "expected": "NOT_COMPARABLE",
+        "name": "probe field semantic_state",
+        "passed": false
+      },
+      {
+        "actual": [],
+        "capability": "S1",
+        "classification": "B",
+        "detail": "no cited observation is filed under this concept",
+        "expected": "us-gaap:PaymentsToAcquireProductiveAssets",
+        "name": "probe cites a figure filed under PaymentsToAcquireProductiveAssets",
+        "passed": false
+      },
+      {
+        "actual": 0,
+        "capability": "F4",
+        "classification": "B",
+        "detail": "no observation was cited",
+        "expected": ">= 1 citation",
+        "name": "cites at least one observation",
+        "passed": false
+      },
+      {
+        "actual": "parsed",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "a JSON answer object",
+        "name": "the answer parsed into the contract",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "probe": {
+        "citation_required": true,
+        "expected": {
+          "claim_type": "PARTIAL",
+          "semantic_state": "NOT_COMPARABLE"
+        },
+        "notes": "PARTIAL is not a weaker EXACT. It is a statement that the concept does not express the whole metric, and the consequence -- a series break the registry records -- is what a consumer has to carry. The two fields are deliberately different vocabularies: a model that puts PARTIAL in both has answered one question twice.",
+        "probe_id": "P4_partial_mapping_meaning",
+        "question": "Figures filed under PaymentsToAcquireProductiveAssets are held for AAPL and mapped to the capex metric. How faithfully does that concept express the metric, and can its figures be read as one continuous comparable series with the metric's other concepts? Cite a figure filed under that concept.",
+        "reason_code_vocabulary": [],
+        "required_concepts": [
+          "us-gaap:PaymentsToAcquireProductiveAssets"
+        ],
+        "required_refs": [],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "required_concepts"
+        ],
+        "vocabulary": [
+          "EXACT",
+          "PARTIAL",
+          "NON_COMPARABLE",
+          "UNKNOWN"
+        ]
+      }
+    },
+    "failed_count": 4,
+    "passed": false,
+    "test_id": "probe-P4_partial_mapping_meaning"
+  },
+  "changed": false,
+  "interrupted_by_transport": true,
+  "reaudited_verdict": false,
+  "recorded_verdict": false,
+  "stop_reason": "transport_error",
+  "test_id": "probe-P4_partial_mapping_meaning"
+}

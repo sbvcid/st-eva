@@ -47,10 +47,11 @@ by a consumer rather than merely correct.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from .auditor import CLASS_TARGET, Audit, Auditor, Check
-from .target import PROBE_FIELDS, TargetAnswer
+from .target import PROBE_FIELDS, TargetAnswer, _as_code
 
 # Re-exported so the probe layer can be asked "what fields does a probe add"
 # without a caller knowing which module they live in. They are defined in
@@ -126,6 +127,32 @@ AMBIGUITY_VOCABULARY = (
     "MULTIPLE_OBSERVATIONS",
 )
 
+# Point-in-time: how much of a period's evidence existed at a given instant.
+#
+# The middle value is the one that matters and the one a model almost never
+# produces. `FULLY_KNOWNABLE` and `NOT_YET_KNOWNABLE` are the comfortable
+# answers; the honest one for most periods in an archive built incrementally is
+# that some of the evidence existed and some of it did not, and a consumer who
+# reports the archive's present-day figure as what was known at the time has
+# imported hindsight.
+POINT_IN_TIME_VOCABULARY = (
+    "FULLY_KNOWNABLE",
+    "PARTIALLY_KNOWNABLE",
+    "NOT_YET_KNOWNABLE",
+)
+
+# Source consistency is not truth.
+#
+# Two sources agreeing is not corroboration unless they are independent, and two
+# sources disagreeing is not a verdict. An archive that reports both facts
+# separately is saying something a single boolean cannot, and this is the
+# vocabulary that says it.
+INDEPENDENCE_VOCABULARY = (
+    "INDEPENDENT",
+    "NOT_INDEPENDENT",
+    "UNKNOWN",
+)
+
 # What each probe's instruction block tells the model. Kept as data so the
 # instruction a probe sent can be diffed against the code that graded it.
 PROBE_INSTRUCTIONS = """
@@ -191,6 +218,8 @@ class Probe:
         states: tuple = (),
         reasons: tuple = (),
         required_refs: Optional[List[str]] = None,
+        required_concepts: tuple = (),
+        citation_required: bool = True,
         unguessable_fields: Optional[List[str]] = None,
         notes: str = "",
     ) -> None:
@@ -201,6 +230,18 @@ class Probe:
         self.states = states
         self.reasons = reasons
         self.required_refs = list(required_refs or [])
+        self.required_concepts = tuple(required_concepts)
+        # Whether a correct answer must cite something.
+        #
+        # False for a subject the archive holds no observation for, and derived
+        # from the archive rather than set by hand. The rule that an ungrounded
+        # answer fails is right in general and wrong here: asked why a figure is
+        # absent, the correct answer cites nothing, and a check that demands a
+        # citation makes the question unanswerable. That is what happened --
+        # five runs answered P2 correctly on state, reason code and citation
+        # semantics, cited nothing, and were failed by a rule their answer could
+        # not satisfy.
+        self.citation_required = citation_required
         self.unguessable_fields = list(unguessable_fields or [])
         self.notes = notes
 
@@ -219,6 +260,8 @@ class Probe:
             "semantic_state_vocabulary": list(self.states),
             "reason_code_vocabulary": list(self.reasons),
             "required_refs": self.required_refs,
+            "required_concepts": list(self.required_concepts),
+            "citation_required": self.citation_required,
             # Recorded so a result can be read against the floor rather than
             # against zero: a probe with one guessable binary field and one
             # unguessable id is not a coin toss.
@@ -297,11 +340,18 @@ def audit_probe(
     for field in ("claim_type", "semantic_state", "reason_code", "operation_ref"):
         if field not in probe.expected:
             continue
+        # Both sides folded, not just the answer.
+        #
+        # `TargetAnswer` case-folds every code it reads, so an answer that
+        # echoes `divide` from the tool output arrives as `DIVIDE` and was
+        # compared against a lowercase key. Folding the answer alone fixes the
+        # model and breaks the grader; a code is a code whichever way round it
+        # is written, and the archive issues it lowercase.
         _field_check(
             result,
             f"probe field {field}",
             "S1",
-            probe.expected[field],
+            _as_code(probe.expected[field]),
             getattr(answer, field),
             unguessable=field in probe.unguessable_fields,
         )
@@ -340,11 +390,45 @@ def audit_probe(
             )
         )
 
+    for concept in probe.required_concepts:
+        # A concept, not an identifier.
+        #
+        # The first version of P4 and P5 demanded one *specific* observation id
+        # and failed a model that cited the right concept at a different period
+        # -- and on P5, whose question literally says "cite one observation from
+        # each", a model that cited exactly one of each was failed. The question
+        # is about concepts, so the citation requirement is at concept
+        # granularity: the model has to have gone and found figures filed under
+        # the concept it is making a claim about, and which period it looked at
+        # is not what is being tested.
+        cited = set(answer.evidence_refs)
+        found = [
+            ref for ref in cited
+            if _concept_of(auditor, ref) == concept
+        ]
+        result.checks.append(
+            Check(
+                capability="S1",
+                name=f"probe cites a figure filed under {concept.split(':')[-1]}",
+                passed=bool(found),
+                expected=concept,
+                actual=sorted(cited),
+                detail=(
+                    "" if found
+                    else "no cited observation is filed under this concept"
+                ),
+                classification=None if found else CLASS_TARGET,
+            )
+        )
+
     # A probe is a semantic question about specific figures, so a correct claim
-    # with no evidence behind it is an unsupported claim. Same rule the sealed
-    # suite applies to T1, kept here because it is the difference between "read
-    # the archive" and "know the vocabulary".
-    auditor.check_citations_exist(result, set(answer.evidence_refs))
+    # with no evidence behind it is an unsupported claim -- except where the
+    # archive holds no figure to cite, in which case citing nothing is the
+    # correct answer and the check is skipped rather than failed.
+    auditor.check_citations_exist(
+        result, set(answer.evidence_refs),
+        require_at_least_one=probe.citation_required,
+    )
     auditor.check_citations_were_retrieved(
         result, set(answer.evidence_refs), set(retrieved)
     )
@@ -359,6 +443,16 @@ def audit_probe(
             classification=None if answer.parse_error is None else CLASS_TARGET,
         )
     )
+
+
+def _concept_of(auditor, observation_id: str) -> Optional[str]:
+    if getattr(auditor, "connection", None) is None:
+        return None
+    row = auditor.connection.execute(
+        "SELECT source_concept_ref FROM observations WHERE observation_id = ?",
+        (observation_id,),
+    ).fetchone()
+    return row["source_concept_ref"] if row is not None else None
 
 
 # -- construction ------------------------------------------------------------
@@ -422,6 +516,100 @@ def _group_with_multiple_concepts(connection, asset: str) -> Optional[Dict[str, 
             ),
         }
     return None
+
+
+def _partial_knowable_period(connection, asset: str) -> Optional[Dict[str, Any]]:
+    """
+    A period where the archive holds several figures and they were not all
+    available at the same time, and a cutoff that falls between them.
+
+    Found by asking the data. The subject has to be one where a cutoff genuinely
+    separates evidence from evidence, because a period whose figures all arrived
+    together cannot test anything about point-in-time discipline -- there is
+    nothing to get wrong. The answer and the figure that was knowable are read
+    out of the rows rather than computed by this module's own rule, so the probe
+    cannot disagree with the surface about what was knowable when.
+    """
+    rows = connection.execute(
+        "SELECT o.metric, o.period_end, o.observation_id, o.value_json,"
+        " o.available_at FROM observations o"
+        " JOIN assets a ON a.asset_id = o.asset_id"
+        " WHERE a.ticker = ? AND o.period_end IS NOT NULL"
+        " AND o.available_at IS NOT NULL"
+        " ORDER BY o.metric, o.period_end, o.available_at",
+        (asset,),
+    ).fetchall()
+    groups: Dict[Any, List[Any]] = {}
+    for row in rows:
+        groups.setdefault((row["metric"], row["period_end"]), []).append(row)
+    for key in sorted(groups, key=lambda k: (str(k[0]), str(k[1]))):
+        members = groups[key]
+        if len(members) < 2:
+            continue
+        instants = sorted({m["available_at"] for m in members})
+        if len(instants) < 2:
+            continue
+        cutoff = _day_after(instants[0])
+        if cutoff >= instants[1]:
+            continue
+        knowable = [m for m in members if m["available_at"] <= cutoff]
+        later = [m for m in members if m["available_at"] > cutoff]
+        if not knowable or not later:
+            continue
+        chosen = sorted(knowable, key=lambda m: m["observation_id"])[0]
+        return {
+            "metric": key[0],
+            "period_end": key[1],
+            "cutoff": cutoff,
+            "knowable_observation_id": chosen["observation_id"],
+            "knowable_value": json.loads(chosen["value_json"] or "null"),
+            "knowable_at": chosen["available_at"],
+            "not_yet_observation_ids": sorted(
+                m["observation_id"] for m in later
+            ),
+            "total_observations": len(members),
+        }
+    return None
+
+
+def _day_after(instant: str) -> str:
+    """
+    A cutoff a day after an instant, in the archive's own format.
+
+    A day is the smallest honest gap. A cutoff exactly on the boundary would
+    make "was it available" a question about comparison strictness rather than
+    about the model's understanding of point-in-time.
+    """
+    moment = datetime.fromisoformat(instant.replace("Z", "+00:00"))
+    return (moment + timedelta(days=1)).isoformat().replace("+00:00", "Z")
+
+
+def _cross_source_record(connection) -> Optional[Dict[str, Any]]:
+    """
+    A recorded cross-source check between two observations, read from the record.
+
+    The point of P7 is what the archive *recorded* about independence, so the
+    answer key is the recorded value. Reading it from the record rather than
+    inferring it from the two providers is the difference between asking whether
+    a model can read a distinction and asking whether it can guess one.
+    """
+    row = connection.execute(
+        "SELECT record_id, observation_id, kind, status,"
+        " comparison_basis_json, references_json, explanation"
+        " FROM validation_records WHERE kind = 'cross_source'"
+        " ORDER BY record_id LIMIT 1"
+    ).fetchone()
+    if row is None:
+        return None
+    basis = json.loads(row["comparison_basis_json"] or "{}")
+    return {
+        "record_id": row["record_id"],
+        "status": row["status"],
+        "independence": basis.get("independence") or "UNKNOWN",
+        "provider": basis.get("provider"),
+        "observation_ids": sorted(json.loads(row["references_json"] or "[]")),
+        "explanation": row["explanation"],
+    }
 
 
 def build_probes(
@@ -499,6 +687,16 @@ def build_probes(
         (asset,),
     ).fetchone()
     if negative is not None:
+        # Whether a correct answer must cite something, read from the archive
+        # rather than decided here. A metric the archive holds no observation
+        # for is precisely the case where the right answer cites nothing, and a
+        # probe that demands a citation in that case is unanswerable.
+        held = connection.execute(
+            "SELECT COUNT(*) FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id"
+            " WHERE a.ticker = ? AND o.metric = ?",
+            (asset, negative["metric"]),
+        ).fetchone()[0]
         probes.append(
             Probe(
                 probe_id="P2_negative_state_cause",
@@ -527,10 +725,14 @@ def build_probes(
                 # inferring it: SOURCE_OMITS_CONCEPT and NO_RECENT_VALUE are
                 # different facts about the world.
                 unguessable_fields=["reason_code"],
+                citation_required=bool(held),
                 notes=(
                     "Every negative state is a different claim about why a "
                     "figure is absent. A model that reports the right number "
-                    "as zero has lost the distinction entirely."
+                    "as zero has lost the distinction entirely. The archive "
+                    f"holds {held} observations for this metric, so a correct "
+                    "answer cites nothing and the citation check is scoped "
+                    "accordingly."
                 ),
             )
         )
@@ -598,45 +800,38 @@ def build_probes(
                 break
     if broken:
         subject = broken[0]
-        witness = connection.execute(
-            "SELECT o.observation_id FROM observations o"
-            " JOIN assets a ON a.asset_id = o.asset_id"
-            " WHERE a.ticker = ? AND o.source_concept_ref = ?"
-            " ORDER BY o.observation_id LIMIT 1",
-            (asset, subject["concept_id"]),
-        ).fetchone()
-        if witness is not None:
-            probes.append(
-                Probe(
-                    probe_id="P4_partial_mapping_meaning",
-                    question=(
-                        f"Figures filed under "
-                        f"{subject['concept_id'].split(':')[-1]} are held for "
-                        f"{asset} and mapped to the "
-                        f"{subject['metric_id'].replace('_', ' ')} metric. How "
-                        f"faithfully does that concept express the metric, and "
-                        f"can its figures be read as one continuous comparable "
-                        f"series with the metric's other concepts?"
-                    ),
-                    expected={
-                        "claim_type": str(subject["mapping_type"]),
-                        "semantic_state": "NOT_COMPARABLE",
-                    },
-                    vocabulary=("EXACT", "PARTIAL", "NON_COMPARABLE", "UNKNOWN"),
-                    states=SEMANTIC_STATE_VOCABULARY,
-                    # One of four for the fidelity, one of nine for the
-                    # comparability, and a citation that cannot be guessed at
-                    # all. The floor is far below a coin.
-                    unguessable_fields=["required_refs"],
-                    required_refs=[witness["observation_id"]],
-                    notes=(
-                        "PARTIAL is not a weaker EXACT. It is a statement that "
-                        "the concept does not express the whole metric, and the "
-                        "consequence -- a series break the registry records -- "
-                        "is what a consumer has to carry."
-                    ),
-                )
+        probes.append(
+            Probe(
+                probe_id="P4_partial_mapping_meaning",
+                question=(
+                    f"Figures filed under "
+                    f"{subject['concept_id'].split(':')[-1]} are held for "
+                    f"{asset} and mapped to the "
+                    f"{subject['metric_id'].replace('_', ' ')} metric. How "
+                    f"faithfully does that concept express the metric, and "
+                    f"can its figures be read as one continuous comparable "
+                    f"series with the metric's other concepts? Cite a figure "
+                    f"filed under that concept."
+                ),
+                expected={
+                    "claim_type": str(subject["mapping_type"]),
+                    "semantic_state": "NOT_COMPARABLE",
+                },
+                vocabulary=("EXACT", "PARTIAL", "NON_COMPARABLE", "UNKNOWN"),
+                states=SEMANTIC_STATE_VOCABULARY,
+                # At concept granularity, not by identifier. See `audit_probe`.
+                unguessable_fields=["required_concepts"],
+                required_concepts=(subject["concept_id"],),
+                notes=(
+                    "PARTIAL is not a weaker EXACT. It is a statement that "
+                    "the concept does not express the whole metric, and the "
+                    "consequence -- a series break the registry records -- "
+                    "is what a consumer has to carry. The two fields are "
+                    "deliberately different vocabularies: a model that puts "
+                    "PARTIAL in both has answered one question twice."
+                ),
             )
+        )
 
     # -- P5: can two concepts be read as one series? ----------------------
     if registry is not None and broken:
@@ -657,7 +852,7 @@ def build_probes(
             ).fetchone()
             if row is not None:
                 witnesses.append(row["observation_id"])
-        if len(concepts) >= 2 and len(witnesses) == 2:
+        if len(concepts) >= 2:
             probes.append(
                 Probe(
                     probe_id="P5_two_concepts_one_series",
@@ -675,17 +870,102 @@ def build_probes(
                     },
                     vocabulary=("COMPARABLE", "NOT_COMPARABLE", "UNKNOWN"),
                     states=SEMANTIC_STATE_VOCABULARY,
-                    unguessable_fields=["required_refs"],
-                    required_refs=sorted(witnesses),
+                    # One of each, at concept granularity. A model that cited
+                    # one figure of each of the two concepts was failed by the
+                    # first version of this check for not citing two specific
+                    # ids, which is the question being asked of it backwards.
+                    unguessable_fields=["required_concepts"],
+                    required_concepts=tuple(
+                        concept["concept_id"] for concept in concepts[:2]
+                    ),
                     notes=(
                         "The complement of P4. P4 asks what a fidelity means; "
                         "this asks whether two concepts can be joined, which is "
                         "the question a consumer has to answer before splicing a "
-                        "series. A two-way answer with no citation is a coin "
-                        "toss, so the citations are required."
+                        "series."
                     ),
                 )
             )
+
+    # -- P6: what was knowable at a cutoff, not what exists now ----------
+    #
+    # The most easily failed probe in the set, and the one that most looks like
+    # a retrieval question. It is not: every figure is one call away, and a
+    # model that answers with the archive's present-day figure has imported
+    # hindsight into a question about what a researcher could have known. The
+    # comfortable answers are `FULLY_KNOWNABLE` and `NOT_YET_KNOWNABLE`; the
+    # honest one here is the middle, and a model that can only produce the
+    # comfortable two is not doing point-in-time at all.
+    partial = _partial_knowable_period(connection, asset)
+    if partial is not None:
+        probes.append(
+            Probe(
+                probe_id="P6_point_in_time_availability",
+                question=(
+                    f"A researcher is writing as of {partial['cutoff'][:10]} and "
+                    f"wants {asset}'s {partial['metric'].replace('_', ' ')} for "
+                    f"the period ending {partial['period_end']}. The archive "
+                    f"holds {partial['total_observations']} observations for "
+                    f"that period today. How much of that period was knowable at "
+                    f"the researcher's date, and which figure is the one they "
+                    f"could have had? Cite that observation and state its value. "
+                    f"Do not use a figure that became available after their "
+                    f"date."
+                ),
+                expected={
+                    "claim_type": "PARTIALLY_KNOWNABLE",
+                    "stated_value": partial["knowable_value"],
+                },
+                vocabulary=POINT_IN_TIME_VOCABULARY,
+                states=SEMANTIC_STATE_VOCABULARY,
+                # The figure and the observation id are the probe. Both come
+                # from filtering on availability, which is the capability, and
+                # neither can be produced by picking the newest or the oldest.
+                unguessable_fields=["stated_value", "required_refs"],
+                required_refs=[partial["knowable_observation_id"]],
+                notes=(
+                    "Answering this with the archive's present-day figure is the "
+                    "failure. The figure is easy to retrieve and easy to get "
+                    "wrong, which is what makes it a probe and not a test of "
+                    "retrieval."
+                ),
+            )
+        )
+
+    # -- P7: does a second source corroborate, and is it true? ------------
+    cross = _cross_source_record(connection)
+    if cross is not None:
+        probes.append(
+            Probe(
+                probe_id="P7_source_consistency_not_truth",
+                question=(
+                    f"The archive holds a recorded cross-check for {asset} "
+                    f"between two sources. Do the two corroborate each other "
+                    f"independently? And does the archive select one of them? "
+                    f"Cite both observations the check compares."
+                ),
+                expected={
+                    "claim_type": cross["independence"],
+                    "semantic_state": "NO_WINNER_SELECTED",
+                },
+                vocabulary=INDEPENDENCE_VOCABULARY,
+                states=SEMANTIC_STATE_VOCABULARY,
+                # Two observations, and the separation of two ideas a model
+                # usually fuses: that sources disagreeing is not a verdict, and
+                # that two sources are not two independent witnesses.
+                unguessable_fields=["required_refs"],
+                required_refs=cross["observation_ids"],
+                notes=(
+                    "The distinction is that consistency is not truth. A model "
+                    "that says 'two sources disagree, so the figure is "
+                    "unreliable' has answered a different question, and a model "
+                    "that says 'an SEC filing beats a vendor quote' has invented "
+                    "a rule the archive does not have. The recorded comparison "
+                    f"says the two are {cross['independence']} and that neither "
+                    "is selected."
+                ),
+            )
+        )
 
     return probes
 
@@ -706,6 +986,8 @@ def probe_dataset(
         "vocabularies": {
             "provenance": list(PROVENANCE_VOCABULARY),
             "semantic_state": list(SEMANTIC_STATE_VOCABULARY),
+            "point_in_time": list(POINT_IN_TIME_VOCABULARY),
+            "independence": list(INDEPENDENCE_VOCABULARY),
             "reason_code": list(REASON_CODES),
             "ambiguity": list(AMBIGUITY_VOCABULARY),
         },

@@ -388,6 +388,90 @@ The last of these is the shape of the whole project. The failure mode is never t
 number being wrong. It is the experiment reporting a fact about the model that
 belongs to the harness.
 
+## 0.9 What a semantic evaluation found, and the principle it settled (2.6.5)
+
+The 2.6.4 round produced the finding and this one measured it. Seven semantic
+probes — reported against derived, a negative state and its reason, what kind
+of disagreement this is, what a `PARTIAL` mapping means, whether two concepts
+are one series, what was knowable at an instant rather than what exists now, and
+whether two sources corroborate independently — run five times against one
+accepted model.
+
+**Fourteen of the twenty-one recorded failures were the evaluator's.** Four
+distinct defects, all found the same way: a correct answer sitting next to a
+check that said no, and no time pressure to believe the check.
+
+An operation id was compared case-sensitively, after the rationale for folding
+case had been written and applied to three other fields. A probe about a metric
+the archive holds no observation for required a citation, which made the correct
+answer — cite nothing — unsatisfiable. Two concept probes demanded one specific
+observation id each, and failed a model that cited the right concept at a
+different period; on one of them the question said "cite one observation from
+each" and it did exactly that.
+
+After correction: **three capabilities stable across five runs** — telling a
+derived figure from a reported one, naming a negative state and its reason, and
+saying that two figures are two different measures rather than two readings of
+one. That last one is the direct test of the 2.6.3 fix, and it passes 5/5.
+
+**A new failure mode, and it needs its own name: semantics correct, code
+emission unreliable.** Asked what was knowable at an instant, the model stated
+the right figure, cited the right observation, three runs out of three — and
+wrote `PARTIALLY_KNOWABLE` twice and `FULLY_KNOWNABLE` once. A consumer reading
+its `claim_type` would mis-read a correct answer every time. That is a different
+problem from not understanding, it is partly recoverable, and a gate that
+reports only pass or fail cannot tell a consumer which one it is looking at.
+
+**The seventh probe is confounded and is recorded as confounded.** The archive's
+one cross-source `DISCREPANT` record is not discoverable by search — the
+`validation_status` filter returns empty for every status, `coverage_report`
+reports `CONFLICTING: 0`, and the record is reachable only through
+`get_validation(observation_id)` for an identifier the caller must already
+hold. Asking a model to read that distinction asks it to find something the
+surface will not let it find, so its 0/5 measures findability at least as much
+as reading. That is a query-surface gap, carried forward from 2.6.3 and not
+counted against the model.
+
+Alongside it, a new surface finding: `query_observations` exposes fifteen
+parameters and the tool schema describes four, and **`as_of` is not a
+point-in-time filter** — it is an exact match on a row's own reporting instant,
+beside `knowable_at`, which is the point-in-time filter and has no description.
+A caller asking what was knowable in 2009 uses `as_of`, gets an empty list, and
+cannot tell that from *no evidence existed*. This is the same class as the
+`status` to `validation_status` rename in 2.6.1: a name that has to be
+disambiguated by prose is not self-describing. It was **deliberately not fixed
+before measuring**, because changing the tool surface mid-experiment breaks
+comparability and is the "teach the model the answer" move worth avoiding. The
+trace shows the model never used either filter, so it caused none of this
+round's failures — and two tests now pin the current behaviour, one of them
+asserting the defect so that fixing it has to be deliberate.
+
+### The principle this settles
+
+> **ST-EVA defines the Evidence contract. Model capability determines whether a
+> consumer can satisfy it.**
+
+Three rounds, one surface, one tool schema, one prompt, one evaluator. A model
+was rejected for reasons that had nothing to do with the data. A model was
+accepted as a *bounded* consumer whose failures were all interpretive, where the
+remedy is supervision rather than a different archive. A model was failed four
+times by the evaluator, twice in 2.6.2, twice in 2.6.3, four times here. **Not
+one outcome required changing what Revenue means, what Conflict means, or what
+Source means.** Every correction went into the grader or the harness, and the
+archive's semantics were untouched in all three rounds except for the one real
+defect 2.6.3 found.
+
+Across every run of the 2.5+ surface, **260 citations and zero fabricated
+observation identifiers.** The local model's defining failure — a correct answer
+next to an invented identifier — has not recurred in any cloud run, and the
+grounding surface does its job.
+
+The corollary is the part worth keeping: **do not adapt the surface until a weak
+model passes.** The 2.6.3 fix made the surface *correct*, and every model
+improved at once — five of ten answers asserting a false cause became none of
+thirty-eight. Making the surface *teachable* would improve the numbers and
+destroy the thing the numbers measure.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

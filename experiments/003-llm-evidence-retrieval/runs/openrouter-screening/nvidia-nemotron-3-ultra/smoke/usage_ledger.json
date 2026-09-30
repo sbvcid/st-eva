@@ -1,9 +1,9 @@
 [
   {
-    "elapsed_seconds": 2.39,
+    "elapsed_seconds": 2.03,
     "error": null,
     "index": 0,
-    "provider_generation_id": "gen-1790734679-07wmvgfHosUizQAz9RVl",
+    "provider_generation_id": "gen-1790758753-ggaAEdFKdNRr15T3TNXF",
     "test_id": "S0_tool_call_smoke",
     "usage": {
       "completion_tokens": 95,
@@ -38,17 +38,17 @@
     "usage": null
   },
   {
-    "elapsed_seconds": 15.15,
+    "elapsed_seconds": 14.27,
     "error": null,
     "index": 1,
-    "provider_generation_id": "gen-1790734682-Ef3JagZmIMKBkNjlJ6fr",
+    "provider_generation_id": "gen-1790758755-mP75H8UMw3hbKb5So5s4",
     "test_id": "S0_tool_call_smoke",
     "usage": {
-      "completion_tokens": 374,
+      "completion_tokens": 428,
       "completion_tokens_details": {
         "audio_tokens": 0,
         "image_tokens": 0,
-        "reasoning_tokens": 248
+        "reasoning_tokens": 238
       },
       "cost": 0,
       "cost_details": {
@@ -64,7 +64,7 @@
         "cached_tokens": 0,
         "video_tokens": 0
       },
-      "total_tokens": 3613
+      "total_tokens": 3667
     }
   }
 ]

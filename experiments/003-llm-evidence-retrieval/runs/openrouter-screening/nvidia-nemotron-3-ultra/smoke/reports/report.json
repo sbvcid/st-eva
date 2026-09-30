@@ -102,7 +102,7 @@
       "meaning": "source limitation: the evidence cannot support any answer"
     }
   },
-  "finished_at": "2026-09-30T02:18:18.516916+00:00",
+  "finished_at": "2026-09-30T08:59:31.325267+00:00",
   "human_review": {
     "purpose": "calibration: a sample of passes and all failures, so the evaluator can be checked against successes as well as failures",
     "sample_of_passes": [
@@ -124,17 +124,17 @@
   "scoring_note": "No overall quality score is produced. The capabilities are not interchangeable, and averaging them would let exact values buy invented provenance.",
   "screening_rows": [
     {
-      "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report lists them with their evidence states: 8 are SOURCE_REPORTED (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding), 1 is SOURCE_DID_NOT_REPORT (dividend_per_share), 1 is NOT_APPLICABLE (operating_margin_bank), 1 is UNAVAILABLE (segment_revenue), and 1 is STALE (guidance). The coverage report does not name a specific source document reference to fetch.",
+      "answer": "ST-EVA holds 12 metrics for AAPL. The coverage report shows metric_count: 12 with the following state distribution: SOURCE_REPORTED (8 metrics), SOURCE_DID_NOT_REPORT (1), NOT_APPLICABLE (1), UNAVAILABLE (1), STALE (1), and CONFLICTING (0). The 12 metrics are: assets, capex, cash, debt, dividend_per_share, eps_diluted, guidance, net_income, operating_margin_bank, revenue, segment_revenue, and shares_outstanding. The report does not name a specific source document reference that can be fetched with get_source_document; the 'resolved_from' fields indicate internal resolution methods ('observation_status' or 'evidence_state') rather than source document identifiers.",
       "answer_parsed": true,
-      "checks": 3,
       "derived_refs": [],
-      "elapsed_seconds": 17.55,
+      "elapsed_seconds": 16.31,
       "evidence_refs": [],
       "exchanges": 3,
       "failed_checks": [],
       "failed_tool_calls": 0,
       "first_reply_parsed": true,
       "format_repair_used": false,
+      "interrupted_by_transport": false,
       "off_surface_calls": [],
       "operations": [
         "coverage_report"
@@ -145,15 +145,15 @@
       "test_id": "S0_tool_call_smoke",
       "tool_calls": 1,
       "uncertainties": [
-        "No source document reference was provided in the coverage report to check for filing text availability."
+        "No source document reference was provided in the coverage report to fetch and check for filing text availability."
       ],
       "unverifiable": [],
       "usage": {
-        "completion_tokens": 374,
+        "completion_tokens": 428,
         "completion_tokens_details": {
           "audio_tokens": 0,
           "image_tokens": 0,
-          "reasoning_tokens": 248
+          "reasoning_tokens": 238
         },
         "cost": 0,
         "cost_details": {
@@ -169,13 +169,13 @@
           "cached_tokens": 0,
           "video_tokens": 0
         },
-        "total_tokens": 3613
+        "total_tokens": 3667
       },
       "verdict": "PASS"
     }
   ],
   "snapshot": "C:\\git\\st-eva\\experiments\\003-llm-evidence-retrieval\\harness\\snapshot.sqlite",
-  "started_at": "2026-09-30T02:18:00.961048+00:00",
+  "started_at": "2026-09-30T08:59:15.009834+00:00",
   "totals": {
     "failed": 0,
     "passed": 1,

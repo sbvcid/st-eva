@@ -1,0 +1,136 @@
+{
+  "answer": {
+    "answer": "As of 2009-07-23, only one of the four observations for AAPL's assets for the period ending 2008-09-27 was knowable. That observation (obsarch_c7c975383c7c3649dde7b6d7) was knowable on 2009-07-22 and reports total assets of 39,572,000,000 USD from a 10-Q filing (accession 0001193125-09-153165). The other three observations became knowable after 2009-07-23 (on 2009-10-27, 2010-01-25, and 2010-10-27).",
+    "claim_type": "PARTIALLY_KNOWABLE",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_c7c975383c7c3649dde7b6d7"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "SOURCE_REPORTED",
+    "stated_value": 39572000000.0,
+    "uncertainties": [
+      "The other three observations represent later filings (10-K, 10-K/A) that may restate the figure, but they were not available to the researcher on 2009-07-23."
+    ]
+  },
+  "audit": {
+    "answer_text": "As of 2009-07-23, only one of the four observations for AAPL's assets for the period ending 2008-09-27 was knowable. That observation (obsarch_c7c975383c7c3649dde7b6d7) was knowable on 2009-07-22 and reports total assets of 39,572,000,000 USD from a 10-Q filing (accession 0001193125-09-153165). The other three observations became knowable after 2009-07-23 (on 2009-10-27, 2010-01-25, and 2010-10-27).",
+    "check_count": 6,
+    "checks": [
+      {
+        "actual": "PARTIALLY_KNOWABLE",
+        "capability": "S1",
+        "classification": "B",
+        "detail": "guessable field wrong",
+        "expected": "PARTIALLY_KNOWNABLE",
+        "name": "probe field claim_type",
+        "passed": false
+      },
+      {
+        "actual": 39572000000.0,
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": 39572000000.0,
+        "name": "probe field stated_value",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "name": "probe cites the subject's own identifiers",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "capability": "F4",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "name": "every cited observation exists",
+        "passed": true
+      },
+      {
+        "actual": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "capability": "F5",
+        "classification": null,
+        "detail": "",
+        "expected": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "name": "cited observations were actually retrieved",
+        "passed": true
+      },
+      {
+        "actual": "parsed",
+        "capability": "S1",
+        "classification": null,
+        "detail": "",
+        "expected": "a JSON answer object",
+        "name": "the answer parsed into the contract",
+        "passed": true
+      }
+    ],
+    "expectations": {
+      "probe": {
+        "citation_required": true,
+        "expected": {
+          "claim_type": "PARTIALLY_KNOWNABLE",
+          "stated_value": 39572000000.0
+        },
+        "notes": "Answering this with the archive's present-day figure is the failure. The figure is easy to retrieve and easy to get wrong, which is what makes it a probe and not a test of retrieval.",
+        "probe_id": "P6_point_in_time_availability",
+        "question": "A researcher is writing as of 2009-07-23 and wants AAPL's assets for the period ending 2008-09-27. The archive holds 4 observations for that period today. How much of that period was knowable at the researcher's date, and which figure is the one they could have had? Cite that observation and state its value. Do not use a figure that became available after their date.",
+        "reason_code_vocabulary": [],
+        "required_concepts": [],
+        "required_refs": [
+          "obsarch_c7c975383c7c3649dde7b6d7"
+        ],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "stated_value",
+          "required_refs"
+        ],
+        "vocabulary": [
+          "FULLY_KNOWNABLE",
+          "PARTIALLY_KNOWNABLE",
+          "NOT_YET_KNOWNABLE"
+        ]
+      }
+    },
+    "failed_count": 1,
+    "passed": false,
+    "test_id": "probe-P6_point_in_time_availability"
+  },
+  "changed": false,
+  "interrupted_by_transport": false,
+  "reaudited_verdict": false,
+  "recorded_verdict": false,
+  "stop_reason": "answered",
+  "test_id": "probe-P6_point_in_time_availability"
+}

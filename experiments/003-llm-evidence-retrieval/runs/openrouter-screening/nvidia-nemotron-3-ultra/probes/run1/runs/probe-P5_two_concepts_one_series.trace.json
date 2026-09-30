@@ -1,0 +1,163 @@
+{
+  "answer": {
+    "answer": "The two capex concepts cannot be read as one continuous comparable series. The archive records a CONCEPT_MAPPING_BREAK between them: PaymentsToAcquireProductiveAssets maps to the capex metric with PARTIAL fidelity and series_continues=false (it includes software and intangible assets), while PaymentsToAcquirePropertyPlantAndEquipment maps with EXACT fidelity and series_continues=true from 2013-09-28 onward. The notes explicitly state \"the series does not continue across the change.\"",
+    "claim_type": "NOT_COMPARABLE",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_b98e5af9724c1f18a541187b",
+      "obsarch_6cebc6372360ab025750b671"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "NOT_COMPARABLE",
+    "stated_value": null,
+    "uncertainties": []
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "PaymentsToAcquireProductiveAssets",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'PaymentsToAcquireProductiveAssets'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "PaymentsToAcquirePropertyPlantAndEquipment",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'PaymentsToAcquirePropertyPlantAndEquipment'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "capex",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "returned_count": 1,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "capex",
+        "order": "PERIOD_DESCENDING",
+        "period_end": "2014-09-27",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "returned_count": 1,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "capex",
+        "order": "PERIOD_DESCENDING",
+        "period_end": "2013-09-28",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "returned_count": 1,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 1,
+        "metric": "capex",
+        "order": "PERIOD_DESCENDING",
+        "period_end": "2012-09-29",
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[1]",
+      "returned_count": 1,
+      "sequence": 6
+    }
+  ]
+}
