@@ -1,0 +1,51 @@
+{
+  "attempts": [
+    {
+      "at": 0.0,
+      "outcome": "sent",
+      "test_id": "T1_exact_value"
+    },
+    {
+      "at": 0.2,
+      "detail": "HTTP 400 from https://openrouter.ai/api/v1/chat/completions: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\\"status\\\":400,\\\"title\\\":\\\"Bad Request\\\",\\\"detail\\\":\\\"Function id '948fe171-ce7a-4332-8bc0-5e14e90259f9': DEGRADED function cannot be invoked\\\"}\",\"provider_name\":\"Nvidia\",\"is_byok\":false}},\"user_id\":\"user_3JEi7KIykua2ix3BlMEF9irhd8s\"}",
+      "is_model_finding": false,
+      "outcome": "refused:network",
+      "test_id": "T1_exact_value"
+    },
+    {
+      "at": 0.2,
+      "outcome": "sent",
+      "test_id": "T3_pagination"
+    },
+    {
+      "at": 0.4,
+      "detail": "HTTP 400 from https://openrouter.ai/api/v1/chat/completions: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\\"status\\\":400,\\\"title\\\":\\\"Bad Request\\\",\\\"detail\\\":\\\"Function id '948fe171-ce7a-4332-8bc0-5e14e90259f9': DEGRADED function cannot be invoked\\\"}\",\"provider_name\":\"Nvidia\",\"is_byok\":false}},\"user_id\":\"user_3JEi7KIykua2ix3BlMEF9irhd8s\"}",
+      "is_model_finding": false,
+      "outcome": "refused:network",
+      "test_id": "T3_pagination"
+    },
+    {
+      "at": 0.4,
+      "outcome": "sent",
+      "test_id": "T6_reported_vs_derived"
+    },
+    {
+      "at": 0.6,
+      "detail": "HTTP 400 from https://openrouter.ai/api/v1/chat/completions: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\\"status\\\":400,\\\"title\\\":\\\"Bad Request\\\",\\\"detail\\\":\\\"Function id '948fe171-ce7a-4332-8bc0-5e14e90259f9': DEGRADED function cannot be invoked\\\"}\",\"provider_name\":\"Nvidia\",\"is_byok\":false}},\"user_id\":\"user_3JEi7KIykua2ix3BlMEF9irhd8s\"}",
+      "is_model_finding": false,
+      "outcome": "refused:network",
+      "test_id": "T6_reported_vs_derived"
+    }
+  ],
+  "declared_limit": 150,
+  "elapsed_seconds": 0.6,
+  "label": "nvidia-nemotron-3-ultra/screen2",
+  "model_finding_refusals": 0,
+  "rate_limit_headers": {},
+  "refusals_by_kind": {
+    "network": 3
+  },
+  "remaining_budget": 147,
+  "requests_sent": 3,
+  "stopped_because": "3 network refusals with no answer in between"
+}

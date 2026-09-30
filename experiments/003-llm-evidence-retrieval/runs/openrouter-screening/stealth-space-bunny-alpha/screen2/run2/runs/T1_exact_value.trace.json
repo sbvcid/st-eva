@@ -1,0 +1,116 @@
+{
+  "answer": {
+    "answer": "The archive holds two reported revenue figures for AAPL for the period 2006-10-01 to 2007-09-29, and ST-EVA has not selected one. Both are SOURCE_REPORTED, both use the same source concept (us-gaap:SalesRevenueNet, mapped to the revenue metric as PARTIAL, i.e. a component rather than an exact expression of the metric), both come from the same provider (SecEdgar, regulatory filings), and both are UNVERIFIABLE because a single official source cannot cross-validate itself. The first is USD 24,006,000,000 as filed in 10-K accession 0001193125-09-214859 (available from 2009-10-27). The second is USD 24,578,000,000 as filed in 10-K/A accession 0001193125-10-012091 (available from 2010-01-25). ST-EVA records this as an ambiguity with reason MULTIPLE_FILINGS and resolution NO_WINNER_SELECTED: the same source concept is reported with two different values by two filings, which may be a restatement, a re-filing, or two different periods of coverage, and the evidence held does not establish which filing a question was about. The two values differ by USD 572,000,000. I am not choosing between them.",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": [
+      "Which of USD 24,006,000,000 (10-K) and USD 24,578,000,000 (10-K/A) is correct for the period ending 2007-09-29 is not settled; the evidence states neither a winner nor a reason for the difference.",
+      "Both figures are UNVERIFIABLE: no cross-check was recorded against any other source (validation records are empty for both observations).",
+      "The mapping from us-gaap:SalesRevenueNet to the revenue metric is PARTIAL, so neither value is an exact expression of the metric; a series break is recorded at this period.",
+      "No other concept (e.g. us-gaap:Revenues) is held for this period; a wider search across 2006-06-01 to 2008-06-30 returned only these two observations for this period end, plus later periods 2007-09-30 to 2008-06-28 and 2008-03-30 to 2008-06-28."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-09-29",
+        "period_start": "2007-09-29",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2007-12-31",
+        "period_start": "2007-01-01",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[2]",
+      "returned_count": 2,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_ddb4af888ab3c6be910c0f9e"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_6383b6a9892d72ff26aab02a"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2008-06-30",
+        "period_start": "2006-06-01",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[4]",
+      "returned_count": 4,
+      "sequence": 5
+    }
+  ]
+}

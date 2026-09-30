@@ -479,6 +479,479 @@ class TestTheAnswerContractIsAnEvaluationFormatOnly(unittest.TestCase):
         self.assertIn("traceable", ANSWER_CONTRACT)
         self.assertIn("uncertainties", ANSWER_CONTRACT)
 
+    def test_a_probe_field_does_not_become_part_of_st_eva(self):
+        """
+        The probe fields extend the evaluation format and nothing else.
+
+        Five more fields on an answer object is a small thing to add and an easy
+        one to justify wrongly later -- "the query surface could report this
+        too". So the same assertion as above, run over the same production
+        modules, for the fields the archive does not already have.
+
+        `reason_code` is deliberately exempt, and the exemption is the point
+        rather than an exception: it is the archive's own field, emitted by
+        `coverage_report` and in every observation's status block. A probe asking
+        for it is the model quoting the archive. A name collision between an
+        evaluation format and a fact the archive genuinely holds is not a leak,
+        and a test that cannot tell the two apart would get it wrong in both
+        directions.
+        """
+        import evidence_query
+        import sqlite_archive
+
+        from harness.probes import PROBE_FIELDS
+
+        already_the_archive_owns = {"reason_code"}
+        novel = [f for f in PROBE_FIELDS if f not in already_the_archive_owns]
+        self.assertTrue(novel)
+        for module in (evidence_query, sqlite_archive):
+            source = open(module.__file__, encoding="utf-8").read()
+            for field in novel:
+                self.assertNotIn(
+                    field, source,
+                    f"{module.__name__} grew {field}; a probe field is an "
+                    "evaluation format and must not reach the archive",
+                )
+            # And the format as a whole, so a rename cannot smuggle it in.
+            self.assertNotIn("claim_type", source)
+
+    def test_the_probe_answer_shape_is_not_the_archive_answer_shape(self):
+        """
+        The probe's field set, together, is the thing that must not appear.
+        """
+        import evidence_query
+
+        source = open(evidence_query.__file__, encoding="utf-8").read()
+        for group in (
+            ("claim_type", "semantic_state"),
+            ("operation_ref", "stated_value"),
+        ):
+            present = [name for name in group if name in source]
+            self.assertLessEqual(
+                len(present), 1,
+                f"{present} appear together in the query surface, which is the "
+                "shape of an evaluation answer",
+            )
+
+    def test_a_probe_field_of_the_wrong_type_is_dropped_not_coerced(self):
+        """
+        A model that answered `["PARTIAL", "EXACT"]` has not made a claim.
+
+        Stringifying that list would produce a confident mismatch against the
+        answer key, which reads as "the model was wrong" rather than "the model
+        did not answer", and the two call for different conclusions about a
+        model.
+        """
+        answer = TargetAnswer.parse(json.dumps({
+            "answer": "x",
+            "evidence_refs": [],
+            "claim_type": ["PARTIAL", "EXACT"],
+        }))
+        self.assertEqual(answer.claim_type, "")
+
+    def test_a_probe_code_is_case_folded_because_a_code_is_an_identifier(self):
+        answer = TargetAnswer.parse(json.dumps({
+            "answer": "x",
+            "evidence_refs": [],
+            "claim_type": "partial",
+            "stated_value": "1,234.5",
+        }))
+        self.assertEqual(answer.claim_type, "PARTIAL")
+        self.assertAlmostEqual(answer.stated_value, 1234.5)
+
+    def test_the_sealed_contract_is_unchanged_by_the_probe_fields(self):
+        """
+        The sealed fifteen still require exactly `answer` and `evidence_refs`.
+
+        A probe field arriving as null must not become a missing key, or adding
+        probes would quietly start failing every sealed test.
+        """
+        answer = TargetAnswer.parse(json.dumps({
+            "answer": "x",
+            "evidence_refs": ["obs_1"],
+            "claim_type": None,
+            "semantic_state": None,
+            "stated_value": None,
+        }))
+        self.assertIsNone(answer.parse_error)
+        self.assertEqual(answer.evidence_refs, ["obs_1"])
+
+
+class TestSemanticProbes(unittest.TestCase):
+    """
+    The probe layer: structured claims, graded as values.
+
+    These are the tests that make a probe worth running. A probe that graded
+    prose would be a smaller, noisier version of the sealed suite; the reason to
+    add probes at all is that the answer arrives as fields, so nothing has to be
+    inferred from English.
+    """
+
+    def probe(self, **overrides):
+        from harness.probes import Probe
+
+        defaults = dict(
+            probe_id="P_test",
+            question="q",
+            expected={"claim_type": "PARTIAL", "reason_code": "RETRIEVAL_FAILED"},
+            vocabulary=("EXACT", "PARTIAL"),
+            reasons=("RETRIEVAL_FAILED",),
+            unguessable_fields=["reason_code"],
+        )
+        defaults.update(overrides)
+        return Probe(**defaults)
+
+    def answer(self, **claims):
+        payload = {"answer": "x", "evidence_refs": claims.pop(
+            "evidence_refs", ["obs_1"])}
+        payload.update(claims)
+        return TargetAnswer.parse(json.dumps(payload))
+
+    def audit(self, probe, answer, retrieved=("obs_1",)):
+        from harness.auditor import Audit, Auditor
+        from harness.probes import audit_probe
+
+        result = Audit(
+            test_id=probe.probe_id,
+            expectations=probe.expected,
+            answer_text=answer.answer,
+        )
+        probe_audit = type("NullAuditor", (), {
+            "check_citations_exist": staticmethod(
+                lambda *a, **k: None
+            ),
+            "check_citations_were_retrieved": staticmethod(
+                lambda *a, **k: None
+            ),
+        })()
+        audit_probe(
+            probe_audit, result, answer, None, set(retrieved), probe
+        )
+        return result
+
+    def test_a_correct_claim_passes(self):
+        probe = self.probe()
+        result = self.audit(
+            probe, self.answer(claim_type="PARTIAL",
+                               reason_code="RETRIEVAL_FAILED")
+        )
+        self.assertTrue(result.passed, [c.name for c in result.checks])
+
+    def test_a_wrong_claim_fails_and_says_which_field(self):
+        result = self.audit(
+            self.probe(), self.answer(claim_type="EXACT",
+                                      reason_code="RETRIEVAL_FAILED")
+        )
+        self.assertFalse(result.passed)
+        failed = {c.name for c in result.checks if c.passed is False}
+        self.assertEqual(failed, {"probe field claim_type"})
+
+    def test_an_omitted_field_fails_rather_than_going_unverifiable(self):
+        """
+        A model must not be able to opt out of a probe by leaving a key empty.
+
+        "Did not say" and "said something wrong" are both failures of the same
+        claim, and scoring the first as unverifiable would let a silent model
+        pass every probe.
+        """
+        result = self.audit(
+            self.probe(), self.answer(claim_type="PARTIAL", reason_code="")
+        )
+        self.assertFalse(result.passed)
+        self.assertEqual(result.unverifiable, [])
+        failed = [c for c in result.checks if c.passed is False]
+        self.assertEqual(len(failed), 1)
+        self.assertIn("not stated", failed[0].actual)
+
+    def test_a_missing_citation_fails(self):
+        probe = self.probe(
+            expected={"claim_type": "PARTIAL"},
+            required_refs=["obs_1", "obs_2"],
+            unguessable_fields=["required_refs"],
+        )
+        result = self.audit(
+            probe, self.answer(claim_type="PARTIAL", evidence_refs=["obs_1"]),
+            retrieved=("obs_1", "obs_2"),
+        )
+        self.assertFalse(result.passed)
+        self.assertIn(
+            "probe cites the subject's own identifiers",
+            {c.name for c in result.checks if c.passed is False},
+        )
+
+    def test_a_stated_value_is_compared_as_a_number(self):
+        probe = self.probe(
+            expected={"claim_type": "DERIVED", "stated_value": 31.42}
+        )
+        good = self.audit(probe, self.answer(claim_type="DERIVED",
+                                             stated_value=31.42))
+        self.assertTrue(good.passed)
+        bad = self.audit(probe, self.answer(claim_type="DERIVED",
+                                            stated_value=31.4))
+        self.assertFalse(bad.passed)
+
+    def test_the_instruction_names_the_vocabulary_but_not_the_answer(self):
+        """
+        Stating the codes is protocol. Naming the right one would be the answer.
+        """
+        probe = self.probe(
+            expected={"claim_type": "PARTIAL"},
+            vocabulary=("EXACT", "PARTIAL", "UNKNOWN"),
+        )
+        text = probe.instructions()
+        for code in ("EXACT", "PARTIAL", "UNKNOWN"):
+            self.assertIn(code, text)
+        self.assertNotIn("the answer is", text.lower())
+
+    def test_the_probe_set_is_resolved_from_the_archive(self):
+        """
+        Every probe's answer key is read out of the snapshot, and every probe has
+        something a model could not guess.
+        """
+        import sys
+
+        from evidence_query import EvidenceQuery
+        from harness.probes import build_probes
+        from harness.runner import _query_connection
+        from harness.snapshot import default_snapshot_path
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        connection = _query_connection(snapshot)
+        query = EvidenceQuery.open(snapshot)
+        try:
+            probes = build_probes(connection, "AAPL", query.registry())
+        finally:
+            query.close()
+            connection.close()
+        self.assertGreaterEqual(len(probes), 5)
+        for probe in probes:
+            self.assertTrue(
+                probe.unguessable_fields,
+                f"{probe.probe_id} has no unguessable field, so a coin would "
+                "beat it and the probe measures nothing",
+            )
+            self.assertTrue(probe.expected)
+            self.assertTrue(probe.full_question())
+
+
+class TestTheTwoConsumerClasses(unittest.TestCase):
+    """
+    What a consumer is, decided mechanically from a run series.
+
+    The split is the useful output of 2.6.3: one model was perfect at finding
+    and citing evidence and could not read semantics at all, and one number
+    cannot say both. These tests pin the split without a model, so the two
+    verdicts cannot drift into one.
+    """
+
+    def series(self, **overrides):
+        """Three runs of a model that gets everything right, built per run.
+
+        A fresh dict per run rather than one dict repeated three times: sharing
+        the objects would let a single-row edit in a test leak into all three
+        runs, and a gate that quietly passes because of an alias is worse than
+        one that fails.
+        """
+        single_run = []
+        for test_id, capability in (
+            ("T1_exact_value", "retrieval"),
+            ("T2_series", "retrieval"),
+            ("T3_pagination", "pagination"),
+            ("T14_truncation_trap", "pagination"),
+            ("T4_point_in_time", "temporal"),
+            ("T6_reported_vs_derived", "semantic"),
+            ("T8_conflict", "semantic"),
+            ("T9_unavailable", "semantic"),
+            ("T10_concept_evolution", "semantic"),
+            ("T11_partial_mapping", "semantic"),
+            ("T12_non_comparable", "semantic"),
+            ("T13_provenance_chain", "provenance"),
+            ("probe:P1_reported_or_derived", "semantic"),
+            ("probe:P2_negative_state_cause", "semantic"),
+            ("probe:P3_disagreement_meaning", "semantic"),
+            ("probe:P4_partial_mapping_meaning", "semantic"),
+            ("probe:P5_two_concepts_one_series", "semantic"),
+        ):
+            verdict = overrides.get(test_id, "PASS")
+            single_run.append({
+                "test_id": test_id,
+                "consumer_capability": capability,
+                "verdict": verdict,
+                "stability": "stable_pass" if verdict == "PASS" else "stable_fail",
+                "failed_checks": [],
+                "provenance_check_failures": [],
+                "fabricated_identifiers": [],
+                "misfiled_identifiers": [],
+                "identifiers_cited": 3,
+                "off_surface_calls": [],
+                "tool_calls": 2,
+                "failed_tool_calls": 0,
+                "evidence_refs": 3,
+            })
+        return [dict(row) for row in single_run for _ in range(3)]
+
+    def assess(self, rows):
+        from harness.consumer import assess
+
+        return assess(rows, run_count=3)
+
+    def test_a_model_that_grounds_but_reads_nothing_is_a_bounded_consumer(self):
+        """
+        The 2.6.3 Nemotron shape, and the reason the classes are separate.
+
+        Evidence Consumer ACCEPTED, Semantic Consumer NOT_YET, classified as a
+        bounded consumer. Not rejected: rejecting a model that cites only real
+        identifiers would be throwing away the property the product is built on,
+        and a supervised second reader on the semantics is cheaper than that.
+        """
+        rows = self.series()
+        for row in rows:
+            if "probe:" in row["test_id"] or row["test_id"] in (
+                "T6_reported_vs_derived", "T8_conflict", "T9_unavailable",
+            ):
+                row["verdict"] = "FAIL"
+                row["stability"] = "stable_fail"
+        result = self.assess(rows)
+        self.assertEqual(
+            result["evidence_consumer"]["verdict"], "ACCEPTED"
+        )
+        self.assertEqual(result["semantic_consumer"]["verdict"], "NOT_YET")
+        self.assertEqual(result["classification"], "bounded / supervised consumer")
+
+    def test_a_model_that_invents_an_identifier_is_not_a_consumer(self):
+        """
+        One fabricated citation fails the whole class.
+
+        Not a rate. An invented observation id looks checkable to whoever reads
+        the answer, which is what makes it worse than no citation at all, and a
+        model that does it once is a model that will do it again.
+        """
+        rows = self.series()
+        rows[0]["fabricated_identifiers"] = ["obsarch_0000000000deadbeef"]
+        result = self.assess(rows)
+        self.assertEqual(result["evidence_consumer"]["verdict"], "REJECTED")
+        self.assertEqual(result["classification"], "not a consumer")
+        # And semantics are not even reached: there is nothing to build on.
+        self.assertEqual(result["semantic_consumer"]["verdict"], "NOT_REACHED")
+
+    def test_a_real_identifier_in_the_wrong_field_is_not_fabrication(self):
+        """
+        The mistake this round nearly made, pinned so it cannot be made again.
+
+        The auditor emits one check -- "every cited observation exists" -- for
+        *any* citation that is not an observation id, including a source-fact id
+        or a document id that the archive genuinely holds. Reading that check as
+        fabrication produced a REJECTED verdict for a model that had invented
+        nothing: all 77 of its citations were in the database, and it was
+        rejected for filing six of them in the wrong column.
+
+        Fabricating `obs_ff00...` and filing a real `sfid_...` in the wrong field
+        are different faults with different consequences, and one check name
+        cannot carry the difference.
+        """
+        rows = self.series()
+        rows[0]["misfiled_identifiers"] = [
+            {"identifier": "sfid_b5229f1711c68622f937916d70285775",
+             "kind": "source_fact"},
+        ]
+        rows[1]["provenance_check_failures"] = [
+            "every cited observation exists"
+        ]
+        criterion = next(
+            c for c in self.assess(rows)["evidence_consumer"]["criteria"]
+            if c["id"] == "no_fabricated_identifiers"
+        )
+        self.assertTrue(
+            criterion["passed"],
+            "a real identifier in the wrong field is not a fabrication",
+        )
+        self.assertIn("0 the archive does not hold", criterion["observed"])
+        # It still costs, on the criterion that is about the wrong field.
+        rate = next(
+            c for c in self.assess(rows)["evidence_consumer"]["criteria"]
+            if c["id"] == "citations_are_retrieved_and_in_namespace"
+        )
+        self.assertLess(rate["observed"].count("misfiled"), 3)
+
+    def test_a_test_the_run_set_never_contained_is_not_a_failure(self):
+        """
+        A screening run carries five sealed tests, not fifteen.
+
+        Without this the gate would report that a model fails point-in-time
+        because point-in-time was never asked, and reject it for a question
+        nobody put to it.
+        """
+        rows = [r for r in self.series() if r["test_id"] not in (
+            "T4_point_in_time", "T14_truncation_trap",
+        )]
+        result = self.assess(rows)
+        criterion = next(
+            c for c in result["evidence_consumer"]["criteria"]
+            if c["id"] == "temporal_discipline"
+        )
+        self.assertIsNone(criterion["passed"])
+        self.assertIn("not exercised", criterion["observed"])
+        # And it carries no weight: the retrieval criterion is exercised and
+        # passing, so the class is not failed by the absent one.
+        self.assertEqual(
+            result["evidence_consumer"]["verdict"], "ACCEPTED"
+        )
+
+    def test_a_single_off_surface_call_rejects(self):
+        rows = self.series()
+        rows[2]["off_surface_calls"] = ["get_validation_sql"]
+        self.assertEqual(
+            self.assess(rows)["evidence_consumer"]["verdict"], "REJECTED"
+        )
+
+    def test_a_model_that_answers_from_memory_is_not_an_evidence_consumer(self):
+        rows = self.series()
+        for row in rows:
+            row["tool_calls"] = 0
+        result = self.assess(rows)
+        criterion = next(
+            c for c in result["evidence_consumer"]["criteria"]
+            if c["id"] == "uses_the_tool_surface"
+        )
+        self.assertFalse(criterion["passed"])
+
+    def test_a_model_that_reads_everything_is_a_candidate_autonomous_consumer(self):
+        """
+        The bar for the top class, stated so it is not a moving target: ground
+        every citation, stay on the surface, and read the semantic distinctions
+        in a majority of runs rather than once by luck.
+        """
+        result = self.assess(self.series())
+        self.assertEqual(result["semantic_consumer"]["verdict"], "ACCEPTED")
+        self.assertEqual(
+            result["classification"], "candidate autonomous consumer"
+        )
+
+    def test_an_unstable_capability_does_not_count_as_read(self):
+        """
+        One pass out of three is not a capability.
+
+        Averaging it into a rate would say the model reads semantics a third of
+        the time, which is a claim about a consumer that nobody would accept.
+        """
+        rows = self.series()
+        for row in rows:
+            if row["test_id"] == "probe:P1_reported_or_derived":
+                continue
+        seen = 0
+        for row in rows:
+            if row["test_id"] == "probe:P1_reported_or_derived":
+                seen += 1
+                row["verdict"] = "PASS" if seen == 1 else "FAIL"
+                row["stability"] = "unstable"
+        criterion = next(
+            c for c in self.assess(rows)["semantic_consumer"]["criteria"]
+            if c["id"] == "reads_a_derived_figure"
+        )
+        self.assertFalse(criterion["passed"])
+
 
 class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
     """
@@ -707,6 +1180,114 @@ class TestFindingsFromTheFirstRealModelRun(unittest.TestCase):
         budget.record_sent("T3")
         self.assertFalse(budget.can_start("T4"))
         self.assertIn("budget of 3", budget.stopped_because)
+
+    def test_a_gateway_reports_an_upstream_failure_with_whatever_status(self):
+        """
+        A 400 that carries `provider_name` is a provider failure, not a network
+        one.
+
+        Found by being wrong: an OpenRouter endpoint whose backing provider was
+        degraded answered `400` with `Provider returned error` and a
+        `provider_name`, and a classifier that read only the status called it a
+        network failure. Wrong twice over -- the retry advice differs, and the
+        recorded reason becomes a claim about the network that the response
+        itself contradicts.
+        """
+        from harness.providers import classify_error_body, classify_http_failure
+
+        degraded = (
+            '{"error":{"message":"Provider returned error","code":400,'
+            '"metadata":{"raw":"DEGRADED function cannot be invoked"},'
+            '"provider_name":"nvidia"}}'
+        )
+        self.assertEqual(classify_http_failure(400, degraded), "provider_error")
+        self.assertEqual(
+            classify_error_body('{"error":{"code":503,"message":"overloaded"}}'),
+            "provider_error",
+        )
+
+    def test_a_refused_request_of_ours_is_not_retried(self):
+        """
+        A 4xx naming our own payload is a harness fault and sending it again
+        gets the same refusal.
+        """
+        from harness.budget import SIGNALS
+        from harness.providers import classify_http_failure
+
+        kind = classify_http_failure(
+            400, '{"error":{"message":"Invalid JSON payload",'
+                 '"type":"invalid_request_error"}}'
+        )
+        self.assertEqual(kind, "request_rejected")
+        self.assertFalse(SIGNALS[kind]["retry"])
+
+    def test_a_slow_provider_does_not_crash_the_run(self):
+        """
+        A read that stalls mid-response arrives as a bare `TimeoutError`, and
+        `urlopen` does not wrap it.
+
+        Uncaught it ends the process. A slow provider would then look like a
+        crash rather than like a provider that did not answer -- one level worse
+        than a misclassification, because there is no classification left to
+        correct. Found this way: a real 2.6.4 run died on one.
+        """
+        from unittest import mock
+
+        from harness.budget import RequestBudget
+        from harness.providers import (
+            OpenAICompatibleClient,
+            ProviderConfig,
+            TransportError,
+        )
+
+        client = OpenAICompatibleClient(
+            ProviderConfig(
+                base_url="https://example.invalid/v1", model="m", provider="p",
+            ),
+            api_key="not-a-real-key",
+        )
+        budget = RequestBudget(None)
+        client.budget = budget
+
+        with mock.patch(
+            "harness.providers.urllib.request.urlopen",
+            side_effect=TimeoutError("read operation timed out"),
+        ):
+            with self.assertRaises(TransportError) as caught:
+                client.complete([{"role": "user", "content": "hi"}])
+
+        self.assertEqual(caught.exception.kind, "network")
+        # Counted, classified, and retryable -- rather than taking the run with
+        # it and leaving the attempt unrecorded.
+        self.assertEqual(budget.spent, 1)
+        self.assertEqual(budget.signals["network"], 1)
+        self.assertTrue(budget.should_retry("network"))
+        self.assertFalse(
+            budget.attempts[-1].get("is_model_finding", False)
+        )
+
+    def test_a_reset_connection_is_classified_rather_than_fatal(self):
+        from unittest import mock
+
+        from harness.providers import (
+            OpenAICompatibleClient,
+            ProviderConfig,
+            TransportError,
+        )
+
+        client = OpenAICompatibleClient(
+            ProviderConfig(
+                base_url="https://example.invalid/v1", model="m", provider="p"
+            ),
+            api_key="not-a-real-key",
+        )
+        with mock.patch(
+            "harness.providers.urllib.request.urlopen",
+            side_effect=ConnectionResetError("peer closed"),
+        ):
+            with self.assertRaises(TransportError) as caught:
+                client.complete([{"role": "user", "content": "hi"}])
+        self.assertEqual(caught.exception.kind, "network")
 
     def test_a_withdrawn_model_is_not_retried(self):
         """

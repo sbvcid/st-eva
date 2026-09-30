@@ -49,6 +49,16 @@ SIGNALS: Dict[str, Dict[str, Any]] = {
         "is_model_finding": False,
         "note": "the model or its endpoint is gone; retrying cannot help",
     },
+    "request_rejected": {
+        "retry": False,
+        "retry_after_seconds": 0,
+        "is_model_finding": False,
+        "note": (
+            "the endpoint refused the request the harness sent; sending it "
+            "again gets the same refusal, so this is a harness fault to look at "
+            "rather than a provider condition to wait out"
+        ),
+    },
     "malformed_response": {
         "retry": True,
         "retry_after_seconds": 15,

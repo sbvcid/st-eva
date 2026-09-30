@@ -241,9 +241,54 @@ a `budget.json` saying exactly that.
 `harness/providers.py` takes the credential from the environment and never writes
 it into a config, a trace or a run directory.
 
-Reports: `reports/OPENROUTER_SCREENING.md` (2.6.2, the first cloud-model round)
-and `reports/AMBIGUITY_SEMANTICS_AND_VARIANCE.md` (2.6.3, the surface fix and
-the first run series).
+Reports: `reports/OPENROUTER_SCREENING.md` (2.6.2, the first cloud-model round),
+`reports/AMBIGUITY_SEMANTICS_AND_VARIANCE.md` (2.6.3, the surface fix and the
+first run series) and `reports/SEMANTIC_CONSUMER_SCREENING.md` (2.6.4, two
+consumer classes and the semantic probes).
+
+## Two consumer classes
+
+The sealed suite reports one number, and 2.6.3 showed what one number hides: a
+model can be perfect at finding and citing evidence and unable to read it, and
+both halves are real. So a model is assessed twice.
+
+```
+Evidence Consumer   find the evidence, cite it truthfully
+Semantic Consumer   say what the evidence means
+```
+
+`harness/consumer.py` decides both from a run series, never from a single run and
+never from a judgement call. A criterion the run set never exercised is reported
+`n/a` and carries no weight; a criterion is a conjunction over its tests rather
+than a sum, so an easy test cannot carry a hard one; and the evidence gate is
+evaluated first, because a model that invents citations may read semantics
+beautifully and saying otherwise would claim its accuracy transfers to claims
+that do not exist.
+
+The outcome is a per-model statement rather than a score:
+
+```
+candidate autonomous consumer | bounded / supervised consumer | not a consumer
+```
+
+## Semantic probes
+
+Five questions whose answer is a **field** rather than prose —
+`claim_type`, `semantic_state`, `reason_code`, `operation_ref`, `stated_value` —
+so the grader compares values and never infers a claim from English. Every probe
+is unguessable in at least one field, every answer key is read from the archive at
+build time, and P4/P5 read their comparability answer from the registry's own
+`series_breaks` rather than restating its rule.
+
+Probes are an experiment protocol. A test asserts their fields appear nowhere in
+`evidence_query.py` or `sqlite_archive.py`, and that the field set does not appear
+as a group. `reason_code` is exempt on purpose: it is the archive's own field, so a
+probe asking for it is the model quoting the archive.
+
+A test id is also a path, and on Windows a colon in a filename does not fail — it
+redirects the write to an alternate data stream that glob cannot see and git will
+not commit. Probe ids are `probe-…`, and `test_id_must_be_a_filename` refuses a
+reserved character at mint time.
 
 ## What building this found in the evaluator
 

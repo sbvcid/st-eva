@@ -35,6 +35,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -46,6 +47,7 @@ if HERE not in sys.path:
 
 from evidence_query import EvidenceQuery
 from harness import report as report_module
+from harness import consumer as consumer_module
 from harness.auditor import (
     CLASS_DATASET,
     CLASS_EVALUATOR,
@@ -54,6 +56,8 @@ from harness.auditor import (
     Check,
 )
 from harness.dataset import Dataset, Test, build_dataset
+from harness.probes import as_tests as probes_as_tests
+from harness.probes import probe_dataset
 from harness.providers import ProviderConfig
 from harness.runner import Runner, TestResult, _query_connection
 from harness.schemas import tool_schemas
@@ -136,6 +140,20 @@ CONSUMER_CAPABILITY: Dict[str, str] = {
     "T13_provenance_chain": "provenance",
     "T14_truncation_trap": "pagination",
     "T15_inference_boundary": "reported vs derived",
+}
+
+# What each probe is for, in the same language.
+#
+# A probe is not a sealed test and gets its own line here, because the two are
+# measured differently: a sealed test grades a prose answer, and a probe grades
+# fields. Putting them in one table would invite reading a probe's rate as if it
+# were comparable to a sealed test's.
+PROBE_CAPABILITY: Dict[str, str] = {
+    "probe-P1_reported_or_derived": "reported vs derived",
+    "probe-P2_negative_state_cause": "negative states",
+    "probe-P3_disagreement_meaning": "conflict handling",
+    "probe-P4_partial_mapping_meaning": "concept semantics",
+    "probe-P5_two_concepts_one_series": "concept semantics",
 }
 
 # Retries are for the transport, never for the model. A refused request and a
@@ -501,6 +519,56 @@ def make_target(model: Dict[str, Any], api_key: str) -> ToolCallingTarget:
     return ToolCallingTarget(config=config, client=None, max_exchanges=MAX_EXCHANGES)
 
 
+def build_probe_phase(snapshot_path: str) -> Dataset:
+    """
+    The five probes, resolved against the snapshot and wrapped as `Test`s.
+
+    Built from the archive rather than written down, for the same reason the
+    sealed dataset is: a hard-coded expected value is a test that can be
+    satisfied by the evaluator agreeing with itself. P4 and P5 take their
+    comparability answer from the core registry's own `series_breaks`, because
+    whether a series is comparable is the registry's rule and a probe that
+    restates it would eventually disagree with it.
+    """
+    from harness.runner import _query_connection
+    from evidence_query import EvidenceQuery
+
+    connection = _query_connection(snapshot_path)
+    query = EvidenceQuery.open(snapshot_path)
+    try:
+        tests = probes_as_tests(connection, "AAPL", query.registry())
+    finally:
+        query.close()
+        connection.close()
+    dataset = Dataset(tests, snapshot_path)
+    dataset.dataset_id = "steva-003a-semantic-probes"
+    dataset.version = "1"
+    return dataset
+
+
+def build_screen2(snapshot_path: str) -> Dataset:
+    """
+    The sealed screening five, plus the five probes, in one run.
+
+    One run series rather than two, for a reason about what is being controlled
+    for. 2.6.4's comparison is between models, and every source of variation
+    except the model has to be held still: same snapshot, same evaluator, same
+    tool schema, same prompt, same day, same provider. Splitting the probes into
+    their own run would mean a second set of conditions, and a difference between
+    a model's screening score and its probe score would then be a difference
+    between two runs rather than between two kinds of question.
+
+    The five sealed tests keep their test_ids unchanged, so a 2.6.4 screening
+    result is comparable with 2.6.2's and 2.6.3's for the same tests.
+    """
+    dataset = build_dataset(snapshot_path)
+    sealed = [t for t in dataset.tests if t.test_id in SCREENING_TESTS]
+    dataset.tests = sealed + build_probe_phase(snapshot_path).tests
+    dataset.dataset_id = "steva-003b-screening-plus-probes"
+    dataset.version = "2"
+    return dataset
+
+
 def run_phase(
     phase: str,
     model: Dict[str, Any],
@@ -525,6 +593,10 @@ def run_phase(
         dataset, _ = build_smoke_dataset(snapshot_path)
     elif phase == "screen":
         dataset.tests = [t for t in dataset.tests if t.test_id in SCREENING_TESTS]
+    elif phase == "screen2":
+        dataset = build_screen2(snapshot_path)
+    elif phase == "probes":
+        dataset = build_probe_phase(snapshot_path)
     elif phase != "full":
         raise SystemExit(f"unknown phase {phase!r}")
 
@@ -843,6 +915,77 @@ def reaudit_phase(model: Dict[str, Any], phase: str, snapshot_path: str) -> Dict
     }
 
 
+def _identifier_kinds(snapshot_path: str) -> Dict[str, str]:
+    """
+    Every identifier the archive holds, and which kind each one is.
+
+    Built so a cited identifier can be classified against the archive rather
+    than inferred from an auditor's check name.
+
+    That distinction is the whole argument, and it took three attempts to get
+    right in one round. The auditor emits one check called "every cited
+    observation exists" for *any* citation that is not an observation id, and
+    three different faults all land on it: an invented `obs_ff00…`, a real
+    `sfid_…` filed in the wrong column, and a line of tool output copied into
+    the array. Reading that check as fabrication rejects a model for any of
+    the three, and only one of them is invention.
+
+    `kinds` says what the archive holds. The shape test below says what the
+    model was trying to write. Between them a citation is one of:
+
+        fabricated  identifier-shaped, and the archive does not hold it
+        misfiled    the archive holds it, as a different kind of identifier
+        not_an_id   not identifier-shaped at all -- a transcript line
+
+    The third is a real fault and a real one for a consumer to worry about, but
+    it is a contract violation rather than a false statement about the archive,
+    and it must not be counted as invention.
+    """
+    connection = _query_connection(snapshot_path)
+    kinds: Dict[str, str] = {}
+    for row in connection.execute("SELECT observation_id FROM observations"):
+        kinds[row[0]] = "observation"
+    for row in connection.execute(
+        "SELECT DISTINCT source_fact_id FROM observations"
+        " WHERE source_fact_id IS NOT NULL"
+    ):
+        kinds.setdefault(row[0], "source_fact")
+    for row in connection.execute("SELECT document_id FROM source_documents"):
+        kinds.setdefault(row[0], "document")
+    for row in connection.execute("SELECT lineage_id FROM observation_lineage"):
+        kinds.setdefault(row[0], "lineage")
+    for row in connection.execute("SELECT ref FROM derived_values"):
+        kinds.setdefault(row[0], "derived")
+    connection.close()
+    return kinds
+
+
+# The prefixes and shapes the archive issues, and nothing else.
+#
+# A token is "identifier-shaped" if it could plausibly be one of ours. The test
+# is deliberately about shape rather than about lookup: `sfid_…` and `doc_…` are
+# ours even when the particular one is not in the database, and a sentence with
+# spaces and an arrow never is, however much of it came from a tool result.
+IDENTIFIER_SHAPES = re.compile(
+    r"^(obs|obsarch|obs_|obsarch_|sfid|doc|line|der|concept|asset|ctx|val)_"
+    r"[A-Za-z0-9_.\-]*$"
+    r"|^obsarch_[0-9a-f]{8,}$"
+    r"|^der:[A-Za-z0-9_.\-:]+$"
+    r"|^obs:[A-Za-z0-9_.\-:]+$"
+)
+
+
+def classify_citation(ref: str, kinds: Dict[str, str]) -> str:
+    """
+    One citation, against the archive: fabricated, misfiled, or not an id.
+    """
+    if ref in kinds:
+        return "observation" if kinds[ref] == "observation" else "misfiled"
+    if IDENTIFIER_SHAPES.match(ref):
+        return "fabricated"
+    return "not_an_identifier"
+
+
 def variance_phase(
     model: Dict[str, Any],
     phase: str,
@@ -913,27 +1056,59 @@ def variance_phase(
         }
 
     runs: List[Dict[str, Any]] = []
+    kinds = _identifier_kinds(snapshot_path)
     for run_dir in run_dirs:
         rows: Dict[str, Dict[str, Any]] = {}
         for path in sorted(glob.glob(os.path.join(run_dir, "audit", "*.json"))):
             stored = json.load(open(path, encoding="utf-8"))
             stop = (stored.get("target_run") or {}).get("stop_reason")
+            failed = [
+                c["name"] for c in stored["audit"]["checks"]
+                if c["passed"] is False
+            ]
+            cited = list(stored["answer"]["evidence_refs"])
+            verdict_of_citation = [
+                (ref, classify_citation(ref, kinds)) for ref in cited
+            ]
             rows[stored["test_id"]] = {
                 "verdict": verdict_of_unread(
                     stored["audit"]["passed"],
                     stop in ("transport_error", "budget_exhausted"),
                 ),
                 "stop_reason": stop,
-                "failed_checks": [
-                    c["name"] for c in stored["audit"]["checks"]
-                    if c["passed"] is False
+                "failed_checks": failed,
+                # The two citation checks, by name. Kept, because they are the
+                # grader's own record -- but not used to decide fabrication,
+                # which is decided against the archive above.
+                "provenance_check_failures": [
+                    name for name in failed
+                    if name in (
+                        "every cited observation exists",
+                        "cited observations were actually retrieved",
+                    )
                 ],
-                "refusals": [
-                    c["name"] for c in stored["audit"]["checks"]
-                    if c["passed"] is None
+                "identifiers_cited": len(cited),
+                "fabricated_identifiers": [
+                    ref for ref, kind in verdict_of_citation
+                    if kind == "fabricated"
+                ],
+                "misfiled_identifiers": [
+                    {"identifier": ref, "kind": kinds[ref]}
+                    for ref, kind in verdict_of_citation if kind == "misfiled"
+                ],
+                "non_identifier_citations": [
+                    ref for ref, kind in verdict_of_citation
+                    if kind == "not_an_identifier"
                 ],
                 "tool_calls": len(stored.get("trace", [])),
-                "evidence_refs": len(stored["answer"]["evidence_refs"]),
+                "failed_tool_calls": len([
+                    call for call in stored.get("trace", []) if call.get("error")
+                ]),
+                "off_surface_calls": [
+                    call["operation"] for call in stored.get("trace", [])
+                    if call.get("operation") not in OPERATIONS
+                ],
+                "evidence_refs": len(cited),
             }
         budget = {}
         budget_path = os.path.join(run_dir, "budget.json")
@@ -956,7 +1131,9 @@ def variance_phase(
         passed = verdicts.count("PASS")
         tests.append({
             "test_id": test_id,
-            "consumer_capability": CONSUMER_CAPABILITY.get(test_id, "unclassified"),
+            "consumer_capability": CONSUMER_CAPABILITY.get(
+                test_id, PROBE_CAPABILITY.get(test_id, "unclassified")
+            ),
             "verdicts": verdicts,
             "passes": passed,
             "fails": verdicts.count("FAIL"),
@@ -972,6 +1149,16 @@ def variance_phase(
                 name for row in observed if row
                 for name in row["failed_checks"]
             }),
+            "provenance_check_failures": sorted({
+                name for row in observed if row
+                for name in row["provenance_check_failures"]
+            }),
+            "off_surface_calls": sorted({
+                call for row in observed if row
+                for call in row["off_surface_calls"]
+            }),
+            "tool_calls": [row["tool_calls"] for row in observed if row],
+            "evidence_refs": [row["evidence_refs"] for row in observed if row],
         })
 
     capability: Dict[str, Dict[str, Any]] = {}
@@ -988,6 +1175,27 @@ def variance_phase(
         entry["stable_pass"] += 1 if test["stability"] == "stable_pass" else 0
         entry["unstable"] += 1 if test["stability"] == "unstable" else 0
 
+    # The gate reads per-test-run rows, not the aggregated ones: it needs each
+    # run's tool calls and citation checks separately, and a criterion that
+    # counted test *kinds* would let a capability that passed in one run out of
+    # three look like three passes.
+    flat_rows: List[Dict[str, Any]] = []
+    for run in runs:
+        for test_id, row in run["tests"].items():
+            flat_rows.append({
+                "test_id": test_id,
+                "verdict": row["verdict"],
+                "tool_calls": row["tool_calls"],
+                "failed_tool_calls": row["failed_tool_calls"],
+                "off_surface_calls": row["off_surface_calls"],
+                "provenance_check_failures": row["provenance_check_failures"],
+                "evidence_refs": row["evidence_refs"],
+                "identifiers_cited": row["identifiers_cited"],
+                "fabricated_identifiers": row["fabricated_identifiers"],
+                "misfiled_identifiers": row["misfiled_identifiers"],
+                "non_identifier_citations": row["non_identifier_citations"],
+            })
+
     out = {
         "phase": "variance",
         "model_id": model["model_id"],
@@ -998,6 +1206,15 @@ def variance_phase(
         "tests": tests,
         "by_consumer_capability": capability,
         "grounding": _grounding_summary(runs),
+        # Both gates, decided from the same rows, so a verdict and the evidence
+        # behind it are read from one artifact and cannot disagree.
+        "consumer": consumer_module.assess(
+            flat_rows, len(runs), excluded
+        ),
+        "probe_set": probe_dataset(
+            _query_connection(snapshot_path), "AAPL",
+            EvidenceQuery.open(snapshot_path).registry(),
+        ),
     }
     path = os.path.join(
         base, f"variance-{model['dir']}-{phase}.json"
@@ -1049,11 +1266,40 @@ def _grounding_summary(runs: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _print_consumer(assessment: Dict[str, Any]) -> None:
+    """
+    The two verdicts, each with the evidence that decided it.
+
+    Printed with every criterion's observation next to its threshold, because a
+    gate whose reasoning is not visible is an assertion. And the two classes are
+    never combined into a single label, because the whole reason for splitting
+    them is that a model can be one without the other.
+    """
+    evidence = assessment["evidence_consumer"]
+    semantic = assessment["semantic_consumer"]
+    print(
+        f"\n   EVIDENCE CONSUMER: {evidence['verdict']}"
+        f"   SEMANTIC CONSUMER: {semantic['verdict']}"
+        f"   -> {assessment['classification']}"
+    )
+    for label, gate in (("evidence", evidence), ("semantic", semantic)):
+        print(f"     {label}:")
+        for criterion in gate["criteria"]:
+            mark = {
+                True: "ok  ", False: "FAIL", None: "n/a ",
+            }[criterion["passed"]]
+            print(
+                f"       [{mark}] {criterion['id']}: {criterion['observed']} "
+                f"(needs {criterion['threshold']})"
+            )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "phase",
-        choices=("smoke", "screen", "full", "reaudit", "variance"),
+        choices=("smoke", "screen", "screen2", "probes", "full", "reaudit",
+                 "variance", "consumer"),
         help=(
             "which phase to run; reaudit re-grades a stored run and variance "
             "reads a run series -- neither sends a request"
@@ -1143,9 +1389,10 @@ def main() -> int:
                 )
             print(
                 f"\n   identifiers cited across runs: "
-                f"{outcome['grounding']['identifiers_cited']}\n"
+                f"{outcome['grounding']['identifiers_cited']}"
             )
-            print(f"   written to {outcome['path']}\n", flush=True)
+            _print_consumer(outcome["consumer"])
+            print(f"\n   written to {outcome['path']}\n", flush=True)
             summary.append(outcome)
             continue
         if args.phase == "reaudit":

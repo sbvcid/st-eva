@@ -1,0 +1,1522 @@
+[
+  {
+    "elapsed_seconds": 3.37,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751376-sc3iKv06h9DjxTkG325d",
+    "test_id": "T1_exact_value",
+    "usage": {
+      "completion_tokens": 146,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2164,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 140,
+        "video_tokens": 0
+      },
+      "total_tokens": 2310
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "T1_exact_value",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "T1_exact_value",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 0.48,
+    "error": "no completion in the response from https://openrouter.ai/api/v1/chat/completions: {\"id\": \"gen-1790751379-aF45ACF9BvlE6WFkXCSe\", \"error\": {\"message\": \"Provider returned an empty response\", \"code\": 502, \"metadata\": {\"error_type\": \"provider_unavailable\"}}}",
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "T1_exact_value",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 1.66,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751379-57XWaqjAUrYirim3rObD",
+    "test_id": "T3_pagination",
+    "usage": {
+      "completion_tokens": 97,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2158,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2255
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "T3_pagination",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "T3_pagination",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 10.91,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751381-4JEoLDsqnRCqXnsMvjzt",
+    "test_id": "T3_pagination",
+    "usage": {
+      "completion_tokens": 853,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18672,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2253,
+        "video_tokens": 0
+      },
+      "total_tokens": 19525
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "T3_pagination",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 5,
+    "provider_generation_id": null,
+    "test_id": "T3_pagination",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 12.09,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751392-FXDwoFDiCQP7dPYgd7Jc",
+    "test_id": "T3_pagination",
+    "usage": {
+      "completion_tokens": 860,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23829,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 19523,
+        "video_tokens": 0
+      },
+      "total_tokens": 24689
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 7,
+    "provider_generation_id": null,
+    "test_id": "T3_pagination",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 22.88,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": "gen-1790751404-JHunFVFPkuIxKD5FgPcx",
+    "test_id": "T3_pagination",
+    "usage": {
+      "completion_tokens": 1600,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 27844,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 24687,
+        "video_tokens": 0
+      },
+      "total_tokens": 29444
+    }
+  },
+  {
+    "elapsed_seconds": 6.37,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": "gen-1790751427-7DZfJgAW77o10IfNrpp7",
+    "test_id": "T3_pagination",
+    "usage": {
+      "completion_tokens": 1043,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 29526,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 29442,
+        "video_tokens": 0
+      },
+      "total_tokens": 30569
+    }
+  },
+  {
+    "elapsed_seconds": 2.33,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751433-Ilsr5j84H17a2EQPfAi0",
+    "test_id": "T6_reported_vs_derived",
+    "usage": {
+      "completion_tokens": 180,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2152,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2332
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "T6_reported_vs_derived",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "T6_reported_vs_derived",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 2.16,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751436-jwNxJCoQUNDUb9hrNrj2",
+    "test_id": "T6_reported_vs_derived",
+    "usage": {
+      "completion_tokens": 149,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2562,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2711
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "T6_reported_vs_derived",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 10.55,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751438-6Bu1sDFmAXr2ygBtJuX9",
+    "test_id": "T6_reported_vs_derived",
+    "usage": {
+      "completion_tokens": 442,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 3348,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 140,
+        "video_tokens": 0
+      },
+      "total_tokens": 3790
+    }
+  },
+  {
+    "elapsed_seconds": 1.62,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751448-iv472Ry6Wv7CXelrwcKw",
+    "test_id": "T8_conflict",
+    "usage": {
+      "completion_tokens": 38,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2150,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2188
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 3.76,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751450-afnY1C5Lmg9DhOkGdrJs",
+    "test_id": "T8_conflict",
+    "usage": {
+      "completion_tokens": 247,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2825,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2186,
+        "video_tokens": 0
+      },
+      "total_tokens": 3072
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 11.35,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751454-50XO7sceSguIobCqCDZm",
+    "test_id": "T8_conflict",
+    "usage": {
+      "completion_tokens": 955,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 132156,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 140,
+        "video_tokens": 0
+      },
+      "total_tokens": 133111
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 6,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 7,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 8,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 9,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 9.41,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": "gen-1790751465-CAfiiHNzW2AH6glGZF8B",
+    "test_id": "T8_conflict",
+    "usage": {
+      "completion_tokens": 919,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 139600,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 133109,
+        "video_tokens": 0
+      },
+      "total_tokens": 140519
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 11,
+    "provider_generation_id": null,
+    "test_id": "T8_conflict",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 12.55,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": "gen-1790751475-twaD2JVzN2Z9WbIDam7i",
+    "test_id": "T8_conflict",
+    "usage": {
+      "completion_tokens": 921,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 167368,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 140517,
+        "video_tokens": 0
+      },
+      "total_tokens": 168289
+    }
+  },
+  {
+    "elapsed_seconds": 2.1,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751487-GqAJPqa6OQwskKIqcdSo",
+    "test_id": "T13_provenance_chain",
+    "usage": {
+      "completion_tokens": 131,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2169,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2300
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 3.48,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751489-TP33wi8RHK5axeyyGotW",
+    "test_id": "T13_provenance_chain",
+    "usage": {
+      "completion_tokens": 337,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 5740,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 6077
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 5,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 6,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 7,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 8,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 9.68,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751493-zfGCKnrquQlIoQfmgWV1",
+    "test_id": "T13_provenance_chain",
+    "usage": {
+      "completion_tokens": 333,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 14896,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 15229
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 10,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 11,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 12,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 6.66,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": "gen-1790751503-oPTckPT4jD7N8zNxIsgT",
+    "test_id": "T13_provenance_chain",
+    "usage": {
+      "completion_tokens": 349,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 31225,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 6075,
+        "video_tokens": 0
+      },
+      "total_tokens": 31574
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 14,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 15,
+    "provider_generation_id": null,
+    "test_id": "T13_provenance_chain",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 13.51,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": "gen-1790751509-C7KsqqZ8352XsLu9unq8",
+    "test_id": "T13_provenance_chain",
+    "usage": {
+      "completion_tokens": 1442,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 34989,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 31572,
+        "video_tokens": 0
+      },
+      "total_tokens": 36431
+    }
+  },
+  {
+    "elapsed_seconds": 1.25,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751523-maHPV4lUp87srK3Ie8RZ",
+    "test_id": "probe:P1_reported_or_derived",
+    "usage": {
+      "completion_tokens": 40,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2442,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2482
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "probe:P1_reported_or_derived",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 3.22,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751524-lrzBhbJVIxGoLdrYRFpW",
+    "test_id": "probe:P1_reported_or_derived",
+    "usage": {
+      "completion_tokens": 234,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 3106,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 3340
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": null,
+    "test_id": "probe:P1_reported_or_derived",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "probe:P1_reported_or_derived",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 20.19,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751527-9RGZAhLKQC6CgdMscjfC",
+    "test_id": "probe:P1_reported_or_derived",
+    "usage": {
+      "completion_tokens": 1080,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 5271,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 3338,
+        "video_tokens": 0
+      },
+      "total_tokens": 6351
+    }
+  },
+  {
+    "elapsed_seconds": 2.41,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751547-ogCePZjDVx2FlIIHmIfs",
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": {
+      "completion_tokens": 176,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2450,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 128,
+        "video_tokens": 0
+      },
+      "total_tokens": 2626
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 1.51,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751550-me9tAkwf62ixsNrLCnYp",
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": {
+      "completion_tokens": 122,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 3372,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2450,
+        "video_tokens": 0
+      },
+      "total_tokens": 3494
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 5,
+    "provider_generation_id": null,
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 8.68,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751551-JcHlUssSlzgru8vJO4id",
+    "test_id": "probe:P2_negative_state_cause",
+    "usage": {
+      "completion_tokens": 757,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 3665,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 3372,
+        "video_tokens": 0
+      },
+      "total_tokens": 4422
+    }
+  },
+  {
+    "elapsed_seconds": 1.78,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751560-8vfguBELCSNXh5TigYXx",
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": {
+      "completion_tokens": 104,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2441,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2545
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 15.63,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751562-wMQUpUd00uYlXz4jnBaQ",
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": {
+      "completion_tokens": 974,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 8433,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 9407
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 5,
+    "provider_generation_id": null,
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 6,
+    "provider_generation_id": null,
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 15.47,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751578-gTSwJiWInGxXBH0cm0VF",
+    "test_id": "probe:P3_disagreement_meaning",
+    "usage": {
+      "completion_tokens": 1454,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 22157,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 23611
+    }
+  },
+  {
+    "elapsed_seconds": 2.02,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751593-qUaDpSNkSZZvTTLoXw6l",
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": {
+      "completion_tokens": 87,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2453,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 140,
+        "video_tokens": 0
+      },
+      "total_tokens": 2540
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 2.3,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751595-Kwe4LtB0KFbK0BMkLcpQ",
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": {
+      "completion_tokens": 165,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 3291,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 3456
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 5,
+    "provider_generation_id": null,
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 16.63,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751597-NZQwQJmBPlyvK4P7eJkB",
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": {
+      "completion_tokens": 1600,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 280176,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 281776
+    }
+  },
+  {
+    "elapsed_seconds": 26.98,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": "gen-1790751614-CRp66oGU5L9seHvD2HkI",
+    "test_id": "probe:P4_partial_mapping_meaning",
+    "usage": {
+      "completion_tokens": 869,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 281814,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 142,
+        "video_tokens": 0
+      },
+      "total_tokens": 282683
+    }
+  },
+  {
+    "elapsed_seconds": 1.57,
+    "error": null,
+    "index": 0,
+    "provider_generation_id": "gen-1790751641-E1JPMfP7ig35ElpBhHFC",
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": {
+      "completion_tokens": 91,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2453,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2108,
+        "video_tokens": 0
+      },
+      "total_tokens": 2544
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 1.74,
+    "error": null,
+    "index": 1,
+    "provider_generation_id": "gen-1790751643-QIKFVrQG7d3qCfWgj8BU",
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": {
+      "completion_tokens": 102,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 2783,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 2885
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 4,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 5,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 15.92,
+    "error": null,
+    "index": 2,
+    "provider_generation_id": "gen-1790751644-G4reNtdQ1H5w69ysSnM3",
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": {
+      "completion_tokens": 1475,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 57228,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2105,
+        "video_tokens": 0
+      },
+      "total_tokens": 58703
+    }
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 7,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 8,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 9,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": null,
+    "error": null,
+    "index": 10,
+    "provider_generation_id": null,
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": null
+  },
+  {
+    "elapsed_seconds": 12.77,
+    "error": null,
+    "index": 3,
+    "provider_generation_id": "gen-1790751660-oGqKuGjUcIvOYn1AS5dj",
+    "test_id": "probe:P5_two_concepts_one_series",
+    "usage": {
+      "completion_tokens": 1342,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 64197,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 58701,
+        "video_tokens": 0
+      },
+      "total_tokens": 65539
+    }
+  }
+]

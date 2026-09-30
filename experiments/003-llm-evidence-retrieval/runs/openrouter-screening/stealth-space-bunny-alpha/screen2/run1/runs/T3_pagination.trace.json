@@ -1,0 +1,115 @@
+{
+  "answer": {
+    "answer": "ST-EVA holds AAPL's revenue series as SOURCE_REPORTED, with 339 points. The series-level count (point_count = 339 on get_metric_history, total_count = 339 on page) is the count of the whole held series, not a page-limited figure; both endpoint requests returned truncated = true when I asked for only 2 points.\n\nEarliest period: 2006-10-01 to 2007-09-29 (fiscal year ended 2007), obsarch_ddb4af888ab3c6be910c0f9e and obsarch_6383b6a9892d72ff26aab02a.\n\nLatest period: the series ends at period end 2026-06-27. Two observations carry that same end date: obsarch_8b16a09f918ead49d6a5167f (2025-09-28 to 2026-06-27, nine months) and obsarch_6685d2b420f3010dbeb6217b (2026-03-29 to 2026-06-27, the quarter), both from 10-Q accession 0000320193-26-000020.\n\nTotal points: 339.\n\nOn method: I did not page the cursor through all 339 point payloads. I read both ends of the series (ascending and descending) plus the series metadata, which is where the earliest period, latest period and total come from. The 339 is therefore the whole series as held, but I did not individually retrieve and count each point.\n\nHow the series may be read: the 339 points are not a single uniform source concept. The mapping records a PARTIAL concept (us-gaap:SalesRevenueNet) over 2007-09-29 to 2018-06-30, a second PARTIAL concept (us-gaap:Revenues) over 2016-09-24 to 2018-09-29, and an EXACT concept (us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax) from 2017-09-30 onward, with CONCEPT_MAPPING_BREAK entries recorded at those boundaries. The two points at the earliest period sit on the PARTIAL mapping; the two at the latest end date sit on the EXACT one. All observations carry validation_status UNVERIFIABLE, on the stated grounds that a single official source cannot cross-validate itself.",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "obsarch_8b16a09f918ead49d6a5167f",
+      "obsarch_6685d2b420f3010dbeb6217b",
+      "obsarch_93fee51aaa69c96c6f90fdcc",
+      "obsarch_e90aab2f3452c07e59d7b0b0",
+      "obsarch_9876bb7ff70888195c271bda",
+      "obsarch_466ad08feeef461d885a0874",
+      "obsarch_72b5391df7aeb2c42e5b188b",
+      "obsarch_db148bf773b240c90cd669a3",
+      "obsarch_12d6d60b9014e06cad9be0a3",
+      "obsarch_3c647ded1d2977e1521e195c"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": [
+      "The cursor was not walked through all 339 point payloads; the total of 339 comes from the series metadata (point_count and total_count), and only the first and last points were individually retrieved.",
+      "339 points are not necessarily 339 distinct periods. The earliest period 2006-10-01 to 2007-09-29 carries two competing values (24006000000.0 and 24578000000.0, accessions 0001193125-09-214859 and 0001193125-10-012091) with ambiguity resolution NO_WINNER_SELECTED, so multiple observations exist for a single period. The distinct-period count is not established.",
+      "The latest period end 2026-06-27 is shared by a nine-month observation and a quarterly observation, so 'latest period' is the end date, not a single unambiguous duration.",
+      "The concept mapping changes within the series (PARTIAL then EXACT) and ST-EVA records CONCEPT_MAPPING_BREAK entries, so points on either side of the breaks are not established as the same measure even though the series is held as one.",
+      "The evidence does not explain the two competing values for the earliest period, or whether they represent a restatement, a re-filing, or different periods of coverage."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 10,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[10]",
+      "returned_count": 10,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 2,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=2,truncated=True)",
+      "returned_count": 2,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 2,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=2,truncated=True)",
+      "returned_count": 2,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 2,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=2,truncated=True)",
+      "returned_count": 2,
+      "sequence": 5
+    }
+  ]
+}

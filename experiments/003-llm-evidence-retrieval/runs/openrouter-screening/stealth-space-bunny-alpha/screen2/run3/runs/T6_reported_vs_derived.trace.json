@@ -1,0 +1,95 @@
+{
+  "answer": {
+    "answer": "Neither. ST-EVA holds no current price-to-sales (P/S) figure for AAPL \u2014 it was neither reported by a source nor calculated by ST-EVA. A query for price_to_sales_ratio was refused as an unknown metric name, and the registry of metrics ST-EVA knows contains no valuation-ratio metric of any kind (its list runs from assets through shares_outstanding, with no price, market capitalisation or P/S entry). The coverage report for AAPL confirms this: 12 metrics are held, and all are reported fundamentals (assets, capex, cash, debt, eps_diluted, net_income, revenue, shares_outstanding) or carry negative states (dividend_per_share SOURCE_DID_NOT_REPORT, guidance STALE, operating_margin_bank NOT_APPLICABLE, segment_revenue UNAVAILABLE). No P/S concept appears in any of them, so there is no reported value and no derived value, and therefore no operand set to report. The closest held data is reported revenue \u2014 for example AAPL revenue of 109,417,000,000 USD for the quarter ended 2026-06-27 and 364,357,000,000 USD for the nine months then ended, both SOURCE_REPORTED from the XBRL concept us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax in 10-Q accession 0000320193-26-000020 \u2014 but ST-EVA also holds no share-price metric, so even a price-to-sales computation would lack its numerator on this evidence base.",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_6685d2b420f3010dbeb6217b",
+      "obsarch_8b16a09f918ead49d6a5167f"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": [
+      "The core claim \u2014 that no P/S figure exists in ST-EVA \u2014 rests on the metric-registry refusal and the AAPL coverage report, neither of which carries observation ids, so no observation can be cited for it directly.",
+      "I have not retrieved the latest shares_outstanding observation, so I cannot state its period or value, and I make no claim about what a P/S would equal if computed.",
+      "The evidence does not establish whether a P/S figure was ever shown elsewhere (for example in a prior session or a different system); it establishes only that ST-EVA's AAPL holdings contain no such metric."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "price_to_sales_ratio",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'price_to_sales_ratio'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "query_observations",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "price_to_sales_ratio",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": "UnknownMetricError: UNKNOWN_METRIC: no metric named 'price_to_sales_ratio'. Known metrics: assets, capex, cash, debt, dividend_per_share, eps_diluted, gross_profit, guidance, income_tax, interest_expense, long_term_debt_current, long_term_debt_noncurrent, net_income, operating_cash_flow, operating_income, operating_margin_bank, r_and_d, revenue, sbc, segment_revenue, sga, shares_outstanding",
+      "operation": "get_metric_history",
+      "result_shape": "unknown",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 5,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[5]",
+      "returned_count": 5,
+      "sequence": 4
+    }
+  ]
+}

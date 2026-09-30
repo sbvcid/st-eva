@@ -1,0 +1,104 @@
+{
+  "answer": {
+    "answer": "AAPL's reported revenue series holds 339 points, all in the SOURCE_REPORTED state. The earliest period covered is the fiscal year 2006-10-01 to 2007-09-29, reported in two observations from different filings that disagree: 24,006,000,000 USD (10-K, accession 0001193125-09-214859) and 24,578,000,000 USD (10-K/A, accession 0001193125-10-012091). The latest period covered is 2025-09-28 to 2026-06-27, reported at 364,357,000,000 USD from 10-Q accession 0000320193-26-000020, and the most recent single-quarter point in the series is 2026-03-29 to 2026-06-27 at 109,417,000,000 USD. The total number of points is 339, which is the figure reported as total_count by every page of the cursor walk and independently corroborated by the asset coverage report, which shows 339 observations held for revenue in the SOURCE_REPORTED state.\n\nTwo qualifications on how this series may be read. First, 339 is a count of reported observations, not a count of distinct fiscal periods: the same period is frequently reported by several filings, so a single period can occupy multiple points, as the 2006-10-01 to 2007-09-29 period does. Second, the series is not uniform in concept fidelity across its span. The early portion, from 2007-09-29 to 2018-06-30, is mapped from us-gaap:SalesRevenueNet with a PARTIAL mapping that the registry records as a series break, and a us-gaap:Revenues window from 2016-09-24 to 2018-09-29 carries a second PARTIAL break. The latest point, from 2017-09-30 onward, is mapped from us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax with an EXACT mapping and series_continues true. The series-level comparability flag is a single us-gaap reporting framework, marked comparable, but that flag speaks to framework and not to concept fidelity, which varies by window as described.\n\nFinally, the series I walked is the paginated observation set. The history endpoint returns 200 of 339 points and is itself truncated, so it is not a complete rendering of the series; the earliest and latest periods and the 339 total above are taken from the paginated walk and the coverage report rather than from that truncated history response.",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_ddb4af888ab3c6be910c0f9e",
+      "obsarch_6383b6a9892d72ff26aab02a",
+      "obsarch_8b16a09f918ead49d6a5167f",
+      "obsarch_6685d2b420f3010dbeb6217b",
+      "obsarch_437c0102752fbcec880ba454",
+      "obsarch_9876bb7ff70888195c271bda",
+      "obsarch_466ad08feeef461d885a0874",
+      "obsarch_72b5391df7aeb2c42e5b188b"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": [
+      "The earliest period 2006-10-01 to 2007-09-29 is reported with two different values (24,006,000,000 and 24,578,000,000 USD) by two filings, and ST-EVA has selected no winner; the disagreement is unresolved in the evidence held.",
+      "The period 2007-09-30 to 2008-09-27 is likewise reported with two different values (32,479,000,000 and 37,491,000,000 USD) across three filings, with no winner selected.",
+      "The count of 339 is a count of observations, not of distinct fiscal periods; the number of distinct periods in the span is not established by the evidence returned.",
+      "Concept fidelity differs across the series: PARTIAL mappings govern the earlier windows and an EXACT mapping governs from 2017-09-30, so points in different windows are not on an identical basis even though the framework is us-gaap throughout.",
+      "The series breaks recorded against the SalesRevenueNet and Revenues mappings are annotated NOT_EXPLAINED_BY_ST_EVA, so the evidence does not state why the series must break at those windows.",
+      "The full 339-point series was not inspected point by point; the intermediate 139 points between the 200 returned by the history endpoint and the total were covered only through the paginated walk and its stated total_count, not individually read."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 5,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=5,truncated=True)",
+      "returned_count": 5,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 5,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=5,truncated=True)",
+      "returned_count": 5,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": "b2Zmc2V0OjU=",
+        "limit": 5,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=339,returned=5,truncated=True)",
+      "returned_count": 5,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": null,
+        "metric": "revenue",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=339,returned=200,truncated=True)",
+      "returned_count": 200,
+      "sequence": 5
+    }
+  ]
+}

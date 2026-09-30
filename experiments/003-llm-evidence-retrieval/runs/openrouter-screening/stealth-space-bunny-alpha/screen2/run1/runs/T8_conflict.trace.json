@@ -1,0 +1,151 @@
+{
+  "answer": {
+    "answer": "The disagreement recorded for AAPL is not a single figure in CONFLICTING state \u2014 the coverage report shows zero CONFLICTING observations. It is an ambiguity record attached to the `debt` metric, flagged MULTIPLE_SOURCE_CONCEPTS with resolution NO_WINNER_SELECTED. The reason is MULTIPLE_SOURCE_CONCEPTS: the same metric label is attached to two different us-gaap source concepts, and the evidence explicitly states these are different measures rather than two readings of one measure, so the evidence does not establish that either is the figure a question about this metric was asking for. The competing values, for the most recent period (instant 2026-06-27, 10-Q accession 0000320193-26-000020), are: us-gaap:LongTermDebtCurrent = 11,007,000,000 USD and us-gaap:LongTermDebtNoncurrent = 71,340,000,000 USD. The same ambiguity recurs at the two preceding periods: at 2026-03-28, 8,310,000,000 vs 74,404,000,000; at 2025-12-27, 11,827,000,000 vs 76,685,000,000. Both observations at each period carry evidence_state SOURCE_REPORTED and validation_status UNVERIFIABLE, with an empty cross-check list \u2014 a single official source cannot cross-validate itself. Each concept is mapped PARTIAL to `debt`, with the registry noting each is a component of total debt, never the total on its own; the concepts also map EXACT to separate metrics (long_term_debt_current, long_term_debt_noncurrent), which is what leaves the registry unable to choose. On which value is correct: the evidence settles nothing. ST-EVA has not selected one and does not claim either is a candidate, and same_measure_established is false. I cannot name a winner. Note also that the `debt` series holds 180 points and my read was truncated, so the three periods above are the ambiguity records I actually retrieved, not a complete enumeration of where the pattern occurs; the pattern is visible throughout the retrieved history, where both a current and a noncurrent concept are reported at each date.",
+    "claim_type": "",
+    "derived_refs": [],
+    "evidence_refs": [
+      "obsarch_f3fadf4d01e44338521c5246",
+      "obsarch_3b7be905fbd714979485b01f",
+      "obsarch_eeeaab3e4049332947114f40",
+      "obsarch_836a7cd96b5d8eea48e89c19",
+      "obsarch_28fea3f9a5d2b479bfc6cf2f",
+      "obsarch_d00fc154eaf971387c5c55a4"
+    ],
+    "operation_ref": "",
+    "parse_error": null,
+    "reason_code": "",
+    "semantic_state": "",
+    "stated_value": null,
+    "uncertainties": [
+      "The evidence does not establish which value is correct; the recorded resolution is NO_WINNER_SELECTED with same_measure_established false, so the question of the correct figure is left open by design.",
+      "The `debt` metric history is truncated: 180 points held, 12 returned. The three dated ambiguity pairs cited are the ones retrieved, not the complete set of periods at which the pattern occurs.",
+      "No cross-check exists for either competing value \u2014 validation_status is UNVERIFIABLE and get_validation returns an empty list for obsarch_f3fadf4d01e44338521c5246, so agreement between sources has not been tested here.",
+      "Whether the metric intended was total debt, or one of its two components, is a registry/filer question the evidence marks NOT_EXPLAINED; the mapping to `debt` is PARTIAL and the concept is flagged AMBIGUOUS_MAPPING against several metrics.",
+      "Separately, an unresolved vendor observation (obsarch_7429c7068c9299b29190bfba, YahooFinance, 95,000,000,000 USD for 2023-07-01 to 2024-06-30) sits in the revenue series with no registry mapping and a methodology note that it is a value ST-EVA did not retrieve from a source. It is not part of a recorded ambiguity and its period differs from the nearest filed periods, so I am not treating it as the disagreement you asked about, but it is held and unexplained."
+    ]
+  },
+  "trace": [
+    {
+      "arguments": {
+        "asset": "AAPL"
+      },
+      "error": null,
+      "operation": "coverage_report",
+      "result_shape": "object[5]",
+      "returned_count": null,
+      "sequence": 1
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "cursor": null,
+        "limit": 50,
+        "metric": null,
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "page",
+      "result_shape": "page(total=1925,returned=50,truncated=True)",
+      "returned_count": 50,
+      "sequence": 2
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": 40,
+        "metric": "revenue",
+        "order": "PERIOD_DESCENDING",
+        "period_end": null,
+        "period_start": null,
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[40]",
+      "returned_count": 40,
+      "sequence": 3
+    },
+    {
+      "arguments": {
+        "asset": "AAPL",
+        "limit": 12,
+        "metric": "debt",
+        "period_end": null,
+        "period_start": null
+      },
+      "error": null,
+      "operation": "get_metric_history",
+      "result_shape": "series(point_count=180,returned=12,truncated=True)",
+      "returned_count": 12,
+      "sequence": 4
+    },
+    {
+      "arguments": {
+        "include_lineage": true,
+        "include_validation": true,
+        "observation_id": "obsarch_f3fadf4d01e44338521c5246"
+      },
+      "error": null,
+      "operation": "get_observation",
+      "result_shape": "object[23]",
+      "returned_count": null,
+      "sequence": 5
+    },
+    {
+      "arguments": {
+        "observation_id": "obsarch_f3fadf4d01e44338521c5246"
+      },
+      "error": null,
+      "operation": "get_validation",
+      "result_shape": "list[0]",
+      "returned_count": 0,
+      "sequence": 6
+    },
+    {
+      "arguments": {
+        "include_lineage": true,
+        "include_validation": true,
+        "observation_id": "obsarch_7429c7068c9299b29190bfba"
+      },
+      "error": null,
+      "operation": "get_observation",
+      "result_shape": "object[22]",
+      "returned_count": null,
+      "sequence": 7
+    },
+    {
+      "arguments": {
+        "as_of": null,
+        "asset": "AAPL",
+        "basis_framework": null,
+        "currency": null,
+        "instant": null,
+        "knowable_at": null,
+        "limit": null,
+        "metric": "revenue",
+        "order": "PERIOD_ASCENDING",
+        "period_end": "2024-06-30",
+        "period_start": "2023-07-01",
+        "provider": null,
+        "source_type": null,
+        "unit": null,
+        "validation_status": null
+      },
+      "error": null,
+      "operation": "query_observations",
+      "result_shape": "list[18]",
+      "returned_count": 18,
+      "sequence": 8
+    }
+  ]
+}

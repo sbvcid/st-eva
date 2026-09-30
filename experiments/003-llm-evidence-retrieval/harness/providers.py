@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -315,6 +316,30 @@ class OpenAICompatibleClient:
             raise TransportError(
                 f"could not reach {self.config.endpoint}: {error.reason}"
             ) from error
+        except TimeoutError as error:
+            # A read that times out mid-response is not a `URLError`.
+            #
+            # `urlopen` wraps what it can and lets the rest through, and a read
+            # that stalls during `getresponse()` arrives as a bare
+            # `TimeoutError`. Uncaught, that ends the process and the run with
+            # it -- which is the exact failure this class exists to prevent, one
+            # level worse: a slow provider would look like a crash rather than
+            # like a provider that did not answer. Caught after `URLError`,
+            # because a wrapped timeout is already reported by that clause.
+            raise TransportError(
+                f"timed out reading a response from {self.config.endpoint}"
+                f" after {self.config.timeout_seconds}s",
+                "network",
+            ) from error
+        except OSError as error:
+            # The remaining transport faults -- a connection reset, a broken
+            # pipe, a DNS failure that never became a `URLError`. Same class of
+            # event as a timeout and the same consequence if it escapes.
+            raise TransportError(
+                f"transport failure talking to {self.config.endpoint}: "
+                f"{type(error).__name__}: {error}",
+                "network",
+            ) from error
 
 
 class TransportError(Exception):
@@ -345,21 +370,8 @@ class TransportError(Exception):
 
 
 def classify_http_failure(status: int, body: str) -> str:
-    """
-    Which kind of failure an HTTP status is, from the status and the body.
-
-    Deliberately coarse. The point is not to diagnose the provider but to
-    separate "this will never work" from "this will work later", because those
-    two need opposite handling and a harness that cannot tell them apart either
-    gives up on a model that was about to recover or hammers one that is gone.
-    """
-    if status == 429:
-        return "rate_limited"
-    if status in (404, 408):
-        return "model_unavailable"
-    if 500 <= status < 600:
-        return "provider_error"
-    return "network"
+    """Which kind of failure an HTTP status is. See `classify_failure`."""
+    return classify_failure(status, body)
 
 
 def classify_error_body(body: str) -> str:
@@ -368,13 +380,67 @@ def classify_error_body(body: str) -> str:
 
     A gateway that answers 200 with an `error` object is reporting an upstream
     failure through a success status, so the status code cannot be trusted on
-    its own and the body's own error metadata is what says what happened.
+    its own and the body's own error metadata is what says what happened. The
+    body's `code` is passed through as the status when it has one, so a
+    rate-limit reported as a 200 with `code: 429` is classified as a rate limit
+    rather than as a malformed response.
     """
-    lowered = body.lower()
-    if "rate-limit" in lowered or "rate_limit" in lowered or "429" in lowered:
+    code = None
+    match = re.search(r'"code"\s*:\s*(\d{3})', body or "")
+    if match:
+        code = int(match.group(1))
+    return classify_failure(code, body)
+
+
+def classify_failure(status: Optional[int], body: str) -> str:
+    """
+    Which kind of failure this is, from the status *and* the body.
+
+    Deliberately coarse. The point is not to diagnose the provider but to
+    separate "this will never work" from "this will work later", because those
+    two need opposite handling and a harness that cannot tell them apart either
+    gives up on a model that was about to recover or hammers one that is gone.
+
+    One function for both entry points, because a gateway reports an upstream
+    failure with whatever status it likes and two classifiers would drift. An
+    OpenRouter endpoint whose backing provider was degraded answered `400` with
+    `{"error": {"message": "Provider returned error", "provider_name": ...}}`,
+    and a classifier that read only the status called that a network failure --
+    wrong twice over, because the retry advice differs and the recorded reason
+    becomes a claim about the network that the response contradicts.
+    """
+    lowered = (body or "").lower()
+    if status == 429 or "rate-limit" in lowered or "rate_limit" in lowered:
         return "rate_limited"
     if "no endpoints found" in lowered or "model not found" in lowered:
         return "model_unavailable"
-    if "provider" in lowered:
+    upstream = (
+        "provider returned error" in lowered
+        or "provider_name" in lowered
+        or "upstream error" in lowered
+        or "degraded" in lowered
+        or "overloaded" in lowered
+    )
+    if upstream:
         return "provider_error"
+    if status in (404, 408):
+        return "model_unavailable"
+    if status is not None and 500 <= status < 600:
+        return "provider_error"
+    if status is not None and 400 <= status < 500 and any(
+        marker in lowered
+        for marker in (
+            "invalid_request", "invalid json", "malformed", "unprocessable",
+            "invalid_request_error", "schema",
+        )
+    ):
+        # A 4xx naming *our* request is a different thing entirely: the harness
+        # sent something the endpoint refuses, and sending it again gets the same
+        # refusal. Classified apart from every provider fault because it is the
+        # one case where retrying is guaranteed not to help and the cause is
+        # here rather than out there.
+        return "request_rejected"
+    if "choices" in lowered:
+        # A body that actually carries a completion is not a failure at all.
+        return "network"
     return "malformed_response"

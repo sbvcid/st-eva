@@ -315,6 +315,79 @@ number is the argument for run series: a single run of this model is a number
 with no error bar, and 9/15 and 10/15 out of the same configuration are both
 consistent with the same model.
 
+## 0.8 Two consumer classes, and what binds them (2.6.4)
+
+2.6.3 ended with a result that one number could not express. A model retrieved
+evidence, cited it, and read a series to the end — every run, no exceptions — and
+the same model scored zero on telling a derived figure from a reported one and on
+naming why a figure is absent. Both halves were real, stable across three runs,
+and unrelated. Averaging them into `9/15` said neither.
+
+So the consumer is assessed twice, and the two verdicts are never combined:
+
+**Evidence Consumer** — can it find the evidence and cite it truthfully? The
+question is grounding: identifiers that exist, citations that were actually
+retrieved, nothing claimed that no tool returned, and a series read to the end
+rather than to the first page. A model that fails here is not a consumer, and the
+reason is not politeness. An invented observation id is a false statement about
+the archive, and it looks checkable to whoever reads the answer, which is what
+makes it worse than no citation at all.
+
+**Semantic Consumer** — can it say what the evidence means? The question is
+reading the distinctions the archive already makes: a derived figure from a
+reported one, `SOURCE_DID_NOT_REPORT` from `UNAVAILABLE` from `STALE`, two
+different measures from two readings of one measure, a `PARTIAL` mapping from an
+`EXACT` one. Failing here is a capability ceiling, not a safety problem, and it
+is addressable by supervision rather than by refusing the model.
+
+The split decides what to do next, which is the point of it. A model that cannot
+ground is rejected. A model that can ground but cannot read semantics is usable
+with a second reader on the semantics — and adapting the surface until a weak
+model passes is how an evidence database starts lying by omission.
+
+Three results, all from the same measurement:
+
+**Zero fabricated identifiers, in 215 citations, across two models and six
+runs.** Seventy-nine from one, 136 from the other. That is the product's own
+claim, verified by the archive rather than asserted: ST-EVA can supply
+machine-verifiable provenance, and a capable model will actually use it.
+
+**Neither model is a Semantic Consumer.** One passed a derived-figure reading in
+prose three times out of three and picked the right field once out of three; the
+other failed every semantic probe it was asked, four out of four, stably. **The
+binding constraint is the semantic consumption layer, and it is a property of the
+model, not of the surface.**
+
+**The surface was probed five more times and answered every question from data it
+already held. No new defect.** The fix in 2.6.3 and the probes are the two halves
+of one check: a surface that is right is not the same as a surface a consumer can
+read, and 2.6.3 could only measure the first, because the answer arrived as prose
+and the grader had to infer the claim from the wording.
+
+The measurement itself carried three findings, all of them about the harness and
+all of them found by running rather than by reading:
+
+A test id is also a path, and on Windows a colon in a filename does not fail — it
+redirects the write to an NTFS alternate data stream, which glob cannot see, git
+will not commit and a reviewer will never find. Five probes' worth of audit
+records vanished from runs that had reported them as passing. Ids are now
+filesystem-safe and a reserved character is refused at mint time, because by the
+time the write has gone wrong the run is over and nothing says so.
+
+A gateway reports an upstream failure with whatever status it likes. An endpoint
+whose backing provider was degraded answered `400` with `Provider returned error`,
+and a classifier reading only the status recorded a network fault — wrong twice
+over, since the retry advice differs and the recorded reason becomes a claim about
+the network that the response contradicts.
+
+A read that stalls mid-response arrives as a bare `TimeoutError`, which `urlopen`
+does not wrap, and it ended the process. A slow provider should look like a
+provider that did not answer. It now does.
+
+The last of these is the shape of the whole project. The failure mode is never the
+number being wrong. It is the experiment reporting a fact about the model that
+belongs to the harness.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

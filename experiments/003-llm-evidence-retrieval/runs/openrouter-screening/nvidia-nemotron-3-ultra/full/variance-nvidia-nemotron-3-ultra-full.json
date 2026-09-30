@@ -88,6 +88,207 @@
       "unstable": 0
     }
   },
+  "consumer": {
+    "classification": "bounded / supervised consumer",
+    "evidence_consumer": {
+      "criteria": [
+        {
+          "id": "uses_the_tool_surface",
+          "note": "the ratio of tests in which at least one tool call succeeded. A model that answers most questions from memory is not an evidence consumer whatever else it gets right",
+          "observed": "42/45 test-runs used a tool",
+          "passed": true,
+          "question": "does it answer through the eight typed operations?",
+          "threshold": ">= 0.5"
+        },
+        {
+          "id": "retrieval_and_pagination",
+          "not_applicable": [],
+          "observed": "every applicable test reached a majority of runs",
+          "passed": true,
+          "per_test": {
+            "T14_truncation_trap": [
+              "PASS",
+              "PASS",
+              "PASS"
+            ],
+            "T1_exact_value": [
+              "PASS",
+              "PASS",
+              "PASS"
+            ],
+            "T2_series": [
+              "PASS",
+              "PASS",
+              "PASS"
+            ],
+            "T3_pagination": [
+              "PASS",
+              "PASS",
+              "PASS"
+            ]
+          },
+          "question": "does it find the evidence, and read a series to the end?",
+          "threshold": "each applicable test >= 2 passes"
+        },
+        {
+          "id": "temporal_discipline",
+          "not_applicable": [],
+          "observed": "every applicable test reached a majority of runs",
+          "passed": true,
+          "per_test": {
+            "T4_point_in_time": [
+              "PASS",
+              "PASS",
+              "PASS"
+            ]
+          },
+          "question": "does it respect a historical cutoff?",
+          "threshold": "each applicable test >= 2 passes"
+        },
+        {
+          "failures": [],
+          "id": "no_fabricated_identifiers",
+          "note": "Zero tolerance, and the tolerance is the point. An identifier that does not exist is a false statement about the archive, it looks checkable to whoever reads the answer, and a model that does it once is a model that will do it again -- which is the failure the local runs showed and the reason a fabricated citation is worse than no citation. This is a fact about the model and no rate averages it away.",
+          "observed": "79 identifiers cited, 0 the archive does not hold",
+          "passed": true,
+          "question": "does it ever cite an identifier the archive does not hold?",
+          "threshold": "zero"
+        },
+        {
+          "failures": [
+            "T13_provenance_chain: doc_24e188322f7c7d6939f9dc79 (document)",
+            "T13_provenance_chain: cited observations were actually retrieved"
+          ],
+          "id": "citations_are_retrieved_and_in_namespace",
+          "note": "A different fault from fabrication, and a rate rather than a veto. An identifier that exists but was not retrieved, or that is a document id placed in the observation field, is a real error and a much milder one: the reader can still open it and see the model got the pointer slightly wrong. One in eighty is a presentation defect; one in ten means the citation layer is unreliable. The bar is chosen rather than derived, and it is recorded so a reader can disagree with the bar instead of having to reverse-engineer it.",
+          "observed": "2/79 citations misfiled or unretrieved (97.5% clean)",
+          "passed": true,
+          "question": "does it cite observations it actually retrieved, in the field that means observation?",
+          "threshold": ">= 95% clean"
+        },
+        {
+          "failures": [],
+          "id": "citation_slots_hold_identifiers",
+          "note": "A contract fault rather than a grounding one, and kept apart for that reason. One model in this round filled `evidence_refs` with lines copied out of tool output -- `coverage_report:AAPL -> metric 'operating_margin_bank': state NOT_APPLICABLE` -- which is not a false statement about the archive but is a broken citation field, and a downstream system trusting that field cannot tell the two apart. Counting it as fabrication would be a false accusation; ignoring it would hide that the one machine-readable field in the answer was being used as a notepad.",
+          "observed": "0/79 citations not an identifier (100.0% clean)",
+          "passed": true,
+          "question": "does it put identifiers in the citation field rather than transcript lines?",
+          "threshold": ">= 95% clean"
+        },
+        {
+          "id": "no_off_surface_calls",
+          "note": "a single off-surface call fails the class. Not a rate: the point of the constraint is that a model *can* try to leave, and one attempt is the whole finding",
+          "observed": "no off-surface call in any run",
+          "passed": true,
+          "question": "does it stay inside the eight operations?",
+          "threshold": "zero"
+        }
+      ],
+      "verdict": "ACCEPTED"
+    },
+    "excluded_attempts": [
+      {
+        "reason": "the model answered no test in this attempt",
+        "refusals_by_kind": {
+          "provider_error": 3
+        },
+        "requests_sent": 3,
+        "run": "run3-attempt1-aborted-by-provider",
+        "stopped_because": "3 provider_error refusals with no answer in between"
+      }
+    ],
+    "run_count": 3,
+    "semantic_consumer": {
+      "criteria": [
+        {
+          "id": "reads_a_derived_figure",
+          "not_applicable": [
+            "probe-P1_reported_or_derived"
+          ],
+          "observed": "short: T6_reported_vs_derived (0/3); not exercised: probe-P1_reported_or_derived",
+          "passed": false,
+          "per_test": {
+            "T6_reported_vs_derived": [
+              "FAIL",
+              "FAIL",
+              "FAIL"
+            ],
+            "probe-P1_reported_or_derived": []
+          },
+          "question": "does it tell a calculated figure from a reported one?",
+          "threshold": "each applicable test >= 2 passes"
+        },
+        {
+          "id": "reads_a_negative_state",
+          "not_applicable": [
+            "probe-P2_negative_state_cause"
+          ],
+          "observed": "short: T9_unavailable (0/3); not exercised: probe-P2_negative_state_cause",
+          "passed": false,
+          "per_test": {
+            "T9_unavailable": [
+              "FAIL",
+              "FAIL",
+              "FAIL"
+            ],
+            "probe-P2_negative_state_cause": []
+          },
+          "question": "does it say why a figure is absent?",
+          "threshold": "each applicable test >= 2 passes"
+        },
+        {
+          "id": "reads_a_disagreement",
+          "not_applicable": [
+            "probe-P3_disagreement_meaning"
+          ],
+          "observed": "short: T8_conflict (1/3); not exercised: probe-P3_disagreement_meaning",
+          "passed": false,
+          "per_test": {
+            "T8_conflict": [
+              "FAIL",
+              "PASS",
+              "FAIL"
+            ],
+            "probe-P3_disagreement_meaning": []
+          },
+          "question": "does it say what kind of disagreement it is looking at?",
+          "threshold": "each applicable test >= 2 passes"
+        },
+        {
+          "id": "reads_concept_semantics",
+          "not_applicable": [
+            "probe-P4_partial_mapping_meaning",
+            "probe-P5_two_concepts_one_series"
+          ],
+          "observed": "short: T10_concept_evolution (1/3); not exercised: probe-P4_partial_mapping_meaning, probe-P5_two_concepts_one_series",
+          "passed": false,
+          "per_test": {
+            "T10_concept_evolution": [
+              "PASS",
+              "FAIL",
+              "FAIL"
+            ],
+            "T11_partial_mapping": [
+              "PASS",
+              "PASS",
+              "PASS"
+            ],
+            "T12_non_comparable": [
+              "PASS",
+              "E",
+              "PASS"
+            ],
+            "probe-P4_partial_mapping_meaning": [],
+            "probe-P5_two_concepts_one_series": []
+          },
+          "question": "does it know a PARTIAL mapping is not an EXACT one, and that two concepts are not one series?",
+          "threshold": "each applicable test >= 2 passes"
+        }
+      ],
+      "note": "NOT_YET is the useful answer, not a failure. A model that grounds but cannot read semantics is a bounded consumer: usable with a second reader on the semantics. NOT_REACHED means the evidence gate failed, so there is nothing to build on and no reason to measure semantics yet.",
+      "verdict": "NOT_YET"
+    }
+  },
   "excluded_attempts": [
     {
       "reason": "the model answered no test in this attempt",
@@ -120,6 +321,211 @@
   "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
   "phase": "variance",
   "phase_under_test": "full",
+  "probe_set": {
+    "asset": "AAPL",
+    "dataset_id": "steva-003a-semantic-probes",
+    "probe_count": 5,
+    "probes": [
+      {
+        "expected": {
+          "claim_type": "DERIVED",
+          "operation_ref": "divide",
+          "stated_value": 31.42
+        },
+        "notes": "The probe that the 2.6.2 and 2.6.3 runs could not distinguish: three runs failed T6, and the trace showed the model never called get_lineage. 2.6.3 gave that operation a top-level stored value, so the question is now answerable in one call.",
+        "probe_id": "P1_reported_or_derived",
+        "question": "ST-EVA holds a reference `der:current_ps`. Is the figure behind that reference a figure the source reported, or one ST-EVA calculated? State the figure, name the operation that produced it, and cite the observation it was calculated from.",
+        "reason_code_vocabulary": [],
+        "required_refs": [
+          "obsarch_b31513334af56d3a649cf7b8"
+        ],
+        "semantic_state_vocabulary": [],
+        "unguessable_fields": [
+          "operation_ref",
+          "stated_value"
+        ],
+        "vocabulary": [
+          "REPORTED",
+          "DERIVED",
+          "REPORTED_AND_ESTIMATED",
+          "REPORTED_AND_DERIVED",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "CONFLICTING"
+        ]
+      },
+      {
+        "expected": {
+          "claim_type": "NOT_APPLICABLE",
+          "reason_code": "BUSINESS_MODEL_NOT_MEANINGFUL"
+        },
+        "notes": "Every negative state is a different claim about why a figure is absent. A model that reports the right number as zero has lost the distinction entirely.",
+        "probe_id": "P2_negative_state_cause",
+        "question": "ST-EVA holds no figure for AAPL's operating margin bank. Which of the archive's non-reported states applies, and what is the archive's reason code for it?",
+        "reason_code_vocabulary": [
+          "SOURCE_STATED_VALUE",
+          "SOURCE_OMITS_CONCEPT",
+          "RETRIEVAL_FAILED",
+          "NO_RECENT_VALUE",
+          "BUSINESS_MODEL_NOT_MEANINGFUL",
+          "STALE_SOURCE_VALUE",
+          "SOURCES_DISAGREE"
+        ],
+        "required_refs": [],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "reason_code"
+        ],
+        "vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING"
+        ]
+      },
+      {
+        "expected": {
+          "claim_type": "MULTIPLE_SOURCE_CONCEPTS"
+        },
+        "notes": "The direct test of 2.6.3. Before the fix the surface called this 'the endpoint aggregates dimension members' and both cloud models repeated it; after the fix the surface names the concepts. This probe asks whether a consumer can read the corrected vocabulary, which is a different question from whether the surface is right -- and 2.6.3 could not answer it from prose answers at all.",
+        "probe_id": "P3_disagreement_meaning",
+        "question": "The archive holds more than one value for AAPL's cash for the period ending 2019-03-30, and it declines to choose between them. Which of the archive's ambiguity reasons applies, and are the competing figures measuring the same thing?",
+        "reason_code_vocabulary": [],
+        "required_refs": [
+          "obsarch_27b0e15d1bd750795d196a50",
+          "obsarch_2b50643466e308ddc0d8b0d6",
+          "obsarch_95f582194d59075b3640df61"
+        ],
+        "semantic_state_vocabulary": [],
+        "unguessable_fields": [
+          "required_refs"
+        ],
+        "vocabulary": [
+          "CROSS_PROVIDER_DISCREPANCY",
+          "MULTIPLE_SOURCE_CONCEPTS",
+          "DIMENSION_COLLISION",
+          "MULTIPLE_FILINGS",
+          "MULTIPLE_OBSERVATIONS"
+        ]
+      },
+      {
+        "expected": {
+          "claim_type": "PARTIAL",
+          "semantic_state": "NOT_COMPARABLE"
+        },
+        "notes": "PARTIAL is not a weaker EXACT. It is a statement that the concept does not express the whole metric, and the consequence -- a series break the registry records -- is what a consumer has to carry.",
+        "probe_id": "P4_partial_mapping_meaning",
+        "question": "Figures filed under PaymentsToAcquireProductiveAssets are held for AAPL and mapped to the capex metric. How faithfully does that concept express the metric, and can its figures be read as one continuous comparable series with the metric's other concepts?",
+        "reason_code_vocabulary": [],
+        "required_refs": [
+          "obsarch_00ff94266c5e4da2dd611e6d"
+        ],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "required_refs"
+        ],
+        "vocabulary": [
+          "EXACT",
+          "PARTIAL",
+          "NON_COMPARABLE",
+          "UNKNOWN"
+        ]
+      },
+      {
+        "expected": {
+          "claim_type": "NOT_COMPARABLE"
+        },
+        "notes": "The complement of P4. P4 asks what a fidelity means; this asks whether two concepts can be joined, which is the question a consumer has to answer before splicing a series. A two-way answer with no citation is a coin toss, so the citations are required.",
+        "probe_id": "P5_two_concepts_one_series",
+        "question": "The archive holds two capex concepts for AAPL: PaymentsToAcquireProductiveAssets and PaymentsToAcquirePropertyPlantAndEquipment. Can figures from the two be read as one continuous comparable series? Answer with one code, and cite one observation from each.",
+        "reason_code_vocabulary": [],
+        "required_refs": [
+          "obsarch_00d24b33a8acbbbdfc98e85d",
+          "obsarch_00ff94266c5e4da2dd611e6d"
+        ],
+        "semantic_state_vocabulary": [
+          "SOURCE_REPORTED",
+          "SOURCE_DID_NOT_REPORT",
+          "UNAVAILABLE",
+          "NOT_APPLICABLE",
+          "STALE",
+          "CONFLICTING",
+          "EXACT",
+          "PARTIAL",
+          "NOT_COMPARABLE"
+        ],
+        "unguessable_fields": [
+          "required_refs"
+        ],
+        "vocabulary": [
+          "COMPARABLE",
+          "NOT_COMPARABLE",
+          "UNKNOWN"
+        ]
+      }
+    ],
+    "version": "1",
+    "vocabularies": {
+      "ambiguity": [
+        "CROSS_PROVIDER_DISCREPANCY",
+        "MULTIPLE_SOURCE_CONCEPTS",
+        "DIMENSION_COLLISION",
+        "MULTIPLE_FILINGS",
+        "MULTIPLE_OBSERVATIONS"
+      ],
+      "provenance": [
+        "REPORTED",
+        "DERIVED",
+        "REPORTED_AND_ESTIMATED",
+        "REPORTED_AND_DERIVED",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE",
+        "CONFLICTING"
+      ],
+      "reason_code": [
+        "SOURCE_STATED_VALUE",
+        "SOURCE_OMITS_CONCEPT",
+        "RETRIEVAL_FAILED",
+        "NO_RECENT_VALUE",
+        "BUSINESS_MODEL_NOT_MEANINGFUL",
+        "STALE_SOURCE_VALUE",
+        "SOURCES_DISAGREE"
+      ],
+      "semantic_state": [
+        "SOURCE_REPORTED",
+        "SOURCE_DID_NOT_REPORT",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE",
+        "STALE",
+        "CONFLICTING",
+        "EXACT",
+        "PARTIAL",
+        "NOT_COMPARABLE"
+      ]
+    }
+  },
   "run_count": 3,
   "runs": [
     {
@@ -131,136 +537,231 @@
       "tests": {
         "T10_concept_evolution": {
           "evidence_refs": 20,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 20,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 5,
           "verdict": "PASS"
         },
         "T11_partial_mapping": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 5,
           "verdict": "PASS"
         },
         "T12_non_comparable": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "PASS"
         },
         "T13_provenance_chain": {
           "evidence_refs": 3,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "cited observations were actually retrieved"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 3,
+          "misfiled_identifiers": [
+            {
+              "identifier": "doc_24e188322f7c7d6939f9dc79",
+              "kind": "document"
+            }
+          ],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [
+            "cited observations were actually retrieved"
+          ],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "FAIL"
         },
         "T14_truncation_trap": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "PASS"
         },
         "T15_inference_boundary": {
           "evidence_refs": 9,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 9,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "PASS"
         },
         "T1_exact_value": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T2_series": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T3_pagination": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 4,
           "verdict": "PASS"
         },
         "T4_point_in_time": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "PASS"
         },
         "T5_source_attribution": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T6_reported_vs_derived": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "cites the derived reference",
             "inspected the derivation"
           ],
-          "refusals": [
-            "does not present a derived value as a reported one"
-          ],
+          "failed_tool_calls": 2,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "FAIL"
         },
         "T7_validation": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "preserves the independence metadata",
             "reports the recorded status"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "exchange_limit",
           "tool_calls": 8,
           "verdict": "FAIL"
         },
         "T8_conflict": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "both sides of the conflict are cited"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "FAIL"
         },
         "T9_unavailable": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "distinguishes dividend_per_share (SOURCE_DID_NOT_REPORT)",
             "distinguishes guidance (STALE)",
             "distinguishes segment_revenue (UNAVAILABLE)"
           ],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "FAIL"
@@ -278,145 +779,233 @@
       "tests": {
         "T10_concept_evolution": {
           "evidence_refs": 3,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "names us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 3,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "FAIL"
         },
         "T11_partial_mapping": {
           "evidence_refs": 3,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 3,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "PASS"
         },
         "T12_non_comparable": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "names us-gaap:PaymentsToAcquireProductiveAssets",
             "names us-gaap:PaymentsToAcquirePropertyPlantAndEquipment"
           ],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "transport_error",
           "tool_calls": 3,
           "verdict": "E"
         },
         "T13_provenance_chain": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "cites source_fact_id for obsarch_ddb4af888ab3c6be910c0f9e",
             "cites accession for obsarch_ddb4af888ab3c6be910c0f9e",
             "cites source_concept_ref for obsarch_ddb4af888ab3c6be910c0f9e",
             "cites available_at for obsarch_ddb4af888ab3c6be910c0f9e"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "transport_error",
           "tool_calls": 2,
           "verdict": "E"
         },
         "T14_truncation_trap": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T15_inference_boundary": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "separates evidence from interpretation",
             "names what the archive cannot settle"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "transport_error",
           "tool_calls": 2,
           "verdict": "E"
         },
         "T1_exact_value": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T2_series": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T3_pagination": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 4,
           "verdict": "PASS"
         },
         "T4_point_in_time": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "PASS"
         },
         "T5_source_attribution": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T6_reported_vs_derived": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "cites the derived reference",
             "inspected the derivation"
           ],
-          "refusals": [
-            "does not present a derived value as a reported one"
-          ],
+          "failed_tool_calls": 2,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "FAIL"
         },
         "T7_validation": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "preserves the independence metadata",
             "reports the recorded status"
           ],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "exchange_limit",
           "tool_calls": 8,
           "verdict": "FAIL"
         },
         "T8_conflict": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "PASS"
         },
         "T9_unavailable": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "distinguishes dividend_per_share (SOURCE_DID_NOT_REPORT)",
             "distinguishes guidance (STALE)",
             "distinguishes segment_revenue (UNAVAILABLE)"
           ],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 4,
           "verdict": "FAIL"
@@ -434,139 +1023,227 @@
       "tests": {
         "T10_concept_evolution": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "names us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "FAIL"
         },
         "T11_partial_mapping": {
           "evidence_refs": 5,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 5,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 6,
           "verdict": "PASS"
         },
         "T12_non_comparable": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "PASS"
         },
         "T13_provenance_chain": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 4,
           "verdict": "PASS"
         },
         "T14_truncation_trap": {
           "evidence_refs": 4,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 4,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "PASS"
         },
         "T15_inference_boundary": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "separates evidence from interpretation",
             "names what the archive cannot settle"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "transport_error",
           "tool_calls": 0,
           "verdict": "E"
         },
         "T1_exact_value": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T2_series": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T3_pagination": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 4,
           "verdict": "PASS"
         },
         "T4_point_in_time": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T5_source_attribution": {
           "evidence_refs": 2,
+          "fabricated_identifiers": [],
           "failed_checks": [],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 2,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "PASS"
         },
         "T6_reported_vs_derived": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "cites the derived reference",
             "inspected the derivation"
           ],
-          "refusals": [
-            "does not present a derived value as a reported one"
-          ],
+          "failed_tool_calls": 2,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 2,
           "verdict": "FAIL"
         },
         "T7_validation": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "preserves the independence metadata",
             "reports the recorded status"
           ],
-          "refusals": [],
+          "failed_tool_calls": 2,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "exchange_limit",
           "tool_calls": 8,
           "verdict": "FAIL"
         },
         "T8_conflict": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "both sides of the conflict are cited"
           ],
-          "refusals": [],
+          "failed_tool_calls": 0,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 1,
           "verdict": "FAIL"
         },
         "T9_unavailable": {
           "evidence_refs": 0,
+          "fabricated_identifiers": [],
           "failed_checks": [
             "distinguishes dividend_per_share (SOURCE_DID_NOT_REPORT)",
             "distinguishes guidance (STALE)",
             "distinguishes segment_revenue (UNAVAILABLE)"
           ],
-          "refusals": [],
+          "failed_tool_calls": 1,
+          "identifiers_cited": 0,
+          "misfiled_identifiers": [],
+          "non_identifier_citations": [],
+          "off_surface_calls": [],
+          "provenance_check_failures": [],
           "stop_reason": "answered",
           "tool_calls": 3,
           "verdict": "FAIL"
@@ -577,14 +1254,26 @@
   "tests": [
     {
       "consumer_capability": "concept semantics",
+      "evidence_refs": [
+        20,
+        3,
+        2
+      ],
       "failed_checks": [
         "names us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
       ],
       "fails": 2,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 1,
+      "provenance_check_failures": [],
       "stability": "unstable",
       "test_id": "T10_concept_evolution",
+      "tool_calls": [
+        5,
+        2,
+        2
+      ],
       "verdicts": [
         "PASS",
         "FAIL",
@@ -593,12 +1282,24 @@
     },
     {
       "consumer_capability": "concept semantics",
+      "evidence_refs": [
+        2,
+        3,
+        5
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T11_partial_mapping",
+      "tool_calls": [
+        5,
+        3,
+        6
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -607,15 +1308,27 @@
     },
     {
       "consumer_capability": "concept semantics",
+      "evidence_refs": [
+        2,
+        0,
+        2
+      ],
       "failed_checks": [
         "names us-gaap:PaymentsToAcquireProductiveAssets",
         "names us-gaap:PaymentsToAcquirePropertyPlantAndEquipment"
       ],
       "fails": 0,
       "interrupted": 1,
+      "off_surface_calls": [],
       "passes": 2,
+      "provenance_check_failures": [],
       "stability": "unstable",
       "test_id": "T12_non_comparable",
+      "tool_calls": [
+        3,
+        3,
+        3
+      ],
       "verdicts": [
         "PASS",
         "E",
@@ -624,6 +1337,11 @@
     },
     {
       "consumer_capability": "provenance",
+      "evidence_refs": [
+        3,
+        0,
+        2
+      ],
       "failed_checks": [
         "cited observations were actually retrieved",
         "cites accession for obsarch_ddb4af888ab3c6be910c0f9e",
@@ -633,9 +1351,18 @@
       ],
       "fails": 1,
       "interrupted": 1,
+      "off_surface_calls": [],
       "passes": 1,
+      "provenance_check_failures": [
+        "cited observations were actually retrieved"
+      ],
       "stability": "unstable",
       "test_id": "T13_provenance_chain",
+      "tool_calls": [
+        3,
+        2,
+        4
+      ],
       "verdicts": [
         "FAIL",
         "E",
@@ -644,12 +1371,24 @@
     },
     {
       "consumer_capability": "pagination",
+      "evidence_refs": [
+        0,
+        2,
+        4
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T14_truncation_trap",
+      "tool_calls": [
+        2,
+        1,
+        2
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -658,15 +1397,27 @@
     },
     {
       "consumer_capability": "reported vs derived",
+      "evidence_refs": [
+        9,
+        0,
+        0
+      ],
       "failed_checks": [
         "names what the archive cannot settle",
         "separates evidence from interpretation"
       ],
       "fails": 0,
       "interrupted": 2,
+      "off_surface_calls": [],
       "passes": 1,
+      "provenance_check_failures": [],
       "stability": "unstable",
       "test_id": "T15_inference_boundary",
+      "tool_calls": [
+        2,
+        2,
+        0
+      ],
       "verdicts": [
         "PASS",
         "E",
@@ -675,12 +1426,24 @@
     },
     {
       "consumer_capability": "evidence retrieval",
+      "evidence_refs": [
+        2,
+        2,
+        2
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T1_exact_value",
+      "tool_calls": [
+        1,
+        1,
+        1
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -689,12 +1452,24 @@
     },
     {
       "consumer_capability": "evidence retrieval",
+      "evidence_refs": [
+        0,
+        0,
+        0
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T2_series",
+      "tool_calls": [
+        1,
+        1,
+        1
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -703,12 +1478,24 @@
     },
     {
       "consumer_capability": "pagination",
+      "evidence_refs": [
+        2,
+        2,
+        2
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T3_pagination",
+      "tool_calls": [
+        4,
+        4,
+        4
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -717,12 +1504,24 @@
     },
     {
       "consumer_capability": "temporal discipline",
+      "evidence_refs": [
+        0,
+        0,
+        0
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T4_point_in_time",
+      "tool_calls": [
+        2,
+        2,
+        1
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -731,12 +1530,24 @@
     },
     {
       "consumer_capability": "provenance",
+      "evidence_refs": [
+        2,
+        2,
+        2
+      ],
       "failed_checks": [],
       "fails": 0,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 3,
+      "provenance_check_failures": [],
       "stability": "stable_pass",
       "test_id": "T5_source_attribution",
+      "tool_calls": [
+        1,
+        1,
+        1
+      ],
       "verdicts": [
         "PASS",
         "PASS",
@@ -745,15 +1556,27 @@
     },
     {
       "consumer_capability": "reported vs derived",
+      "evidence_refs": [
+        0,
+        0,
+        0
+      ],
       "failed_checks": [
         "cites the derived reference",
         "inspected the derivation"
       ],
       "fails": 3,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 0,
+      "provenance_check_failures": [],
       "stability": "stable_fail",
       "test_id": "T6_reported_vs_derived",
+      "tool_calls": [
+        2,
+        3,
+        2
+      ],
       "verdicts": [
         "FAIL",
         "FAIL",
@@ -762,15 +1585,27 @@
     },
     {
       "consumer_capability": "provenance",
+      "evidence_refs": [
+        0,
+        0,
+        0
+      ],
       "failed_checks": [
         "preserves the independence metadata",
         "reports the recorded status"
       ],
       "fails": 3,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 0,
+      "provenance_check_failures": [],
       "stability": "stable_fail",
       "test_id": "T7_validation",
+      "tool_calls": [
+        8,
+        8,
+        8
+      ],
       "verdicts": [
         "FAIL",
         "FAIL",
@@ -779,14 +1614,26 @@
     },
     {
       "consumer_capability": "conflict handling",
+      "evidence_refs": [
+        0,
+        2,
+        0
+      ],
       "failed_checks": [
         "both sides of the conflict are cited"
       ],
       "fails": 2,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 1,
+      "provenance_check_failures": [],
       "stability": "unstable",
       "test_id": "T8_conflict",
+      "tool_calls": [
+        1,
+        3,
+        1
+      ],
       "verdicts": [
         "FAIL",
         "PASS",
@@ -795,6 +1642,11 @@
     },
     {
       "consumer_capability": "negative states",
+      "evidence_refs": [
+        0,
+        0,
+        0
+      ],
       "failed_checks": [
         "distinguishes dividend_per_share (SOURCE_DID_NOT_REPORT)",
         "distinguishes guidance (STALE)",
@@ -802,9 +1654,16 @@
       ],
       "fails": 3,
       "interrupted": 0,
+      "off_surface_calls": [],
       "passes": 0,
+      "provenance_check_failures": [],
       "stability": "stable_fail",
       "test_id": "T9_unavailable",
+      "tool_calls": [
+        3,
+        4,
+        3
+      ],
       "verdicts": [
         "FAIL",
         "FAIL",
