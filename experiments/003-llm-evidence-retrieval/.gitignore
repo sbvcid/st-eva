@@ -31,6 +31,13 @@ bulkfacts/
 snapshot-bulk.sqlite
 snapshot-bulk.sqlite-*
 
+# The mixed-source merge archive and the trimmed payload it is built from. Same
+# reasoning as the other archives, and the trimmed payload is *derived* from the
+# fetched documents rather than fetched itself. The committed artefact is
+# merge-213.json, which holds the fingerprints and the verdict.
+snapshot-merge.sqlite
+snapshot-merge.sqlite-*
+
 # Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
 # extract like the archives above: the *derived* numbers are committed (in the
 # collection chains, the reports and the ledger output) and the responses are

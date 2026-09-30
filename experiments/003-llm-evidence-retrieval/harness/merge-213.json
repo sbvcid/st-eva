@@ -1,0 +1,212 @@
+{
+  "append_only": {
+    "delete": "refused: observations are append-only",
+    "row": "obsarch_000a8a29e220742f8ba75ceb",
+    "update": "refused: observations are append-only"
+  },
+  "bulk_issuers": [
+    "LTRX",
+    "CMI",
+    "KTCC",
+    "NEON",
+    "RBC"
+  ],
+  "bulk_only_issuers": [
+    "NEON",
+    "RBC"
+  ],
+  "bulk_payload": {
+    "documents": 12,
+    "fact_rows_removed": 4108,
+    "note": "The payload is trimmed, not the archive. Nothing in the archive under test was edited to manufacture a difference.",
+    "per_issuer_removed": {
+      "0000026172": 4,
+      "0000087050": 221,
+      "0000719733": 442,
+      "0000790273": 104,
+      "0000932787": 697,
+      "0001114925": 361,
+      "0001324948": 491,
+      "0001517396": 534,
+      "0001549084": 344,
+      "0001943444": 362,
+      "0002074973": 75,
+      "0002098430": 473
+    }
+  },
+  "duplicates_final": {
+    "identities_with_more_than_one_observation": 0,
+    "sample": []
+  },
+  "identity": {
+    "identity_stable": true,
+    "lost": 0,
+    "observations_after_step_1": 4002,
+    "survived_three_steps": 4002
+  },
+  "incremental_issuers": [
+    "LTRX",
+    "CMI",
+    "KTCC"
+  ],
+  "seeded": {
+    "concepts": 46,
+    "declines": 19,
+    "mappings": 47,
+    "metrics": 20,
+    "unmodelled_taxonomies": 4
+  },
+  "steps": [
+    {
+      "elapsed_seconds": 30.7,
+      "issuers": [
+        "LTRX",
+        "CMI",
+        "KTCC"
+      ],
+      "metrics_in_scope": [
+        "revenue",
+        "net_income",
+        "eps_diluted",
+        "assets",
+        "cash",
+        "debt",
+        "capex",
+        "shares_outstanding"
+      ],
+      "metrics_per_issuer": {
+        "CMI": 8,
+        "KTCC": 8,
+        "LTRX": 8
+      },
+      "observations": 4002,
+      "step": "1_incremental_api"
+    },
+    {
+      "change": {
+        "added": 5998,
+        "after": 10000,
+        "before": 4002,
+        "changed": 0,
+        "changed_sample": [],
+        "irreversible": true,
+        "removed": 0,
+        "removed_sample": []
+      },
+      "duplicates": {
+        "identities_with_more_than_one_observation": 0,
+        "sample": []
+      },
+      "elapsed_seconds": 14.6,
+      "issuers": [
+        "LTRX",
+        "CMI",
+        "KTCC",
+        "NEON",
+        "RBC"
+      ],
+      "metrics_gained_for_already_held_issuers": {
+        "CMI": [],
+        "KTCC": [],
+        "LTRX": []
+      },
+      "metrics_in_scope": [
+        "revenue",
+        "net_income",
+        "gross_profit",
+        "operating_income",
+        "r_and_d",
+        "interest_expense",
+        "income_tax",
+        "cash",
+        "debt",
+        "assets",
+        "equity",
+        "operating_cash_flow",
+        "capex",
+        "sbc",
+        "eps_diluted",
+        "weighted_average_diluted_shares",
+        "shares_outstanding",
+        "sga",
+        "long_term_debt_current",
+        "long_term_debt_noncurrent"
+      ],
+      "metrics_per_issuer": {
+        "CMI": 8,
+        "KTCC": 8,
+        "LTRX": 8,
+        "NEON": 17,
+        "RBC": 18
+      },
+      "observations": 10000,
+      "step": "2_bulk_into_incremental"
+    },
+    {
+      "change": {
+        "added": 95,
+        "after": 10095,
+        "before": 10000,
+        "changed": 0,
+        "changed_sample": [],
+        "irreversible": true,
+        "removed": 0,
+        "removed_sample": []
+      },
+      "duplicates": {
+        "identities_with_more_than_one_observation": 0,
+        "sample": []
+      },
+      "elapsed_seconds": 30.3,
+      "issuers": [
+        "LTRX",
+        "CMI",
+        "KTCC",
+        "NEON",
+        "RBC"
+      ],
+      "metrics_in_scope": [
+        "revenue",
+        "net_income",
+        "gross_profit",
+        "operating_income",
+        "r_and_d",
+        "interest_expense",
+        "income_tax",
+        "cash",
+        "debt",
+        "assets",
+        "equity",
+        "operating_cash_flow",
+        "capex",
+        "sbc",
+        "eps_diluted",
+        "weighted_average_diluted_shares",
+        "shares_outstanding",
+        "sga",
+        "long_term_debt_current",
+        "long_term_debt_noncurrent"
+      ],
+      "metrics_per_issuer": {
+        "CMI": 8,
+        "KTCC": 8,
+        "LTRX": 8,
+        "NEON": 17,
+        "RBC": 18
+      },
+      "observations": 10095,
+      "step": "3_incremental_again"
+    }
+  ],
+  "verdict": {
+    "bulk_only_evidence_added": true,
+    "bulk_widened_scope_for_held_issuers": false,
+    "delete_refused": true,
+    "identity_stable": true,
+    "incremental_new_preserved": true,
+    "no_duplicate_identities": true,
+    "nothing_changed": true,
+    "nothing_removed": true,
+    "update_refused": true
+  }
+}

@@ -1201,6 +1201,76 @@ archive an incremental run has already touched, where the incremental run may ho
 observations the bulk payload predates. That is a question about append-only
 evidence, and it is now a small question rather than an unknown one.
 
+## 0.17 Mixed-source bootstrap, and the rule it produced (2.13)
+
+2.12 proved the two delivery paths agree when one is the only source, which is
+the easy direction: there was nothing to overwrite. 2.13 ran the hard one — a bulk
+bootstrap into an archive an incremental run had already built — with two
+asymmetries created from real data: the incremental archive was built at a
+narrower Core metric scope, and the bulk payload had each issuer's most recent
+accessions **removed from it**, which is what a nightly archive built before those
+filings landed looks like. Two issuers were in the bulk set and not the
+incremental set, so bulk-only evidence was genuine.
+
+### Every irreversibility claim, measured
+
+bulk-only evidence added · already-shared evidence duplicated **0** · incremental-
+new evidence preserved · any existing observation **changed 0, removed 0** ·
+**4,002 of 4,002 survived three steps with identity stable, 0 lost** · `UPDATE`
+**refused: observations are append-only** · `DELETE` **refused: observations are
+append-only**.
+
+The append-only guarantee was **attempted, not assumed** — a real `UPDATE` and a
+real `DELETE` against a real row, recorded as refused. And duplication is measured
+on *identity* rather than on row count, because a second row for the same
+evidence would look like a successful addition to any fingerprint.
+
+### The finding: neither route can widen scope once filings are held
+
+```
+fresh archive, full Core scope, one filer      18 metrics
+narrow scope first, then bulk at full scope     8 metrics
+then incremental at full scope                  8 metrics
+```
+
+Ten Core metrics exist for that filer, the registry has concepts for them, and
+**neither later route fetched them.** `ingest()` returns as soon as every filing
+in the index is already held — *before* the metric loop. A source asked about an
+issuer with nothing new to learn is asked about nothing at all.
+
+That guard is the property 2.11 measured as its best result. It is also the thing
+that blocks a legitimate request, and the two are the same code.
+
+So the architecture is sharper than "bulk is cheaper":
+
+> **bulk must bootstrap a fresh archive at the full Core scope. Incremental is
+> for new filings only. A change to the Core metric set is a re-bootstrap, not an
+> incremental run** — and a coverage report must distinguish the two, or it reads
+> "18 metrics" and "8 metrics" as the same kind of absence.
+
+### A bug this round nearly reported as a finding
+
+Step 2 added nothing and finished in 0.2 seconds, which looks like "the merge is a
+no-op, and therefore safe". It was not a merge: the trimmed payload directory
+carried an **empty** `tickers.json`, so the bulk source resolved no issuer and
+ingested no issuer. **An empty map and an empty archive look identical from
+outside**, and the "no errors" output said nothing.
+
+It was visible only because a merge that adds nothing immediately after one that
+added 5,998 is arithmetically impossible, and the steps were printed side by side.
+The generalisation is the one worth keeping: **a merge test that cannot fail is
+not a test**, and here what made it un-failable was an input that resolved to
+nothing.
+
+### What is now settled
+
+There is no untested step left between this and a corpus of thousands. The
+interface, the path reconciliation, the merge, the irreversibility of
+incremental → bulk → incremental, the append-only guarantee, and the scope rule
+have all been measured on real filings. What remains is arithmetic and an
+operations decision: how many companies, which Core metrics, how often to run,
+and where the boundary of free public data sits.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.
