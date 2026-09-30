@@ -647,6 +647,43 @@ class EvidenceQuery:
             "business_model_basis": recorded["basis"],
         }
 
+    def coverage_ledger(
+        self,
+        asset: str,
+        source_inventory: Optional[Sequence[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Where this issuer's coverage is thin, and why -- one row per metric.
+
+        `coverage_report` answers "what is held, in what state". This answers the
+        question a coverage figure cannot: **of the metrics ST-EVA says it
+        provides, which are collected, which were never asked for, which were
+        deliberately declined, and which do not apply.**
+
+        The universe is ST-EVA's own Core Metric Universe, not the filer's
+        concept count. That refusal is the design and it is worth restating,
+        because the alternative is a trap this project walked into twice in two
+        rounds: a headline "3.0% of this filer's concepts" invites someone to
+        raise it, and the cheapest way to raise it is to collect concepts nobody
+        asked for. Measuring against what ST-EVA promised makes every row in the
+        ledger have an owner, and makes the number answerable.
+
+        `source_inventory` is what the filer actually reports, which the archive
+        cannot know because ingestion only fetches concepts the registry maps.
+        Optional; where it is absent the ledger reports
+        `source_inventory_known: false` rather than concluding the filer reports
+        nothing.
+        """
+        from coverage_semantics import scoped_ledger
+
+        return scoped_ledger(
+            self.connection,
+            self.registry(),
+            self._asset_id(asset),
+            asset,
+            source_inventory,
+        )
+
     def applicability_of(self, ticker: str, metric: str) -> Dict[str, Any]:
         """
         What the registry says about one metric for one issuer, whatever the

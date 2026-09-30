@@ -179,6 +179,11 @@ class Ingestor:
         self.provider = provider
         self.registry = registry
         self.connection = store.connection
+        # The run this ingest is writing, and the scope rows waiting on it.
+        # A scope row names a run, and the run row is written last, so the scope
+        # is buffered and written alongside it.
+        self._current_run_id: Optional[str] = None
+        self._pending_scope: List[Tuple[str, str, str, int, int, str]] = []
 
     # -- filing identity -------------------------------------------------
 
@@ -287,6 +292,8 @@ class Ingestor:
         report = IngestionReport(
             asset=ticker.upper(), cik=cik, run_id="run_" + uuid.uuid4().hex[:16]
         )
+        # The run this ingest writes, for the scope rows buffered against it.
+        self._current_run_id = report.run_id
 
         index = self.provider.filing_index(cik)
         wanted = set(forms)
@@ -315,10 +322,17 @@ class Ingestor:
             # Nothing new was accepted, so no concept endpoint can have
             # changed for a filing we already hold. Fetching them again would
             # re-download a decade of filings to learn nothing.
+            #
+            # The scope is still recorded, and recorded as `NOT_ATTEMPTED`. A run
+            # that asked nothing must not read as a run that looked and found
+            # silence, because those are the same sentence to every count that
+            # reads `ingestion_runs` -- and they are opposite facts.
+            self._record_scope(asset_id, metrics, attempted=False)
             self._count_fetches(report)
             self._write_run(asset_id, report, "NO_CHANGE")
             return report
 
+        self._record_scope(asset_id, metrics, attempted=True)
         for metric in metrics:
             try:
                 self._ingest_metric(
@@ -444,7 +458,7 @@ class Ingestor:
 
     def _write_run(self, asset_id: str, report: IngestionReport, status: str) -> None:
         self.connection.execute(
-            "INSERT INTO ingestion_runs (run_id, asset_id, source_id,"
+            "INSERT OR REPLACE INTO ingestion_runs (run_id, asset_id, source_id,"
             " started_at, finished_at, filings_seen, filings_already_held,"
             " filings_ingested, documents_stored, documents_reused,"
             " source_facts_stored, source_facts_skipped, observations_stored,"
@@ -472,6 +486,20 @@ class Ingestor:
                 "; ".join(report.errors) or None,
             ),
         )
+        # The run exists now, so the scope can name it. Written in the same
+        # transaction as the run so the two cannot come apart.
+        for row in self._pending_scope:
+            if row[0] != report.run_id:
+                continue
+            self.connection.execute(
+                "INSERT OR REPLACE INTO ingestion_scope (run_id, asset_id,"
+                " metric_id, mapping_count, attempted, observations_stored,"
+                " status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (row[0], row[1], row[2], row[3], row[4], 0, row[5]),
+            )
+        self._pending_scope = [
+            row for row in self._pending_scope if row[0] != report.run_id
+        ]
         self.connection.commit()
 
     def _concept_plan(
@@ -543,6 +571,57 @@ class Ingestor:
 
         if not stored_any:
             report.concepts_unresolved += 1
+
+    def _record_scope(
+        self,
+        asset_id: str,
+        metrics: Sequence[str],
+        attempted: bool,
+    ) -> None:
+        """
+        Write down what this run was asked to collect.
+
+        `ingestion_runs` says what a run did and nothing about what it was for,
+        so "this metric has no observations" has been a sentence with three
+        meanings that all read the same. This is the record that separates them,
+        and it is written on every run including the ones that ask nothing --
+        an unattempted metric is the single most useful thing a coverage figure
+        can report, because it is the only status that is a to-do item.
+
+        The status is decided by whether the registry has a concept to ask with,
+        not by whether anything came back. A metric with no declaration is
+        `NO_MAPPING` and one with a declaration the source did not answer is
+        `SOURCE_SILENT`, and the two call for completely different work.
+        """
+        run_id = self._current_run_id
+        if not run_id:
+            return
+        # Buffered rather than written here. A scope row names a run, and the run
+        # row is written at the end of the run, so writing now would insert a
+        # child before its parent. `_write_run` writes both in one transaction,
+        # which also means a run can never exist without its scope or vice
+        # versa.
+        self._pending_scope = getattr(self, "_pending_scope", [])
+        for metric in metrics:
+            mapping_count = len(self.registry.mappings_for_metric(metric))
+            if not attempted:
+                status = "NOT_ATTEMPTED"
+            elif mapping_count == 0:
+                status = "NO_MAPPING"
+            elif self._metric_observed(metric, asset_id):
+                status = "INGESTED"
+            else:
+                status = "SOURCE_SILENT"
+            self._pending_scope.append(
+                (run_id, asset_id, metric, mapping_count, int(attempted), status)
+            )
+
+    def _metric_observed(self, metric: str, asset_id: str) -> bool:
+        row = self.connection.execute(
+            "SELECT 1 FROM observations WHERE asset_id = ? AND metric = ?"
+            " LIMIT 1", (asset_id, metric),
+        ).fetchone()
+        return row is not None
 
     def _store_document(
         self,

@@ -709,6 +709,131 @@ remainder is deliberate. The difference between "not collected" and "considered
 and declined" is exactly what a coverage claim has to be honest about, and only
 the first of those is currently recorded in a machine-readable place.
 
+## 0.12 Coverage semantics: where is coverage low, and why (2.8)
+
+2.7 ended with a number that was true and almost useless. **3.0% of TSM's
+concepts** — measured against a denominator that is not a target, and
+indecomposable, so it read as *ST-EVA only manages 3%* when the truth was that
+nine concepts had been deliberately declined with reasons, ten were declared,
+and the rest had never been asked for. Three completely different situations,
+one number, no way to tell them apart.
+
+### The universe, and the refusal to change it
+
+Coverage is measured against **ST-EVA's own Core Metric Universe** — every active
+semantic metric, and the source concepts declared to express it — and not against
+a filer's full concept count.
+
+That is a refusal rather than an oversight, and this project has now walked into
+the opposite mistake twice. A figure against the source's concept count invites
+someone to raise it, and **the cheapest way to raise it is to collect concepts
+nobody asked for** — the exact opposite of providing necessary, trustworthy
+data. The source figure is still reported, because losing it would lose a real
+number; it is just not the denominator, and every ledger says so in its payload
+rather than in a comment.
+
+The filer's full concept list is also **not derivable from the archive**, since
+ingestion only fetches concepts the registry maps. It is an input, and where it
+is absent the ledger says so rather than concluding the filer reports nothing.
+
+### What 3.0% means
+
+```
+TSM, against what ST-EVA promised:
+     18 applicable Core metrics
+      7 collected
+     11 never asked for        <- a backlog, and it is knowable
+
+TSM, against what TSM reports:
+    336 concepts
+     10 declared
+      9 declined, with reasons
+    317 not considered
+```
+
+The first is the product question and it has an answer. The second is a size,
+not a score, and it is reported so that nobody has to guess at it.
+
+Every issuer has the same **35 declared-or-declined concepts**. The semantic
+layer is issuer-independent, and the differences between three companies in three
+different taxonomies are entirely in what has been collected and what applies to
+them.
+
+### Two records that had to exist
+
+`ingestion_runs` recorded what a run *did* and nothing about what it was *for*,
+so "this metric has no observations" was a sentence with three meanings that all
+read the same: never asked, asked and silent, asked and the rows are not here.
+`ingestion_scope` is one row per metric per run. A run that returned early
+because nothing was new has asked nothing and records `NOT_ATTEMPTED` — written
+on every run including those that ask nothing, because an unattempted metric is
+the most useful thing a coverage figure can report.
+
+`declined_concept_mappings` turns 2.7's nine prose decisions into records with a
+closed reason vocabulary: `COMPONENT_OF`, `WIDER_AGGREGATE`,
+`NARROWER_AGGREGATE`, `DIFFERENT_QUANTITY`, `IDENTITY_MISMATCH`, `NOT_A_METRIC`.
+The codes are the point — a component of a metric, a wider aggregate of it, a
+measure of something else, a count of a different population, and a figure that
+is not a measurement at all all read as "not mapped" in a flat list, and they
+call for completely different responses.
+
+Keyed on **(concept, metric considered)** because the interesting declines are
+near misses, and deliberately **not per issuer**: "this element measures
+continuing operations" is a fact about the element and does not become true or
+false per company.
+
+### The order of the derivation is the argument
+
+`COLLECTED`, then `NOT_APPLICABLE`, then a decline, then what was asked, then what
+was not. **The decisions are evaluated above the fetches**, which is what stops a
+deliberate refusal from being reported as a gap to be filled. `NOT_YET_COLLECTED`
+is the only status flagged as a backlog item.
+
+Two statuses that are real and not hypothetical:
+
+```
+shares_outstanding  NU   DELIBERATELY_DECLINED
+    both IFRS candidates rejected -- authorised shares count a different
+    population, and IssuedCapital is a currency amount -- and NU reports no
+    share count. A decided thing, not a gap.
+
+debt                NU   SOURCE_SILENT
+    asked, and the source had nothing under the declared borrowings elements.
+    A fact about the filer, and completely different work from the eleven
+    NOT_YET_COLLECTED metrics beside it.
+```
+
+### Three errors of my own, and what each showed
+
+A decline was made to **compete** with a collection, so a metric collected
+through one concept hid every decline against another. A decline is a fact about
+a *concept*: AAPL's revenue is collected through US-GAAP concepts while four
+IFRS revenue elements are declined, and those are framework judgements rather
+than per-issuer ones. Declines are a row attribute that coexists with any
+status, and become the status only when nothing is held.
+
+`decline_concept_mapping` **skipped its own validation** — `DeclinedConcept`
+checked the reason and the qualification, the writer did not. Two validation
+paths is how a blank reason reaches a table whose trigger refuses one. There is
+now one path.
+
+And an archive predating the ledger would have reported every uncollected metric
+as `NOT_YET_COLLECTED` — *nobody has ever looked* — about metrics it plainly
+holds. It answers `UNDETERMINED`, which is the only honest thing an archive
+without a scope record can say.
+
+### What is still missing
+
+The ledger does **not** do concept-level `UNMAPPED` matching. NU reports
+`ifrs-full:Borrowings`, no mapping claims it, and the ledger does not say so.
+Doing it properly means matching an inventory concept to a metric without a
+mapping — which is the "similar label" problem 2.7 spent a phase refusing to
+solve by name, and an `UNMAPPED` built on a name match would be worse than none.
+
+And collection is still the bottleneck, but it is now **measurable**: the eleven
+TSM backlog items and the nine for AAPL are the same list of Core metrics, so
+widening collection is one decision rather than three per-issuer negotiations.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

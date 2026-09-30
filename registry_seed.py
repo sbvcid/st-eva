@@ -40,9 +40,14 @@ from core_registry import (
     MAPPING_EXACT,
     MAPPING_NON_COMPARABLE,
     MAPPING_PARTIAL,
+    REASON_COMPONENT_OF,
+    REASON_DIFFERENT_QUANTITY,
+    REASON_IDENTITY_MISMATCH,
+    REASON_NOT_A_METRIC,
     Concept,
     ConceptMapping,
     CoreRegistry,
+    DeclinedConcept,
     Metric,
     concept_id_for,
 )
@@ -868,6 +873,129 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
     ),
 )
 
+# Concepts considered for a metric and declined, with the reason recorded where a
+# coverage figure can read it.
+#
+# Nine of them, and until 2.8 the reasoning lived only in the notes above. A
+# reader of the archive could see what ST-EVA held and not what it had considered
+# and rejected, which with 3.0% of a filer's concepts collected is most of what
+# a coverage claim has to be honest about: "not collected" and "declined on
+# purpose" are different sentences and they call for different work.
+#
+# Recorded as records rather than prose, and each carries a closed reason code
+# because the distinction that matters is which *kind* of near-miss it is. A
+# component of the metric is a different thing from a wider aggregate of it, and
+# from a measure of something else entirely, and a coverage ledger that flattened
+# them would lose the only information the record exists to keep.
+DECLINES: Tuple[DeclinedConcept, ...] = (
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "RevenueFromContractsWithCustomers"),
+        considered_for_metric="revenue",
+        reason_code=REASON_COMPONENT_OF,
+        reason=(
+            "A component of ifrs-full:Revenue, not the revenue line. A filer that "
+            "reports the two at the same value -- as this one does -- still "
+            "presents them as separate lines, and mapping both would put two "
+            "figures into one metric for one period with nothing to tell a "
+            "reader which the filer actually presented."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "RevenueFromInterest"),
+        considered_for_metric="revenue",
+        reason_code=REASON_COMPONENT_OF,
+        reason=(
+            "Interest income reported inside ordinary-activity revenue. The "
+            "metric is the revenue line as presented, and an IFRS element for "
+            "one component of it is not that line -- it is the reason the "
+            "revenue mapping is PARTIAL rather than EXACT."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "RevenueFromGovernmentGrants"),
+        considered_for_metric="revenue",
+        reason_code=REASON_COMPONENT_OF,
+        reason=(
+            "Government grants inside ordinary-activity revenue. A component of "
+            "the revenue line, reported separately by a filer that chooses to."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "RevenueFromDividends"),
+        considered_for_metric="revenue",
+        reason_code=REASON_COMPONENT_OF,
+        reason=(
+            "Dividend income inside ordinary-activity revenue. A component of "
+            "the revenue line, on the same reasoning as the interest and grant "
+            "elements."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(
+            IFRS_FULL, "DilutedEarningsLossPerShareFromContinuingOperations"
+        ),
+        considered_for_metric="eps_diluted",
+        reason_code=REASON_DIFFERENT_QUANTITY,
+        reason=(
+            "Diluted earnings per share from continuing operations. The metric "
+            "is diluted earnings per share for the reporting period with no "
+            "such qualifier, so this is a different quantity and mapping it "
+            "would put a continuing-operations figure in a total-period field."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "NumberOfSharesAuthorised"),
+        considered_for_metric="shares_outstanding",
+        reason_code=REASON_IDENTITY_MISMATCH,
+        reason=(
+            "Shares authorised. The metric counts shares outstanding, and "
+            "authorised is a larger and different population: the gap between "
+            "the two is unissued capital, which is a different fact."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "IssuedCapital"),
+        considered_for_metric="shares_outstanding",
+        reason_code=REASON_NOT_A_METRIC,
+        reason=(
+            "A currency amount, not a share count. Declined for share count and "
+            "for every other count metric, and it would be easy to mistake for "
+            "a share figure because it is reported in the equity statement."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "LoansAndAdvancesToCustomers"),
+        considered_for_metric="revenue",
+        reason_code=REASON_NOT_A_METRIC,
+        reason=(
+            "A financial institution's earning assets. No Core metric declares "
+            "them, and they are the balance-sheet side of the business rather "
+            "than a measure of revenue; a decline here says the concept is "
+            "outside ST-EVA's scope, not that it was overlooked."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+    DeclinedConcept(
+        concept_id=concept_id_for(IFRS_FULL, "InterestRevenueExpense"),
+        considered_for_metric="revenue",
+        reason_code=REASON_DIFFERENT_QUANTITY,
+        reason=(
+            "Interest income and expense presented as one net line by a "
+            "financial institution. The metric is revenue recognised from "
+            "ordinary activities as presented, and this element reports a "
+            "different thing: interest, net of the cost of it."
+        ),
+        framework_basis=IFRS_FULL,
+    ),
+)
+
 
 def seed(registry: CoreRegistry) -> Dict[str, int]:
     """Load the registry seed. Idempotent."""
@@ -877,8 +1005,19 @@ def seed(registry: CoreRegistry) -> Dict[str, int]:
         registry.add_concept(concept)
     for mapping in MAPPINGS:
         registry.add_mapping(mapping)
+    declines = 0
+    for decline in DECLINES:
+        registry.decline_concept_mapping(
+            decline.concept_id,
+            decline.considered_for_metric,
+            decline.reason_code,
+            decline.reason,
+            decline.framework_basis,
+        )
+        declines += 1
     return {
         "metrics": len(METRICS),
         "concepts": len(CONCEPTS),
         "mappings": len(MAPPINGS),
+        "declines": declines,
     }

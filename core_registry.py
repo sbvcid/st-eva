@@ -113,6 +113,31 @@ MAPPING_TYPES = (
     MAPPING_NON_COMPARABLE,
 )
 
+# Why a source concept was considered for a metric and not mapped to it.
+#
+# Closed, because the distinction that matters is *which kind* of near-miss it
+# is, and a free-text reason cannot be branched on. A component of the metric, a
+# wider aggregate of it, a measure of something else, a count of a different
+# population and a figure that is not a measurement at all all read as "not
+# mapped" in a flat list, and they call for completely different responses:
+# the first two are the metric's own definition, the third is a different
+# question, the fourth is a near miss worth revisiting, and the fifth is out of
+# scope entirely.
+REASON_COMPONENT_OF = "COMPONENT_OF"
+REASON_WIDER_AGGREGATE = "WIDER_AGGREGATE"
+REASON_NARROWER_AGGREGATE = "NARROWER_AGGREGATE"
+REASON_DIFFERENT_QUANTITY = "DIFFERENT_QUANTITY"
+REASON_IDENTITY_MISMATCH = "IDENTITY_MISMATCH"
+REASON_NOT_A_METRIC = "NOT_A_METRIC"
+DECLINE_REASONS = (
+    REASON_COMPONENT_OF,
+    REASON_WIDER_AGGREGATE,
+    REASON_NARROWER_AGGREGATE,
+    REASON_DIFFERENT_QUANTITY,
+    REASON_IDENTITY_MISMATCH,
+    REASON_NOT_A_METRIC,
+)
+
 # A series continues only through these. A PARTIAL mapping is a wider or
 # narrower aggregate, and NON_COMPARABLE is a different quantity, so splicing
 # across either would splice two different numbers into one line.
@@ -255,6 +280,55 @@ class ConceptMapping:
             "effective_from": self.effective_from,
             "effective_to": self.effective_to,
             "notes": self.notes,
+        }
+
+
+@dataclass(frozen=True)
+class DeclinedConcept:
+    """
+    A source concept that was weighed against a metric and rejected.
+
+    The counterpart to `ConceptMapping`, and the more informative of the two for
+    a coverage question. A mapping says "this concept means this metric". This
+    says "this concept was considered, and here is why it is not" -- which is
+    what separates a metric ST-EVA has no opinion about from one it has decided
+    about, and those are different things to read in a coverage report.
+    """
+
+    concept_id: str
+    considered_for_metric: str
+    reason_code: str
+    reason: str
+    # Which framework reading produced it, so a decline about an IFRS element is
+    # not read as a claim about the US-GAAP one. None where the judgement does
+    # not depend on the framework.
+    framework_basis: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.reason_code not in DECLINE_REASONS:
+            raise RegistryError(
+                f"decline reason_code {self.reason_code!r} is not in "
+                f"{list(DECLINE_REASONS)}"
+            )
+        if not self.reason or not self.reason.strip():
+            # A decline with no stated reason is an omission wearing a
+            # decision's clothes, and the code alone does not say which of the
+            # six it is.
+            raise RegistryError(
+                "a decline must state why, not only which category"
+            )
+        if ":" not in (self.concept_id or ""):
+            raise RegistryError(
+                "a decline concept_id must be qualified as taxonomy:concept"
+            )
+
+    def contract_dict(self) -> Dict[str, Any]:
+        return {
+            "concept_id": self.concept_id,
+            "considered_for_metric": self.considered_for_metric,
+            "reason_code": self.reason_code,
+            "reason": self.reason,
+            "framework_basis": self.framework_basis,
         }
 
 
@@ -480,6 +554,101 @@ class CoreRegistry:
             (asset_id, business_model, basis, source, utc_now()),
         )
         self.connection.commit()
+
+    def decline_concept_mapping(
+        self,
+        concept_id: str,
+        considered_for_metric: str,
+        reason_code: str,
+        reason: str,
+        framework_basis: Optional[str] = None,
+    ) -> None:
+        """
+        Record a source concept that was weighed against a metric and rejected.
+
+        The counterpart to `add_mapping`, and the more informative of the two.
+        A mapping says "this concept means this metric"; a decline says "this
+        concept was considered for this metric and here is why it is not", which
+        is the information a coverage figure needs and cannot get from a count.
+
+        Without it, 2.7's nine IFRS decisions lived in seed-file prose, and an
+        archive holding 3.0% of a filer's concepts could report what it held and
+        not what it had deliberately left out. Those are different claims and a
+        reader is entitled to the difference.
+
+        Validated by building a `DeclinedConcept` and writing that, rather than
+        by writing the fields directly. Two validation paths is how a blank
+        reason ends up in a table whose trigger refuses one: the dataclass
+        checked it on the seed path and the method did not check it here.
+        """
+        record = DeclinedConcept(
+            concept_id=concept_id,
+            considered_for_metric=considered_for_metric,
+            reason_code=reason_code,
+            reason=reason,
+            framework_basis=framework_basis,
+        )
+        self.connection.execute(
+            "INSERT OR REPLACE INTO declined_concept_mappings (concept_id,"
+            " considered_for_metric, reason_code, reason, framework_basis,"
+            " recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                record.concept_id,
+                record.considered_for_metric,
+                record.reason_code,
+                record.reason,
+                record.framework_basis,
+                utc_now(),
+            ),
+        )
+        self.connection.commit()
+
+    def declines_for_metric(
+        self,
+        metric_id: str,
+    ) -> List[Dict[str, Any]]:
+        """
+        Every concept that was considered for one metric and declined.
+
+        Sorted by concept so a coverage report is stable between runs, which
+        matters more here than it sounds: this list is read by a language model
+        through the query surface, and a reordering would look like a change in
+        what ST-EVA holds.
+
+        Empty on an archive predating migration 0012, for the same reason
+        `business_model_of` is: an archive that cannot have recorded a decision
+        has recorded none, and the read path may not demand a migration it cannot
+        ask for.
+        """
+        if not self._has_decline_records():
+            return []
+        return [
+            dict(row)
+            for row in self.connection.execute(
+                "SELECT concept_id, considered_for_metric, reason_code, reason,"
+                " framework_basis FROM declined_concept_mappings"
+                " WHERE considered_for_metric = ? ORDER BY concept_id",
+                (metric_id,),
+            )
+        ]
+
+    def _has_decline_records(self) -> bool:
+        return self.connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table'"
+            " AND name = 'declined_concept_mappings'"
+        ).fetchone() is not None
+
+    def all_declines(self) -> List[Dict[str, Any]]:
+        if not self._has_decline_records():
+            return []
+        return [
+            dict(row)
+            for row in self.connection.execute(
+                "SELECT concept_id, considered_for_metric, reason_code, reason,"
+                " framework_basis FROM declined_concept_mappings"
+                " ORDER BY considered_for_metric, concept_id"
+            )
+        ]
 
     def business_model_of(self, asset_id: str) -> Optional[Dict[str, Any]]:
         """
