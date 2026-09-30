@@ -49,6 +49,20 @@ from core_registry import (
 
 BANK = "BANK"
 MINING = "MINING"
+# A filer the SEC classifies under SIC major group 61 or 62. Declared separately
+# from `BANK` because that is the label the filer carries, and this project's
+# rule is that a claim is recorded at the strength the evidence supports: naming
+# a filer "BANK" when its own submission says "Finance Services" would be a
+# classification somebody made rather than one anybody published.
+FINANCE_SERVICES = "FINANCE_SERVICES"
+
+# The two financial models together, for the metrics a financial institution does
+# not have. Written as a tuple at each use site rather than collapsed into one
+# member, because the two names are both load-bearing: `BANK` is what a metric was
+# declared against in 2.5, `FINANCE_SERVICES` is what a filer can be recorded as
+# in 2.7, and merging them would silently re-point every earlier ruling at a
+# vocabulary that did not exist when they were made.
+FINANCIAL = (BANK, FINANCE_SERVICES)
 
 # metric_id -> definition fields.
 METRICS: Tuple[Metric, ...] = (
@@ -72,11 +86,24 @@ METRICS: Tuple[Metric, ...] = (
         statement="INCOME",
         semantic_definition=(
             "Revenue less cost of revenue for the reporting period, as the "
-            "filer reports it. Not computed by ST-EVA."
+            "filer reports it. Not computed by ST-EVA. A financial institution "
+            "has no cost-of-revenue line against which to take this difference, "
+            "so the metric has no meaning there rather than a missing value."
         ),
         unit_family="currency",
         normal_period_type="DURATION",
         comparability_group="income_statement_flows",
+        # Declared on the definition, not on any issuer's empty data.
+        #
+        # The distinction this is here to keep is the one that gets lost: an
+        # inapplicable metric and a metric with no observations are different
+        # facts with different remedies, and only the first of them is a
+        # statement about the company. A bank's income statement has interest
+        # income and interest expense and no cost of sales, so "revenue less
+        # cost of revenue" is undefined there -- the line does not exist to be
+        # missing. Inheriting this from an empty observation count would get the
+        # right answer for the wrong reason and would make the two collapse.
+        inapplicable_in=FINANCIAL,
     ),
     Metric(
         metric_id="operating_income",
@@ -90,7 +117,7 @@ METRICS: Tuple[Metric, ...] = (
         unit_family="currency",
         normal_period_type="DURATION",
         comparability_group="income_statement_flows",
-        inapplicable_in=(BANK,),
+        inapplicable_in=FINANCIAL,
     ),
     Metric(
         metric_id="r_and_d",
@@ -278,6 +305,12 @@ METRICS: Tuple[Metric, ...] = (
 US_GAAP = "us-gaap"
 DEI = "dei"
 VENDOR = "vendor"
+# The second accounting framework. Foreign private issuers filing on Form 20-F
+# report under IFRS as issued by the IASB, and the taxonomy those filings use is
+# `ifrs-full`. It is a framework name and not a company name: nothing in this
+# module may branch on it, and the mappings below are declared against the
+# metric definitions rather than against any issuer's filing.
+IFRS_FULL = "ifrs-full"
 
 CONCEPTS: Tuple[Concept, ...] = (
     Concept(
@@ -442,6 +475,115 @@ CONCEPTS: Tuple[Concept, ...] = (
             "of the cross-source comparison rather than on the field name."
         ),
     ),
+    # -- IFRS ------------------------------------------------------------
+    #
+    # A second accounting framework, not a second company. Every concept below
+    # is declared for `ifrs-full` because that is the taxonomy that issues it;
+    # nothing below mentions the issuer whose filing prompted the reading, and
+    # the mappings are declared on the metric's own definition.
+    #
+    # Definitions are IFRS Foundation wording, trimmed for length. `Revenue` is
+    # the one to read carefully: IFRS revenue is an aggregate of ordinary-activity
+    # income that may include interest, dividend, royalty and grant income, while
+    # the metric's exact US-GAAP concept is contracts-with-customers only. Similar
+    # labels, different contents, which is the whole point of declaring them.
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "Revenue"),
+        taxonomy=IFRS_FULL,
+        concept="Revenue",
+        label="Revenue",
+        source_definition=(
+            "Income from the entity's ordinary activities, including sales of "
+            "goods, rendering of services, and interest, dividend, royalty and "
+            "grant income that the entity designates part of ordinary "
+            "activities."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "ProfitLoss"),
+        taxonomy=IFRS_FULL,
+        concept="ProfitLoss",
+        label="Profit (loss)",
+        source_definition=(
+            "The total of profit or loss for the period, including profit or "
+            "loss attributable to non-controlling interests."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            IFRS_FULL, "ProfitLossAttributableToOwnersOfParent"
+        ),
+        taxonomy=IFRS_FULL,
+        concept="ProfitLossAttributableToOwnersOfParent",
+        label="Profit (loss) attributable to owners of the parent",
+        source_definition=(
+            "The portion of the profit or loss for the period attributable to "
+            "the owners of the parent."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "Assets"),
+        taxonomy=IFRS_FULL,
+        concept="Assets",
+        label="Assets",
+        source_definition=(
+            "A present economic resource controlled by the entity as a result "
+            "of past events from which an economic benefit is expected to flow."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "CashAndCashEquivalents"),
+        taxonomy=IFRS_FULL,
+        concept="CashAndCashEquivalents",
+        label="Cash and cash equivalents",
+        source_definition=(
+            "Short-term, highly liquid investments that are readily convertible "
+            "to known amounts of cash and subject to an insignificant risk of "
+            "changes in value. Short-term investments held for trading or "
+            "short-term treasury management are a separate line."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "DilutedEarningsLossPerShare"),
+        taxonomy=IFRS_FULL,
+        concept="DilutedEarningsLossPerShare",
+        label="Diluted earnings (loss) per share",
+        source_definition=(
+            "The weighted average number of ordinary shares outstanding used to "
+            "calculate diluted earnings per share, from continuing operations "
+            "unless the entity reports otherwise."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "NumberOfSharesIssuedAndFullyPaid"),
+        taxonomy=IFRS_FULL,
+        concept="NumberOfSharesIssuedAndFullyPaid",
+        label="Number of shares issued and fully paid",
+        source_definition=(
+            "The number of shares of the entity that have been issued to "
+            "holders and fully paid for."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "CurrentPortionOfLongtermBorrowings"),
+        taxonomy=IFRS_FULL,
+        concept="CurrentPortionOfLongtermBorrowings",
+        label="Current portion of long-term borrowings",
+        source_definition=(
+            "The amount of long-term borrowings that is repayable within one "
+            "year of the reporting date."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(IFRS_FULL, "LongtermBorrowings"),
+        taxonomy=IFRS_FULL,
+        concept="LongtermBorrowings",
+        label="Long-term borrowings",
+        source_definition=(
+            "Interest-bearing liabilities repayable more than one year after "
+            "the reporting date, excluding the current portion."
+        ),
+    ),
 )
 
 MAPPINGS: Tuple[ConceptMapping, ...] = (
@@ -583,6 +725,145 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         notes=(
             "the registrant's registered security; a listed-instrument count "
             "is a different quantity and is not mapped here"
+        ),
+    ),
+    # -- IFRS ------------------------------------------------------------
+    #
+    # Four are EXACT, four are PARTIAL, and the notes say why in each case. The
+    # rule applied throughout: EXACT only where the metric's own definition and
+    # the source concept's own definition say the same thing, and PARTIAL
+    # wherever one is a component or a wider aggregate of the other -- which is
+    # what `CONTINUING_MAPPINGS` exists to make visible, because a series
+    # spliced across a PARTIAL boundary would splice two different numbers into
+    # one line.
+    #
+    # Two things are deliberately NOT mapped, and their absence is the point of
+    # the exercise rather than an oversight:
+    #
+    #   `ifrs-full:RevenueFromContractsWithCustomers` is a *component* of
+    #   `ifrs-full:Revenue`. Mapping both would put two IFRS figures into one
+    #   metric for the same period, and the reader could not tell which line the
+    #   issuer actually presented.
+    #
+    #   `ifrs-full:DilutedEarningsLossPerShareFromContinuingOperations` measures
+    #   continuing operations only, and the metric is defined for the reporting
+    #   period without that qualifier. It is a different quantity and forcing it
+    #   in would be the exact failure this framework boundary exists to catch.
+    ConceptMapping(
+        metric_id="assets",
+        concept_id=concept_id_for(IFRS_FULL, "Assets"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the metric is total assets at the balance sheet date and the "
+            "IFRS element is a present economic resource controlled by the "
+            "entity; neither framework admits a narrower reading of the line"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="cash",
+        concept_id=concept_id_for(IFRS_FULL, "CashAndCashEquivalents"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the metric definition already excludes short-term investments as a "
+            "different concept, and the IFRS element draws the same line: "
+            "trading and short-term treasury investments are a separate line. "
+            "A definition written to be framework-neutral is satisfied by both "
+            "frameworks, which is the strongest evidence available that it is"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="eps_diluted",
+        concept_id=concept_id_for(IFRS_FULL, "DilutedEarningsLossPerShare"),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "weighted-average diluted share count over the reporting period in "
+            "both frameworks; the continuing-operations variant is a different "
+            "quantity and is deliberately not mapped"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="net_income",
+        concept_id=concept_id_for(
+            IFRS_FULL, "ProfitLossAttributableToOwnersOfParent"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "profit attributable to the owners of the parent, which is what the "
+            "metric defines as net income as the filer reports it, and the "
+            "same parent-only claim the US-GAAP net-income element makes"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="revenue",
+        concept_id=concept_id_for(IFRS_FULL, "Revenue"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2015-12-31",
+        notes=(
+            "IFRS revenue is an aggregate of ordinary-activity income and may "
+            "carry interest, dividend, royalty and grant income, while the "
+            "metric's exact US-GAAP concept is contracts-with-customers only, "
+            "which is a component of it. Filers differ in whether they fold the "
+            "other income in, so the two tags are not the same claim. A filer "
+            "that reports the components separately makes the figures coincide; "
+            "that is a fact about that filer and not a definition, and the "
+            "mapping has to survive one that does not. Window: the earliest "
+            "period this element is reported for by any filer using the "
+            "taxonomy, with no end date because nothing observed here is "
+            "evidence that it stopped"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="net_income",
+        concept_id=concept_id_for(IFRS_FULL, "ProfitLoss"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2015-12-31",
+        notes=(
+            "total profit including non-controlling interests, a wider "
+            "aggregate than the parent-only net income the metric defines. "
+            "Where a filer reports both, the two differ by exactly the "
+            "non-controlling interest, which is the test for whether a series "
+            "may continue across them. Window: earliest reported period for the "
+            "element across filers using the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="shares_outstanding",
+        concept_id=concept_id_for(IFRS_FULL, "NumberOfSharesIssuedAndFullyPaid"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2016-12-31",
+        notes=(
+            "issued and fully paid is not the same claim as outstanding: the "
+            "two are equal only where the filer holds no treasury shares, and "
+            "the archive holds no evidence either way. The metric definition "
+            "already excludes a weighted-average count over a period and a "
+            "listed-instrument count; issued is a third thing. Window: earliest "
+            "reported period for the element across filers using the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="debt",
+        concept_id=concept_id_for(IFRS_FULL, "CurrentPortionOfLongtermBorrowings"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2016-12-31",
+        notes=(
+            "one declared component of a composition, exactly as the US-GAAP "
+            "current/non-current long-term pair already is. The metric states "
+            "that no single standard concept declares debt, so the composition "
+            "is recorded on each mapping and a series must not continue across "
+            "a partial boundary. Window: earliest reported period for the "
+            "element across filers using the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="debt",
+        concept_id=concept_id_for(IFRS_FULL, "LongtermBorrowings"),
+        mapping_type=MAPPING_PARTIAL,
+        effective_from="2020-12-31",
+        notes=(
+            "the non-current component of the same composition, and structurally "
+            "the same shape as the US-GAAP declaration it sits beside -- which is "
+            "the generalisation 2.7 was asked to demonstrate. Window: earliest "
+            "reported period for the element across filers using the taxonomy"
         ),
     ),
 )

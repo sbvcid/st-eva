@@ -1131,7 +1131,29 @@ class TestRefusalStates(QueryFixture):
         self.assertEqual(history["state"]["resolved_from"], "observation_status")
 
     def test_the_state_vocabulary_is_closed(self):
-        self.assertEqual(len(EVIDENCE_STATES), 6)
+        """
+        Closed, and named member by member rather than counted.
+
+        2.7 added `NO_OBSERVATIONS` and the count went from six to seven, which
+        is the correct outcome: "applicable, and nothing collected yet" had no
+        token and could only be reported as `UNAVAILABLE`, which says the last
+        attempt failed. A test that only counted members would have needed
+        editing every time the vocabulary changed for a good reason and would
+        have said nothing about *why*; naming them means the next addition has to
+        be a decision rather than a diff.
+        """
+        self.assertEqual(
+            set(EVIDENCE_STATES),
+            {
+                "SOURCE_REPORTED",
+                "SOURCE_DID_NOT_REPORT",
+                "NOT_APPLICABLE",
+                "NO_OBSERVATIONS",
+                "UNAVAILABLE",
+                "CONFLICTING",
+                "STALE",
+            },
+        )
         with self.assertRaises(EvidenceStateError):
             EvidenceState(asset=AAPL, metric="revenue", state="MAYBE")
 

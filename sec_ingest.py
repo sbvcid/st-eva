@@ -69,6 +69,50 @@ DEFAULT_METRICS = (
 
 DEFAULT_FORMS = ("10-K", "10-Q")
 
+# SIC major groups, and the business model each one implies.
+#
+# Read from the filer's own submission rather than from a company list, so the
+# classification is the issuer's and the rule is checkable by anyone with the
+# same filing. Only groups that name a business model in the registry's closed
+# vocabulary are mapped at all; everything else resolves to `None`, which means
+# *no inapplicability ruling is made* and every declared metric stays
+# applicable. That is the safe direction to be wrong in: an unclassified issuer
+# gets asked about a metric that turns out not to exist, and is told so by the
+# evidence layer, rather than silently having a metric removed from its coverage.
+SIC_GROUPS: Tuple[Tuple[int, int, str], ...] = (
+    (10, 14, "MINING"),
+    (20, 39, "MANUFACTURING"),
+    (60, 67, "FINANCE_SERVICES"),
+)
+
+
+def business_model_from_filer_classification(
+    submissions: Dict[str, Any],
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    The business model an issuer declares, and where the declaration is from.
+
+    Returns `(business_model, source)`. `None` for the model when the
+    classification does not name one in the closed vocabulary, and the source is
+    the SIC code and description either way, because a reader who finds an
+    issuer unclassified should be able to see what it actually said.
+    """
+    sic = submissions.get("sic")
+    source = None
+    if sic:
+        description = submissions.get("sicDescription")
+        source = f"SIC {sic} {description}".strip()
+    if sic in (None, ""):
+        return None, source
+    try:
+        major = int(sic) // 100
+    except (TypeError, ValueError):
+        return None, source
+    for low, high, model in SIC_GROUPS:
+        if low <= major <= high:
+            return model, source
+    return None, source
+
 
 @dataclass
 class IngestionReport:
@@ -214,6 +258,32 @@ class Ingestor:
             name = ticker.upper()
 
         asset_id = self.store.record_asset(ticker.upper(), cik=cik, name=name)
+
+        # The issuer's declared business model, recorded before anything is
+        # fetched, so the applicability surface is reachable from the first
+        # observation rather than needing a second pass. It is a fact about the
+        # filer taken from the filer's own submission, and it is what lets
+        # `NOT_APPLICABLE` be derived rather than asserted per issuer.
+        #
+        # A provider that cannot supply the classification is not an error. The
+        # classification is worth having and is not worth failing an ingestion
+        # over: without it the registry simply makes no inapplicability ruling
+        # for that issuer, which is the same position as any unclassified issuer
+        # and the safe direction to be wrong in.
+        declared, declared_source = (
+            business_model_from_filer_classification(
+                self.provider.submissions(cik)
+            )
+            if hasattr(self.provider, "submissions") else (None, None)
+        )
+        if declared is not None:
+            self.registry.set_issuer_business_model(
+                asset_id,
+                declared,
+                basis="DECLARED_BY_ISSUER",
+                source=declared_source,
+            )
+
         report = IngestionReport(
             asset=ticker.upper(), cik=cik, run_id="run_" + uuid.uuid4().hex[:16]
         )
@@ -252,7 +322,8 @@ class Ingestor:
         for metric in metrics:
             try:
                 self._ingest_metric(
-                    cik, ticker.upper(), metric, acceptance, report
+                    cik, ticker.upper(), metric, acceptance, report,
+                    asset_id=asset_id,
                 )
             except Exception as error:  # noqa: BLE001
                 report.errors.append(f"{metric}: {type(error).__name__}: {error}")
@@ -428,6 +499,7 @@ class Ingestor:
         metric: str,
         acceptance: Dict[str, Optional[str]],
         report: IngestionReport,
+        asset_id: str = "",
     ) -> None:
         """
         Ingest every concept the registry maps to this metric, not just the
@@ -457,6 +529,7 @@ class Ingestor:
             )
             stored_any += self._store_facts(
                 company_cik,
+                asset_id,
                 ticker,
                 metric,
                 taxonomy,
@@ -515,9 +588,69 @@ class Ingestor:
             report.documents_reused += 1
         return document_id
 
+    def _ensure_filing_identity(
+        self,
+        asset_id: str,
+        accession: str,
+        entry: Dict[str, Any],
+    ) -> None:
+        """
+        Make sure every accession a fact came from has a filing row.
+
+        `held_filings` is written from the submissions index, and that index is
+        bounded: EDGAR publishes roughly the most recent thousand filings per
+        filer. The XBRL *concept* endpoint reaches much further back, so an
+        issuer's company facts legitimately contain accessions the index never
+        mentions. Those facts were stored, and no filing row was written for
+        them, and the consequence was that the provenance chain stopped one link
+        short for every one of them:
+
+            observation -> source_fact_id -> document -> accession -> ???
+
+        2.7 asked for that chain to resolve to a filing and to found that it did
+        not, for 29 of 86 accessions. It is not new with this round -- the sealed
+        2.6 archive has the same gap for 30 of 74 -- and nothing about it is
+        specific to a framework or an issuer. It is a gap in writing down an
+        identity that was sitting in the fact the whole time.
+
+        `form` and `filed` come from the fact's own record, so the row is
+        recorded from evidence rather than guessed. The filing's *document* is
+        left empty when the fact did not name one, because inventing a document
+        reference would be worse than an honest null, and the document link for
+        these facts already resolves through `observation_sources`.
+        """
+        if not accession:
+            return
+        exists = self.connection.execute(
+            "SELECT 1 FROM held_filings WHERE asset_id = ? AND accession = ?",
+            (asset_id, accession),
+        ).fetchone()
+        if exists is not None:
+            return
+        form = str(entry.get("form") or "").strip() or None
+        filed = str(entry.get("filed") or "").strip() or None
+        report_date = str(entry.get("fy") or "")
+        self.connection.execute(
+            "INSERT OR IGNORE INTO held_filings (asset_id, accession, form,"
+            " filed_at, period_end, report_date, primary_document, document_id,"
+            " first_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                asset_id,
+                accession,
+                form,
+                filed,
+                None,
+                report_date or None,
+                None,
+                "",
+                utc_now(),
+            ),
+        )
+
     def _store_facts(
         self,
         cik: str,
+        asset_id: str,
         ticker: str,
         metric: str,
         taxonomy: str,
@@ -553,6 +686,8 @@ class Ingestor:
                 period_start = entry.get("start")
                 period_end = str(entry["end"])
                 accession = str(entry.get("accn") or "")
+                if asset_id:
+                    self._ensure_filing_identity(asset_id, accession, entry)
 
                 # The submissions index only carries recent filings, so an older
                 # accession has no acceptance timestamp there. The fact's own

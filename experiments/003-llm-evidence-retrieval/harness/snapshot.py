@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 from archive import FilingRef
 from core_registry import CoreRegistry
@@ -39,7 +39,7 @@ from data_contract import (
 )
 from evidence_model import source_fact_id
 from registry_seed import seed
-from sec_ingest import DEFAULT_METRICS, Ingestor
+from sec_ingest import DEFAULT_FORMS, DEFAULT_METRICS, Ingestor
 from sec_provider import SECProvider
 from sqlite_archive import SQLiteArchive
 
@@ -67,6 +67,9 @@ def build_snapshot(
     path: str,
     issuers: Optional[List[str]] = None,
     live: bool = True,
+    forms: Optional[Sequence[str]] = None,
+    metrics: Optional[Sequence[str]] = None,
+    include_fixture: bool = True,
 ) -> Dict[str, Any]:
     """
     Build (or reopen) the evaluation archive.
@@ -75,10 +78,25 @@ def build_snapshot(
     fixture evidence, which is what the offline harness tests use: it exercises
     the audit machinery without spending a source's request budget or making the
     test suite depend on a network.
+
+    `forms` and `metrics` narrow what ingestion asks for, and exist because an
+    issuer that files on Form 20-F has nothing in a 10-K index: without them a
+    foreign private issuer is not a thin archive but an *empty* one, which looks
+    like a semantic failure and is a filing-form mismatch. Defaulting to the
+    10-K set keeps every existing build identical.
+
+    `include_fixture` controls the synthetic single-issuer evidence appended
+    below. Those rows are evaluation scaffolding for one issuer's difficult
+    shapes -- a cross-source conflict, a stale figure, a derived value -- and
+    putting them in a cross-framework archive would put one issuer's synthetic
+    disagreement in the middle of a generalisation test, where a reader could
+    not tell which rows came from EDGAR.
     """
     issuers = issuers or [EVAL_ASSET]
     if os.path.exists(path):
         return {"path": path, "reused": True, "issuers": issuers, "live": live}
+    forms = tuple(forms) if forms else None
+    metrics = tuple(metrics) if metrics else None
 
     store = SQLiteArchive(path)
     registry = CoreRegistry(store.connection)
@@ -89,16 +107,21 @@ def build_snapshot(
         for issuer in issuers:
             report = Ingestor(
                 store, SECProvider(), registry
-            ).ingest(issuer, metrics=DEFAULT_METRICS)
+            ).ingest(issuer, metrics=metrics or DEFAULT_METRICS,
+                     forms=forms or DEFAULT_FORMS)
             ingested[issuer] = report.contract_dict()
 
-    _append_fixture_evidence(store, registry)
+    if include_fixture:
+        _append_fixture_evidence(store, registry)
     store.close()
     return {
         "path": path,
         "reused": False,
         "issuers": issuers,
         "live": live,
+        "forms": list(forms or DEFAULT_FORMS),
+        "metrics": list(metrics or DEFAULT_METRICS),
+        "include_fixture": include_fixture,
         "ingested": ingested,
     }
 

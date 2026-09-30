@@ -42,7 +42,39 @@ BANK = "BANK"
 INSURANCE = "INSURANCE"
 REIT = "REIT"
 MINING = "MINING"
-BUSINESS_MODELS = (BANK, INSURANCE, REIT, MINING)
+INSURANCE = "INSURANCE"
+REIT = "REIT"
+MINING = "MINING"
+# A filer classified by the SEC under SIC major group 61 or 62: banks, insurers
+# and finance companies. Added in 2.7 because a filer that publishes that
+# classification was previously unrepresentable, and a financial institution
+# that could not be recorded was a financial institution whose inapplicable
+# metrics fell through to `UNAVAILABLE` and reported a retrieval failure for a
+# line that does not exist.
+#
+# `BANK` stays in the vocabulary. It was declared against a metric before any
+# issuer could be classified at all, and deleting it would silently make
+# operating income applicable to every issuer this round did not touch.
+FINANCE_SERVICES = "FINANCE_SERVICES"
+# `OPERATING` is what a filer is when nothing more specific is warranted, and it
+# is deliberately a member rather than the absence of one: an issuer recorded as
+# `None` has had no ruling made, and an issuer recorded as `OPERATING` has been
+# looked at and found to be an ordinary business. The two read the same in a
+# coverage report and mean different things, and the difference is the whole
+# point of the record.
+OPERATING = "OPERATING"
+MANUFACTURING = "MANUFACTURING"
+TECHNOLOGY = "TECHNOLOGY"
+BUSINESS_MODELS = (
+    OPERATING,
+    MANUFACTURING,
+    TECHNOLOGY,
+    FINANCE_SERVICES,
+    BANK,
+    INSURANCE,
+    REIT,
+    MINING,
+)
 
 # Metric vocabularies, mirroring the migration's triggers.
 STATEMENTS = (
@@ -55,7 +87,17 @@ STATEMENTS = (
 UNIT_FAMILIES = ("currency", "per_share", "count", "ratio", "multiple")
 PERIOD_TYPES = ("DURATION", "INSTANT")
 APPLICABILITIES = ("APPLICABLE", "CONDITIONAL", "NOT_APPLICABLE")
-METRIC_STATUSES = ("ACTIVE", "DEPRECATED", "PROPOSED")
+METRIC_STATUSES = ("ACTIVE", "DEPRECASED", "PROPOSED")
+
+# How an issuer came to be classified, mirroring the migration's trigger. A
+# reader has to be able to tell "the filer publishes this" from "somebody decided
+# this" without opening a comment, because the two support very different
+# confidence in an inapplicability ruling.
+BUSINESS_MODEL_BASES = (
+    "DECLARED_BY_ISSUER",
+    "DERIVED_FROM_REPORTED_CONCEPTS",
+    "MANUAL_CLASSIFICATION",
+)
 
 # The mapping vocabulary, and the one rule that matters: only EXACT and
 # EQUIVALENT let a series continue across a change of concept.
@@ -392,6 +434,98 @@ class CoreRegistry:
                 " (metric_id, business_model) VALUES (?, ?)",
                 (metric_id, model),
             )
+
+    def set_issuer_business_model(
+        self,
+        asset_id: str,
+        business_model: str,
+        basis: str = "MANUAL_CLASSIFICATION",
+        source: Optional[str] = None,
+    ) -> None:
+        """
+        Record which business an issuer is in, and how that was established.
+
+        Issuer metadata, not a metric property and not a company code path. The
+        reason this exists is that `metric_inapplicable_in` had a column no row
+        could fill, so a metric correctly declared inapplicable for a financial
+        institution could never be resolved for one -- and the surface fell
+        through to `UNAVAILABLE`, reporting a retrieval failure for a line that
+        does not exist.
+        """
+        if business_model not in BUSINESS_MODELS:
+            raise RegistryError(
+                f"business_model {business_model!r} is not in "
+                f"{list(BUSINESS_MODELS)}"
+            )
+        if not self._has_business_models():
+            raise RegistryError(
+                "this archive predates migration 0010 and has no "
+                "issuer_business_model table. Writing a classification into an "
+                "archive that cannot be migrated would record a fact with "
+                "nothing enforcing its vocabulary."
+            )
+        if basis not in BUSINESS_MODEL_BASES:
+            raise RegistryError(
+                f"business model basis {basis!r} is not in "
+                f"{list(BUSINESS_MODEL_BASES)}"
+            )
+        if basis != "MANUAL_CLASSIFICATION" and not source:
+            raise RegistryError(
+                "a declared or derived business model must name the source it "
+                "came from; an inapplicability ruling rests on it"
+            )
+        self.connection.execute(
+            "INSERT OR REPLACE INTO issuer_business_model (asset_id,"
+            " business_model, basis, source, recorded_at) VALUES (?, ?, ?, ?, ?)",
+            (asset_id, business_model, basis, source, utc_now()),
+        )
+        self.connection.commit()
+
+    def business_model_of(self, asset_id: str) -> Optional[Dict[str, Any]]:
+        """
+        The issuer's business model, with its basis and source.
+
+        `None` for an issuer nobody has classified, and that is a meaningful
+        answer rather than a missing one: an unclassified issuer gets no
+        inapplicability ruling, so every declared metric stays applicable. A
+        business model we do not know about is not evidence that a metric does
+        not apply, and `Metric.applies_to` is written the same way.
+
+        `None` also for an archive built before migration 0010, which has no such
+        table. That is the same answer and for the same reason, and it is
+        deliberate: the read path must not require a migration it cannot demand.
+        An evaluation archive is a frozen record of what a build produced, and
+        every 2.1 through 2.6 result was read out of one that predates this
+        migration. Applying it would change the bytes and the contents of the
+        ground truth those results were graded against, so the older archive has
+        to keep answering -- with no classifications in it, and therefore no
+        inapplicability rulings, which is exactly what it knew before.
+        """
+        if not self._has_business_models():
+            return None
+        row = self.connection.execute(
+            "SELECT asset_id, business_model, basis, source, recorded_at"
+            " FROM issuer_business_model WHERE asset_id = ?",
+            (asset_id,),
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def _has_business_models(self) -> bool:
+        return self.connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table'"
+            " AND name = 'issuer_business_model'"
+        ).fetchone() is not None
+
+    def inapplicable_metrics(self, business_model: str) -> List[str]:
+        """Every metric declared inapplicable to one business, in metric order."""
+        return [
+            row["metric_id"]
+            for row in self.connection.execute(
+                "SELECT metric_id FROM metric_inapplicable_in"
+                " WHERE business_model = ? ORDER BY metric_id",
+                (business_model,),
+            )
+        ]
 
     def add_concept(self, concept: Concept) -> str:
         self.connection.execute(

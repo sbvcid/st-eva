@@ -41,6 +41,7 @@ from core_registry import CoreRegistry
 from evidence_model import (
     CONFLICTING,
     EVIDENCE_STATES,
+    NO_OBSERVATIONS,
     NOT_APPLICABLE,
     REASON_CODES,
     SOURCE_DID_NOT_REPORT,
@@ -48,8 +49,16 @@ from evidence_model import (
     STALE,
     UNAVAILABLE,
     STATE_STATUS,
-    canonical_json,
 )
+
+# Applicability, as distinct from evidence state.
+#
+# `NOT_APPLICABLE` is the token both vocabularies could want and the one they
+# must not share, which is why the applicability side is spelled out here rather
+# than imported from `evidence_model`. 2.7 added `NO_OBSERVATIONS` precisely so
+# that the evidence side had its own word for "applicable and empty" and did not
+# have to borrow `UNAVAILABLE` to say it.
+APPLICABLE = "APPLICABLE"
 
 # The cross-check statuses an observation can carry. Closed because an unmatched
 # one returns an empty list, and an empty list reads as "no such data" rather
@@ -521,15 +530,36 @@ class EvidenceQuery:
         states: Dict[str, Dict[str, Any]],
         status: Optional[str],
         has_value: Optional[bool] = None,
+        asset_id: Optional[str] = None,
+        no_observations: bool = False,
     ) -> Dict[str, Any]:
         """
         The state of one metric, resolved and always present.
 
-        A metric the state table does not mention falls back to what the
-        observations themselves say, because an absence of a state is not
-        itself a state. `has_value` matters: an observation that exists with no
-        value is an absent value, not an absent observation, and reporting
-        UNAVAILABLE for a metric we do hold would be its own kind of wrong.
+        Four sources, in a fixed order, because the order *is* the argument.
+
+        1. **An explicit state row.** Someone recorded a fact about this metric
+           for this issuer, with a reason. It wins, and it has always won, so
+           every archive built before this round reads exactly as it did.
+
+        2. **The registry's applicability for this issuer's business model.** A
+           metric declared inapplicable to a financial institution is
+           `NOT_APPLICABLE` for a financial institution whether or not anybody
+           wrote a row saying so, because the declaration is a fact about the
+           metric and the business model is a fact about the issuer, and
+           together they determine the answer. Before 2.7 there was nowhere to
+           record the second fact, so this branch could not exist and the answer
+           fell through to the third -- which reported a retrieval failure for a
+           line of business that does not have one.
+
+        3. **What the observations themselves say.** An absence of a state is
+           not itself a state; `has_value` matters, because an observation that
+           exists with no value is an absent value rather than an absent
+           observation.
+
+        4. **Nothing held.** `NO_OBSERVATIONS` -- applicable, and nothing
+           collected for it yet. This used to be `UNAVAILABLE`, which says the
+           last attempt failed, and an empty archive is not a broken one.
         """
         row = states.get(metric)
         if row is not None:
@@ -543,14 +573,32 @@ class EvidenceQuery:
                 "as_of": row["as_of"],
                 "resolved_from": "evidence_state",
             }
-        if has_value is False:
+
+        inapplicable = self._inapplicable_reason(metric, asset_id)
+        if inapplicable is not None:
+            return inapplicable
+
+        if no_observations:
+            # Nothing held and no state recorded: applicable and not collected.
+            #
+            # A named flag rather than a `has_value` of `None`, because `None`
+            # already meant something else. Two call sites pass no `has_value`
+            # at all -- the per-observation package and the concept history --
+            # and for both the row in hand *is* the evidence, so `None` has to
+            # keep meaning "not a question this call site asks". Overloading it
+            # made every observation's own state read as NOT_YET_COLLECTED,
+            # which is how it was caught: an observation with a value in it was
+            # reported as never collected.
+            state = NO_OBSERVATIONS
+        elif has_value is False:
+            # An observation exists and carries no value. That is an absent
+            # value rather than an absent observation, and the two are
+            # different answers.
             state = UNAVAILABLE
         elif status is not None and str(status) == str(STALE):
             state = STALE
-        elif status is not None or has_value:
-            state = SOURCE_REPORTED
         else:
-            state = UNAVAILABLE
+            state = SOURCE_REPORTED
         return {
             "state": state,
             "reason_kind": None,
@@ -558,6 +606,74 @@ class EvidenceQuery:
             "explanation": None,
             "as_of": None,
             "resolved_from": "observation_status",
+        }
+
+    def _inapplicable_reason(
+        self,
+        metric: str,
+        asset_id: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Whether the registry says this metric does not apply to this issuer.
+
+        Derived from two recorded facts and never from an absence. An issuer with
+        no recorded business model gets no ruling at all: an unknown kind of
+        business is not evidence that a metric does not exist, and
+        `Metric.applies_to` is written the same way.
+        """
+        if not asset_id:
+            return None
+        registry = self.registry()
+        recorded = registry.business_model_of(asset_id)
+        if not recorded:
+            return None
+        definition = registry.metric(metric)
+        if definition is None or definition.applies_to(
+            recorded["business_model"]
+        ):
+            return None
+        return {
+            "state": NOT_APPLICABLE,
+            "reason_kind": None,
+            "reason_code": REASON_CODES[NOT_APPLICABLE],
+            "explanation": (
+                f"{metric} is not defined for a "
+                f"{recorded['business_model']} issuer: "
+                f"{definition.semantic_definition}"
+            ),
+            "as_of": None,
+            "resolved_from": "registry_applicability",
+            "business_model": recorded["business_model"],
+            "business_model_basis": recorded["basis"],
+        }
+
+    def applicability_of(self, ticker: str, metric: str) -> Dict[str, Any]:
+        """
+        What the registry says about one metric for one issuer, whatever the
+        archive holds.
+
+        Reported separately from the evidence state on purpose. The two answer
+        different questions and 2.7 exists because they were being read as one:
+        a metric can be inapplicable *and* absent, applicable *and* absent, and
+        applicable *and* present, and a caller that only sees the state cannot
+        tell the first two apart.
+        """
+        asset_id = self._asset_id(ticker)
+        registry = self.registry()
+        recorded = registry.business_model_of(asset_id)
+        definition = registry.metric(metric)
+        model = recorded["business_model"] if recorded else None
+        applies = definition.applies_to(model) if definition else True
+        return {
+            "metric": metric,
+            "applicability": APPLICABLE if applies else NOT_APPLICABLE,
+            "business_model": model,
+            "business_model_basis": recorded["basis"] if recorded else None,
+            "business_model_source": recorded["source"] if recorded else None,
+            "inapplicable_in": list(definition.inapplicable_in)
+            if definition else [],
+            "semantic_definition": definition.semantic_definition
+            if definition else None,
         }
 
     # -- observations ----------------------------------------------------
@@ -812,7 +928,9 @@ class EvidenceQuery:
         answers and a consumer must be able to tell them apart.
         """
         status = row["status"]
-        state = self._state_for(row["metric"], states, status)
+        state = self._state_for(
+            row["metric"], states, status, asset_id=row["asset_id"]
+        )
         raw = _loads(row["raw_json"], {}) or {}
         fact = raw.get("sec_fact", {}) if isinstance(raw, dict) else {}
         value = _loads(row["value_json"], None)
@@ -1473,6 +1591,7 @@ class EvidenceQuery:
             has_value=any(point["has_value"] for point in observations)
             if observations
             else False,
+            asset_id=self._asset_id(asset),
         )
 
         bases = sorted(
@@ -1577,6 +1696,17 @@ class EvidenceQuery:
 
         metrics = set(by_metric) | set(states)
         counts = {state: 0 for state in EVIDENCE_STATES}
+        # A metric nobody holds and nobody ruled on is still a metric the
+        # registry knows about, and a coverage report that only enumerates
+        # metrics which already appear is a report about what has been collected
+        # rather than about what applies. Since 2.7 the two are reported
+        # separately, which is the only way a reader can tell "does not exist for
+        # this company" from "exists and we have not looked".
+        for row in self.registry().connection.execute(
+            "SELECT metric_id FROM metric_registry WHERE status = 'ACTIVE'"
+        ):
+            metrics.add(row["metric_id"])
+
         detail = []
         for metric in sorted(metrics):
             latest = self.connection.execute(
@@ -1592,10 +1722,16 @@ class EvidenceQuery:
                 has_value=(
                     _loads(latest["value_json"], None) is not None
                     if latest
-                    else False
+                    else None
                 ),
+                asset_id=asset_id,
+                # Set only when there is no row at all. The other two cases --
+                # a row with a value, and a row without one -- are `True` and
+                # `False`, and the three must not be collapsed into one.
+                no_observations=latest is None,
             )
             counts[resolved["state"]] += 1
+            applies = self.applicability_of(asset, metric)
             detail.append(
                 {
                     "metric": metric,
@@ -1603,16 +1739,34 @@ class EvidenceQuery:
                     "reason_code": resolved["reason_code"],
                     "observations_held": by_metric.get(metric, 0),
                     "resolved_from": resolved["resolved_from"],
+                    # The other axis, carried beside the first. Reported
+                    # separately and never merged into the state, because
+                    # "inapplicable" and "not yet collected" are the two facts
+                    # 2.7 was written to stop anyone reading as one.
+                    "applicability": applies["applicability"],
+                    "business_model": applies["business_model"],
                 }
             )
+        applicability_counts = {
+            APPLICABLE: 0,
+            NOT_APPLICABLE: 0,
+        }
+        for entry in detail:
+            applicability_counts[entry["applicability"]] += 1
         return {
             "asset": asset,
             "metric_count": len(metrics),
             "state_counts": counts,
+            "applicability_counts": applicability_counts,
+            "business_model": self.registry().business_model_of(asset_id),
             "metrics": detail,
             "note": (
-                "States are counted, not scored. A single completeness figure "
-                "would be an interpretation and would hide which distinct "
-                "negative applies to which metric."
+                "Two axes, reported separately and never merged. `state` is "
+                "what the archive holds: reported, absent for a stated reason, "
+                "not applicable, not yet collected, or a failed retrieval. "
+                "`applicability` is what the registry says about the metric for "
+                "this kind of company, whatever the archive holds. A single "
+                "completeness figure would be an interpretation and would hide "
+                "which of the distinct negatives applies to which metric."
             ),
         }

@@ -568,6 +568,147 @@ model is not that it computes, and a derived figure computed for a bank to fill
 a gap in the schema would be precisely the failure this architecture exists to
 prevent.
 
+## 0.11 Cross-framework and applicability generalization (2.7)
+
+The 2.6 series answered whether a language model can consume ST-EVA evidence.
+It can — retrieval, pagination, temporal discipline and citation grounding are
+stable, with zero fabricated identifiers in every run. It also left open the
+question that matters for the archive itself rather than for a consumer: **does
+the semantic model generalise past one accounting framework and one kind of
+company?**
+
+Two issuers, neither chosen for convenience. TSM files Form 20-F under Taiwan
+IFRSs and reports **zero** `us-gaap` concepts. NU is classified by the SEC under
+SIC 6199, Finance Services — and turned out to be an IFRS foreign private issuer
+too, which means it cannot isolate the applicability question from the framework
+question on its own. That is recorded rather than worked around.
+
+### The principle this establishes
+
+> **Framework-specific source concepts may differ; semantic metrics must remain
+> framework-neutral where their definitions are genuinely equivalent.**
+
+And, less comfortably:
+
+> **A similar label does not establish the same metric.**
+
+`ifrs-full:Revenue` and `us-gaap:Revenues` read alike and are not the same claim.
+The IFRS element is an aggregate of ordinary-activity income that may carry
+interest, dividend, royalty and grant income; the concept the metric calls
+*exact* is contracts-with-customers only, which is a component of it. TSM reports
+both at 2,894,307,700,000 and reports the interest, grant and dividend income as
+separate concepts, so the two figures coincide in its filings. **That is a fact
+about TSM and not a definition**, and a mapping that said EXACT would be
+asserting a generalisation from one filer's presentation. It is PARTIAL, the
+series break is recorded, and a test asserts the weaker type so a later edit
+cannot promote it on the strength of the spelling.
+
+Four IFRS concepts map EXACT, on definitions that hold in both frameworks. Five
+map PARTIAL, each for a stated reason: a wider aggregate, non-controlling
+interests in the total, *issued* rather than *outstanding* shares, and a `debt`
+metric that no single standard concept declares in either framework — handled, in
+both, by a declared composition of two components, which is structurally the same
+generalisation the US-GAAP pair already used.
+
+Concepts left unresolved are the other half of the deliverable, and one of them is
+sharp: **TSM reports the same 2,894,307,700,000 under both `Revenue` and
+`RevenueFromContractsWithCustomers`.** Same number, same period, one is a
+component of the other. Mapping both would have raised the count and lowered the
+meaning. Also unmapped: the IFRS revenue components, the continuing-operations
+EPS variant, `NumberOfSharesAuthorised`, and `IssuedCapital` — which is a
+currency amount, not a share count.
+
+### Applicability was declared, and unreachable
+
+`metric_inapplicable_in` is keyed by business model, and its own column comment
+already said the right thing: *"recorded only when a business model is actually
+excluded; an empty list stays empty, and never stands in for a retrieval that
+found nothing."* That rule was enforceable and completely unreachable, because
+**nothing in the archive said which business model an issuer was in.** The table
+had a column no row could fill.
+
+So a metric correctly declared inapplicable to a financial institution fell
+through to its evidence fallback and answered
+
+```
+UNAVAILABLE / RETRIEVAL_FAILED
+```
+
+which says *our last attempt failed* about a line of business that does not have
+one. This is not a missing feature. It is the collapse between applicability and
+availability that the whole phase was written to prevent, arriving through a
+missing wire rather than a wrong rule.
+
+Migration 0010 adds the link — `issuer_business_model`, with a closed basis
+vocabulary, so that "the filer publishes this classification" and "somebody
+decided this informally" can never read the same in a row. A filer's SIC code is
+part of its own submission, so the classification is the issuer's and a reader
+with the same filing can check it. Migration 0011 then adds the state the
+collapse was hiding behind: `NO_OBSERVATIONS`, reason `NOT_YET_COLLECTED`, for a
+metric that applies and has not been collected — a fact about the archive, which
+is not the same as a fact about a retrieval, and not the same as a fact about the
+company.
+
+The result for NU, derived rather than asserted:
+
+```
+gross_profit      NOT_APPLICABLE    BUSINESS_MODEL_NOT_MEANINGFUL   held 0
+operating_income  NOT_APPLICABLE    BUSINESS_MODEL_NOT_MEANINGFUL   held 0
+capex             NO_OBSERVATIONS   NOT_YET_COLLECTED               held 0
+r_and_d           NO_OBSERVATIONS   NOT_YET_COLLECTED               held 0
+revenue           SOURCE_REPORTED   SOURCE_STATED_VALUE          held 12
+```
+
+**Zero `UNAVAILABLE`, and the three states never collapse.** NU's own taxonomy
+settled the question before any policy was written: it reports
+`operating_income` in **zero concepts**, because a bank's income statement has
+interest income and interest expense and no cost of sales, so both gross profit
+and operating income are undefined for it. ST-EVA refuses, on its own definition
+and a filed classification.
+
+`EBITDA`, `enterprise_value` and `PFCF` are **not Core metrics and were not
+added.** Under the rule that a metric is not created because a test asked for it,
+the honest answer is that the registry does not define them and the question is
+out of scope by construction. `gross_profit` and `operating_income` were the two
+registered metrics that genuinely do not apply.
+
+### A provenance gap that was not new
+
+Phase 5 asked for the chain to resolve from a semantic metric to a filing, and
+it stopped one link short for **29 of 86 accessions**. `held_filings` is written
+from the submissions index, which is bounded; company facts reach much further
+back, so facts were stored for accessions the index never mentioned and no
+filing row was written for them. The sealed 2.6 archive has the same gap for 30
+of its 74 accessions, so this was latent rather than new, and nothing about it
+was specific to a framework or an issuer — it was an identity sitting in the fact
+the whole time, never written down. Now zero.
+
+### What generalised, and what did not
+
+**Issuer-named columns: 0. Issuer tokens in the semantic modules: 0** — counted
+from the schema and the module text, not from a flag, and skipping comments on
+purpose, because this project records which issuer prompted which decision and a
+count that included the documentation would forbid the record of why. One
+registry serves two taxonomies and two business models; the sealed archive is
+byte-identical; `verify_harness` is unchanged; 554 tests pass.
+
+And the number that is the honest headline:
+
+> **Coverage is 10 of 334 concepts for TSM — 3.0% — and 6 of 151 for NU — 4.0%.**
+
+The framework generalised *reachability* for the concepts someone declared, and
+it did not come close to generalising *collection*. "TSM revenue works" and "TSM
+is covered" are different claims, and the coverage axes from 2.6.6 are what made
+the difference visible instead of letting the first stand in for the second.
+
+Which leaves the thing this phase hands to the next. The set of concepts ST-EVA
+considered and **declined** currently lives in seed-file notes rather than in the
+archive, so the archive can report what it holds and not what it ruled out. With
+3.0% as the coverage figure, a reader has no way to tell how much of the
+remainder is deliberate. The difference between "not collected" and "considered
+and declined" is exactly what a coverage claim has to be honest about, and only
+the first of those is currently recorded in a machine-readable place.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

@@ -4,8 +4,17 @@
 # put a moving EDGAR extract in version control, and the dataset's expectations
 # are resolved from whichever snapshot is in use, so a committed copy would go
 # stale against the code that reads it.
+#
+# The cross-framework archive is the same kind of thing and is ignored for the
+# same reason: it is an EDGAR extract for a set of issuers, rebuilt by
+# `build_snapshot(..., issuers=..., forms=...)`, and the 2.7 report records the
+# numbers it produced. Committing one live archive while ignoring its sibling
+# would leave the repository with two different rules for the same artefact
+# depending on which phase produced it.
 snapshot.sqlite
 snapshot.sqlite-*
+snapshot-crossframework.sqlite
+snapshot-crossframework.sqlite-*
 
 # Run outputs. A run of the *sealed* dataset against a real model is the
 # evidence this experiment exists to produce, so those are committed; the

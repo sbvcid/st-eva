@@ -47,6 +47,9 @@ from sqlite_archive import SQLiteArchive
 
 REPO = Path(__file__).resolve().parent.parent
 US_GAAP = "us-gaap"
+# The second accounting framework, named here so the cross-framework tests read
+# as a statement about two frameworks rather than about one taxonomy.
+IFRS_FULL = "ifrs-full"
 
 
 class RegistryFixture(unittest.TestCase):
@@ -282,15 +285,110 @@ class TestMappingRegistry(RegistryFixture):
         )
 
     def test_no_date_filter_returns_every_mapping(self):
-        """Narrowing to unbounded mappings would hide a concept that stopped."""
+        """
+        Narrowing to unbounded mappings would hide a concept that stopped.
+
+        Asserted as the property the docstring names -- every mapping reachable
+        with no date is reachable through *some* dated read -- rather than as an
+        arithmetic identity. The identity was a proxy that happened to hold for
+        one framework and stopped holding when a second was added, because a
+        mapping whose window covers both sampled dates is legitimately counted
+        twice. The proxy failed for a correct reason and said nothing about
+        whether a concept was hidden.
+        """
+        every = {
+            m.concept_id
+            for m in self.registry.mappings_for_metric("revenue")
+        }
+        self.assertTrue(every)
+        reachable = set()
+        for when in ("2010-01-01", "2017-01-01", "2018-01-01", "2020-01-01"):
+            reachable |= {
+                m.concept_id
+                for m in self.registry.mappings_for_metric(
+                    "revenue", as_of=when
+                )
+            }
         self.assertEqual(
-            len(self.registry.mappings_for_metric("revenue")), 4
+            every - reachable, set(),
+            "a mapping is invisible to every dated read, which is the "
+            "unbounded-mapping filter this test exists to catch",
         )
-        self.assertEqual(len(self.registry.mappings_for_metric("revenue")),
-                         len(self.registry.mappings_for_metric(
-                             "revenue", as_of="2020-01-01"))
-                         + len(self.registry.mappings_for_metric(
-                             "revenue", as_of="2017-01-01")) - 1)
+        # And the IFRS revenue concept's window is real in both directions: it
+        # is absent before the element was ever reported here, and present for
+        # every period it covers. A window that swallowed those dates would hide
+        # the concept for the exact periods it was declared for.
+        ifrs_revenue = concept_id_for(IFRS_FULL, "Revenue")
+        self.assertIn(ifrs_revenue, every)
+        self.assertNotIn(
+            ifrs_revenue,
+            [
+                m.concept_id
+                for m in self.registry.mappings_for_metric(
+                    "revenue", as_of="2010-01-01"
+                )
+            ],
+        )
+        for when in ("2017-01-01", "2020-01-01"):
+            self.assertIn(
+                ifrs_revenue,
+                [
+                    m.concept_id
+                    for m in self.registry.mappings_for_metric(
+                        "revenue", as_of=when
+                    )
+                ],
+            )
+
+    def test_one_metric_is_reachable_from_two_frameworks(self):
+        """
+        The generalisation 2.7 was asked to demonstrate, as a test.
+
+        A semantic metric is reached through whichever source concept the filer
+        used, and the two taxonomies sit beside each other in one table with no
+        issuer column, no framework column on the metric, and no code path that
+        knows which framework it is reading. If that stops being true this fails
+        rather than being noticed later by a reader.
+        """
+        for metric in ("assets", "cash", "eps_diluted", "net_income"):
+            taxonomies = {
+                concept_id.split(":", 1)[0]
+                for concept_id in (
+                    m.concept_id
+                    for m in self.registry.mappings_for_metric(metric)
+                )
+            }
+            self.assertIn("ifrs-full", taxonomies, metric)
+            self.assertIn("us-gaap", taxonomies, metric)
+
+    def test_a_framework_never_gets_an_exact_mapping_on_a_label_alone(self):
+        """
+        The one thing a similar English label does not establish.
+
+        `ifrs-full:Revenue` and `us-gaap:Revenues` read alike and do not mean
+        the same thing: the IFRS element is an aggregate of ordinary-activity
+        income that may carry interest, dividend and royalty income, while the
+        US-GAAP element the metric calls exact is contracts-with-customers only,
+        which is a component of it. The test asserts the *weaker* type, so a
+        future edit that promotes it to EXACT on the strength of the spelling
+        fails here.
+        """
+        mapping = next(
+            m for m in self.registry.mappings_for_metric("revenue")
+            if m.concept_id == concept_id_for(IFRS_FULL, "Revenue")
+        )
+        self.assertEqual(mapping.mapping_type, MAPPING_PARTIAL)
+        self.assertFalse(mapping.series_continues)
+        self.assertTrue(mapping.effective_from)
+        # And the exact mapping for the same metric is the *other* framework's
+        # narrower concept, so the two cannot be quietly swapped.
+        exact = [
+            m for m in self.registry.mappings_for_metric("revenue")
+            if m.mapping_type == MAPPING_EXACT
+        ]
+        self.assertTrue(exact)
+        for entry in exact:
+            self.assertTrue(entry.concept_id.startswith("us-gaap:"))
 
     def test_the_database_refuses_a_vocabulary_violation(self):
         with self.assertRaises(sqlite3.IntegrityError):
