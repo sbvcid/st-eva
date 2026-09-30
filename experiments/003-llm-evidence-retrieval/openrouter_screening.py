@@ -48,6 +48,7 @@ if HERE not in sys.path:
 from evidence_query import EvidenceQuery
 from harness import report as report_module
 from harness import consumer as consumer_module
+from harness import coverage as coverage_module
 from harness.auditor import (
     CLASS_DATASET,
     CLASS_EVALUATOR,
@@ -1278,22 +1279,7 @@ def variance_phase(
     # run's tool calls and citation checks separately, and a criterion that
     # counted test *kinds* would let a capability that passed in one run out of
     # three look like three passes.
-    flat_rows: List[Dict[str, Any]] = []
-    for run in runs:
-        for test_id, row in run["tests"].items():
-            flat_rows.append({
-                "test_id": test_id,
-                "verdict": row["verdict"],
-                "tool_calls": row["tool_calls"],
-                "failed_tool_calls": row["failed_tool_calls"],
-                "off_surface_calls": row["off_surface_calls"],
-                "provenance_check_failures": row["provenance_check_failures"],
-                "evidence_refs": row["evidence_refs"],
-                "identifiers_cited": row["identifiers_cited"],
-                "fabricated_identifiers": row["fabricated_identifiers"],
-                "misfiled_identifiers": row["misfiled_identifiers"],
-                "non_identifier_citations": row["non_identifier_citations"],
-            })
+    flat_rows = flat_test_rows({"runs": runs})
 
     out = {
         "phase": "variance",
@@ -1309,6 +1295,15 @@ def variance_phase(
         # behind it are read from one artifact and cannot disagree.
         "consumer": consumer_module.assess(
             flat_rows, len(runs), excluded
+        ),
+        # The three axes, measured from the archive and the eight operations
+        # with no requests. The 2.6.5 P7 result is what made them necessary: a
+        # fact the archive holds and no query surfaces is invisible to every
+        # count of held rows, and it is the worst kind of gap to have.
+        "coverage": coverage_module.measure(
+            _query_connection(snapshot_path),
+            EvidenceQuery.open(snapshot_path),
+            flat_rows,
         ),
         "probe_set": probe_dataset(
             _query_connection(snapshot_path), "AAPL",
@@ -1365,6 +1360,36 @@ def _grounding_summary(runs: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def flat_test_rows(variance: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    One row per test *run*, with the citation classification the gate reads.
+
+    The variance artifact stores rows per run, keyed by test id, and the gates
+    want them flat. Handing them over from one place keeps the consumer gate and
+    the coverage axes reading the same rows -- and a caller assembling them by
+    hand is how the coverage measurement ended up keyed wrong the first time.
+    """
+    rows: List[Dict[str, Any]] = []
+    for run in variance.get("runs", []):
+        for test_id, row in run["tests"].items():
+            rows.append({
+                "test_id": test_id,
+                "run": run.get("run"),
+                **{
+                    key: row.get(key)
+                    for key in (
+                        "verdict", "verdict_source", "stop_reason",
+                        "failed_checks", "provenance_check_failures",
+                        "identifiers_cited", "fabricated_identifiers",
+                        "misfiled_identifiers", "non_identifier_citations",
+                        "tool_calls", "failed_tool_calls",
+                        "off_surface_calls", "evidence_refs",
+                    )
+                },
+            })
+    return rows
+
+
 def _print_consumer(assessment: Dict[str, Any]) -> None:
     """
     The two verdicts, each with the evidence that decided it.
@@ -1376,11 +1401,24 @@ def _print_consumer(assessment: Dict[str, Any]) -> None:
     """
     evidence = assessment["evidence_consumer"]
     semantic = assessment["semantic_consumer"]
+    structured = assessment.get("structured_consumer", {})
     print(
         f"\n   EVIDENCE CONSUMER: {evidence['verdict']}"
         f"   SEMANTIC CONSUMER: {semantic['verdict']}"
+        f"   STRUCTURED CONSUMER: {structured.get('verdict', 'n/a')}"
         f"   -> {assessment['classification']}"
     )
+    if structured.get("verdict") not in (None, "NOT_REACHED"):
+        print(
+            f"       encoding {structured['runs_where_it_was_encoded']}"
+            f"/{structured['runs_where_understanding_was_right']} correct"
+            f" readings ({structured['encoding_rate']:.1%}), joint"
+            f" {structured['joint_rate']:.1%}"
+        )
+        for probe, count in structured.get(
+            "probes_misencoded_after_a_correct_reading", []
+        ):
+            print(f"       right but mis-encoded: {probe} ({count}x)")
     for label, gate in (("evidence", evidence), ("semantic", semantic)):
         print(f"     {label}:")
         for criterion in gate["criteria"]:
@@ -1391,6 +1429,47 @@ def _print_consumer(assessment: Dict[str, Any]) -> None:
                 f"       [{mark}] {criterion['id']}: {criterion['observed']} "
                 f"(needs {criterion['threshold']})"
             )
+
+
+def _print_coverage(axes: Optional[Dict[str, Any]]) -> None:
+    """
+    The three axes, side by side, because the disagreement between them is the
+    finding.
+
+    One number for "coverage" cannot say whether an archive is incomplete, a
+    surface is unsearchable, or a model is misreading. All three are real, they
+    have different remedies, and two of the three are invisible in the first.
+    """
+    if not axes:
+        return
+    evidence = axes["evidence_coverage"]
+    discovery = axes["query_discoverability"]
+    reading = axes["semantic_interpretability"]
+    print("   coverage axes:")
+    print(
+        f"     evidence held          {evidence['observations_held']}"
+        f" observations, {evidence['observations_unmapped']} unmapped,"
+        f" frameworks {evidence['by_framework']}"
+    )
+    print(
+        f"     discoverable by search {discovery['facts_discoverable_by_search']}"
+        f"/{discovery['facts_held']} facts ({discovery['rate']})"
+    )
+    for entry in discovery["by_fact_class"]:
+        mark = "ok " if entry["discoverable"] >= entry["held"] else (
+            "-- " if entry["discoverable"] else "NO "
+        )
+        print(
+            f"       [{mark}] {entry['fact_class']:<32}"
+            f" held={entry['held']:<4} found={entry['discoverable']:<4}"
+        )
+    print(
+        f"     read correctly        {reading['read_correctly']}"
+        f"/{reading['decided']} ({reading['read_rate']}),"
+        f" encoded {reading['encoded_correctly']}"
+        f" ({reading['joint_rate']})"
+    )
+    print(f"       outcomes: {reading['by_outcome']}")
 
 
 def main() -> int:
@@ -1491,6 +1570,7 @@ def main() -> int:
                 f"{outcome['grounding']['identifiers_cited']}"
             )
             _print_consumer(outcome["consumer"])
+            _print_coverage(outcome.get("coverage"))
             print(f"\n   written to {outcome['path']}\n", flush=True)
             summary.append(outcome)
             continue

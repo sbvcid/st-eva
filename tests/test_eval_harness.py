@@ -901,6 +901,149 @@ class TestTheTwoConsumerClasses(unittest.TestCase):
     verdicts cannot drift into one.
     """
 
+    def test_a_model_that_reads_right_and_encodes_wrong_is_only_the_third(
+        self
+    ):
+        """
+        The 2.6.5 P6 case, as a rule rather than an anecdote.
+
+        The model retrieved the knowable figure, cited the knowable observation,
+        and wrote a code that was not in the vocabulary. Folding that into
+        "Semantic Consumer: not yet" is what made that report hard to act on --
+        the remedy for a model that reads a figure correctly and labels it
+        wrongly is neither more archive nor more supervision over its judgements.
+        It is a narrow mechanical fault, and the third class is what names it.
+        """
+        from harness.consumer import split_probe_outcome
+
+        row = self.series()[0]
+        row["test_id"] = "probe-P6_point_in_time_availability"
+        row["verdict"] = "FAIL"
+        row["failed_checks"] = ["probe field claim_type"]
+
+        result = self.assess([row] * 3)
+        structured = result["structured_consumer"]
+        self.assertEqual(
+            split_probe_outcome(["probe field claim_type"], False),
+            "structured",
+        )
+        # Understanding is credited; encoding is not.
+        self.assertEqual(structured["runs_where_understanding_was_right"], 3)
+        self.assertEqual(structured["runs_where_it_was_encoded"], 0)
+        self.assertEqual(structured["encoding_rate"], 0.0)
+        self.assertNotEqual(structured["verdict"], "ACCEPTED")
+
+    def test_a_model_that_reads_wrong_is_not_counted_against_encoding(self):
+        """
+        Encoding is measured only over runs where the reading was right.
+
+        Otherwise a model that misreads a figure *and* mislabels it would
+        appear twice, in two classes, and the number that matters -- can it
+        say what it understood -- would be diluted by faults it does not have.
+        """
+        from harness.consumer import split_probe_outcome
+
+        self.assertEqual(
+            split_probe_outcome(
+                ["probe field stated_value", "probe field claim_type"], False
+            ),
+            "semantic",
+        )
+        row = self.series()[0]
+        row["test_id"] = "probe-P9_unmeasured"
+        row["verdict"] = "FAIL"
+        row["failed_checks"] = [
+            "probe field stated_value", "probe field claim_type",
+        ]
+        structured = self.assess([row] * 3)["structured_consumer"]
+        self.assertEqual(structured["runs_where_understanding_was_right"], 0)
+        self.assertEqual(structured["verdict"], "ACCEPTED")
+
+    def test_a_probe_the_model_never_answered_is_a_tool_use_failure(self):
+        from harness.consumer import split_probe_outcome
+
+        self.assertEqual(split_probe_outcome([], True), "tool_use")
+        self.assertEqual(
+            split_probe_outcome(["the answer parsed into the contract"], False),
+            "semantic",
+        )
+
+    def test_coverage_separates_holding_a_fact_from_finding_it(self):
+        """
+        The axis 2.6.5 needed.
+
+        A fact the archive holds and no query surfaces is invisible to every
+        count of held rows, so the archive looks complete and the consumer finds
+        nothing. That is the worst of the three gaps and it is the one the
+        `cross_source_validation_records` line reports.
+        """
+        import sys
+
+        from evidence_query import EvidenceQuery
+        from harness.coverage import _discoverability
+        from harness.runner import _query_connection
+        from harness.snapshot import default_snapshot_path
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        connection = _query_connection(snapshot)
+        query = EvidenceQuery.open(snapshot)
+        try:
+            axes = _discoverability(query, connection, "AAPL")
+        finally:
+            query.close()
+            connection.close()
+        by_class = {f["fact_class"]: f for f in axes["by_fact_class"]}
+        # The archive holds a cross-source check and no search reaches it.
+        record = by_class["cross_source_validation_records"]
+        self.assertGreaterEqual(record["held"], 1)
+        self.assertEqual(
+            record["discoverable"], 0,
+            "the cross-source record became discoverable; this test and the "
+            "2.6.5 report both need updating",
+        )
+        # And the facts that *are* discoverable stay that way.
+        for name in ("negative_states", "ambiguity_groups"):
+            self.assertEqual(by_class[name]["discoverable"],
+                             by_class[name]["held"])
+
+    def test_coverage_never_reports_more_mapped_than_held(self):
+        """
+        A join across the mapping table multiplies observations when a concept
+        maps to several metrics, and the first version of this reported *-178
+        unmapped*. A coverage figure that comes out negative is the fastest way
+        to know a coverage figure is lying.
+        """
+        import sys
+
+        from harness.coverage import _evidence_coverage
+        from harness.runner import _query_connection
+        from harness.snapshot import default_snapshot_path
+
+        snapshot = default_snapshot_path()
+        if not os.path.exists(snapshot):
+            self.skipTest("no snapshot built")
+        connection = _query_connection(snapshot)
+        try:
+            axis = _evidence_coverage(
+                connection, connection.execute(
+                    "SELECT asset_id FROM assets LIMIT 1"
+                ).fetchone()[0], "AAPL",
+            )
+        finally:
+            connection.close()
+        self.assertGreaterEqual(axis["observations_unmapped"], 0)
+        self.assertLessEqual(
+            axis["observations_mapped_to_a_concept"],
+            axis["observations_held"],
+        )
+        self.assertEqual(
+            axis["observations_held"],
+            axis["observations_mapped_to_a_concept"]
+            + axis["observations_unmapped"],
+        )
+
     def series(self, **overrides):
         """Three runs of a model that gets everything right, built per run.
 

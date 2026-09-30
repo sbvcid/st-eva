@@ -282,6 +282,123 @@
       ],
       "note": "NOT_YET is the useful answer, not a failure. A model that grounds but cannot read semantics is a bounded consumer: usable with a second reader on the semantics. NOT_REACHED means the evidence gate failed, so there is nothing to build on and no reason to measure semantics yet.",
       "verdict": "NOT_YET"
+    },
+    "structured_consumer": {
+      "criteria": [
+        {
+          "id": "encodes_a_correct_reading",
+          "note": "95% rather than 100% because a code misspelled once in fifty is a reliability figure and not a capability boundary, and a gate that demands perfection reports noise as a finding.",
+          "observed": "21/27 correct readings encoded correctly (77.8%)",
+          "passed": false,
+          "question": "when it retrieved and cited the right thing, did it say so in the vocabulary it was given?",
+          "threshold": ">= 95%"
+        }
+      ],
+      "encoding_rate": 0.778,
+      "joint_rate": 0.656,
+      "note": "Measured over runs where the judgement was right. A model that is wrong about a figure has not demonstrated anything about encoding, and counting it here would dilute the class.",
+      "probes_misencoded_after_a_correct_reading": [
+        [
+          "probe-P4_partial_mapping_meaning",
+          3
+        ],
+        [
+          "probe-P6_point_in_time_availability",
+          3
+        ]
+      ],
+      "runs_where_it_was_encoded": 21,
+      "runs_where_understanding_was_right": 27,
+      "verdict": "NOT_YET"
+    }
+  },
+  "coverage": {
+    "asset": "AAPL",
+    "evidence_coverage": {
+      "by_framework": {
+        "NONE": 2,
+        "dei": 71,
+        "us-gaap": 1852
+      },
+      "note": "`registered_metrics_without_observations` is not a gap in the archive. It is the applicability surface: a metric the registry declares inapplicable to this issuer's business model is supposed to have no observations, and the reason it is absent is a finding rather than a hole.",
+      "observations_held": 1925,
+      "observations_mapped_to_a_concept": 1923,
+      "observations_unmapped": 2,
+      "registered_metrics": 18,
+      "registered_metrics_with_observations": 8,
+      "registered_metrics_without_observations": [
+        "gross_profit",
+        "income_tax",
+        "interest_expense",
+        "long_term_debt_current",
+        "long_term_debt_noncurrent",
+        "operating_cash_flow",
+        "operating_income",
+        "r_and_d",
+        "sbc",
+        "sga"
+      ]
+    },
+    "operations": [
+      "query_observations",
+      "get_observation",
+      "get_metric_history",
+      "page",
+      "get_lineage",
+      "get_validation",
+      "get_source_document",
+      "coverage_report"
+    ],
+    "query_discoverability": {
+      "by_fact_class": [
+        {
+          "discoverable": 4,
+          "fact_class": "negative_states",
+          "held": 4,
+          "question": "why is a figure absent for a metric?",
+          "via": "coverage_report(asset) names the state and its reason code per metric"
+        },
+        {
+          "discoverable": 107,
+          "fact_class": "ambiguity_groups",
+          "held": 107,
+          "question": "two figures the archive will not choose between",
+          "via": "query_observations(metric) attaches the classification and its basis"
+        },
+        {
+          "discoverable": 0,
+          "fact_class": "cross_source_validation_records",
+          "held": 1,
+          "question": "a recorded cross-check between two sources",
+          "via": "get_validation(observation_id) only"
+        },
+        {
+          "discoverable": 1,
+          "fact_class": "the_conflicting_observations",
+          "held": 2,
+          "question": "the two figures a cross-source record compares",
+          "via": "get_observation(observation_id) -- reachable only with the id"
+        }
+      ],
+      "facts_discoverable_by_search": 112,
+      "facts_held": 114,
+      "note": "'By search' means an operation that does not already take an observation id. A fact reachable only through get_observation(observation_id) counts as undiscoverable here, because a consumer holding that id has already done the work the search was for.",
+      "rate": 0.982
+    },
+    "semantic_interpretability": {
+      "by_outcome": {
+        "no_answer": 3,
+        "read_and_encoded": 21,
+        "semantic": 5,
+        "structured": 6
+      },
+      "decided": 32,
+      "encoded_correctly": 21,
+      "joint_rate": 0.656,
+      "note": "`read_rate` above `joint_rate` is the finding this axis exists to make visible: a model whose readings are right and whose encodings are not needs a different remedy from a model whose readings are wrong, and the two produce the same pass count.",
+      "probe_runs": 35,
+      "read_correctly": 27,
+      "read_rate": 0.844
     }
   },
   "excluded_attempts": [],

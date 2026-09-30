@@ -259,30 +259,65 @@ walks a run series** and rebuilds each answer through the full contract — an
 earlier version copied only the four sealed keys, dropped every probe field
 silently, and graded seven passing probes as failures.
 
-## Two consumer classes
+## Three consumer classes
 
 The sealed suite reports one number, and 2.6.3 showed what one number hides: a
 model can be perfect at finding and citing evidence and unable to read it, and
-both halves are real. So a model is assessed twice.
+both halves are real. 2.6.5 then showed that one number hides a third thing — a
+model that retrieved the right figure, cited the right observation, and wrote a
+code that was not in the vocabulary. It understood, and could not encode what it
+understood.
 
 ```
-Evidence Consumer   find the evidence, cite it truthfully
-Semantic Consumer   say what the evidence means
+Evidence Consumer      find the data, cite it truthfully
+Semantic Consumer      does its judgement match the archive's?
+Structured Consumer    can it encode that judgement in the schema given?
 ```
 
-`harness/consumer.py` decides both from a run series, never from a single run and
-never from a judgement call. A criterion the run set never exercised is reported
-`n/a` and carries no weight; a criterion is a conjunction over its tests rather
-than a sum, so an easy test cannot carry a hard one; and the evidence gate is
-evaluated first, because a model that invents citations may read semantics
-beautifully and saying otherwise would claim its accuracy transfers to claims
-that do not exist.
+`harness/consumer.py` decides all three from a run series, never from a single
+run and never from a judgement call. A criterion the run set never exercised is
+reported `n/a` and carries no weight; a criterion is a conjunction over its
+tests rather than a sum, so an easy test cannot carry a hard one; and the
+evidence gate is evaluated first, because a model that invents citations may
+read semantics beautifully and saying otherwise would claim its accuracy
+transfers to claims that do not exist.
+
+The third class is measured **only over runs where the judgement was right** —
+otherwise a model that misreads a figure *and* mislabels it appears twice, in
+two classes, and dilutes the one that matters. `split_probe_outcome` decides it
+from the check names: meaning checks passing while a code field fails is
+`structured`, a failed meaning check is `semantic`, and no answer at all is
+`tool_use`. Grading still compares values and never infers a claim from prose;
+the split classifies a run that has already failed.
 
 The outcome is a per-model statement rather than a score:
 
 ```
 candidate autonomous consumer | bounded / supervised consumer | not a consumer
 ```
+
+## Three axes of coverage
+
+"Coverage" is three different claims and they disagree, with three different
+remedies.
+
+```
+evidence_coverage         the archive holds it
+query_discoverability     a consumer can reach it without already knowing its id
+semantic_interpretability a model that found it reads it correctly
+```
+
+`harness/coverage.py` measures all three from the archive and the eight
+operations, sending nothing. Undiscoverable evidence is the worst of the three
+gaps: the data is there, so every count of held rows says the archive is
+complete, and no consumer can find it anyway. On the AAPL snapshot 112 of 114
+facts are discoverable, and the two that are not are the entire cross-source
+story.
+
+It is the instrument cross-framework work is measured with, because it turns
+`0 IFRS mappings` on TSM from a silent zero into one of three statements —
+evidence thin, discoverability thin, or interpretability thin. Only the first is
+an ingestion problem.
 
 ## Semantic probes
 

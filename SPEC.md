@@ -472,6 +472,102 @@ improved at once — five of ten answers asserting a false cause became none of
 thirty-eight. Making the surface *teachable* would improve the numbers and
 destroy the thing the numbers measure.
 
+## 0.10 Three consumer classes, and three axes of coverage (2.6.6)
+
+2.6.5 ended with a finding that a two-class gate could not hold. Asked what was
+knowable at an instant, the model retrieved the correct figure, cited the correct
+observation, and then wrote a code that was not in the vocabulary — three runs
+out of three. It **understood and could not encode what it understood**, and
+recording that as "Semantic Consumer: NOT_YET" asserts two things that are both
+wrong: that the model cannot judge evidence, and that more archive or more
+supervision over its judgements is the remedy.
+
+So there are three, each answering a different question:
+
+**Evidence Consumer** — can it find the evidence and cite it truthfully? The
+question is grounding. A model that fails here is not a consumer, because an
+invented identifier looks checkable to whoever reads the answer.
+
+**Semantic Consumer** — does its *judgement* match the archive's? Credit is given
+for getting the underlying fact right: the figure, the concept, the state, the
+observation.
+
+**Structured Consumer** — can it *encode* that judgement in the schema it was
+given? Measured only over runs where the judgement was right, because a model
+that reaches the wrong figure and also writes the wrong code has demonstrated
+nothing about encoding, and counting it would dilute the class with faults it
+does not have.
+
+The split is mechanical, from the check names. Grading still compares values and
+never infers a claim from English; the split classifies a run that has already
+failed. The result: **27 runs where the model understood the evidence, 21 where
+it also encoded it — 77.8%, with all six mis-encodings on two probes.** Six runs
+in which the model retrieved the right thing and then failed to say so in the
+vocabulary it was handed, and all six invisible inside a single "NOT_YET".
+
+### Coverage is three numbers, not one
+
+> **evidence_coverage** — the archive holds it
+> **query_discoverability** — a consumer can reach it without already knowing
+> its identifier
+> **semantic_interpretability** — a model that found it reads it correctly
+
+They disagree, and each disagreement has a different remedy. Missing evidence is
+an ingestion problem. **Undiscoverable evidence is a surface problem and the
+worst of the three**: the data is there, so every count of held rows says the
+archive is complete, and no consumer can find it anyway. Unreadable evidence is
+a model problem that no amount of ingestion touches.
+
+Measured on the AAPL snapshot, the axes say:
+
+| | |
+| --- | --- |
+| evidence held | 1,925 observations, 2 unmapped, `us-gaap` 1,852 / `dei` 71 |
+| **discoverable by search** | **112 of 114 facts (98.2%)** |
+| — negative states | 4 / 4, via `coverage_report` |
+| — ambiguity groups | 107 / 107, via `query_observations` |
+| — **cross-source validation records** | **0 / 1, nothing reaches it** |
+| — **the conflicting observations** | **1 / 2, only with an id the consumer lacks** |
+| read correctly | 27 / 32 (84.4%) |
+| read *and* encoded | 21 / 32 (65.6%) |
+
+The 2% that is not discoverable is the entire cross-source story, and it is the
+measurement behind 2.6.5's P7 being recorded as confounded rather than as a model
+failure. `registered_metrics_without_observations` is deliberately **not** counted
+as a gap: a metric the registry declares inapplicable to an issuer's business
+model is supposed to have none, and that distinction is the point of the
+applicability surface.
+
+### What this settles, and what it hands to the next phase
+
+The evidence question is closed. Nemotron retrieves stably, cites only
+identifiers that exist, reads every series to the end, and has never left the
+eight typed operations — **0 fabricated identifiers in 124 citations**. It has
+demonstrated it can be an ST-EVA consumer, and that question should not be
+reopened. It has not demonstrated it can be an *unsupervised* consumer, and the
+three failures behind that now have three different owners: two are the model's
+capability, and one is the surface's.
+
+Semantic probes are also closed. 2.6.5's correction rate was four evaluator
+defects in twenty-one recorded failures, and at that ratio another probe round
+measures the grader more than the model.
+
+The next phase is cross-framework — TSM for IFRS, NU for banking applicability —
+and its question is not "can it run". AAPL, MSFT, MU and NVDA answered that. It
+is whether the semantic model generalises past US-GAAP and past ordinary
+industrials. **These axes are the instrument for that question**, because they
+turn `0 IFRS mappings` on TSM from a silent zero into one of three statements:
+evidence thin, discoverability thin, or interpretability thin. Only the first is
+an ingestion problem, and building the wrong one because the number was silent is
+how a project spends a quarter.
+
+The success condition for NU is that ST-EVA **refuses**: `EBITDA` for a bank is
+`NOT_APPLICABLE` with `BUSINESS_MODEL_NOT_MEANINGFUL`, the way
+`operating_margin_bank` already is in the AAPL archive. The measure of a banking
+model is not that it computes, and a derived figure computed for a bank to fill
+a gap in the schema would be precisely the failure this architecture exists to
+prevent.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

@@ -1,13 +1,22 @@
 """
-Two consumer classes, and a gate for each.
+Three consumer classes, and a gate for each.
 
 The sealed suite reports one number, and 2.6.3 showed what one number hides.
 `nvidia/nemotron-3-ultra-550b-a55b:free` scored 15/15 on retrieval, pagination
-and temporal discipline across three runs — no failures, no flips — and 0/3 on
+and temporal discipline across three runs -- no failures, no flips -- and 0/3 on
 each of reported-vs-derived and negative states, also stable. Both halves are
 real, they are different facts, and `9/15` cannot express either.
 
-So the model is assessed twice, against two different questions:
+2.6.5 then showed that one number hides a third thing. On the point-in-time
+probe the model stated the correct figure, cited the correct observation, and
+then wrote `PARTIALLY_KNOWABLE` when the code was `PARTIALLY_KNOWNABLE` --
+three runs out of three. It *understood* and it could not *encode what it
+understood*. Folding that into "Semantic Consumer" is what made the 2.6.5 report
+hard to act on: the remedy for a model that reads a figure correctly and labels
+it wrongly is not a different archive, and it is not more supervision over its
+judgements either. It is a different thing entirely.
+
+So three classes, each answering a different question:
 
     **Evidence Consumer** -- can it find the evidence and cite it truthfully?
         The question is about grounding: identifiers that exist, citations that
@@ -16,25 +25,31 @@ So the model is assessed twice, against two different questions:
         here is worse than useless, because an invented citation looks
         checkable to whoever reads the answer.
 
-    **Semantic Consumer** -- can it say what the evidence means?
-        The question is about reading the distinctions the archive already makes:
-        a derived figure from a reported one, `SOURCE_DID_NOT_REPORT` from
-        `UNAVAILABLE`, two different measures from two readings of one measure,
-        a PARTIAL mapping from an EXACT one. Failing here is not a safety
-        problem. It is a capability ceiling, and it is fixable by supervision
-        rather than by refusing the model.
+    **Semantic Consumer** -- does its *judgement* match the archive's?
+        Credit is given for getting the underlying fact right: the figure, the
+        concept, the state, the observation. Asked what was knowable at an
+        instant, a model that retrieved the knowable figure and cited the
+        knowable observation has understood the question whatever it writes in
+        the code field.
 
-The split matters for what to do next, which is the point of it. A model that
-cannot ground is unusable and should be rejected. A model that can ground but
-cannot read semantics is usable with a human reading the semantics alongside, and
-throwing the surface out to accommodate it would be adapting ST-EVA to a weak
-model — which is how an evidence database starts lying by omission.
+    **Structured Consumer** -- can it *encode* that judgement in the schema it
+        was given?
+        Measured only over runs where the judgement was right. A model that is
+        right and cannot say so in the required vocabulary is a real and
+        separable limitation, and it is separable precisely because the two
+        things are measured apart.
+
+The split matters for what to do next. A model that cannot ground is unusable.
+A model that cannot judge is a capability ceiling, addressable by supervision.
+A model that can judge and cannot encode has a narrow, mechanical fault that no
+amount of archive work will touch -- and mistaking it for the second would mean
+sending that model back for more evidence, which is the wrong remedy.
 
 **A gate is a gate.** Each class has named criteria, each criterion is decided
 from a run series rather than from a judgement call, and a model that fails any
 criterion of a class is not that class. Nothing here produces a ranking, and
-nothing here compares two models: the output is two verdicts per model, each with
-the evidence that decided it.
+nothing here compares two models: the output is three verdicts per model, each
+with the evidence that decided it.
 
 `stability` is a criterion in its own right and not a nicety. A capability that
 passes in one run of three and fails in the other two is not a capability the
@@ -152,8 +167,63 @@ EVIDENCE_CRITERIA: List[Dict[str, Any]] = [
     },
 ]
 
-SEMANTIC_CRITERIA: List[Dict[str, Any]] = [
-    {
+# The two halves of a probe, named so the split is mechanical rather than read.
+#
+# `MEANING_CHECKS` are the checks that ask whether the model got the underlying
+# fact right: the figure it retrieved, the observation or concept it cited. The
+# `CODE_FIELDS` are the vocabulary slots.
+#
+# A run in which every MEANING check passed and a CODE field failed is a run where
+# the model understood and could not encode. Found by being wrong, twice: P1 was
+# read as a model failure for five runs when the defect was a case-sensitive
+# comparison, and P6 was read as a model failure for three runs when the figure
+# and the citation were both right and only the code was wrong. The first was my
+# fault and the second was the model's, and nothing in the recorded verdict told
+# them apart -- which is why the split is recorded per run rather than decided by
+# whoever is reading the report.
+MEANING_CHECKS = (
+    "probe field stated_value",
+    "probe cites the subject's own identifiers",
+    "probe cites a figure filed under",
+    "cites at least one observation",
+)
+CODE_FIELDS = (
+    "probe field claim_type",
+    "probe field semantic_state",
+    "probe field reason_code",
+    "probe field operation_ref",
+)
+
+
+def split_probe_outcome(failed_checks: List[str], stopped: bool) -> str:
+    """
+    Which of the three things a probe failure is, from the checks alone.
+
+        `structured`  the meaning was right and the encoding was not
+        `semantic`    the meaning itself was wrong
+        `tool_use`    there was no answer to be wrong
+
+    Mechanical, and it is the whole point. Deciding this by reading the prose
+    would be the thing this project has refused to do for six rounds, and it
+    would put a judgement in the place of a fact. Two of the three cases are
+    decidable from the check names, and the third -- "the figure was wrong" --
+    is decidable because it means a MEANING check failed.
+    """
+    if stopped:
+        return "tool_use"
+    meaning_failed = any(
+        any(name.startswith(prefix) for prefix in MEANING_CHECKS)
+        for name in failed_checks
+    )
+    code_failed = any(
+        name in CODE_FIELDS for name in failed_checks
+    )
+    if not meaning_failed and code_failed:
+        return "structured"
+    return "semantic"
+
+
+SEMANTIC_CRITERIA: List[Dict[str, Any]] = [    {
         "id": "reads_a_derived_figure",
         "question": "does it tell a calculated figure from a reported one?",
         "tests": ("probe-P1_reported_or_derived", "T6_reported_vs_derived"),
@@ -238,6 +308,8 @@ def assess(
         )
     semantic_ok = not any(f["passed"] is False for f in semantic_findings)
 
+    structured = _structured_gate(rows, run_count)
+
     return {
         "run_count": run_count,
         "excluded_attempts": excluded_attempts or [],
@@ -272,6 +344,7 @@ def assess(
             else "candidate autonomous consumer" if semantic_ok
             else "bounded / supervised consumer"
         ),
+        "structured_consumer": structured,
     }
 
 
@@ -381,6 +454,128 @@ def _decide_semantic_criterion(
     run_count: int,
 ) -> Dict[str, Any]:
     return _decide_passes(criterion, by_test, run_count)
+
+
+def _structured_gate(
+    rows: List[Dict[str, Any]],
+    run_count: int,
+) -> Dict[str, Any]:
+    """
+    The third class: can it encode what it understood, in the schema it was given?
+
+    Measured **only over runs where the understanding was right**. That is the
+    definition, and it is what makes the class separable: a model that reaches
+    the wrong figure and also writes the wrong code has not demonstrated anything
+    about encoding, and counting it would dilute the class with failures that
+    belong to the Semantic one.
+
+    Two denominators, both reported, because they answer different questions:
+
+        `given the right answer, how often is it encoded correctly?`
+            the encoding rate, over runs whose meaning was right.
+        `of everything it was asked, how often did right-and-encoded coincide?`
+            the joint rate, which is the number a consumer actually experiences.
+    """
+    probes = [row for row in rows if row["test_id"].startswith("probe-")]
+    if not probes:
+        return {
+            "verdict": "NOT_REACHED",
+            "criteria": [],
+            "note": (
+                "No probes in this run set. A Structured Consumer is measured "
+                "over structured questions, and a run that asked none has said "
+                "nothing about it."
+            ),
+        }
+
+    majority = run_count // 2 + 1
+    per_probe: Dict[str, Dict[str, int]] = {}
+    for row in probes:
+        entry = per_probe.setdefault(
+            row["test_id"], {"right_and_encoded": 0, "right_but_misencoded": 0,
+                             "wrong": 0, "no_answer": 0}
+        )
+        if row["verdict"] in ("E", "NOT_RUN"):
+            entry["no_answer"] += 1
+        elif row["verdict"] == "PASS":
+            entry["right_and_encoded"] += 1
+        else:
+            kind = split_probe_outcome(
+                row.get("failed_checks", []),
+                row["verdict"] == "E",
+            )
+            if kind == "structured":
+                entry["right_but_misencoded"] += 1
+            else:
+                entry["wrong"] += 1
+
+    understood = [
+        p for p in probes if p["verdict"] == "PASS"
+        or split_probe_outcome(p.get("failed_checks", []), False) == "structured"
+    ]
+    encoded = [p for p in probes if p["verdict"] == "PASS"]
+    decided = [p for p in probes if p["verdict"] in ("PASS", "FAIL")]
+    encoding_rate = (
+        len(encoded) / len(understood) if understood else 1.0
+    )
+    joint_rate = (
+        len([p for p in probes if p["verdict"] == "PASS"]) / len(decided)
+        if decided else 0.0
+    )
+    weakest = sorted(
+        (
+            (name, e["right_but_misencoded"])
+            for name, e in per_probe.items()
+            if e["right_but_misencoded"]
+        ),
+        key=lambda kv: -kv[1],
+    )
+    return {
+        "verdict": (
+            "ACCEPTED" if encoding_rate >= 0.95
+            else "NOT_YET" if evidence_gate_is_reachable(rows)
+            else "NOT_REACHED"
+        ),
+        "encoding_rate": round(encoding_rate, 3),
+        "joint_rate": round(joint_rate, 3),
+        "runs_where_understanding_was_right": len(understood),
+        "runs_where_it_was_encoded": len(encoded),
+        "probes_misencoded_after_a_correct_reading": weakest,
+        "criteria": [{
+            "id": "encodes_a_correct_reading",
+            "question": (
+                "when it retrieved and cited the right thing, did it say so in "
+                "the vocabulary it was given?"
+            ),
+            "passed": encoding_rate >= 0.95,
+            "observed": (
+                f"{len(encoded)}/{len(understood)} correct readings encoded "
+                f"correctly ({encoding_rate:.1%})"
+            ),
+            "threshold": ">= 95%",
+            "note": (
+                "95% rather than 100% because a code misspelled once in fifty "
+                "is a reliability figure and not a capability boundary, and a "
+                "gate that demands perfection reports noise as a finding."
+            ),
+        }],
+        "note": (
+            "Measured over runs where the judgement was right. A model that is "
+            "wrong about a figure has not demonstrated anything about encoding, "
+            "and counting it here would dilute the class."
+        ),
+    }
+
+
+def evidence_gate_is_reachable(rows: List[Dict[str, Any]]) -> bool:
+    """
+    Whether the model even got as far as having an understanding to encode.
+
+    Every probe that was refused by the transport, or that the model never
+    answered, is a run with no judgement in it, and a Structured Consumer
+    verdict over runs where nothing was understood says nothing about encoding.
+    """
+    return any(row["verdict"] in ("PASS", "FAIL") for row in rows)
 
 
 def _rate_finding(
