@@ -5,21 +5,28 @@
 # are resolved from whichever snapshot is in use, so a committed copy would go
 # stale against the code that reads it.
 #
-# The cross-framework archive is the same kind of thing and is ignored for the
-# same reason: it is an EDGAR extract for a set of issuers, rebuilt by
-# `build_snapshot(..., issuers=..., forms=...)`, and the 2.7 report records the
-# numbers it produced. Committing one live archive while ignoring its sibling
-# would leave the repository with two different rules for the same artefact
-# depending on which phase produced it.
+# The cross-framework and population archives are the same kind of thing and are
+# ignored for the same reason: each is an EDGAR extract for a set of issuers,
+# rebuilt by `build_crossframework_snapshot.py` and `ingest_universe.py`, and the
+# reports record the numbers each produced. Committing one live archive while
+# ignoring its siblings would leave the repository with a different rule for the
+# same artefact depending on which phase produced it.
 snapshot.sqlite
 snapshot.sqlite-*
 snapshot-crossframework.sqlite
 snapshot-crossframework.sqlite-*
 
+# The population archive is larger than its siblings -- a stratified run over
+# live EDGAR -- and what is committed from it is the *result*, universe-211.json,
+# which holds the cost measurements and every classified outcome. The numbers are
+# the finding; the database is reproducible with one command.
+snapshot-universe.sqlite
+snapshot-universe.sqlite-*
+
 # Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
-# extract like the archives above, and gitignored for the same reason: the
-# *derived* numbers are committed (in the collection chains, the reports and the
-# ledger output) and the responses are reproducible with one command per issuer.
+# extract like the archives above: the *derived* numbers are committed (in the
+# collection chains, the reports and the ledger output) and the responses are
+# reproducible with one command per issuer.
 inventory/
 inventory/*
 
@@ -29,9 +36,6 @@ inventory/*
 #
 #   committed:  runs/ollama-local-*/
 #   ignored:    runs/scripted-*/, runs/reference-*/, runs/unknown-*/
-snapshot.sqlite
-snapshot.sqlite-*
-
 runs/scripted-*/
 runs/reference-*/
 runs/unknown-*/

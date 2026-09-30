@@ -1,0 +1,3911 @@
+{
+  "archive_bytes": 174497792,
+  "classified_failures": {
+    "NOT_ATTEMPTED": 16,
+    "SOURCE_SILENT": 93
+  },
+  "companies": 75,
+  "elapsed_seconds": 807.2,
+  "first_pass": {
+    "bytes": 2743506,
+    "bytes_per_company": 36580,
+    "megabytes_per_company": 2.33,
+    "observations_per_company": 728.0,
+    "requests": 1755,
+    "requests_per_company": 23.4,
+    "seconds_per_company": 10.76,
+    "seconds_per_filing": 0.13
+  },
+  "outcomes": {
+    "COLLECTED": 70,
+    "NOT_ATTEMPTED": 2,
+    "SOURCE_SILENT": 3
+  },
+  "reports": [
+    {
+      "asset": "LTRX",
+      "bytes": 266937,
+      "cik": "0001114925",
+      "concept_fetches": 23,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 4,
+      "documents_reused": 0,
+      "documents_stored": 12,
+      "elapsed_seconds": 11.734,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 125,
+      "filings_seen": 125,
+      "network_fetches": 25,
+      "observations_skipped": 0,
+      "observations_stored": 1168,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 25,
+      "run_id": "run_0af29ebb9a6c4b90",
+      "sic": "3576",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1168,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 266937,
+        "deduplication_ratio": 0.237,
+        "documents_retained": 14,
+        "requests_made": 25,
+        "requests_per_unique_document": 1.79,
+        "unique_document_bytes": 1127638
+      }
+    },
+    {
+      "asset": "CHRN",
+      "bytes": 42342,
+      "cik": "0001549084",
+      "concept_fetches": 46,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 45,
+      "documents_reused": 0,
+      "documents_stored": 13,
+      "elapsed_seconds": 10.703,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 139,
+      "filings_seen": 139,
+      "network_fetches": 49,
+      "observations_skipped": 0,
+      "observations_stored": 1061,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_06ac0b9f89e845b6",
+      "sic": "3569",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1061,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 309279,
+        "deduplication_ratio": 0.221,
+        "documents_retained": 28,
+        "requests_made": 49,
+        "requests_per_unique_document": 1.75,
+        "unique_document_bytes": 1398908
+      }
+    },
+    {
+      "asset": "RBC",
+      "bytes": 53443,
+      "cik": "0001324948",
+      "concept_fetches": 69,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 36,
+      "documents_reused": 0,
+      "documents_stored": 12,
+      "elapsed_seconds": 11.328,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 124,
+      "filings_seen": 124,
+      "network_fetches": 73,
+      "observations_skipped": 0,
+      "observations_stored": 1593,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_bfd0687c549b4edb",
+      "sic": "3562",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1593,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 362722,
+        "deduplication_ratio": 0.203,
+        "documents_retained": 41,
+        "requests_made": 73,
+        "requests_per_unique_document": 1.78,
+        "unique_document_bytes": 1791044
+      }
+    },
+    {
+      "asset": "SSYS",
+      "bytes": 36911,
+      "cik": "0001517396",
+      "concept_fetches": 92,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 1,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 10.25,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 15,
+      "filings_seen": 15,
+      "network_fetches": 97,
+      "observations_skipped": 0,
+      "observations_stored": 1024,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_335f202cbca64dc1",
+      "sic": "3577",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1024,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 399633,
+        "deduplication_ratio": 0.196,
+        "documents_retained": 53,
+        "requests_made": 97,
+        "requests_per_unique_document": 1.83,
+        "unique_document_bytes": 2037937
+      }
+    },
+    {
+      "asset": "CMI",
+      "bytes": 43994,
+      "cik": "0000026172",
+      "concept_fetches": 115,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 3,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 10.891,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 119,
+      "filings_seen": 119,
+      "network_fetches": 121,
+      "observations_skipped": 0,
+      "observations_stored": 1326,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_16d34905b5e34c2e",
+      "sic": "3510",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1326,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 443627,
+        "deduplication_ratio": 0.187,
+        "documents_retained": 65,
+        "requests_made": 121,
+        "requests_per_unique_document": 1.86,
+        "unique_document_bytes": 2377274
+      }
+    },
+    {
+      "asset": "TRSG",
+      "bytes": 7252,
+      "cik": "0001943444",
+      "concept_fetches": 138,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 8,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 8.515,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 5,
+      "filings_seen": 5,
+      "network_fetches": 145,
+      "observations_skipped": 0,
+      "observations_stored": 83,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_0d29ea2026bc4bbc",
+      "sic": "3530",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 83,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 450879,
+        "deduplication_ratio": 0.187,
+        "documents_retained": 73,
+        "requests_made": 145,
+        "requests_per_unique_document": 1.99,
+        "unique_document_bytes": 2405887
+      }
+    },
+    {
+      "asset": "CCXIU",
+      "bytes": 5042,
+      "cik": "0002074973",
+      "concept_fetches": 161,
+      "concepts_unresolved": 5,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 3,
+      "elapsed_seconds": 7.344,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 11,
+      "filings_seen": 11,
+      "network_fetches": 169,
+      "observations_skipped": 0,
+      "observations_stored": 16,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 5
+      },
+      "requests": 24,
+      "run_id": "run_a3f49a960ccc4089",
+      "sic": "3569",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 16,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 455921,
+        "deduplication_ratio": 0.188,
+        "documents_retained": 77,
+        "requests_made": 169,
+        "requests_per_unique_document": 2.19,
+        "unique_document_bytes": 2425275
+      }
+    },
+    {
+      "asset": "MAIR",
+      "bytes": 5591,
+      "cik": "0002098430",
+      "concept_fetches": 184,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 1,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 6.86,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 193,
+      "observations_skipped": 0,
+      "observations_stored": 24,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_4bc5be70690c4614",
+      "sic": "3564",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 24,
+      "stratum": "industrial_technology",
+      "transport": {
+        "bytes_downloaded": 461512,
+        "deduplication_ratio": 0.189,
+        "documents_retained": 85,
+        "requests_made": 193,
+        "requests_per_unique_document": 2.27,
+        "unique_document_bytes": 2441900
+      }
+    },
+    {
+      "asset": "KTCC",
+      "bytes": 50979,
+      "cik": "0000719733",
+      "concept_fetches": 207,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 54,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 11.656,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 130,
+      "filings_seen": 130,
+      "network_fetches": 217,
+      "observations_skipped": 0,
+      "observations_stored": 1508,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_d094543de6404cbf",
+      "sic": "3672",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1508,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 512491,
+        "deduplication_ratio": 0.182,
+        "documents_retained": 97,
+        "requests_made": 217,
+        "requests_per_unique_document": 2.24,
+        "unique_document_bytes": 2820633
+      }
+    },
+    {
+      "asset": "STMEF",
+      "bytes": 38326,
+      "cik": "0000932787",
+      "concept_fetches": 230,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 5,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 9.359,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 17,
+      "filings_seen": 17,
+      "network_fetches": 241,
+      "observations_skipped": 3,
+      "observations_stored": 327,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_4ea659c27f6d4704",
+      "sic": "3674",
+      "source_facts_skipped": 3,
+      "source_facts_stored": 327,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 550817,
+        "deduplication_ratio": 0.181,
+        "documents_retained": 108,
+        "requests_made": 241,
+        "requests_per_unique_document": 2.23,
+        "unique_document_bytes": 3046910
+      }
+    },
+    {
+      "asset": "CONC",
+      "bytes": 14994,
+      "cik": "0000790273",
+      "concept_fetches": 253,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 5,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 10.203,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 16,
+      "filings_seen": 16,
+      "network_fetches": 265,
+      "observations_skipped": 0,
+      "observations_stored": 260,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_e89ebba4188f4242",
+      "sic": "3663",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 260,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 565811,
+        "deduplication_ratio": 0.181,
+        "documents_retained": 116,
+        "requests_made": 265,
+        "requests_per_unique_document": 2.28,
+        "unique_document_bytes": 3128664
+      }
+    },
+    {
+      "asset": "NEON",
+      "bytes": 46013,
+      "cik": "0000087050",
+      "concept_fetches": 276,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 29,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 10.188,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 110,
+      "filings_seen": 110,
+      "network_fetches": 289,
+      "observations_skipped": 0,
+      "observations_stored": 1000,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_7965ffb925144528",
+      "sic": "3679",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1000,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 611824,
+        "deduplication_ratio": 0.178,
+        "documents_retained": 125,
+        "requests_made": 289,
+        "requests_per_unique_document": 2.31,
+        "unique_document_bytes": 3439635
+      }
+    },
+    {
+      "asset": "ASX",
+      "bytes": 34334,
+      "cik": "0001122411",
+      "concept_fetches": 299,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 12,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 8.172,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 313,
+      "observations_skipped": 81,
+      "observations_stored": 226,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_74456afe4e924043",
+      "sic": "3674",
+      "source_facts_skipped": 81,
+      "source_facts_stored": 226,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 646158,
+        "deduplication_ratio": 0.178,
+        "documents_retained": 136,
+        "requests_made": 313,
+        "requests_per_unique_document": 2.3,
+        "unique_document_bytes": 3637053
+      }
+    },
+    {
+      "asset": "ERIC",
+      "bytes": 29714,
+      "cik": "0000717826",
+      "concept_fetches": 322,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 10,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 8.422,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 337,
+      "observations_skipped": 0,
+      "observations_stored": 206,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_828b5db335af4ca8",
+      "sic": "3663",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 206,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 675872,
+        "deduplication_ratio": 0.178,
+        "documents_retained": 145,
+        "requests_made": 337,
+        "requests_per_unique_document": 2.32,
+        "unique_document_bytes": 3795832
+      }
+    },
+    {
+      "asset": "CAE",
+      "bytes": 18140,
+      "cik": "0001173382",
+      "concept_fetches": 345,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 6,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 9.015,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 361,
+      "observations_skipped": 0,
+      "observations_stored": 155,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_c1a466da023d42f8",
+      "sic": "3690",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 155,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 694012,
+        "deduplication_ratio": 0.179,
+        "documents_retained": 155,
+        "requests_made": 361,
+        "requests_per_unique_document": 2.33,
+        "unique_document_bytes": 3886245
+      }
+    },
+    {
+      "asset": "TKLS",
+      "bytes": 25224,
+      "cik": "0001429393",
+      "concept_fetches": 368,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 45,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 12.047,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 71,
+      "filings_seen": 71,
+      "network_fetches": 385,
+      "observations_skipped": 0,
+      "observations_stored": 918,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_6174aadb5bd64a77",
+      "sic": "3630",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 918,
+      "stratum": "semiconductor",
+      "transport": {
+        "bytes_downloaded": 719236,
+        "deduplication_ratio": 0.177,
+        "documents_retained": 165,
+        "requests_made": 385,
+        "requests_per_unique_document": 2.33,
+        "unique_document_bytes": 4059971
+      }
+    },
+    {
+      "asset": "HNDAF",
+      "bytes": 30126,
+      "cik": "0000715153",
+      "concept_fetches": 391,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 2,
+      "documents_reused": 0,
+      "documents_stored": 16,
+      "elapsed_seconds": 9.531,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 14,
+      "filings_seen": 14,
+      "network_fetches": 409,
+      "observations_skipped": 0,
+      "observations_stored": 390,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_7ecfd8decf7f4d46",
+      "sic": "3711",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 390,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 749362,
+        "deduplication_ratio": 0.177,
+        "documents_retained": 182,
+        "requests_made": 409,
+        "requests_per_unique_document": 2.25,
+        "unique_document_bytes": 4231945
+      }
+    },
+    {
+      "asset": "TATT",
+      "bytes": 25923,
+      "cik": "0000808439",
+      "concept_fetches": 414,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 7,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 8.172,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 16,
+      "filings_seen": 16,
+      "network_fetches": 433,
+      "observations_skipped": 0,
+      "observations_stored": 286,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_38220a6420044077",
+      "sic": "3724",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 286,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 775285,
+        "deduplication_ratio": 0.178,
+        "documents_retained": 193,
+        "requests_made": 433,
+        "requests_per_unique_document": 2.24,
+        "unique_document_bytes": 4367656
+      }
+    },
+    {
+      "asset": "ATRO",
+      "bytes": 49132,
+      "cik": "0000008063",
+      "concept_fetches": 437,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 62,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 12.329,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 110,
+      "filings_seen": 110,
+      "network_fetches": 457,
+      "observations_skipped": 0,
+      "observations_stored": 1527,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_bf216a3ec91f475a",
+      "sic": "3728",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1527,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 824417,
+        "deduplication_ratio": 0.174,
+        "documents_retained": 205,
+        "requests_made": 457,
+        "requests_per_unique_document": 2.23,
+        "unique_document_bytes": 4745666
+      }
+    },
+    {
+      "asset": "THRMV",
+      "bytes": 45043,
+      "cik": "0000903129",
+      "concept_fetches": 460,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 23,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 11.546,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 132,
+      "filings_seen": 132,
+      "network_fetches": 481,
+      "observations_skipped": 0,
+      "observations_stored": 1099,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_5b773e373b2944a2",
+      "sic": "3714",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1099,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 869460,
+        "deduplication_ratio": 0.172,
+        "documents_retained": 216,
+        "requests_made": 481,
+        "requests_per_unique_document": 2.23,
+        "unique_document_bytes": 5060486
+      }
+    },
+    {
+      "asset": "BLBD",
+      "bytes": 48955,
+      "cik": "0001589526",
+      "concept_fetches": 483,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 8,
+      "documents_reused": 0,
+      "documents_stored": 12,
+      "elapsed_seconds": 10.938,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 133,
+      "filings_seen": 133,
+      "network_fetches": 505,
+      "observations_skipped": 0,
+      "observations_stored": 1185,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_5663c43d2ff347a4",
+      "sic": "3713",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1185,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 918415,
+        "deduplication_ratio": 0.171,
+        "documents_retained": 229,
+        "requests_made": 505,
+        "requests_per_unique_document": 2.21,
+        "unique_document_bytes": 5378366
+      }
+    },
+    {
+      "asset": "MCFT",
+      "bytes": 39089,
+      "cik": "0001638290",
+      "concept_fetches": 506,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 27,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 11.344,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 97,
+      "filings_seen": 97,
+      "network_fetches": 529,
+      "observations_skipped": 0,
+      "observations_stored": 1301,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_3b20412e3ab7422a",
+      "sic": "3730",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1301,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 957504,
+        "deduplication_ratio": 0.169,
+        "documents_retained": 241,
+        "requests_made": 529,
+        "requests_per_unique_document": 2.2,
+        "unique_document_bytes": 5664961
+      }
+    },
+    {
+      "asset": "APTV",
+      "bytes": 43615,
+      "cik": "0001521332",
+      "concept_fetches": 529,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 35,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 11.625,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 124,
+      "filings_seen": 124,
+      "network_fetches": 553,
+      "observations_skipped": 0,
+      "observations_stored": 1366,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_6ee234c04e4441a6",
+      "sic": "3714",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1366,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 1001119,
+        "deduplication_ratio": 0.166,
+        "documents_retained": 253,
+        "requests_made": 553,
+        "requests_per_unique_document": 2.19,
+        "unique_document_bytes": 6022593
+      }
+    },
+    {
+      "asset": "ADNT",
+      "bytes": 33135,
+      "cik": "0001670541",
+      "concept_fetches": 552,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 11,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 9.422,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 129,
+      "filings_seen": 129,
+      "network_fetches": 577,
+      "observations_skipped": 0,
+      "observations_stored": 747,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_27dc304e474c4a6f",
+      "sic": "3714",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 747,
+      "stratum": "software",
+      "transport": {
+        "bytes_downloaded": 1034254,
+        "deduplication_ratio": 0.165,
+        "documents_retained": 263,
+        "requests_made": 577,
+        "requests_per_unique_document": 2.19,
+        "unique_document_bytes": 6251493
+      }
+    },
+    {
+      "asset": "AILLP",
+      "bytes": 17377,
+      "cik": "0000018654",
+      "concept_fetches": 575,
+      "concepts_unresolved": 8,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 0,
+      "elapsed_seconds": 6.953,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "net_income"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "assets"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "cash"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 96,
+      "filings_seen": 96,
+      "network_fetches": 601,
+      "observations_skipped": 0,
+      "observations_stored": 0,
+      "outcome": "SOURCE_SILENT",
+      "outcomes": {
+        "SOURCE_SILENT": 8
+      },
+      "requests": 24,
+      "run_id": "run_6a3e38f9ef2d410b",
+      "sic": "4931",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 0,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1051631,
+        "deduplication_ratio": 0.166,
+        "documents_retained": 264,
+        "requests_made": 601,
+        "requests_per_unique_document": 2.28,
+        "unique_document_bytes": 6332350
+      }
+    },
+    {
+      "asset": "UEPEO",
+      "bytes": 20707,
+      "cik": "0000100826",
+      "concept_fetches": 598,
+      "concepts_unresolved": 8,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 0,
+      "elapsed_seconds": 6.718,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "net_income"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "assets"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "cash"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 107,
+      "filings_seen": 107,
+      "network_fetches": 625,
+      "observations_skipped": 0,
+      "observations_stored": 0,
+      "outcome": "SOURCE_SILENT",
+      "outcomes": {
+        "SOURCE_SILENT": 8
+      },
+      "requests": 24,
+      "run_id": "run_f733d48c87524824",
+      "sic": "4911",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 0,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1072338,
+        "deduplication_ratio": 0.167,
+        "documents_retained": 265,
+        "requests_made": 625,
+        "requests_per_unique_document": 2.36,
+        "unique_document_bytes": 6428805
+      }
+    },
+    {
+      "asset": "EONGY",
+      "bytes": 9912,
+      "cik": "0001136808",
+      "concept_fetches": 598,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 0,
+      "elapsed_seconds": 0.297,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "revenue"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "net_income"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "assets"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "cash"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "debt"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "capex"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 0,
+      "filings_seen": 0,
+      "network_fetches": 626,
+      "observations_skipped": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "outcomes": {
+        "NOT_ATTEMPTED": 8
+      },
+      "requests": 1,
+      "run_id": "run_29a62237fd9a4b19",
+      "sic": "4900",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 0,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1082250,
+        "deduplication_ratio": 0.167,
+        "documents_retained": 266,
+        "requests_made": 626,
+        "requests_per_unique_document": 2.35,
+        "unique_document_bytes": 6474375
+      }
+    },
+    {
+      "asset": "CIG-C",
+      "bytes": 17361,
+      "cik": "0001157557",
+      "concept_fetches": 621,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 12,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 7.36,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 10,
+      "filings_seen": 10,
+      "network_fetches": 650,
+      "observations_skipped": 0,
+      "observations_stored": 145,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_20098bded7b849d0",
+      "sic": "4911",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 145,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1099611,
+        "deduplication_ratio": 0.168,
+        "documents_retained": 275,
+        "requests_made": 650,
+        "requests_per_unique_document": 2.36,
+        "unique_document_bytes": 6556845
+      }
+    },
+    {
+      "asset": "NMPWP",
+      "bytes": 38566,
+      "cik": "0001004315",
+      "concept_fetches": 644,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 10,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 8.656,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 674,
+      "observations_skipped": 0,
+      "observations_stored": 272,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_84008d330471423b",
+      "sic": "4922",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 272,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1138177,
+        "deduplication_ratio": 0.168,
+        "documents_retained": 284,
+        "requests_made": 674,
+        "requests_per_unique_document": 2.37,
+        "unique_document_bytes": 6764638
+      }
+    },
+    {
+      "asset": "TAC",
+      "bytes": 35764,
+      "cik": "0001144800",
+      "concept_fetches": 667,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 9.562,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 698,
+      "observations_skipped": 0,
+      "observations_stored": 172,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_a8013f0ed3bc4d71",
+      "sic": "4911",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 172,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1173941,
+        "deduplication_ratio": 0.169,
+        "documents_retained": 293,
+        "requests_made": 698,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 6963802
+      }
+    },
+    {
+      "asset": "CDZI",
+      "bytes": 48629,
+      "cik": "0000727273",
+      "concept_fetches": 690,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 4,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 14.078,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 116,
+      "filings_seen": 116,
+      "network_fetches": 722,
+      "observations_skipped": 0,
+      "observations_stored": 1203,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_c3fb93a2b751454c",
+      "sic": "4941",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1203,
+      "stratum": "utilities_transport",
+      "transport": {
+        "bytes_downloaded": 1222570,
+        "deduplication_ratio": 0.167,
+        "documents_retained": 302,
+        "requests_made": 722,
+        "requests_per_unique_document": 2.39,
+        "unique_document_bytes": 7301631
+      }
+    },
+    {
+      "asset": "GRLF",
+      "bytes": 4323,
+      "cik": "0000915661",
+      "concept_fetches": 690,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 0,
+      "elapsed_seconds": 0.406,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "revenue"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "net_income"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "assets"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "cash"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "debt"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "capex"
+        },
+        {
+          "detail": "the run found no new filings, so it asked nothing",
+          "outcome": "NOT_ATTEMPTED",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 0,
+      "filings_seen": 0,
+      "network_fetches": 723,
+      "observations_skipped": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "outcomes": {
+        "NOT_ATTEMPTED": 8
+      },
+      "requests": 1,
+      "run_id": "run_6e98b4bd5f6443af",
+      "sic": "2050",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 0,
+      "stratum": "manufacturing",
+      "transport": {
+        "bytes_downloaded": 1226893,
+        "deduplication_ratio": 0.168,
+        "documents_retained": 303,
+        "requests_made": 723,
+        "requests_per_unique_document": 2.39,
+        "unique_document_bytes": 7320393
+      }
+    },
+    {
+      "asset": "HAIN",
+      "bytes": 53632,
+      "cik": "0000910406",
+      "concept_fetches": 713,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 71,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 13.829,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 124,
+      "filings_seen": 124,
+      "network_fetches": 747,
+      "observations_skipped": 0,
+      "observations_stored": 1453,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_b8a6e92bac4643ec",
+      "sic": "2000",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1453,
+      "stratum": "manufacturing",
+      "transport": {
+        "bytes_downloaded": 1280525,
+        "deduplication_ratio": 0.166,
+        "documents_retained": 315,
+        "requests_made": 747,
+        "requests_per_unique_document": 2.37,
+        "unique_document_bytes": 7696607
+      }
+    },
+    {
+      "asset": "BRCNF",
+      "bytes": 11126,
+      "cik": "0001158399",
+      "concept_fetches": 736,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 6,
+      "elapsed_seconds": 8.953,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 3,
+      "filings_seen": 3,
+      "network_fetches": 771,
+      "observations_skipped": 0,
+      "observations_stored": 32,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_2acb9bfa425b430f",
+      "sic": "2020",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 32,
+      "stratum": "manufacturing",
+      "transport": {
+        "bytes_downloaded": 1291651,
+        "deduplication_ratio": 0.167,
+        "documents_retained": 322,
+        "requests_made": 771,
+        "requests_per_unique_document": 2.39,
+        "unique_document_bytes": 7750145
+      }
+    },
+    {
+      "asset": "FLO",
+      "bytes": 47860,
+      "cik": "0001128928",
+      "concept_fetches": 759,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 20,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 15.172,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 121,
+      "filings_seen": 121,
+      "network_fetches": 795,
+      "observations_skipped": 0,
+      "observations_stored": 1402,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_8f23f244939e47ad",
+      "sic": "2000",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1402,
+      "stratum": "manufacturing",
+      "transport": {
+        "bytes_downloaded": 1339511,
+        "deduplication_ratio": 0.165,
+        "documents_retained": 334,
+        "requests_made": 795,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 8112395
+      }
+    },
+    {
+      "asset": "AFRIW",
+      "bytes": 9502,
+      "cik": "0001903870",
+      "concept_fetches": 782,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 9,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 12.219,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 6,
+      "filings_seen": 6,
+      "network_fetches": 819,
+      "observations_skipped": 0,
+      "observations_stored": 128,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_2875f3532f0a468d",
+      "sic": "2040",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 128,
+      "stratum": "manufacturing",
+      "transport": {
+        "bytes_downloaded": 1349013,
+        "deduplication_ratio": 0.166,
+        "documents_retained": 345,
+        "requests_made": 819,
+        "requests_per_unique_document": 2.37,
+        "unique_document_bytes": 8148453
+      }
+    },
+    {
+      "asset": "NAII",
+      "bytes": 40271,
+      "cik": "0000787253",
+      "concept_fetches": 805,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 4,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 15.422,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 80,
+      "filings_seen": 80,
+      "network_fetches": 843,
+      "observations_skipped": 0,
+      "observations_stored": 968,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_09e4711ca5c04927",
+      "sic": "2833",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 968,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1389284,
+        "deduplication_ratio": 0.165,
+        "documents_retained": 355,
+        "requests_made": 843,
+        "requests_per_unique_document": 2.37,
+        "unique_document_bytes": 8412769
+      }
+    },
+    {
+      "asset": "INBP",
+      "bytes": 37978,
+      "cik": "0001016504",
+      "concept_fetches": 828,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 14,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 14.906,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 96,
+      "filings_seen": 96,
+      "network_fetches": 867,
+      "observations_skipped": 0,
+      "observations_stored": 1222,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_0020574a76c3453e",
+      "sic": "2834",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1222,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1427262,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 367,
+        "requests_made": 867,
+        "requests_per_unique_document": 2.36,
+        "unique_document_bytes": 8682246
+      }
+    },
+    {
+      "asset": "CPMD",
+      "bytes": 27568,
+      "cik": "0001081938",
+      "concept_fetches": 851,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 21,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 11.781,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 80,
+      "filings_seen": 80,
+      "network_fetches": 891,
+      "observations_skipped": 0,
+      "observations_stored": 860,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_e58643710ad046cf",
+      "sic": "2834",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 860,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1454830,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 377,
+        "requests_made": 891,
+        "requests_per_unique_document": 2.36,
+        "unique_document_bytes": 8866117
+      }
+    },
+    {
+      "asset": "HGYN",
+      "bytes": 21244,
+      "cik": "0001324759",
+      "concept_fetches": 874,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 13,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 10.375,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 36,
+      "filings_seen": 36,
+      "network_fetches": 915,
+      "observations_skipped": 0,
+      "observations_stored": 317,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_30f39e9f202c4d74",
+      "sic": "2821",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 317,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1476074,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 385,
+        "requests_made": 915,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 8981204
+      }
+    },
+    {
+      "asset": "CNBX",
+      "bytes": 25617,
+      "cik": "0001343009",
+      "concept_fetches": 897,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 33,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 10.407,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 71,
+      "filings_seen": 71,
+      "network_fetches": 939,
+      "observations_skipped": 0,
+      "observations_stored": 835,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_e4e1838e76a6443d",
+      "sic": "2834",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 835,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1501691,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 394,
+        "requests_made": 939,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 9152601
+      }
+    },
+    {
+      "asset": "RIGL",
+      "bytes": 43997,
+      "cik": "0001034842",
+      "concept_fetches": 920,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 8,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 11.859,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 134,
+      "filings_seen": 134,
+      "network_fetches": 963,
+      "observations_skipped": 0,
+      "observations_stored": 868,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_259cd1495404444b",
+      "sic": "2834",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 868,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1545688,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 404,
+        "requests_made": 963,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 9435776
+      }
+    },
+    {
+      "asset": "KURA",
+      "bytes": 41290,
+      "cik": "0001422143",
+      "concept_fetches": 943,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 12,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 10.719,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 143,
+      "filings_seen": 143,
+      "network_fetches": 987,
+      "observations_skipped": 0,
+      "observations_stored": 979,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_839239c3fcbe4279",
+      "sic": "2834",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 979,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1586978,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 415,
+        "requests_made": 987,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 9704468
+      }
+    },
+    {
+      "asset": "CELZ",
+      "bytes": 28791,
+      "cik": "0001187953",
+      "concept_fetches": 966,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 11,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 11.297,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 97,
+      "filings_seen": 97,
+      "network_fetches": 1011,
+      "observations_skipped": 0,
+      "observations_stored": 833,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_2fd3ff331cbc452d",
+      "sic": "2836",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 833,
+      "stratum": "chemicals",
+      "transport": {
+        "bytes_downloaded": 1615769,
+        "deduplication_ratio": 0.163,
+        "documents_retained": 423,
+        "requests_made": 1011,
+        "requests_per_unique_document": 2.39,
+        "unique_document_bytes": 9891277
+      }
+    },
+    {
+      "asset": "FIP",
+      "bytes": 17958,
+      "cik": "0001899883",
+      "concept_fetches": 989,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 4,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 10.765,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 63,
+      "filings_seen": 63,
+      "network_fetches": 1035,
+      "observations_skipped": 0,
+      "observations_stored": 392,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_21b77b65b80f4b91",
+      "sic": "4011",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 392,
+      "stratum": "utilities",
+      "transport": {
+        "bytes_downloaded": 1633727,
+        "deduplication_ratio": 0.164,
+        "documents_retained": 434,
+        "requests_made": 1035,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 9988582
+      }
+    },
+    {
+      "asset": "FAST",
+      "bytes": 51267,
+      "cik": "0000815556",
+      "concept_fetches": 1012,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 51,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 13.36,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 122,
+      "filings_seen": 122,
+      "network_fetches": 1059,
+      "observations_skipped": 0,
+      "observations_stored": 1772,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_fd408844823b42dd",
+      "sic": "5200",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1772,
+      "stratum": "retail",
+      "transport": {
+        "bytes_downloaded": 1684994,
+        "deduplication_ratio": 0.162,
+        "documents_retained": 446,
+        "requests_made": 1059,
+        "requests_per_unique_document": 2.37,
+        "unique_document_bytes": 10401845
+      }
+    },
+    {
+      "asset": "TSCO",
+      "bytes": 51330,
+      "cik": "0000916365",
+      "concept_fetches": 1035,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 19,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 12.203,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 153,
+      "filings_seen": 153,
+      "network_fetches": 1083,
+      "observations_skipped": 0,
+      "observations_stored": 1386,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_08518ed36393473b",
+      "sic": "5200",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1386,
+      "stratum": "retail",
+      "transport": {
+        "bytes_downloaded": 1736324,
+        "deduplication_ratio": 0.161,
+        "documents_retained": 456,
+        "requests_made": 1083,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 10770163
+      }
+    },
+    {
+      "asset": "GRWG",
+      "bytes": 34210,
+      "cik": "0001604868",
+      "concept_fetches": 1058,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 17,
+      "documents_reused": 0,
+      "documents_stored": 12,
+      "elapsed_seconds": 12.61,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 113,
+      "filings_seen": 113,
+      "network_fetches": 1107,
+      "observations_skipped": 0,
+      "observations_stored": 835,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_41278c195c7748ef",
+      "sic": "5200",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 835,
+      "stratum": "retail",
+      "transport": {
+        "bytes_downloaded": 1770534,
+        "deduplication_ratio": 0.161,
+        "documents_retained": 469,
+        "requests_made": 1107,
+        "requests_per_unique_document": 2.36,
+        "unique_document_bytes": 10984205
+      }
+    },
+    {
+      "asset": "FHB",
+      "bytes": 38655,
+      "cik": "0000036377",
+      "concept_fetches": 1081,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 11.781,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 121,
+      "filings_seen": 121,
+      "network_fetches": 1131,
+      "observations_skipped": 0,
+      "observations_stored": 767,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_df365503a2bd4426",
+      "sic": "6022",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 767,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 1809189,
+        "deduplication_ratio": 0.161,
+        "documents_retained": 478,
+        "requests_made": 1131,
+        "requests_per_unique_document": 2.37,
+        "unique_document_bytes": 11235376
+      }
+    },
+    {
+      "asset": "CCFN",
+      "bytes": 24019,
+      "cik": "0000731122",
+      "concept_fetches": 1104,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 2,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 10.281,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 66,
+      "filings_seen": 66,
+      "network_fetches": 1155,
+      "observations_skipped": 0,
+      "observations_stored": 291,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_af088ad966144b52",
+      "sic": "6022",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 291,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 1833208,
+        "deduplication_ratio": 0.161,
+        "documents_retained": 486,
+        "requests_made": 1155,
+        "requests_per_unique_document": 2.38,
+        "unique_document_bytes": 11364280
+      }
+    },
+    {
+      "asset": "BBAR",
+      "bytes": 24392,
+      "cik": "0000913059",
+      "concept_fetches": 1127,
+      "concepts_unresolved": 3,
+      "dimension_collisions": 48,
+      "documents_reused": 0,
+      "documents_stored": 5,
+      "elapsed_seconds": 8.469,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 8,
+      "filings_seen": 8,
+      "network_fetches": 1179,
+      "observations_skipped": 0,
+      "observations_stored": 91,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 3
+      },
+      "requests": 24,
+      "run_id": "run_d43c6b809925446c",
+      "sic": "6029",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 91,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 1857600,
+        "deduplication_ratio": 0.162,
+        "documents_retained": 492,
+        "requests_made": 1179,
+        "requests_per_unique_document": 2.4,
+        "unique_document_bytes": 11492374
+      }
+    },
+    {
+      "asset": "PFBX",
+      "bytes": 41765,
+      "cik": "0000770460",
+      "concept_fetches": 1150,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 30,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 10.703,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 108,
+      "filings_seen": 108,
+      "network_fetches": 1203,
+      "observations_skipped": 0,
+      "observations_stored": 819,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_f54c7c4908a2441d",
+      "sic": "6022",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 819,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 1899365,
+        "deduplication_ratio": 0.161,
+        "documents_retained": 500,
+        "requests_made": 1203,
+        "requests_per_unique_document": 2.41,
+        "unique_document_bytes": 11774343
+      }
+    },
+    {
+      "asset": "NRIM",
+      "bytes": 48855,
+      "cik": "0001163370",
+      "concept_fetches": 1173,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 20,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 12.875,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 123,
+      "filings_seen": 123,
+      "network_fetches": 1227,
+      "observations_skipped": 0,
+      "observations_stored": 1301,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_4b1584a49ef44a94",
+      "sic": "6035",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1301,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 1948220,
+        "deduplication_ratio": 0.161,
+        "documents_retained": 510,
+        "requests_made": 1227,
+        "requests_per_unique_document": 2.41,
+        "unique_document_bytes": 12124086
+      }
+    },
+    {
+      "asset": "CZWI",
+      "bytes": 47183,
+      "cik": "0001367859",
+      "concept_fetches": 1196,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 29,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 11.797,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 135,
+      "filings_seen": 135,
+      "network_fetches": 1251,
+      "observations_skipped": 0,
+      "observations_stored": 1094,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_5b22f30710c9404c",
+      "sic": "6035",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1094,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 1995403,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 518,
+        "requests_made": 1251,
+        "requests_per_unique_document": 2.42,
+        "unique_document_bytes": 12445970
+      }
+    },
+    {
+      "asset": "AUBN",
+      "bytes": 32634,
+      "cik": "0000750574",
+      "concept_fetches": 1219,
+      "concepts_unresolved": 3,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 6,
+      "elapsed_seconds": 9.109,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "net_income"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 135,
+      "filings_seen": 135,
+      "network_fetches": 1275,
+      "observations_skipped": 0,
+      "observations_stored": 298,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 3
+      },
+      "requests": 24,
+      "run_id": "run_9fc1d8288f534806",
+      "sic": "6022",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 298,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 2028037,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 525,
+        "requests_made": 1275,
+        "requests_per_unique_document": 2.43,
+        "unique_document_bytes": 12643529
+      }
+    },
+    {
+      "asset": "FCNCP",
+      "bytes": 41942,
+      "cik": "0000798941",
+      "concept_fetches": 1242,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 39,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 12.578,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 146,
+      "filings_seen": 146,
+      "network_fetches": 1299,
+      "observations_skipped": 0,
+      "observations_stored": 874,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_18439c510dfe4c58",
+      "sic": "6022",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 874,
+      "stratum": "bank",
+      "transport": {
+        "bytes_downloaded": 2069979,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 533,
+        "requests_made": 1299,
+        "requests_per_unique_document": 2.44,
+        "unique_document_bytes": 12930516
+      }
+    },
+    {
+      "asset": "OMCC",
+      "bytes": 46536,
+      "cik": "0001000045",
+      "concept_fetches": 1265,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 102,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 12.625,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 121,
+      "filings_seen": 121,
+      "network_fetches": 1323,
+      "observations_skipped": 0,
+      "observations_stored": 1093,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_0b1e922d677647b7",
+      "sic": "6153",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1093,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2116515,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 545,
+        "requests_made": 1323,
+        "requests_per_unique_document": 2.43,
+        "unique_document_bytes": 13238248
+      }
+    },
+    {
+      "asset": "ORXCF",
+      "bytes": 37102,
+      "cik": "0001070304",
+      "concept_fetches": 1288,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 39,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 9.844,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 17,
+      "filings_seen": 17,
+      "network_fetches": 1347,
+      "observations_skipped": 18,
+      "observations_stored": 587,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_971a8b7ee07548c5",
+      "sic": "6159",
+      "source_facts_skipped": 18,
+      "source_facts_stored": 587,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2153617,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 554,
+        "requests_made": 1347,
+        "requests_per_unique_document": 2.43,
+        "unique_document_bytes": 13460428
+      }
+    },
+    {
+      "asset": "IPB",
+      "bytes": 3918,
+      "cik": "0001267332",
+      "concept_fetches": 1311,
+      "concepts_unresolved": 8,
+      "dimension_collisions": 0,
+      "documents_reused": 0,
+      "documents_stored": 0,
+      "elapsed_seconds": 7.985,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "net_income"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "eps_diluted"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "assets"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "cash"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 2,
+      "filings_seen": 2,
+      "network_fetches": 1371,
+      "observations_skipped": 0,
+      "observations_stored": 0,
+      "outcome": "SOURCE_SILENT",
+      "outcomes": {
+        "SOURCE_SILENT": 8
+      },
+      "requests": 24,
+      "run_id": "run_5934408155f74b41",
+      "sic": "6189",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 0,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2157535,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 555,
+        "requests_made": 1371,
+        "requests_per_unique_document": 2.47,
+        "unique_document_bytes": 13475961
+      }
+    },
+    {
+      "asset": "SLNHP",
+      "bytes": 43198,
+      "cik": "0000064463",
+      "concept_fetches": 1334,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 43,
+      "documents_reused": 0,
+      "documents_stored": 12,
+      "elapsed_seconds": 11.843,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 244,
+      "filings_seen": 244,
+      "network_fetches": 1395,
+      "observations_skipped": 0,
+      "observations_stored": 735,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_00ae9b581a3e4f81",
+      "sic": "6199",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 735,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2200733,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 568,
+        "requests_made": 1395,
+        "requests_per_unique_document": 2.46,
+        "unique_document_bytes": 13743426
+      }
+    },
+    {
+      "asset": "SUIG",
+      "bytes": 22375,
+      "cik": "0001425355",
+      "concept_fetches": 1357,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 5,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 11.844,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 73,
+      "filings_seen": 73,
+      "network_fetches": 1419,
+      "observations_skipped": 0,
+      "observations_stored": 313,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_2f08038448404466",
+      "sic": "6199",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 313,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2223108,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 577,
+        "requests_made": 1419,
+        "requests_per_unique_document": 2.46,
+        "unique_document_bytes": 13857687
+      }
+    },
+    {
+      "asset": "PRAA",
+      "bytes": 51319,
+      "cik": "0001185348",
+      "concept_fetches": 1380,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 30,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 12.843,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 135,
+      "filings_seen": 135,
+      "network_fetches": 1443,
+      "observations_skipped": 0,
+      "observations_stored": 1402,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_43970f35ad654d9a",
+      "sic": "6153",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1402,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2274427,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 587,
+        "requests_made": 1443,
+        "requests_per_unique_document": 2.46,
+        "unique_document_bytes": 14225614
+      }
+    },
+    {
+      "asset": "AIXC",
+      "bytes": 31175,
+      "cik": "0001460702",
+      "concept_fetches": 1403,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 15,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 11.282,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 140,
+      "filings_seen": 140,
+      "network_fetches": 1467,
+      "observations_skipped": 0,
+      "observations_stored": 547,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_a8c0692f4e45404f",
+      "sic": "6199",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 547,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2305602,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 596,
+        "requests_made": 1467,
+        "requests_per_unique_document": 2.46,
+        "unique_document_bytes": 14409000
+      }
+    },
+    {
+      "asset": "FMCCH",
+      "bytes": 39237,
+      "cik": "0001026214",
+      "concept_fetches": 1426,
+      "concepts_unresolved": 3,
+      "dimension_collisions": 3,
+      "documents_reused": 0,
+      "documents_stored": 6,
+      "elapsed_seconds": 11.375,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 139,
+      "filings_seen": 139,
+      "network_fetches": 1491,
+      "observations_skipped": 0,
+      "observations_stored": 689,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 3
+      },
+      "requests": 24,
+      "run_id": "run_20c8285518c849d2",
+      "sic": "6111",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 689,
+      "stratum": "insurance",
+      "transport": {
+        "bytes_downloaded": 2344839,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 603,
+        "requests_made": 1491,
+        "requests_per_unique_document": 2.47,
+        "unique_document_bytes": 14696715
+      }
+    },
+    {
+      "asset": "AWCA",
+      "bytes": 22208,
+      "cik": "0001021917",
+      "concept_fetches": 1449,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 12,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 10.734,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 78,
+      "filings_seen": 78,
+      "network_fetches": 1515,
+      "observations_skipped": 0,
+      "observations_stored": 502,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_3e09bde3ffc743c0",
+      "sic": "6512",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 502,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2367047,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 611,
+        "requests_made": 1515,
+        "requests_per_unique_document": 2.48,
+        "unique_document_bytes": 14829025
+      }
+    },
+    {
+      "asset": "EFC",
+      "bytes": 46606,
+      "cik": "0001411342",
+      "concept_fetches": 1472,
+      "concepts_unresolved": 3,
+      "dimension_collisions": 13,
+      "documents_reused": 0,
+      "documents_stored": 6,
+      "elapsed_seconds": 15.109,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "revenue"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 280,
+      "filings_seen": 280,
+      "network_fetches": 1539,
+      "observations_skipped": 0,
+      "observations_stored": 1000,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 3
+      },
+      "requests": 24,
+      "run_id": "run_8d0bda9f0e3042c8",
+      "sic": "6500",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1000,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2413653,
+        "deduplication_ratio": 0.159,
+        "documents_retained": 618,
+        "requests_made": 1539,
+        "requests_per_unique_document": 2.49,
+        "unique_document_bytes": 15139621
+      }
+    },
+    {
+      "asset": "MYCB",
+      "bytes": 19186,
+      "cik": "0001556801",
+      "concept_fetches": 1495,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 23,
+      "documents_reused": 0,
+      "documents_stored": 9,
+      "elapsed_seconds": 11.063,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 77,
+      "filings_seen": 77,
+      "network_fetches": 1563,
+      "observations_skipped": 0,
+      "observations_stored": 600,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_d704b963d3154d8c",
+      "sic": "6500",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 600,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2432839,
+        "deduplication_ratio": 0.159,
+        "documents_retained": 628,
+        "requests_made": 1563,
+        "requests_per_unique_document": 2.49,
+        "unique_document_bytes": 15260503
+      }
+    },
+    {
+      "asset": "BPYPN",
+      "bytes": 23778,
+      "cik": "0001545772",
+      "concept_fetches": 1518,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 1,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 9.406,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 9,
+      "filings_seen": 9,
+      "network_fetches": 1587,
+      "observations_skipped": 0,
+      "observations_stored": 291,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_d2f5c878f27a4485",
+      "sic": "6500",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 291,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2456617,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 636,
+        "requests_made": 1587,
+        "requests_per_unique_document": 2.5,
+        "unique_document_bytes": 15393018
+      }
+    },
+    {
+      "asset": "CRESY",
+      "bytes": 30875,
+      "cik": "0001034957",
+      "concept_fetches": 1541,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 64,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 9.922,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 8,
+      "filings_seen": 8,
+      "network_fetches": 1611,
+      "observations_skipped": 0,
+      "observations_stored": 137,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_d6bcdbba24194d14",
+      "sic": "6500",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 137,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2487492,
+        "deduplication_ratio": 0.16,
+        "documents_retained": 645,
+        "requests_made": 1611,
+        "requests_per_unique_document": 2.5,
+        "unique_document_bytes": 15584846
+      }
+    },
+    {
+      "asset": "HPP",
+      "bytes": 43473,
+      "cik": "0001482512",
+      "concept_fetches": 1564,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 11,
+      "documents_reused": 0,
+      "documents_stored": 8,
+      "elapsed_seconds": 14.063,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 137,
+      "filings_seen": 137,
+      "network_fetches": 1635,
+      "observations_skipped": 0,
+      "observations_stored": 983,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_0b34e7ba8677414c",
+      "sic": "6500",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 983,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2530965,
+        "deduplication_ratio": 0.159,
+        "documents_retained": 654,
+        "requests_made": 1635,
+        "requests_per_unique_document": 2.5,
+        "unique_document_bytes": 15888858
+      }
+    },
+    {
+      "asset": "VAC",
+      "bytes": 46251,
+      "cik": "0001524358",
+      "concept_fetches": 1587,
+      "concepts_unresolved": 1,
+      "dimension_collisions": 176,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 15.015,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "debt"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 136,
+      "filings_seen": 136,
+      "network_fetches": 1659,
+      "observations_skipped": 0,
+      "observations_stored": 1599,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 1
+      },
+      "requests": 24,
+      "run_id": "run_f7c6db15388b493e",
+      "sic": "6531",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1599,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2577216,
+        "deduplication_ratio": 0.158,
+        "documents_retained": 665,
+        "requests_made": 1659,
+        "requests_per_unique_document": 2.49,
+        "unique_document_bytes": 16280325
+      }
+    },
+    {
+      "asset": "BNH",
+      "bytes": 36880,
+      "cik": "0001001085",
+      "concept_fetches": 1610,
+      "concepts_unresolved": 2,
+      "dimension_collisions": 4,
+      "documents_reused": 0,
+      "documents_stored": 7,
+      "elapsed_seconds": 10.344,
+      "errors": [],
+      "failures": [
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "capex"
+        },
+        {
+          "detail": "asked, and the source reported no figure for it",
+          "outcome": "SOURCE_SILENT",
+          "subject": "shares_outstanding"
+        }
+      ],
+      "filings_already_held": 0,
+      "filings_ingested": 8,
+      "filings_seen": 8,
+      "network_fetches": 1683,
+      "observations_skipped": 0,
+      "observations_stored": 326,
+      "outcome": "COLLECTED",
+      "outcomes": {
+        "SOURCE_SILENT": 2
+      },
+      "requests": 24,
+      "run_id": "run_b72e0f9eee974b42",
+      "sic": "6512",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 326,
+      "stratum": "reit",
+      "transport": {
+        "bytes_downloaded": 2614096,
+        "deduplication_ratio": 0.158,
+        "documents_retained": 673,
+        "requests_made": 1683,
+        "requests_per_unique_document": 2.5,
+        "unique_document_bytes": 16493075
+      }
+    },
+    {
+      "asset": "MLCO",
+      "bytes": 34263,
+      "cik": "0001381640",
+      "concept_fetches": 1633,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 16,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 11.5,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 16,
+      "filings_seen": 16,
+      "network_fetches": 1707,
+      "observations_skipped": 0,
+      "observations_stored": 429,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_3205d8d2838f4027",
+      "sic": "7011",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 429,
+      "stratum": "services",
+      "transport": {
+        "bytes_downloaded": 2648359,
+        "deduplication_ratio": 0.159,
+        "documents_retained": 685,
+        "requests_made": 1707,
+        "requests_per_unique_document": 2.49,
+        "unique_document_bytes": 16681475
+      }
+    },
+    {
+      "asset": "HLT",
+      "bytes": 45859,
+      "cik": "0001585689",
+      "concept_fetches": 1656,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 55,
+      "documents_reused": 0,
+      "documents_stored": 10,
+      "elapsed_seconds": 15.656,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 119,
+      "filings_seen": 119,
+      "network_fetches": 1731,
+      "observations_skipped": 0,
+      "observations_stored": 1270,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_c891956df5a942ee",
+      "sic": "7011",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1270,
+      "stratum": "services",
+      "transport": {
+        "bytes_downloaded": 2694218,
+        "deduplication_ratio": 0.158,
+        "documents_retained": 696,
+        "requests_made": 1731,
+        "requests_per_unique_document": 2.49,
+        "unique_document_bytes": 17031611
+      }
+    },
+    {
+      "asset": "MAR",
+      "bytes": 49288,
+      "cik": "0001048286",
+      "concept_fetches": 1679,
+      "concepts_unresolved": 0,
+      "dimension_collisions": 46,
+      "documents_reused": 0,
+      "documents_stored": 11,
+      "elapsed_seconds": 15.516,
+      "errors": [],
+      "failures": [],
+      "filings_already_held": 0,
+      "filings_ingested": 117,
+      "filings_seen": 117,
+      "network_fetches": 1755,
+      "observations_skipped": 0,
+      "observations_stored": 1694,
+      "outcome": "COLLECTED",
+      "outcomes": {},
+      "requests": 24,
+      "run_id": "run_a77606c831454299",
+      "sic": "7011",
+      "source_facts_skipped": 0,
+      "source_facts_stored": 1694,
+      "stratum": "services",
+      "transport": {
+        "bytes_downloaded": 2743506,
+        "deduplication_ratio": 0.157,
+        "documents_retained": 708,
+        "requests_made": 1755,
+        "requests_per_unique_document": 2.48,
+        "unique_document_bytes": 17424576
+      }
+    }
+  ],
+  "second_pass": {
+    "bytes": 0,
+    "elapsed_seconds": 0.3,
+    "filings_ingested": 0,
+    "observations_stored": 0,
+    "request_ratio": 0.0,
+    "requests": 0,
+    "requests_per_company": 0.0
+  },
+  "second_pass_reports": [
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "LTRX"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CHRN"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "RBC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "SSYS"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CMI"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "TRSG"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CCXIU"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "MAIR"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "KTCC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "STMEF"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CONC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "NEON"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "ASX"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "ERIC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CAE"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "TKLS"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "HNDAF"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "TATT"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "ATRO"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "THRMV"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "BLBD"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "MCFT"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "APTV"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "ADNT"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "AILLP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "UEPEO"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "EONGY"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CIG-C"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "NMPWP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "TAC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CDZI"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "GRLF"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "HAIN"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "BRCNF"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "FLO"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "AFRIW"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "NAII"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "INBP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CPMD"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "HGYN"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CNBX"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "RIGL"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "KURA"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CELZ"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "FIP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "FAST"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "TSCO"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "GRWG"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "FHB"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CCFN"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "BBAR"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "PFBX"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "NRIM"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CZWI"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "AUBN"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "FCNCP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "OMCC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "ORXCF"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "IPB"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "SLNHP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "SUIG"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "PRAA"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "AIXC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "FMCCH"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "AWCA"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "EFC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "MYCB"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "BPYPN"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "CRESY"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "HPP"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "VAC"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "BNH"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "MLCO"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "HLT"
+    },
+    {
+      "filings_ingested": 0,
+      "observations_stored": 0,
+      "outcome": "NOT_ATTEMPTED",
+      "requests": 0,
+      "ticker": "MAR"
+    }
+  ],
+  "seeded": {
+    "concepts": 46,
+    "declines": 19,
+    "mappings": 47,
+    "metrics": 20,
+    "unmodelled_taxonomies": 4
+  },
+  "strata": {
+    "bank": 8,
+    "chemicals": 8,
+    "industrial_technology": 8,
+    "insurance": 8,
+    "manufacturing": 5,
+    "reit": 8,
+    "retail": 3,
+    "semiconductor": 8,
+    "services": 3,
+    "software": 8,
+    "utilities": 1,
+    "utilities_transport": 7
+  },
+  "totals": {
+    "documents_stored": 632,
+    "filings_ingested": 6160,
+    "filings_seen": 6160,
+    "observations_skipped": 102,
+    "observations_stored": 54602,
+    "source_facts_skipped": 102,
+    "source_facts_stored": 54602
+  },
+  "transport": {
+    "bytes_downloaded": 2743506,
+    "deduplication_ratio": 0.157,
+    "documents_retained": 708,
+    "requests_made": 1755,
+    "requests_per_unique_document": 2.48,
+    "unique_document_bytes": 17424576
+  }
+}

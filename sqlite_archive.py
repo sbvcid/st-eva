@@ -257,6 +257,32 @@ class SQLiteArchive(ArchiveStore):
 
     # -- assets and sources ----------------------------------------------
 
+    def asset_id_for_cik(self, cik: str) -> Optional[str]:
+        """
+        The asset this CIK is already stored as, or None.
+
+        Added because `assets.cik` is UNIQUE and that constraint is right: two
+        rows for one filer would put the same filing under two names and make
+        every later comparison ambiguous. It also means a company that trades
+        several share classes has several tickers and one issuer, so a caller
+        working from a ticker list will arrive here with the same CIK twice and
+        the second arrival is a lookup rather than a violation.
+
+        Matches both the zero-padded and the bare form rather than importing the
+        provider's `normalize_cik`. The archive is the layer *below* the
+        provider, and a storage class that reaches up to a source adapter for a
+        string format has the dependency backwards -- the padded form is
+        EDGAR's convention, and matching both is also the more forgiving thing
+        to do with a value that arrives from a caller.
+        """
+        bare = str(cik).strip()
+        padded = bare.zfill(10) if bare.isdigit() else bare
+        row = self.connection.execute(
+            "SELECT asset_id FROM assets WHERE cik IN (?, ?) LIMIT 1",
+            (bare, padded),
+        ).fetchone()
+        return row["asset_id"] if row is not None else None
+
     def record_asset(
         self,
         ticker: str,

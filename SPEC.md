@@ -1023,6 +1023,106 @@ what a number means, and the remaining risk is doing a thousand companies badly
 rather than getting one right. Which is the better problem, and is where this
 stops.
 
+## 0.15 Scale, and the number the whole phase turns on (2.11)
+
+The question stopped being what ST-EVA should be. It became whether it can
+accumulate twenty years of traceable evidence for a thousand companies cheaply and
+incrementally **without changing what evidence means**. Seventy-five issuers, twelve
+SIC strata, two accounting frameworks, every filing form the population uses.
+
+### What a company costs, and the cost is flat
+
+| per issuer | |
+| --- | --- |
+| requests | 23.4 |
+| seconds | 10.8 |
+| observations | 728 |
+| archive size | 2.33 MB |
+
+**6,160 filings, 54,602 observations, 174 MB, in 13.5 minutes.** The flatness is
+the structural result: requests are a function of *how many filings were
+accepted*, and a filing costs 0.13 seconds. A company is expensive because it has
+a long history, not because it is large.
+
+### The number the phase turns on
+
+```
+first pass    1755 requests   2,743,506 bytes   807 seconds   54,602 observations
+second pass      0 requests           0 bytes     0.3 seconds         0 observations
+```
+
+**Zero, not "few."** A second pass issued no request at all, because the index is
+re-read to discover new filings, nothing was accepted since, and the run therefore
+asked about no concept. That is what separates "ST-EVA can ingest EDGAR" from
+"ST-EVA can be *maintained* against EDGAR", and it is the ingestion ledger, held
+filings and source-fact identity from 2.5 that make it zero.
+
+Extrapolated to ten thousand: **234,000 requests once, and zero on every pass
+after.** 16 hours at our self-limit, 6.5 at the SEC's ceiling, 23.3 GB, 7.3
+million observations.
+
+### The caveat that decides how much weight that carries
+
+**23.4 requests and 2.33 MB per company is a floor, not a central estimate.** The
+sample is the deepest readable history in a strided sample of 700 candidates, and
+it contains no mega-cap — because ranking by raw form count *selects against*
+them, a mega-cap's recent window being mostly Form 4 and Form 8-K. The
+twenty-year archives live in files the submissions payload only names. The linear
+*shape* extrapolates; the *constant* is what a mega-cap-weighted sample would
+revise.
+
+### Every failure classified, which was the acceptance criterion
+
+70 of 75 issuers `COLLECTED`, 3 `SOURCE_SILENT`, 2 `NOT_ATTEMPTED`, **0
+unclassified**. Of 1,500 metric slots, 109 classified failures — every one
+`SOURCE_SILENT` or `NOT_ATTEMPTED`, which are facts about the filer — and zero
+unclassified. `PARSER_FAILURE` and `FILING_UNSUPPORTED` are both zero, and that
+is a result: those two exist because a form the pipeline cannot handle and a
+document that will not parse look identical in a count and call for opposite
+responses.
+
+One behaviour changed because it was wrong at population scale: **an unresolvable
+ticker used to raise, and a raise ends a run.** One bad name on issuer three
+leaves ninety-seven unclassified. It now returns `ISSUER_UNRESOLVED` and
+continues; the sealed test's actual claim, that such a ticker ingests nothing, is
+unchanged and still asserted.
+
+### A ticker is not an issuer
+
+Found at issuer thirty: a preferred share and its common mapped to one CIK and
+`record_asset` refused the second. The UNIQUE constraint is right, so the fix went
+into the caller and a lookup — the sample deduplicates by CIK, and
+`asset_id_for_cik()` resolves an issuer held under a different ticker. It matters
+for the cost model: EDGAR lists **10,431 tickers** for far fewer companies, so
+per-company cost is understated by however many share classes a company trades.
+
+### Two methods, one removed
+
+The population is **strided, not prefixed**: the first version took the first 700
+alphabetically and produced 73 issuers all beginning with A, mostly warrants, not
+one anybody would name. And forms are **derived from each issuer's own
+submission history**, because assuming 10-K/10-Q reports every foreign private
+issuer as `SOURCE_SILENT` — a fact about our request dressed as a fact about the
+filer.
+
+A reported number was also **removed rather than corrected**:
+`deduplication_ratio: 0.157` divided gzipped wire bytes by decompressed
+retained bytes — two different units, producing a confident category error. What
+is reported instead is **requests per unique document: 2.48**, which is
+meaningful and says deduplication is already doing most of its work.
+
+### What is not settled
+
+**The archive path is documented, not exercised.** At 234,000 requests the SEC's
+own guidance is that bulk archives are the right mechanism, and ST-EVA's 2.5
+identity model is what would let a bulk bootstrap reconcile with an incremental
+one — but **the reconciliation itself is untested**, and it is the single thing
+between this sample and a ten-thousand-issuer corpus. That is the next piece of
+work, ahead of a mega-cap-weighted resample and well ahead of 1,000.
+
+The risk at scale is no longer semantic. There is no ambiguity left about what a
+number means.
+
 ## 1. Objective
 
 ST-EVA is a market-implied assumptions engine.

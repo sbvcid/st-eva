@@ -31,6 +31,10 @@ an intention.
     concept belongs.
 """
 
+import json
+import time
+import urllib.error
+import urllib.request
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -115,6 +119,55 @@ def business_model_from_filer_classification(
     return None, source
 
 
+# Why a filing or an issuer produced no evidence, as a closed vocabulary.
+#
+# 2.11's acceptance criterion is **not** a success rate. A run over a hundred
+# issuers that reports "94% collected" is worth less than one that reports what
+# the other six percent was, because the first number cannot be acted on and the
+# second can. So a failure is a *kind*, recorded with the thing it happened to,
+# and the report is only considered complete when every failure has one.
+#
+# The kinds are drawn at the two places a run can fail, and they are different
+# questions:
+#
+#   the *issuer* could not be worked on at all   ISSUER_UNRESOLVED
+#   a *filing* could not be used                 FILING_UNSUPPORTED,
+#                                                FILING_UNREADABLE
+#   a *document* would not parse                 PARSER_FAILURE
+#   the *registry* had nothing to ask            REGISTRY_UNRESOLVED
+#   the *source* had nothing                     SOURCE_SILENT
+#   the *business* rules it out                  NOT_APPLICABLE
+#   it was never *attempted*                     NOT_ATTEMPTED
+#
+# `PARSER_FAILURE` and `FILING_UNSUPPORTED` are the two that did not exist before
+# 2.11 and are the ones a success rate would have hidden. A filing whose form the
+# pipeline does not handle and a filing whose document would not parse look
+# identical in a count -- both produce nothing -- and they call for opposite
+# responses: one is scope, the other is a bug.
+OUTCOME_COLLECTED = "COLLECTED"
+OUTCOME_SOURCE_SILENT = "SOURCE_SILENT"
+OUTCOME_NOT_APPLICABLE = "NOT_APPLICABLE"
+OUTCOME_NOT_ATTEMPTED = "NOT_ATTEMPTED"
+OUTCOME_REGISTRY_UNRESOLVED = "REGISTRY_UNRESOLVED"
+OUTCOME_PARSER_FAILURE = "PARSER_FAILURE"
+OUTCOME_FILING_UNSUPPORTED = "FILING_UNSUPPORTED"
+OUTCOME_FILING_UNREADABLE = "FILING_UNREADABLE"
+OUTCOME_ISSUER_UNRESOLVED = "ISSUER_UNRESOLVED"
+OUTCOME_PARTIAL = "PARTIAL"
+INGESTION_OUTCOMES = (
+    OUTCOME_COLLECTED,
+    OUTCOME_SOURCE_SILENT,
+    OUTCOME_NOT_APPLICABLE,
+    OUTCOME_NOT_ATTEMPTED,
+    OUTCOME_REGISTRY_UNRESOLVED,
+    OUTCOME_PARSER_FAILURE,
+    OUTCOME_FILING_UNSUPPORTED,
+    OUTCOME_FILING_UNREADABLE,
+    OUTCOME_ISSUER_UNRESOLVED,
+    OUTCOME_PARTIAL,
+)
+
+
 @dataclass
 class IngestionReport:
     """What one run did, counted rather than asserted."""
@@ -136,6 +189,38 @@ class IngestionReport:
     concepts_unresolved: int = 0
     dimension_collisions: int = 0
     errors: List[str] = field(default_factory=list)
+    # Every failure, with its kind and the thing it happened to. Empty is a
+    # claim, and the claim is only meaningful because the kinds are closed: a run
+    # with no entries has classified everything that did not happen.
+    failures: List[Dict[str, str]] = field(default_factory=list)
+    outcomes: Dict[str, int] = field(default_factory=dict)
+    transport: Dict[str, Any] = field(default_factory=dict)
+    elapsed_seconds: float = 0.0
+
+    def classify(
+        self,
+        outcome: str,
+        subject: str = "",
+        detail: str = "",
+    ) -> None:
+        """
+        Record one thing that did not become evidence, and why.
+
+        `outcome` must be in the closed vocabulary. A free-text failure would
+        put this back to being a log, and a log is what the acceptance criterion
+        was written against.
+        """
+        if outcome not in INGESTION_OUTCOMES:
+            raise ValueError(
+                f"ingestion outcome {outcome!r} is not in "
+                f"{list(INGESTION_OUTCOMES)}"
+            )
+        self.failures.append({
+            "outcome": outcome,
+            "subject": subject,
+            "detail": detail[:400],
+        })
+        self.outcomes[outcome] = self.outcomes.get(outcome, 0) + 1
 
     @property
     def changed_anything(self) -> bool:
@@ -164,7 +249,49 @@ class IngestionReport:
             "concepts_unresolved": self.concepts_unresolved,
             "dimension_collisions": self.dimension_collisions,
             "errors": list(self.errors),
+            # The classified absence, which is the thing a success rate would
+            # have compressed away.
+            "outcome": self.headline_outcome(),
+            "outcomes": dict(self.outcomes),
+            "failures": list(self.failures),
+            "transport": dict(self.transport),
+            "elapsed_seconds": self.elapsed_seconds,
         }
+
+    @property
+    def outcome(self) -> str:
+        """
+        The one word a reader takes away, chosen from the classified failures
+        rather than from a success rate.
+
+        A property rather than a method because `contract_dict` publishes it
+        under that name, and a report whose attribute is spelled one way and
+        reached another is a report people stop reading. It was exactly that
+        mismatch, caught by a test.
+
+        A run that stored something is `COLLECTED` even if some metrics came
+        back empty, because the empty ones carry their own classifications and
+        `PARTIAL` would imply a fault where there is none. A run that stored
+        nothing reports the worst thing that happened to it, so a parser failure
+        is never summarised as "no data".
+        """
+        return self.headline_outcome()
+
+    def headline_outcome(self) -> str:
+        if self.observations_stored:
+            return OUTCOME_COLLECTED
+        for outcome in (
+            OUTCOME_PARSER_FAILURE,
+            OUTCOME_FILING_UNREADABLE,
+            OUTCOME_FILING_UNSUPPORTED,
+            OUTCOME_ISSUER_UNRESOLVED,
+            OUTCOME_REGISTRY_UNRESOLVED,
+        ):
+            if self.outcomes.get(outcome):
+                return outcome
+        if self.filings_ingested:
+            return OUTCOME_SOURCE_SILENT
+        return OUTCOME_NOT_ATTEMPTED
 
 
 class Ingestor:
@@ -250,20 +377,48 @@ class Ingestor:
         filing has been accepted, so a run that finds nothing new downloads
         nothing.
         """
+        started = time.monotonic()
+        report: IngestionReport
         cik = self._known_cik(ticker)
         if cik is None:
             company = self.provider.resolve_company(ticker)
             if company is None:
-                raise ValueError(
-                    f"{ticker} is not in the SEC company map; no CIK could "
-                    "be resolved and no filing was inferred."
+                # A ticker the SEC does not list is a fact about the universe,
+                # not an error to raise. At 2.11's population a raise would end
+                # the run on the first bad name and leave every later issuer
+                # unclassified -- the failure would be total and the report
+                # would say nothing about which issuer caused it.
+                report = IngestionReport(
+                    asset=ticker.upper(), cik="", run_id="",
                 )
+                report.classify(
+                    OUTCOME_ISSUER_UNRESOLVED, ticker.upper(),
+                    "the SEC company map does not list this ticker",
+                )
+                report.elapsed_seconds = round(
+                    time.monotonic() - started, 3
+                )
+                return report
             cik = company.cik
             name = company.name
         else:
             name = ticker.upper()
 
-        asset_id = self.store.record_asset(ticker.upper(), cik=cik, name=name)
+        # An issuer we already hold under a *different ticker* is the same
+        # company, not a conflict. The EDGAR map lists every share class as its
+        # own ticker -- a preferred and its common share one CIK between them --
+        # so a caller working from tickers will hand us the same issuer twice, and
+        # the right answer is to use the asset that exists rather than to refuse.
+        # The UNIQUE constraint on `assets.cik` is the archive's opinion on the
+        # question and it is the right one: two rows for one CIK would put the
+        # same filing under two names and make every later comparison ambiguous.
+        asset_id = self.store.asset_id_for_cik(cik) if hasattr(
+            self.store, "asset_id_for_cik"
+        ) else None
+        if asset_id is None:
+            asset_id = self.store.record_asset(
+                ticker.upper(), cik=cik, name=name
+            )
 
         # The issuer's declared business model, recorded before anything is
         # fetched, so the applicability surface is reachable from the first
@@ -329,12 +484,23 @@ class Ingestor:
             # silence, because those are the same sentence to every count that
             # reads `ingestion_runs` -- and they are opposite facts.
             self._record_scope(asset_id, metrics, attempted=False)
+            for metric in metrics:
+                report.classify(
+                    OUTCOME_NOT_ATTEMPTED, metric,
+                    "the run found no new filings, so it asked nothing",
+                )
             self._count_fetches(report)
+            report.transport = self._transport_stats()
+            report.elapsed_seconds = round(time.monotonic() - started, 3)
             self._write_run(asset_id, report, "NO_CHANGE")
             return report
 
         self._record_scope(asset_id, metrics, attempted=True)
         for metric in metrics:
+            # Which of these two it is changes what happens next, and a success
+            # rate cannot tell them apart: one is a bug in our reading and one
+            # is a fact about the filer. The exception text names the class.
+            before = report.observations_stored
             try:
                 self._ingest_metric(
                     cik, ticker.upper(), metric, acceptance, report,
@@ -342,12 +508,24 @@ class Ingestor:
                 )
             except Exception as error:  # noqa: BLE001
                 report.errors.append(f"{metric}: {type(error).__name__}: {error}")
+                report.classify(
+                    self._classify_metric_error(error), metric,
+                    f"{type(error).__name__}: {error}",
+                )
+            else:
+                if report.observations_stored == before:
+                    report.classify(
+                        OUTCOME_SOURCE_SILENT, metric,
+                        "asked, and the source reported no figure for it",
+                    )
 
         for entry in new_entries:
             self._record_filing(asset_id, entry, "")
         self._record_adoption(asset_id)
         self.connection.commit()
         self._count_fetches(report)
+        report.transport = self._transport_stats()
+        report.elapsed_seconds = round(time.monotonic() - started, 3)
         self._write_run(
             asset_id, report, "OK" if not report.errors else "PARTIAL"
         )
@@ -592,6 +770,33 @@ class Ingestor:
 
         if not stored_any:
             report.concepts_unresolved += 1
+
+    def _transport_stats(self) -> Dict[str, Any]:
+        """What this issuer cost, when the provider can say."""
+        stats = getattr(self.provider, "transport_stats", None)
+        return dict(stats()) if callable(stats) else {}
+
+    @staticmethod
+    def _classify_metric_error(error: Exception) -> str:
+        """
+        Which kind of failure an exception was, from what the pipeline knows
+        about its own stages.
+
+        Keyed on the exception *type* rather than its text, because the text is
+        whatever the network or the parser happened to say and the type is ours.
+        """
+        if isinstance(error, (ValueError, json.JSONDecodeError)):
+            return OUTCOME_PARSER_FAILURE
+        if isinstance(error, UnicodeDecodeError):
+            return OUTCOME_FILING_UNREADABLE
+        if isinstance(error, urllib.error.HTTPError):
+            if error.code == 404:
+                return OUTCOME_SOURCE_SILENT
+            if error.code in (403, 429, 500, 502, 503, 504):
+                return OUTCOME_FILING_UNREADABLE
+        if isinstance(error, urllib.error.URLError):
+            return OUTCOME_FILING_UNREADABLE
+        return OUTCOME_FILING_UNREADABLE
 
     def _record_scope(
         self,

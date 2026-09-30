@@ -688,6 +688,9 @@ class SECProvider:
         # to be the transport's own tally rather than an inference from what
         # happened to be stored.
         self._fetch_log: List[str] = []
+        # Transport accounting, for the scale question. See `_get`.
+        self.requests_made = 0
+        self.bytes_downloaded = 0
 
     @property
     def network_fetches(self) -> int:
@@ -735,9 +738,16 @@ class SECProvider:
 
         A 404 is an answer, not a failure: the issuer does not report that
         concept. `allow_missing` returns None for it instead of raising.
+
+        Every call is counted and every body measured, in `transport_stats()`.
+        They are here because the question "is ten thousand companies actually
+        feasible" is a question about **requests and bytes per company**, and a
+        harness that cannot answer it has to guess. Counting a request costs
+        nothing and guessing the order of magnitude later costs a redesign.
         """
         self._throttle()
         self._fetch_log.append(url)
+        self.requests_made += 1
         request = urllib.request.Request(
             url,
             headers={
@@ -749,6 +759,7 @@ class SECProvider:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 body = response.read()
+                self.bytes_downloaded += len(body)
                 encoding = response.headers.get("Content-Encoding", "")
                 if encoding == "gzip":
                     body = gzip.decompress(body)
@@ -766,6 +777,41 @@ class SECProvider:
             raise ValueError(
                 f"SEC returned a non-JSON document for {url}: {error}"
             ) from error
+
+    def transport_stats(self) -> Dict[str, Any]:
+        """
+        What this provider cost, and what it brought back.
+
+        Four numbers and the two ratios that decide whether a population is
+        reachable: requests and bytes per company, and bytes per filing. The
+        ratios are the point -- a raw byte total says nothing without a
+        denominator, and the question at scale is never "how much data" but "how
+        much per company and whether that is a linear or a super-linear cost".
+        """
+        unique_bytes = sum(
+            document.byte_size or 0 for document in self._documents
+        )
+        return {
+            "requests_made": self.requests_made,
+            "bytes_downloaded": self.bytes_downloaded,
+            "documents_retained": len(self._documents),
+            "unique_document_bytes": unique_bytes,
+            # The two byte figures above are *different units* and must not be
+            # divided into each other: `bytes_downloaded` is what came off the
+            # wire, gzipped, and `unique_document_bytes` is the decompressed
+            # payload we keep. The first version of this method reported their
+            # ratio as a deduplication ratio, which is a category error and
+            # produced the confidently meaningless 0.157.
+            #
+            # A real deduplication figure needs *served* bytes on both sides, so
+            # it is not reported here rather than reported wrongly. What is
+            # meaningful and is reported: requests per unique document, which
+            # says how many times a document had to be asked for to keep it once.
+            "requests_per_unique_document": (
+                round(self.requests_made / len(self._documents), 2)
+                if self._documents else None
+            ),
+        }
 
     def _record_document(
         self,

@@ -375,6 +375,24 @@ class TestConceptEvolutionIsNotSpliced(unittest.TestCase):
 
 class TestIngestorNeedsAFilingIndex(unittest.TestCase):
     def test_an_unresolvable_ticker_ingests_nothing(self):
+        """
+        An unresolvable ticker is a *classified* outcome, not an exception.
+
+        The claim this test has always made is that an unresolvable ticker
+        ingests nothing, and that is still asserted. What changed in 2.11 is the
+        shape of the report, and for a reason that only appears at population
+        scale: **a raise ends the run.** A hundred-issuer pass that hits one bad
+        name on issuer three leaves ninety-seven unclassified, and the report
+        says only which ticker stopped it — which is the opposite of the
+        acceptance criterion for the round, that every failure carries a kind.
+
+        So the run reports `ISSUER_UNRESOLVED` and carries on, and the test
+        pins the classification as well as the absence of data. Nothing is
+        loosened: an exception would have been *easier* to assert, and would
+        have been the wrong contract.
+        """
+        from sec_ingest import OUTCOME_ISSUER_UNRESOLVED
+
         store = new_archive()
 
         class NoIndex:
@@ -382,13 +400,25 @@ class TestIngestorNeedsAFilingIndex(unittest.TestCase):
                 return None
 
         try:
-            with self.assertRaises(ValueError):
-                Ingestor(store, NoIndex(), CoreRegistry(store.connection)).ingest(
-                    "NOT_A_TICKER"
-                )
+            report = Ingestor(
+                store, NoIndex(), CoreRegistry(store.connection)
+            ).ingest("NOT_A_TICKER")
+            self.assertEqual(report.outcome, OUTCOME_ISSUER_UNRESOLVED)
+            self.assertEqual(report.observations_stored, 0)
+            self.assertEqual(
+                [f["subject"] for f in report.failures], ["NOT_A_TICKER"]
+            )
             self.assertEqual(
                 store.connection.execute(
                     "SELECT COUNT(*) AS n FROM held_filings"
+                ).fetchone()["n"],
+                0,
+            )
+            # And no asset was created either, because an issuer we cannot
+            # resolve is not an issuer we know anything about.
+            self.assertEqual(
+                store.connection.execute(
+                    "SELECT COUNT(*) AS n FROM assets"
                 ).fetchone()["n"],
                 0,
             )
