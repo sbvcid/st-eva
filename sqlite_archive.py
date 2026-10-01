@@ -37,7 +37,14 @@ from archive import (
     document_hash,
     utc_now,
 )
-from data_contract import Observation, SourceType, ValidationStatus
+from data_contract import (
+    AvailabilityBasis,
+    Observation,
+    SourceType,
+    ValidationStatus,
+    eligibility_for_declared_date,
+    point_in_time_cutoff,
+)
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "archive" / "migrations"
 
@@ -338,14 +345,42 @@ class SQLiteArchive(ArchiveStore):
         base_url: Optional[str] = None,
         declared: str = "YES",
         notes: Optional[str] = None,
+        retains_dimensions: Optional[str] = None,
+        aggregation_note: Optional[str] = None,
     ) -> str:
+        """
+        Register a source and, optionally, what shape its facts arrive in.
+
+        `retains_dimensions` is a property of the **endpoint**, not of a metric
+        and not of a filer, and 2.22 is why it is declared here rather than
+        inferred per metric:
+
+            AGGREGATE   the endpoint returns facts without the dimensional axis,
+                        so two facts that differ only by member arrive looking
+                        like one. Not a defect; it is what the endpoint is.
+            NONE        every endpoint this project uses is AGGREGATE, which is
+                        why the distinction is recorded rather than inferred --
+                        a source that kept its axes would need it.
+
+        The per-event `ingestion_dimension_collisions` rows are then **evidence**
+        for this declaration rather than a set of metric-specific exceptions.
+        Without it the natural reading of 392 collisions across eight banks is
+        "`gross_profit` is weird", when the measurement actually showed
+        `operating_cash_flow` with six times more affected keys and `equity` with
+        more extra values per key than `gross_profit` had. The property belongs
+        to how the source represents facts, so it is stated where that lives.
+        """
         source_id = "src_" + hashlib.sha256(
             f"{provider}|{source_type}|{base_url}".encode("utf-8")
         ).hexdigest()[:20]
         self.connection.execute(
             "INSERT OR IGNORE INTO sources (source_id, provider, source_type,"
-            " base_url, declared, notes) VALUES (?, ?, ?, ?, ?, ?)",
-            (source_id, provider, source_type, base_url, declared, notes),
+            " base_url, declared, notes, retains_dimensions, aggregation_note)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                source_id, provider, source_type, base_url, declared, notes,
+                retains_dimensions, aggregation_note,
+            ),
         )
         self.connection.commit()
         return source_id
@@ -634,7 +669,36 @@ class SQLiteArchive(ArchiveStore):
         klass: str,
         archived_at: str,
     ) -> Optional[str]:
+        """
+        The first instant from which this fact may be used in a replay.
+
+        Three cases, decided by what the source actually declared, and never by
+        whether a value happens to be populated.
+
+            an instant the source published   that instant
+            a date the source published       the moment that date is over
+            nothing declared                   never eligible
+
+        The middle case is the one 2.14 added. A `FILED_AS_OF_DATE` fact carries
+        a date, so it is replayable from the day *after* its declared date and
+        not before. Using it from midnight would assert that EDGAR disseminated
+        the filing at 00:00; measured across the two delivery routes, that made
+        6,508 of 17,043 facts replayable from a moment before the filer
+        published them. The evidence is real and it is not discarded — a date
+        proves publication happened on that day, so the fact becomes usable once
+        the day is provably elapsed.
+
+        `retrieved_at` is never an input. It is when this process asked, not
+        when the data existed, and using it is how a backtest ends up worthless.
+        """
         if klass == SOURCE_DECLARED:
+            if (
+                observation.available_at_basis
+                == AvailabilityBasis.FILED_AS_OF_DATE.value
+            ):
+                return eligibility_for_declared_date(
+                    observation.available_at
+                )
             return observation.available_at
         if klass == ARCHIVE_FIRST_SEEN:
             return archived_at
@@ -775,19 +839,30 @@ class SQLiteArchive(ArchiveStore):
         A `NULL` replay_eligible_from is excluded, which is what makes an
         undeclared observation permanently ineligible rather than merely late.
 
+        The cutoff is read through `point_in_time_cutoff`, so a bare date means
+        the whole of that day. Comparing the stored string directly read "as of
+        2026-03-05" as midnight, which excluded a fact whose eligibility is that
+        day -- and the in-memory selector, which compares dates, included it.
+        Same question, two answers. A cutoff that cannot be read returns nothing,
+        because returning everything for an unreadable question is the failure a
+        point-in-time contract exists to prevent.
+
         Where two archived rows carry the same contract identifier — a band
         restated after archival, so the canonical per-metric identifier
         collided — the most recently eligible one is returned. That is the same
         rule `latest_knowable` applies, and the earlier row is still in the
         archive and still reachable by its own id.
         """
+        at = point_in_time_cutoff(cutoff)
+        if at is None:
+            return []
         rows = self.connection.execute(
             "SELECT o.* FROM observations o JOIN assets a"
             " ON a.asset_id = o.asset_id"
             " WHERE a.ticker = ? AND o.replay_eligible_from IS NOT NULL"
             " AND o.replay_eligible_from <= ?"
             " ORDER BY o.replay_eligible_from, o.observation_id",
-            (asset.upper(), cutoff),
+            (asset.upper(), at),
         ).fetchall()
         newest: Dict[str, sqlite3.Row] = {}
         for row in rows:

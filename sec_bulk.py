@@ -54,7 +54,7 @@ from sec_provider import (
     content_hash_of,
     normalize_cik,
 )
-from data_contract import utc_now
+from data_contract import PRECISION_DATE, PRECISION_INSTANT, utc_now
 
 
 TICKER_MAP_NAME = "tickers.json"
@@ -171,6 +171,31 @@ class BulkFactsSource:
             exchanges=(),
         )
 
+    def _submissions_document(self, cik: str) -> Optional[Dict[str, Any]]:
+        """
+        The submissions document for this issuer, or None.
+
+        Split out from `submissions` because the reporting fallback below asks
+        `filing_index` for a count, and `filing_index` asks this for the document.
+        Routing both through `submissions` therefore recursed until the stack ran
+        out, which the offline suite caught on the first run -- the derived-index
+        test calls `filing_index` with no submissions directory held, which is the
+        companyfacts-only case every prior measurement depends on.
+        """
+        if not self.submissions_directory:
+            return None
+        cik = normalize_cik(cik)
+        path = os.path.join(self.submissions_directory, f"{cik}.json")
+        if not os.path.exists(path):
+            matches = glob.glob(
+                os.path.join(self.submissions_directory, f"*{cik}*.json")
+            )
+            if not matches:
+                return None
+            path = matches[0]
+        with open(path, encoding="utf-8") as handle:
+            return json.load(handle)
+
     def submissions(self, cik: str) -> Dict[str, Any]:
         """
         The issuer's submission history, from an accompanying file.
@@ -182,17 +207,9 @@ class BulkFactsSource:
         not the same answer, so the caller is told which happened.
         """
         cik = normalize_cik(cik)
-        if self.submissions_directory:
-            path = os.path.join(self.submissions_directory, f"{cik}.json")
-            if not os.path.exists(path):
-                matches = glob.glob(
-                    os.path.join(self.submissions_directory, f"*{cik}*.json")
-                )
-                if not matches:
-                    return {}
-                path = matches[0]
-            with open(path, encoding="utf-8") as handle:
-                return json.load(handle)
+        document = self._submissions_document(cik)
+        if document is not None:
+            return document
         # A submissions file is absent. Say so in a shape the caller can read,
         # rather than returning the filing index or nothing: the business-model
         # derivation looks for `sic` here, finds none, and makes no ruling --
@@ -203,14 +220,69 @@ class BulkFactsSource:
             "cik": cik,
             "entityName": (facts or {}).get("entityName"),
             "submissions_available": False,
-            "derived_filing_count": len(self.filing_index(cik)),
+            "derived_filing_count": len(self._derived_filing_index(cik)),
         }
 
     def filing_index(self, cik: str) -> List[Dict[str, Any]]:
         """
+        The filer's filing index, from submissions when it is held.
+
+        Two indices exist and they are not the same shape. The **submitted**
+        index is what the filer declared: every accession in its filing history,
+        with the form it filed under and the instant EDGAR accepted it. The
+        **derived** index is what the facts can prove: one entry per accession
+        that actually contributed a tagged fact, dated by the fact's `filed`
+        field, which is a date and not an instant.
+
+        Which one is used is the whole of the second stream. With submissions
+        held, the index is the filer's own -- wider, and carrying EDGAR's
+        acceptance instants -- and availability becomes an `INSTANT` for
+        accessions inside the window and a declared `DATE` outside it, exactly as
+        the API path behaves. Without it, the index is derived and every fact is
+        date-precision, which is honest and one day late.
+
+        The derived path is unchanged and remains the fallback, so every
+        companyfacts-only measurement taken before this round still reproduces.
+        """
+        cik = normalize_cik(cik)
+        submissions = self._submissions_document(cik) or {}
+        recent = ((submissions.get("filings") or {}).get("recent")) or {}
+        accessions = recent.get("accessionNumber") or []
+        if accessions:
+            entries: List[Dict[str, Any]] = []
+            for position, accession in enumerate(accessions):
+                def column(name: str) -> str:
+                    values = recent.get(name) or []
+                    if position < len(values) and values[position]:
+                        return str(values[position])
+                    return ""
+
+                accepted = column("acceptanceDateTime")
+                entries.append({
+                    "accession": str(accession),
+                    "form": column("form"),
+                    "filing_date": column("filingDate"),
+                    # EDGAR publishes the acceptance instant for filings in the
+                    # window, so this index declares an instant. Outside the
+                    # window there is nothing, and the ingestor falls back to the
+                    # fact's own filed date at date precision -- which is a
+                    # different answer, declared rather than guessed.
+                    "acceptance_datetime": accepted,
+                    "acceptance_precision": (
+                        PRECISION_INSTANT if accepted else PRECISION_DATE
+                    ),
+                    "report_date": column("reportDate"),
+                    "primary_document": column("primaryDocument"),
+                    "is_xbrl": column("isXBRL"),
+                })
+            return entries
+        return self._derived_filing_index(cik)
+
+    def _derived_filing_index(self, cik: str) -> List[Dict[str, Any]]:
+        """
         An index derived from the facts, one entry per accession that carries one.
 
-        This is the material difference from the API path's index, and it is a
+        This is the material difference from the submitted index, and it is a
         difference in kind rather than in degree. An entry here is a filing that
         actually contributed a fact, so every entry earns its place; a filing that
         contributed nothing we can see is absent, which for a bootstrap is
@@ -233,7 +305,15 @@ class BulkFactsSource:
                             "accession": accession,
                             "form": str(row.get("form") or ""),
                             "filing_date": str(row.get("filed") or ""),
+                            # The declared value, at the precision it was
+                            # declared. `companyfacts` carries each fact's
+                            # `filed` **date** and no time of day, so this index
+                            # says so rather than letting a consumer infer it from
+                            # the string. Declaring a date is what lets the
+                            # archive keep the fact replayable without pretending
+                            # EDGAR disseminated it at midnight.
                             "acceptance_datetime": str(row.get("filed") or ""),
+                            "acceptance_precision": PRECISION_DATE,
                             "report_date": str(row.get("end") or ""),
                             "primary_document": "",
                             "is_xbrl": 1,

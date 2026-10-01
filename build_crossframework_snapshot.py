@@ -172,6 +172,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="comma-separated metrics; defaults to the full Core set",
     )
     parser.add_argument("--json", help="write the ingestion reports here")
+    parser.add_argument(
+        "--issuer",
+        action="append",
+        help="ingest this ticker through the API path, instead of the built-in "
+             "cross-framework six. Forms come from --reference, so the form "
+             "policy is the filer's own recorded set rather than a hand-written "
+             "one: a coverage difference that is really a form-policy difference "
+             "is not a finding about coverage.",
+    )
+    parser.add_argument(
+        "--reference",
+        help="archive to read each issuer's recorded forms and CIK from, when "
+             "--issuer is used",
+    )
     args = parser.parse_args(argv)
 
     metrics = (
@@ -179,13 +193,51 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.metrics else ALL_METRICS
     )
 
+    issuers = DEFAULT_ISSUERS
+    if args.issuer:
+        if not args.reference:
+            raise SystemExit(
+                "--issuer needs --reference: the forms and the CIK are read from "
+                "an archive, not guessed, because 2.13's empty-map incident was "
+                "a run that reported no errors and collected nothing"
+            )
+        import sqlite3 as _sqlite3
+
+        connection = _sqlite3.connect(args.reference)
+        connection.row_factory = _sqlite3.Row
+        resolved = []
+        for ticker in args.issuer:
+            row = connection.execute(
+                "SELECT cik FROM assets WHERE ticker = ?",
+                (ticker.upper(),),
+            ).fetchone()
+            if row is None:
+                raise SystemExit(
+                    f"the reference archive holds no asset for {ticker!r}"
+                )
+            if not row["cik"]:
+                raise SystemExit(
+                    f"the reference archive holds no CIK for {ticker!r}"
+                )
+            forms = tuple(dict.fromkeys(
+                str(r["form"]) for r in connection.execute(
+                    "SELECT DISTINCT h.form FROM held_filings h"
+                    " JOIN assets a ON a.asset_id = h.asset_id"
+                    " WHERE a.ticker = ? AND h.form IS NOT NULL",
+                    (ticker.upper(),),
+                ) if r["form"]
+            )) or ("10-K", "10-Q")
+            resolved.append((ticker.upper(), forms))
+        connection.close()
+        issuers = tuple(resolved)
+
     before = None
     if os.path.exists(SEALED):
         before = sha256(SEALED)
         print(f"sealed AAPL snapshot before: {before[:16]}")
 
     result = build(
-        args.target, metrics=metrics, fresh=not args.append,
+        args.target, issuers=issuers, metrics=metrics, fresh=not args.append,
         chain_dir=args.chain_dir,
     )
     print(f"seeded: {result['seeded']}")

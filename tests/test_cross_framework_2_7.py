@@ -118,7 +118,24 @@ class ArchiveFixture(unittest.TestCase):
     def tearDown(self):
         self.store.close()
 
-    def classify(self, model="FINANCE_SERVICES", source="SIC 6199 Finance Services"):
+    def classify(self, model="BANK", source="SIC 6022 State Commercial Banks"):
+        """
+        Default to `BANK`, and make the one refusal these tests need.
+
+        It was `FINANCE_SERVICES` when this file was written. 2.23 refuted
+        `gross_profit` for `BANK`; 2.25 refuted the remaining exclusions; and
+        2.25's contract change left a refusal reachable only at state
+        `SUPPORTED`, of which there is none. So the behaviour 2.7 was written to
+        protect -- an inapplicable metric is not a failed retrieval -- is now
+        exercised against a refusal somebody makes, which is the only way one can
+        come into existence.
+        """
+        with self.writable():
+            self.registry.support_exclusion("operating_income", "BANK")
+        with self.writable():
+            self.registry.set_issuer_business_model(
+                self.asset_id, model, basis="DECLARED_BY_ISSUER", source=source
+            )
         with self.writable():
             self.registry.set_issuer_business_model(
                 self.asset_id, model, basis="DECLARED_BY_ISSUER", source=source
@@ -205,19 +222,19 @@ class TestInapplicabilityIsDerived(ArchiveFixture):
         # And it is not the retrieval failure it used to be reported as.
         self.assertNotEqual(by_metric["operating_income"]["state"], UNAVAILABLE)
 
-    def test_gross_profit_is_inapplicable_to_a_financial_institution(self):
+    def test_gross_profit_is_no_longer_inapplicable_to_any_financial_class(self):
         """
-        Declared on the definition, not inherited from an empty count.
+        2.23 refuted this for `BANK` and 2.25 for `FINANCE_SERVICES`.
 
-        A financial institution has no cost-of-revenue line to take a difference
-        from. That makes the metric undefined there, which is a different fact
-        from "we have not collected it" and needs a different remedy.
+        The exclusion is gone entirely, and this test is the one that will fail if
+        anyone puts it back. The behaviour 2.7 protects -- an inapplicable metric
+        is not a failed retrieval -- is unchanged and still exercised by
+        `operating_income`, which is the only standing proposition.
         """
-        self.classify()
         report = self.query.coverage_report(AAPL)
         by_metric = {e["metric"]: e for e in report["metrics"]}
-        self.assertEqual(by_metric["gross_profit"]["state"], NOT_APPLICABLE)
-        self.assertEqual(by_metric["gross_profit"]["applicability"], NOT_APPLICABLE)
+        self.assertEqual(by_metric["gross_profit"]["applicability"], APPLICABLE)
+        self.assertNotEqual(by_metric["gross_profit"]["state"], NOT_APPLICABLE)
 
     def test_an_unclassified_issuer_gets_no_ruling(self):
         """
@@ -275,7 +292,7 @@ class TestInapplicabilityIsDerived(ArchiveFixture):
         self.assertEqual(
             report["business_model"]["basis"], "DECLARED_BY_ISSUER"
         )
-        self.assertIn("6199", report["business_model"]["source"])
+        self.assertIn("6022", report["business_model"]["source"])
 
     def test_a_declared_classification_must_name_its_source(self):
         with self.assertRaises(RegistryError):

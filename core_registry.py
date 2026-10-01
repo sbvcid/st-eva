@@ -30,6 +30,7 @@ wrong against real AAPL filings:
 
 import json
 import sqlite3
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -199,16 +200,45 @@ class Metric:
     applicability: str = "APPLICABLE"
     comparability_group: Optional[str] = None
     status: str = "ACTIVE"
-    # Business models in which the concept does not exist. A metric is never
-    # added to this list because nothing was retrieved for it.
+    # **The refusal surface.** Business models this metric is actually ruled out
+    # for, which means: the evidence is not collected and the coverage surface
+    # reports `NOT_APPLICABLE`. A row here is a *refusal*, and a refusal requires
+    # an affirmative evidentiary basis.
+    #
+    # 2.25 split this from `exclusions` below because the two were the same field
+    # and four refusals written in 2.7 from category intuition sat here with no
+    # recorded basis. All four were refuted by filers of their own class. Only a
+    # `SUPPORTED` exclusion belongs here, and as of 2.25 **there is none** -- which
+    # is a finding, not a loss.
     inapplicable_in: Tuple[str, ...] = ()
+
+    # Declared propositions about business models where the metric might not
+    # exist, as `(business_model, state, proposition)`. Recorded whatever their
+    # state, because a hypothesis nobody can see is a hypothesis that gets
+    # re-derived from scratch and re-authored from the same intuition.
+    #
+    # `state` is one of PROPOSED / TESTABLE / SUPPORTED / REFUTED / UNDECIDED, and
+    # **none of them except SUPPORTED has any authority over Evidence
+    # collection.** A `TESTABLE` exclusion is a question the archive is asking,
+    # not an answer it is acting on -- and that is the whole difference between a
+    # hypothesis layer and a screener.
+    exclusions: Tuple[Tuple[str, str, Optional[str]], ...] = ()
 
     def applies_to(self, business_model: Optional[str]) -> bool:
         """
         Whether the metric is applicable to a business.
 
-        A business model we do not know about is not evidence of
-        inapplicability, so an unknown model applies rather than being refused.
+        Consults the refusal surface only, never `exclusions`. A business model we
+        do not know about is not evidence of inapplicability, so an unknown model
+        applies rather than being refused; and a model we have a *hypothesis*
+        about is not evidence either, so a `TESTABLE` or `UNDECIDED` exclusion
+        does not refuse anything.
+
+        The refused consequence is that a metric with an open proposition is asked
+        and answered by the source: `COLLECTED` if the filer reports it,
+        `SOURCE_SILENT` if not, and `NOT_YET_COLLECTED` only if we have not asked.
+        All three are honest, and `SOURCE_SILENT` is not work to do -- which is
+        why the safe direction is also the cheap one.
         """
         if self.applicability == "NOT_APPLICABLE":
             return False
@@ -488,7 +518,6 @@ class CoreRegistry:
     def add_metric(
         self,
         metric: Metric,
-        inapplicable_in: Sequence[str] = (),
     ) -> str:
         self.connection.execute(
             "INSERT OR REPLACE INTO metric_registry (metric_id, display_name,"
@@ -507,10 +536,112 @@ class CoreRegistry:
                 metric.status,
             ),
         )
-        if inapplicable_in:
-            self._set_inapplicable(metric.metric_id, inapplicable_in)
+        # `inapplicable_in` is deliberately not a parameter here.
+        #
+        # It was, until 2.26's audit, and that was a bypass: `seed()` passed
+        # `metric.inapplicable_in` straight through, so any metric dataclass
+        # declaring an exclusion repopulated the refusal surface with no
+        # proposition and no lifecycle state -- which is precisely what the
+        # SUPPORTED-only contract exists to prevent. It happened to be inert
+        # because every seeded exclusion is empty, but a contract is only as
+        # strong as the narrowest path to the surface, and the narrowest path is
+        # the one nobody remembers closing.
+        #
+        # The only writer is now `support_exclusion`, and
+        # `tests/test_semantic_conflict.py::TestTheRefusalSurfaceHasOneEntryPoint`
+        # is what keeps it that way.
+        self._record_exclusions(metric)
         self.connection.commit()
         return metric.metric_id
+
+    def _record_exclusions(self, metric: Metric) -> None:
+        """
+        The hypothesis layer, written beside the metric.
+
+        Separate from `metric_inapplicable_in` because those two tables answer
+        different questions and were the same table until 2.25:
+
+            metric_exclusion       what we are claiming, and on what evidence
+            metric_inapplicable_in what we are refusing, which is SUPPORTED only
+
+        The proposition text is stored because a claim that cannot say what would
+        refute it cannot be refuted, and one that never says what would support it
+        cannot be supported.
+        """
+        self.connection.execute(
+            "CREATE TABLE IF NOT EXISTS metric_exclusion ("
+            " metric_id TEXT NOT NULL REFERENCES metric_registry(metric_id),"
+            " business_model TEXT NOT NULL,"
+            " state TEXT NOT NULL CHECK (state IN ('PROPOSED','TESTABLE',"
+            "   'SUPPORTED','REFUTED','UNDECIDED')),"
+            " proposition TEXT,"
+            " refuted_by_ticker TEXT, refuted_by_concept TEXT,"
+            " refuted_by_observations INTEGER,"
+            " support_basis TEXT, recorded_at TEXT NOT NULL,"
+            " PRIMARY KEY (metric_id, business_model))"
+        )
+        for model, state, proposition in metric.exclusions:
+            self.connection.execute(
+                "INSERT OR IGNORE INTO metric_exclusion"
+                " (metric_id, business_model, state, proposition, recorded_at)"
+                " VALUES (?, ?, ?, ?, ?)",
+                (
+                    metric.metric_id, model, state, proposition, utc_now(),
+                ),
+            )
+
+    def exclusion_states(self) -> Dict[str, Dict[str, str]]:
+        """
+        Every declared proposition and its state, keyed metric then class.
+
+        The question 2.25 exists to make answerable: *what is the registry
+        claiming, and on what evidence?* Before the split, the only way to ask it
+        was to read the coverage report and see which metrics had no rows.
+        """
+        if not self._has_table("metric_exclusion"):
+            return {}
+        out: Dict[str, Dict[str, str]] = defaultdict(dict)
+        for row in self.connection.execute(
+            "SELECT metric_id, business_model, state FROM metric_exclusion"
+        ):
+            out[str(row["metric_id"])][str(row["business_model"])] = str(
+                row["state"]
+            )
+        return dict(out)
+
+    def support_exclusion(self, metric_id: str, business_model: str) -> None:
+        """
+        Promote a proposition to a refusal. The deliberate act.
+
+        Refusing Evidence collection is not a data edit, so it is not one here
+        either: a proposition becomes a refusal by being marked `SUPPORTED` on a
+        named basis and by then entering the refusal surface. There is no path
+        that does this implicitly, because the failure mode this whole round
+        exists to undo is a refusal that appeared without anyone deciding to
+        make one.
+        """
+        row = self.connection.execute(
+            "SELECT state FROM metric_exclusion WHERE metric_id = ?"
+            " AND business_model = ?",
+            (metric_id, business_model),
+        ).fetchone()
+        if row is None:
+            raise RegistryError(
+                f"no such exclusion: {metric_id} x {business_model}"
+            )
+        self.connection.execute(
+            "UPDATE metric_exclusion SET state = 'SUPPORTED'"
+            " WHERE metric_id = ? AND business_model = ?",
+            (metric_id, business_model),
+        )
+        self._set_inapplicable(metric_id, [business_model])
+        self.connection.commit()
+
+    def _has_table(self, name: str) -> bool:
+        return self.connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (name,),
+        ).fetchone() is not None
 
     def _set_inapplicable(self, metric_id: str, models: Sequence[str]) -> None:
         """

@@ -36,6 +36,7 @@ UA = (
     "st-eva coverage inventory)"
 )
 CIK_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
+SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 
 # The taxonomies ST-EVA declares concepts against. A filer reporting anything
 # outside this set is reporting filer-specific extension elements, which are a
@@ -109,9 +110,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument(
         "--summary", help="write a summary here instead of printing it"
     )
+    parser.add_argument(
+        "--submissions-dir",
+        help="also fetch each issuer's submissions document into this "
+             "directory, named CIK##########.json as the SEC's own bulk "
+             "distribution names it. The two streams answer different questions "
+             "and are kept apart on disk for that reason: companyfacts is "
+             "everything a filer ever tagged, submissions is the filer's filing "
+             "history and its own SIC. 2.17 measured that a companyfacts-only "
+             "bulk bootstrap cannot record a business model, so no applicability "
+             "rule is reachable -- the facts do not stop, the context does.",
+    )
     args = parser.parse_args(argv)
 
     os.makedirs(args.out, exist_ok=True)
+    if args.submissions_dir:
+        os.makedirs(args.submissions_dir, exist_ok=True)
     ciks = resolve_ciks(args.issuer)
     summary: Dict[str, object] = {}
 
@@ -133,6 +147,27 @@ def main(argv: Optional[List[str]] = None) -> int:
                 if t not in DECLARED_TAXONOMIES
             ),
         }
+        if args.submissions_dir:
+            sub_raw = _get(SUBMISSIONS_URL.format(cik=ciks[ticker]))
+            sub_path = os.path.join(
+                args.submissions_dir, f"CIK{ciks[ticker]:010d}.json"
+            )
+            with open(sub_path, "w", encoding="utf-8") as handle:
+                handle.write(sub_raw)
+            sub = json.loads(sub_raw)
+            recent = ((sub.get("filings") or {}).get("recent")) or {}
+            summary[ticker]["submissions"] = {
+                "sic": sub.get("sic"),
+                "sic_description": sub.get("sicDescription"),
+                "filings_in_recent_window": len(
+                    recent.get("accessionNumber") or []
+                ),
+                "older_files": sorted(
+                    f.get("name")
+                    for f in (sub.get("filings") or {}).get("files") or []
+                    if f.get("name")
+                ),
+            }
         print(f"{ticker}: "
               f"{summary[ticker]['concepts_reported']} concepts reported"
               + (f", {summary[ticker]['undeclared_concepts']} in undeclared "

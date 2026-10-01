@@ -407,9 +407,46 @@ class TestApplicability(RegistryFixture):
         self.assertEqual(metric.applicability, "APPLICABLE")
 
     def test_a_business_model_can_exclude_a_metric(self):
+        """
+        A refusal exists, but only because one was made.
+
+        2.25 gave a rule production authority only at state `SUPPORTED`, and no
+        seeded exclusion is. So the mechanism is exercised the way it would have to
+        be exercised for real: someone decides, and the refusal appears.
+        """
+        operating = self.registry.metric("operating_income")
+        # Before: a `TESTABLE` proposition is a question, not a refusal.
+        self.assertTrue(operating.applies_to("INDUSTRIALS"))
+        self.assertTrue(operating.applies_to(BANK))
+        self.assertEqual(
+            self.registry.exclusion_states().get("operating_income", {}),
+            {BANK: "TESTABLE"},
+        )
+        self.registry.support_exclusion("operating_income", BANK)
+        # After: the same proposition, now supported, refuses.
         operating = self.registry.metric("operating_income")
         self.assertTrue(operating.applies_to("INDUSTRIALS"))
         self.assertFalse(operating.applies_to(BANK))
+
+    def test_an_unsupported_exclusion_refuses_nothing(self):
+        """
+        **The invariant 2.25 exists to establish.**
+
+        A `TESTABLE` hypothesis must not prevent Evidence collection, or the
+        lifecycle is decoration: an unsupported rule would still be editing the
+        coverage surface while claiming to be a question.
+        """
+        for model in ("BANK", "FINANCE_SERVICES", "MINING", "INSURANCE"):
+            self.assertTrue(
+                self.registry.metric("operating_income").applies_to(model),
+                model,
+            )
+
+    def test_a_refusal_cannot_be_made_without_a_proposition(self):
+        from core_registry import RegistryError
+
+        with self.assertRaises(RegistryError):
+            self.registry.support_exclusion("operating_income", "MANUFACTURING")
 
     def test_an_unknown_business_model_is_not_inapplicability(self):
         """

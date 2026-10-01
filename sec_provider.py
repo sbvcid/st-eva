@@ -55,6 +55,7 @@ from data_contract import (
     METRIC_SHARES_OUTSTANDING,
     Observation,
     ObservationSet,
+    PRECISION_INSTANT,
     SourceType,
     Unit,
     ValidationStatus,
@@ -1238,6 +1239,11 @@ class SECProvider:
                     "filing_date": column("filingDate"),
                     "report_date": column("reportDate"),
                     "acceptance_datetime": column("acceptanceDateTime"),
+                    # EDGAR publishes the acceptance instant, so this index
+                    # declares an instant. The declaration is what lets a
+                    # source with only a date say so without the consumer
+                    # inferring the precision from the shape of a string.
+                    "acceptance_precision": PRECISION_INSTANT,
                     "primary_document": column("primaryDocument"),
                     "is_xbrl": column("isXBRL"),
                 }

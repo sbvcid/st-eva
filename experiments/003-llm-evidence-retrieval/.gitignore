@@ -38,6 +38,105 @@ snapshot-bulk.sqlite-*
 snapshot-merge.sqlite
 snapshot-merge.sqlite-*
 
+# The full-Core-scope bulk archive, built by `fullscope_bulk.py` from the
+# inventory documents with no network at all. Same reasoning as its siblings:
+# the archive is a build artefact and the committed artefact is the result,
+# fullscope-214.json.
+snapshot-fullscope.sqlite
+snapshot-fullscope.sqlite-*
+collection-fullscope/
+
+# The full-Core-scope population archive, built by `fullscope_bulk.py` from the
+# bulk-facts payload with no network at all. Same reasoning as its siblings:
+# the archive is a build artefact and the committed artefact is the result,
+# population-215.json.
+snapshot-population.sqlite
+snapshot-population.sqlite-*
+collection-population/
+
+# The gate tool's own JSON, run over both archives. `score_collection_gates.py`
+# prints as well as writing, and the committed artefact already carries the
+# gate results, so these two are the intermediate rather than the finding.
+gates-fullscope.json
+gates-reference.json
+gates-population.json
+gates-universe.json
+gates-universe-216.json
+chains-universe-216.json
+
+# Collection chains derived from the 75-issuer archive by
+# `derive_collection_chains.py`. Regenerable in one command from the archive, and
+# the archive itself is gitignored -- so committing these would be committing a
+# measurement with no subject.
+collection-universe/
+
+# The bank payload, fetched by `fetch_source_inventory.py` for the eight SIC 60
+# filers the 2.16.1 split reclassified. A moving EDGAR extract like its siblings.
+bulkfacts-banks/
+bulkfacts-banks-2/
+submissions-banks/
+fetch-banks.json
+fetch-banks-2.json
+fetch-banks-both.json
+
+# The full-Core-scope bank archive. Same reasoning as its siblings: one command
+# rebuilds it from `bulkfacts-banks/`.
+snapshot-banks.sqlite
+snapshot-banks.sqlite-*
+collection-banks/
+gates-banks.json
+banks-217.json
+
+# The two-stream bank archive: `companyfacts` plus `submissions`.
+snapshot-banks2.sqlite
+snapshot-banks2.sqlite-*
+collection-banks2/
+gates-banks2.json
+banks2-218.json
+banks2-220.json
+
+# The corrected API-path reference for the same eight banks. Built under the
+# availability contract 2.14 fixed, which is what makes the bulk/API equivalence
+# chain closable at all.
+snapshot-banks-api.sqlite
+snapshot-banks-api.sqlite-*
+collection-banks-api/
+gates-banks-api.json
+banks-api-220.json
+
+# The MINING and INSURANCE population: four filers of each, none of which
+# existed in any archive here before 2.23. A moving EDGAR extract and its build
+# artefacts, on the same terms as their siblings.
+bulkfacts-ins-min/
+submissions-ins-min/
+fetch-ins-min.json
+candidate-sic-scan.json
+snapshot-ins-min.sqlite
+snapshot-ins-min.sqlite-*
+collection-ins-min/
+gates-ins-min.json
+insmin-223.json
+
+# The SIC 61-62 population, whose candidate names were already in the 75-issuer
+# archive's own classification table. IPB has no `companyfacts` document at all --
+# EDGAR returns 404 -- so seven of the eight fetched.
+bulkfacts-fs/
+submissions-fs/
+fetch-fs.json
+fetch-fs-AIXC.json
+fetch-fs-FMCCH.json
+fetch-fs-IPB.json
+fetch-fs-OMCC.json
+fetch-fs-ORXCF.json
+fetch-fs-PRAA.json
+fetch-fs-SLNHP.json
+fetch-fs-SUIG.json
+snapshot-fs.sqlite
+snapshot-fs.sqlite-*
+collection-fs/
+gates-fs.json
+fin-225.json
+
 # Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
 # extract like the archives above: the *derived* numbers are committed (in the
 # collection chains, the reports and the ledger output) and the responses are

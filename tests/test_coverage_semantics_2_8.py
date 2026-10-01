@@ -77,7 +77,28 @@ class LedgerFixture(unittest.TestCase):
         finally:
             self.connection.execute("PRAGMA query_only = ON")
 
-    def classify(self, model="FINANCE_SERVICES"):
+    def support_operating_income_for_banks(self):
+        """
+        Make the one refusal these tests need, explicitly.
+
+        2.25 gave a rule production authority only at `SUPPORTED`, and no seeded
+        exclusion is -- so a refusal here is a decision somebody made, which is
+        the whole point of the change. `operating_income x BANK` is the standing
+        `TESTABLE` proposition; promoting it here is what a real support decision
+        would look like.
+        """
+        with self.writable():
+            self.registry.support_exclusion("operating_income", "BANK")
+
+    def classify(self, model="BANK"):
+        """
+        `BANK`, because that is the class these tests promote a refusal for.
+
+        2.23 refuted `gross_profit` for `BANK` and 2.25 refuted both remaining
+        exclusions for `FINANCE_SERVICES`, so `operating_income` under this label
+        is what still exercises a refusal. The statuses under test are unchanged.
+        """
+        self.support_operating_income_for_banks()
         with self.writable():
             self.registry.set_issuer_business_model(
                 self.asset_id, model, basis="DECLARED_BY_ISSUER",
@@ -305,11 +326,11 @@ class TestTheStatusesAreDistinct(LedgerFixture):
         self.assertEqual(
             self.status_of(ledger, "operating_income"), NOT_APPLICABLE_STATUS
         )
-        self.assertEqual(
-            self.status_of(ledger, "gross_profit"), NOT_APPLICABLE_STATUS
-        )
+        # One refusal, not two. `gross_profit` was refused for this class until
+        # 2.25 refuted it against three of the seven SIC 61-62 filers, so it is
+        # now applicable here and the ledger's applicable count rises to match.
         self.assertEqual(ledger["metrics_applicable"],
-                         ledger["metrics_total"] - 2)
+                         ledger["metrics_total"] - 1)
 
     def test_a_decline_coexists_with_a_collection_through_another_concept(self):
         """

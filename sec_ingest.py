@@ -44,6 +44,10 @@ from core_registry import CoreRegistry
 from data_contract import (
     AvailabilityBasis,
     Observation,
+    PRECISION_DATE,
+    PRECISION_INSTANT,
+    PRECISION_NONE,
+    PRECISIONS,
     SourceType,
     Unit,
     ValidationStatus,
@@ -73,6 +77,22 @@ DEFAULT_METRICS = (
 
 DEFAULT_FORMS = ("10-K", "10-Q")
 
+# How a source says what precision its availability value has.
+#
+# A filing index may carry `acceptance_precision` beside the value. Both
+# producers in this repository set it: the SEC API index has EDGAR's
+# `acceptanceDateTime`, which is an instant, and the bulk index is derived from
+# each fact's `filed` date, which is not. The key exists so that a source with
+# only a date can say so, rather than the consumer guessing from the shape of a
+# string -- which is what it used to do, and 2.14 measured the result: two routes
+# that were each right about which *basis* they meant still disagreed on
+# 17,043 of 17,043 rows because neither of them said what the precision was.
+#
+# An index that carries a value without declaring its precision is read as an
+# instant, because a source that puts a time in the field is asserting a time.
+# The declaration is what lets a date-only source be honest without a guess.
+DEFAULT_ACCEPTANCE_PRECISION = PRECISION_INSTANT
+
 # SIC major groups, and the business model each one implies.
 #
 # Read from the filer's own submission rather than from a company list, so the
@@ -87,7 +107,37 @@ SIC_GROUPS: Tuple[Tuple[int, int, str], ...] = (
     (10, 14, "MINING"),
     (20, 39, "MANUFACTURING"),
     (70, 89, "SERVICES"),
-    (60, 67, "FINANCE_SERVICES"),
+    # SIC 60-67 was one bucket, which made a bank, an insurer, a credit union
+    # and a finance company the same class. Split only as far as the rules need.
+    #
+    # 60 is depository institutions -- banks and savings banks -- and it is the
+    # one group whose classification changes an applicability ruling: `gross_profit`
+    # and `operating_income` are refused for BANK, and BANK had been unreachable
+    # from any SIC code, so those two rules had never fired for the reason they
+    # were written. 63 and 64 are insurance carriers and insurance agents and
+    # brokers. 61 and 62 stay FINANCE_SERVICES on purpose: savings institutions
+    # and credit unions are arguably either, and a wrong guess there is a
+    # ruling removed from a real filer on the strength of a two-digit code. A
+    # broad honest bucket beats a precise wrong one.
+    #
+    # **63-64 changes nothing yet, and that is the point of stating it.** No
+    # seeded applicability rule names INSURANCE, so making it reachable adds a
+    # label and not a ruling. It is worth doing because the classification then
+    # matches the filer, and because the rules that would use it are then aimed
+    # at a reachable class -- but it does not by itself test insurance
+    # applicability, and claiming that it does would be a null result dressed as
+    # a success. Writing those rules is a semantic decision, not a mapping fix.
+    #
+    # `REIT` (SIC 65) is deliberately **not** mapped. It is reachable only
+    # through `DECLARED_BY_ISSUER`, `DERIVED_FROM_REPORTED_CONCEPTS` or
+    # `MANUAL_CLASSIFICATION`, none of which the SEC ingestion path performs,
+    # and inventing a SIC rule to make the vocabulary look covered is the wrong
+    # direction: the question being asked is whether the classification has
+    # enough resolution to explain missing evidence, and a rule added to raise
+    # taxonomy coverage cannot answer it.
+    (60, 60, "BANK"),
+    (61, 62, "FINANCE_SERVICES"),
+    (63, 64, "INSURANCE"),
 )
 
 
@@ -460,10 +510,27 @@ class Ingestor:
             and entry.get("is_xbrl") in (1, "1", True)
         ]
         report.filings_seen = len(relevant)
-        acceptance = {
-            entry["accession"]: entry.get("acceptance_datetime")
-            for entry in index
-        }
+        # Accession to (value, precision), and the precision is the index's own
+        # declaration rather than something recovered from the value. A bulk
+        # index derived from each fact's `filed` date declares a date; the SEC
+        # submissions index declares EDGAR's acceptance instant. Reading the
+        # declaration is what makes the two routes agree.
+        acceptance: Dict[str, Optional[Tuple[str, str]]] = {}
+        for entry in index:
+            value = entry.get("acceptance_datetime")
+            if not value:
+                acceptance[entry["accession"]] = None
+                continue
+            precision = str(
+                entry.get("acceptance_precision")
+                or DEFAULT_ACCEPTANCE_PRECISION
+            )
+            if precision not in PRECISIONS:
+                raise ValueError(
+                    f"filing index declares precision {precision!r} for "
+                    f"{entry['accession']}, which is not a declared precision"
+                )
+            acceptance[entry["accession"]] = (str(value), precision)
 
         held = self.held_accessions(asset_id)
         report.filings_already_held = len(
@@ -699,7 +766,87 @@ class Ingestor:
         self._pending_scope = [
             row for row in self._pending_scope if row[0] != report.run_id
         ]
+        # The collisions, in the same transaction as the run they belong to.
+        # A collision is a statement about a metric, so filing it per issuer
+        # would put the number somewhere nobody asking the question looks:
+        # 2.21 could report 404 collisions across eight banks and still be unable
+        # to say whether any of them belonged to gross profit.
+        seen_collisions = set()
+        for row in getattr(self, "_pending_collisions", []):
+            if row[0] != report.run_id:
+                continue
+            key = row[1:8]
+            if key in seen_collisions:
+                continue
+            seen_collisions.add(key)
+            self.connection.execute(
+                "INSERT OR REPLACE INTO ingestion_dimension_collisions"
+                " (run_id, asset_id, metric_id, concept_id, accession,"
+                " period_start, period_end, unit, distinct_values,"
+                " collision_kind, detected_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (*row, utc_now()),
+            )
+        self._pending_collisions = [
+            row for row in getattr(self, "_pending_collisions", [])
+            if row[0] != report.run_id
+        ]
         self.connection.commit()
+
+    def _availability_for(
+        self,
+        fact: Dict[str, Any],
+        acceptance: Dict[str, Optional[Tuple[str, str]]],
+    ) -> Tuple[Optional[str], str, str]:
+        """
+        When this fact became public, on what basis, and at what precision.
+
+        Three answers rather than one, because they are three different claims
+        and the archive has to be able to make all three:
+
+            value      what the source published, at the precision it
+                       published it
+            basis      which of the contract's declared bases that is
+            precision  whether a consumer may treat the value as an instant
+
+        The order is the SEC's own: the acceptance datetime is preferred,
+        because it is the moment EDGAR disseminated the submission; the filed
+        date is second, because it is a provable date whose time of day the SEC
+        does not publish. The retrieval time is never used. It is when this
+        process asked, not when the data existed.
+
+        **The filed date is kept as a date.** It used to be rendered as
+        `T00:00:00+00:00`, which asserted that EDGAR disseminated the filing at
+        midnight, and the archive then made the fact replayable from that
+        midnight. 2.14 measured the consequence across the two delivery routes:
+        6,508 of 17,043 facts were replayable from a moment before the filer
+        published them. A date is a claim about a day; an invented time of day is
+        a claim about history that no filing supports.
+        """
+        accession = str(fact.get("accn") or "")
+        declared = acceptance.get(accession)
+        if declared is not None:
+            value, precision = declared
+            if value:
+                if precision == PRECISION_DATE:
+                    return (
+                        value,
+                        AvailabilityBasis.FILED_AS_OF_DATE.value,
+                        PRECISION_DATE,
+                    )
+                return (
+                    value,
+                    AvailabilityBasis.ACCEPTANCE_DATETIME.value,
+                    PRECISION_INSTANT,
+                )
+        filed = str(fact.get("filed") or "").strip()
+        if filed:
+            return (
+                filed,
+                AvailabilityBasis.FILED_AS_OF_DATE.value,
+                PRECISION_DATE,
+            )
+        return None, AvailabilityBasis.UNDECLARED.value, PRECISION_NONE
 
     def _concept_plan(
         self,
@@ -849,6 +996,52 @@ class Ingestor:
         ).fetchone()
         return row is not None
 
+    def _ensure_sec_source(self) -> None:
+        """
+        Register what SEC EDGAR is, once per archive.
+
+        The evidence path had no `sources` row at all: documents carried a
+        `provider` string and nothing described what that provider *is* or what
+        shape its facts arrive in. So a question like "does this endpoint keep the
+        dimensional axis" had nowhere to be answered, and the only way to express
+        it was as a per-metric exception -- which is a property of the accident
+        rather than of the data.
+
+        Declared once, here, because it is true of the endpoint and not of any
+        filer or metric:
+
+            AGGREGATE   both EDGAR XBRL endpoints drop the member axis, so two
+                        facts differing only by dimension arrive looking like one.
+                        `companyconcept` is per-concept over the same flattened
+                        view, so reading concept-by-concept does not recover it.
+
+        That is a limitation of the source and not a defect in the archive, and
+        saying so at the source is what lets the per-event collision records be
+        read as *evidence* of this rather than as a list of metrics that are odd.
+        """
+        if getattr(self, "_sec_source_registered", False):
+            return
+        self.store.record_source(
+            SEC_SOURCE,
+            SourceType.REGULATORY_FILING.value,
+            base_url=SEC_CANONICAL,
+            notes=(
+                "SEC EDGAR XBRL company facts and company concept. Every fact "
+                "carries one accession, period and unit; the dimensional axis is "
+                "not returned. Two facts differing only by member therefore "
+                "arrive looking identical, which is what "
+                "`ingestion_dimension_collisions` records."
+            ),
+            retains_dimensions="AGGREGATE",
+            aggregation_note=(
+                "Facts are aggregated across dimension members. A period with "
+                "two or more distinct values for one concept is therefore "
+                "ambiguous by construction, and which member each value belongs "
+                "to is not determinable from this source."
+            ),
+        )
+        self._sec_source_registered = True
+
     def _store_document(
         self,
         cik: str,
@@ -866,6 +1059,7 @@ class Ingestor:
         documents = self.provider.documents_for(taxonomy, concept)
         if not documents:
             return ""
+        self._ensure_sec_source()
         document = documents[-1]
         uri = (
             f"{SEC_CANONICAL}/api/xbrl/companyconcept/CIK{cik}"
@@ -981,7 +1175,7 @@ class Ingestor:
             ).fetchone()
             document_hash = row["content_hash"] if row else ""
 
-        seen_periods: Dict[Tuple[str, str, str], float] = {}
+        seen_periods: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
         stored = 0
 
         for unit, entries in (payload.get("units") or {}).items():
@@ -995,23 +1189,78 @@ class Ingestor:
                     self._ensure_filing_identity(asset_id, accession, entry)
 
                 # The submissions index only carries recent filings, so an older
-                # accession has no acceptance timestamp there. The fact's own
-                # `filed` date is the coarser provable answer, and it is the
-                # same date the SEC published, so it is used with its own
-                # basis rather than dropped.
-                available_at = acceptance.get(accession)
-                if not available_at and entry.get("filed"):
-                    available_at = f"{entry['filed']}T00:00:00+00:00"
+                # accession has no acceptance timestamp there. `_availability_for`
+                # then falls back to the fact's own `filed` date -- at the
+                # precision the fact declares, which is a date, not an instant.
+                available_at, available_basis, available_precision = (
+                    self._availability_for(entry, acceptance)
+                )
 
                 # An aggregated endpoint hides dimension members, so two facts
                 # can arrive looking identical. A differing value for the same
-                # concept, period and unit is the signature of that, and it is
-                # counted rather than silently overwritten.
+                # concept, period and unit is the signature of that.
+                #
+                # Counted, and now *persisted with the metric, the concept, the
+                # filing and the period attached* -- 2.21. The count used to be
+                # per run and per issuer, which is useless at the moment it
+                # matters: deciding whether a bank reports a gross profit is a
+                # question about a metric, and the number that would answer it
+                # was filed a level above the question. It is also recorded per
+                # distinct value rather than per event, so six members of one
+                # period count as one row with `distinct_values = 6` rather than
+                # as five rows that look like five separate ambiguities.
+                #
+                # Restatements are told apart from hidden members, because the
+                # two call for opposite responses and look identical otherwise:
+                # the same member restated across two accessions is ordinary, and
+                # a filer revising last year's figure is not a fact whose
+                # meaning is in doubt.
                 collision_key = (str(period_start or ""), period_end, unit)
-                previous = seen_periods.get(collision_key)
-                if previous is not None and previous != float(entry["val"]):
+                values: Dict[str, Dict[str, Any]] = seen_periods.setdefault(
+                    collision_key,
+                    {"by_accession": {}, "all": set()},
+                )
+                by_accession: Dict[str, set] = values["by_accession"]
+                distinct: set = values["all"]
+                fact_value = float(entry["val"])
+                filing = accession or ""
+                by_accession.setdefault(filing, set()).add(fact_value)
+                if distinct and fact_value not in distinct:
                     report.dimension_collisions += 1
-                seen_periods[collision_key] = float(entry["val"])
+                    # Which of two things this is, decided by what the evidence
+                    # supports rather than by what would be reassuring. If one
+                    # filing reported two values for one period, a member was
+                    # hidden and that is provable from this source. If each filing
+                    # reported one and they disagree, all that can be said is
+                    # that a later filing reports something different.
+                    #
+                    # It was tempting to call the second case a restatement --
+                    # ordinary, comparable, not an ambiguity. Measurement refused
+                    # it: BBAR tags GrossProfit for 2019 as 88.8bn, 120.9bn and
+                    # 182.5bn across three 20-F filings, and a restatement does
+                    # not move a number by 36% then 51%. But the aggregated
+                    # endpoint dropped the member axis before ingestion saw
+                    # anything, so nothing here can tell a revision from two
+                    # members. The kind therefore says what was seen.
+                    member_hidden = any(
+                        len(seen) > 1 for seen in by_accession.values()
+                    )
+                    self._record_dimension_collision(
+                        asset_id=asset_id,
+                        metric=metric,
+                        concept=f"{taxonomy}:{concept}",
+                        accession=accession,
+                        period_start=str(period_start or ""),
+                        period_end=period_end,
+                        unit=unit,
+                        distinct_values=len(distinct) + 1,
+                        kind=(
+                            "SAME_PERIOD_DIFFERENT_VALUE"
+                            if member_hidden
+                            else "LATER_FILING_DIFFERS"
+                        ),
+                    )
+                distinct.add(fact_value)
 
                 fact_id = source_fact_id(
                     source_id=SEC_SOURCE,
@@ -1045,6 +1294,8 @@ class Ingestor:
                     period_start,
                     period_end,
                     available_at,
+                    available_basis,
+                    available_precision,
                     accession,
                 )
                 self.store.record_observation(
@@ -1072,6 +1323,51 @@ class Ingestor:
 
         return stored
 
+    def _record_dimension_collision(
+        self,
+        asset_id: str,
+        metric: str,
+        concept: str,
+        accession: str,
+        period_start: str,
+        period_end: str,
+        unit: str,
+        distinct_values: int,
+        kind: str,
+    ) -> None:
+        """
+        Buffer one dimension collision, at the grain a decision needs.
+
+        Buffered rather than written, for the same reason the scope rows are: the
+        row names a run and the run row is written at the end of the run, so
+        writing here would insert a child before its parent. `_write_run` writes
+        both in one transaction, which means a run cannot exist without its
+        collisions and cannot have collisions without the run.
+
+        Keyed on the collision rather than the run so a rerun over the same
+        window replaces the row instead of accumulating a second identical one,
+        while a rerun over a *wider* window adds rows -- which is the honest
+        direction, because more filings means more chances to find a member that
+        the first window had not reached.
+        """
+        if not self._current_run_id or not asset_id:
+            return
+        self._pending_collisions = getattr(
+            self, "_pending_collisions", []
+        )
+        self._pending_collisions.append((
+            self._current_run_id,
+            asset_id,
+            metric,
+            concept,
+            accession or None,
+            period_start or None,
+            period_end or None,
+            unit or None,
+            int(distinct_values),
+            kind,
+        ))
+
     def _fact_held(self, fact_id: str) -> bool:
         return (
             self.connection.execute(
@@ -1093,15 +1389,26 @@ class Ingestor:
         period_start: Optional[str],
         period_end: str,
         available_at: Optional[str],
+        available_basis: str,
+        available_precision: str,
         accession: str,
     ) -> Observation:
         contract_unit = xbrl_unit_to_contract_unit(unit) or Unit.RATIO.value
         currency = unit if unit in ("USD",) else None
-        available_basis = (
-            AvailabilityBasis.ACCEPTANCE_DATETIME.value
-            if available_at and "T" in str(available_at)
-            else AvailabilityBasis.UNDECLARED.value
-        )
+        # The basis arrives as a declaration rather than being recovered from the
+        # shape of the value. It used to be decided by asking whether the string
+        # contained a `T`, which meant a filed-date fallback wearing a midnight
+        # was recorded as an acceptance instant, and a bare date was recorded as
+        # undeclared -- so the two delivery routes produced different
+        # availability semantics for identical evidence.
+        if available_at and available_basis not in AvailabilityBasis:
+            raise ValueError(
+                f"availability basis {available_basis!r} is not declared"
+            )
+        if available_at and available_precision not in PRECISIONS:
+            raise ValueError(
+                f"availability precision {available_precision!r} is not declared"
+            )
         return Observation(
             observation_id=(
                 f"ingest|{metric}|{concept}|{accession}"
@@ -1136,7 +1443,17 @@ class Ingestor:
                     "fy": entry.get("fy"),
                     "fp": entry.get("fp"),
                     "frame": entry.get("frame"),
+                    "filed": entry.get("filed"),
                     "label": payload.get("label"),
+                },
+                # What the source declared about *when*, kept next to the value
+                # so a consumer can read the precision without re-deriving it
+                # from the shape of a string -- which is the mistake 2.14
+                # measured across the two delivery routes.
+                "availability": {
+                    "declared_value": available_at,
+                    "declared_basis": available_basis,
+                    "declared_precision": available_precision,
                 },
                 "mapping_type": mapping.mapping_type,
                 "mapping_effective_from": mapping.effective_from,

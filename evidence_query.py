@@ -36,7 +36,14 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from data_contract import ValidationStatus, parse_iso_date, utc_now
+from data_contract import (
+    AvailabilityBasis,
+    PRECISION_DATE,
+    PRECISION_INSTANT,
+    ValidationStatus,
+    parse_iso_date,
+    utc_now,
+)
 from core_registry import CoreRegistry
 from evidence_model import (
     CONFLICTING,
@@ -1005,8 +1012,21 @@ class EvidenceQuery:
             },
             "as_of": row["as_of"],
             "available_at": {
+                "value": available_at,
+                # Kept under the historical key so an existing consumer of the
+                # package keeps reading the same field, and `precision` is
+                # added because a `FILED_AS_OF_DATE` value is a date and this is
+                # a consumer-facing surface: publishing it under the name
+                # `instant` without saying so is the fiction 2.14 removed at the
+                # ingestion layer.
                 "instant": available_at,
                 "basis": row["available_at_basis"],
+                "precision": (
+                    PRECISION_DATE
+                    if row["available_at_basis"]
+                    == AvailabilityBasis.FILED_AS_OF_DATE.value
+                    else PRECISION_INSTANT
+                ),
                 "class": row["availability_class"],
                 "knowable_at": row["replay_eligible_from"],
             },

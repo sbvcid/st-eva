@@ -102,17 +102,38 @@ METRICS: Tuple[Metric, ...] = (
         unit_family="currency",
         normal_period_type="DURATION",
         comparability_group="income_statement_flows",
-        # Declared on the definition, not on any issuer's empty data.
+        # **REFUTED for BANK, and the rule is gone.** See SPEC 0.28.
         #
-        # The distinction this is here to keep is the one that gets lost: an
-        # inapplicable metric and a metric with no observations are different
-        # facts with different remedies, and only the first of them is a
-        # statement about the company. A bank's income statement has interest
-        # income and interest expense and no cost of sales, so "revenue less
-        # cost of revenue" is undefined there -- the line does not exist to be
-        # missing. Inheriting this from an empty observation count would get the
-        # right answer for the wrong reason and would make the two collapse.
-        inapplicable_in=FINANCIAL,
+        # This exclusion was written on the reasoning that a bank's income
+        # statement has no cost of sales, so "revenue less cost of revenue" is
+        # undefined there -- which is a good argument and is not the whole truth.
+        # NRIM, a US savings institution filing 10-Q, tags
+        # `us-gaap:GrossProfit` as a quarterly line in 22 observations, and the
+        # conflict marker fired on its own. A bank can report a gross profit
+        # subtotal, and one does.
+        #
+        # Six of the eight banks sampled report none, and that silence is *not*
+        # the justification: a metric with no observations is a different fact
+        # from a metric with no meaning, and inheriting the second from the first
+        # is what got the rule written.
+        #
+        # **REFUTED for FINANCE_SERVICES too, and the rule is now empty.**
+        #
+        # 2.24 retained this exclusion and labelled it PROPOSED rather than
+        # supported, on the grounds that SIC 61-62 had been split out of 60-67 in
+        # 2.16.1 and the eight filers that produced were all SIC 60 -- so no
+        # filer of this class had ever been collected at full scope. That was the
+        # right way to record it and it lasted exactly as long as it took to
+        # collect them: three of the seven report the concept.
+        #
+        #     AIXC    4 obs   us-gaap:GrossProfit
+        #     SLNHP  20 obs   us-gaap:GrossProfit
+        #     SUIG   15 obs   us-gaap:GrossProfit
+        #
+        # A savings and loan holding company reporting a gross profit subtotal
+        # is the ordinary case, not an exception -- the same finding as NRIM, and
+        # from the same SIC major group one division over.
+        inapplicable_in=(),
     ),
     Metric(
         metric_id="operating_income",
@@ -126,7 +147,39 @@ METRICS: Tuple[Metric, ...] = (
         unit_family="currency",
         normal_period_type="DURATION",
         comparability_group="income_statement_flows",
-        inapplicable_in=FINANCIAL,
+        # **No refusal. An open proposition, at state `TESTABLE`.**
+        #
+        # Refuted for FINANCE_SERVICES by six of seven SIC 61-62 filers holding
+        # 666 observations of `us-gaap:OperatingIncomeLoss` between them -- a credit
+        # union, a mortgage banker and a savings and loan holding company all
+        # report the line. The original reasoning said a financial institution's
+        # operating result "is not an operating-income concept"; that sentence was
+        # about banks and was written as a statement about finance.
+        #
+        # For `BANK` the proposition survives: 0 of the eight SIC 60 filers
+        # sampled tag the concept. **Consistent, and not a basis.** A bank that
+        # reports operating income refutes this; eight that do not do not support
+        # it. So it stays recorded, stays `TESTABLE`, and refuses nothing --
+        # because 2.25 established that only a `SUPPORTED` exclusion may hold
+        # production authority over Evidence collection.
+        #
+        # What that costs and what it buys: a bank is asked, and the answer is
+        # either `COLLECTED` or `SOURCE_SILENT`. Both are honest and neither is
+        # work to do. The buy is that the proposition is still queryable, with its
+        # falsifiable claim attached, instead of having been deleted or promoted
+        # on silence.
+        inapplicable_in=(),
+        exclusions=(
+            (
+                BANK,
+                "TESTABLE",
+                "A BANK filer does not tag us-gaap:OperatingIncomeLoss. "
+                "Refuted by one bank holding one observation. Supported only by "
+                "evidence that the line does not exist on a bank's statement -- "
+                "not by the archive not having seen one, which is SOURCE_SILENT "
+                "and is not work to do.",
+            ),
+        ),
     ),
     Metric(
         metric_id="r_and_d",
@@ -139,7 +192,22 @@ METRICS: Tuple[Metric, ...] = (
         unit_family="currency",
         normal_period_type="DURATION",
         comparability_group="income_statement_flows",
-        inapplicable_in=(MINING,),
+        # **REFUTED for MINING, and the rule is gone.** See SPEC 0.28.
+        #
+        # NEM, a gold and silver miner (SIC 1040), tags
+        # `us-gaap:ResearchAndDevelopmentExpense` in 236 observations, and the
+        # conflict marker fired the first time the rule was reachable at all --
+        # 2.16.1 made MINING reachable, 2.23 supplied a filer, and the rule was
+        # contradicted immediately.
+        #
+        # The original reasoning was that research and development is not a cost a
+        # mining company carries. Exploration *is* research, and where it is
+        # capitalised it is still research; a gold miner with an exploration
+        # programme is the ordinary case, not the exception.
+        #
+        # Three of the four miners sampled report none, and as with `gross_profit`
+        # that silence is not the justification.
+        inapplicable_in=(),
     ),
     Metric(
         metric_id="sga",
@@ -1719,7 +1787,7 @@ DECLINES: Tuple[DeclinedConcept, ...] = (
 def seed(registry: CoreRegistry) -> Dict[str, int]:
     """Load the registry seed. Idempotent."""
     for metric in METRICS:
-        registry.add_metric(metric, inapplicable_in=metric.inapplicable_in)
+        registry.add_metric(metric)
     for concept in CONCEPTS:
         registry.add_concept(concept)
     for mapping in MAPPINGS:

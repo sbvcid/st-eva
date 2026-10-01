@@ -57,7 +57,7 @@ backlog turns into an argument.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from core_registry import CoreRegistry
 from evidence_model import NOT_APPLICABLE, SOURCE_REPORTED
@@ -173,6 +173,7 @@ def collection_chain(
         "asset": ticker.upper(),
         "business_model": ledger["business_model"],
         "metrics": by_metric,
+        "semantic_conflicts": ledger["semantic_conflicts"],
         "totals": {
             "metrics": ledger["metrics_total"],
             "applicable": ledger["metrics_applicable"],
@@ -375,6 +376,13 @@ def scoped_ledger(
             ),
             "mapping_types": sorted({m.mapping_type for m in mappings}),
             "why": why,
+            "semantic_conflict": _semantic_conflict(
+                applies=applies,
+                status=status,
+                observation_count=observation_count,
+                concepts=concepts,
+                adoption=adoption,
+            ),
         })
 
     counts: Dict[str, int] = {status: 0 for status in COVERAGE_STATUSES}
@@ -418,6 +426,18 @@ def scoped_ledger(
         "backlog_items": sorted(
             r["metric"] for r in rows if r["is_backlog_item"]
         ),
+        # Counted beside the statuses, not inside them. A cell that holds evidence
+        # for a metric the registry rules out is still in exactly one status
+        # bucket, and moving it into a status of its own would make the status
+        # counts stop being a partition of the Core universe -- which is the one
+        # thing they are relied on to be.
+        "semantic_conflicts": [
+            {
+                "metric": r["metric"],
+                **r["semantic_conflict"],
+            }
+            for r in rows if r["semantic_conflict"]
+        ],
         "collected_rate": (
             round(
                 sum(1 for r in scored if r["status"] == COLLECTED) / len(scored),
@@ -425,6 +445,71 @@ def scoped_ledger(
             ) if scored else None
         ),
         "rows": rows,
+    }
+
+
+# The one conflict the coverage vocabulary knows how to name.
+#
+# **Evidence, applicability and coverage are three different facts, and this is
+# where they are allowed to disagree.** A metric can be reported by the source,
+# ruled inapplicable by the registry, and processed anyway -- and all three of
+# those are true at once. Collapsing them into one status would hide the
+# disagreement, which is the only thing worth reporting.
+#
+# The decision behind it, and the reason it is not the other way round: a
+# coverage interpretation must never become a deletion filter on evidence.
+# 2.18 measured why. NRIM tags `us-gaap:GrossProfit` in twenty-two rows and BBAR
+# tags `ifrs-full:GrossProfit` in eighteen, and both facts are held while the
+# ledger says `gross_profit` does not apply to a bank. That disagreement is the
+# *entire* finding -- it is how `BANK -> gross_profit NOT_APPLICABLE` was caught
+# as too broad. Had ingestion refused to store them, the ledger would have read
+# zero observations and the rule would have looked confirmed by evidence that
+# was never gathered.
+#
+# So: nothing is deleted, the conflict is named, and what a consumer does about
+# it is its own decision.
+CONFLICT_EVIDENCE_HELD_FOR_INAPPLICABLE_METRIC = (
+    "EVIDENCE_HELD_FOR_INAPPLICABLE_METRIC"
+)
+
+
+def _semantic_conflict(
+    applies: bool,
+    status: str,
+    observation_count: int,
+    concepts: Sequence[str],
+    adoption: Mapping[str, Any],
+) -> Optional[Dict[str, Any]]:
+    """
+    The conflict on one metric-issuer cell, or None.
+
+    `None` for every cell that agrees with itself, which is the overwhelming
+    majority and should stay quiet -- a marker that fires constantly teaches a
+    reader to ignore it.
+
+    The condition is narrow on purpose: the registry rules the metric out for
+    this filer's business model, *and* the source reported something for it. A
+    decline is not a conflict: declining a concept is a recorded decision about
+    that concept, and a metric the registry has already routed around is not
+    evidence contradicting a ruling.
+    """
+    if applies or observation_count <= 0:
+        return None
+    return {
+        "kind": CONFLICT_EVIDENCE_HELD_FOR_INAPPLICABLE_METRIC,
+        "applicability": NOT_APPLICABLE_STATUS,
+        "observations_held": observation_count,
+        "concepts_reported": sorted(
+            c for c in concepts if c in adoption
+        ),
+        "ledger_status": status,
+        "note": (
+            "the source reported this metric and the registry rules it out for "
+            "this filer's business model. Both are kept. The evidence is a fact "
+            "about what the filer published; the applicability is a coverage "
+            "interpretation about what it should mean. Neither is removed to "
+            "make the other look settled."
+        ),
     }
 
 

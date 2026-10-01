@@ -26,7 +26,7 @@ one-way: adapters and the engine depend on the contract, never the reverse.
 
 import math
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from statistics import median as _median
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -247,6 +247,148 @@ class AvailabilityBasis(str, Enum):
 
     def __str__(self) -> str:  # pragma: no cover - trivial
         return self.value
+
+
+# The precision a source declared for an availability value.
+#
+# This is not a fourth kind of basis. It is the question the basis cannot answer
+# on its own: `FILED_AS_OF_DATE` says the source published a date rather than an
+# instant, and that difference is what decides when a fact becomes replayable.
+#
+# It exists because 2.14 measured what happens when nobody asks. Two ingestion
+# routes, both correct about which basis they meant, disagreed on 17,043 of
+# 17,043 rows -- and the disagreement was entirely the *precision* of one field:
+#
+#     the SEC API path   filed date -> "2015-10-28T00:00:00+00:00"  and called
+#                        it ACCEPTANCE_DATETIME, over-claiming a time of day
+#                        the SEC does not publish
+#     the bulk path      filed date -> "2015-10-28"                and was
+#                        labelled UNDECLARED, so a declared date lost its
+#                        declared-ness entirely
+#
+# A source that has only a date must be able to say so without the consumer
+# guessing from the shape of a string, and a consumer that has a date must not
+# promote it to an instant. The rule is one sentence: **ST-EVA does not raise
+# date-precision information to an exact timestamp**, because a date proves that
+# publication happened on a day and says nothing about when on that day, and an
+# invented midnight is a claim about history that no filing supports.
+PRECISION_INSTANT = "INSTANT"
+PRECISION_DATE = "DATE"
+PRECISION_NONE = "NONE"
+PRECISIONS = (PRECISION_INSTANT, PRECISION_DATE, PRECISION_NONE)
+
+# How far a declared date may trail the true dissemination instant.
+#
+# **A rule of a source, not a financial constant, and not inheritable.** It
+# belongs to EDGAR because EDGAR's filed-as-of date and its acceptance instant
+# are its own two fields and they do not always agree on the day: reconciling a
+# bulk-built archive against the API-built one found 65 facts whose filed-as-of
+# date was **one day earlier** than the acceptance instant -- MU, filed
+# 2020-06-29, accepted 2020-06-30T16:12:44Z.
+#
+# So "the declared day is over" is not by itself a provable lower bound for this
+# source, and an eligibility boundary that ignored this made 65 facts replayable
+# before EDGAR published them. One day is the allowance because one day is the
+# largest disagreement observed on this source. **A new adapter must measure its
+# own and must not carry this value over**, because the same one-day shift is an
+# artefact of how this publisher records two dates and another publisher may not
+# have it at all.
+#
+# If a source ever needs two days, this is the single place to move, and the
+# per-fact point-in-time check in `fullscope_bulk.py` reports the consequence
+# rather than hiding it.
+DECLARED_DATE_LAG_DAYS = 1
+
+
+def start_of_day_after(value: Optional[str], days: int = 1) -> Optional[str]:
+    """
+    The first instant at which a declared date is provably elapsed.
+
+    `days` shifts the boundary by whole days, and defaults to one. The
+    point-in-time boundary for a `FILED_AS_OF_DATE` fact is
+    `start_of_day_after(value, 1 + DECLARED_DATE_LAG_DAYS)`, because the
+    declared date can trail the true dissemination instant by a day.
+
+    The next day's start rather than the declared day's `23:59:59` because
+    eligibility is a `<=` comparison and a day has no last instant at second
+    resolution: naming `.999999` would invent a resolution the source never had.
+    It also keeps the two point-in-time implementations in this repository
+    agreeing. The in-memory path compares *dates*, so a whole-day shift is
+    exactly what it can already express.
+
+    None for anything unparseable, so a caller cannot fall back to a guess.
+    """
+    declared = parse_iso_date(value)
+    if declared is None:
+        return None
+    return f"{(declared + timedelta(days=days)).isoformat()}T00:00:00+00:00"
+
+
+def eligibility_for_declared_date(value: Optional[str]) -> Optional[str]:
+    """
+    When a fact known only by a declared date may be used in a replay.
+
+    The whole of the rule in one function, because it is applied in two places
+    that must not drift:
+
+        an instant the source published   that instant
+        a date the source published       after the declared day, plus the
+                                          allowance for a declared date that
+                                          trails the acceptance instant
+        nothing declared                  never eligible
+
+    A date is a claim about a day, not about a moment, and using the fact from
+    that day's midnight would assert that EDGAR disseminated the filing at
+    00:00. Measured across the two delivery routes, doing that made 6,508 of
+    17,043 facts replayable from a moment before the filer published them.
+    The evidence is not discarded: it becomes usable once its day is provably
+    over.
+    """
+    return start_of_day_after(value, 1 + DECLARED_DATE_LAG_DAYS)
+
+
+def end_of_declared_day(value: Optional[str]) -> Optional[str]:
+    """
+    The last instant a date covers, for reading a point-in-time *cutoff*.
+
+    A bare date as a cutoff means the whole of that day, not its first moment.
+    That is the ordinary reading of "as of 2026-03-05", and it is what the
+    in-memory selector already does because it compares dates. The SQL selector
+    compares strings, where a bare date sorts *before* every instant of that
+    day, so it was silently reading "as of 2026-03-05" as midnight and would
+    exclude a fact declared for that very day. The two implementations gave
+    different answers to the same question.
+
+    Only used for cutoffs. A *declared* value keeps its own precision: this is
+    about what a caller is asking for, never about what a source said.
+    """
+    day = parse_iso_date(value)
+    if day is None:
+        return None
+    return f"{day.isoformat()}T23:59:59.999999+00:00"
+
+
+def point_in_time_cutoff(value: Optional[str]) -> Optional[str]:
+    """
+    The instant a point-in-time cutoff actually names.
+
+    An ISO-8601 value carries a time only after a date-time separator, so that is
+    what distinguishes an instant from a whole day. `datetime.fromisoformat`
+    cannot make the distinction on its own -- it accepts a bare date as midnight
+    -- and a cutoff silently read as midnight is how a fact becomes knowable
+    before its day is over.
+
+    None for anything unreadable, so a caller can refuse rather than answer with
+    everything or with nothing and call it a result.
+    """
+    if not value or not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    if "T" in text or " " in text:
+        return text if parse_iso_date(text) is not None else None
+    return end_of_declared_day(text)
 
 
 # 2.2.3 evidence unit strings. A valuation band is a multiple, never a currency.
@@ -955,6 +1097,15 @@ class ObservationSet:
         It is consulted only when `available_at` is absent, and an id missing
         from the mapping is still excluded, so omitting it entirely reproduces
         this method's original behaviour exactly.
+
+        **A declared date is not an instant.** This path compares dates, so a
+        `FILED_AS_OF_DATE` observation is knowable from after its declared day
+        -- plus the allowance for a declared date that trails the acceptance
+        instant -- which is exactly what `eligibility_for_declared_date` derives.
+        Both point-in-time implementations in this repository therefore answer
+        the same question the same way; leaving this one alone would give a
+        repository two answers to "when was this knowable", which is the failure
+        2.14 measured across two delivery routes.
         """
         cutoff_value = parse_iso_date(cutoff)
         if cutoff_value is None:
@@ -964,6 +1115,14 @@ class ObservationSet:
             if metric is not None and observation.metric != metric:
                 continue
             declared = parse_iso_date(observation.available_at)
+            if (
+                declared is not None
+                and observation.available_at_basis
+                == AvailabilityBasis.FILED_AS_OF_DATE.value
+            ):
+                declared = declared + timedelta(
+                    days=1 + DECLARED_DATE_LAG_DAYS
+                )
             if declared is None and eligibility:
                 declared = parse_iso_date(
                     eligibility.get(observation.observation_id)
