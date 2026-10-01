@@ -47,7 +47,7 @@ from data_contract import (
     CurrencyBasis,
     METRIC_ASSETS,
     METRIC_CASH,
-    METRIC_DEBT,
+    METRIC_LONG_TERM_DEBT,
     METRIC_DEFINITIONS,
     METRIC_EPS_DILUTED,
     METRIC_NET_INCOME,
@@ -152,7 +152,7 @@ SEC_CONCEPTS: Dict[str, Tuple[Concept, ...]] = {
             "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
         ),
     ),
-    METRIC_DEBT: (
+    METRIC_LONG_TERM_DEBT: (
         Concept("us-gaap", "LongTermDebtNoncurrent", role="addend"),
         Concept("us-gaap", "LongTermDebtCurrent", role="addend"),
     ),

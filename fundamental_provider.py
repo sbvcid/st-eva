@@ -28,7 +28,6 @@ from data_contract import (
     CurrencyBasis,
     METRIC_CASH,
     METRIC_CONSENSUS_FORWARD_EPS,
-    METRIC_DEBT,
     METRIC_DEFINITIONS,
     METRIC_EBITDA,
     METRIC_ENTERPRISE_VALUE,
@@ -1110,9 +1109,32 @@ class YahooFundamentalProvider:
         # the quote currency turns an unknown into a false fact, and a false
         # currency is worse than a missing one because it combines silently
         # with everything else in that currency.
+        #
+        # **`totalDebt` is deliberately absent, and its absence is the finding.**
+        # It used to project here, and it must not any more. This module's
+        # `totalDebt` is the vendor's *total* debt; Core `long_term_debt` (2.33) is
+        # long-term debt specifically and **excludes short-term borrowings by its
+        # own definition**. Projecting one into the other is not a defensible
+        # mismatch with a caveat in `methodology` -- it puts a different quantity
+        # in the same metric under the same name, and every Core consumer would
+        # read it as long-term debt.
+        #
+        # This provider acquires three modules -- `defaultKeyStatistics`,
+        # `earningsTrend`, `financialData` -- and **no balance-sheet module**, so it
+        # holds no field whose semantics it has verified as long-term debt. It was
+        # not going to assume one exists on the strength of a field name: 2.29
+        # established that a name is not a definition, four times over.
+        #
+        # So `long_term_debt` is simply **unavailable from this source**, which is
+        # what "the source does not report it" looks like from the provider side,
+        # and cross-validation reads as a missing vendor figure rather than a
+        # disagreement.
+        #
+        # Retiring it cost no history: every `debt` observation in every archive
+        # on disk, the sealed 2.2.3 snapshot included, is provider `SecEdgar`. The
+        # projection had never written one.
         for metric, field_name in (
             (METRIC_CASH, "totalCash"),
-            (METRIC_DEBT, "totalDebt"),
         ):
             value = safe_float(financial.get(field_name))
             if value is None:

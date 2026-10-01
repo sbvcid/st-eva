@@ -239,6 +239,34 @@ def scoped_ledger(
         "SELECT metric_id, display_name, status FROM metric_registry"
         " WHERE status = 'ACTIVE' ORDER BY metric_id"
     ).fetchall()
+    # **Plus every metric this archive actually holds.** A metric that has been
+    # renamed keeps its historical observations -- rewriting them would change
+    # `observation_id`, and a naming decision must not manufacture new Evidence --
+    # so an archive written before the rename holds rows under the old id while
+    # the active universe no longer lists it. Dropping those rows would make them
+    # invisible on the coverage surface, which is a regression caused entirely by
+    # a rename. The union keeps them reportable under the name they were archived
+    # with, and `resolve_metric` is what tells a reader which quantity they now
+    # denote.
+    stored_metrics = [
+        row[0] for row in connection.execute(
+            "SELECT DISTINCT metric FROM observations"
+            " WHERE asset_id = ? ORDER BY metric", (asset_id,)
+        )
+    ]
+    if stored_metrics:
+        known = {row["metric_id"] for row in metric_rows}
+        missing = [m for m in stored_metrics if m not in known]
+        if missing:
+            for name in missing:
+                definition = registry.metric(name)
+                metric_rows.append({
+                    "metric_id": name,
+                    "display_name": (
+                        definition.display_name if definition else name),
+                    "status": "DEPRECATED",
+                })
+            metric_rows.sort(key=lambda row: row["metric_id"])
     business = registry.business_model_of(asset_id)
     model = business["business_model"] if business else None
 

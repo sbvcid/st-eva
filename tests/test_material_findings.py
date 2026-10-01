@@ -25,7 +25,7 @@ import unittest
 from data_contract import (
     AvailabilityBasis,
     METRIC_CASH,
-    METRIC_DEBT,
+    METRIC_LONG_TERM_DEBT,
     METRIC_REVENUE,
     METRIC_SHARES_OUTSTANDING,
     Observation,
@@ -239,8 +239,16 @@ class TestF2UnstatedCurrencyIsNotAsserted(unittest.TestCase):
             timeseries_url=None,
         )
         by_metric = {item.metric: item for item in emitted}
-        for metric in (METRIC_CASH, METRIC_DEBT):
-            self.assertIn(metric, by_metric)
+        # `totalDebt` is in the payload and `long_term_debt` is still absent from
+        # the output. That is the whole point: the vendor's *total* debt is not the
+        # metric, and a `methodology` caveat would not make it one. The payload
+        # deliberately still supplies `totalDebt` so the test proves the provider
+        # declines it rather than merely never seeing it.
+        self.assertNotIn(
+            METRIC_LONG_TERM_DEBT, by_metric,
+            "Yahoo totalDebt was projected onto a long-term-debt metric",
+        )
+        for metric in (METRIC_CASH,):
             item = by_metric[metric]
             self.assertIsNone(
                 item.currency,
@@ -619,7 +627,7 @@ class TestF6StaleObservationsAreVisible(unittest.TestCase):
         materials = list(material_observations(data).values())
         ancient = observation(
             "cmp-debt-sec-2013",
-            METRIC_DEBT,
+            METRIC_LONG_TERM_DEBT,
             3_624_000_000.0,
             as_of="2013-05-30",
             period_end="2013-05-30",
@@ -639,8 +647,8 @@ class TestF6StaleObservationsAreVisible(unittest.TestCase):
     def test_a_long_dead_filing_is_counted_as_stale(self):
         document = self._document_with_old_filing()
         freshness = document["data_quality"]["freshness"]
-        self.assertIn("debt", freshness["stale_metrics"])
-        bucket = freshness["by_metric"]["debt"]
+        self.assertIn("long_term_debt", freshness["stale_metrics"])
+        bucket = freshness["by_metric"]["long_term_debt"]
         self.assertEqual(bucket["recency"], "NO_RECENT_VALUE")
         self.assertEqual(bucket["latest_as_of"], "2013-05-30")
         self.assertGreater(bucket["current_value_age_days"], 4000)
@@ -654,7 +662,7 @@ class TestF6StaleObservationsAreVisible(unittest.TestCase):
         self.assertIn("obs:cmp-debt-sec-2013", document["provenance"]["refs"])
         figures = [
             item["figure"]
-            for item in document["observed"][METRIC_DEBT]
+            for item in document["observed"][METRIC_LONG_TERM_DEBT]
             if item["figure"]["ref"] == "obs:cmp-debt-sec-2013"
         ]
         self.assertTrue(figures)
@@ -674,7 +682,7 @@ class TestF6StaleObservationsAreVisible(unittest.TestCase):
         document = self._document_with_old_filing()
         freshness = document["data_quality"]["freshness"]
         self.assertIn("by_metric", freshness)
-        self.assertIn("recency", freshness["by_metric"][METRIC_DEBT])
+        self.assertIn("recency", freshness["by_metric"][METRIC_LONG_TERM_DEBT])
 
 
 class TestF7SeriesChangeMetadata(unittest.TestCase):
@@ -687,7 +695,7 @@ class TestF7SeriesChangeMetadata(unittest.TestCase):
         series = [
             observation(
                 f"cmp-debt-sec-{period}",
-                METRIC_DEBT,
+                METRIC_LONG_TERM_DEBT,
                 value,
                 as_of=period,
                 period_end=period,
@@ -702,9 +710,9 @@ class TestF7SeriesChangeMetadata(unittest.TestCase):
             )
         ]
         report = series_metadata(series)
-        self.assertEqual(report[METRIC_DEBT]["observations"], 4)
-        self.assertTrue(report[METRIC_DEBT]["discontinuities"])
-        worst = report[METRIC_DEBT]["discontinuities"][0]
+        self.assertEqual(report[METRIC_LONG_TERM_DEBT]["observations"], 4)
+        self.assertTrue(report[METRIC_LONG_TERM_DEBT]["discontinuities"])
+        worst = report[METRIC_LONG_TERM_DEBT]["discontinuities"][0]
         self.assertEqual(worst["to_period"], "2026-07-26")
         self.assertGreater(worst["relative_change"], 2.0)
         self.assertEqual(
@@ -715,7 +723,7 @@ class TestF7SeriesChangeMetadata(unittest.TestCase):
         series = [
             observation(
                 f"cmp-debt-sec-{period}",
-                METRIC_DEBT,
+                METRIC_LONG_TERM_DEBT,
                 value,
                 as_of=period,
                 period_end=period,
@@ -727,19 +735,19 @@ class TestF7SeriesChangeMetadata(unittest.TestCase):
             )
         ]
         report = series_metadata(series)
-        self.assertEqual(report[METRIC_DEBT]["discontinuities"], [])
+        self.assertEqual(report[METRIC_LONG_TERM_DEBT]["discontinuities"], [])
 
     def test_the_report_declares_what_it_does_not_know(self):
         series = [
             observation(
-                "cmp-debt-sec-x", METRIC_DEBT, 1.0,
+                "cmp-debt-sec-x", METRIC_LONG_TERM_DEBT, 1.0,
                 period_end="2026-01-25",
                 available_at="2026-01-25T12:00:00.000Z",
             )
         ]
         report = series_metadata(series)
         self.assertEqual(
-            report[METRIC_DEBT]["comparability"],
+            report[METRIC_LONG_TERM_DEBT]["comparability"],
             "SINGLE_OBSERVATION_NO_TREND",
         )
 

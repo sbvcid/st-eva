@@ -1139,15 +1139,108 @@ class CoreRegistry:
             if metric is not None
         ]
 
+    def resolve_metric(self, metric_id: str) -> Optional[str]:
+        """
+        Follow a supersession chain to the metric that now carries the meaning.
+
+        A metric that has been renamed keeps its row and keeps every observation
+        recorded against it, because `observations.metric` is part of the contract
+        id and rewriting it would change `observation_id` and manufacture new
+        historical Evidence out of a naming decision. What changes is the question
+        *what does this metric denote*, and it is answered here rather than by
+        editing rows that are supposed to be immutable.
+
+        Resolution follows the chain to its end and **fails loudly on a cycle**,
+        because a supersession table that can loop would make every meaning in the
+        archive ambiguous, and that is worse than an unresolved name.
+
+        Returns the id unchanged when nothing supersedes it, so callers need not
+        special-case the common case.
+        """
+        seen = [metric_id]
+        current = metric_id
+        if not self._has_table("metric_supersession"):
+            # An archive opened without the migration -- a read-only consumer, or a
+            # fixture that builds its schema directly. Nothing has superseded
+            # anything in a store that has never heard of supersession, so the id
+            # stands. Failing here would make an older archive unreadable rather
+            # than merely un-renamed.
+            return current
+        for _ in range(8):
+            row = self.connection.execute(
+                "SELECT successor_id FROM metric_supersession"
+                " WHERE predecessor_id = ?", (current,)
+            ).fetchone()
+            if row is None:
+                return current
+            current = str(row["successor_id"])
+            if current in seen:
+                raise RegistryError(
+                    "metric supersession cycle: "
+                    + " -> ".join(seen + [current])
+                )
+            seen.append(current)
+        raise RegistryError(
+            "metric supersession chain longer than expected: "
+            + " -> ".join(seen)
+        )
+
+    def supersession_of(self, metric_id: str) -> Optional[Dict[str, Any]]:
+        """The recorded decision, if this metric has been superseded."""
+        row = self.connection.execute(
+            "SELECT * FROM metric_supersession WHERE predecessor_id = ?",
+            (metric_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "predecessor_id": row["predecessor_id"],
+            "successor_id": row["successor_id"],
+            "decided_at": row["decided_at"],
+            "reason": row["reason"],
+            "evidence": row["evidence"],
+        }
+
+    def record_supersession(
+        self,
+        predecessor_id: str,
+        successor_id: str,
+        reason: str,
+        evidence: Optional[str] = None,
+        decided_at: Optional[str] = None,
+    ) -> None:
+        """
+        Record a rename. Append-only, and it does not touch the predecessor.
+
+        The predecessor's row, its mappings and every observation filed under it
+        are left exactly as they are. What this adds is the decision, so that a
+        reader asking what a historical `metric = 'debt'` observation denotes gets
+        an answer rather than a stale name.
+        """
+        self.connection.execute(
+            "INSERT OR IGNORE INTO metric_supersession"
+            " (predecessor_id, successor_id, decided_at, reason, evidence,"
+            "  recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (predecessor_id, successor_id, decided_at or utc_now(), reason,
+             evidence, utc_now()),
+        )
+        self.connection.commit()
+
     def mappings_for_metric(
         self,
         metric_id: str,
         as_of: Optional[str] = None,
     ) -> List[ConceptMapping]:
+        # Followed, not used directly: a renamed metric keeps its observations and
+        # its row, and the concepts that now define what it denotes are declared
+        # against the successor. Without this, every historical observation under a
+        # renamed metric would resolve to no mappings and read as UNDETERMINED --
+        # a coverage regression caused entirely by a naming decision.
+        target = self.resolve_metric(metric_id)
         rows = self.connection.execute(
             "SELECT * FROM metric_concept_mapping WHERE metric_id = ?"
             " ORDER BY mapping_type, effective_from, concept_id",
-            (metric_id,),
+            (target,),
         ).fetchall()
         return [
             mapping

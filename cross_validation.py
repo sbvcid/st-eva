@@ -25,13 +25,14 @@ from data_contract import (
     COMPARABLE_METRICS,
     CrossValidationResult,
     METRIC_ASSETS,
+    METRIC_LONG_TERM_DEBT,
     METRIC_CASH,
-    METRIC_DEBT,
     METRIC_EPS_DILUTED,
     METRIC_NET_INCOME,
     METRIC_REVENUE,
     METRIC_SHARES_OUTSTANDING,
     Observation,
+    canonical_metric_id,
     Unit,
     ValidationRecord,
     ValidationStatus,
@@ -214,8 +215,8 @@ COMPARABILITY: Dict[str, ComparabilitySpec] = {
             "quantities.",
         ),
     ),
-    METRIC_DEBT: ComparabilitySpec(
-        metric=METRIC_DEBT,
+    METRIC_LONG_TERM_DEBT: ComparabilitySpec(
+        metric=METRIC_LONG_TERM_DEBT,
         contract_unit=_MONETARY,
         period_type="instant",
         measurement_basis="INSTANT",
@@ -227,9 +228,19 @@ COMPARABILITY: Dict[str, ComparabilitySpec] = {
         independence=INDEPENDENCE_UNVERIFIED,
         independence_note="",
         known_caveats=(
-            "The filing taxonomy publishes no single total-debt concept. The "
-            "figure is composed from the filer's current and non-current debt "
-            "concepts, and filers compose debt differently.",
+            "Long-term debt, per the 2.33 decision: the current and non-current "
+            "portions of long-term debt, excluding short-term borrowings. The "
+            "filing taxonomy publishes no single long-term-debt concept, so the "
+            "figure is composed from the filer's current and non-current "
+            "long-term concepts -- and that composition was verified rather "
+            "than assumed: `LongTermDebtCurrent + LongTermDebtNoncurrent == "
+            "us-gaap:LongTermDebt` holds in 451 periods across 25 filers, "
+            "reproducible from the source documents. Filers still compose the "
+            "current and non-current sides from different bases in some cases "
+            "(capital leases on one side only), so a summed total is not always "
+            "the filer's own. No vendor figure is expected for this metric: the "
+            "Yahoo projection that once supplied one projected a *total* debt "
+            "into a long-term-debt metric and was retired rather than caveated."
         ),
     ),
     METRIC_SHARES_OUTSTANDING: ComparabilitySpec(
@@ -266,7 +277,8 @@ COMPARABILITY: Dict[str, ComparabilitySpec] = {
 # page, so they are the same concept. Its problem is a missing date, not a
 # different definition, and naming the wrong problem would be worse than
 # naming none.
-DEFINITION_DIVERGENT_METRICS = frozenset({METRIC_CASH, METRIC_DEBT})
+DEFINITION_DIVERGENT_METRICS = frozenset(
+    {METRIC_CASH, METRIC_LONG_TERM_DEBT})
 
 # Basis keys that, when they differ, mean the two figures are counting
 # different things rather than disagreeing about the same thing. A listed
@@ -847,7 +859,9 @@ def cross_validate(
     # verdict. It is captured here, before the definition checks, so the reader
     # always learns how the filing-side figure was built even when the
     # comparison is refused for a stronger reason.
-    if metric == METRIC_DEBT:
+    # Canonicalised: the sealed 2.2.3 archive stores this metric under the
+    # pre-2.33 name, and the branch must still recognise those rows.
+    if canonical_metric_id(metric) == METRIC_LONG_TERM_DEBT:
         raw = filing.raw if isinstance(filing.raw, dict) else {}
         composition = raw.get("composition") or {}
         if composition:

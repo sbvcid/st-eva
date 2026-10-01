@@ -35,7 +35,7 @@ from data_contract import (
     CONTRACT_METRICS,
     METRIC_ASSETS,
     METRIC_CASH,
-    METRIC_DEBT,
+    METRIC_LONG_TERM_DEBT,
     METRIC_EPS_DILUTED,
     METRIC_REVENUE,
     METRIC_SHARES_OUTSTANDING,
@@ -714,14 +714,14 @@ class TestComparabilityPolicy(unittest.TestCase):
         reported so a reader can see how the figure was built.
         """
         vendor = make_vendor(
-            METRIC_DEBT,
+            METRIC_LONG_TERM_DEBT,
             84_343_996_416.0,
             as_of="2026-06-27",
             basis="UNDATED_INSTANT",
             period_type="instant",
         )
         declared = make_filing(
-            METRIC_DEBT,
+            METRIC_LONG_TERM_DEBT,
             82_347_000_000.0,
             period_start=None,
             extra_raw={
@@ -733,7 +733,7 @@ class TestComparabilityPolicy(unittest.TestCase):
                 }
             },
         )
-        result = cross_validate(METRIC_DEBT, vendor, declared)
+        result = cross_validate(METRIC_LONG_TERM_DEBT, vendor, declared)
         self.assertEqual(result.status, ValidationStatus.METHODOLOGY_MISMATCH)
         self.assertEqual(
             result.validation.comparison_basis["filing_composition"],
@@ -1025,7 +1025,7 @@ class TestSevenMetricsAlwaysAccountedFor(unittest.TestCase):
 
     def test_definition_divergent_metrics_are_declared(self):
         self.assertIn(METRIC_CASH, DEFINITION_DIVERGENT_METRICS)
-        self.assertIn(METRIC_DEBT, DEFINITION_DIVERGENT_METRICS)
+        self.assertIn(METRIC_LONG_TERM_DEBT, DEFINITION_DIVERGENT_METRICS)
         # shares is the same concept on both sides; its problem is a missing
         # date, and mislabelling that would be worse than not labelling it.
         self.assertNotIn(METRIC_SHARES_OUTSTANDING, DEFINITION_DIVERGENT_METRICS)

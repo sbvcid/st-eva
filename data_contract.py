@@ -414,7 +414,35 @@ METRIC_NET_INCOME = "net_income"
 METRIC_EPS_DILUTED = "eps_diluted"
 METRIC_ASSETS = "assets"
 METRIC_CASH = "cash"
+# 2.33: `debt` is renamed `long_term_debt`.
+#
+# Core `debt` claimed total debt while its declared components summed, by value
+# arithmetic, to `us-gaap:LongTermDebt`. Long-term debt is the decided semantic
+# target; the name follows the components, which are what filers actually report.
+# Short-term borrowings, total liabilities and lease-inclusive obligations are
+# excluded unless a source concept says of itself that it is part of long-term debt.
+#
+# `METRIC_DEBT` is **retained as the legacy alias** rather than deleted. The
+# sealed 2.2.3 archive holds 180 observations recorded under `metric = 'debt'`, and
+# `observations.metric` is part of the contract id -- so those rows must keep
+# resolving, and rewriting them would change `observation_id` and manufacture new
+# historical Evidence out of a naming decision. `canonical_metric_id()` is what
+# maps the old name onto the current one.
+METRIC_LONG_TERM_DEBT = "long_term_debt"
+
 METRIC_DEBT = "debt"
+"""Legacy id. Superseded by `long_term_debt`; kept so every observation archived
+under the old name still resolves. Use `canonical_metric_id()` when reading a
+metric id that came out of an archive."""
+
+CROSS_CONTRACT_METRIC_ALIASES: Dict[str, str] = {
+    METRIC_DEBT: METRIC_LONG_TERM_DEBT,
+}
+
+
+def canonical_metric_id(metric_id: str) -> str:
+    """Map a stored metric id onto the id that currently carries its meaning."""
+    return CROSS_CONTRACT_METRIC_ALIASES.get(metric_id, metric_id)
 METRIC_SHARES_OUTSTANDING = "shares_outstanding"
 METRIC_ENTERPRISE_VALUE = "enterprise_value"
 METRIC_MARKET_CAP = "market_cap"
@@ -442,7 +470,7 @@ CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_EPS_DILUTED,
     METRIC_ASSETS,
     METRIC_CASH,
-    METRIC_DEBT,
+    METRIC_LONG_TERM_DEBT,
     METRIC_SHARES_OUTSTANDING,
 )
 
@@ -551,7 +579,7 @@ METRIC_UNITS: Dict[str, str] = {
     METRIC_EPS_DILUTED: UNIT_PER_SHARE,
     METRIC_ASSETS: UNIT_CURRENCY,
     METRIC_CASH: UNIT_CURRENCY,
-    METRIC_DEBT: UNIT_CURRENCY,
+    METRIC_LONG_TERM_DEBT: UNIT_CURRENCY,
     METRIC_SHARES_OUTSTANDING: Unit.COUNT.value,
 }
 
@@ -572,9 +600,14 @@ METRIC_CROSS_SOURCE_DEFINITIONS: Dict[str, str] = {
         "synthesized. Vendor 'total cash' may include short-term investments, "
         "which is a different concept."
     ),
-    METRIC_DEBT: (
-        "Total debt at a balance sheet date, composed from the filer's "
-        "current and non-current debt concepts. Never synthesized."
+    METRIC_LONG_TERM_DEBT: (
+        "Long-term debt at a balance-sheet date, comprising the current and "
+        "non-current portions of long-term debt. Excludes short-term "
+        "borrowings, total liabilities and lease-inclusive debt obligations "
+        "unless a source concept states that it is part of long-term debt. "
+        "The current and non-current portions are two views of one quantity. "
+        "Never synthesized. Renamed from `debt` in 2.33, when the components and "
+        "the name were found to denote different quantities."
     ),
     METRIC_SHARES_OUTSTANDING: (
         "Shares outstanding at a stated date. Never synthesized. A period "
@@ -603,7 +636,7 @@ COMPARABLE_METRICS: Tuple[str, ...] = (
     METRIC_EPS_DILUTED,
     METRIC_ASSETS,
     METRIC_CASH,
-    METRIC_DEBT,
+    METRIC_LONG_TERM_DEBT,
     METRIC_SHARES_OUTSTANDING,
 )
 

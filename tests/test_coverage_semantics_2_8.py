@@ -265,9 +265,13 @@ class TestTheStatusesAreDistinct(LedgerFixture):
         """
         Asked, and the source had nothing.
         """
-        self.add_scope_run("debt", "SOURCE_SILENT")
+        # `long_term_debt`, not `debt`: 2.33 renamed the metric and `debt` is no
+        # longer in the active universe, so asking the ledger about it now
+        # measures the rename rather than the status. The status under test is
+        # unchanged.
+        self.add_scope_run("long_term_debt", "SOURCE_SILENT")
         self.assertEqual(
-            self.status_of(self.ledger(), "debt"), SOURCE_SILENT
+            self.status_of(self.ledger(), "long_term_debt"), SOURCE_SILENT
         )
 
     def test_not_yet_collected_is_the_only_backlog_item(self):
@@ -279,13 +283,13 @@ class TestTheStatusesAreDistinct(LedgerFixture):
         self.classify()
         self.decline(concept_id_for(IFRS_FULL, "LoansAndAdvancesToCustomers"),
                      "cash")
-        self.add_scope_run("debt", "SOURCE_SILENT")
+        self.add_scope_run("long_term_debt", "SOURCE_SILENT")
         ledger = self.ledger()
         self.assertEqual(
-            self.status_of(ledger, "debt"), SOURCE_SILENT
+            self.status_of(ledger, "long_term_debt"), SOURCE_SILENT
         )
         backlog = {r["metric"] for r in ledger["rows"] if r["is_backlog_item"]}
-        self.assertNotIn("debt", backlog)
+        self.assertNotIn("long_term_debt", backlog)
         self.assertNotIn("revenue", backlog)
         self.assertNotIn("cash", backlog)
         self.assertIn("r_and_d", backlog)

@@ -312,19 +312,70 @@ METRICS: Tuple[Metric, ...] = (
         normal_period_type="INSTANT",
         comparability_group="debt_components",
     ),
+    # 2.33: renamed from `debt`. **Product decision, not a hypothesis.**
+    #
+    # `debt` said "Total debt" while its four declared components summed -- by
+    # value arithmetic across three filers, not by name -- to
+    # `us-gaap:LongTermDebt`. So the name, the components and the definition each
+    # denoted a different quantity, and none of them was testable because the
+    # definition was circular.
+    #
+    # The components are what filers actually report, so the metric adopts them
+    # and the name follows. Short-term borrowings, total liabilities and
+    # lease-inclusive obligations are **excluded**: a source concept joins only if
+    # it says of itself that it is part of long-term debt, and never because the
+    # name resembles it.
+    #
+    # `total_debt` is deliberately NOT created. It is a future semantic candidate
+    # with no non-circular definition, no source representation and no
+    # cross-filer evidence -- not a refuted metric, an unestablished one. No
+    # `ShortTermBorrowings` mapping was added to stand in for it.
     Metric(
-        metric_id="debt",
-        display_name="Total debt",
+        metric_id="long_term_debt",
+        display_name="Long-term debt",
         statement="BALANCE_SHEET",
         semantic_definition=(
-            "Borrowings classified as debt under this metric definition. No "
-            "single standard concept states it, so it is a composition of "
-            "declared components and the composition is recorded on each "
-            "mapping."
+            "Long-term debt at a balance-sheet date, comprising the current "
+            "and non-current portions of long-term debt. Excludes "
+            "short-term borrowings, total liabilities and lease-inclusive debt "
+            "obligations unless a source concept states that it is part of "
+            "long-term debt. The current and non-current portions are two views "
+            "of one quantity and are declared as its components."
         ),
         unit_family="currency",
         normal_period_type="INSTANT",
         comparability_group="balance_sheet_totals",
+    ),
+    # The name `debt` is retained, **superseded**, with every observation filed
+    # against it untouched. `observations.metric` is part of the contract id, so
+    # rewriting it would change `observation_id` and manufacture new historical
+    # Evidence out of a naming decision. The row stays so those observations
+    # still resolve, and `metric_supersession` records that `debt` and
+    # `long_term_debt` denote the same quantity.
+    Metric(
+        metric_id="debt",
+        display_name="Long-term debt",
+        statement="BALANCE_SHEET",
+        semantic_definition=(
+            "Superseded by `long_term_debt` in 2.33 and retained so that every "
+            "observation archived under this name still resolves. It denotes the "
+            "same quantity: long-term debt at a balance-sheet date, comprising "
+            "the current and non-current portions of long-term debt. The metric "
+            "previously read 'Total debt' while its components summed to "
+            "long-term debt, and that claim was withdrawn."
+        ),
+        unit_family="currency",
+        normal_period_type="INSTANT",
+        comparability_group="balance_sheet_totals",
+        # `DEPRECATED`, which is the existing vocabulary member meaning "retained,
+        # no longer the active definition". Not a new `SUPERSEDED` member: the
+        # successor is named in `metric_supersession`, and adding a second status
+        # that means the same thing would be vocabulary inflation. Every consumer
+        # that reads `status = 'ACTIVE'` -- the coverage universe, the evidence
+        # surface, the cross-framework verifier -- stops treating this row as part
+        # of the Core set while its observations keep resolving through the
+        # supersession chain.
+        status="DEPRECATED",
     ),
     Metric(
         metric_id="shares_outstanding",
@@ -1084,19 +1135,31 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         mapping_type=MAPPING_EXACT,
         effective_from="2014-09-27",
     ),
+    # Repointed to `long_term_debt` in 2.33. They were never moved off `debt` row
+    # by row: the four concepts now define the successor, and a historical
+    # `metric = 'debt'` observation resolves through `metric_supersession` to
+    # reach them, so nothing archived before the rename loses its mapping.
     ConceptMapping(
-        metric_id="debt",
+        metric_id="long_term_debt",
         concept_id=concept_id_for(US_GAAP, "LongTermDebtNoncurrent"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2014-09-27",
-        notes="a component of total debt, never the total on its own",
+        notes=(
+            "the non-current portion of long-term debt, never the total on its "
+            "own. Long-term debt excludes short-term borrowings and capital "
+            "lease obligations by the source's own description of the element."
+        ),
     ),
     ConceptMapping(
-        metric_id="debt",
+        metric_id="long_term_debt",
         concept_id=concept_id_for(US_GAAP, "LongTermDebtCurrent"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2014-09-27",
-        notes="a component of total debt, never the total on its own",
+        notes=(
+            "the current portion of long-term debt, never the total on its own. "
+            "The current and non-current portions are two views of one "
+            "quantity; a series must not continue across the partial boundary."
+        ),
     ),
     # Capital expenditure. The clearest demonstration that a name is not a
     # definition: these two read alike, and the SEC says one includes software
@@ -1250,29 +1313,28 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         ),
     ),
     ConceptMapping(
-        metric_id="debt",
+        metric_id="long_term_debt",
         concept_id=concept_id_for(IFRS_FULL, "CurrentPortionOfLongtermBorrowings"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2016-12-31",
         notes=(
-            "one declared component of a composition, exactly as the US-GAAP "
-            "current/non-current long-term pair already is. The metric states "
-            "that no single standard concept declares debt, so the composition "
-            "is recorded on each mapping and a series must not continue across "
-            "a partial boundary. Window: earliest reported period for the "
-            "element across filers using the taxonomy"
+            "the current portion of long-term debt under IFRS, structurally the "
+            "same shape as the US-GAAP current/non-current pair and denoting the "
+            "same semantic target as it. A series must not continue across the "
+            "partial boundary. Window: earliest reported period for the element "
+            "across filers using the taxonomy"
         ),
     ),
     ConceptMapping(
-        metric_id="debt",
+        metric_id="long_term_debt",
         concept_id=concept_id_for(IFRS_FULL, "LongtermBorrowings"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2020-12-31",
         notes=(
-            "the non-current component of the same composition, and structurally "
-            "the same shape as the US-GAAP declaration it sits beside -- which is "
-            "the generalisation 2.7 was asked to demonstrate. Window: earliest "
-            "reported period for the element across filers using the taxonomy"
+            "the non-current portion of long-term debt under IFRS, denoting the "
+            "same semantic target as the US-GAAP declaration beside it. Window: "
+            "earliest reported period for the element across filers using the "
+            "taxonomy"
         ),
     ),
     # -- 2.9: the seven Core metrics that had no declared concept ---------
@@ -1804,10 +1866,35 @@ def seed(registry: CoreRegistry) -> Dict[str, int]:
         declines += 1
     for taxonomy, kind, reason in UNMODELLED_TAXONOMIES:
         registry.mark_taxonomy_unmodelled(taxonomy, kind, reason)
+    # 2.33: the `debt` -> `long_term_debt` decision, recorded after the metric
+    # rows exist so the supersession's references resolve.
+    #
+    # Recorded here rather than in migration 0016 because a migration runs before
+    # any seed has created `metric_registry`, and the row references two of them.
+    # Idempotent, so re-seeding an archive does not duplicate the decision.
+    registry.record_supersession(
+        "debt",
+        "long_term_debt",
+        reason=(
+            "Core debt claimed total debt while its declared components "
+            "reconstruct long-term debt. Long-term debt is adopted as the "
+            "semantic target: the components already are it, and total_debt is "
+            "left unestablished because no filer in the corpus reports a "
+            "quantity its current and non-current components sum to. Short-term "
+            "borrowings, total liabilities and lease-inclusive obligations are "
+            "excluded unless a source concept says so itself, and never on "
+            "name similarity."
+        ),
+        evidence=(
+            "reports/2_33_DEBT_SEMANTIC_DECISION.md; "
+            "harness/231-debt-composition.json"
+        ),
+    )
     return {
         "metrics": len(METRICS),
         "concepts": len(CONCEPTS),
         "mappings": len(MAPPINGS),
         "declines": declines,
         "unmodelled_taxonomies": len(UNMODELLED_TAXONOMIES),
+        "supersessions": 1,
     }
