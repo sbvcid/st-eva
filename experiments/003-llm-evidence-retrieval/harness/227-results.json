@@ -1,0 +1,6981 @@
+{
+  "cohort_a_context_enrichment": {
+    "issuers": [
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 146,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 164,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 348,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 338,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 264,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 338,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 234,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 209,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 338,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 134,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 234,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 234,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 338,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 247,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 70,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 234,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 37.0,
+        "dimension_collision_rows": 76,
+        "dimension_collisions_by_metric": {
+          "assets": 3,
+          "debt": 1,
+          "eps_diluted": 25,
+          "equity": 3,
+          "gross_profit": 5,
+          "income_tax": 5,
+          "long_term_debt_noncurrent": 1,
+          "net_income": 5,
+          "operating_cash_flow": 4,
+          "operating_income": 5,
+          "revenue": 5,
+          "weighted_average_diluted_shares": 14
+        },
+        "earliest_filing": "2009-07-22",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "424B2",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-01",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 4230,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "AAPL"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 5,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 5,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 7,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 6,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 3,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 5,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 5,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 0,
+        "dimension_collisions_by_metric": {},
+        "earliest_filing": "2025-11-18",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K",
+          "S-1",
+          "S-1/A",
+          "S-1MEF",
+          "S-4",
+          "S-4/A"
+        ],
+        "latest_filing": "2026-09-30",
+        "max_distinct_values_one_key": 0,
+        "metrics_with_evidence": 7,
+        "observations": 36,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 6,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 7,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "CCXIU"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 120,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 96,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 240,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 44,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 121,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 239,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 3,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 113,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 277,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 99,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 178,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 150,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 101,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 104,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 62,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 100,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 112,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "capex": 3,
+          "cash": 13,
+          "eps_diluted": 12,
+          "equity": 9,
+          "gross_profit": 5,
+          "interest_expense": 6,
+          "net_income": 10,
+          "operating_income": 7,
+          "r_and_d": 11,
+          "revenue": 5,
+          "sbc": 3,
+          "sga": 18,
+          "weighted_average_diluted_shares": 8
+        },
+        "earliest_filing": "2012-11-07",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "10-Q/A",
+          "8-K",
+          "8-K/A",
+          "8-K12B",
+          "DEF 14A",
+          "DEF 14C",
+          "POS AM",
+          "PRE 14A",
+          "PREM14C",
+          "PRER14A",
+          "PRER14C",
+          "S-1/A",
+          "S-3",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-25",
+        "max_distinct_values_one_key": 4,
+        "metrics_with_evidence": 18,
+        "observations": 2401,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "CHRN"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 149,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 155,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 299,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 94,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 265,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 444,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 265,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 242,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 30,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 100,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 265,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 121,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 69,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 222,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 43.1,
+        "dimension_collision_rows": 58,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "cash": 1,
+          "debt": 1,
+          "equity": 8,
+          "gross_profit": 15,
+          "long_term_debt_current": 1,
+          "operating_cash_flow": 2,
+          "operating_income": 7,
+          "r_and_d": 5,
+          "sga": 14,
+          "weighted_average_diluted_shares": 3
+        },
+        "earliest_filing": "2009-07-30",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "11-K",
+          "424B5",
+          "8-K",
+          "DEF 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-04",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 3620,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 1,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 1,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "CMI"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 30,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 59,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 44,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 48,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 61,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 29,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 40,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 15,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 34,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 7,
+        "dimension_collisions_by_metric": {
+          "cash": 1,
+          "eps_diluted": 3,
+          "equity": 1,
+          "net_income": 1,
+          "sga": 1
+        },
+        "earliest_filing": "2021-11-10",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K"
+        ],
+        "latest_filing": "2026-07-21",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 13,
+        "observations": 461,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 13,
+          "DELIBERATELY_DECLINED": 1,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 6,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "CONC"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 127,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 132,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 210,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 113,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 292,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 224,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 292,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 204,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 165,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 282,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 132,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 204,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 204,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 292,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 132,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 204,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 60,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 292,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 90,
+        "dimension_collisions_by_metric": {
+          "assets": 6,
+          "cash": 7,
+          "debt": 5,
+          "eps_diluted": 14,
+          "equity": 11,
+          "gross_profit": 3,
+          "long_term_debt_current": 5,
+          "net_income": 3,
+          "operating_cash_flow": 5,
+          "revenue": 17,
+          "weighted_average_diluted_shares": 14
+        },
+        "earliest_filing": "2011-11-14",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "11-K",
+          "8-K",
+          "8-K/A",
+          "DEF 14A"
+        ],
+        "latest_filing": "2026-09-24",
+        "max_distinct_values_one_key": 5,
+        "metrics_with_evidence": 18,
+        "observations": 3561,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "KTCC"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 120,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 120,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 257,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 116,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 82,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 209,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 100,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 183,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 102,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 230,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 160,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 180,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 60,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 82,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 22,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "cash": 1,
+          "gross_profit": 4,
+          "income_tax": 2,
+          "interest_expense": 2,
+          "net_income": 1,
+          "operating_cash_flow": 1,
+          "r_and_d": 4,
+          "sga": 4,
+          "weighted_average_diluted_shares": 1
+        },
+        "earliest_filing": "2011-11-14",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "11-K",
+          "8-K",
+          "DEF 14A",
+          "S-3"
+        ],
+        "latest_filing": "2026-09-22",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 2721,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "LTRX"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 10,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 8,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 2,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "equity": 1
+        },
+        "earliest_filing": "2026-03-09",
+        "forms": [
+          "10-Q",
+          "8-K",
+          "S-1",
+          "S-1/A",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-25",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 13,
+        "observations": 54,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 13,
+          "DELIBERATELY_DECLINED": 2,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 5,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "MAIR"
+      },
+      {
+        "business_model": "SERVICES",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 142,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 230,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 410,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 258,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 340,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 213,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 306,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 232,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 194,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 340,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 170,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 278,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 230,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 338,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 133,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 230,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 68,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 232,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 66.6,
+        "dimension_collision_rows": 85,
+        "dimension_collisions_by_metric": {
+          "assets": 3,
+          "debt": 1,
+          "eps_diluted": 10,
+          "equity": 5,
+          "gross_profit": 16,
+          "income_tax": 10,
+          "long_term_debt_noncurrent": 1,
+          "net_income": 11,
+          "operating_income": 8,
+          "revenue": 5,
+          "sga": 12,
+          "weighted_average_diluted_shares": 3
+        },
+        "earliest_filing": "2009-10-23",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "10-Q/A",
+          "11-K",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-02",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 4344,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "MSFT"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 132,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 149,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 336,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 48,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 309,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 379,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 309,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 213,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 187,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 336,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 107,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 309,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 213,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 309,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 183,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 213,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 64,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 213,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 45.0,
+        "dimension_collision_rows": 23,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "capex": 5,
+          "equity": 2,
+          "operating_income": 9,
+          "weighted_average_diluted_shares": 6
+        },
+        "earliest_filing": "2010-01-12",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "424B5",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "PRE 14A",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-30",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 4009,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "MU"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 122,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 114,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 219,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 36,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 309,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 234,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 183,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 98,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 229,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 128,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 170,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 190,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 218,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 99,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 195,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 62,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 64,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 98,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "capex": 8,
+          "cash": 3,
+          "eps_diluted": 1,
+          "equity": 5,
+          "gross_profit": 10,
+          "income_tax": 4,
+          "interest_expense": 12,
+          "net_income": 5,
+          "operating_cash_flow": 2,
+          "operating_income": 10,
+          "r_and_d": 6,
+          "revenue": 8,
+          "sbc": 2,
+          "sga": 13,
+          "weighted_average_diluted_shares": 7
+        },
+        "earliest_filing": "2011-08-05",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "8-K",
+          "8-K/A",
+          "DEF 14A"
+        ],
+        "latest_filing": "2026-08-12",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 17,
+        "observations": 2670,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 3,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "NEON"
+      },
+      {
+        "business_model": "FINANCE_SERVICES",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 8,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 16,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 9,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 22,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 12,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 12,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 12,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 24,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 12,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 12,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 6,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 6,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "eps_diluted": 1,
+          "income_tax": 2,
+          "interest_expense": 2
+        },
+        "earliest_filing": "2022-04-21",
+        "forms": [
+          "20-F"
+        ],
+        "latest_filing": "2026-04-08",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 11,
+        "observations": 145,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 11,
+          "DELIBERATELY_DECLINED": 3,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 6,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "NU"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 138,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 90,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 339,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 88,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 309,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 248,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 305,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 231,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 196,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 314,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 161,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 308,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 193,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 69,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 231,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 65.8,
+        "dimension_collision_rows": 158,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "capex": 3,
+          "cash": 6,
+          "eps_diluted": 18,
+          "equity": 3,
+          "gross_profit": 11,
+          "income_tax": 10,
+          "interest_expense": 13,
+          "net_income": 13,
+          "operating_cash_flow": 8,
+          "operating_income": 7,
+          "r_and_d": 7,
+          "revenue": 9,
+          "sbc": 8,
+          "sga": 7,
+          "weighted_average_diluted_shares": 34
+        },
+        "earliest_filing": "2009-08-20",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "424B5",
+          "8-K",
+          "DEF 14A",
+          "PRE 14A",
+          "S-3ASR"
+        ],
+        "latest_filing": "2026-09-03",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 18,
+        "observations": 3895,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "NVDA"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 149,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 118,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 268,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 260,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 216,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 280,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 217,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 215,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 194,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 268,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 122,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 215,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 9,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 248,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 149,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 213,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 66,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 216,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 13.6,
+        "dimension_collision_rows": 151,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "capex": 2,
+          "cash": 1,
+          "debt": 2,
+          "eps_diluted": 7,
+          "equity": 14,
+          "gross_profit": 13,
+          "income_tax": 15,
+          "interest_expense": 12,
+          "long_term_debt_current": 1,
+          "long_term_debt_noncurrent": 1,
+          "net_income": 15,
+          "operating_cash_flow": 5,
+          "operating_income": 21,
+          "revenue": 7,
+          "sbc": 11,
+          "sga": 15,
+          "weighted_average_diluted_shares": 7
+        },
+        "earliest_filing": "2010-08-09",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "8-K",
+          "DEF 14A",
+          "PRE 14A",
+          "PRER14A"
+        ],
+        "latest_filing": "2026-09-09",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 18,
+        "observations": 3423,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "RBC"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 108,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 122,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 293,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 42,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 120,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 290,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 2,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 150,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 90,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 169,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 72,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 15,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 115,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 26,
+        "dimension_collisions_by_metric": {
+          "capex": 1,
+          "income_tax": 3,
+          "operating_cash_flow": 3,
+          "weighted_average_diluted_shares": 19
+        },
+        "earliest_filing": "2013-03-07",
+        "forms": [
+          "20-F",
+          "20-F/A",
+          "6-K",
+          "6-K/A",
+          "F-3",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-13",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 2458,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "SSYS"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 34,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 6,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 54,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 64,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 102,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 52,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 39,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 42,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 48,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 51,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 17,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 48,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 15,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "debt": 2,
+          "gross_profit": 2,
+          "long_term_debt_current": 1,
+          "long_term_debt_noncurrent": 1,
+          "operating_income": 2,
+          "r_and_d": 2,
+          "sga": 2,
+          "shares_outstanding": 1
+        },
+        "earliest_filing": "2010-03-30",
+        "forms": [
+          "11-K",
+          "20-F",
+          "20-F/A",
+          "F-3ASR"
+        ],
+        "latest_filing": "2026-06-04",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 18,
+        "observations": 862,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "STMEF"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 10,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 25,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 6,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 28,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 6,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 32,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "eps_diluted": 1,
+          "equity": 10,
+          "gross_profit": 3,
+          "income_tax": 6,
+          "interest_expense": 2,
+          "net_income": 5,
+          "operating_income": 3
+        },
+        "earliest_filing": "2024-04-26",
+        "forms": [
+          "20-F",
+          "20-F/A"
+        ],
+        "latest_filing": "2026-04-23",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 15,
+        "observations": 215,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 15,
+          "DELIBERATELY_DECLINED": 1,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 4,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "TRSG"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 36,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 28,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 53,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 52,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 23,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 28,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 9,
+        "dimension_collisions_by_metric": {
+          "cash": 8,
+          "equity": 1
+        },
+        "earliest_filing": "2016-04-11",
+        "forms": [
+          "20-F",
+          "6-K"
+        ],
+        "latest_filing": "2026-04-16",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 14,
+        "observations": 420,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 14,
+          "DELIBERATELY_DECLINED": 2,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 4,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "TSM"
+      }
+    ],
+    "panel": {
+      "archive": "snapshot-227-a1.sqlite",
+      "dimension_collision_rows": 970,
+      "distinct_accessions_in_observations": 774,
+      "distinct_source_fact_id": 39525,
+      "documents_stored": 357,
+      "duplicate_identities": 0,
+      "filings_held": 1570,
+      "issuers": 18,
+      "missing_accession": 0,
+      "missing_document": 0,
+      "observations": 39525
+    },
+    "what_it_is": "18 filers whose companyfacts were already held; submissions fetched for the first time"
+  },
+  "cohort_b_new_issuers": {
+    "issuers": [
+      {
+        "business_model": "INSURANCE",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 144,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 328,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 321,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 284,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 321,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 286,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 248,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 155,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 164,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 321,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 69,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 40.8,
+        "dimension_collision_rows": 126,
+        "dimension_collisions_by_metric": {
+          "assets": 6,
+          "eps_diluted": 21,
+          "equity": 10,
+          "income_tax": 18,
+          "interest_expense": 7,
+          "net_income": 12,
+          "operating_cash_flow": 3,
+          "operating_income": 16,
+          "revenue": 7,
+          "sga": 19,
+          "weighted_average_diluted_shares": 7
+        },
+        "earliest_filing": "2009-08-07",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "10-Q/A",
+          "11-K",
+          "424B2",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-3",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-07",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 13,
+        "observations": 3091,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 13,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 7,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "AFL"
+      },
+      {
+        "business_model": "UNCLASSIFIED",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 80,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 55,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 87,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 40,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 163,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 60,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 24,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 158,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 73,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 112,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 41,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 37,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 120,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 41,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 24,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "cash": 4,
+          "eps_diluted": 2,
+          "equity": 2,
+          "interest_expense": 1,
+          "net_income": 2,
+          "operating_income": 1,
+          "sga": 10,
+          "weighted_average_diluted_shares": 1
+        },
+        "earliest_filing": "2011-11-07",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "8-K",
+          "8-K/A",
+          "S-1",
+          "S-1/A"
+        ],
+        "latest_filing": "2026-05-15",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 15,
+        "observations": 1137,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 15,
+          "DELIBERATELY_DECLINED": 1,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 4,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "AWCA"
+      },
+      {
+        "business_model": "INSURANCE",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 136,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 321,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 12,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 301,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 240,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 221,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 131,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 301,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 124,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 301,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 221,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 68,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 208,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 53.0,
+        "dimension_collision_rows": 104,
+        "dimension_collisions_by_metric": {
+          "assets": 3,
+          "eps_diluted": 25,
+          "equity": 10,
+          "income_tax": 13,
+          "net_income": 25,
+          "operating_cash_flow": 5,
+          "revenue": 15,
+          "sga": 8
+        },
+        "earliest_filing": "2009-08-07",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "424B2",
+          "8-K",
+          "DEF 14A",
+          "PRE 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-07-28",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 13,
+        "observations": 2585,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 13,
+          "DELIBERATELY_DECLINED": 1,
+          "MAPPED_NO_CURRENT_OBSERVATION": 1,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 5,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "CB"
+      },
+      {
+        "business_model": "SERVICES",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 132,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 194,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 370,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 178,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 272,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 363,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 56,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 216,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 186,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 184,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 64,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 272,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 286,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 148,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 216,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 66,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 197,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 32.2,
+        "dimension_collision_rows": 53,
+        "dimension_collisions_by_metric": {
+          "assets": 3,
+          "cash": 1,
+          "debt": 1,
+          "equity": 4,
+          "gross_profit": 4,
+          "income_tax": 4,
+          "interest_expense": 1,
+          "long_term_debt_current": 1,
+          "operating_income": 12,
+          "revenue": 4,
+          "sbc": 2,
+          "sga": 11,
+          "weighted_average_diluted_shares": 5
+        },
+        "earliest_filing": "2010-08-03",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-24",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 17,
+        "observations": 3400,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 1,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "CRL"
+      },
+      {
+        "business_model": "UNCLASSIFIED",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 124,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 343,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 184,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 403,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 108,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 281,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 286,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 135,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 172,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 23,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 63,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 27,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "cash": 4,
+          "equity": 6,
+          "interest_expense": 2,
+          "net_income": 7,
+          "operating_cash_flow": 4,
+          "operating_income": 2
+        },
+        "earliest_filing": "2011-08-10",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "10-Q/A",
+          "424B5",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "PRE 14A",
+          "S-3ASR"
+        ],
+        "latest_filing": "2026-09-24",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 11,
+        "observations": 2122,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 11,
+          "DELIBERATELY_DECLINED": 2,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 7,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "EFC"
+      },
+      {
+        "business_model": "UNCLASSIFIED",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 138,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 173,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 330,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 172,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 257,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 188,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 313,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 145,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 313,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 173,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 319,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 173,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 225,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 70,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 15.7,
+        "dimension_collision_rows": 125,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "capex": 5,
+          "cash": 6,
+          "debt": 2,
+          "eps_diluted": 21,
+          "equity": 3,
+          "gross_profit": 8,
+          "income_tax": 7,
+          "interest_expense": 7,
+          "long_term_debt_current": 1,
+          "long_term_debt_noncurrent": 1,
+          "net_income": 8,
+          "operating_cash_flow": 5,
+          "operating_income": 7,
+          "revenue": 8,
+          "sbc": 1,
+          "sga": 13,
+          "weighted_average_diluted_shares": 21
+        },
+        "earliest_filing": "2009-07-24",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "11-K",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "PRE 14A",
+          "S-8"
+        ],
+        "latest_filing": "2026-07-16",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 17,
+        "observations": 3651,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 1,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "FAST"
+      },
+      {
+        "business_model": "MINING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 211,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 174,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 356,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 198,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 255,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 402,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 232,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 13,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 11,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 162,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 320,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 344,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 144,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 232,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 73,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 253,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 19.2,
+        "dimension_collision_rows": 118,
+        "dimension_collisions_by_metric": {
+          "assets": 5,
+          "cash": 22,
+          "debt": 3,
+          "eps_diluted": 7,
+          "income_tax": 10,
+          "long_term_debt_noncurrent": 3,
+          "operating_cash_flow": 3,
+          "operating_income": 22,
+          "revenue": 14,
+          "sga": 21,
+          "weighted_average_diluted_shares": 8
+        },
+        "earliest_filing": "2009-05-11",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "PRE 14A",
+          "S-3ASR",
+          "S-8",
+          "SD"
+        ],
+        "latest_filing": "2026-09-24",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 16,
+        "observations": 3380,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 16,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 2,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "FCX"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 130,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 158,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 201,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 81,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 298,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 248,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 303,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 108,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 33,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 166,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 186,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 222,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 65,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 18.4,
+        "dimension_collision_rows": 60,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "eps_diluted": 17,
+          "net_income": 2,
+          "operating_income": 9,
+          "sbc": 1,
+          "sga": 17,
+          "weighted_average_diluted_shares": 13
+        },
+        "earliest_filing": "2010-08-24",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "11-K",
+          "424B2",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-28",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 17,
+        "observations": 3047,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 1,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "FLO"
+      },
+      {
+        "business_model": "INSURANCE",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 147,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 362,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 464,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 233,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 367,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 139,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 191,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 360,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 161,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 231,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 70,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 360,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 34.3,
+        "dimension_collision_rows": 370,
+        "dimension_collisions_by_metric": {
+          "assets": 7,
+          "cash": 23,
+          "eps_diluted": 31,
+          "equity": 37,
+          "income_tax": 45,
+          "interest_expense": 21,
+          "net_income": 36,
+          "operating_cash_flow": 1,
+          "operating_income": 49,
+          "revenue": 51,
+          "sbc": 13,
+          "sga": 46,
+          "weighted_average_diluted_shares": 10
+        },
+        "earliest_filing": "2009-07-31",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "11-K",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "DEFC14A",
+          "PRE 14A",
+          "PREC14A",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-20",
+        "max_distinct_values_one_key": 5,
+        "metrics_with_evidence": 14,
+        "observations": 3559,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 14,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 6,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "GNW"
+      },
+      {
+        "business_model": "SERVICES",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 104,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 118,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 264,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 6,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 224,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 342,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 168,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 149,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 240,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 118,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 240,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 264,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 114,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 168,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 168,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 7.6,
+        "dimension_collision_rows": 167,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "cash": 3,
+          "eps_diluted": 24,
+          "equity": 6,
+          "income_tax": 25,
+          "interest_expense": 15,
+          "net_income": 8,
+          "operating_cash_flow": 12,
+          "operating_income": 21,
+          "revenue": 18,
+          "sbc": 5,
+          "sga": 15,
+          "weighted_average_diluted_shares": 13
+        },
+        "earliest_filing": "2014-05-09",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K",
+          "DEF 14A",
+          "PRE 14A",
+          "S-4"
+        ],
+        "latest_filing": "2026-07-28",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 16,
+        "observations": 2737,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 16,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 1,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 3,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "HLT"
+      },
+      {
+        "business_model": "UNCLASSIFIED",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 122,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 373,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 135,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 373,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 96,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 74,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 172,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 162,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 138,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 134,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 130,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 138,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 198,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 61,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 147,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 19.1,
+        "dimension_collision_rows": 38,
+        "dimension_collisions_by_metric": {
+          "assets": 4,
+          "cash": 2,
+          "eps_diluted": 3,
+          "gross_profit": 2,
+          "income_tax": 4,
+          "interest_expense": 4,
+          "operating_cash_flow": 5,
+          "operating_income": 7,
+          "revenue": 2,
+          "sga": 2,
+          "weighted_average_diluted_shares": 3
+        },
+        "earliest_filing": "2011-08-12",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K",
+          "DEF 14A",
+          "POSASR",
+          "S-3",
+          "S-8",
+          "SC 13D/A"
+        ],
+        "latest_filing": "2026-09-11",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 15,
+        "observations": 2453,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 15,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 5,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "HPP"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 106,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 62,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 322,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 106,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 56,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 242,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 37,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 141,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 251,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 118,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 83,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 93,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 15,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 133,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 154,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 61,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 56,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 12,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "cash": 10,
+          "equity": 1
+        },
+        "earliest_filing": "2011-08-15",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-1",
+          "S-1/A",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-09",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 17,
+        "observations": 2036,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 1,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "KURA"
+      },
+      {
+        "business_model": "SERVICES",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 144,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 161,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 354,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 52,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 290,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 292,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 207,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 330,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 162,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 290,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 290,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 114,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 73,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 217,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 50.5,
+        "dimension_collision_rows": 114,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "capex": 1,
+          "cash": 2,
+          "eps_diluted": 13,
+          "equity": 6,
+          "income_tax": 12,
+          "net_income": 13,
+          "operating_cash_flow": 10,
+          "operating_income": 16,
+          "revenue": 13,
+          "sga": 25,
+          "shares_outstanding": 1
+        },
+        "earliest_filing": "2009-07-17",
+        "forms": [
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "10-Q/A",
+          "11-K",
+          "424B5",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-24",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 16,
+        "observations": 3450,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 16,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 2,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "MAR"
+      },
+      {
+        "business_model": "SERVICES",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 57,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 11,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 98,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 70,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 59,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 118,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 59,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 78,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 56,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 36,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 59,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 62,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 57,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 59,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 16,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 59,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 32,
+        "dimension_collisions_by_metric": {
+          "assets": 6,
+          "cash": 3,
+          "debt": 2,
+          "eps_diluted": 2,
+          "equity": 3,
+          "income_tax": 1,
+          "interest_expense": 2,
+          "long_term_debt_current": 1,
+          "long_term_debt_noncurrent": 1,
+          "net_income": 2,
+          "operating_cash_flow": 2,
+          "operating_income": 2,
+          "revenue": 1,
+          "sga": 2,
+          "weighted_average_diluted_shares": 2
+        },
+        "earliest_filing": "2011-04-01",
+        "forms": [
+          "20-F",
+          "6-K"
+        ],
+        "latest_filing": "2026-03-13",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 16,
+        "observations": 954,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 16,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 2,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "MLCO"
+      },
+      {
+        "business_model": "MINING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 36,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 44,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 34,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 119,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 92,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 30,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 46,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 10,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 26,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "debt": 2,
+          "eps_diluted": 6,
+          "equity": 8,
+          "income_tax": 3,
+          "net_income": 6
+        },
+        "earliest_filing": "2016-04-05",
+        "forms": [
+          "20-F",
+          "20-F/A",
+          "6-K",
+          "6-K/A",
+          "F-3ASR",
+          "S-8",
+          "SD"
+        ],
+        "latest_filing": "2026-09-01",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 12,
+        "observations": 595,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 12,
+          "DELIBERATELY_DECLINED": 2,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 6,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "RIO"
+      },
+      {
+        "business_model": "MINING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 19,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 28,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 23,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 38,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 36,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 16,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 4,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 14,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 21,
+        "dimension_collisions_by_metric": {
+          "assets": 1,
+          "debt": 2,
+          "eps_diluted": 2,
+          "equity": 2,
+          "gross_profit": 3,
+          "income_tax": 3,
+          "interest_expense": 2,
+          "net_income": 2,
+          "r_and_d": 1,
+          "revenue": 1,
+          "sga": 2
+        },
+        "earliest_filing": "2016-03-28",
+        "forms": [
+          "40-F",
+          "6-K",
+          "SD"
+        ],
+        "latest_filing": "2026-05-28",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 13,
+        "observations": 268,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 13,
+          "DELIBERATELY_DECLINED": 3,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 4,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "TECK"
+      },
+      {
+        "business_model": "MANUFACTURING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 122,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 137,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 190,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 196,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 207,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 268,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 207,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 199,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 53,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 101,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 199,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 169,
+            "status": "COLLECTED"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 133,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 137,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 199,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 61,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 199,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 18.8,
+        "dimension_collision_rows": 112,
+        "dimension_collisions_by_metric": {
+          "assets": 4,
+          "capex": 1,
+          "eps_diluted": 7,
+          "equity": 5,
+          "gross_profit": 19,
+          "income_tax": 8,
+          "net_income": 7,
+          "operating_cash_flow": 5,
+          "operating_income": 20,
+          "r_and_d": 4,
+          "revenue": 4,
+          "sbc": 3,
+          "sga": 17,
+          "weighted_average_diluted_shares": 8
+        },
+        "earliest_filing": "2011-09-08",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "10-Q/A",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-4",
+          "S-4/A",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-11",
+        "max_distinct_values_one_key": 3,
+        "metrics_with_evidence": 17,
+        "observations": 2777,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 1,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 0,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "THRMV"
+      },
+      {
+        "business_model": "INSURANCE",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 146,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 112,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 18,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 341,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 219,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 341,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 209,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 101,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 67,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 341,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 69,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 237,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 53.6,
+        "dimension_collision_rows": 16,
+        "dimension_collisions_by_metric": {
+          "assets": 3,
+          "operating_cash_flow": 3,
+          "revenue": 8,
+          "sga": 2
+        },
+        "earliest_filing": "2009-08-05",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "10-Q/A",
+          "11-K",
+          "424B3",
+          "424B5",
+          "8-K",
+          "DEF 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-07",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 14,
+        "observations": 2675,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 14,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 4,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "TRV"
+      },
+      {
+        "business_model": "UNCLASSIFIED",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 179,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 146,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 320,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 110,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 278,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 189,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 257,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 146,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 97,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 202,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 65,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 212,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 19.4,
+        "dimension_collision_rows": 53,
+        "dimension_collisions_by_metric": {
+          "assets": 3,
+          "eps_diluted": 15,
+          "equity": 3,
+          "gross_profit": 1,
+          "income_tax": 1,
+          "net_income": 1,
+          "operating_cash_flow": 5,
+          "operating_income": 1,
+          "sbc": 4,
+          "weighted_average_diluted_shares": 19
+        },
+        "earliest_filing": "2010-08-03",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "424B2",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "PRE 14A",
+          "S-3ASR"
+        ],
+        "latest_filing": "2026-08-25",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 17,
+        "observations": 3261,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 1,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 2,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "TSCO"
+      },
+      {
+        "business_model": "INSURANCE",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 160,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 164,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 316,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 214,
+            "status": "COLLECTED"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 268,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 298,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 228,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 228,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "MAPPED_NO_CURRENT_OBSERVATION"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 266,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 158,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 268,
+            "status": "COLLECTED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 268,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 182,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 228,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 69,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 228,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 68.4,
+        "dimension_collision_rows": 12,
+        "dimension_collisions_by_metric": {
+          "assets": 2,
+          "debt": 1,
+          "long_term_debt_noncurrent": 1,
+          "sbc": 1,
+          "sga": 7
+        },
+        "earliest_filing": "2009-08-06",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "11-K",
+          "424B5",
+          "8-K",
+          "8-K/A",
+          "DEF 14A",
+          "S-3ASR",
+          "S-8"
+        ],
+        "latest_filing": "2026-09-08",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 16,
+        "observations": 3543,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 16,
+          "DELIBERATELY_DECLINED": 0,
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 2,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "UNH"
+      },
+      {
+        "business_model": "UNCLASSIFIED",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 122,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 138,
+            "status": "COLLECTED"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 320,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 282,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 306,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 206,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 26,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 272,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 116,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 405,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 136,
+            "status": "COLLECTED"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 198,
+            "status": "COLLECTED"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 60,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 195,
+            "status": "COLLECTED"
+          }
+        },
+        "declared_date_pct": 44.5,
+        "dimension_collision_rows": 277,
+        "dimension_collisions_by_metric": {
+          "assets": 8,
+          "capex": 11,
+          "cash": 15,
+          "eps_diluted": 26,
+          "equity": 12,
+          "income_tax": 28,
+          "net_income": 37,
+          "operating_cash_flow": 6,
+          "revenue": 69,
+          "sbc": 11,
+          "sga": 38,
+          "weighted_average_diluted_shares": 16
+        },
+        "earliest_filing": "2011-12-07",
+        "forms": [
+          "10-K",
+          "10-Q",
+          "8-K",
+          "DEF 14A",
+          "PRE 14A",
+          "S-8"
+        ],
+        "latest_filing": "2026-08-06",
+        "max_distinct_values_one_key": 4,
+        "metrics_with_evidence": 14,
+        "observations": 2782,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 14,
+          "DELIBERATELY_DECLINED": 1,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 5,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "VAC"
+      },
+      {
+        "business_model": "MINING",
+        "by_metric": {
+          "assets": {
+            "conflicts": 0,
+            "observations": 42,
+            "status": "COLLECTED"
+          },
+          "capex": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "cash": {
+            "conflicts": 0,
+            "observations": 75,
+            "status": "COLLECTED"
+          },
+          "debt": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "eps_diluted": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "equity": {
+            "conflicts": 0,
+            "observations": 75,
+            "status": "COLLECTED"
+          },
+          "gross_profit": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "income_tax": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "interest_expense": {
+            "conflicts": 0,
+            "observations": 76,
+            "status": "COLLECTED"
+          },
+          "long_term_debt_current": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "long_term_debt_noncurrent": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "net_income": {
+            "conflicts": 0,
+            "observations": 72,
+            "status": "COLLECTED"
+          },
+          "operating_cash_flow": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "operating_income": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          },
+          "r_and_d": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "revenue": {
+            "conflicts": 0,
+            "observations": 50,
+            "status": "COLLECTED"
+          },
+          "sbc": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "sga": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "SOURCE_SILENT"
+          },
+          "shares_outstanding": {
+            "conflicts": 0,
+            "observations": 10,
+            "status": "COLLECTED"
+          },
+          "weighted_average_diluted_shares": {
+            "conflicts": 0,
+            "observations": 0,
+            "status": "DELIBERATELY_DECLINED"
+          }
+        },
+        "declared_date_pct": 0.0,
+        "dimension_collision_rows": 4,
+        "dimension_collisions_by_metric": {
+          "eps_diluted": 3,
+          "net_income": 1
+        },
+        "earliest_filing": "2016-03-17",
+        "forms": [
+          "40-F",
+          "6-K",
+          "F-10"
+        ],
+        "latest_filing": "2026-08-07",
+        "max_distinct_values_one_key": 2,
+        "metrics_with_evidence": 11,
+        "observations": 600,
+        "semantic_conflicts": [],
+        "status_counts": {
+          "COLLECTED": 11,
+          "DELIBERATELY_DECLINED": 2,
+          "MAPPED_NO_CURRENT_OBSERVATION": 0,
+          "NOT_APPLICABLE": 0,
+          "NOT_YET_COLLECTED": 0,
+          "SOURCE_SILENT": 7,
+          "SOURCE_UNAVAILABLE": 0,
+          "UNDETERMINED": 0,
+          "UNMAPPED": 0
+        },
+        "ticker": "WPM"
+      }
+    ],
+    "panel": {
+      "archive": "snapshot-227-b.sqlite",
+      "dimension_collision_rows": 1891,
+      "distinct_accessions_in_observations": 1235,
+      "distinct_source_fact_id": 54103,
+      "documents_stored": 396,
+      "duplicate_identities": 0,
+      "filings_held": 3040,
+      "issuers": 22,
+      "missing_accession": 0,
+      "missing_document": 0,
+      "observations": 54103
+    },
+    "what_it_is": "22 new filers, companyfacts + submissions, 20 Core metrics, forms from the issuer's own submissions document"
+  },
+  "experiment": "2.27 cross-business-model evidence corpus",
+  "population_8_metric_archive": {
+    "note": "the 75-issuer population archive holds 8 of the 20 metrics, so its cells are scope gaps rather than source silence and it is reported beside the matrix, not inside it",
+    "panel": {
+      "archive": "snapshot-universe.sqlite",
+      "dimension_collision_rows": 0,
+      "distinct_accessions_in_observations": 3042,
+      "distinct_source_fact_id": 54602,
+      "documents_stored": 632,
+      "duplicate_identities": 0,
+      "filings_held": 6548,
+      "issuers": 75,
+      "missing_accession": 0,
+      "missing_document": 0,
+      "observations": 54602
+    }
+  },
+  "population_full_scope": {
+    "business_model_x_metric_x_status": {
+      "assets": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 19
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "capex": {
+        "BANK": {
+          "COLLECTED": 7,
+          "SOURCE_SILENT": 1
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 3
+        },
+        "INSURANCE": {
+          "COLLECTED": 3,
+          "SOURCE_SILENT": 6
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 16,
+          "SOURCE_SILENT": 3
+        },
+        "MINING": {
+          "COLLECTED": 3,
+          "SOURCE_SILENT": 5
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 4,
+          "SOURCE_SILENT": 2
+        }
+      },
+      "cash": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 19
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "debt": {
+        "BANK": {
+          "SOURCE_SILENT": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 2,
+          "SOURCE_SILENT": 6
+        },
+        "INSURANCE": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 4
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 14,
+          "SOURCE_SILENT": 5
+        },
+        "MINING": {
+          "COLLECTED": 6,
+          "SOURCE_SILENT": 2
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 2,
+          "SOURCE_SILENT": 4
+        }
+      },
+      "eps_diluted": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "equity": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 19
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "gross_profit": {
+        "BANK": {
+          "COLLECTED": 2,
+          "SOURCE_SILENT": 6
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 4,
+          "SOURCE_SILENT": 4
+        },
+        "INSURANCE": {
+          "SOURCE_SILENT": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 15,
+          "SOURCE_SILENT": 4
+        },
+        "MINING": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 3
+        },
+        "SERVICES": {
+          "COLLECTED": 2,
+          "SOURCE_SILENT": 3
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 4,
+          "SOURCE_SILENT": 2
+        }
+      },
+      "income_tax": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 5,
+          "DELIBERATELY_DECLINED": 1
+        }
+      },
+      "interest_expense": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 8,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 15,
+          "DELIBERATELY_DECLINED": 4
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "long_term_debt_current": {
+        "BANK": {
+          "SOURCE_SILENT": 8
+        },
+        "FINANCE_SERVICES": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "SOURCE_SILENT": 6
+        },
+        "INSURANCE": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 3,
+          "SOURCE_SILENT": 6
+        },
+        "MANUFACTURING": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 13,
+          "SOURCE_SILENT": 6
+        },
+        "MINING": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 3,
+          "SOURCE_SILENT": 5
+        },
+        "SERVICES": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 5
+        },
+        "UNCLASSIFIED": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 1,
+          "SOURCE_SILENT": 5
+        }
+      },
+      "long_term_debt_noncurrent": {
+        "BANK": {
+          "SOURCE_SILENT": 8
+        },
+        "FINANCE_SERVICES": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "SOURCE_SILENT": 6
+        },
+        "INSURANCE": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 4,
+          "SOURCE_SILENT": 5
+        },
+        "MANUFACTURING": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 12,
+          "SOURCE_SILENT": 7
+        },
+        "MINING": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 3,
+          "SOURCE_SILENT": 5
+        },
+        "SERVICES": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 4,
+          "SOURCE_SILENT": 1
+        },
+        "UNCLASSIFIED": {
+          "MAPPED_NO_CURRENT_OBSERVATION": 2,
+          "SOURCE_SILENT": 4
+        }
+      },
+      "net_income": {
+        "BANK": {
+          "COLLECTED": 7,
+          "SOURCE_SILENT": 1
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 19
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "operating_cash_flow": {
+        "BANK": {
+          "COLLECTED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 8
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 19
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "operating_income": {
+        "BANK": {
+          "DELIBERATELY_DECLINED": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 6,
+          "DELIBERATELY_DECLINED": 2
+        },
+        "INSURANCE": {
+          "COLLECTED": 5,
+          "DELIBERATELY_DECLINED": 4
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "MINING": {
+          "COLLECTED": 2,
+          "DELIBERATELY_DECLINED": 6
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 5,
+          "DELIBERATELY_DECLINED": 1
+        }
+      },
+      "r_and_d": {
+        "BANK": {
+          "SOURCE_SILENT": 8
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 3,
+          "SOURCE_SILENT": 5
+        },
+        "INSURANCE": {
+          "SOURCE_SILENT": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 16,
+          "SOURCE_SILENT": 3
+        },
+        "MINING": {
+          "COLLECTED": 3,
+          "SOURCE_SILENT": 5
+        },
+        "SERVICES": {
+          "COLLECTED": 1,
+          "SOURCE_SILENT": 4
+        },
+        "UNCLASSIFIED": {
+          "SOURCE_SILENT": 6
+        }
+      },
+      "revenue": {
+        "BANK": {
+          "COLLECTED": 3,
+          "DELIBERATELY_DECLINED": 5
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 18,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "MINING": {
+          "COLLECTED": 8
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 5,
+          "DELIBERATELY_DECLINED": 1
+        }
+      },
+      "sbc": {
+        "BANK": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 3
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 3
+        },
+        "INSURANCE": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 4
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 15,
+          "SOURCE_SILENT": 4
+        },
+        "MINING": {
+          "COLLECTED": 3,
+          "SOURCE_SILENT": 5
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "sga": {
+        "BANK": {
+          "COLLECTED": 1,
+          "SOURCE_SILENT": 7
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 7,
+          "SOURCE_SILENT": 1
+        },
+        "INSURANCE": {
+          "COLLECTED": 7,
+          "SOURCE_SILENT": 2
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 19
+        },
+        "MINING": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 3
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 5,
+          "SOURCE_SILENT": 1
+        }
+      },
+      "shares_outstanding": {
+        "BANK": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 16,
+          "DELIBERATELY_DECLINED": 3
+        },
+        "MINING": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 6
+        }
+      },
+      "weighted_average_diluted_shares": {
+        "BANK": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "FINANCE_SERVICES": {
+          "COLLECTED": 7,
+          "DELIBERATELY_DECLINED": 1
+        },
+        "INSURANCE": {
+          "COLLECTED": 9
+        },
+        "MANUFACTURING": {
+          "COLLECTED": 17,
+          "DELIBERATELY_DECLINED": 2
+        },
+        "MINING": {
+          "COLLECTED": 3,
+          "DELIBERATELY_DECLINED": 5
+        },
+        "SERVICES": {
+          "COLLECTED": 5
+        },
+        "UNCLASSIFIED": {
+          "COLLECTED": 5,
+          "DELIBERATELY_DECLINED": 1
+        }
+      }
+    },
+    "declared_date_pct_by_business_model": {
+      "BANK": {
+        "issuers": [
+          "AUBN",
+          "BBAR",
+          "CCFN",
+          "CZWI",
+          "FCNCP",
+          "FHB",
+          "NRIM",
+          "PFBX"
+        ],
+        "median": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          9.2
+        ]
+      },
+      "FINANCE_SERVICES": {
+        "issuers": [
+          "AIXC",
+          "FMCCH",
+          "NU",
+          "OMCC",
+          "ORXCF",
+          "PRAA",
+          "SLNHP",
+          "SUIG"
+        ],
+        "median": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          21.9,
+          37.2
+        ]
+      },
+      "INSURANCE": {
+        "issuers": [
+          "AFL",
+          "CB",
+          "GNW",
+          "HUM",
+          "PFG",
+          "PRU",
+          "SIGI",
+          "TRV",
+          "UNH"
+        ],
+        "median": 53.6,
+        "values": [
+          8.0,
+          34.3,
+          40.8,
+          53.0,
+          53.6,
+          55.3,
+          68.4,
+          69.1,
+          70.1
+        ]
+      },
+      "MANUFACTURING": {
+        "issuers": [
+          "AAPL",
+          "CCXIU",
+          "CHRN",
+          "CMI",
+          "CONC",
+          "FLO",
+          "KTCC",
+          "KURA",
+          "LTRX",
+          "MAIR",
+          "MU",
+          "NEON",
+          "NVDA",
+          "RBC",
+          "SSYS",
+          "STMEF",
+          "THRMV",
+          "TRSG",
+          "TSM"
+        ],
+        "median": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          13.6,
+          18.4,
+          18.8,
+          37.0,
+          43.1,
+          45.0,
+          65.8
+        ]
+      },
+      "MINING": {
+        "issuers": [
+          "BHP",
+          "FCX",
+          "KNF",
+          "NEM",
+          "PAAS",
+          "RIO",
+          "TECK",
+          "WPM"
+        ],
+        "median": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          19.2,
+          58.7
+        ]
+      },
+      "SERVICES": {
+        "issuers": [
+          "CRL",
+          "HLT",
+          "MAR",
+          "MLCO",
+          "MSFT"
+        ],
+        "median": 32.2,
+        "values": [
+          0.0,
+          7.6,
+          32.2,
+          50.5,
+          66.6
+        ]
+      },
+      "UNCLASSIFIED": {
+        "issuers": [
+          "AWCA",
+          "EFC",
+          "FAST",
+          "HPP",
+          "TSCO",
+          "VAC"
+        ],
+        "median": 19.1,
+        "values": [
+          0.0,
+          0.0,
+          15.7,
+          19.1,
+          19.4,
+          44.5
+        ]
+      }
+    },
+    "denominator": {
+      "applicable_is_not_a_denominator_term": true,
+      "definition": "20 Core metrics x every full-scope filer, fixed before the fetch by reports/2_27_POPULATION_DESIGN.md"
+    },
+    "issuer_counts_by_business_model": {
+      "BANK": 8,
+      "FINANCE_SERVICES": 8,
+      "INSURANCE": 9,
+      "MANUFACTURING": 19,
+      "MINING": 8,
+      "SERVICES": 5,
+      "UNCLASSIFIED": 6
+    },
+    "issuers_by_business_model": {
+      "BANK": [
+        "AUBN",
+        "BBAR",
+        "CCFN",
+        "CZWI",
+        "FCNCP",
+        "FHB",
+        "NRIM",
+        "PFBX"
+      ],
+      "FINANCE_SERVICES": [
+        "AIXC",
+        "FMCCH",
+        "NU",
+        "OMCC",
+        "ORXCF",
+        "PRAA",
+        "SLNHP",
+        "SUIG"
+      ],
+      "INSURANCE": [
+        "AFL",
+        "CB",
+        "GNW",
+        "HUM",
+        "PFG",
+        "PRU",
+        "SIGI",
+        "TRV",
+        "UNH"
+      ],
+      "MANUFACTURING": [
+        "AAPL",
+        "CCXIU",
+        "CHRN",
+        "CMI",
+        "CONC",
+        "FLO",
+        "KTCC",
+        "KURA",
+        "LTRX",
+        "MAIR",
+        "MU",
+        "NEON",
+        "NVDA",
+        "RBC",
+        "SSYS",
+        "STMEF",
+        "THRMV",
+        "TRSG",
+        "TSM"
+      ],
+      "MINING": [
+        "BHP",
+        "FCX",
+        "KNF",
+        "NEM",
+        "PAAS",
+        "RIO",
+        "TECK",
+        "WPM"
+      ],
+      "SERVICES": [
+        "CRL",
+        "HLT",
+        "MAR",
+        "MLCO",
+        "MSFT"
+      ],
+      "UNCLASSIFIED": [
+        "AWCA",
+        "EFC",
+        "FAST",
+        "HPP",
+        "TSCO",
+        "VAC"
+      ]
+    },
+    "metric_x_business_model_conflicts": {},
+    "metric_x_business_model_dimension_ambiguity": {
+      "assets": {
+        "BANK": 17,
+        "FINANCE_SERVICES": 22,
+        "INSURANCE": 37,
+        "MANUFACTURING": 31,
+        "MINING": 21,
+        "SERVICES": 16,
+        "UNCLASSIFIED": 19
+      },
+      "capex": {
+        "BANK": 20,
+        "FINANCE_SERVICES": 21,
+        "INSURANCE": 8,
+        "MANUFACTURING": 23,
+        "MINING": 7,
+        "SERVICES": 1,
+        "UNCLASSIFIED": 16
+      },
+      "cash": {
+        "BANK": 37,
+        "FINANCE_SERVICES": 23,
+        "INSURANCE": 29,
+        "MANUFACTURING": 51,
+        "MINING": 38,
+        "SERVICES": 9,
+        "UNCLASSIFIED": 31
+      },
+      "debt": {
+        "BANK": 0,
+        "FINANCE_SERVICES": 0,
+        "INSURANCE": 4,
+        "MANUFACTURING": 11,
+        "MINING": 14,
+        "SERVICES": 4,
+        "UNCLASSIFIED": 2
+      },
+      "eps_diluted": {
+        "BANK": 29,
+        "FINANCE_SERVICES": 42,
+        "INSURANCE": 127,
+        "MANUFACTURING": 105,
+        "MINING": 36,
+        "SERVICES": 49,
+        "UNCLASSIFIED": 67
+      },
+      "equity": {
+        "BANK": 57,
+        "FINANCE_SERVICES": 50,
+        "INSURANCE": 120,
+        "MANUFACTURING": 74,
+        "MINING": 35,
+        "SERVICES": 24,
+        "UNCLASSIFIED": 26
+      },
+      "gross_profit": {
+        "BANK": 11,
+        "FINANCE_SERVICES": 0,
+        "INSURANCE": 0,
+        "MANUFACTURING": 90,
+        "MINING": 22,
+        "SERVICES": 20,
+        "UNCLASSIFIED": 11
+      },
+      "income_tax": {
+        "BANK": 43,
+        "FINANCE_SERVICES": 73,
+        "INSURANCE": 142,
+        "MANUFACTURING": 53,
+        "MINING": 52,
+        "SERVICES": 52,
+        "UNCLASSIFIED": 40
+      },
+      "interest_expense": {
+        "BANK": 28,
+        "FINANCE_SERVICES": 58,
+        "INSURANCE": 46,
+        "MANUFACTURING": 47,
+        "MINING": 9,
+        "SERVICES": 18,
+        "UNCLASSIFIED": 14
+      },
+      "long_term_debt_current": {
+        "BANK": 0,
+        "FINANCE_SERVICES": 0,
+        "INSURANCE": 0,
+        "MANUFACTURING": 8,
+        "MINING": 2,
+        "SERVICES": 2,
+        "UNCLASSIFIED": 1
+      },
+      "long_term_debt_noncurrent": {
+        "BANK": 0,
+        "FINANCE_SERVICES": 0,
+        "INSURANCE": 4,
+        "MANUFACTURING": 3,
+        "MINING": 6,
+        "SERVICES": 2,
+        "UNCLASSIFIED": 1
+      },
+      "net_income": {
+        "BANK": 56,
+        "FINANCE_SERVICES": 64,
+        "INSURANCE": 151,
+        "MANUFACTURING": 67,
+        "MINING": 37,
+        "SERVICES": 34,
+        "UNCLASSIFIED": 55
+      },
+      "operating_cash_flow": {
+        "BANK": 67,
+        "FINANCE_SERVICES": 50,
+        "INSURANCE": 30,
+        "MANUFACTURING": 35,
+        "MINING": 14,
+        "SERVICES": 24,
+        "UNCLASSIFIED": 25
+      },
+      "operating_income": {
+        "BANK": 0,
+        "FINANCE_SERVICES": 54,
+        "INSURANCE": 72,
+        "MANUFACTURING": 100,
+        "MINING": 22,
+        "SERVICES": 59,
+        "UNCLASSIFIED": 18
+      },
+      "r_and_d": {
+        "BANK": 0,
+        "FINANCE_SERVICES": 14,
+        "INSURANCE": 0,
+        "MANUFACTURING": 39,
+        "MINING": 7,
+        "SERVICES": 0,
+        "UNCLASSIFIED": 0
+      },
+      "revenue": {
+        "BANK": 1,
+        "FINANCE_SERVICES": 47,
+        "INSURANCE": 159,
+        "MANUFACTURING": 55,
+        "MINING": 23,
+        "SERVICES": 41,
+        "UNCLASSIFIED": 79
+      },
+      "sbc": {
+        "BANK": 0,
+        "FINANCE_SERVICES": 21,
+        "INSURANCE": 25,
+        "MANUFACTURING": 28,
+        "MINING": 2,
+        "SERVICES": 7,
+        "UNCLASSIFIED": 16
+      },
+      "sga": {
+        "BANK": 12,
+        "FINANCE_SERVICES": 82,
+        "INSURANCE": 113,
+        "MANUFACTURING": 108,
+        "MINING": 35,
+        "SERVICES": 65,
+        "UNCLASSIFIED": 63
+      },
+      "shares_outstanding": {
+        "BANK": 1,
+        "FINANCE_SERVICES": 1,
+        "INSURANCE": 0,
+        "MANUFACTURING": 1,
+        "MINING": 1,
+        "SERVICES": 1,
+        "UNCLASSIFIED": 0
+      },
+      "weighted_average_diluted_shares": {
+        "BANK": 13,
+        "FINANCE_SERVICES": 70,
+        "INSURANCE": 18,
+        "MANUFACTURING": 134,
+        "MINING": 9,
+        "SERVICES": 23,
+        "UNCLASSIFIED": 60
+      }
+    },
+    "metric_x_status": {
+      "assets": {
+        "COLLECTED": 63
+      },
+      "capex": {
+        "COLLECTED": 43,
+        "SOURCE_SILENT": 20
+      },
+      "cash": {
+        "COLLECTED": 63
+      },
+      "debt": {
+        "COLLECTED": 34,
+        "SOURCE_SILENT": 29
+      },
+      "eps_diluted": {
+        "COLLECTED": 62,
+        "DELIBERATELY_DECLINED": 1
+      },
+      "equity": {
+        "COLLECTED": 63
+      },
+      "gross_profit": {
+        "COLLECTED": 32,
+        "SOURCE_SILENT": 31
+      },
+      "income_tax": {
+        "COLLECTED": 61,
+        "DELIBERATELY_DECLINED": 2
+      },
+      "interest_expense": {
+        "COLLECTED": 58,
+        "DELIBERATELY_DECLINED": 5
+      },
+      "long_term_debt_current": {
+        "MAPPED_NO_CURRENT_OBSERVATION": 27,
+        "SOURCE_SILENT": 36
+      },
+      "long_term_debt_noncurrent": {
+        "MAPPED_NO_CURRENT_OBSERVATION": 27,
+        "SOURCE_SILENT": 36
+      },
+      "net_income": {
+        "COLLECTED": 62,
+        "SOURCE_SILENT": 1
+      },
+      "operating_cash_flow": {
+        "COLLECTED": 63
+      },
+      "operating_income": {
+        "COLLECTED": 41,
+        "DELIBERATELY_DECLINED": 22
+      },
+      "r_and_d": {
+        "COLLECTED": 23,
+        "SOURCE_SILENT": 40
+      },
+      "revenue": {
+        "COLLECTED": 55,
+        "DELIBERATELY_DECLINED": 8
+      },
+      "sbc": {
+        "COLLECTED": 44,
+        "SOURCE_SILENT": 19
+      },
+      "sga": {
+        "COLLECTED": 49,
+        "SOURCE_SILENT": 14
+      },
+      "shares_outstanding": {
+        "COLLECTED": 57,
+        "DELIBERATELY_DECLINED": 6
+      },
+      "weighted_average_diluted_shares": {
+        "COLLECTED": 53,
+        "DELIBERATELY_DECLINED": 10
+      }
+    }
+  },
+  "population_manifest": "reports/2_27_POPULATION_DESIGN.md",
+  "prior_full_scope_archives": {
+    "BANK (2.17-2.24)": {
+      "archive": "snapshot-banks2.sqlite",
+      "dimension_collision_rows": 392,
+      "distinct_accessions_in_observations": 389,
+      "distinct_source_fact_id": 11174,
+      "documents_stored": 105,
+      "duplicate_identities": 0,
+      "filings_held": 911,
+      "issuers": 8,
+      "missing_accession": 0,
+      "missing_document": 0,
+      "observations": 11174
+    },
+    "FINANCE_SERVICES (2.25)": {
+      "archive": "snapshot-fs.sqlite",
+      "dimension_collision_rows": 686,
+      "distinct_accessions_in_observations": 351,
+      "distinct_source_fact_id": 12489,
+      "documents_stored": 129,
+      "duplicate_identities": 0,
+      "filings_held": 983,
+      "issuers": 7,
+      "missing_accession": 0,
+      "missing_document": 0,
+      "observations": 12489
+    },
+    "MINING + INSURANCE (2.23)": {
+      "archive": "snapshot-ins-min.sqlite",
+      "dimension_collision_rows": 680,
+      "distinct_accessions_in_observations": 385,
+      "distinct_source_fact_id": 16351,
+      "documents_stored": 132,
+      "duplicate_identities": 0,
+      "filings_held": 996,
+      "issuers": 8,
+      "missing_accession": 0,
+      "missing_document": 0,
+      "observations": 16351
+    }
+  },
+  "requests": {
+    "cohort_a_companyfacts_refetched_unintentionally": 18,
+    "cohort_a_submissions": 18,
+    "cohort_b_companyfacts": 22,
+    "cohort_b_submissions": 22,
+    "total": 80
+  }
+}

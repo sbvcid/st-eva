@@ -137,6 +137,27 @@ collection-fs/
 gates-fs.json
 fin-225.json
 
+# 2.27 corpus. Two cohorts, measured apart: `227a-orig` is the ORIGINAL
+# companyfacts for the 18 existing filers plus their newly fetched submissions,
+# which is what isolates context enrichment from new filings. `227a` is the
+# re-fetch that the fetch tool performs alongside submissions.
+bulkfacts-227a/
+bulkfacts-227a-orig/
+submissions-227a/
+bulkfacts-227b/
+submissions-227b/
+fetch-227a.json
+fetch-227b.json
+tickers-227b.json
+snapshot-227-a1.sqlite
+snapshot-227-a1.sqlite-*
+collection-227-a1/
+gates-227-a1.json
+snapshot-227-b.sqlite
+snapshot-227-b.sqlite-*
+collection-227-b/
+gates-227-b.json
+
 # Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
 # extract like the archives above: the *derived* numbers are committed (in the
 # collection chains, the reports and the ledger output) and the responses are
