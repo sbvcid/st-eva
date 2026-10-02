@@ -503,6 +503,88 @@ class ResolvedEvidence:
         return payload
 
 
+@dataclass(frozen=True)
+class ObservationMapping:
+    """
+    What a single historical observation resolves to, given the fact it came from.
+
+    `mappings_for_metric` answers *what a metric declares*. That is a
+    metric-level question and it is the right question for a ledger, a gate or an
+    ingestion plan. It is the wrong question for one observation, because every
+    observation carries a source concept and the concept, not the metric name,
+    is what says what the figure means.
+
+    Under a supersession the two diverge sharply. `mappings_for_metric('debt')`
+    follows `debt -> long_term_debt` and returns every concept the successor
+    declares, so a single legacy row looks as though it carried all of them --
+    and a concept with no established destination for the successor inherits an
+    interpretation simply by sharing a predecessor name with four others. 2.49
+    measured that over 8,193 historical rows and found the exposure invisible in
+    every coverage count, because the concept set does not change.
+
+    So this type carries the three things that record:
+
+      * the **stored** metric, which is never rewritten here,
+      * the **resolved** metric, which is what lineage says the name now means,
+      * the mappings applicable to **this observation's own concept**, and
+        nothing else.
+
+    The status is explicit rather than derived from emptiness. `UNRESOLVED` with
+    a reason is an answer; an empty list that a caller is invited to read as
+    "nothing special" is not.
+    """
+
+    # The concept has a declared mapping on the resolved metric, and that
+    # mapping is the one that applies.
+    RESOLVED = "RESOLVED"
+    # The observation carries no source concept, so nothing can be said about
+    # what it means. Never inferred away, and never treated as "unmapped
+    # because the registry is silent".
+    UNRESOLVED_NO_SOURCE_CONCEPT = "UNRESOLVED_NO_SOURCE_CONCEPT"
+    # The resolved metric declares no mapping for this concept. The observation
+    # keeps its historical identity and gains no successor interpretation.
+    UNRESOLVED_NO_APPLICABLE_MAPPING = "UNRESOLVED_NO_APPLICABLE_MAPPING"
+
+    stored_metric_id: str
+    resolved_metric_id: str
+    source_concept: Optional[str]
+    mappings: Tuple[ConceptMapping, ...] = ()
+    status: str = RESOLVED
+    reason: str = ""
+    supersession: Optional[Dict[str, Any]] = None
+
+    @property
+    def is_superseded(self) -> bool:
+        return self.stored_metric_id != self.resolved_metric_id
+
+    @property
+    def is_resolved(self) -> bool:
+        # Both conditions, deliberately. A status alone could be positive while
+        # the mapping tuple was empty, and an empty tuple is not a resolution.
+        return self.status == self.RESOLVED and bool(self.mappings)
+
+    @property
+    def mapping_types(self) -> Tuple[str, ...]:
+        return tuple(mapping.mapping_type for mapping in self.mappings)
+
+    def contract_dict(self) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "stored_metric": self.stored_metric_id,
+            "resolved_metric": self.resolved_metric_id,
+            "superseded": self.is_superseded,
+            "source_concept": self.source_concept,
+            "status": self.status,
+            "resolved": self.is_resolved,
+            "mappings": [mapping.contract_dict() for mapping in self.mappings],
+            "mapping_types": list(self.mapping_types),
+        }
+        if self.supersession:
+            payload["supersession"] = dict(self.supersession)
+        if not self.is_resolved:
+            payload["reason"] = self.reason
+        return payload
+
+
 def concept_id_for(taxonomy: str, concept: str) -> str:
     return f"{taxonomy}:{concept}"
 
@@ -1186,7 +1268,17 @@ class CoreRegistry:
         )
 
     def supersession_of(self, metric_id: str) -> Optional[Dict[str, Any]]:
-        """The recorded decision, if this metric has been superseded."""
+        """
+        The recorded decision, if this metric has been superseded.
+
+        Returns None when the archive has no supersession table, for the same
+        reason `resolve_metric` does: a store that has never heard of
+        supersession has not superseded anything, and reporting the absence of a
+        table as an error would make an older archive unreadable rather than
+        merely un-renamed.
+        """
+        if not self._has_table("metric_supersession"):
+            return None
         row = self.connection.execute(
             "SELECT * FROM metric_supersession WHERE predecessor_id = ?",
             (metric_id,),
@@ -1231,11 +1323,26 @@ class CoreRegistry:
         metric_id: str,
         as_of: Optional[str] = None,
     ) -> List[ConceptMapping]:
-        # Followed, not used directly: a renamed metric keeps its observations and
-        # its row, and the concepts that now define what it denotes are declared
-        # against the successor. Without this, every historical observation under a
-        # renamed metric would resolve to no mappings and read as UNDETERMINED --
-        # a coverage regression caused entirely by a naming decision.
+        """
+        Every concept the named metric declares, following the supersession chain.
+
+        **This is a metric-level query. It does not answer what applies to a
+        single observation, and it must not be read as if it did.**
+
+        A metric declares concepts; an observation carries one. Following the
+        chain means a renamed metric reports its successor's declarations, which
+        is what stops a legacy row from being stranded by a rename -- but it also
+        means every legacy row looks as though it carried every one of the
+        successor's concepts. Under `debt -> long_term_debt` that is four
+        concepts, two of which had no established destination for the successor
+        when 2.49 measured it.
+
+        The concept set is unchanged by the follow, so this is invisible in
+        coverage counts and has to be asked about directly. For one observation,
+        use `mappings_for_observation`, which conditions on the observation's own
+        concept and reports an explicit unresolved state instead of returning a
+        set the observation does not carry.
+        """
         target = self.resolve_metric(metric_id)
         rows = self.connection.execute(
             "SELECT * FROM metric_concept_mapping WHERE metric_id = ?"
@@ -1247,6 +1354,99 @@ class CoreRegistry:
             for mapping in (self._mapping(row) for row in rows)
             if mapping is not None and mapping.applies_on(as_of)
         ]
+
+    def mappings_for_observation(
+        self,
+        metric_id: str,
+        source_concept: Optional[str] = None,
+        as_of: Optional[str] = None,
+    ) -> ObservationMapping:
+        """
+        Resolve one observation: stored metric + its own source concept.
+
+        The supersession still resolves -- `debt` still means `long_term_debt`,
+        and the stored metric is never rewritten -- but a mapping reaches this
+        observation only when the successor declares it **for the concept this
+        observation actually carries**. A concept with no such declaration gets
+        an explicit unresolved result, never the successor's full mapping set.
+
+        No source concept means insufficient context, and it is reported as
+        such. Falling back to every mapping the successor declares would make a
+        missing fact look like a resolved one, which is the specific failure 2.49
+        measured: the blanket path was invisible precisely because it always
+        produced an answer.
+
+        The registry needs no new metadata for this. A mapping row already names
+        its concept, and that name *is* the applicability key -- "declared for X"
+        and "applies to an observation of X" are the same relation. What was
+        missing was a resolution entry point that could ask the question, which
+        is why this is a function rather than a schema change.
+        """
+        resolved_id = self.resolve_metric(metric_id)
+        if resolved_id is None:
+            return ObservationMapping(
+                stored_metric_id=metric_id,
+                resolved_metric_id=metric_id,
+                source_concept=source_concept,
+                status=ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING,
+                reason=(
+                    "the stored metric does not resolve, so there is no "
+                    "successor to inherit a mapping from"
+                ),
+            )
+        supersession = self.supersession_of(metric_id)
+
+        if not source_concept:
+            return ObservationMapping(
+                stored_metric_id=metric_id,
+                resolved_metric_id=resolved_id,
+                source_concept=None,
+                status=ObservationMapping.UNRESOLVED_NO_SOURCE_CONCEPT,
+                reason=(
+                    "NOT_APPLICABLE. The observation carries no source concept, "
+                    "so nothing states what the figure measures. The successor's "
+                    "declarations are not a substitute: they are what the metric "
+                    "allows, not what this fact is."
+                ),
+                supersession=supersession,
+            )
+
+        applicable = [
+            mapping
+            for mapping in self.mappings_for_metric(resolved_id, as_of=as_of)
+            if mapping.concept_id == source_concept
+        ]
+        if not applicable:
+            return ObservationMapping(
+                stored_metric_id=metric_id,
+                resolved_metric_id=resolved_id,
+                source_concept=source_concept,
+                status=ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING,
+                reason=(
+                    f"NOT_APPLICABLE. `{resolved_id}` declares no mapping for "
+                    f"`{source_concept}`, so the observation keeps its historical "
+                    f"identity `{metric_id}` and gains no successor "
+                    "interpretation. This is unresolved, not refuted: the "
+                    "concept may have a destination that has not been decided "
+                    "yet, and absence here is not evidence against it."
+                ),
+                supersession=supersession,
+            )
+        return ObservationMapping(
+            stored_metric_id=metric_id,
+            resolved_metric_id=resolved_id,
+            source_concept=source_concept,
+            mappings=tuple(applicable),
+            status=ObservationMapping.RESOLVED,
+            reason=(
+                ""
+                if resolved_id == metric_id else
+                f"resolved through the supersession {metric_id} -> {resolved_id}; "
+                f"the mapping returned is the one declared for this "
+                f"observation's own concept `{source_concept}`"
+            ),
+            supersession=supersession,
+        )
 
     def metrics_for_concept(
         self,

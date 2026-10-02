@@ -1250,6 +1250,25 @@ class EvidenceQuery:
         )
         payload = resolved.contract_dict()
         payload["observation_id"] = row["observation_id"]
+        # The stored metric alongside the concept, resolved together.
+        #
+        # `resolve` above answers what the *concept* means on its own. This
+        # answers what this *observation* is entitled to inherit through a
+        # supersession, which is a separate question: 2.49 measured that asking
+        # it at the metric level hands every legacy row all four successor
+        # concepts, including two whose destination had not been established,
+        # and that the exposure is invisible in every coverage count because the
+        # concept set does not change. The stored metric is reported, never
+        # rewritten -- this is semantic resolution, not migration.
+        inherited = self.registry().mappings_for_observation(
+            row["metric"],
+            source_concept=concept_id,
+            as_of=row["period_end"],
+        )
+        payload["stored_metric"] = inherited.stored_metric_id
+        payload["resolved_metric"] = inherited.resolved_metric_id
+        payload["metric_superseded"] = inherited.is_superseded
+        payload["inherited_mapping"] = inherited.contract_dict()
         # A metric whose series breaks across a concept change says so here, at
         # the figure, rather than leaving it to be discovered by diffing a
         # history.
