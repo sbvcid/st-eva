@@ -784,6 +784,28 @@ CONCEPTS: Tuple[Concept, ...] = (
             "holders and fully paid for."
         ),
     ),
+    # Quoted from the filing that presents it, not from `companyfacts` and not
+    # from the taxonomy by hand. 2.35 established that `companyfacts` supplies no
+    # description for any `ifrs-full` element at all, so the semantic anchor had to
+    # come from the primary document -- and the rendered metadata carries the
+    # element's own definition with its standard reference, which is exactly what
+    # this registry expects of a concept and exactly what a later reader needs in
+    # order to check the mapping below without reading a report.
+    Concept(
+        concept_id=concept_id_for(
+            IFRS_FULL,
+            "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+        ),
+        taxonomy=IFRS_FULL,
+        concept=("PurchaseOfPropertyPlantAndEquipment"
+                 "ClassifiedAsInvestingActivities"),
+        label="Acquisitions of property, plant and equipment",
+        source_definition=(
+            "The cash outflow for the purchases of property, plant and "
+            "equipment, classified as investing activities. [Refer: Property, "
+            "plant and equipment]"
+        ),
+    ),
     Concept(
         concept_id=concept_id_for(IFRS_FULL, "CurrentPortionOfLongtermBorrowings"),
         taxonomy=IFRS_FULL,
@@ -1182,6 +1204,45 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
             "includes software and other intangible assets, which the "
             "property-and-equipment concept does not, so the series does not "
             "continue across the change"
+        ),
+    ),
+    # IFRS, promoted in 2.39 after the semantic work in 2.35-2.38. This is the
+    # first IFRS mapping added on the strength of *primary filing evidence* rather
+    # than taxonomy wording, and the route matters: `companyfacts` supplies no
+    # label and no description for any `ifrs-full` element, so the accounting
+    # object and the measurement basis were established from the presentation --
+    # the Consolidated Statements of Cash Flows, under CASH FLOWS FROM INVESTING
+    # ACTIVITIES, on the line "Acquisitions of property, plant and equipment" --
+    # and the element's own definition below is quoted from that filing's
+    # rendered metadata rather than paraphrased, as every concept here is.
+    #
+    # EXACT because the asset scope is the same as the declared US-GAAP EXACT
+    # mapping above: property, plant and equipment, excluding software and
+    # intangibles. It is not the PARTIAL concept, which includes those.
+    ConceptMapping(
+        metric_id="capex",
+        concept_id=concept_id_for(
+            IFRS_FULL,
+            "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+        ),
+        mapping_type=MAPPING_EXACT,
+        effective_from="2015-12-31",
+        notes=(
+            "IFRS. Presented by TSM, BHP, PAAS and TECK on the consolidated "
+            "statement of cash flows under CASH FLOWS FROM INVESTING ACTIVITIES, "
+            "on the line 'Acquisitions of property, plant and equipment': a cash "
+            "outflow, and the same asset scope as the declared US-GAAP EXACT "
+            "mapping, excluding software and intangibles. "
+            "CAVEAT: TSM's non-cash transaction schedule presents the same XBRL "
+            "fact and value under a non-cash heading. The instance shows one fact "
+            "and one value rather than a distinct second transaction, but the "
+            "filing does not explain why this cash-flow magnitude is repeated "
+            "there. "
+            "STRUCTURAL: an XBRL dimension member is not preserved as a "
+            "observation field. Measured incidence across the four filers holding "
+            "this concept: 0 of 104 period/unit/accession keys. Latent rather than "
+            "blocking, and to be re-measured as the population widens. "
+            "See reports/2_38_IFRS_CAPEX_MAPPING_PROPOSITION.md."
         ),
     ),
     ConceptMapping(

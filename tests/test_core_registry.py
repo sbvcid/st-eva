@@ -279,9 +279,25 @@ class TestMappingRegistry(RegistryFixture):
             [m.concept_id for m in historical],
             [concept_id_for(US_GAAP, "PaymentsToAcquireProductiveAssets")],
         )
+        # Two from 2020: the US-GAAP exact concept, and the IFRS one promoted in
+        # 2.39 whose `effective_from` is the earliest period any filer reporting
+        # it has used. A 2010 read still excludes it, which is the point -- the
+        # date filter is what keeps an IFRS-only filer from being asked about a
+        # concept before anything reported it.
+        #
+        # Order is the registry's: mapping type, then `effective_from`, then
+        # concept id. Both are EXACT, so the us-gaap concept leads on its
+        # earlier date.
         self.assertEqual(
             [m.concept_id for m in current],
-            [concept_id_for(US_GAAP, "PaymentsToAcquirePropertyPlantAndEquipment")],
+            [
+                concept_id_for(
+                    US_GAAP, "PaymentsToAcquirePropertyPlantAndEquipment"),
+                concept_id_for(
+                    IFRS_FULL,
+                    "PurchaseOfPropertyPlantAndEquipment"
+                    "ClassifiedAsInvestingActivities"),
+            ],
         )
 
     def test_no_date_filter_returns_every_mapping(self):

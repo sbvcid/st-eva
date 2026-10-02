@@ -167,6 +167,11 @@ gates-227-b.json
 231-debt-composition.json
 232-debt-definition.json
 232-debt-semantic-decision.json
+234-capex-characterisation.json
+235-ifrs-capex.json
+236-primary-capex-context.json
+237-tsm-duplicate-context.json
+238-ifrs-capex-proposition.json
 
 # Source inventories, fetched by `fetch_source_inventory.py`. A moving EDGAR
 # extract like the archives above: the *derived* numbers are committed (in the
