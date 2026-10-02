@@ -33,6 +33,7 @@ Design points that are load-bearing:
 import gzip
 import hashlib
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -107,6 +108,24 @@ XBRL_UNIT_TO_CONTRACT_UNIT: Dict[str, str] = {
 }
 
 MONETARY_XBRL_UNITS = ("USD", "USD/shares", "USD-per-shares")
+"""The enumerated spellings only, kept for callers that name them literally.
+
+**This is no longer the monetary test.** It used to be, which is how every
+non-USD monetary fact ended up typed as a ratio with a NULL currency: 2.52
+measured 51 of 51 non-USD facts losing their currency and 60 of 60 USD facts
+keeping it, with no exception either way. The enumerated spellings below keep
+their existing behaviour byte for byte; anything else is decided by
+`monetary_currency_of`, which recognises an ISO 4217 code.
+
+`xbrl_unit_to_contract_unit` above is likewise a seed, not the whole rule: an ISO
+4217 code it does not list still resolves, through the same two helpers.
+"""
+
+# An ISO 4217 alphabetic currency code. XBRL types a monetary item by this
+# reference, so a unit that is exactly three upper-case letters is a currency the
+# source declared -- recording it is reporting what the filing said, not guessing
+# a currency from a domicile, a listing or a ticker.
+ISO_4217_CURRENCY_CODE = re.compile(r"^[A-Z]{3}$")
 
 
 class Concept:
@@ -326,8 +345,68 @@ def normalize_cik(value: Any) -> str:
     return digits.zfill(10)
 
 
+def monetary_currency_of(unit: str) -> Optional[str]:
+    """
+    The currency code this unit is denominated in, or None if it is not monetary.
+
+    Two rules, and only two.
+
+    The enumerated spellings keep the behaviour they always had, byte for byte,
+    so no already-recorded USD value moves. Everything else is decided by
+    whether the unit is an ISO 4217 code -- optionally followed by a `/shares`
+    divisor, which names the code it is per-share of.
+
+    Before 2.52 this decision was `unit in ("USD",)`, and a TWD or CAD or JPY
+    fact was stored as a ratio with no currency at all, which is how 278 IFRS
+    and 20 US-GAAP observations ended up unable to satisfy a currency-family
+    metric.
+    """
+    explicit = XBRL_UNIT_TO_CONTRACT_UNIT.get(unit)
+    if explicit == Unit.CURRENCY.value:
+        return unit
+    if explicit == Unit.PER_SHARE.value:
+        return "USD"
+    if explicit is not None:
+        return None
+    if ISO_4217_CURRENCY_CODE.match(unit or ""):
+        return unit
+    base, slash, divisor = (unit or "").partition("/shares")
+    if slash and not divisor and ISO_4217_CURRENCY_CODE.match(base):
+        return base
+    return None
+
+
+def observation_currency_of(unit: str) -> Optional[str]:
+    """
+    The currency for a contract observation's `currency` column.
+
+    A per-share fact keeps its currency in the basis rather than here, because
+    the observation's unit is already `per_share` and the currency column states
+    what the observation is *measured in*.
+    """
+    if xbrl_unit_to_contract_unit(unit) != Unit.CURRENCY.value:
+        return None
+    return monetary_currency_of(unit)
+
+
 def xbrl_unit_to_contract_unit(unit: str) -> Optional[str]:
-    return XBRL_UNIT_TO_CONTRACT_UNIT.get(unit)
+    """
+    The contract unit this XBRL unit is recorded under, or None if unrecognised.
+
+    The enumerated spellings are answered from the table. An ISO 4217 code the
+    table does not list is a currency and resolves to `currency`, and a code
+    followed by `/shares` resolves to `per_share`. Anything else returns None so
+    that the caller refuses it rather than coercing it.
+    """
+    explicit = XBRL_UNIT_TO_CONTRACT_UNIT.get(unit)
+    if explicit is not None:
+        return explicit
+    if ISO_4217_CURRENCY_CODE.match(unit or ""):
+        return Unit.CURRENCY.value
+    base, slash, divisor = (unit or "").partition("/shares")
+    if slash and not divisor and ISO_4217_CURRENCY_CODE.match(base):
+        return Unit.PER_SHARE.value
+    return None
 
 
 def _basis_for(fact: SecFact) -> Dict[str, Any]:
@@ -341,7 +420,8 @@ def _basis_for(fact: SecFact) -> Dict[str, Any]:
     """
     basis: Dict[str, Any] = {
         "reporting_currency": (
-            fact.unit if fact.unit in MONETARY_XBRL_UNITS else "UNDECLARED"
+            fact.unit if fact.unit in MONETARY_XBRL_UNITS
+            else monetary_currency_of(fact.unit) or "UNDECLARED"
         ),
         "source_declared": True,
         "taxonomy": fact.taxonomy,
@@ -1458,7 +1538,11 @@ class SECProvider:
     ) -> Observation:
         """Build a contract observation for one fact."""
         contract_unit = xbrl_unit_to_contract_unit(fact.unit) or Unit.RATIO.value
-        currency = "USD" if fact.unit in MONETARY_XBRL_UNITS else None
+        currency = (
+            monetary_currency_of(fact.unit)
+            if contract_unit in (Unit.CURRENCY.value, Unit.PER_SHARE.value)
+            else None
+        )
         currency_basis = (
             CurrencyBasis.REPORTED.value
             if currency
@@ -1604,7 +1688,11 @@ class SECProvider:
             latest,
         )
         unit = xbrl_unit_to_contract_unit(latest.unit) or Unit.RATIO.value
-        currency = "USD" if latest.unit in MONETARY_XBRL_UNITS else None
+        currency = (
+            monetary_currency_of(latest.unit)
+            if unit in (Unit.CURRENCY.value, Unit.PER_SHARE.value)
+            else None
+        )
 
         return Observation(
             observation_id=comparable_observation_id(

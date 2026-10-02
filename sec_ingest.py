@@ -55,7 +55,7 @@ from data_contract import (
     utc_now,
 )
 from evidence_model import source_fact_id
-from sec_provider import xbrl_unit_to_contract_unit
+from sec_provider import observation_currency_of, xbrl_unit_to_contract_unit
 
 SEC_SOURCE = "SecEdgar"
 SEC_SOURCE_TYPE = SourceType.REGULATORY_FILING.value
@@ -1394,7 +1394,12 @@ class Ingestor:
         accession: str,
     ) -> Observation:
         contract_unit = xbrl_unit_to_contract_unit(unit) or Unit.RATIO.value
-        currency = unit if unit in ("USD",) else None
+        # The source-declared currency, not a hardcoded `USD`. This line and the
+        # `or Unit.RATIO.value` fallback above are the two halves of the defect
+        # 2.52 measured: an unmapped unit took the fallback and lost its
+        # currency, so a TWD or CAD or JPY fact was recorded as a ratio with no
+        # currency and could not satisfy a currency-family metric.
+        currency = observation_currency_of(unit)
         # The basis arrives as a declaration rather than being recovered from the
         # shape of the value. It used to be decided by asking whether the string
         # contained a `T`, which meant a filed-date fallback wearing a midnight

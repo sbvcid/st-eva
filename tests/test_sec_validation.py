@@ -68,6 +68,8 @@ from sec_provider import (
     is_quarter,
     normalize_cik,
     xbrl_unit_to_contract_unit,
+    monetary_currency_of,
+    observation_currency_of,
 )
 
 RETRIEVED = "2026-09-28T12:00:00+00:00"
@@ -534,8 +536,74 @@ class TestXBRLUnits(unittest.TestCase):
         )
 
     def test_an_unmapped_unit_is_refused_not_coerced(self):
-        self.assertIsNone(xbrl_unit_to_contract_unit("JPY"))
+        """
+        The principle, not the old example.
+
+        This test used to assert that `JPY` resolved to nothing, which made
+        "only USD is monetary" a recorded contract rather than an oversight.
+        2.52 measured what that cost: of 111 IFRS facts paired against their raw
+        `companyfacts` source, all 60 USD facts kept their currency and all 51
+        non-USD ones lost it, with no exception either way -- so a TWD, CAD or
+        JPY observation was stored as a ratio with no currency and could not
+        satisfy a currency-family metric.
+
+        `JPY` was the wrong example for the principle: it is an ISO 4217 code,
+        so it is mapped, and refusing it was the defect. A unit that genuinely
+        has no mapping -- a compound divisor, an unqualified measure -- is still
+        refused below.
+        """
         self.assertIsNone(xbrl_unit_to_contract_unit("USD/shares/diluted"))
+        self.assertIsNone(xbrl_unit_to_contract_unit("usd"))
+        self.assertIsNone(xbrl_unit_to_contract_unit(""))
+        self.assertIsNone(xbrl_unit_to_contract_unit("kWh"))
+
+    def test_every_iso_4217_currency_is_a_currency_unit(self):
+        """
+        The regression 2.52 asked for.
+
+        Not a sample. If a currency is recognised, every currency is, because
+        the rule is a shape and not an enumeration -- an enumerated list is what
+        let the next unreviewed currency fail silently.
+        """
+        for code in ("USD", "TWD", "CAD", "JPY", "EUR", "GBP", "SEK", "CHF",
+                     "AUD", "BRL", "INR", "KRW", "SGD"):
+            self.assertEqual(
+                xbrl_unit_to_contract_unit(code), Unit.CURRENCY.value, code)
+            self.assertEqual(
+                monetary_currency_of(code), code, code)
+
+    def test_a_currency_per_share_unit_resolves_to_per_share(self):
+        for code in ("USD", "TWD", "CAD"):
+            self.assertEqual(
+                xbrl_unit_to_contract_unit(f"{code}/shares"),
+                Unit.PER_SHARE.value, code)
+            self.assertEqual(monetary_currency_of(f"{code}/shares"), code,
+                             code)
+
+    def test_a_non_monetary_unit_still_has_no_currency(self):
+        for unit_name in ("shares", "pure", "USD/shares/diluted", "kWh",
+                           "usd", ""):
+            self.assertIsNone(monetary_currency_of(unit_name), unit_name)
+
+    def test_usd_behaviour_is_unchanged(self):
+        """
+        The enumerated spellings must move by nothing at all.
+
+        2.53 extends the rule to currencies the seed table never listed; it does
+        not redefine the ones it did, so a recorded USD observation keeps the
+        unit, the currency and the basis it already has.
+        """
+        self.assertEqual(
+            xbrl_unit_to_contract_unit("USD"), Unit.CURRENCY.value)
+        self.assertEqual(
+            xbrl_unit_to_contract_unit("USD/shares"), Unit.PER_SHARE.value)
+        self.assertEqual(
+            xbrl_unit_to_contract_unit("USD-per-shares"),
+            Unit.PER_SHARE.value)
+        self.assertEqual(observation_currency_of("USD"), "USD")
+        self.assertIsNone(observation_currency_of("USD/shares"))
+        self.assertIsNone(observation_currency_of("shares"))
+        self.assertIsNone(observation_currency_of("pure"))
 
     def test_cik_is_zero_padded_to_ten_digits(self):
         self.assertEqual(normalize_cik(320193), "0000320193")
