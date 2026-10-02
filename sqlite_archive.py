@@ -1273,7 +1273,12 @@ class SQLiteArchive(ArchiveStore):
             "INSERT INTO interpretations (interpretation_id, source_fact_id,"
             " knowledge_at, unit, currency, currency_basis, identity, supersedes,"
             " created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tuple(row.values()))
-        self.connection.commit()
+        # Commit only when this call opened nothing. A caller repairing a whole
+        # archive needs every interpretation in it to land or none of them, and
+        # a per-row commit here would make that impossible without bypassing this
+        # method -- which is exactly how a persistence contract gets bypassed.
+        if not self.connection.in_transaction:
+            self.connection.commit()
         return {"created": True, "interpretation": row}
 
     def interpretations_for_source_fact(
