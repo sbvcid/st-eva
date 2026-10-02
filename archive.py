@@ -66,6 +66,18 @@ class ArchiveError(Exception):
     """The archive could not satisfy a request it should have been able to."""
 
 
+class InterpretationError(ArchiveError):
+    """
+    A proposed interpretation violates the knowledge-state contract.
+
+    Separate from `ArchiveError` so a caller can tell "this reading is not
+    allowed" from "the archive could not answer". The rules it refuses are the
+    cross-row ones -- ordering, same-source supersedes, no cycles, one reading
+    per knowledge instant -- which SQLite cannot express and which 2.59's
+    domain validators own.
+    """
+
+
 class InsufficientHistory(ArchiveError):
     """
     The archive cannot answer the question asked.

@@ -33,6 +33,7 @@ from archive import (
     ArchiveError,
     ArchiveStore,
     FilingRef,
+    InterpretationError,
     StoredDocument,
     document_hash,
     utc_now,
@@ -44,6 +45,11 @@ from data_contract import (
     ValidationStatus,
     eligibility_for_declared_date,
     point_in_time_cutoff,
+)
+from knowledge_axis import (
+    KnowledgeAxis,
+    KnowledgeAxisError,
+    SourceFact,
 )
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "archive" / "migrations"
@@ -253,14 +259,26 @@ class SQLiteArchive(ArchiveStore):
                     f"migration {version} is below the recorded user_version "
                     f"{current}. The archive was created by a newer build."
                 )
-            connection.executescript(sql)
-            connection.execute(
-                "INSERT INTO schema_migrations (version, name, checksum,"
-                " applied_at) VALUES (?, ?, ?, ?)",
-                (version, name, checksum, utc_now()),
-            )
-            connection.execute(f"PRAGMA user_version = {version}")
-            connection.commit()
+            # `executescript` commits any pending transaction before it runs, so
+            # a migration that fails part-way through would otherwise leave DDL
+            # applied and unrecorded -- a schema state that no migration claims
+            # and no later run will reconcile. The rollback is explicit for that
+            # reason, and it is a no-op on the success path.
+            try:
+                connection.executescript(sql)
+                connection.execute(
+                    "INSERT INTO schema_migrations (version, name, checksum,"
+                    " applied_at) VALUES (?, ?, ?, ?)",
+                    (version, name, checksum, utc_now()),
+                )
+                connection.execute(f"PRAGMA user_version = {version}")
+                connection.commit()
+            except Exception:
+                try:
+                    connection.rollback()
+                except sqlite3.Error:
+                    pass
+                raise
 
     # -- assets and sources ----------------------------------------------
 
@@ -1121,6 +1139,185 @@ class SQLiteArchive(ArchiveStore):
                 "SELECT COUNT(*) AS n FROM observations"
             ).fetchone()["n"]
         )
+
+    # -- interpretations (knowledge-state axis, 2.61) ----------------------
+    #
+    # Persistence for the axis validated in 2.59 and designed in 2.60. These
+    # operations are deliberately NOT wired into any existing reader:
+    # `observations_for` and `get_metric_history` are untouched, so current
+    # point-in-time behaviour is unchanged until a reader is deliberately pointed
+    # at this layer.
+    #
+    # The ordering, same-fact, backwards-only and no-cycles rules are enforced
+    # by the 2.59 domain validators, not by SQLite. The schema contributes
+    # NOT NULL, the foreign key, the unique identity and append-only; the rest is
+    # cross-row and cannot be expressed as a CHECK constraint. The validator
+    # logic lives in one place -- `knowledge_axis` -- and is replayed here over
+    # the stored series rather than reimplemented.
+
+    def _has_table(self, name: str) -> bool:
+        return self.connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (name,)).fetchone() is not None
+
+    def _has_interpretations(self) -> bool:
+        """
+        Whether this archive carries the 2.61 table at all.
+
+        An archive built before 2.61 must still open and must still serve every
+        existing call. The same defensive shape `resolve_metric` uses for an
+        archive that predates the supersession table: report the absence rather
+        than raise, so an older archive is merely older and not broken.
+        """
+        return self._has_table("interpretations")
+
+    def _source_fact(self, source_fact_id: str) -> Optional[SourceFact]:
+        """The source fact an interpretation refers to, from `observations`."""
+        row = self.connection.execute(
+            "SELECT o.* FROM observations o WHERE o.source_fact_id = ?",
+            (source_fact_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return SourceFact(
+            source_fact_id=row["source_fact_id"],
+            available_at=row["available_at"] or row["replay_eligible_from"],
+            replay_eligible_from=row["replay_eligible_from"],
+            value=json.loads(row["value_json"]),
+            period_start=row["period_start"],
+            period_end=row["period_end"],
+            metric=row["metric"],
+            lineage_id=row["lineage_id"],
+        )
+
+    def _axis_for(self, source_fact_id: str) -> KnowledgeAxis:
+        """
+        Rebuild the stored series as a validated axis.
+
+        Replaying the persisted rows through `record` means the validators see
+        the real series rather than a reimplementation of it, so a row that was
+        written by an older build with looser rules cannot slip a new one past
+        them.
+        """
+        fact = self._source_fact(source_fact_id)
+        if fact is None:
+            raise InterpretationError(
+                f"no observation carries source_fact_id {source_fact_id!r}, so "
+                "there is no source fact to interpret. An interpretation may "
+                "not create a source fact.")
+        axis = KnowledgeAxis(fact)
+        for row in self._interpretations_for(source_fact_id):
+            axis.record(
+                row["knowledge_at"], row["unit"], row["currency"],
+                row["currency_basis"], supersedes=row["supersedes"])
+        return axis
+
+    def _interpretations_for(self, source_fact_id: str) -> List[Dict[str, Any]]:
+        return [dict(row) for row in self.connection.execute(
+            "SELECT * FROM interpretations WHERE source_fact_id = ?"
+            " ORDER BY knowledge_at, interpretation_id", (source_fact_id,))]
+
+    def add_interpretation(
+        self,
+        source_fact_id: str,
+        knowledge_at: str,
+        unit: str,
+        currency: Optional[str],
+        currency_basis: str,
+    ) -> Dict[str, Any]:
+        """
+        Record one interpretation of an existing source fact.
+
+        Returns the stored row, and `created` says whether this call wrote it. A
+        repeat of an identical interpretation is recognised and reported as
+        `created: False` rather than raising, because re-running a repair has to
+        be safe. Everything else the 2.59 contract forbids is refused.
+        """
+        if not self._has_interpretations():
+            raise InterpretationError(
+                "this archive predates the knowledge-state migration, so it "
+                "cannot hold an interpretation. Open it with create=True to "
+                "apply migration 17.")
+        axis = self._axis_for(source_fact_id)
+        # A new reading supersedes the one currently last in knowledge order.
+        # The first reading supersedes nothing, and every later one must name
+        # its predecessor -- which is what makes the series an auditable chain
+        # rather than an unordered pile of readings.
+        held = axis.audit()
+        try:
+            interpretation, created = axis.record(
+                knowledge_at, unit, currency, currency_basis,
+                supersedes=held[-1].identity if held else None)
+        except KnowledgeAxisError as error:
+            # The validators live in one place; the archive reports its own
+            # error type so a caller can tell "this reading is not allowed"
+            # from "the archive could not answer".
+            raise InterpretationError(str(error)) from error
+        if not created:
+            existing = self.connection.execute(
+                "SELECT * FROM interpretations WHERE identity = ?",
+                (interpretation.identity,)).fetchone()
+            return {"created": False, "interpretation": dict(existing)}
+        row = {
+            "interpretation_id": f"interp_{interpretation.identity[7:31]}",
+            "source_fact_id": interpretation.source_fact_id,
+            "knowledge_at": interpretation.knowledge_at,
+            "unit": interpretation.unit,
+            "currency": interpretation.currency,
+            "currency_basis": interpretation.currency_basis,
+            "identity": interpretation.identity,
+            "supersedes": interpretation.supersedes,
+            "created_at": utc_now(),
+        }
+        self.connection.execute(
+            "INSERT INTO interpretations (interpretation_id, source_fact_id,"
+            " knowledge_at, unit, currency, currency_basis, identity, supersedes,"
+            " created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tuple(row.values()))
+        self.connection.commit()
+        return {"created": True, "interpretation": row}
+
+    def interpretations_for_source_fact(
+        self, source_fact_id: str
+    ) -> List[Dict[str, Any]]:
+        """Every interpretation of one source fact, in knowledge order."""
+        if not self._has_interpretations():
+            return []
+        return self._interpretations_for(source_fact_id)
+
+    def get_interpretation(self, interpretation_id: str) -> Optional[Dict[str, Any]]:
+        if not self._has_interpretations():
+            return None
+        row = self.connection.execute(
+            "SELECT * FROM interpretations WHERE interpretation_id = ?",
+            (interpretation_id,)).fetchone()
+        return dict(row) if row else None
+
+    def effective_interpretation(
+        self, source_fact_id: str, cutoff: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        The one interpretation effective at a knowledge cutoff.
+
+        Greatest `knowledge_at` at or before `cutoff`, inclusive. Not wired into
+        any existing reader: this is the layer 2.60 said readers would need, and
+        2.61 deliberately stops short of changing reader semantics.
+        """
+        if not self._has_interpretations():
+            return None
+        axis = self._axis_for(source_fact_id)
+        chosen = axis.effective_at(cutoff)
+        if chosen is None:
+            return None
+        row = self.connection.execute(
+            "SELECT * FROM interpretations WHERE identity = ?",
+            (chosen.identity,)).fetchone()
+        return dict(row) if row else None
+
+    def interpretation_count(self) -> int:
+        if not self._has_interpretations():
+            return 0
+        return int(self.connection.execute(
+            "SELECT COUNT(*) AS n FROM interpretations").fetchone()["n"])
 
     def document_count(self) -> int:
         return int(
