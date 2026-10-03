@@ -437,7 +437,24 @@ def _strip_ref_prefix(reference: str) -> str:
     return reference
 
 
+def _json1_probe(connection: sqlite3.Connection) -> bool:
+    """
+    Whether this SQLite was built with JSON1.
+
+    JSON1 is a compile-time option, so it is probed rather than assumed: a
+    query that is correct on a JSON1 build must not fail on a build without it.
+    """
+    try:
+        connection.execute(
+            "SELECT json_extract('{\"k\":\"v\"}', '$.k')").fetchone()
+        return True
+    except sqlite3.Error:
+        return False
+
+
 @dataclass(frozen=True)
+
+
 class EvidenceQuery:
     """
     A read-only service over the archive.
@@ -826,8 +843,35 @@ class EvidenceQuery:
         elif instant is False:
             where.append("o.period_start IS NOT NULL")
         if basis_framework:
-            where.append("o.basis_json LIKE ?")
-            params.append(f'%"reporting_framework": "{basis_framework}"%')
+            # The predicate has to be EXACT, not merely safe, and that is a
+            # correctness requirement rather than a performance one.
+            #
+            # `query_observations` applies LIMIT in SQL. So a prefilter that is
+            # over-inclusive fills the page window with rows the structural check
+            # then rejects, and the query answers "no such observation" even
+            # though matching rows exist further down. Widening the pattern to
+            # "has this key at all" reintroduces exactly that, which is why the
+            # obvious relaxation is wrong.
+            #
+            # JSON1 is a compile-time option, so it is probed rather than
+            # assumed: a query that is correct on a JSON1 build must not fail on
+            # a build without it. The fallback is `instr`, not LIKE, and that is
+            # not incidental: LIKE is case-insensitive for ASCII, so a LIKE on
+            # "US-GAAP" silently matched every "us-gaap" row -- which refilled
+            # the LIMIT window with rows the structural check then rejected, and
+            # reproduced the very bug being fixed. `instr` is case-sensitive and
+            # takes no wildcards, so it is exact in the two ways that matter.
+            if _json1_probe(self.connection):
+                where.append("json_extract(o.basis_json,"
+                             " '$.reporting_framework') = ?")
+                params.append(basis_framework)
+            else:
+                where.append("(instr(o.basis_json, ?) > 0"
+                             " OR instr(o.basis_json, ?) > 0)")
+                params.append(
+                    f'"reporting_framework":"{basis_framework}"')
+                params.append(
+                    f'"reporting_framework": "{basis_framework}"')
 
         clause = (" WHERE " + " AND ".join(where)) if where else ""
         sort = {
@@ -857,9 +901,14 @@ class EvidenceQuery:
                 row, states, include_validation, include_lineage,
                 knowledge_cutoff=knowledge_cutoff,
             )
-            if basis_framework and basis_framework not in _canonical(
-                result.get("basis")
+            if basis_framework and (
+                    (result.get("basis") or {}).get("reporting_framework")
+                    != basis_framework
             ):
+                # Compared as a value, not as a substring. Checking whether the
+                # canonical text of the whole basis *contains* the framework
+                # would accept `us-gaapfoo` and `x-us-gaap`, which are not
+                # frameworks under the basis contract.
                 continue
             results.append(result)
         object.__setattr__(
