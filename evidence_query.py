@@ -45,6 +45,7 @@ from data_contract import (
     utc_now,
 )
 from core_registry import CoreRegistry
+from sqlite_archive import interpretation_status
 from evidence_model import (
     CONFLICTING,
     EVIDENCE_STATES,
@@ -844,9 +845,17 @@ class EvidenceQuery:
 
         states = self._state_map(asset)
         results = []
+        # `knowable_at` is the point-in-time question the caller already asked
+        # about availability, so it is the point-in-time question to ask about
+        # knowledge too. With no cutoff given, this surface answers on the
+        # effective reading -- it is an evidence retrieval surface, and a reader
+        # that returned the superseded reading while the point-in-time reader
+        # returned the corrected one would be the inconsistency 2.64 removed.
+        knowledge_cutoff = knowable_at
         for row in rows:
             result = self._observation_package(
-                row, states, include_validation, include_lineage
+                row, states, include_validation, include_lineage,
+                knowledge_cutoff=knowledge_cutoff,
             )
             if basis_framework and basis_framework not in _canonical(
                 result.get("basis")
@@ -963,6 +972,7 @@ class EvidenceQuery:
         states: Dict[str, Dict[str, Any]],
         include_validation: bool,
         include_lineage: bool,
+        knowledge_cutoff: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         One observation, in the canonical evidence shape.
@@ -970,6 +980,20 @@ class EvidenceQuery:
         Fields that are null are still present, with an explicit marker, because
         "the source did not state this" and "we do not know" are different
         answers and a consumer must be able to tell them apart.
+
+        The unit, currency and currency basis are the ones ST-EVA currently
+        holds for this source fact, not necessarily the ones the row was written
+        with. A 2.53 parser defect typed non-USD monetary facts as a ratio with
+        no currency, and 2.62 recorded the corrected reading as an
+        interpretation rather than rewriting the row. Without this overlay the
+        point-in-time reader and this surface would give two different answers
+        about the same fact, and this is the surface downstream evidence
+        retrieval reads.
+
+        Only those three fields move. Value, period, metric, availability,
+        contract id, lineage and source-fact identity are the fact and are not
+        reachable from an interpretation, so the restriction is structural rather
+        than a filter a call site could forget.
         """
         status = row["status"]
         state = self._state_for(
@@ -1001,6 +1025,10 @@ class EvidenceQuery:
             "metric": row["metric"],
             "value": value,
             "has_value": value is not None,
+            # The effective reading. Overwritten below when a later
+            # interpretation applies; `stored_*` keeps the row's own values so a
+            # consumer can still see what was written and when it was
+            # superseded.
             "unit": row["unit"],
             "currency": row["currency"],
             "currency_basis": row["currency_basis"],
@@ -1043,6 +1071,9 @@ class EvidenceQuery:
             "retrieved_at": row["retrieved_at"],
             "first_archived_at": row["first_archived_at"],
         }
+
+        self._apply_knowledge_interpretation(
+            package, row, basis, knowledge_cutoff)
         if include_validation:
             package["validation"] = self.get_validation(
                 row["observation_id"]
@@ -1214,6 +1245,46 @@ class EvidenceQuery:
                 block["recorded_cross_check"] = records
                 block["determination"] = "FROM_RECORDED_EVIDENCE"
         return block
+
+    def _apply_knowledge_interpretation(
+        self,
+        package: Dict[str, Any],
+        row: sqlite3.Row,
+        basis: Optional[Dict[str, Any]],
+        knowledge_cutoff: Optional[str],
+    ) -> None:
+        """
+        Overlay the effective interpretation onto an evidence package.
+
+        The selection is delegated to `interpretation_status`, which is the same
+        rule `observations_for` uses. That is the whole point of this round: two
+        formal consumers were answering the same question differently, and a
+        second resolver inside this surface would restore the defect rather than
+        remove it.
+
+        The stored reading is preserved as `stored_unit` / `stored_currency` /
+        `stored_currency_basis`, and the provenance rides in the existing
+        structured `basis` field, so nothing is hidden and no new public shape
+        is introduced.
+        """
+        interpretation, status = interpretation_status(
+            self.connection, row["source_fact_id"], knowledge_cutoff)
+        package["knowledge_interpretation_status"] = status
+        if interpretation is None:
+            return
+        package["stored_unit"] = package["unit"]
+        package["stored_currency"] = package["currency"]
+        package["stored_currency_basis"] = package["currency_basis"]
+        for field_name in ("unit", "currency", "currency_basis"):
+            package[field_name] = interpretation[field_name]
+        if basis is None:
+            basis = {}
+            package["basis"] = basis
+        basis["knowledge_interpretation"] = {
+            "identity": interpretation["identity"],
+            "knowledge_at": interpretation["knowledge_at"],
+            "applied_at_cutoff": knowledge_cutoff,
+        }
 
     def _semantic_for(
         self,

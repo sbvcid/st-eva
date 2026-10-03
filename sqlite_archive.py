@@ -151,6 +151,125 @@ def _lineage_id(
     ).hexdigest()[:24]
 
 
+#: A cutoff meaning "everything ST-EVA knows". Used where a caller expresses no
+#: point in time and wants the effective reading rather than a historical one.
+LATEST_KNOWLEDGE = "9999-12-31T23:59:59.999999+00:00"
+
+
+def table_exists(connection: sqlite3.Connection, name: str) -> bool:
+    return connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (name,)).fetchone() is not None
+
+
+def _row_as_dict(connection: sqlite3.Connection, sql: str,
+                 params: Tuple[Any, ...] = ()) -> Optional[Dict[str, Any]]:
+    """
+    One row as a dict, whatever the connection's row factory is.
+
+    `interpretation_status` and `knowledge_axis_for` are module-level and take a
+    caller's connection, and callers legitimately differ: `EvidenceQuery` is
+    handed connections it did not open. Assuming `sqlite3.Row` would make the
+    canonical selection rule depend on an incidental setting, and the first
+    symptom would be a `TypeError` in a reader rather than a wrong answer.
+    """
+    cursor = connection.execute(sql, params)
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return dict(zip([description[0] for description in cursor.description], row))
+
+
+def knowledge_axis_for(connection: sqlite3.Connection, source_fact_id: str
+                       ) -> Optional[KnowledgeAxis]:
+    """
+    Rebuild one source fact's stored interpretation series as a validated axis.
+
+    Returns None when no observation carries that `source_fact_id`, which is a
+    statement about the fact rather than a failure.
+
+    An observation whose source declared no availability has no availability to
+    stand in for, and `KnowledgeAxis` insists on one. The earliest instant the
+    archive recorded is used so the knowledge question can still be answered:
+    availability gates whether a fact is replay-eligible, and plays no part in
+    choosing between interpretations. A row with nothing at all recorded falls
+    through to None, which callers read as "no source fact to interpret".
+    """
+    row = _row_as_dict(connection,
+                       "SELECT * FROM observations WHERE source_fact_id = ?",
+                       (source_fact_id,))
+    if row is None:
+        return None
+    availability = (row["available_at"] or row["replay_eligible_from"]
+                    or row["first_archived_at"])
+    if availability is None:
+        return None
+    fact = SourceFact(
+        source_fact_id=row["source_fact_id"],
+        available_at=availability,
+        replay_eligible_from=row["replay_eligible_from"] or availability,
+        value=json.loads(row["value_json"]),
+        period_start=row["period_start"],
+        period_end=row["period_end"],
+        metric=row["metric"],
+        lineage_id=row["lineage_id"],
+    )
+    axis = KnowledgeAxis(fact)
+    cursor = connection.execute(
+        "SELECT * FROM interpretations WHERE source_fact_id = ?"
+        " ORDER BY knowledge_at, interpretation_id", (source_fact_id,))
+    columns = [description[0] for description in cursor.description]
+    for stored_row in cursor:
+        stored = dict(zip(columns, stored_row))
+        axis.record(
+            stored["knowledge_at"], stored["unit"], stored["currency"],
+            stored["currency_basis"], supersedes=stored["supersedes"])
+    return axis
+
+
+def interpretation_status(connection: sqlite3.Connection,
+                          source_fact_id: Optional[str],
+                          cutoff: Optional[str] = None
+                          ) -> Tuple[Optional[Dict[str, Any]], str]:
+    """
+    THE canonical effective-interpretation selection rule.
+
+    Every reader goes through this one function. A second resolver would be a
+    second answer to the same question, and the two would eventually disagree at
+    a boundary -- which is the defect 2.64 exists to remove between two readers
+    that already had.
+
+    The selection itself is `KnowledgeAxis.effective_at`, validated in 2.59, so
+    the inclusive boundary and the tie refusal live in exactly one place.
+
+    Status is one of
+
+        APPLIED              an interpretation was found and applies
+        BASELINE             none applies; the observation's own reading stands
+        UNAVAILABLE_LEGACY   the archive predates the interpretations table
+        NO_SOURCE_FACT       the observation carries no source-fact identity
+
+    `cutoff=None` means "everything ST-EVA knows", which is what a reader with
+    no point in time in the question is asking for.
+    """
+    if not table_exists(connection, "interpretations"):
+        return None, "UNAVAILABLE_LEGACY"
+    if not source_fact_id:
+        return None, "NO_SOURCE_FACT"
+    axis = knowledge_axis_for(connection, source_fact_id)
+    if axis is None:
+        return None, "NO_SOURCE_FACT"
+    chosen = axis.effective_at(cutoff or LATEST_KNOWLEDGE)
+    if chosen is None:
+        return None, "BASELINE"
+    stored = _row_as_dict(
+        connection, "SELECT * FROM interpretations WHERE identity = ?",
+        (chosen.identity,))
+    if stored is None:
+        return None, "BASELINE"
+    return stored, "APPLIED"
+
+
 class SQLiteArchive(ArchiveStore):
     """A single-file SQLite archive. One connection, opened lazily."""
 
@@ -896,10 +1015,20 @@ class SQLiteArchive(ArchiveStore):
         """
         if not self._has_interpretations():
             return None, "UNAVAILABLE_LEGACY"
-        chosen = self.effective_interpretation(source_fact_id, cutoff)
+        if not source_fact_id:
+            return None, "NO_SOURCE_FACT"
+        axis = knowledge_axis_for(self.connection, source_fact_id)
+        if axis is None:
+            return None, "NO_SOURCE_FACT"
+        chosen = axis.effective_at(cutoff or LATEST_KNOWLEDGE)
         if chosen is None:
             return None, "BASELINE"
-        return chosen, "APPLIED"
+        row = self.connection.execute(
+            "SELECT * FROM interpretations WHERE identity = ?",
+            (chosen.identity,)).fetchone()
+        if row is None:
+            return None, "BASELINE"
+        return dict(row), "APPLIED"
 
     def _overlay_interpretation(self, observation: Observation, cutoff: str
                                  ) -> Tuple[Observation, str]:
@@ -1322,17 +1451,12 @@ class SQLiteArchive(ArchiveStore):
         written by an older build with looser rules cannot slip a new one past
         them.
         """
-        fact = self._source_fact(source_fact_id)
-        if fact is None:
+        axis = knowledge_axis_for(self.connection, source_fact_id)
+        if axis is None:
             raise InterpretationError(
                 f"no observation carries source_fact_id {source_fact_id!r}, so "
                 "there is no source fact to interpret. An interpretation may "
                 "not create a source fact.")
-        axis = KnowledgeAxis(fact)
-        for row in self._interpretations_for(source_fact_id):
-            axis.record(
-                row["knowledge_at"], row["unit"], row["currency"],
-                row["currency_basis"], supersedes=row["supersedes"])
         return axis
 
     def _interpretations_for(self, source_fact_id: str) -> List[Dict[str, Any]]:
