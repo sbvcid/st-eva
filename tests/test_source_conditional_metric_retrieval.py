@@ -159,24 +159,63 @@ class TestResolutionPrecedence(unittest.TestCase):
         EXACT claim of its own against `long_term_debt_current`. The noncurrent
         concept is untouched and still unresolved. Both halves matter: the rule is
         unchanged, and what changed is one concept's evidence.
-        """
-        unresolved = self.registry.resolve_source_concept(IFRS_NONCURRENT)
-        self.assertFalse(unresolved.is_resolved, IFRS_NONCURRENT)
-        self.assertEqual(unresolved.destination_metric, None)
-        self.assertIn("unresolved, not refuted", unresolved.detail.lower())
 
-        promoted = self.registry.resolve_source_concept(IFRS_CURRENT)
-        self.assertTrue(promoted.is_resolved, IFRS_CURRENT)
-        self.assertEqual(promoted.destination_metric, CURRENT_METRIC)
-        self.assertEqual(promoted.mapping_type, "EXACT")
-        # The rule under test: the inherited PARTIAL composition mapping is
-        # present and still does not compete with an exact identity claim.
+        Revised in 2.73 for the noncurrent concept, and this is the rule under
+        test rather than an exception to it. It now carries a measured IDENTITY
+        PARTIAL claim of its own against `long_term_debt_noncurrent`. What must
+        still hold is everything 2.66 established: the successor's PARTIAL
+        declaration does not become a destination, and a PARTIAL identity claim
+        is never upgraded into a whole.
+        """
+        # The inherited declaration is still on the successor, and still did not
+        # win. This is the 2.66 defect, unchanged.
+        inherited = {
+            mapping.metric_id
+            for mapping, _ in self.registry.metrics_for_concept(IFRS_NONCURRENT)
+            if mapping.mapping_type == "PARTIAL"
+        }
+        self.assertIn(SUCCESSOR, inherited, "2.73 must not remove the declaration")
+
+        promoted = self.registry.resolve_source_concept(IFRS_NONCURRENT)
+        self.assertTrue(promoted.is_resolved, IFRS_NONCURRENT)
+        self.assertEqual(promoted.destination_metric, NONCURRENT_METRIC)
+        self.assertEqual(promoted.mapping_type, "PARTIAL")
+        self.assertEqual(promoted.mapping_origin, ConceptResolution.DIRECT)
+        # Never the aggregate that declares it, never a whole.
+        self.assertNotEqual(promoted.destination_metric, SUCCESSOR)
+        self.assertFalse(promoted.is_exact)
+        self.assertTrue(promoted.is_component)
+        # And the measured scope rides with it, so PARTIAL is not taken on
+        # trust.
+        self.assertEqual(promoted.scope["unmeasured_holders"], 6)
+
+        current = self.registry.resolve_source_concept(IFRS_CURRENT)
+        self.assertTrue(current.is_resolved, IFRS_CURRENT)
+        self.assertEqual(current.destination_metric, CURRENT_METRIC)
+        self.assertEqual(current.mapping_type, "EXACT")
+        # The rule under test for the sibling: the inherited PARTIAL composition
+        # mapping is present and still does not compete with an exact identity
+        # claim.
         inherited = {
             mapping.metric_id
             for mapping, _ in self.registry.metrics_for_concept(IFRS_CURRENT)
             if mapping.mapping_type == "PARTIAL"}
         self.assertIn(SUCCESSOR, inherited)
-        self.assertNotEqual(promoted.destination_metric, SUCCESSOR)
+        self.assertNotEqual(current.destination_metric, SUCCESSOR)
+
+    def test_a_concept_with_no_identity_claim_is_still_unresolved(self) -> None:
+        """
+        The anti-vacuous half of the rule 2.73 did not move.
+
+        Promoting one concept says nothing about a concept nothing claims, and
+        the answer there is still "unresolved, not refuted" -- the distinction
+        2.66 exists to preserve.
+        """
+        bare = self.registry.resolve_source_concept(
+            "us-gaap:ShortTermBorrowings")
+        self.assertFalse(bare.is_resolved)
+        self.assertEqual(bare.destination_metric, None)
+        self.assertIn("unresolved, not refuted", bare.detail.lower())
 
     def test_an_unauthorised_proposition_is_not_promoted_by_this_change(self) -> None:
         before = self.registry.connection.execute(
@@ -315,25 +354,66 @@ class TestEffectiveMetricRetrievalOnRealArchives(unittest.TestCase):
         self.assertIn(IFRS_CURRENT, concepts)
 
     def test_12_the_non_current_component_query_retrieves_legacy_rows(self) -> None:
-        expected = self.connection.execute(
-            "SELECT COUNT(*) FROM observations WHERE metric = ? AND concept = ?"
-            " AND period_end >= (SELECT MIN(effective_from) FROM"
-            " metric_concept_mapping WHERE metric_id = ?)",
-            (LEGACY, US_GAAP_NONCURRENT, NONCURRENT_METRIC)).fetchone()[0]
-        self.assertGreater(expected, 0, "no positive control in the archive")
-        self.assertEqual(self._count(NONCURRENT_METRIC), expected)
+        """
+        WHY THIS CHANGED: 2.73 gave this component a second declaring concept.
+
+        `long_term_debt_noncurrent` is now claimed by the US-GAAP non-current
+        portion *and* by `ifrs-full:LongtermBorrowings`, each inside its own
+        persisted window. The expected population is therefore a partition over
+        both concepts, not the old count plus a constant: a query that dropped
+        the IFRS rows, or returned the pre-window ones, would have to pass a
+        hardcoded number to get through.
+        """
+        expected = {}
+        for concept in (US_GAAP_NONCURRENT, IFRS_NONCURRENT):
+            window = self.connection.execute(
+                "SELECT effective_from FROM metric_concept_mapping"
+                " WHERE metric_id = ? AND concept_id = ?",
+                (NONCURRENT_METRIC, concept)).fetchone()
+            self.assertIsNotNone(
+                window, f"{concept} declares nothing for this metric")
+            expected[concept] = {
+                r["contract_id"] for r in self.connection.execute(
+                    "SELECT contract_id FROM observations WHERE metric = ?"
+                    " AND concept = ? AND period_end >= ?",
+                    (LEGACY, concept, window["effective_from"]))}
+            self.assertGreater(len(expected[concept]), 0,
+                               f"{concept}: no positive control in the archive")
+
+        self.assertEqual(self._count(NONCURRENT_METRIC),
+                         sum(len(v) for v in expected.values()))
+
+        rows = self.query.query_observations(metric=NONCURRENT_METRIC,
+                                             limit=5000)
+        by_concept = {}
+        for row in rows:
+            by_concept.setdefault(
+                (row.get("source") or {}).get("concept"), set()).add(
+                    row["contract_id"])
+        # Set equality, not a count: which rows arrived, per declaring concept.
+        self.assertEqual(by_concept, expected)
 
     def test_13_the_total_query_does_not_retrieve_component_rows(self) -> None:
-        self.assertEqual(self._count(SUCCESSOR), 0)
-
-    def test_14_unresolved_ifrs_rows_appear_in_no_canonical_query(self) -> None:
         """
-        Stronger than before the promotion, not weaker.
+        WHY THIS CHANGED: 2.73 added a fourth COMPOSITION row's twin claim.
 
-        The noncurrent IFRS concept is unauthorised and must be invisible
-        everywhere. The current-portion concept is now promoted, so it must
-        appear in its own component query and **only** there -- in particular it
-        must not leak into the total, which is the failure 2.45 was about.
+        The aggregate still retrieves nothing at all. Under 2.73 it could not
+        have retrieved the IFRS rows through their component metric either,
+        because the concept resolves to the component and not to the aggregate.
+        """
+        self.assertEqual(self._count(SUCCESSOR), 0)
+        rows = self.query.query_observations(metric=SUCCESSOR, limit=5000)
+        self.assertEqual(rows, [])
+
+    def test_14_ifrs_rows_appear_only_under_their_own_component(self) -> None:
+        """
+        Stronger than before the promotions, not weaker.
+
+        2.45's failure was IFRS rows leaking into the total. What is asserted
+        now is positive destination isolation for both IFRS concepts: each
+        appears under its own component metric and **only** there -- in
+        particular neither may reach the aggregate, and the two may not reach
+        each other's metric.
         """
         for concept in (IFRS_NONCURRENT, IFRS_CURRENT):
             present = self.connection.execute(
@@ -341,24 +421,63 @@ class TestEffectiveMetricRetrievalOnRealArchives(unittest.TestCase):
                 " AND metric = ?", (concept, LEGACY)).fetchone()[0]
             self.assertGreater(present, 0, f"{concept}: no positive control")
 
-        for metric in (SUCCESSOR, NONCURRENT_METRIC):
+        by_metric = {}
+        for metric in (SUCCESSOR, NONCURRENT_METRIC, CURRENT_METRIC):
             rows = self.query.query_observations(metric=metric, limit=5000)
-            concepts = {(r.get("source") or {}).get("concept") for r in rows}
-            self.assertNotIn(IFRS_NONCURRENT, concepts, metric)
-            self.assertNotIn(IFRS_CURRENT, concepts, metric)
+            by_metric[metric] = {(r.get("source") or {}).get("concept")
+                                 for r in rows}
 
-        current_rows = self.query.query_observations(metric=CURRENT_METRIC,
-                                                     limit=5000)
-        current_concepts = {(r.get("source") or {}).get("concept")
-                            for r in current_rows}
-        self.assertIn(IFRS_CURRENT, current_concepts)
-        self.assertNotIn(IFRS_NONCURRENT, current_concepts)
+        self.assertIn(IFRS_NONCURRENT, by_metric[NONCURRENT_METRIC])
+        self.assertIn(IFRS_CURRENT, by_metric[CURRENT_METRIC])
+        # Each IFRS concept reaches its own component metric, and each is denied
+        # the other two -- including, crucially, the aggregate, which is the
+        # 2.45 failure.
+        self.assertNotIn(IFRS_NONCURRENT, by_metric[SUCCESSOR])
+        self.assertNotIn(IFRS_NONCURRENT, by_metric[CURRENT_METRIC])
+        self.assertNotIn(IFRS_CURRENT, by_metric[SUCCESSOR])
+        self.assertNotIn(IFRS_CURRENT, by_metric[NONCURRENT_METRIC])
+        self.assertEqual(by_metric[SUCCESSOR], set())
 
     def test_15_ambiguous_rows_are_excluded(self) -> None:
+        """
+        WHY THIS CHANGED: the non-current component gained a PARTIAL source.
+
+        The invariant is the exclusion of ambiguity, not the exclusion of
+        PARTIAL. 2.73 widened who may feed a metric query; it did not widen what
+        counts as a destination, so every source feeding one must still resolve
+        uniquely, directly, to that metric and no other.
+        """
+        registry = CoreRegistry(self.connection)
         for metric in (CURRENT_METRIC, NONCURRENT_METRIC, SUCCESSOR):
-            sources = self.registry_sources(metric)
-            self.assertTrue(all(
-                s["mapping_type"] == "EXACT" for s in sources), metric)
+            for source in self.registry_sources(metric):
+                where = (metric, source["concept"])
+                resolution = registry.resolve_source_concept(
+                    source["concept"])
+                self.assertTrue(resolution.is_resolved, where)
+                self.assertEqual(resolution.destination_metric, metric, where)
+                self.assertEqual(resolution.mapping_origin,
+                                 ConceptResolution.DIRECT, where)
+                self.assertEqual(resolution.status,
+                                 ConceptResolution.RESOLVED, where)
+                self.assertEqual(resolution.candidates, (), where)
+                self.assertEqual(source["mapping_type"],
+                                 resolution.mapping_type, where)
+
+        # The aggregate has no destination source at all: all four of its rows
+        # are COMPOSITION declarations. Asserted explicitly because a loop over
+        # an empty list would pass vacuously.
+        self.assertEqual(self.registry_sources(SUCCESSOR), [])
+
+        # EXACT stays EXACT, and the one measured PARTIAL is a component rather
+        # than a quieter whole.
+        self.assertEqual(
+            {(s["concept"], s["mapping_type"])
+             for s in self.registry_sources(CURRENT_METRIC)},
+            {(US_GAAP_CURRENT, "EXACT"), (IFRS_CURRENT, "EXACT")})
+        self.assertEqual(
+            {(s["concept"], s["mapping_type"])
+             for s in self.registry_sources(NONCURRENT_METRIC)},
+            {(US_GAAP_NONCURRENT, "EXACT"), (IFRS_NONCURRENT, "PARTIAL")})
 
     def registry_sources(self, metric):
         return CoreRegistry(self.connection).effective_metric_sources(metric)
@@ -473,10 +592,14 @@ def test_the_two_mechanisms_are_not_merged_into_one_field(self) -> None:
     """
     A single legacy debt row, three independent answers.
 
-    The repaired rows are the IFRS ones, and those concepts have no authorised
-    metric destination -- so this row is the clearest possible case: stored
-    metric identity kept, metric destination explicitly unresolved, and the unit
-    corrected. Three questions, three fields, none of them answering for another.
+    The repaired rows are the IFRS ones. Those concepts now have an authorised
+    metric destination, but *this* row's `period_end` precedes the mapping's
+    window, so the destination is still unresolved here -- for the window
+    reason, not because nothing claims the concept. Stored metric identity is
+    therefore kept, metric destination explicitly unresolved, and the unit
+    corrected: three questions, three fields, none of them answering for
+    another. Module-level and uncollected at HEAD; 2.73 only corrected the
+    description.
     """
     row = self.connection.execute(
         "SELECT o.*, a.ticker FROM observations o"

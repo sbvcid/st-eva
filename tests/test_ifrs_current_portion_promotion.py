@@ -70,7 +70,7 @@ class TestThePromotedMapping(unittest.TestCase):
 
     def rows_for(self, concept: str) -> List[Dict[str, Any]]:
         return [dict(r) for r in self.registry.connection.execute(
-            "SELECT metric_id, mapping_type, effective_from, effective_to, notes"
+            "SELECT metric_id, mapping_type, effective_from, effective_to, notes, relation_kind, scope_json"
             " FROM metric_concept_mapping WHERE concept_id = ?"
             " ORDER BY mapping_type", (concept,))]
 
@@ -111,13 +111,29 @@ class TestThePromotedMapping(unittest.TestCase):
         self.assertEqual(rows[0]["mapping_type"], "EXACT")
         self.assertEqual(rows[0]["effective_from"], "2014-09-27")
 
-    def test_5_the_longterm_borrowings_state_is_unchanged(self) -> None:
-        """The 298 were not promoted, authorised by this round, or touched."""
-        rows = self.rows_for(IFRS_NONCURRENT)
-        self.assertEqual([r["metric_id"] for r in rows], [SUCCESSOR])
-        self.assertEqual(rows[0]["mapping_type"], "PARTIAL")
+    def test_5_the_longterm_borrowings_relations_do_not_compete(self) -> None:
+        """
+        WHY THIS CHANGED: 2.73 promoted these 298.
+
+        Previously the concept carried only a `debt` PARTIAL and resolved
+        nowhere. What must now hold is a partition rather than a count: the
+        component metric claims the concept as an IDENTITY destination, and the
+        aggregate declares it as a COMPOSITION component. Both relationships stay
+        true; only one is a destination.
+        """
+        rows = {r["metric_id"]: r for r in self.rows_for(IFRS_NONCURRENT)}
+        self.assertEqual(rows[SUCCESSOR]["relation_kind"], "COMPOSITION")
+        self.assertEqual(rows[NONCURRENT_METRIC]["mapping_type"], "PARTIAL")
+        self.assertEqual(rows[NONCURRENT_METRIC]["relation_kind"], "IDENTITY")
+
         resolution = self.registry.resolve_source_concept(IFRS_NONCURRENT)
-        self.assertFalse(resolution.is_resolved)
+        self.assertTrue(resolution.is_resolved)
+        self.assertEqual(resolution.destination_metric, NONCURRENT_METRIC)
+        # The aggregate is never a destination, which is the whole point.
+        self.assertNotEqual(resolution.destination_metric, SUCCESSOR)
+        # PARTIAL is not upgraded to EXACT.
+        self.assertFalse(resolution.is_exact)
+        self.assertTrue(resolution.is_component)
 
     def test_6_the_core_metric_count_is_unchanged(self) -> None:
         active = [m.metric_id for m in self.registry.metrics()
@@ -125,9 +141,21 @@ class TestThePromotedMapping(unittest.TestCase):
         self.assertEqual(len(active), 20)
 
     def test_15_the_promotion_resolves_nothing_else(self) -> None:
-        for concept in (IFRS_NONCURRENT,):
-            self.assertFalse(
-                self.registry.resolve_source_concept(concept).is_resolved)
+        """
+        WHY THIS CHANGED: the noncurrent IFRS concept now resolves, to its own
+        component metric. What must still hold is that the two IFRS concepts stay
+        apart and that neither reaches the aggregate.
+        """
+        resolution = self.registry.resolve_source_concept(IFRS_NONCURRENT)
+        self.assertTrue(resolution.is_resolved)
+        self.assertEqual(resolution.destination_metric, NONCURRENT_METRIC)
+        self.assertNotEqual(resolution.destination_metric, SUCCESSOR)
+
+        # The 2.71 promotion of the current-portion concept is untouched.
+        current = self.registry.resolve_source_concept(
+            "ifrs-full:CurrentPortionOfLongtermBorrowings")
+        self.assertEqual(current.destination_metric, TARGET)
+        self.assertTrue(current.is_exact)
 
     def test_the_promotion_note_records_the_qualifier(self) -> None:
         notes = (next(r for r in self.rows_for(CONCEPT)

@@ -301,11 +301,20 @@ class TestResolutionIsConditionedOnTheSourceConcept(unittest.TestCase):
         # because it carries an EXACT claim of its own rather than because the
         # blanket path was widened. The anti-vacuous property is unchanged --
         # the resolved set is still exact and disjoint from everything else.
+        # WHY THIS CHANGED: 2.73 promoted the noncurrent IFRS concept, so the
+        # resolved set grew again. The anti-vacuous property this test exists for
+        # is unchanged: the set is still exact and still disjoint from
+        # everything that must not resolve.
         self.assertEqual(resolved, {US_GAAP_CURRENT, US_GAAP_NONCURRENT,
-                                    IFRS_CURRENT})
+                                    IFRS_CURRENT, IFRS_NONCURRENT})
         self.assertEqual(resolved & {OUTSIDE_THE_SUCCESSOR_SET}, set())
-        # The noncurrent IFRS concept is still unauthorised and still absent.
-        self.assertEqual(resolved & {IFRS_NONCURRENT}, set())
+        # 2.73: the noncurrent IFRS concept entered the resolved set through
+        # its own IDENTITY PARTIAL claim, so there is no longer a "must stay
+        # absent" assertion to make for it here. What this test continues to
+        # protect is unchanged and is the exact set equality above plus the
+        # disjointness below: no concept outside the declared set was admitted.
+        # That it lands on its component metric and never on the aggregate is
+        # asserted in `test_case_3`.
 
 
 class TestTheFourCriticalCases(unittest.TestCase):
@@ -344,7 +353,7 @@ class TestTheFourCriticalCases(unittest.TestCase):
                          US_GAAP_NONCURRENT_METRIC)
         self.assertEqual(result.mapping_types, ("EXACT",))
 
-    def test_case_3_ifrs_non_current_is_not_resolved(self):
+    def test_case_3_ifrs_non_current_resolves_to_its_own_component(self):
         """
         2.47 returned SUPPORTED_PARTIAL: the accounting object matches the
         non-current component, but the realised breadth is filer-dependent, so
@@ -356,19 +365,27 @@ class TestTheFourCriticalCases(unittest.TestCase):
         not a decision, and treating it as a destination exposed all 417
         unauthorised IFRS rows as total long-term debt -- 2.45's
         BLOCKED_SUPERSESSION, still live. Unresolved is not refuted.
+
+        Revised in 2.73. The concept now carries its own measured IDENTITY
+        PARTIAL claim, so it resolves -- but to the component it belongs to, on
+        the narrower scope 2.47 measured, and never to the aggregate that
+        declares it.
         """
+        # WHY THIS CHANGED: 2.73 gave this concept an IDENTITY PARTIAL
+        # destination, so it is no longer unresolved. What replaces the old claim
+        # is stronger, not weaker: it resolves to the component metric, never to
+        # the aggregate that declares it, and never as EXACT.
         result = self._resolve(IFRS_NONCURRENT)
-        self.assertFalse(result.is_resolved)
-        self.assertEqual(result.mappings, ())
-        self.assertEqual(result.stored_metric_id, LEGACY)
-        self.assertEqual(result.status,
-                         ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING)
-        self.assertIn("unresolved, not refuted", result.reason.lower())
+        self.assertTrue(result.is_resolved)
+        self.assertEqual(result.resolved_metric_id, US_GAAP_NONCURRENT_METRIC)
+        self.assertNotEqual(result.resolved_metric_id, LEGACY)
+        self.assertEqual(result.mapping_types, ("PARTIAL",))
         # Name and concept are separate questions. The metric *name* `debt` was
-        # superseded regardless; the *concept* has no authorised destination.
-        # Reporting the successor here while refusing to resolve is what keeps
-        # the two apart.
-        self.assertEqual(result.resolved_metric_id, SUCCESSOR)
+        # superseded regardless; the *concept* now resolves, and what it must
+        # never resolve to is the successor whose name replaced it. Reporting
+        # the successor here is what kept the two apart before 2.73, and
+        # refusing to report it here is what keeps them apart now.
+        self.assertNotEqual(result.resolved_metric_id, SUCCESSOR)
 
     def test_case_4_ifrs_current_is_not_promoted_by_the_sibling_or_the_parent(self):
         """
@@ -388,14 +405,16 @@ class TestTheFourCriticalCases(unittest.TestCase):
 
     def test_the_two_ifrs_classes_do_not_see_each_other(self):
         """
-        Revised in 2.71. They now resolve differently -- the noncurrent concept
-        is unresolved and the current one is EXACT -- and they still never see
-        each other: neither names the other's concept, and neither lands on the
-        parent total.
+        Revised in 2.71, again in 2.73. They now resolve to different metrics on
+        different terms -- the noncurrent concept PARTIAL, the current one
+        EXACT -- and they still never see each other: neither names the other's
+        concept, and neither lands on the parent total.
         """
+        # WHY THIS CHANGED: the noncurrent concept now resolves. The separation
+        # under test is unchanged and is what must still hold.
         noncurrent = self._resolve(IFRS_NONCURRENT)
         current = self._resolve(IFRS_CURRENT)
-        self.assertFalse(noncurrent.is_resolved)
+        self.assertTrue(noncurrent.is_resolved)
         self.assertTrue(current.is_resolved)
         self.assertNotEqual(current.resolved_metric_id,
                             US_GAAP_NONCURRENT_METRIC)

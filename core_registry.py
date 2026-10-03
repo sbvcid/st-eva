@@ -173,6 +173,23 @@ DECLINE_REASONS = (
 # across either would splice two different numbers into one line.
 CONTINUING_MAPPINGS = frozenset({MAPPING_EXACT, MAPPING_EQUIVALENT})
 
+#: Which of two different relations a mapping row asserts. Added in 2.73.
+#:
+#: IDENTITY      this source concept expresses this metric
+#: COMPOSITION   this metric is composed from this source concept
+#:
+#: Deliberately orthogonal to `mapping_type`. An IDENTITY mapping may be EXACT or
+#: PARTIAL; a COMPOSITION row is a declaration about an aggregate and is never a
+#: destination claim. Before this existed both relations shared one row shape,
+#: and 2.72 measured the result: promoting the component mapping left one concept
+#: ambiguous between the aggregate naming it and the component it belongs to.
+#:
+#: Declared above ConceptMapping because that dataclass uses it as a field
+#: default; placing it lower raises NameError at import.
+MAPPING_IDENTITY = "IDENTITY"
+MAPPING_COMPOSITION = "COMPOSITION"
+MAPPING_RELATION_KINDS = (MAPPING_IDENTITY, MAPPING_COMPOSITION)
+
 # The adoption basis, closed for the same reason every other vocabulary here is
 # closed. `OBSERVED_ADOPTION` is the only honest claim available from a filing:
 # "this filer's own filings reported this concept in these periods". It is not
@@ -296,11 +313,23 @@ class ConceptMapping:
     effective_from: Optional[str] = None
     effective_to: Optional[str] = None
     notes: Optional[str] = None
+    # Which relation this row asserts; see MAPPING_IDENTITY.
+    relation_kind: str = MAPPING_IDENTITY
+    # Structured breadth qualification, and the reason a PARTIAL identity mapping
+    # is PARTIAL. It lives here rather than in a report so a resolver or query
+    # consumer can tell why without parsing prose. None means no scope variation
+    # has been measured -- NOT a claim that scope does not vary.
+    scope: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if self.mapping_type not in MAPPING_TYPES:
             raise RegistryError(
                 f"mapping_type {self.mapping_type!r} is not in {list(MAPPING_TYPES)}"
+            )
+        if self.relation_kind not in MAPPING_RELATION_KINDS:
+            raise RegistryError(
+                f"relation_kind {self.relation_kind!r} is not in"
+                f" {list(MAPPING_RELATION_KINDS)}"
             )
         if self.mapping_type not in CONTINUING_MAPPINGS and not (
             self.effective_from or self.effective_to
@@ -335,6 +364,8 @@ class ConceptMapping:
             "metric_id": self.metric_id,
             "concept_id": self.concept_id,
             "mapping_type": self.mapping_type,
+            "relation_kind": self.relation_kind,
+            "scope": self.scope,
             "series_continues": self.series_continues,
             "effective_from": self.effective_from,
             "effective_to": self.effective_to,
@@ -637,8 +668,27 @@ class ConceptResolution:
     effective_from: Optional[str] = None
     effective_to: Optional[str] = None
     notes: Optional[str] = None
+    # Structured scope carried from the winning mapping, so a caller can see why
+    # a PARTIAL destination is partial without reading notes.
+    scope: Optional[Dict[str, Any]] = None
     candidates: Tuple[str, ...] = ()
     detail: str = ""
+
+    @property
+    def is_exact(self) -> bool:
+        """
+        Whether the destination is an identity claim rather than a component.
+
+        Separate from `is_resolved` so a consumer can ask "does this concept
+        express that metric" and "may I treat it as the whole metric" without
+        re-deriving the second from `mapping_type` each time.
+        """
+        return self.is_resolved and self.mapping_type == "EXACT"
+
+    @property
+    def is_component(self) -> bool:
+        """A resolved destination that contributes without expressing all of it."""
+        return self.is_resolved and self.mapping_type == "PARTIAL"
 
     @property
     def is_resolved(self) -> bool:
@@ -659,12 +709,47 @@ class ConceptResolution:
             "destination_metric": self.destination_metric,
             "mapping_origin": self.mapping_origin,
             "mapping_type": self.mapping_type,
+            "exact": self.is_exact,
+            "component": self.is_component,
             "effective_from": self.effective_from,
             "effective_to": self.effective_to,
+            "scope": self.scope,
             "notes": self.notes,
             "candidates": list(self.candidates),
             "detail": self.detail,
         }
+
+
+def _optional_column(row, column: str):
+    """
+    Read a column a pre-2.73 archive does not have.
+
+    `sqlite3.Row` raises IndexError for an unknown column name and a plain dict
+    would raise KeyError. An archive opened read-only never applies migrations, so
+    an absent column is expected rather than exceptional, and it means absent
+    metadata -- it must not raise and must not become a value.
+    """
+    try:
+        return row[column]
+    except (IndexError, KeyError):
+        return None
+
+
+def _read_scope(row) -> Optional[Dict[str, Any]]:
+    """
+    Read a mapping's structured scope, tolerating a pre-2.73 archive.
+
+    A missing column, an empty value and malformed JSON all yield None: scope is a
+    qualification, and losing it must not make a mapping unreadable.
+    """
+    raw = _optional_column(row, "scope_json")
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 class CoreRegistry:
@@ -1112,8 +1197,8 @@ class CoreRegistry:
     def add_mapping(self, mapping: ConceptMapping) -> None:
         self.connection.execute(
             "INSERT OR REPLACE INTO metric_concept_mapping (metric_id,"
-            " concept_id, mapping_type, effective_from, effective_to, notes)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
+            " concept_id, mapping_type, effective_from, effective_to, notes,"
+            " relation_kind, scope_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 mapping.metric_id,
                 mapping.concept_id,
@@ -1121,6 +1206,9 @@ class CoreRegistry:
                 mapping.effective_from,
                 mapping.effective_to,
                 mapping.notes,
+                mapping.relation_kind,
+                None if mapping.scope is None else json.dumps(
+                    mapping.scope, sort_keys=True, separators=(",", ":")),
             ),
         )
         self.connection.commit()
@@ -1555,6 +1643,9 @@ class CoreRegistry:
                 effective_from=row["effective_from"],
                 effective_to=row["effective_to"],
                 notes=row["notes"],
+                relation_kind=(_optional_column(row, "relation_kind")
+                               or MAPPING_IDENTITY),
+                scope=_read_scope(row),
             )
         except RegistryError:
             return None
@@ -1602,9 +1693,20 @@ class CoreRegistry:
                 if mapping.applies_on(as_of) or adoption.covers(as_of)
             ]
 
+        # Only IDENTITY rows are destination claims.
+        #
+        # A COMPOSITION row says the metric is built from the concept, which is
+        # the same relation read from the other end and is never a statement about
+        # which metric the concept expresses. Letting one compete is exactly what
+        # 2.72 measured as AMBIGUOUS_MAPPING between `long_term_debt` and
+        # `long_term_debt_noncurrent` for a single concept. The fix is neither to
+        # weaken a row nor to date one out, but to stop treating a declaration as
+        # a claim.
+        identity_rows = [mapping for mapping, _metric in pairs
+                         if mapping.relation_kind == MAPPING_IDENTITY]
         direct: List[ConceptMapping] = []
         inherited: List[ConceptMapping] = []
-        for mapping, _metric in pairs:
+        for mapping in identity_rows:
             if self.resolve_metric(mapping.metric_id) == mapping.metric_id:
                 direct.append(mapping)
             else:
@@ -1651,6 +1753,47 @@ class CoreRegistry:
                 candidates=tuple(m.metric_id for m in identity_claims),
                 detail=("NOT_EXPLAINED. More than one metric claims this "
                         "concept exactly, so the registry does not choose."),
+            )
+
+        # A direct PARTIAL identity claim is an affirmative destination of lesser
+        # strength than an exact one, and it is never upgraded.
+        #
+        # 2.72 established that PARTIAL may not stand in for missing evidence:
+        # that would convert unknown into a known narrower scope. A PARTIAL
+        # destination is legitimate only because the narrower scope was MEASURED,
+        # and the measurement rides on the mapping as structured scope so a
+        # consumer sees why rather than taking the word for it.
+        component_claims = [
+            mapping for mapping in direct if mapping.mapping_type == "PARTIAL"
+        ]
+        if not identity_claims and len(component_claims) == 1:
+            mapping = component_claims[0]
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.RESOLVED,
+                destination_metric=mapping.metric_id,
+                mapping_origin=ConceptResolution.DIRECT,
+                mapping_type=mapping.mapping_type,
+                effective_from=mapping.effective_from,
+                effective_to=mapping.effective_to,
+                notes=mapping.notes,
+                scope=mapping.scope,
+                detail=(
+                    f"declared directly by `{mapping.metric_id}` as a "
+                    "component of that metric rather than as its whole. The scope "
+                    "was measured and is recorded on the mapping, so a consumer "
+                    "can see that this concept contributes without expressing "
+                    "all of it."),
+            )
+
+        if not identity_claims and len(component_claims) > 1:
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.AMBIGUOUS_MAPPING,
+                candidates=tuple(m.metric_id for m in component_claims),
+                detail=("NOT_EXPLAINED. More than one metric claims this "
+                        "concept as a component, so the registry does not "
+                        "choose."),
             )
 
         # No direct identity claim. An inherited mapping authorises only when it

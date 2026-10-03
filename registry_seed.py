@@ -36,6 +36,8 @@ have been got wrong from the names alone:
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from core_registry import (
+    MAPPING_COMPOSITION,
+    MAPPING_IDENTITY,
     MAPPING_EQUIVALENT,
     UNMODELLED_EXECUTIVE_COMPENSATION,
     UNMODELLED_INDUSTRY_SPECIFIC,
@@ -1166,6 +1168,7 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         concept_id=concept_id_for(US_GAAP, "LongTermDebtNoncurrent"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2014-09-27",
+        relation_kind=MAPPING_COMPOSITION,
         notes=(
             "the non-current portion of long-term debt, never the total on its "
             "own. Long-term debt excludes short-term borrowings and capital "
@@ -1177,12 +1180,48 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         concept_id=concept_id_for(US_GAAP, "LongTermDebtCurrent"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2014-09-27",
+        relation_kind=MAPPING_COMPOSITION,
         notes=(
             "the current portion of long-term debt, never the total on its own. "
             "The current and non-current portions are two views of one "
             "quantity; a series must not continue across the partial boundary."
         ),
     ),
+    # -- 2.73: the noncurrent IFRS component, IDENTITY + PARTIAL --------------
+    #
+    # 2.47 measured the accounting object as correct and the breadth as
+    # materially different by filer, which is what PARTIAL records. 2.70 gates it:
+    # S established, C zero contradictions, F both identified presentation
+    # variants tested.
+    #
+    # Deliberately not EXACT, and the scope that makes it partial is persisted
+    # here rather than left in a research report, so a resolver or query consumer
+    # can tell why without reading prose.
+    #
+    # This coexists with the COMPOSITION row above and no longer competes with it:
+    # that row says the total is built from this concept, this row says the
+    # concept expresses the noncurrent component. Both were always true; 2.72's
+    # ambiguity was the registry failing to express that.
+    ConceptMapping(
+        metric_id="long_term_debt_noncurrent",
+        concept_id=concept_id_for(IFRS_FULL, "LongtermBorrowings"),
+        mapping_type=MAPPING_PARTIAL,
+        relation_kind=MAPPING_IDENTITY,
+        effective_from="2020-12-31",
+        scope={
+            "variation": "FILER_DEPENDENT",
+            "measured": {"TSM": "SUBSET", "RIO": "WHOLE"},
+            "unmeasured_holders": 6,
+            "basis": "2.47 SUPPORTED_PARTIAL; 2.70 gate F",
+        },
+        notes=(
+            "the non-current portion of long-term borrowings under IFRS, "
+            "promoted 2.73 as an IDENTITY PARTIAL because the measured scope "
+            "differs by filer. QUALIFIER: breadth measured on 2 holders, 6 "
+            "unmeasured and not asserted to agree. Window: unchanged from the "
+            "concept's existing mapping"),
+    ),
+
     # Capital expenditure. The clearest demonstration that a name is not a
     # definition: these two read alike, and the SEC says one includes software
     # and intangibles while the other does not.
@@ -1378,6 +1417,7 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         concept_id=concept_id_for(IFRS_FULL, "CurrentPortionOfLongtermBorrowings"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2016-12-31",
+        relation_kind=MAPPING_COMPOSITION,
         notes=(
             "the current portion of long-term debt under IFRS, structurally the "
             "same shape as the US-GAAP current/non-current pair and denoting the "
@@ -1438,6 +1478,7 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         concept_id=concept_id_for(IFRS_FULL, "LongtermBorrowings"),
         mapping_type=MAPPING_PARTIAL,
         effective_from="2020-12-31",
+        relation_kind=MAPPING_COMPOSITION,
         notes=(
             "the non-current portion of long-term debt under IFRS, denoting the "
             "same semantic target as the US-GAAP declaration beside it. Window: "
