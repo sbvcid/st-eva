@@ -1479,7 +1479,24 @@ class SQLiteArchive(ArchiveStore):
         repeat of an identical interpretation is recognised and reported as
         `created: False` rather than raising, because re-running a repair has to
         be safe. Everything else the 2.59 contract forbids is refused.
+
+        Transaction ownership is decided ONCE, here, before any statement can
+        begin a transaction.
+
+        It used to be decided after the INSERT, by asking whether a transaction
+        was open -- which is always true by then, because the INSERT is what
+        opened it. The method therefore never committed its own work, and a
+        standalone caller saw the row on its own connection and nowhere else: the
+        return value said "written" while the file said "absent". A caller that
+        began its own transaction was unaffected, which is why the batch path
+        worked and the standalone path silently did not.
+
+        So this method owns the transaction when none was open when it was
+        called, and then commits on success and rolls back on failure. When a
+        transaction was already open the caller owns it, and this method commits
+        nothing and rolls back nothing. Both modes are legal.
         """
+        started_transaction = not self.connection.in_transaction
         if not self._has_interpretations():
             raise InterpretationError(
                 "this archive predates the knowledge-state migration, so it "
@@ -1516,15 +1533,25 @@ class SQLiteArchive(ArchiveStore):
             "supersedes": interpretation.supersedes,
             "created_at": utc_now(),
         }
-        self.connection.execute(
-            "INSERT INTO interpretations (interpretation_id, source_fact_id,"
-            " knowledge_at, unit, currency, currency_basis, identity, supersedes,"
-            " created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tuple(row.values()))
-        # Commit only when this call opened nothing. A caller repairing a whole
-        # archive needs every interpretation in it to land or none of them, and
-        # a per-row commit here would make that impossible without bypassing this
-        # method -- which is exactly how a persistence contract gets bypassed.
-        if not self.connection.in_transaction:
+        try:
+            self.connection.execute(
+                "INSERT INTO interpretations (interpretation_id,"
+                " source_fact_id, knowledge_at, unit, currency, currency_basis,"
+                " identity, supersedes, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tuple(row.values()))
+        except sqlite3.Error:
+            # Roll back only a transaction this call opened. A caller's
+            # transaction is theirs to commit or roll back, and silently undoing
+            # their work would be a worse bug than the one being fixed.
+            if started_transaction:
+                self.connection.rollback()
+            raise
+        # Commit only when this call owned the transaction, decided at entry.
+        # A caller repairing a whole archive needs every interpretation in it to
+        # land or none of them, so a per-row commit is wrong for a
+        # caller-owned batch. That is why ownership is captured rather than
+        # inferred from SQLite's state after the INSERT.
+        if started_transaction:
             self.connection.commit()
         return {"created": True, "interpretation": row}
 
