@@ -555,7 +555,17 @@ class ObservationMapping:
 
     @property
     def is_superseded(self) -> bool:
-        return self.stored_metric_id != self.resolved_metric_id
+        """
+        Whether the stored metric was actually superseded.
+
+        Read from the recorded supersession rather than inferred from the
+        destination differing. 2.67 introduced a case where the two legitimately
+        differ with no supersession involved: a concept declared directly by a
+        component metric resolves to that component while the row is still
+        stored under an unrelated active metric. Inferring supersession from the
+        difference would report that as a rename, which it is not.
+        """
+        return self.supersession is not None
 
     @property
     def is_resolved(self) -> bool:
@@ -587,6 +597,74 @@ class ObservationMapping:
 
 def concept_id_for(taxonomy: str, concept: str) -> str:
     return f"{taxonomy}:{concept}"
+
+
+@dataclass(frozen=True)
+class ConceptResolution:
+    """
+    Where one source concept points, and how that conclusion was reached.
+
+    The distinction this type exists to carry is **origin**. A metric can claim a
+    concept because it declared that mapping itself, or because the metric was
+    superseded and the mapping only became visible through the chain. 2.66 measured
+    a concept carrying three claimants at once -- its own component metric, the
+    superseded `debt`, and the successor `long_term_debt` -- and `resolve`
+    answered "ambiguous" for all 3,378 legacy rows, so the current/noncurrent
+    split was never selected and everything collapsed onto the total.
+
+    Origin is not a ranking of metrics by name, value, period or insertion order.
+    It is the difference between "this metric declares this concept" and "this
+    mapping is visible only because that metric was renamed".
+
+    An inherited mapping is an affirmative destination only when it is EXACT. A
+    PARTIAL proposition that has not been promoted is a characterisation, not a
+    decision, and 2.47 and 2.51 both left the IFRS concepts unauthorised.
+    """
+
+    RESOLVED = "RESOLVED"
+    AMBIGUOUS_MAPPING = "AMBIGUOUS_MAPPING"
+    UNRESOLVED_NO_SOURCE_CONCEPT = "UNRESOLVED_NO_SOURCE_CONCEPT"
+    UNRESOLVED_NO_APPLICABLE_MAPPING = "UNRESOLVED_NO_APPLICABLE_MAPPING"
+
+    DIRECT = "DIRECT"
+    INHERITED = "INHERITED"
+
+    source_concept: Optional[str]
+    status: str
+    destination_metric: Optional[str] = None
+    mapping_origin: Optional[str] = None
+    mapping_type: Optional[str] = None
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    notes: Optional[str] = None
+    candidates: Tuple[str, ...] = ()
+    detail: str = ""
+
+    @property
+    def is_resolved(self) -> bool:
+        """
+        RESOLVED *and* a destination.
+
+        A status alone can be read as resolved while naming nowhere, so both are
+        required. This is the same shape as `ObservationMapping.is_resolved`, and
+        for the same reason.
+        """
+        return self.status == self.RESOLVED and bool(self.destination_metric)
+
+    def contract_dict(self) -> Dict[str, Any]:
+        return {
+            "source_concept": self.source_concept,
+            "status": self.status,
+            "resolved": self.is_resolved,
+            "destination_metric": self.destination_metric,
+            "mapping_origin": self.mapping_origin,
+            "mapping_type": self.mapping_type,
+            "effective_from": self.effective_from,
+            "effective_to": self.effective_to,
+            "notes": self.notes,
+            "candidates": list(self.candidates),
+            "detail": self.detail,
+        }
 
 
 class CoreRegistry:
@@ -1395,56 +1473,50 @@ class CoreRegistry:
                 ),
             )
         supersession = self.supersession_of(metric_id)
-
-        if not source_concept:
-            return ObservationMapping(
-                stored_metric_id=metric_id,
-                resolved_metric_id=resolved_id,
-                source_concept=None,
-                status=ObservationMapping.UNRESOLVED_NO_SOURCE_CONCEPT,
-                reason=(
-                    "NOT_APPLICABLE. The observation carries no source concept, "
-                    "so nothing states what the figure measures. The successor's "
-                    "declarations are not a substitute: they are what the metric "
-                    "allows, not what this fact is."
-                ),
-                supersession=supersession,
-            )
-
-        applicable = [
-            mapping
-            for mapping in self.mappings_for_metric(resolved_id, as_of=as_of)
-            if mapping.concept_id == source_concept
-        ]
-        if not applicable:
+        resolution = self.resolve_source_concept(
+            source_concept, as_of=as_of, asset_id=None)
+        if resolution.status == ConceptResolution.AMBIGUOUS_MAPPING:
             return ObservationMapping(
                 stored_metric_id=metric_id,
                 resolved_metric_id=resolved_id,
                 source_concept=source_concept,
                 status=ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING,
                 reason=(
-                    f"NOT_APPLICABLE. `{resolved_id}` declares no mapping for "
-                    f"`{source_concept}`, so the observation keeps its historical "
-                    f"identity `{metric_id}` and gains no successor "
-                    "interpretation. This is unresolved, not refuted: the "
-                    "concept may have a destination that has not been decided "
-                    "yet, and absence here is not evidence against it."
+                    "NOT_EXPLAINED. More than one metric claims this concept, "
+                    f"so the registry does not choose: {list(resolution.candidates)}."
                 ),
+                supersession=supersession,
+            )
+        if not resolution.is_resolved:
+            return ObservationMapping(
+                stored_metric_id=metric_id,
+                resolved_metric_id=resolved_id,
+                source_concept=source_concept,
+                status=(
+                    ObservationMapping.UNRESOLVED_NO_SOURCE_CONCEPT
+                    if resolution.status
+                    == ConceptResolution.UNRESOLVED_NO_SOURCE_CONCEPT
+                    else ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING),
+                reason=resolution.detail,
                 supersession=supersession,
             )
         return ObservationMapping(
             stored_metric_id=metric_id,
-            resolved_metric_id=resolved_id,
+            resolved_metric_id=resolution.destination_metric or resolved_id,
             source_concept=source_concept,
-            mappings=tuple(applicable),
+            mappings=(ConceptMapping(
+                metric_id=resolution.destination_metric or resolved_id,
+                concept_id=source_concept or "",
+                mapping_type=resolution.mapping_type or "EXACT",
+                effective_from=resolution.effective_from,
+                effective_to=resolution.effective_to,
+                notes=resolution.notes,
+            ),),
             status=ObservationMapping.RESOLVED,
             reason=(
                 ""
-                if resolved_id == metric_id else
-                f"resolved through the supersession {metric_id} -> {resolved_id}; "
-                f"the mapping returned is the one declared for this "
-                f"observation's own concept `{source_concept}`"
-            ),
+                if resolution.destination_metric == metric_id
+                else resolution.detail),
             supersession=supersession,
         )
 
@@ -1486,6 +1558,189 @@ class CoreRegistry:
             )
         except RegistryError:
             return None
+
+    def resolve_source_concept(
+        self,
+        concept_id: Optional[str],
+        as_of: Optional[str] = None,
+        asset_id: Optional[str] = None,
+    ) -> ConceptResolution:
+        """
+        Where a source concept points, preferring a direct declaration.
+
+        The order of consideration is fixed and is not a ranking:
+
+            1. gather every mapping applicable to the concept at `as_of`
+            2. partition into DIRECT (declared by a metric that is not
+               superseded) and INHERITED (visible only through a chain)
+            3. exactly one DIRECT wins outright
+            4. more than one DIRECT stays AMBIGUOUS and nothing is guessed
+            5. with no DIRECT, an INHERITED mapping qualifies only when it is
+               EXACT; a PARTIAL proposition that was never promoted is a
+               characterisation, not a destination
+
+        Step 5 is what keeps the IFRS concepts unresolved. They have no direct
+        mapping anywhere, and the only thing offering them a destination is a
+        PARTIAL mapping inherited through `debt -> long_term_debt`, which 2.47
+        and 2.51 explicitly did not authorise.
+        """
+        if not concept_id:
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.UNRESOLVED_NO_SOURCE_CONCEPT,
+                detail=("NOT_APPLICABLE. Without a source concept there is "
+                        "nothing to resolve; the stored metric stands."),
+            )
+
+        pairs = self.metrics_for_concept(concept_id, as_of=as_of)
+        adoption = self.adoption_for(asset_id, concept_id) if asset_id else None
+        if adoption is not None and as_of is not None:
+            # Adoption widens the window a concept applies in; it never changes
+            # the fidelity of how it applied.
+            pairs = [
+                (mapping, metric) for mapping, metric in pairs
+                if mapping.applies_on(as_of) or adoption.covers(as_of)
+            ]
+
+        direct: List[ConceptMapping] = []
+        inherited: List[ConceptMapping] = []
+        for mapping, _metric in pairs:
+            if self.resolve_metric(mapping.metric_id) == mapping.metric_id:
+                direct.append(mapping)
+            else:
+                inherited.append(mapping)
+
+        # Ordered by declared identity so the outcome cannot depend on row order.
+        direct.sort(key=lambda m: (m.metric_id, m.concept_id))
+        inherited.sort(key=lambda m: (m.metric_id, m.concept_id))
+
+        # An identity claim is an EXACT mapping declared by a metric that is
+        # itself active.
+        #
+        # "Declared by an active metric" is NOT sufficient on its own, and
+        # measuring that is what corrected this: the successor `long_term_debt`
+        # re-declares its PARTIAL components in its own name, so those rows are
+        # structurally indistinguishable from a direct declaration while being
+        # a statement that the concept is *part of* the total rather than what
+        # the total is. Mapping type carries that distinction, and the registry
+        # already uses it everywhere else.
+        identity_claims = [
+            mapping for mapping in direct if mapping.mapping_type == "EXACT"
+        ]
+
+        if len(identity_claims) == 1:
+            mapping = identity_claims[0]
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.RESOLVED,
+                destination_metric=mapping.metric_id,
+                mapping_origin=ConceptResolution.DIRECT,
+                mapping_type=mapping.mapping_type,
+                effective_from=mapping.effective_from,
+                effective_to=mapping.effective_to,
+                notes=mapping.notes,
+                detail=(f"declared directly by `{mapping.metric_id}`; an "
+                        "inherited mapping and a PARTIAL component statement do "
+                        "not compete with a metric that declares the concept "
+                        "itself"),
+            )
+        if len(identity_claims) > 1:
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.AMBIGUOUS_MAPPING,
+                candidates=tuple(m.metric_id for m in identity_claims),
+                detail=("NOT_EXPLAINED. More than one metric claims this "
+                        "concept exactly, so the registry does not choose."),
+            )
+
+        # No direct identity claim. An inherited mapping authorises only when it
+        # is EXACT; a PARTIAL proposition that was never promoted is a
+        # characterisation, not a decision.
+        authorised = [m for m in inherited if m.mapping_type == "EXACT"]
+        if len(authorised) == 1:
+            mapping = authorised[0]
+            successor = self.resolve_metric(mapping.metric_id)
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.RESOLVED,
+                destination_metric=successor,
+                mapping_origin=ConceptResolution.INHERITED,
+                mapping_type=mapping.mapping_type,
+                effective_from=mapping.effective_from,
+                effective_to=mapping.effective_to,
+                notes=mapping.notes,
+                detail=(f"no direct claim; an EXACT mapping declared by "
+                        f"`{mapping.metric_id}` was inherited through "
+                        f"`{mapping.metric_id}` -> `{successor}`"),
+            )
+        if len(authorised) > 1:
+            return ConceptResolution(
+                source_concept=concept_id,
+                status=ConceptResolution.AMBIGUOUS_MAPPING,
+                candidates=tuple(self.resolve_metric(m.metric_id)
+                                 for m in authorised),
+                detail=("NOT_EXPLAINED. More than one authorised inherited "
+                        "mapping claims this concept."),
+            )
+        return ConceptResolution(
+            source_concept=concept_id,
+            status=ConceptResolution.UNRESOLVED_NO_APPLICABLE_MAPPING,
+            detail=(
+                "NOT_APPLICABLE. No metric claims this concept exactly."
+                + (f" The only mappings offered are "
+                   f"{[(m.metric_id, m.mapping_type) for m in direct + inherited]}, "
+                   "which record component relationships or unauthorised "
+                   "propositions rather than an identity."
+                   if (direct or inherited) else
+                   " No metric declares it at all.")
+                + " This is unresolved, not refuted: a destination may still be "
+                  "decided."),
+        )
+
+    def effective_metric_sources(self, metric_id: str) -> List[Dict[str, Any]]:
+        """
+        Source concepts that resolve uniquely to `metric_id`, with their windows.
+
+        This is the retrieval half of the same rule: a metric query needs to know
+        which legacy concepts belong to the requested metric and over which
+        dates, and that must come from one place rather than a second algorithm
+        restated per reader.
+
+        Only DIRECT resolutions are listed, because only those are decided by a
+        declaration on an active metric. Adoption-widened applicability is not
+        represented here, so a concept that applies to one filer only under
+        adoption will not be reached by this predicate; that is a known
+        narrowing rather than a claim of completeness.
+        """
+        rows = self.connection.execute(
+            "SELECT DISTINCT concept_id, mapping_type, effective_from,"
+            " effective_to FROM metric_concept_mapping"
+            " WHERE metric_id = ? ORDER BY concept_id", (metric_id,)
+        ).fetchall()
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            if self.resolve_metric(metric_id) != metric_id:
+                # Only an active metric declares destinations of its own.
+                continue
+            resolution = self.resolve_source_concept(row["concept_id"])
+            if (resolution.is_resolved
+                    and resolution.destination_metric == metric_id
+                    and resolution.mapping_origin == ConceptResolution.DIRECT):
+                out.append({
+                    "concept": row["concept_id"],
+                    "mapping_type": row["mapping_type"],
+                    "effective_from": row["effective_from"],
+                    "effective_to": row["effective_to"],
+                })
+        return out
+
+    def superseded_metric_ids(self) -> List[str]:
+        """Metric ids that have been replaced, so their rows are legacy."""
+        if not self._has_table("metric_supersession"):
+            return []
+        return [row["predecessor_id"] for row in self.connection.execute(
+            "SELECT predecessor_id FROM metric_supersession ORDER BY"
+            " predecessor_id")]
 
     def resolve(
         self,

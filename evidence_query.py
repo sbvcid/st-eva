@@ -807,8 +807,9 @@ class EvidenceQuery:
             where.append("o.asset_id = ?")
             params.append(self._asset_id(asset))
         if metric:
-            where.append("o.metric = ?")
-            params.append(metric)
+            where.append("(" + ") OR (".join(
+                self._metric_predicate(metric)) + ")")
+            params.extend(self._metric_params(metric))
         if period_start:
             where.append("(o.period_end IS NULL OR o.period_end >= ?)")
             params.append(period_start)
@@ -1014,6 +1015,55 @@ class EvidenceQuery:
         return found
 
     # -- assembly --------------------------------------------------------
+
+    def _metric_predicate(self, metric: str) -> List[str]:
+        """
+        The SQL for "this observation answers to `metric`".
+
+        Two distinct questions share one parameter, and 2.66 measured them
+        disagreeing:
+
+            stored metric     what the row was filed under
+            effective metric  where its source concept now points
+
+        A row stored as `debt` whose source concept is
+        `us-gaap:LongTermDebtCurrent` answers to `long_term_debt_current`. It
+        still answers to `debt`, because an explicit historical query means the
+        stored identity and must not be silently reinterpreted.
+
+        The second predicate admits only rows stored under a *superseded* metric
+        whose concept resolves uniquely to the requested one, inside that
+        mapping's own effective window. That excludes unresolved and ambiguous
+        concepts by construction, and excludes the component rows from a query
+        for the total.
+        """
+        predicates = ["o.metric = ?"]
+        superseded = self.registry().superseded_metric_ids()
+        sources = self.registry().effective_metric_sources(metric)
+        if superseded and sources:
+            clauses = []
+            for source in sources:
+                clauses.append(
+                    "(o.concept = ?"
+                    " AND (o.period_end >= ? OR ? IS NULL)"
+                    " AND (o.period_end <= ? OR ? IS NULL))")
+            predicates.append(
+                "(o.metric IN (" + ",".join("?" * len(superseded)) + ")"
+                " AND (" + " OR ".join(clauses) + "))")
+        return predicates
+
+    def _metric_params(self, metric: str) -> List[Any]:
+        params: List[Any] = [metric]
+        superseded = self.registry().superseded_metric_ids()
+        sources = self.registry().effective_metric_sources(metric)
+        if superseded and sources:
+            params.extend(superseded)
+            for source in sources:
+                params.extend([
+                    source["concept"], source["effective_from"],
+                    source["effective_from"], source["effective_to"],
+                    source["effective_to"]])
+        return params
 
     def _observation_package(
         self,

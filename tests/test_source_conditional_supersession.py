@@ -51,6 +51,8 @@ SUCCESSOR = "long_term_debt"
 
 US_GAAP_CURRENT = "us-gaap:LongTermDebtCurrent"
 US_GAAP_NONCURRENT = "us-gaap:LongTermDebtNoncurrent"
+US_GAAP_CURRENT_METRIC = "long_term_debt_current"
+US_GAAP_NONCURRENT_METRIC = "long_term_debt_noncurrent"
 IFRS_NONCURRENT = "ifrs-full:LongtermBorrowings"
 IFRS_CURRENT = "ifrs-full:CurrentPortionOfLongtermBorrowings"
 
@@ -130,11 +132,20 @@ class TestTheSupersessionStillHolds(unittest.TestCase):
         self.assertEqual(record["successor_id"], SUCCESSOR)
 
     def test_the_change_did_not_make_the_two_metrics_unrelated(self):
-        """They still supersede. What changed is which mappings are handed over."""
+        """
+        They still supersede. What changed is which mappings are handed over.
+
+        Revised in 2.67: the destination is no longer necessarily the successor.
+        A concept that a component metric declares itself resolves to that
+        component, and the supersession is still recorded underneath it.
+        """
+        self.assertEqual(
+            self.registry.resolve_metric(LEGACY), SUCCESSOR)
+        self.assertIsNotNone(self.registry.supersession_of(LEGACY))
         self.assertEqual(
             self.registry.mappings_for_observation(
                 LEGACY, US_GAAP_CURRENT).resolved_metric_id,
-            SUCCESSOR)
+            US_GAAP_CURRENT_METRIC)
 
     def test_the_core_metric_count_did_not_change(self):
         active = [m.metric_id for m in self.registry.metrics()
@@ -169,12 +180,14 @@ class TestResolutionIsConditionedOnTheSourceConcept(unittest.TestCase):
         The substantive change.
 
         Under the blanket path this observation would be handed all four
-        successor concepts. It is handed one.
+        successor concepts. Revised in 2.67: an IFRS concept has no authorised
+        destination at all, so it is handed none. What remains true, and is the
+        property worth keeping, is that it is never handed the successor's set.
         """
         result = self.registry.mappings_for_observation(
-            LEGACY, IFRS_NONCURRENT)
+            LEGACY, US_GAAP_CURRENT)
         self.assertEqual(len(result.mappings), 1)
-        self.assertEqual(result.mappings[0].concept_id, IFRS_NONCURRENT)
+        self.assertEqual(result.mappings[0].concept_id, US_GAAP_CURRENT)
 
     def test_the_returned_set_is_not_the_successor_set(self):
         """
@@ -192,7 +205,9 @@ class TestResolutionIsConditionedOnTheSourceConcept(unittest.TestCase):
             self.assertLess(returned, SUCCESSOR_CONCEPTS,
                             f"{concept} received the whole successor set")
             self.assertNotEqual(returned, SUCCESSOR_CONCEPTS, concept)
-            self.assertEqual(returned, {concept}, concept)
+            # Exactly the observation's own concept, or nothing at all -- never a
+            # sibling, and never an unauthorised destination.
+            self.assertIn(returned, ({concept}, set()), concept)
 
     def test_an_unmapped_concept_receives_no_successor_mapping(self):
         result = self.registry.mappings_for_observation(
@@ -277,8 +292,14 @@ class TestResolutionIsConditionedOnTheSourceConcept(unittest.TestCase):
             if self.registry.mappings_for_observation(
                 LEGACY, concept).is_resolved
         }
-        self.assertEqual(resolved, SUCCESSOR_CONCEPTS)
+        # Revised in 2.67: only the concepts a component metric declares itself
+        # resolve. The two IFRS concepts are characterisation without an
+        # authorised destination, so they are absent -- and the anti-vacuous
+        # property this test exists for is unchanged: the two halves are exact
+        # and disjoint.
+        self.assertEqual(resolved, {US_GAAP_CURRENT, US_GAAP_NONCURRENT})
         self.assertEqual(resolved & {OUTSIDE_THE_SUCCESSOR_SET}, set())
+        self.assertEqual(resolved & {IFRS_NONCURRENT, IFRS_CURRENT}, set())
 
 
 class TestTheFourCriticalCases(unittest.TestCase):
@@ -294,34 +315,54 @@ class TestTheFourCriticalCases(unittest.TestCase):
         return self.registry.mappings_for_observation(LEGACY, concept)
 
     def test_case_1_us_gaap_current_keeps_its_component_identity(self):
+        """
+        Revised in 2.67.
+
+        2.50 recorded this as resolving to the successor with a PARTIAL
+        component mapping. 2.66 measured that as a collapse onto the total, and
+        2.67 restores the component: the metric that declares this concept
+        itself wins outright over anything inherited through the supersession.
+        """
         result = self._resolve(US_GAAP_CURRENT)
         self.assertTrue(result.is_resolved)
         self.assertEqual(result.stored_metric_id, LEGACY)
-        self.assertEqual(result.resolved_metric_id, SUCCESSOR)
-        self.assertEqual(result.mapping_types, ("PARTIAL",))
-        self.assertEqual(result.mappings[0].metric_id, SUCCESSOR)
+        self.assertEqual(result.resolved_metric_id, US_GAAP_CURRENT_METRIC)
+        self.assertEqual(result.mapping_types, ("EXACT",))
+        self.assertEqual(result.mappings[0].metric_id, US_GAAP_CURRENT_METRIC)
 
     def test_case_2_us_gaap_non_current_keeps_its_component_identity(self):
         result = self._resolve(US_GAAP_NONCURRENT)
         self.assertTrue(result.is_resolved)
         self.assertEqual(result.stored_metric_id, LEGACY)
-        self.assertEqual(result.mapping_types, ("PARTIAL",))
+        self.assertEqual(result.resolved_metric_id,
+                         US_GAAP_NONCURRENT_METRIC)
+        self.assertEqual(result.mapping_types, ("EXACT",))
 
-    def test_case_3_ifrs_non_current_stays_partial_with_its_caveat(self):
+    def test_case_3_ifrs_non_current_is_not_resolved(self):
         """
         2.47 returned SUPPORTED_PARTIAL: the accounting object matches the
         non-current component, but the realised breadth is filer-dependent, so
         provider-agnostic equivalence to `LongTermDebtNoncurrent` was not
         established.
 
-        So it must not read as a validated exact parent mapping, and the note
-        carrying the scope position must survive to the reader.
+        Revised in 2.67 from "resolved as PARTIAL" to **unresolved**. 2.66
+        measured why: an inherited PARTIAL proposition is a characterisation,
+        not a decision, and treating it as a destination exposed all 417
+        unauthorised IFRS rows as total long-term debt -- 2.45's
+        BLOCKED_SUPERSESSION, still live. Unresolved is not refuted.
         """
         result = self._resolve(IFRS_NONCURRENT)
-        self.assertTrue(result.is_resolved)
-        self.assertEqual(result.mapping_types, ("PARTIAL",))
-        self.assertNotIn("EXACT", result.mapping_types)
-        self.assertTrue(result.mappings[0].notes)
+        self.assertFalse(result.is_resolved)
+        self.assertEqual(result.mappings, ())
+        self.assertEqual(result.stored_metric_id, LEGACY)
+        self.assertEqual(result.status,
+                         ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING)
+        self.assertIn("unresolved, not refuted", result.reason.lower())
+        # Name and concept are separate questions. The metric *name* `debt` was
+        # superseded regardless; the *concept* has no authorised destination.
+        # Reporting the successor here while refusing to resolve is what keeps
+        # the two apart.
+        self.assertEqual(result.resolved_metric_id, SUCCESSOR)
 
     def test_case_4_ifrs_current_is_not_promoted_by_the_sibling_or_the_parent(self):
         """
@@ -330,24 +371,37 @@ class TestTheFourCriticalCases(unittest.TestCase):
         sibling sits on the same metric or because a supersession exists.
         """
         result = self._resolve(IFRS_CURRENT)
-        self.assertEqual(len(result.mappings), 1)
-        self.assertEqual(result.mappings[0].concept_id, IFRS_CURRENT)
-        self.assertNotIn(IFRS_NONCURRENT,
-                         {m.concept_id for m in result.mappings})
+        # Revised in 2.67: unresolved, not "handed a sibling's mapping".
+        self.assertFalse(result.is_resolved)
+        self.assertEqual(result.mappings, ())
+        self.assertEqual(result.stored_metric_id, LEGACY)
+        self.assertEqual(result.status,
+                         ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING)
 
     def test_the_two_ifrs_classes_do_not_see_each_other(self):
+        """
+        Revised in 2.67. Neither resolves, so neither can see the other -- the
+        separation is now total rather than a matter of not picking a sibling.
+        """
         self.assertEqual(
-            {m.concept_id for m in self._resolve(IFRS_NONCURRENT).mappings},
-            {IFRS_NONCURRENT})
+            self._resolve(IFRS_NONCURRENT).mappings, ())
         self.assertEqual(
-            {m.concept_id for m in self._resolve(IFRS_CURRENT).mappings},
-            {IFRS_CURRENT})
+            self._resolve(IFRS_CURRENT).mappings, ())
 
     def test_us_gaap_mappings_are_unchanged_from_what_the_registry_declares(self):
-        """Requirement 7: nothing about the existing mappings moved."""
-        for concept in (US_GAAP_CURRENT, US_GAAP_NONCURRENT):
+        """
+        Requirement 7: nothing about the registry moved.
+
+        Revised in 2.67 to compare against the declaring metric rather than the
+        successor, because the destination is now the component metric. The
+        assertion is unchanged in substance: the mapping returned is exactly the
+        one the registry declares.
+        """
+        for concept, metric_id in ((US_GAAP_CURRENT, US_GAAP_CURRENT_METRIC),
+                                   (US_GAAP_NONCURRENT,
+                                    US_GAAP_NONCURRENT_METRIC)):
             declared = next(
-                m for m in self.registry.mappings_for_metric(SUCCESSOR)
+                m for m in self.registry.mappings_for_metric(metric_id)
                 if m.concept_id == concept)
             resolved = self._resolve(concept).mappings[0]
             self.assertEqual(resolved, declared, concept)
@@ -419,11 +473,19 @@ class TestSupersessionMetadataIsOptional(unittest.TestCase):
             # `debt` still resolves; there is just nothing superseding it, so it
             # stands as itself and can inherit nothing.
             self.assertEqual(registry.resolve_metric(LEGACY), LEGACY)
+            # Revised in 2.67. Without the supersession table the legacy metric
+            # stands as itself, but this concept is claimed by a *component*
+            # metric directly and that declaration never depended on any
+            # supersession -- so it resolves to the component either way. The
+            # property under test is that nothing crashes and nothing is
+            # inherited from a chain that does not exist.
             result = registry.mappings_for_observation(
                 LEGACY, US_GAAP_CURRENT)
-            self.assertFalse(result.is_resolved)
-            self.assertEqual(result.status,
-                             ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING)
+            self.assertTrue(result.is_resolved)
+            self.assertFalse(result.is_superseded)
+            self.assertEqual(result.resolved_metric_id,
+                             US_GAAP_CURRENT_METRIC)
+            self.assertEqual(result.status, ObservationMapping.RESOLVED)
             self.assertIsNone(result.supersession)
         finally:
             store.close()
@@ -524,7 +586,10 @@ class TestTheQuerySurfaceReportsStoredAndResolvedSeparately(unittest.TestCase):
         try:
             semantic = row["semantic"]
             self.assertEqual(semantic["stored_metric"], LEGACY)
-            self.assertEqual(semantic["resolved_metric"], SUCCESSOR)
+            # Revised in 2.67: the destination is the component the source
+            # concept declares, not the successor total.
+            self.assertEqual(semantic["resolved_metric"],
+                             US_GAAP_CURRENT_METRIC)
             self.assertTrue(semantic["metric_superseded"])
             # The figure itself is still filed under the legacy name.
             self.assertEqual(row["metric"], LEGACY)
