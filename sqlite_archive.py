@@ -22,6 +22,7 @@ import gzip
 import hashlib
 import json
 import sqlite3
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -850,6 +851,116 @@ class SQLiteArchive(ArchiveStore):
             basis=json.loads(row["basis_json"]) if row["basis_json"] else None,
         )
 
+    # -- reader integration for the knowledge-state axis (2.63) --------------
+    #
+    # The original observation is the BASELINE interpretation of its source
+    # fact. The interpretation table holds only later changes in what ST-EVA
+    # understood, so a missing interpretation at a cutoff must never make a
+    # source fact disappear -- it means the baseline still stands. That is the
+    # whole point of 2.62's layout, and it is why this is an overlay rather than
+    # a replacement.
+    #
+    # Only three fields may be overlaid. Value, period, metric, availability,
+    # contract_id, lineage_id and source_fact_id belong to the fact and are not
+    # reachable from an interpretation row, so the restriction is structural
+    # rather than a filter someone has to remember to apply.
+
+    #: The only columns an interpretation is permitted to contribute.
+    INTERPRETATION_OVERLAY_FIELDS = ("unit", "currency", "currency_basis")
+
+    def knowledge_state_available(self) -> bool:
+        """
+        Whether this archive can answer a knowledge-state question at all.
+
+        Distinct from "no applicable interpretation". An archive predating 2.61
+        has no `interpretations` table, and for that archive the question is
+        unanswerable rather than answered with nothing. Collapsing the two would
+        let a legacy archive look like an archive that knows the reading was
+        always wrong.
+        """
+        return self._has_interpretations()
+
+    def interpretation_for(self, source_fact_id: str, cutoff: str
+                           ) -> Tuple[Optional[Dict[str, Any]], str]:
+        """
+        The interpretation effective at `cutoff`, and how confident that is.
+
+        Returns `(row_or_None, status)` where status is one of
+
+            "APPLIED"                  an interpretation was found and overlaid
+            "BASELINE"                 none applies; the observation stands
+            "UNAVAILABLE_LEGACY"       this archive has no interpretations table
+
+        The three are separate because they mean different things to a caller and
+        the difference is invisible if they are collapsed into a single None.
+        """
+        if not self._has_interpretations():
+            return None, "UNAVAILABLE_LEGACY"
+        chosen = self.effective_interpretation(source_fact_id, cutoff)
+        if chosen is None:
+            return None, "BASELINE"
+        return chosen, "APPLIED"
+
+    def _overlay_interpretation(self, observation: Observation, cutoff: str
+                                 ) -> Tuple[Observation, str]:
+        source_fact_id = self._source_fact_id_of(observation)
+        if source_fact_id is None:
+            # An observation with no source-fact identity cannot carry an
+            # interpretation, and that is a fact about it rather than a failure.
+            return observation, "NO_SOURCE_FACT"
+        interpretation, status = self.interpretation_for(source_fact_id, cutoff)
+        if interpretation is None:
+            return observation, status
+        overlay = {
+            field: interpretation[field]
+            for field in self.INTERPRETATION_OVERLAY_FIELDS
+        }
+        basis = dict(observation.basis or {})
+        basis["knowledge_interpretation"] = {
+            "identity": interpretation["identity"],
+            "knowledge_at": interpretation["knowledge_at"],
+            "applied_at_cutoff": cutoff,
+        }
+        return replace(observation, basis=basis, **overlay), "APPLIED"
+
+    def _source_fact_id_of(self, observation: Observation) -> Optional[str]:
+        row = self.connection.execute(
+            "SELECT source_fact_id FROM observations WHERE contract_id = ?",
+            (observation.observation_id,)).fetchone()
+        return row["source_fact_id"] if row and row["source_fact_id"] else None
+
+    def audit_for_source_fact(self, source_fact_id: str) -> Dict[str, Any]:
+        """
+        The full reading history of one source fact.
+
+        The normal reader answers "what did ST-EVA understand at this instant";
+        this answers "what has it ever understood, and when". Both are needed,
+        and collapsing them would hide the original faulty reading the moment a
+        correction exists.
+        """
+        row = self.connection.execute(
+            "SELECT * FROM observations WHERE source_fact_id = ?",
+            (source_fact_id,)).fetchone()
+        observation = self._row_to_observation(row) if row else None
+        interpretations = (self.interpretations_for_source_fact(source_fact_id)
+                           if self._has_interpretations() else [])
+        return {
+            "source_fact_id": source_fact_id,
+            "knowledge_state_available": self._has_interpretations(),
+            "original_observation": (
+                {"observation_id": observation.observation_id,
+                 "unit": observation.unit,
+                 "currency": observation.currency,
+                 "currency_basis": observation.currency_basis}
+                if observation else None),
+            "interpretations": [
+                {"interpretation_id": i["interpretation_id"],
+                 "knowledge_at": i["knowledge_at"], "unit": i["unit"],
+                 "currency": i["currency"],
+                 "currency_basis": i["currency_basis"],
+                 "supersedes": i["supersedes"]} for i in interpretations],
+        }
+
     def observations_for(self, asset: str, cutoff: str) -> List[Observation]:
         """
         Every observation replay-eligible at `cutoff`, and nothing else.
@@ -870,6 +981,11 @@ class SQLiteArchive(ArchiveStore):
         collided — the most recently eligible one is returned. That is the same
         rule `latest_knowable` applies, and the earlier row is still in the
         archive and still reachable by its own id.
+
+        Each returned observation carries the interpretation effective at that
+        cutoff, so a later correction becomes visible without the stored row ever
+        being rewritten. Before its knowledge time the stored reading stands,
+        which is why an interpretation table is an overlay and not a replacement.
         """
         at = point_in_time_cutoff(cutoff)
         if at is None:
@@ -885,7 +1001,14 @@ class SQLiteArchive(ArchiveStore):
         newest: Dict[str, sqlite3.Row] = {}
         for row in rows:
             newest[str(row["contract_id"])] = row
-        return [self._row_to_observation(row) for row in newest.values()]
+        # The overlay is applied after the per-contract collapse, so a
+        # restatement and a correction are resolved independently: the collapse
+        # answers "which row", the overlay answers "how was it understood".
+        return [
+            self._overlay_interpretation(
+                self._row_to_observation(row), cutoff)[0]
+            for row in newest.values()
+        ]
 
     def all_observations(self, asset: str) -> List[Observation]:
         rows = self.connection.execute(
