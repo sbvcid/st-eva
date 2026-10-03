@@ -45,6 +45,12 @@ US_GAAP_NONCURRENT = "us-gaap:LongTermDebtNoncurrent"
 # foreign key and would test nothing.
 UNDECLARED = "ifrs-full:WeightedAverageShares"
 
+# A measured PARTIAL has to carry one; 2.74 requires it and this is the shape
+# the 2.73 promotion persists.
+MEASURED_SCOPE = {"variation": "FILER_DEPENDENT",
+                  "measured": {"TSM": "SUBSET", "RIO": "WHOLE"},
+                  "unmeasured_holders": 6}
+
 EXPECTED_COMPOSITION = {
     (AGGREGATE, "us-gaap:LongTermDebtNoncurrent"),
     (AGGREGATE, "us-gaap:LongTermDebtCurrent"),
@@ -154,12 +160,14 @@ class TestResolverIsolation(unittest.TestCase):
         self.assertEqual(resolution.destination_metric, CURRENT)
         self.assertTrue(resolution.is_exact)
 
-    def test_an_exact_claim_beats_a_partial_one(self) -> None:
+    def test_an_exact_claim_beats_a_measured_partial_one(self) -> None:
         """
         What 2.73 must not introduce: strength ordering inside PARTIAL.
 
         An EXACT identity claim is still the answer when another active metric
-        calls the same concept one of its components.
+        calls the same concept one of its components. The PARTIAL here is
+        *measured*, so it is an eligible destination and loses on strength
+        rather than on eligibility.
         """
         self.registry.add_mapping(_ConceptMapping(
             metric_id="sga", concept_id=UNDECLARED,
@@ -167,7 +175,7 @@ class TestResolverIsolation(unittest.TestCase):
         self.registry.add_mapping(_ConceptMapping(
             metric_id="sbc", concept_id=UNDECLARED,
             mapping_type="PARTIAL", relation_kind="IDENTITY",
-            effective_from="2020-12-31"))
+            effective_from="2020-12-31", scope=MEASURED_SCOPE))
         resolution = self.registry.resolve_source_concept(UNDECLARED)
         self.assertEqual(resolution.destination_metric, "sga")
         self.assertEqual(resolution.mapping_type, "EXACT")
@@ -193,20 +201,41 @@ class TestResolverIsolation(unittest.TestCase):
         The new component branch cannot silently choose between two metrics.
 
         One measured PARTIAL is a destination. Two is the same registry question
-        as two EXACT claims, and 2.73 answers it the same way.
+        as two EXACT claims, and 2.74 answers it the same way.
+
+        Both carry a measured scope, because 2.74 requires one: the property
+        under test is how two *eligible* claims are handled, and an ineligible
+        one is filtered before the count. That filtering is tested in
+        `test_measured_scope_required_for_partial`.
         """
         self.registry.add_mapping(_ConceptMapping(
             metric_id="sga", concept_id=UNDECLARED,
             mapping_type="PARTIAL", relation_kind="IDENTITY",
-            effective_from="2020-12-31"))
+            effective_from="2020-12-31", scope=MEASURED_SCOPE))
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sbc", concept_id=UNDECLARED,
+            mapping_type="PARTIAL", relation_kind="IDENTITY",
+            effective_from="2020-12-31", scope=MEASURED_SCOPE))
+        resolution = self.registry.resolve_source_concept(UNDECLARED)
+        self.assertEqual(resolution.status, "AMBIGUOUS_MAPPING")
+        self.assertFalse(resolution.is_resolved)
+        self.assertEqual(set(resolution.candidates), {"sga", "sbc"})
+
+    def test_an_unmeasured_partial_cannot_outvote_an_exact_one(self) -> None:
+        """
+        The gate filters before the count, so an unmeasured PARTIAL never even
+        competes -- which is stronger than losing to the EXACT claim.
+        """
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sga", concept_id=UNDECLARED,
+            mapping_type="EXACT", relation_kind="IDENTITY"))
         self.registry.add_mapping(_ConceptMapping(
             metric_id="sbc", concept_id=UNDECLARED,
             mapping_type="PARTIAL", relation_kind="IDENTITY",
             effective_from="2020-12-31"))
         resolution = self.registry.resolve_source_concept(UNDECLARED)
-        self.assertEqual(resolution.status, "AMBIGUOUS_MAPPING")
-        self.assertFalse(resolution.is_resolved)
-        self.assertEqual(set(resolution.candidates), {"sga", "sbc"})
+        self.assertEqual(resolution.destination_metric, "sga")
+        self.assertNotIn("sbc", resolution.candidates)
 
     def test_an_empty_candidate_set_stays_unresolved(self) -> None:
         resolution = self.registry.resolve_source_concept(

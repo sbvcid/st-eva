@@ -752,6 +752,24 @@ def _read_scope(row) -> Optional[Dict[str, Any]]:
     return parsed if isinstance(parsed, dict) else None
 
 
+def _scope_is_measured(scope: Optional[Dict[str, Any]]) -> bool:
+    """
+    Whether a PARTIAL mapping's narrower scope was actually measured.
+
+    This is the whole of F1's correction, and it is deliberately one predicate
+    over the evidence that already exists. `_read_scope` has already turned a
+    missing column, an empty value, malformed JSON and a non-object payload into
+    `None`, so what remains to ask is whether there is any scope at all -- an
+    absence of evidence, not a question about JSON syntax.
+
+    No per-mapping flag is added and nothing about an analyst's conclusion is
+    stored: `scope` is the measurement, and this asks only whether it is present.
+    A PARTIAL with no scope has not been characterised, so it is unknown, and
+    unknown stays unknown.
+    """
+    return isinstance(scope, dict) and bool(scope)
+
+
 class CoreRegistry:
     """A read/write view over the three registry tables."""
 
@@ -1755,16 +1773,24 @@ class CoreRegistry:
                         "concept exactly, so the registry does not choose."),
             )
 
-        # A direct PARTIAL identity claim is an affirmative destination of lesser
-        # strength than an exact one, and it is never upgraded.
+        # A measured direct PARTIAL identity claim is an affirmative destination
+        # of lesser strength than an exact one, and it is never upgraded.
         #
         # 2.72 established that PARTIAL may not stand in for missing evidence:
-        # that would convert unknown into a known narrower scope. A PARTIAL
-        # destination is legitimate only because the narrower scope was MEASURED,
-        # and the measurement rides on the mapping as structured scope so a
-        # consumer sees why rather than taking the word for it.
+        # that would convert unknown into a known narrower scope. 2.70 defines
+        # PARTIAL as a semantic outcome -- the accounting object matches and the
+        # scope demonstrably differs -- and not as a state for "not yet
+        # researched". So a PARTIAL earns a destination only once the narrower
+        # scope has been MEASURED, and the measurement rides on the mapping as
+        # structured scope so this check can be made here rather than taking the
+        # word for it.
+        #
+        # Filtering before the count is deliberate: an unmeasured PARTIAL does
+        # not compete at all, so it can neither win nor create an ambiguity.
         component_claims = [
-            mapping for mapping in direct if mapping.mapping_type == "PARTIAL"
+            mapping for mapping in direct
+            if mapping.mapping_type == "PARTIAL"
+            and _scope_is_measured(mapping.scope)
         ]
         if not identity_claims and len(component_claims) == 1:
             mapping = component_claims[0]
