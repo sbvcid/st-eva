@@ -1386,6 +1386,53 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
             "across filers using the taxonomy"
         ),
     ),
+    # -- 2.71: the IFRS current portion promoted to EXACT --------------------
+    #
+    # This is the first mapping admitted by the promotion policy established in
+    # 2.70, which gates on three categorical facts rather than on a coverage
+    # percentage: the accounting object is ESTABLISHED, no measured filer
+    # CONTRADICTS it, and every presentation variant the research IDENTIFIED has
+    # been tested.
+    #
+    # Gate S: the element definition is quoted from the filings' own rendered
+    # metadata -- "The current portion of non-current borrowings" -- and the
+    # registry's source_definition says the same thing. 2.48 established the
+    # object and the carrying-amount basis from primary presentation.
+    #
+    # Gate C: zero measured contradiction.
+    #
+    # Gate F: two presentation variants were identified and both were read. One
+    # presents an aggregated current line on the face of the balance sheet; the
+    # other presents the concept only inside a financing-liabilities note,
+    # inside a wider current-borrowings line that also contains short-term
+    # borrowings. Both carry the whole current portion of NON-CURRENT borrowings,
+    # so the wider line is presentation aggregation and not a narrower object.
+    #
+    # QUALIFIER, recorded because it bounds the claim this mapping makes:
+    # breadth was measured on 2 of 8 current holders. The remaining 6 are
+    # UNMEASURED and are not asserted to agree; the promotion rests on the
+    # identified variants having been tested, not on universal holder
+    # validation.
+    #
+    # The PARTIAL mapping to `long_term_debt` above stays exactly as it is. A
+    # concept may hold both: the component mapping states what the figure IS,
+    # and the composition mapping states which metric it contributes to. 2.67's
+    # resolver prefers the EXACT identity claim, so this mapping is the
+    # destination and the inherited composition no longer competes with it.
+    ConceptMapping(
+        metric_id="long_term_debt_current",
+        concept_id=concept_id_for(IFRS_FULL, "CurrentPortionOfLongtermBorrowings"),
+        mapping_type=MAPPING_EXACT,
+        effective_from="2016-12-31",
+        notes=(
+            "the current portion of long-term borrowings under IFRS, promoted "
+            "2.71 under the 2.70 policy. QUALIFIER: breadth measured on 2 of 8 "
+            "current holders, all identified presentation variants tested, no "
+            "measured contradiction, 6 holders unmeasured and not asserted to "
+            "agree. Window: earliest reported period for the element across "
+            "filers using the taxonomy"
+        ),
+    ),
     ConceptMapping(
         metric_id="long_term_debt",
         concept_id=concept_id_for(IFRS_FULL, "LongtermBorrowings"),

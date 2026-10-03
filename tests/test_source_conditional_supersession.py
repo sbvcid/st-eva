@@ -297,9 +297,15 @@ class TestResolutionIsConditionedOnTheSourceConcept(unittest.TestCase):
         # authorised destination, so they are absent -- and the anti-vacuous
         # property this test exists for is unchanged: the two halves are exact
         # and disjoint.
-        self.assertEqual(resolved, {US_GAAP_CURRENT, US_GAAP_NONCURRENT})
+        # Revised in 2.71: the current-portion IFRS concept now resolves,
+        # because it carries an EXACT claim of its own rather than because the
+        # blanket path was widened. The anti-vacuous property is unchanged --
+        # the resolved set is still exact and disjoint from everything else.
+        self.assertEqual(resolved, {US_GAAP_CURRENT, US_GAAP_NONCURRENT,
+                                    IFRS_CURRENT})
         self.assertEqual(resolved & {OUTSIDE_THE_SUCCESSOR_SET}, set())
-        self.assertEqual(resolved & {IFRS_NONCURRENT, IFRS_CURRENT}, set())
+        # The noncurrent IFRS concept is still unauthorised and still absent.
+        self.assertEqual(resolved & {IFRS_NONCURRENT}, set())
 
 
 class TestTheFourCriticalCases(unittest.TestCase):
@@ -370,23 +376,33 @@ class TestTheFourCriticalCases(unittest.TestCase):
         `NOT_ASSERTED`. It must not gain a semantic mapping merely because a
         sibling sits on the same metric or because a supersession exists.
         """
+        # Revised again in 2.71. The concept is promoted to its OWN component
+        # metric rather than being promoted by the sibling or by the parent --
+        # which is the distinction this case was written to protect. It must not
+        # land on the parent total.
         result = self._resolve(IFRS_CURRENT)
-        # Revised in 2.67: unresolved, not "handed a sibling's mapping".
-        self.assertFalse(result.is_resolved)
-        self.assertEqual(result.mappings, ())
+        self.assertTrue(result.is_resolved)
         self.assertEqual(result.stored_metric_id, LEGACY)
-        self.assertEqual(result.status,
-                         ObservationMapping.UNRESOLVED_NO_APPLICABLE_MAPPING)
+        self.assertEqual(result.resolved_metric_id, US_GAAP_CURRENT_METRIC)
+        self.assertEqual(result.mapping_types, ("EXACT",))
 
     def test_the_two_ifrs_classes_do_not_see_each_other(self):
         """
-        Revised in 2.67. Neither resolves, so neither can see the other -- the
-        separation is now total rather than a matter of not picking a sibling.
+        Revised in 2.71. They now resolve differently -- the noncurrent concept
+        is unresolved and the current one is EXACT -- and they still never see
+        each other: neither names the other's concept, and neither lands on the
+        parent total.
         """
-        self.assertEqual(
-            self._resolve(IFRS_NONCURRENT).mappings, ())
-        self.assertEqual(
-            self._resolve(IFRS_CURRENT).mappings, ())
+        noncurrent = self._resolve(IFRS_NONCURRENT)
+        current = self._resolve(IFRS_CURRENT)
+        self.assertFalse(noncurrent.is_resolved)
+        self.assertTrue(current.is_resolved)
+        self.assertNotEqual(current.resolved_metric_id,
+                            US_GAAP_NONCURRENT_METRIC)
+        self.assertNotEqual(noncurrent.resolved_metric_id,
+                            US_GAAP_CURRENT_METRIC)
+        self.assertNotEqual(current.mappings[0].concept_id,
+                            noncurrent.source_concept)
 
     def test_us_gaap_mappings_are_unchanged_from_what_the_registry_declares(self):
         """
