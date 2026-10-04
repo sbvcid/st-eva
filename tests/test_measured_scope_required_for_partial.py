@@ -328,16 +328,31 @@ class TestTheGatedConceptsRemainUnresolved(unittest.TestCase):
             checked += 1
         self.assertEqual(checked, len(GATED))
 
-    def test_exactly_one_measured_partial_exists_in_the_seed(self) -> None:
+    def test_the_measured_partials_are_exactly_these(self) -> None:
+        """
+        The census of PARTIAL destinations the gate admits, named rather than
+        counted.
+
+        Was one; 2.100 promoted `us-gaap:RestrictedStockExpense` to a measured
+        IDENTITY PARTIAL, so it is two. Both are listed by name, which is what
+        makes a third one visible here rather than a silently larger number.
+        """
         measured = [dict(r) for r in self.registry.connection.execute(
             "SELECT metric_id, concept_id FROM metric_concept_mapping"
             " WHERE mapping_type = 'PARTIAL' AND relation_kind = 'IDENTITY'"
-            " AND scope_json IS NOT NULL")]
+            " AND scope_json IS NOT NULL"
+            " ORDER BY concept_id")]
         self.assertEqual(measured,
                          [{"metric_id": NONCURRENT,
-                           "concept_id": IFRS_NONCURRENT}])
+                           "concept_id": IFRS_NONCURRENT},
+                          {"metric_id": "sbc",
+                           "concept_id": "us-gaap:RestrictedStockExpense"}])
 
-    def test_the_whole_registry_has_one_resolved_partial_destination(self) -> None:
+    def test_the_registry_resolves_exactly_these_partial_destinations(self) -> None:
+        """
+        Every concept in the registry is swept, so this is the count that says
+        how much the gate is admitting at all. Two, for the same reason.
+        """
         resolved = []
         for concept in [r["concept_id"] for r in
                         self.registry.connection.execute(
@@ -346,7 +361,9 @@ class TestTheGatedConceptsRemainUnresolved(unittest.TestCase):
             resolution = self.registry.resolve_source_concept(concept)
             if resolution.is_resolved and resolution.mapping_type == "PARTIAL":
                 resolved.append((concept, resolution.destination_metric))
-        self.assertEqual(resolved, [(IFRS_NONCURRENT, NONCURRENT)])
+        self.assertEqual(resolved,
+                         [(IFRS_NONCURRENT, NONCURRENT),
+                          ("us-gaap:RestrictedStockExpense", "sbc")])
 
 
 class TestCompositionStaysIsolated(unittest.TestCase):

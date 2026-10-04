@@ -39,8 +39,17 @@ UNCHANGED_PRESENT = {
     "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax":
         (DESTINATION, "EXACT"),
 }
-# Must stay unmapped: 2.99 adds no SBC mapping.
-UNCHANGED_ABSENT = ("us-gaap:RestrictedStockExpense",)
+# 2.99 retired the `Revenues` mapping and nothing else, and 2.100 then promoted
+# `us-gaap:RestrictedStockExpense` to `sbc` as a measured PARTIAL on 2.95's
+# cross-filer evidence -- a different decision, taken in a different round, on
+# its own evidence.
+#
+# So the live invariant is not a list of concepts that stayed absent, which would
+# need invented ids to express. It is that `sbc` has exactly two sources, both
+# named, and that the promoted one is pinned to the mapping 2.100 declared rather
+# than permitted to be anything. A third SBC source fails here.
+SBC_EXACT_SOURCE = "us-gaap:ShareBasedCompensation"
+PROMOTED_AFTER_299 = ("us-gaap:RestrictedStockExpense",)
 
 
 class RegistryUnderTest(unittest.TestCase):
@@ -116,10 +125,37 @@ class TestNothingElseMoved(RegistryUnderTest):
         self.assertEqual(mapping["effective_from"], "2007-09-29")
         self.assertEqual(mapping["effective_to"], "2018-06-30")
 
-    def test_and_no_sbc_mapping_was_added(self) -> None:
-        for concept in UNCHANGED_ABSENT:
-            self.assertFalse(self.mappings.get(concept),
-                             "%s must remain unmapped" % concept)
+    def test_and_the_only_sbc_mappings_are_the_two_promoted_ones(self) -> None:
+        """
+        2.99's scope was the retirement. Since then 2.100 promoted exactly one
+        concept to `sbc`, and it is pinned here to the declaration that made it
+        -- IDENTITY, PARTIAL, the evidence-derived window, a measured scope.
+
+        Stated as an exact set of the live `sbc` sources rather than as a list of
+        concepts that must stay absent, because the second form needs invented
+        ids to say anything and an invented id is rejected by the foreign key.
+        """
+        sources = self.registry.effective_metric_sources("sbc")
+        self.assertEqual({s["concept"] for s in sources},
+                         {SBC_EXACT_SOURCE} | set(PROMOTED_AFTER_299))
+        self.assertEqual(len(sources), 2, sources)
+
+    def test_and_the_later_promotion_is_the_one_that_was_declared(self) -> None:
+        """
+        Permitting the mapping would let it drift. It is still PARTIAL, still
+        IDENTITY, still open-ended from the date 2.96 derived.
+        """
+        for concept in PROMOTED_AFTER_299:
+            rows = self.mappings[concept]
+            self.assertEqual(len(rows), 1, concept)
+            mapping = rows[0]
+            self.assertEqual(mapping["metric_id"], "sbc")
+            self.assertEqual(mapping["mapping_type"], "PARTIAL")
+            self.assertEqual(mapping["relation_kind"], "IDENTITY")
+            self.assertEqual(mapping["effective_from"], "2008-12-31")
+            self.assertIsNone(mapping["effective_to"])
+            self.assertTrue(mapping["scope_json"],
+                            "2.74 requires a measured PARTIAL to carry one")
 
     def test_and_the_registry_still_seeds(self) -> None:
         """

@@ -680,6 +680,24 @@ CONCEPTS: Tuple[Concept, ...] = (
             "Amount of noncash expense for share-based payment arrangement."
         ),
     ),
+    # 2.100, declared with the PARTIAL mapping below and for no other reason.
+    # It was not in the registry before, and a mapping to an undeclared concept
+    # resolves nowhere: the resolver asks what the concept is before it asks
+    # which metric claims it.
+    #
+    # The element's own label and definition say "restricted stock or unit",
+    # which is the whole finding. Read against the EXACT element above it, the
+    # two differ by award category and not by accounting object.
+    Concept(
+        concept_id=concept_id_for(US_GAAP, "RestrictedStockExpense"),
+        taxonomy=US_GAAP,
+        concept="RestrictedStockExpense",
+        label="Restricted Stock or Unit Expense",
+        source_definition=(
+            "Amount of noncash expense for award of restricted stock or unit "
+            "under share-based payment arrangement."
+        ),
+    ),
     Concept(
         concept_id=concept_id_for(DEI, "EntityCommonStockSharesOutstanding"),
         taxonomy=DEI,
@@ -1282,6 +1300,71 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         concept_id=concept_id_for(US_GAAP, "ShareBasedCompensation"),
         mapping_type=MAPPING_EXACT,
         effective_from="2007-09-29",
+    ),
+    # -- 2.100: RestrictedStockExpense promoted to a scoped IDENTITY + PARTIAL -
+    #
+    # `RestrictedStockExpense` is cross-filer validated as the same core
+    # share-based compensation expense object with a narrower
+    # restricted-stock/restricted-unit award scope.
+    #
+    # IDENTITY because the metric is not built from the source -- the source is a
+    # scoped view of it -- and PARTIAL because the scope demonstrably differs,
+    # which is the only ground on which PARTIAL may be claimed here. 2.72 fixed
+    # that PARTIAL is a measured semantic outcome rather than a state for "not yet
+    # researched", and 2.74 made the resolver enforce it, so this row carries the
+    # measurement as structured scope and would resolve nowhere without it.
+    #
+    # The scope uses the representation the 2.73 `LongtermBorrowings` row already
+    # established -- `variation`, `measured`, `unmeasured_holders`, `basis` -- and
+    # adds no key. It names what is *excluded*, because "narrower" is a claim and
+    # "restricted stock and restricted stock units, excluding stock options and
+    # other awards" is a measurement a consumer can check.
+    #
+    # QUALIFIER, recorded because it bounds what the measurement covers: breadth
+    # was measured on the 2 filers 2.95 examined (EFC and HUM). Two further
+    # holders exist in the corpus (CB and CZWI) and are UNMEASURED, so they are
+    # not asserted to agree.
+    #
+    # Window: derived, not chosen. The start is the earliest period this concept
+    # is actually reported for, and it is the same date under both rules this
+    # registry uses -- the validated holders' own earliest fact period (2.96's
+    # derivation) and the earliest period reported by any filer at all (the
+    # convention the IFRS rows above follow). `effective_to` stays open because
+    # nothing observed ends the series.
+    #
+    # NOT total SBC, and not EXACT. The corpus does not contain a row this
+    # mapping would newly admit to a `sbc` query, so no numerical gain is claimed
+    # for it; the gain path is a property of the model (2.97R/R2/R3), not of this
+    # source.
+    ConceptMapping(
+        metric_id="sbc",
+        concept_id=concept_id_for(US_GAAP, "RestrictedStockExpense"),
+        mapping_type=MAPPING_PARTIAL,
+        relation_kind=MAPPING_IDENTITY,
+        effective_from="2008-12-31",
+        scope={
+            "variation": "AWARD_CATEGORY",
+            "measured": {
+                "award_category": "RESTRICTED_STOCK_AND_RESTRICTED_STOCK_UNIT",
+                "excluded_award_categories": ["STOCK_OPTIONS", "OTHER_AWARDS"],
+            },
+            "unmeasured_holders": 2,
+            "basis": (
+                "2.95 validated the accounting object and the narrower scope "
+                "across two independent filers (EFC, HUM); both rows name "
+                "restricted stock or restricted stock units and neither names "
+                "options"),
+        },
+        notes=(
+            "the restricted-stock and restricted-unit award category of share-"
+            "based compensation expense: the same core object as the EXACT "
+            "mapping above, restricted to one award category. QUALIFIER: breadth "
+            "measured on 2 of the 4 corpus holders; CB and CZWI are unmeasured "
+            "and not asserted to agree. Window: earliest period the element is "
+            "reported for, which is the same date under the validated-holders "
+            "derivation and the any-filer convention, open-ended because nothing "
+            "observed ends the series"
+        ),
     ),
     ConceptMapping(
         metric_id="shares_outstanding",

@@ -10,6 +10,11 @@ those two statements competing for the same question.
 the concept AMBIGUOUS between the aggregate that names it and the component it
 belongs to. The four COMPOSITION rows are untouched and still true; they are
 simply no longer candidates.
+
+The two registry-wide counts below moved in 2.100, which added the second
+IDENTITY row that carries a measured `PARTIAL` scope. They are assertions about
+the live production registry rather than about this round's findings, so they
+track the seed; the four COMPOSITION rows are pinned by name and did not move.
 """
 
 from __future__ import annotations
@@ -77,7 +82,7 @@ class TestRegistryClassification(unittest.TestCase):
         for row in self.rows():
             self.assertIn(row["relation_kind"], ("IDENTITY", "COMPOSITION"),
                           row)
-        self.assertEqual(len(self.rows()), 49)
+        self.assertEqual(len(self.rows()), 50)
 
     def test_exactly_four_mappings_are_composition(self) -> None:
         composition = {(r["metric_id"], r["concept_id"]) for r in self.rows()
@@ -86,7 +91,7 @@ class TestRegistryClassification(unittest.TestCase):
 
     def test_every_other_mapping_is_identity(self) -> None:
         identity = [r for r in self.rows() if r["relation_kind"] == "IDENTITY"]
-        self.assertEqual(len(identity), 45)
+        self.assertEqual(len(identity), 46)
 
     def test_the_composition_rows_were_stored_not_defaulted(self) -> None:
         """
