@@ -1,10 +1,29 @@
-# ST-EVA 2.2.3 — Market-Implied Assumptions Engine
+# ST-EVA — Reverse Valuation & Market-Implied Expectations Engine
 
-ST-EVA answers one question:
+ST-EVA takes an observed market price and reverse-engineers the fundamental and valuation assumptions implied by that price, using explicit valuation references and auditable evidence.
 
-「目前價格反映了什麼假設？」
+It is a deterministic calculation with a traceable result. It is not a forecast, and it does not recommend anything.
 
-It starts from the observed market price and reverse-engineers the earnings assumptions required to justify that price under an explicitly selected valuation reference.
+## What it asks
+
+A quoted price is a compressed verdict. At a given P/E multiple, the market is implicitly asserting some forward EPS. ST-EVA makes that assertion explicit and computable: given a price and a named reference multiple, what earnings, growth, revenue or margin does that price require?
+
+So the object of study is the assumption, not the asset. The output is a set of market-implied assumptions tied to the reference they were computed against. 「目前價格反映了什麼假設？」 — what assumptions is the current price reflecting?
+
+## Input → output
+
+```
+observed price + explicit valuation reference (P/E, P/FCF, EV/EBITDA, P/S)
+        ↓
+reverse valuation arithmetic
+        ↓
+market-implied assumptions: forward EPS, required EPS CAGR, EPS gap vs consensus,
+implied FCF / EBITDA / revenue, implied net margin
+        ↓
+auditable JSON — every figure names the observation and the operation behind it
+```
+
+The engine is not a DCF calculator and does not project free cash flows forward. It does not generate price targets, scenario ranges, probabilities, or buy/sell calls. It describes what a price already implies, and says which reference it assumed.
 
 ## Core calculation
 
@@ -419,4 +438,6 @@ The deterministic core now supports P/E, P/FCF, EV/EBITDA, and P/S reverse valua
 
 ## Scope
 
-ST-EVA is an analytical component. It describes assumptions embedded in a price; it does not make the investment decision.
+ST-EVA is an analytical primitive. It describes assumptions embedded in a market price; it does not make the investment decision.
+
+"Reverse valuation" here means working backwards from a price under a stated reference to the assumptions that would justify it. It is not a house methodology and makes no claim to be a standard; the assumptions it reports are conditional on the reference and the inputs, and it reports both.
