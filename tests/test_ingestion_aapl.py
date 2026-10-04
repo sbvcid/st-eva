@@ -17,6 +17,7 @@ from pathlib import Path
 
 from archive import FilingRef
 from core_registry import (
+    ConceptMapping,
     MAPPING_PARTIAL,
     CoreRegistry,
     concept_id_for,
@@ -292,11 +293,21 @@ class TestConceptEvolutionIsNotSpliced(unittest.TestCase):
     def tearDown(self) -> None:
         self.store.close()
 
-    def test_revenue_has_three_concepts_and_two_breaks(self):
+    def test_revenue_breaks_where_a_mapped_concept_ends(self):
+        """
+        The two legacy revenue presentations that remain declared each break the
+        series, and the contract-revenue line does not.
+
+        `us-gaap:Revenues` is deliberately absent: 2.99 retired it, because
+        2.98R proved it a broader earning-process measure than `revenue` and so
+        never a valid PARTIAL source. It is no longer a source, so it is no
+        longer a break, and this test now asserts that rather than pretending the
+        retirement did not happen.
+        """
         breaks = {
             item["concept_id"] for item in self.registry.series_breaks("revenue")
         }
-        self.assertIn(concept_id_for(US_GAAP, "Revenues"), breaks)
+        self.assertNotIn(concept_id_for(US_GAAP, "Revenues"), breaks)
         self.assertIn(
             concept_id_for(US_GAAP, "SalesRevenueNet"), breaks
         )
@@ -309,10 +320,33 @@ class TestConceptEvolutionIsNotSpliced(unittest.TestCase):
 
     def test_the_revenue_concept_overlap_is_covered_by_both_windows(self):
         """
-        `Revenues` and the contract concept overlap for two quarters of FY2018.
-        A series crossing that overlap would splice a broader measure into a
-        narrower one.
+        `Revenues` and the contract concept overlapped for two quarters of
+        FY2018. A series crossing that overlap would splice a broader measure
+        into a narrower one.
+
+        That overlap is a historical window condition, and the mapping carrying it
+        was retired by 2.99 because the *semantic* relation was invalid -- being
+        BROADER_THAN_TARGET relative to `revenue`. So the window is reproduced
+        here as a test-local mapping: the property under test is temporal overlap,
+        not the correctness of the retired relation, and no scope is invented so
+        2.74 still refuses to resolve it.
         """
+        self.store.connection.execute(
+            "INSERT OR IGNORE INTO concept_registry"
+            " (concept_id, taxonomy, concept, label, source_definition)"
+            " VALUES (?, ?, ?, ?, NULL)",
+            (concept_id_for(US_GAAP, "Revenues"), US_GAAP, "Revenues",
+             "Revenues"),
+        )
+        self.store.connection.commit()
+        self.registry.add_mapping(ConceptMapping(
+            concept_id=concept_id_for(US_GAAP, "Revenues"),
+            metric_id="revenue",
+            mapping_type="PARTIAL",
+            relation_kind="IDENTITY",
+            effective_from="2016-09-24",
+            effective_to="2018-09-29",
+        ))
         by_concept = {}
         for mapping in self.registry.mappings_for_metric("revenue"):
             by_concept.setdefault(mapping.concept_id, []).append(mapping)

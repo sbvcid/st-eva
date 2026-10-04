@@ -107,7 +107,6 @@ GATED = (
     ("us-gaap:GeneralAndAdministrativeExpense", "sga"),
     ("us-gaap:InterestExpenseDebt", "interest_expense"),
     ("us-gaap:PaymentsToAcquireProductiveAssets", "capex"),
-    ("us-gaap:Revenues", "revenue"),
     ("us-gaap:SalesRevenueNet", "revenue"),
     ("us-gaap:StockholdersEquityIncludingPortionAttributableTo"
      "NoncontrollingInterest", "equity"),
@@ -291,8 +290,8 @@ class TestTheGatedConceptsRemainUnresolved(unittest.TestCase):
         this list, so adding or dropping a mapping here without changing the
         registry fails.
         """
-        self.assertEqual(len(GATED), 14)
-        self.assertEqual(len(set(c for c, _ in GATED)), 14)
+        self.assertEqual(len(GATED), 13)
+        self.assertEqual(len(set(c for c, _ in GATED)), 13)
 
         derived = set()
         for concept in [r["concept_id"] for r in

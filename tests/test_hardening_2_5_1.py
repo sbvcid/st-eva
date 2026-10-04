@@ -29,6 +29,7 @@ import unittest
 
 from archive import FilingRef
 from core_registry import (
+    ConceptMapping,
     ADOPTION_BASES,
     MAPPING_PARTIAL,
     OBSERVED_ADOPTION,
@@ -42,6 +43,43 @@ from sqlite_archive import SQLiteArchive
 
 US_GAAP = "us-gaap"
 REVENUES = concept_id_for(US_GAAP, "Revenues")
+# `REVENUES` is retained only for the adoption-record tests, which key on a
+# concept id and never on a mapping. The window-dependent class uses
+# `FIXTURE_CONCEPT` instead -- see `register_fixture_mapping`.
+US_GAAP = "us-gaap"
+
+# TEST-LOCAL fixture concept. The five adoption tests below exercise the window
+# and adoption mechanism; they needed a resolvable windowed PARTIAL and took it
+# from the seeded `us-gaap:Revenues` mapping, which 2.99 retired because
+# 2.98R proved it BROADER_THAN_TARGET relative to `revenue`. A concept production
+# never declares keeps that finding out of the test contract while supplying the
+# same mechanism. Its scope is this fixture's, and is not a claim about any
+# production mapping.
+FIXTURE_CONCEPT = concept_id_for(US_GAAP, "TestWindowedPartialConcept")
+FIXTURE_WINDOW = ("2016-09-24", "2018-09-29")
+
+
+def register_fixture_mapping(store, registry) -> None:
+    """A windowed, measured PARTIAL in the test's own in-memory store."""
+    store.connection.execute(
+        "INSERT OR IGNORE INTO concept_registry"
+        " (concept_id, taxonomy, concept, label, source_definition)"
+        " VALUES (?, ?, ?, ?, NULL)",
+        (FIXTURE_CONCEPT, US_GAAP, "TestWindowedPartialConcept",
+         "Test windowed partial concept"),
+    )
+    store.connection.commit()
+    registry.add_mapping(ConceptMapping(
+        concept_id=FIXTURE_CONCEPT,
+        metric_id="revenue",
+        mapping_type=MAPPING_PARTIAL,
+        relation_kind="IDENTITY",
+        effective_from=FIXTURE_WINDOW[0],
+        effective_to=FIXTURE_WINDOW[1],
+        scope={"variation": "MEASURED_SUBSET",
+               "measured": {"subset": "FIXTURE_DECLARED"},
+               "basis": "test-local fixture; not a production scope"},
+    ))
 
 
 def new_archive() -> SQLiteArchive:
@@ -205,8 +243,8 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
     """
     The cross-company case, reproduced against two filers and no network.
 
-    The seeded `Revenues` window is AAPL's 2016-2018. MSFT filed the concept in
-    2007. Before adoption existed that fact was unmapped, and the reason given
+    The fixture's windowed PARTIAL mapping covers 2016-2018. MSFT filed the
+    concept in 2007. Before adoption existed that fact was unmapped, and the reason given
     — "no registry mapping relates this concept to a metric" — was true of the
     table and false about MSFT.
     """
@@ -218,11 +256,13 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
         self.aapl = self.store.record_asset("AAPL")
         self.store.record_asset("MSFT", cik="0000789019")
         self.msft = self.store.record_asset("MSFT")
+        register_fixture_mapping(self.store, self.registry)
 
     def tearDown(self) -> None:
         self.store.close()
 
-    def _observe(self, asset_id, first, last, facts=10, concept=REVENUES):
+    def _observe(self, asset_id, first, last, facts=10,
+                 concept=FIXTURE_CONCEPT):
         self.registry.record_adoption(
             asset_id, concept, first, last, fact_count=facts, filing_count=2
         )
@@ -233,16 +273,16 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
         is additional knowledge, not a replacement rule.
         """
         self.assertFalse(
-            self.registry.resolve(REVENUES, as_of="2007-09-30").is_resolved
+            self.registry.resolve(FIXTURE_CONCEPT, as_of="2007-09-30").is_resolved
         )
         self.assertTrue(
-            self.registry.resolve(REVENUES, as_of="2017-09-30").is_resolved
+            self.registry.resolve(FIXTURE_CONCEPT, as_of="2017-09-30").is_resolved
         )
 
     def test_observed_use_outside_the_window_resolves(self):
         self._observe(self.msft, "2007-09-30", "2010-12-31")
         resolved = self.registry.resolve(
-            REVENUES, as_of="2008-06-30", asset_id=self.msft
+            FIXTURE_CONCEPT, as_of="2008-06-30", asset_id=self.msft
         )
         self.assertTrue(resolved.is_resolved)
         self.assertEqual(resolved.metric.metric_id, "revenue")
@@ -257,20 +297,20 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
         self._observe(self.msft, "2007-09-30", "2010-12-31")
         self.assertFalse(
             self.registry.resolve(
-                REVENUES, as_of="2008-06-30", asset_id=self.aapl
+                FIXTURE_CONCEPT, as_of="2008-06-30", asset_id=self.aapl
             ).is_resolved,
             "MSFT's filing history resolved AAPL's 2008 fact",
         )
 
     def test_use_past_a_closed_window_still_resolves(self):
         """
-        NVDA reported `Revenues` through 2026, eight years after AAPL's window
+        NVDA reported the concept through 2026, eight years after AAPL's window
         closed. A window that closes is that filer's last period, not a
         statement that the concept stopped existing.
         """
         self._observe(self.msft, "2008-01-27", "2026-07-26")
         resolved = self.registry.resolve(
-            REVENUES, as_of="2026-06-30", asset_id=self.msft
+            FIXTURE_CONCEPT, as_of="2026-06-30", asset_id=self.msft
         )
         self.assertTrue(resolved.is_resolved)
         self.assertTrue(resolved.adopted_outside_mapping_window)
@@ -283,7 +323,7 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
         """
         self._observe(self.msft, "2007-09-30", "2010-12-31")
         resolved = self.registry.resolve(
-            REVENUES, as_of="2008-06-30", asset_id=self.msft
+            FIXTURE_CONCEPT, as_of="2008-06-30", asset_id=self.msft
         )
         self.assertEqual(len(resolved.mappings), 1)
         self.assertEqual(resolved.mappings[0].mapping_type, MAPPING_PARTIAL)
@@ -298,7 +338,7 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
         self._observe(self.msft, "2007-09-30", "2010-12-31")
         self.assertFalse(
             self.registry.resolve(
-                REVENUES, as_of="2015-06-30", asset_id=self.msft
+                FIXTURE_CONCEPT, as_of="2015-06-30", asset_id=self.msft
             ).is_resolved
         )
 
@@ -310,7 +350,7 @@ class TestAdoptionResolvesWhatTheWindowRefused(unittest.TestCase):
         """
         self._observe(self.msft, "2007-09-30", "2010-12-31")
         payload = self.registry.resolve(
-            REVENUES, as_of="2008-06-30", asset_id=self.msft
+            FIXTURE_CONCEPT, as_of="2008-06-30", asset_id=self.msft
         ).contract_dict()
         self.assertTrue(payload["adopted_outside_mapping_window"])
         self.assertIsNotNone(payload["issuer_adoption"])
@@ -404,7 +444,7 @@ class TestTruncationIsStatedNotHidden(unittest.TestCase):
                         "SecEdgar", accession, US_GAAP, "Revenues",
                         f"{2000 + index % 25}-01-01", period_end, accession,
                     ),
-                    source_concept=REVENUES,
+                    source_concept=FIXTURE_CONCEPT,
                 ),
             )
         self.query = EvidenceQuery.open(self.path)

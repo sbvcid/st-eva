@@ -19,7 +19,12 @@ have been got wrong from the names alone:
     `us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax` are both
     revenue and they overlap for two quarters of FY2018, but Revenues is the
     broader "earning process" measure and includes investment and interest
-    income. Partially, not equivalently, comparable.
+    income. It was mapped here as PARTIAL until 2.99, which retired it:
+    `us-gaap:Revenues` is BROADER_THAN_TARGET relative to `revenue`, and
+    `IDENTITY + PARTIAL` denotes a restricted subset, so the old mapping
+    described the relationship in the wrong direction. It is not re-typed as
+    EXACT either, because the source is not the same object. The concept
+    remains registered, so the finding stays auditable.
 
     `us-gaap:PaymentsToAcquireProductiveAssets` and
     `us-gaap:PaymentsToAcquirePropertyPlantAndEquipment` look like the same
@@ -1085,18 +1090,6 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
         mapping_type=MAPPING_EXACT,
         effective_from="2017-09-30",
         notes="the filer's own contract-revenue line, 117 facts to 2026-06-27",
-    ),
-    ConceptMapping(
-        metric_id="revenue",
-        concept_id=concept_id_for(US_GAAP, "Revenues"),
-        mapping_type=MAPPING_PARTIAL,
-        effective_from="2016-09-24",
-        effective_to="2018-09-29",
-        notes=(
-            "wider earning-process measure including investment and interest "
-            "income; overlaps the contract-revenue concept for two quarters, so "
-            "the series does not continue across the change"
-        ),
     ),
     ConceptMapping(
         metric_id="revenue",

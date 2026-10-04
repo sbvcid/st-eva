@@ -550,8 +550,16 @@ class TestComparability(RegistryFixture):
     def test_a_series_breaks_where_a_concept_changes(self):
         breaks = self.registry.series_breaks("revenue")
         concept_ids = {item["concept_id"] for item in breaks}
-        self.assertIn(concept_id_for(US_GAAP, "Revenues"), concept_ids)
-        self.assertIn(concept_id_for(US_GAAP, "SalesRevenueNet"), concept_ids)
+        # `us-gaap:Revenues` was retired by 2.99 -- it was a broader
+        # earning-process measure than `revenue`, so it could never
+        # validly be a PARTIAL source. The concepts that still break
+        # this series are the legacy revenue presentations that remain
+        # declared.
+        self.assertNotIn(concept_id_for(US_GAAP, "Revenues"),
+                         concept_ids)
+        self.assertIn(concept_id_for(US_GAAP, "SalesRevenueNet"),
+                      concept_ids)
+        self.assertIn("ifrs-full:Revenue", concept_ids)
         for item in breaks:
             self.assertEqual(item["kind"], "CONCEPT_MAPPING_BREAK")
             self.assertEqual(item["explanation"], "NOT_EXPLAINED_BY_ST_EVA")
@@ -600,14 +608,19 @@ class TestResolution(RegistryFixture):
         self.registry.add_mapping(
             ConceptMapping(
                 metric_id="gross_profit",
-                concept_id=concept_id_for(US_GAAP, "Revenues"),
+                concept_id=concept_id_for(US_GAAP, "SalesRevenueNet"),
                 mapping_type=MAPPING_EXACT,
-                effective_from="2016-09-24",
-                effective_to="2018-09-29",
+                effective_from="2007-09-29",
+                effective_to="2018-06-30",
             )
         )
+        # `SalesRevenueNet` now carries two identity claims -- its seeded
+        # revenue mapping and this one -- so the concept is ambiguous
+        # and the registry must report that rather than choose. It
+        # replaces `Revenues`, which 2.99 retired.
         resolved = self.registry.resolve(
-            concept_id_for(US_GAAP, "Revenues"), as_of="2017-12-31"
+            concept_id_for(US_GAAP, "SalesRevenueNet"),
+            as_of="2017-12-31",
         )
         self.assertFalse(resolved.is_resolved)
         self.assertTrue(resolved.series_breaks)
