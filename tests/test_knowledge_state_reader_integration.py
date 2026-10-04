@@ -43,6 +43,7 @@ from archive import InterpretationError  # noqa: E402
 from core_registry import CoreRegistry  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
+import corpus_gate  # noqa: E402
 
 # The harness archives live beside `tests`, not inside it.
 H = os.path.join(os.path.dirname(HERE), "experiments",
@@ -426,8 +427,7 @@ class TestTheRepairedPopulation(unittest.TestCase):
     EXPECTED = {"TWD", "CAD", "SEK", "JPY", "BRL", "GBP", "ARS"}
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
 
     def _samples(self):
         for archive in self.ARCHIVES:

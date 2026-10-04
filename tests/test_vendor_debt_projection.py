@@ -45,6 +45,8 @@ REPO = os.path.dirname(HERE)
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
+import corpus_gate  # noqa: E402
+
 H = os.path.join(REPO, "experiments", "003-llm-evidence-retrieval", "harness")
 
 VENDOR_TOTAL_DEBT_FIELD = "totalDebt"
@@ -174,6 +176,14 @@ class TestNoHistoryWasAffected(unittest.TestCase):
     """
 
     def test_every_stored_debt_observation_is_from_a_filing_source(self):
+        # 3.03: this globs whatever archives exist rather than naming one, so it
+        # is gated on "any corpus", not on a specific file. The `total > 0`
+        # assertion below stays and is the point: with a corpus present but no
+        # debt rows, it must fail rather than pass vacuously. Only the absence of
+        # every archive is an environment fact this test defers on.
+        corpus_gate.require_any(
+            self, "snapshot-universe", "snapshot-crossframework",
+            "snapshot-227-a1", "snapshot-227-b", "snapshot")
         checked, total = 0, 0
         for path in sorted(glob.glob(os.path.join(H, "*.sqlite"))):
             try:

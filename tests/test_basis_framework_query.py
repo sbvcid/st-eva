@@ -44,6 +44,8 @@ if HERE not in sys.path:
 
 from evidence_query import EvidenceQuery, _json1_probe  # noqa: E402
 
+import corpus_gate  # noqa: E402
+
 H = os.path.join(os.path.dirname(HERE), "experiments",
                  "003-llm-evidence-retrieval", "harness")
 
@@ -88,9 +90,11 @@ def query(path: str, **kwargs):
 
 class TestThePositiveControl(unittest.TestCase):
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
-        self.path = archive_path()
+        # 3.03: this used to test `os.path.isdir(H)`, which is true in every
+        # checkout because the harness directory is tracked. The archive is the
+        # thing that is absent. Present-but-empty still fails below, on purpose.
+        self.path = corpus_gate.require(self, "snapshot-crossframework")[
+            "snapshot-crossframework"]
         self.counts = stored_frameworks(self.path)
 
     def test_the_archive_really_contains_the_framework_under_test(self) -> None:
@@ -115,9 +119,8 @@ class TestThePositiveControl(unittest.TestCase):
 
 class TestTheFilterReturnsRealRows(unittest.TestCase):
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
-        self.path = archive_path()
+        self.path = corpus_gate.require(self, "snapshot-crossframework")[
+            "snapshot-crossframework"]
         self.counts = stored_frameworks(self.path)
 
     def test_a_stored_framework_is_returned(self) -> None:
@@ -158,8 +161,7 @@ class TestTheFilterReturnsRealRows(unittest.TestCase):
 
 class TestNoFalsePositives(unittest.TestCase):
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-crossframework")
         self.path = archive_path()
 
     def test_substring_like_values_do_not_match(self) -> None:
@@ -183,8 +185,7 @@ class TestNoFalsePositives(unittest.TestCase):
 
 class TestOtherFiltersAreUnaffected(unittest.TestCase):
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-crossframework")
         self.path = archive_path()
 
     def test_a_query_without_the_basis_filter_is_unchanged(self) -> None:
@@ -216,8 +217,7 @@ class TestOtherBasisFieldsDoNotInterfere(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-crossframework")
         self.directory = tempfile.mkdtemp()
         self.path = os.path.join(self.directory, "probe.sqlite")
         import shutil
@@ -291,8 +291,7 @@ class TestKnowledgeStateIsUnaffected(unittest.TestCase):
                 "snapshot-227-a1", "snapshot-227-b"]
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-crossframework")
 
     def _repaired_targets(self):
         for archive in self.ARCHIVES:
@@ -402,8 +401,7 @@ class TestBothCodePaths(unittest.TestCase):
         """Force the LIKE branch and require the same answers."""
         import evidence_query
 
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-crossframework")
         path = archive_path()
         counts = stored_frameworks(path)
         original = evidence_query._json1_probe

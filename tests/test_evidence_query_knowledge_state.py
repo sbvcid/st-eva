@@ -38,6 +38,7 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
 from evidence_query import EvidenceQuery  # noqa: E402
+import corpus_gate  # noqa: E402
 from sqlite_archive import (  # noqa: E402
     LATEST_KNOWLEDGE,
     SQLiteArchive,
@@ -175,8 +176,7 @@ class TestDiscoveredTargetsExist(unittest.TestCase):
     """A parity test with no target proves nothing, so prove the target exists."""
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         self.targets = discover_targets()
         self.currencies = {t["currency"] for t in self.targets}
         for target in self.targets:
@@ -213,8 +213,7 @@ class TestParityAcrossThePITMatrix(unittest.TestCase):
     """EvidenceQuery and observations_for must agree, at every cutoff."""
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         self.targets = discover_targets()
         self.targets = self.targets[:12]
         for target in self.targets:
@@ -323,8 +322,7 @@ def _between(earlier: str, later: str) -> Optional[str]:
 
 class TestNoDoubleCounting(unittest.TestCase):
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         self.targets = discover_targets()[:8]
 
     def test_one_package_per_source_fact(self) -> None:
@@ -352,8 +350,7 @@ class TestHistorySurfaces(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         self.targets = discover_targets()[:4]
 
     def test_get_observation_returns_the_effective_reading(self) -> None:
@@ -402,8 +399,7 @@ class TestHistorySurfaces(unittest.TestCase):
 
 class TestLegacyArchive(unittest.TestCase):
     def test_an_archive_without_the_table_preserves_current_behaviour(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         target = discover_targets()[0]
         path = target["path"]
         target["stored"] = stored_reading(path, target["source_fact_id"])
@@ -434,8 +430,7 @@ class TestLegacyArchive(unittest.TestCase):
             os.remove(copy_path)
 
     def test_legacy_is_distinguished_from_no_applicable_interpretation(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         target = discover_targets()[0]
         path = target["path"]
         copy_path = os.path.join(os.path.dirname(path), "_legacy_probe2.sqlite")
@@ -464,8 +459,7 @@ class TestLegacyArchive(unittest.TestCase):
 
 class TestFieldRestriction(unittest.TestCase):
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe", "snapshot-crossframework", "snapshot-227-a1", "snapshot-227-b")
         self.targets = discover_targets()[:4]
 
     def test_no_factual_field_is_touched_by_the_overlay(self) -> None:

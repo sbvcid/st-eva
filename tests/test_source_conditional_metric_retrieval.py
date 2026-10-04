@@ -52,6 +52,7 @@ from core_registry import ConceptResolution, CoreRegistry  # noqa: E402
 from evidence_query import EvidenceQuery  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
+import corpus_gate  # noqa: E402
 
 H = os.path.join(os.path.dirname(HERE), "experiments",
                  "003-llm-evidence-retrieval", "harness")
@@ -308,8 +309,7 @@ class TestEffectiveMetricRetrievalOnRealArchives(unittest.TestCase):
     """Requirements 11-19, against real archived rows."""
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe")
         self.source = os.path.join(H, "snapshot-universe.sqlite")
         if not os.path.exists(self.source):
             self.skipTest("target archive is not present")
@@ -571,8 +571,7 @@ class TestKnowledgeStateStaysSeparate(unittest.TestCase):
     """A legacy debt row can carry an effective metric AND an effective unit."""
 
     def setUp(self) -> None:
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe")
         source = os.path.join(H, "snapshot-universe.sqlite")
         workdir = tempfile.mkdtemp()
         self.path = os.path.join(workdir, "probe.sqlite")
@@ -636,8 +635,7 @@ class TestLegacyArchives(unittest.TestCase):
         Metric registration must not be synthesised to make the new predicate
         work; a query for an unregistered metric keeps raising.
         """
-        if not os.path.isdir(H):
-            self.skipTest("harness archives are not present")
+        corpus_gate.require(self, "snapshot-universe")
         source = os.path.join(H, "snapshot-universe.sqlite")
         connection = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
         connection.row_factory = sqlite3.Row
