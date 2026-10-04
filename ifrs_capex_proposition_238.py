@@ -48,6 +48,9 @@ import json
 import os
 import sys
 from collections import Counter, defaultdict
+# Issuer identity comes from the payload's own `cik`; see
+# issuer_identity.py for why the filename is a diagnostic only.
+import issuer_identity  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -73,16 +76,11 @@ CAVEAT = (
 
 
 def documents():
-    out = {}
-    for d in PAYLOAD_DIRS:
-        p = os.path.join(H, d)
-        if not os.path.isdir(p):
-            continue
-        for name in sorted(os.listdir(p)):
-            if name.endswith(".json") and name != "tickers.json":
-                out.setdefault(name.split("_")[0].upper(),
-                               os.path.join(p, name))
-    return out
+    # Issuer identity comes from each payload's own `cik`, joined to the
+    # archive assets table; the filename is a diagnostic. The per-directory
+    # loader is not used here because it cannot know the harness root, and
+    # without the join it degrades silently to CIK: keys.
+    return issuer_identity.load_harness_payloads(H, list(PAYLOAD_DIRS))[0]
 
 
 def facts_of(doc, concept):

@@ -59,6 +59,9 @@ if HERE not in sys.path:
 from core_registry import CoreRegistry  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
+# Issuer identity comes from the payload's own cik; see
+# issuer_identity.py for why the filename is a diagnostic only.
+import issuer_identity  # noqa: E402
 
 H = os.path.join(HERE, "experiments", "003-llm-evidence-retrieval", "harness")
 
@@ -98,16 +101,11 @@ CAPEX_SHAPED = (
 
 def documents():
     """ticker -> companyfacts path, from whatever payload holds it."""
-    out = {}
-    for d in PAYLOAD_DIRS:
-        p = os.path.join(H, d)
-        if not os.path.isdir(p):
-            continue
-        for name in sorted(os.listdir(p)):
-            if not name.endswith(".json") or name == "tickers.json":
-                continue
-            out.setdefault(name.split("_")[0].upper(), os.path.join(p, name))
-    return out
+    # Issuer identity comes from each payload's own `cik`, joined to the
+    # archive assets table; the filename is a diagnostic. The per-directory
+    # loader is not used here because it cannot know the harness root, and
+    # without the join it degrades silently to CIK: keys.
+    return issuer_identity.load_harness_payloads(H, list(PAYLOAD_DIRS))[0]
 
 
 def capex_status() -> dict:

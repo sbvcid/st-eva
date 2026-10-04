@@ -46,6 +46,9 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
 from sec_provider import SECProvider  # noqa: E402
+# Issuer identity comes from the payload's own `cik`; see
+# issuer_identity.py for why the filename is a diagnostic only.
+import issuer_identity  # noqa: E402
 
 H = os.path.join(HERE, "experiments", "003-llm-evidence-retrieval", "harness")
 
@@ -123,10 +126,7 @@ def held_documents() -> dict:
         p = os.path.join(H, d)
         if not os.path.isdir(p):
             continue
-        for name in sorted(os.listdir(p)):
-            if name.endswith(".json") and name != "tickers.json":
-                out.setdefault(name.split("_")[0].upper(),
-                               os.path.join(p, name))
+        out.update(issuer_identity.load_companyfacts_payloads(p, harness_dir=H)[0])
     return out
 
 

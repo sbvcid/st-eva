@@ -61,6 +61,9 @@ from core_registry import CoreRegistry  # noqa: E402
 from coverage_semantics import scoped_ledger  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
+# Issuer identity comes from the payload's own `cik`; see
+# issuer_identity.py for why the filename is a diagnostic only.
+import issuer_identity  # noqa: E402
 
 H = os.path.join(HERE, "experiments", "003-llm-evidence-retrieval", "harness")
 
@@ -92,11 +95,7 @@ def documents():
         p = os.path.join(H, d)
         if not os.path.isdir(p):
             continue
-        for path in glob.glob(os.path.join(p, "*.json")):
-            stem = os.path.basename(path)[:-5]
-            if stem == "tickers":
-                continue
-            out.setdefault(stem.split("_")[0].upper(), path)
+        out.update(issuer_identity.load_companyfacts_payloads(p, harness_dir=H)[0])
     return out
 
 
