@@ -33,7 +33,6 @@ conclusion says, and that stating it changed nothing else.
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import sys
@@ -56,9 +55,10 @@ from core_registry import (  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
 
-H = os.path.join(os.path.dirname(HERE), "experiments",
-                 "003-llm-evidence-retrieval", "harness")
-VALIDATION_296 = os.path.join(H, "296-restricted-stock-partial-validation.json")
+# Deliberately NO harness path here. 3.02 measured that a tracked test reading
+# `296-restricted-stock-partial-validation.json` cannot run from a clean checkout,
+# because Git does not hold that file. The evidence window 2.96 derived is pinned
+# as a value in `TestTheEffectiveWindow`, with its provenance named there.
 
 CONCEPT = "us-gaap:RestrictedStockExpense"
 METRIC = "sbc"
@@ -217,40 +217,61 @@ class TestTheScope(unittest.TestCase):
 
 
 class TestTheEffectiveWindow(unittest.TestCase):
-    """C. Evidence-derived, and probed from the mapping's own window."""
+    """
+    C. Evidence-derived, and probed from the mapping's own window.
+
+    ## Why the derivation is pinned here rather than read from 2.96
+
+    The first version of this class opened
+    `296-restricted-stock-partial-validation.json` and compared the production
+    window against the derivation that round recorded. That made a tracked test
+    depend on an untracked research artefact, which 3.02 measured directly: in a
+    clean checkout the file is absent and five of these tests errored. The whole
+    repository suite must be runnable from what Git holds.
+
+    So the derivation is restated as values, with its provenance named, and the
+    research artefact is left where it belongs. The values are not a guess
+    recorded here for convenience: they are the production contract, and 2.96
+    derived them from the candidate's own observed fact periods.
+
+        effective_from  2008-12-31   earliest observed fact period among the
+                                      validated holders (EFC, HUM), and also the
+                                      earliest period reported by any filer at
+                                      all -- both rules agree
+        effective_to    None         nothing observed ends the series
+        period_min      2008-12-31
+        period_max      2026-06-30
+        periods         54
+
+    The evidence record is `reports/3_01_DISCOVERY_FALLBACK_RECALL.md` and the
+    untracked 2.96 harness artefact. Neither is imported.
+    """
+
+    PERIOD_MIN = "2008-12-31"
+    PERIOD_MAX = "2026-06-30"
+    PERIODS_OBSERVED = 54
 
     def setUp(self) -> None:
         self.store, self.registry = seeded()
         self.addCleanup(self.store.close)
         self.row = rows_for(self.registry, CONCEPT)[0]
-        with io.open(VALIDATION_296, encoding="utf-8") as handle:
-            self.derivation = json.load(handle)["candidate_representation"][
-                "window_derivation"]
 
-    def test_1_the_window_equals_the_derivation_2_96_recorded(self) -> None:
+    def test_1_the_window_is_the_derived_start(self) -> None:
         """
-        The date is pinned against the research round's own recorded derivation
-        rather than against a constant written here. If the production row ever
-        drifts from the evidence, this fails.
-
-        The derivation is the candidate's earliest observed fact period among the
-        validated holders. The corpus agrees with it under the other rule this
-        registry uses -- the earliest period reported by any filer at all -- so
-        the two are not competing readings of the same number.
+        Pinned against the derivation restated in this class's docstring rather
+        than read from the untracked 2.96 artefact, so the assertion survives a
+        clean checkout. The provenance is named there and recorded in the seed's
+        own mapping note, which states the same two agreeing rules.
         """
-        self.assertEqual(self.derivation["derivation"],
-                         "earliest observed fact period among the validated "
-                         "holders; no end date, because the corpus does not "
-                         "close the series")
-        self.assertEqual(self.row["effective_from"],
-                         self.derivation["effective_from"])
+        self.assertEqual(self.row["effective_from"], self.PERIOD_MIN)
+        note = self.row["notes"]
+        self.assertIn("earliest period the element is reported for", note)
+        self.assertIn("open-ended", note)
 
     def test_2_the_end_is_open_and_the_start_is_inside_the_observations(self) -> None:
         self.assertIsNone(self.row["effective_to"])
-        self.assertEqual(self.row["effective_from"],
-                         self.derivation["observed_period_min"])
-        self.assertLess(self.row["effective_from"],
-                        self.derivation["observed_period_max"])
+        self.assertEqual(self.row["effective_from"], self.PERIOD_MIN)
+        self.assertLess(self.PERIOD_MIN, self.PERIOD_MAX)
 
     def test_3_the_mapping_is_absent_before_its_window(self) -> None:
         """
@@ -267,8 +288,7 @@ class TestTheEffectiveWindow(unittest.TestCase):
         self.assertEqual(resolution.status, UNRESOLVED)
 
     def test_4_the_mapping_is_active_from_its_window_onward(self) -> None:
-        for when in (self.row["effective_from"],
-                     self.derivation["observed_period_max"]):
+        for when in (self.row["effective_from"], self.PERIOD_MAX):
             resolution = self.registry.resolve_source_concept(CONCEPT, as_of=when)
             self.assertTrue(resolution.is_resolved, when)
             self.assertEqual(resolution.destination_metric, METRIC, when)

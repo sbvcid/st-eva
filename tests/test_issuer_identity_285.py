@@ -1,28 +1,37 @@
 """
-2.85 -- adversarial tests for canonical issuer identity.
+2.85 -- production regression tests for canonical issuer identity.
 
 ## What is being defended
 
-The defect was that a filename decided who an issuer was, and twelve payloads are
-named `<CIK>.json`. A test that only asserted `unique_issuers == 63` would pass
-against a loader that happened to produce 63 for unrelated reasons -- for instance
-one that deduplicated by path, or that skipped the anomalies entirely rather than
-resolving them.
+A filename used to decide who an issuer was, and twelve payloads in the corpus are
+named `<CIK>.json`. `issuer_identity.py` is the single place that decides. This
+file defends that rule and nothing else.
 
-So the bulk of these tests drive `resolve_issuer` and `load_companyfacts_payloads`
-with synthetic payloads covering the five cases that matter, and the corpus count
-is asserted only as a measured result alongside them.
+## Why these tests build their own payloads
 
-The five synthetic cases:
+Every case here writes a synthetic payload to a temporary directory and drives
+`resolve_issuer` / `load_companyfacts_payloads` against it. A test that asserted
+only a corpus count would pass against a loader that produced the count for
+unrelated reasons -- for instance one that deduplicated by path, or that skipped
+the anomalies instead of resolving them.
 
-    normal filename + matching payload CIK
-    nonstandard filename + valid payload CIK
-    filename CIK that disagrees with the payload
-    two payloads for one issuer
-    payload with no usable CIK
+So the count-free contract is the contract, and the corpus measurements live on
+the research side of the boundary. That split is deliberate and is what makes this
+file runnable from a clean checkout: it imports one tracked module
+(`issuer_identity`), reads no harness artefact, and needs no EDGAR payloads.
 
-The last two are the ones that would each reintroduce the defect: a fallback to
-the filename would invent an issuer, and a non-merging loader would duplicate one.
+3.02 moved the corpus and artefact assertions out of this file. They are preserved
+unchanged in the research-side companion, and this file is the part that is
+genuinely production.
+
+## What is not defended here
+
+The measured corpus counts, the twelve-anomaly table, the 24/8/16 cohort
+partition, and the 2.85 artefact's own self-description. Those are statements
+about what was measured on a particular corpus on a particular date. Asserting
+them from the production suite would make a production test depend on a research
+artefact, and 3.02 measured what that costs: a clean checkout could not import
+this file at all.
 """
 
 from __future__ import annotations
@@ -30,7 +39,6 @@ from __future__ import annotations
 import io
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -41,33 +49,10 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 import issuer_identity  # noqa: E402
-import issuer_identity_audit_285 as audit  # noqa: E402
-from candidate_discovery_repair_277 import held_payloads  # noqa: E402
-from semantic_gap_census_275 import load_payloads  # noqa: E402
-
-H = os.path.join(ROOT, "experiments", "003-llm-evidence-retrieval", "harness")
-ARTEFACT = os.path.join(H, "285-issuer-identity-canonicalisation.json")
-CENSUS_275 = os.path.join(H, "275-semantic-gap-census.json")
-AUDIT_283 = os.path.join(H, "283-r-and-d-source-silent-filer-audit.json")
-
-_RESULT = None
-
-
-def result():
-    global _RESULT
-    if _RESULT is None:
-        with io.open(ARTEFACT, encoding="utf-8") as handle:
-            _RESULT = json.load(handle)
-    return _RESULT
-
-
-def setUpModule():
-    if not os.path.exists(ARTEFACT):
-        raise unittest.SkipTest("run issuer_identity_audit_285.py first")
 
 
 class SyntheticPayloads(unittest.TestCase):
-    """Five cases, written to disk so the loader is exercised end to end."""
+    """The five cases that matter, written to disk so the loader runs end to end."""
 
     def setUp(self) -> None:
         self.dir = tempfile.mkdtemp()
@@ -107,6 +92,10 @@ class SyntheticPayloads(unittest.TestCase):
 
     # 3. filename disagreement ------------------------------------------------
     def test_filename_cik_that_disagrees_with_the_payload(self) -> None:
+        """
+        The payload's CIK wins. The filename does not create an issuer, which is
+        the defect itself.
+        """
         path = self.write("0001549084.json",
                           {"cik": 26172, "entityName": "Cummins"})
         record = issuer_identity.resolve_issuer(
@@ -114,7 +103,6 @@ class SyntheticPayloads(unittest.TestCase):
         self.assertEqual(record["identity_status"],
                          issuer_identity.FILENAME_CIK_MISMATCH)
         self.assertFalse(record["filename_cik_equals_payload_cik"])
-        # The payload's CIK wins; the filename does not create an issuer.
         self.assertEqual(record["canonical_issuer_cik"], "26172")
         self.assertEqual(record["key"], "CMI")
 
@@ -171,9 +159,14 @@ class SyntheticPayloads(unittest.TestCase):
 
 
 class TestCanonicalIdentityComesFromThePayload(unittest.TestCase):
-    """1."""
 
     def test_the_resolver_reads_the_document_not_the_name(self) -> None:
+        """
+        Stated against the source rather than only through behaviour, because the
+        behaviour tests all pass against a loader that happens to agree with the
+        filename on the five synthetic cases. This asserts the decision is read
+        from the payload's own `cik`.
+        """
         source = io.open(os.path.join(ROOT, "issuer_identity.py"),
                          encoding="utf-8").read()
         self.assertIn('document or {}).get("cik")', source)
@@ -186,21 +179,21 @@ class TestCanonicalIdentityComesFromThePayload(unittest.TestCase):
         self.assertIsNone(issuer_identity.normalise_cik("abc"))
         self.assertIsNone(issuer_identity.normalise_cik(None))
 
-    def test_and_no_tracked_reader_derives_identity_from_a_filename(self) -> None:
-        for module in sorted(audit.UPDATED_READERS):
-            path = os.path.join(ROOT, module)
-            if not os.path.exists(path):
-                continue
-            with io.open(path, encoding="utf-8") as f:
-                body = f.read()
-            self.assertIn("issuer_identity", body, module)
-            self.assertNotIn('split("_")[0]', body, module)
-
     def test_and_the_only_remaining_uses_are_diagnostics(self) -> None:
         """
-        `issuer_identity` exposes the filename token on purpose, as a
-        diagnostic, and the 2.84 reconciliation quotes it when describing the
-        defect. Nothing that *decides* an identity may still do it.
+        `issuer_identity` exposes the filename token on purpose, as a diagnostic,
+        and the 2.84 reconciliation quotes it when describing the defect. Nothing
+        that *decides* an identity may still do it.
+
+        Stated by scanning what is present rather than by an allowlist of files
+        that must exist, so the assertion holds in a checkout where the research
+        artefacts are absent -- which is the whole point of 3.02.
+
+        The companion assertion over the enumerated payload readers is NOT here.
+        That list is derived by the 2.85 audit from a scan of research modules, so
+        restating it by hand would assert a list nobody maintains; it is preserved
+        unchanged in the research-side companion, which imports the audit's real
+        `UPDATED_READERS`.
         """
         allowed = {"issuer_identity.py", "issuer_identity_audit_285.py",
                    "cohort_reconciliation_284.py"}
@@ -209,14 +202,13 @@ class TestCanonicalIdentityComesFromThePayload(unittest.TestCase):
             if not name.endswith(".py") or name in allowed:
                 continue
             with io.open(os.path.join(ROOT, name), encoding="utf-8",
-                         errors="replace") as f:
-                if 'split("_")[0]' in f.read():
+                         errors="replace") as handle:
+                if 'split("_")[0]' in handle.read():
                     offenders.append(name)
         self.assertEqual(offenders, [])
 
 
 class TestFilenameIsDiagnosticOnly(unittest.TestCase):
-    """2. 3. 4."""
 
     def test_the_filename_token_is_reported_as_a_diagnostic(self) -> None:
         self.assertEqual(issuer_identity.filename_token("0000026172.json"),
@@ -231,6 +223,10 @@ class TestFilenameIsDiagnosticOnly(unittest.TestCase):
             issuer_identity.filename_matches_expected("0000026172.json"))
 
     def test_and_a_mismatch_never_creates_a_second_issuer(self) -> None:
+        """
+        The loader, not the resolver: two filenames and one CIK must produce one
+        key and two records, so a mismatch is recorded rather than collapsed away.
+        """
         self.write_payload = tempfile.mkdtemp()
         with io.open(os.path.join(self.write_payload, "CMI_companyfacts.json"),
                      "w", encoding="utf-8", newline="\n") as handle:
@@ -248,159 +244,28 @@ class TestFilenameIsDiagnosticOnly(unittest.TestCase):
              issuer_identity.FILENAME_CIK_MISMATCH])
 
 
-class TestAllPayloadsAreProcessed(unittest.TestCase):
-    """6. 7."""
+class TestIdentityResolutionIsNotScopedToAMetric(unittest.TestCase):
+    """
+    Issuer identity is a fact about who filed, not about what was measured.
 
-    def test_every_payload_file_yields_a_record(self) -> None:
-        self.assertEqual(result()["counts"]["payload_files"], 89)
-        self.assertEqual(len(issuer_identity.load_harness_payloads(
-            H, None, issuer_identity.cik_ticker_index(H))[1]), 89)
+    2.85 recorded that `sbc` was not opened by that round. Kept here as a
+    production assertion rather than an artefact flag, because it is a property of
+    the module and not of a particular run: a reader that decided identity would
+    be deciding measurement scope as a side effect.
+    """
 
-    def test_and_the_canonical_count_is_computed_from_the_cik(self) -> None:
-        counts = result()["counts"]
-        self.assertEqual(counts["unique_canonical_issuers"], 63)
-        self.assertEqual(
-            counts["identity_status_counts"][issuer_identity.CANONICAL_MATCH]
-            + counts["identity_status_counts"][
-                issuer_identity.NONCANONICAL_FILENAME], 89)
-
-    def test_and_no_issuer_is_unresolved_in_the_real_corpus(self) -> None:
-        self.assertEqual(result()["counts"]["filers_unresolved"], 0)
-
-    def test_and_every_key_is_a_ticker_not_a_filename_token(self) -> None:
-        mapping, _records = issuer_identity.load_harness_payloads(
-            H, None, issuer_identity.cik_ticker_index(H))
-        for key in mapping:
-            self.assertNotIn(".JSON", key, key)
-            self.assertFalse(key.startswith(("CIK:", "UNRESOLVED:")), key)
-
-
-class TestTheTwelveAnomaliesResolveToExistingIssuers(unittest.TestCase):
-    """8."""
-
-    EXPECTED = {"CCXIU", "CHRN", "CMI", "CONC", "KTCC", "LTRX", "MAIR",
-                "NEON", "RBC", "SSYS", "STMEF", "TRSG"}
-
-    def test_twelve_rows(self) -> None:
-        self.assertEqual(len(result()["anomaly_table"]), 12)
-
-    def test_and_they_are_the_documented_twelve(self) -> None:
-        self.assertEqual({r["issuer"] for r in result()["anomaly_table"]},
-                         self.EXPECTED)
-
-    def test_and_each_resolves_to_an_existing_issuer(self) -> None:
-        self.assertTrue(result()["anomalies_introduce_no_new_issuer"])
-        for row in result()["anomaly_table"]:
-            self.assertEqual(row["mismatch_type"],
-                             issuer_identity.NONCANONICAL_FILENAME)
-            self.assertTrue(row["payload_cik"])
-            self.assertEqual(row["canonical_resolution"], row["issuer"])
-
-    def test_and_the_filename_token_would_have_been_wrong(self) -> None:
-        for row in result()["anomaly_table"]:
-            self.assertTrue(row["filename_derived_token"].endswith(".JSON"))
-            self.assertNotEqual(row["filename_derived_token"],
-                                row["issuer"])
-
-    def test_and_no_issuer_carries_two_keys(self) -> None:
-        mapping, _records = issuer_identity.load_harness_payloads(
-            H, None, issuer_identity.cik_ticker_index(H))
-        self.assertEqual(len(mapping), 63)
-        self.assertEqual(len(set(mapping)), 63)
-
-
-class TestTheCohortIsUnchanged(unittest.TestCase):
-    """9. 2.84's field finding is preserved."""
-
-    def test_the_24_8_16_partition_holds(self) -> None:
-        cohort = result()["cohort_regression"]
-        self.assertEqual((cohort["total_assets"], cohort["attempted"],
-                          cohort["collected"], cohort["source_silent"],
-                          cohort["not_yet_collected_excluded"]),
-                         (99, 24, 8, 16, 75))
-        self.assertTrue(cohort["matches_2_75"])
-
-    def test_and_the_collected_members_are_the_known_eight(self) -> None:
-        self.assertEqual(result()["cohort_regression"]["collected_members"],
-                         ["AAPL", "MSFT", "MU", "NEM", "NVDA", "RIO", "TECK",
-                          "TSM"])
-
-    def test_and_the_historical_artefact_is_not_edited(self) -> None:
-        with io.open(CENSUS_275, encoding="utf-8") as handle:
-            census = json.load(handle)
-        self.assertEqual(
-            census["corpus"]["filers_with_a_companyfacts_payload_on_disk"], 75,
-            "2.75's figure is a record of what was measured then")
-        self.assertEqual(result()["historical_artefacts_edited"], [])
-
-    def test_and_the_readers_now_report_the_canonical_count(self) -> None:
-        self.assertEqual(len(held_payloads()), 63)
-        self.assertEqual(len(load_payloads()), 63)
-
-    def test_and_that_is_a_change_of_one_not_of_the_cohort(self) -> None:
-        self.assertNotEqual(len(load_payloads()), 75)
-        self.assertEqual(result()["cohort_regression"]["attempted"], 24)
-
-
-class TestCoverageRecordsAndPayloadsRemainDistinct(unittest.TestCase):
-    """10."""
-
-    def test_coverage_without_payload_is_counted_separately(self) -> None:
-        distinct = result()["coverage_and_payloads_remain_distinct"]
-        self.assertEqual(distinct["coverage_records_without_a_payload_count"],
-                         36)
-        self.assertIn("payload-unavailable", distinct["statement"])
-
-    def test_and_no_payload_has_no_coverage_record(self) -> None:
-        distinct = result()["coverage_and_payloads_remain_distinct"]
-        self.assertEqual(distinct["payloads_without_a_coverage_record"], [])
-
-    def test_and_the_two_populations_are_not_merged(self) -> None:
-        counts = result()["counts"]
-        self.assertEqual(counts["unique_canonical_issuers"], 63)
-        self.assertEqual(
-            result()["cohort_regression"]["total_assets"], 99)
-
-
-class TestNoSemanticOrRegistryChange(unittest.TestCase):
-    """11. 12. 13. 14."""
-
-    def test_no_semantic_classification_changed(self) -> None:
-        with io.open(AUDIT_283, encoding="utf-8") as handle:
-            audit = json.load(handle)
-        self.assertEqual(audit["state_counts"][
-            "NO_SEPARATE_R_AND_D_DISCLOSURE"], 15)
-        self.assertEqual(audit["state_counts"]["AGGREGATED_R_AND_D"], 1)
-        self.assertEqual(audit["r_and_d_state"], "OPEN_MIXED_PRESENTATION")
-        self.assertFalse(result()["semantic_research_performed"])
-
-    def test_and_no_registry_change(self) -> None:
-        for field in ("registry_changed", "scope_set", "effective_from_set",
-                      "migrated", "observations_changed",
-                      "interpretations_changed", "supersession_changed"):
-            self.assertFalse(result()[field], field)
-        self.assertEqual(result()["mappings_added_or_promoted"], 0)
-
-    def test_and_no_sbc_access(self) -> None:
-        self.assertFalse(result()["sbc_accessed"])
+    def test_the_module_does_not_name_a_metric(self) -> None:
         source = io.open(os.path.join(ROOT, "issuer_identity.py"),
                          encoding="utf-8").read()
         self.assertNotIn('"sbc"', source)
+        self.assertNotIn("metric_concept_mapping", source)
 
-    def test_and_no_period_is_asserted(self) -> None:
-        self.assertFalse(result()["temporal"]["fixed_dates_used"])
-
-    def test_and_production_files_are_the_only_tracked_changes(self) -> None:
-        changed = subprocess.run(
-            ["git", "status", "--porcelain=v1"], capture_output=True, text=True,
-            cwd=ROOT).stdout
-        modified = [line for line in changed.splitlines()
-                    if line[:2].strip() in ("M", "A", "R", "D")]
-        self.assertTrue(modified, "the fix must be a tracked production change")
-        for line in modified:
-            path = line.split()[-1]
-            self.assertNotIn("snapshot.sqlite", path)
-            self.assertNotIn("harness", path)
+    def test_it_takes_no_registry_dependency(self) -> None:
+        """Issuer identity must be resolvable without seeding any registry."""
+        source = io.open(os.path.join(ROOT, "issuer_identity.py"),
+                         encoding="utf-8").read()
+        self.assertNotIn("registry_seed", source)
+        self.assertNotIn("CoreRegistry", source)
 
 
 if __name__ == "__main__":
