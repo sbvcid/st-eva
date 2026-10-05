@@ -361,7 +361,10 @@ class Ingestor:
         # A scope row names a run, and the run row is written last, so the scope
         # is buffered and written alongside it.
         self._current_run_id: Optional[str] = None
-        self._pending_scope: List[Tuple[str, str, str, int, int, str]] = []
+        # (run_id, asset_id, metric_id, mapping_count, attempted,
+        #  observations_stored, status) -- the row as `ingestion_scope` stores it.
+        self._pending_scope: List[
+            Tuple[str, str, str, int, int, int, str]] = []
 
     # -- filing identity -------------------------------------------------
 
@@ -562,7 +565,12 @@ class Ingestor:
             self._write_run(asset_id, report, "NO_CHANGE")
             return report
 
-        self._record_scope(asset_id, metrics, attempted=True)
+        # The scope is recorded after the metrics are ingested, not before. It used
+        # to be written here, which meant the status could only describe what the
+        # archive already held -- so a first run labelled every mapped metric
+        # `SOURCE_SILENT` before it had asked anything. The per-metric count this
+        # run wrote is what the row now reports.
+        stored_by_metric: Dict[str, int] = {}
         for metric in metrics:
             # Which of these two it is changes what happens next, and a success
             # rate cannot tell them apart: one is a bug in our reading and one
@@ -580,11 +588,15 @@ class Ingestor:
                     f"{type(error).__name__}: {error}",
                 )
             else:
+                stored_by_metric[metric] = report.observations_stored - before
                 if report.observations_stored == before:
                     report.classify(
                         OUTCOME_SOURCE_SILENT, metric,
                         "asked, and the source reported no figure for it",
                     )
+
+        self._record_scope(asset_id, metrics, attempted=True,
+                           stored=stored_by_metric)
 
         for entry in new_entries:
             self._record_filing(asset_id, entry, "")
@@ -761,7 +773,7 @@ class Ingestor:
                 "INSERT OR REPLACE INTO ingestion_scope (run_id, asset_id,"
                 " metric_id, mapping_count, attempted, observations_stored,"
                 " status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (row[0], row[1], row[2], row[3], row[4], 0, row[5]),
+                (row[0], row[1], row[2], row[3], row[4], row[5], row[6]),
             )
         self._pending_scope = [
             row for row in self._pending_scope if row[0] != report.run_id
@@ -950,6 +962,7 @@ class Ingestor:
         asset_id: str,
         metrics: Sequence[str],
         attempted: bool,
+        stored: Optional[Dict[str, int]] = None,
     ) -> None:
         """
         Write down what this run was asked to collect.
@@ -961,14 +974,32 @@ class Ingestor:
         an unattempted metric is the single most useful thing a coverage figure
         can report, because it is the only status that is a to-do item.
 
-        The status is decided by whether the registry has a concept to ask with,
-        not by whether anything came back. A metric with no declaration is
-        `NO_MAPPING` and one with a declaration the source did not answer is
-        `SOURCE_SILENT`, and the two call for completely different work.
+        The status is decided by what this run did for the metric, plus what the
+        archive already holds. A metric with no declaration is `NO_MAPPING`; one
+        with a declaration that stored nothing here and holds nothing is
+        `SOURCE_SILENT`; one that stored something here, or already held
+        something, is `INGESTED`. The two call for completely different work.
+
+        This used to be decided before the metrics were ingested, from
+        `_metric_observed` alone, which could only see the past. On a first run
+        that made every mapped metric `SOURCE_SILENT` -- 18 of 20 falsely, on the
+        MU pilot -- because the rows it was going to ask about did not exist yet.
+        `stored` is the per-metric count this run actually wrote, and it is
+        already computed by the ingest loop to classify silence; passing it in
+        is what lets the status describe this run instead of the archive's
+        memory.
+
+        `observations_stored` is the count THIS RUN stored for the metric. It is
+        deliberately not a lifetime total, not the archive's holding, and not an
+        attempt count: the row's grain is (run_id, metric_id), so every column in
+        it describes one run's encounter with one metric. The lifetime question is
+        already answered elsewhere, from `observations` directly, which is what
+        `scoped_ledger` does.
         """
         run_id = self._current_run_id
         if not run_id:
             return
+        stored = stored or {}
         # Buffered rather than written here. A scope row names a run, and the run
         # row is written at the end of the run, so writing now would insert a
         # child before its parent. `_write_run` writes both in one transaction,
@@ -977,16 +1008,18 @@ class Ingestor:
         self._pending_scope = getattr(self, "_pending_scope", [])
         for metric in metrics:
             mapping_count = len(self.registry.mappings_for_metric(metric))
+            stored_here = int(stored.get(metric, 0))
             if not attempted:
                 status = "NOT_ATTEMPTED"
             elif mapping_count == 0:
                 status = "NO_MAPPING"
-            elif self._metric_observed(metric, asset_id):
+            elif stored_here or self._metric_observed(metric, asset_id):
                 status = "INGESTED"
             else:
                 status = "SOURCE_SILENT"
             self._pending_scope.append(
-                (run_id, asset_id, metric, mapping_count, int(attempted), status)
+                (run_id, asset_id, metric, mapping_count, int(attempted),
+                 stored_here, status)
             )
 
     def _metric_observed(self, metric: str, asset_id: str) -> bool:

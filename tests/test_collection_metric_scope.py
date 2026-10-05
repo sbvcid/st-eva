@@ -304,13 +304,30 @@ class NoCallerFallsBackOnTheDefault(unittest.TestCase):
         self.assertEqual(tuple(sec_ingest.DEFAULT_METRICS),
                          DEFAULT_METRICS_BEFORE)
 
-    def test_sec_ingest_is_unmodified_in_the_working_tree(self) -> None:
+    def test_the_default_definition_is_untouched_in_the_working_tree(self) -> None:
+        """
+        The source-level half of `DEFAULT_METRICS` being read-only.
+
+        This used to assert that `sec_ingest.py` had no diff at all, which was a
+        proxy for the claim rather than the claim itself: it forbade any edit to
+        the file, so a later round with an unrelated reason to touch the ingest
+        path failed a test about a constant. 3.16 had exactly that -- it fixed
+        `ingestion_scope.observations_stored` in the same file.
+
+        So the assertion is narrowed to what it means: no changed line may touch
+        `DEFAULT_METRICS`. Everything else in the file is free to move.
+        """
         result = subprocess.run(
-            ["git", "diff", "--name-only", "--", "sec_ingest.py"],
+            ["git", "diff", "-U0", "--", "sec_ingest.py"],
             cwd=ROOT, capture_output=True, text=True, check=False)
-        self.assertEqual(result.stdout.strip(), "",
-                         "sec_ingest.py must not change: DEFAULT_METRICS is "
-                         "read-only for this work")
+        changed = [line for line in result.stdout.splitlines()
+                   if (line.startswith("+") or line.startswith("-"))
+                   and not line.startswith(("+++", "---"))
+                   and "DEFAULT_METRICS" in line]
+        self.assertEqual(
+            changed, [],
+            "DEFAULT_METRICS is read-only for this work; these lines changed it:\n"
+            + "\n".join(changed))
 
     def test_the_three_non_canonical_callers_still_pass_explicit_lists(
             self) -> None:

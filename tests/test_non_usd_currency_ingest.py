@@ -254,6 +254,46 @@ class TestIngestionEndToEnd(unittest.TestCase):
         finally:
             store.close()
 
+    def test_the_scope_row_reports_what_this_run_actually_stored(self):
+        """
+        `ingestion_scope` describes one run's encounter with one metric.
+
+        It used to be written before the metrics were ingested and from the
+        archive's memory alone, which made two things wrong at once: every
+        `observations_stored` was a literal 0, and a first run labelled every
+        mapped metric `SOURCE_SILENT` because the rows it was about to ask about
+        did not exist yet. On the MU pilot that was 18 of 20 metrics recorded
+        silent while holding thousands of observations.
+
+        Both cases are asserted here from one run: `debt` gets a fact and must
+        read `INGESTED` with a non-zero count, and `r_and_d` is asked, gets
+        nothing, and must stay `SOURCE_SILENT` with a zero. The source-silent
+        row is the one that must NOT move -- a fix that made everything read
+        `INGESTED` would pass the first assertion and be wrong.
+        """
+        import shutil
+
+        directory = tempfile.mkdtemp()
+        store = SQLiteArchive(os.path.join(directory, "scope.sqlite"))
+        registry = CoreRegistry(store.connection)
+        seed(registry)
+        try:
+            Ingestor(store, _TwdSource(), registry).ingest(
+                "TSM", metrics=("debt", "r_and_d"), forms=("20-F",))
+            rows = {
+                row["metric_id"]: (row["observations_stored"], row["status"])
+                for row in store.connection.execute(
+                    "SELECT metric_id, observations_stored, status"
+                    " FROM ingestion_scope WHERE attempted = 1")
+            }
+            self.assertEqual(set(rows), {"debt", "r_and_d"})
+            self.assertEqual(rows["debt"][1], "INGESTED")
+            self.assertGreater(rows["debt"][0], 0)
+            self.assertEqual(rows["r_and_d"], (0, "SOURCE_SILENT"))
+        finally:
+            store.close()
+            shutil.rmtree(directory, ignore_errors=True)
+
 
 class TestHistoricalRowsAreOutOfScope(unittest.TestCase):
     """This round repairs ingestion only. Stated so it stays true."""
