@@ -58,6 +58,28 @@ from sec_ingest import Ingestor  # noqa: E402
 from sec_provider import SECProvider, normalize_cik  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
 
+
+def canonical_metrics(registry: CoreRegistry) -> Tuple[str, ...]:
+    """
+    `status = 'ACTIVE'` from the registry, read at run time.
+
+    The same predicate the coverage universe, the cross-framework verifier and the
+    evidence surface apply. It replaces leaving the metric list to `Ingestor`'s
+    parameter default, which still names `debt` -- superseded in 2.33 and
+    permanently closed as a canonical target -- and omits thirteen metrics the
+    canonical universe contains.
+
+    A query and not a frozen tuple, because a frozen list and a registry can only
+    agree until the registry moves.
+    """
+    return tuple(
+        row["metric_id"]
+        for row in registry.connection.execute(
+            "SELECT metric_id FROM metric_registry WHERE status = 'ACTIVE'"
+            " ORDER BY metric_id"
+        )
+    )
+
 MATCHED = "MATCHED"
 ONLY_IN_API = "ONLY_IN_API"
 ONLY_IN_BULK = "ONLY_IN_BULK"
@@ -142,19 +164,29 @@ def build_bulk_archive(
     path then a bulk-built archive and an API-built one would be two different
     archives that happened to share a name, and reconciling them would prove
     nothing.
+
+    The metric scope is read from the registry rather than left to `Ingestor`'s
+    parameter default, for the same reason the reconciliation has to be meaningful
+    at all: this archive has to cover the same canonical metric set as the API-built
+    one it is compared against. A default-driven bulk pass would cover a different
+    set -- one naming `debt`, which 2.33 superseded, and omitting thirteen metrics
+    the canonical universe contains -- and the reconciliation would then be
+    comparing two different questions.
     """
     if os.path.exists(target):
         os.remove(target)
     store = SQLiteArchive(target)
     registry = CoreRegistry(store.connection)
     seeded = seed(registry)
+    metrics_in_scope = canonical_metrics(registry)
     source = BulkFactsSource(
         facts_dir, submissions_directory=submissions_dir, label="bulk"
     )
     reports = []
     started = time.monotonic()
     for ticker in tickers:
-        report = Ingestor(store, source, registry).ingest(ticker)
+        report = Ingestor(store, source, registry).ingest(
+            ticker, metrics=metrics_in_scope)
         reports.append(report.contract_dict())
     elapsed = time.monotonic() - started
     size = os.path.getsize(target)

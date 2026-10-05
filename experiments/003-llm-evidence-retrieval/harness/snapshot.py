@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from archive import FilingRef
 from core_registry import CoreRegistry
@@ -39,7 +39,7 @@ from data_contract import (
 )
 from evidence_model import source_fact_id
 from registry_seed import seed
-from sec_ingest import DEFAULT_FORMS, DEFAULT_METRICS, Ingestor
+from sec_ingest import DEFAULT_FORMS, Ingestor
 from sec_provider import SECProvider
 from sqlite_archive import SQLiteArchive
 
@@ -61,6 +61,29 @@ CONFLICT_METRIC = "shares_outstanding"
 UNAVAILABLE_METRIC = "free_cash_flow"
 DERIVED_REF = "der:current_ps"
 CONTEXT_ID = "ctx_eval_1"
+
+
+def canonical_metrics(registry: CoreRegistry) -> Tuple[str, ...]:
+    """
+    The metric set ingestion is asked for when the caller names none.
+
+    `status = 'ACTIVE'` from the registry, at run time -- the same predicate the
+    coverage universe, the cross-framework verifier and the evidence surface
+    apply. It replaces `Ingestor.DEFAULT_METRICS`, which still names `debt`: that
+    metric was superseded in 2.33 and is permanently closed as a canonical
+    target, so asking for it writes under a key the canonical universe does not
+    contain, while thirteen metrics the universe does contain go unasked.
+
+    Reading it from the registry rather than freezing a tuple is the point. A
+    frozen list and a registry can only agree until the registry moves.
+    """
+    return tuple(
+        row["metric_id"]
+        for row in registry.connection.execute(
+            "SELECT metric_id FROM metric_registry WHERE status = 'ACTIVE'"
+            " ORDER BY metric_id"
+        )
+    )
 
 
 def build_snapshot(
@@ -101,13 +124,15 @@ def build_snapshot(
     store = SQLiteArchive(path)
     registry = CoreRegistry(store.connection)
     seed(registry)
+    canonical = canonical_metrics(registry)
+    metrics = metrics or canonical
 
     ingested: Dict[str, Dict[str, Any]] = {}
     if live:
         for issuer in issuers:
             report = Ingestor(
                 store, SECProvider(), registry
-            ).ingest(issuer, metrics=metrics or DEFAULT_METRICS,
+            ).ingest(issuer, metrics=metrics,
                      forms=forms or DEFAULT_FORMS)
             ingested[issuer] = report.contract_dict()
 
@@ -120,7 +145,7 @@ def build_snapshot(
         "issuers": issuers,
         "live": live,
         "forms": list(forms or DEFAULT_FORMS),
-        "metrics": list(metrics or DEFAULT_METRICS),
+        "metrics": list(metrics),
         "include_fixture": include_fixture,
         "ingested": ingested,
     }

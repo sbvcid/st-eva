@@ -58,7 +58,7 @@ if HERE not in sys.path:
 from core_registry import CoreRegistry  # noqa: E402
 from coverage_semantics import scoped_ledger  # noqa: E402
 from registry_seed import seed  # noqa: E402
-from sec_ingest import DEFAULT_METRICS, Ingestor  # noqa: E402
+from sec_ingest import Ingestor  # noqa: E402
 from sec_provider import SECProvider  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
 
@@ -87,6 +87,32 @@ STRATA: Tuple[Tuple[str, str], ...] = (
 # because the cost of asking for a form a filer does not use is one request, and
 # the cost of assuming is reporting a filer as silent.
 ALL_FORMS = ("10-K", "10-Q", "20-F", "40-F", "8-K", "10-K/A", "20-F/A")
+
+
+def canonical_metrics(registry: CoreRegistry) -> Tuple[str, ...]:
+    """
+    The metric set a canonical collection run asks for, read at run time.
+
+    `status = 'ACTIVE'` is the status predicate the whole project applies: the
+    coverage universe, the cross-framework verifier and the evidence surface each
+    run the same query, and `Ingestor.DEFAULT_METRICS` is a parameter default
+    rather than a contract -- it still names `debt`, which 2.33 superseded and
+    which is permanently closed as a canonical target. A run that relied on it
+    would ask for a metric that is not in the universe and would miss thirteen
+    that are.
+
+    The registry stays the source of truth: if the ACTIVE set changes, this
+    returns the new set with no edit here. That is the reason this is a query and
+    not a frozen tuple -- a frozen twenty-item list is exactly what `debt` in
+    `FULL_CORE_METRICS` looks like from the inside.
+    """
+    return tuple(
+        row["metric_id"]
+        for row in registry.connection.execute(
+            "SELECT metric_id FROM metric_registry WHERE status = 'ACTIVE'"
+            " ORDER BY metric_id"
+        )
+    )
 
 
 def _forms_in(submissions: Dict[str, Any]) -> List[str]:
@@ -334,6 +360,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     store = SQLiteArchive(args.target)
     registry = CoreRegistry(store.connection)
     seeded = seed(registry)
+    metrics_in_scope = canonical_metrics(registry)
 
     reports: List[Dict[str, Any]] = []
     totals = Counter()
@@ -343,7 +370,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         before_bytes = provider.bytes_downloaded
         tick = time.monotonic()
         report = Ingestor(store, provider, registry).ingest(
-            row["ticker"], metrics=DEFAULT_METRICS, forms=forms_for(row)
+            row["ticker"], metrics=metrics_in_scope, forms=forms_for(row)
         )
         payload = report.contract_dict()
         payload["stratum"] = row["stratum"]
@@ -377,7 +404,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     for row in chosen:
         before = provider.requests_made
         report = Ingestor(store, provider, registry).ingest(
-            row["ticker"], metrics=DEFAULT_METRICS, forms=forms_for(row)
+            row["ticker"], metrics=metrics_in_scope, forms=forms_for(row)
         )
         second.append({
             "ticker": row["ticker"],

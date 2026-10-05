@@ -59,14 +59,22 @@ if HERE not in sys.path:
 from core_registry import CoreRegistry  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sec_bulk import TICKER_MAP_NAME, BulkFactsSource  # noqa: E402
-from sec_ingest import DEFAULT_METRICS, Ingestor  # noqa: E402
+from sec_ingest import Ingestor  # noqa: E402
 from sec_provider import SECProvider  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
 
-# The Core metric set the bulk pass runs. Deliberately wider than
-# `DEFAULT_METRICS`, because a bulk bootstrap being able to deliver a metric an
-# older incremental run did not ask for is not a hypothetical -- it is what
-# happens the day the Core set grows.
+# The Core metric set as it was frozen before 2.33. RETAINED FOR AUDIT ONLY --
+# nothing in this module collects with it, and the collection paths below read the
+# registry instead.
+#
+# It is kept because `fullscope_bulk` imports it to compare three metric-list
+# definitions against the registry seed and raise when they disagree. That
+# comparison is the mechanism which catches exactly the drift this change removes,
+# so deleting the constant would have deleted the detector.
+#
+# Note that it names `debt`, which 2.33 superseded. That is why it must not be the
+# collection scope: a frozen list and a registry can only agree until the registry
+# moves, and this one had already stopped agreeing.
 FULL_CORE_METRICS = (
     "revenue", "net_income", "gross_profit", "operating_income", "r_and_d",
     "interest_expense", "income_tax", "cash", "debt", "assets", "equity",
@@ -74,6 +82,30 @@ FULL_CORE_METRICS = (
     "weighted_average_diluted_shares", "shares_outstanding", "sga",
     "long_term_debt_current", "long_term_debt_noncurrent",
 )
+
+
+# The Core metric set the bulk pass runs, as the ACTIVE registry declares it at
+# run time. Deliberately wider than the incremental step's scope, because a bulk
+# bootstrap being able to deliver a metric an older incremental run did not ask
+# for is not a hypothetical -- it is what happens the day the Core set grows.
+#
+# The collection paths call `canonical_metrics(registry)` rather than naming a
+# list, so the registry stays the source of truth.
+def canonical_metrics(registry: CoreRegistry) -> Tuple[str, ...]:
+    """
+    `status = 'ACTIVE'` from the registry, read at execution time.
+
+    The same predicate the coverage universe, the cross-framework verifier and the
+    evidence surface apply. If the ACTIVE set changes, this follows it with no
+    edit here.
+    """
+    return tuple(
+        row["metric_id"]
+        for row in registry.connection.execute(
+            "SELECT metric_id FROM metric_registry WHERE status = 'ACTIVE'"
+            " ORDER BY metric_id"
+        )
+    )
 
 
 def fingerprint(path: str) -> Dict[str, Tuple[str, ...]]:
@@ -338,10 +370,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     seeded = seed(registry)
     api = SECProvider()
     ingestor = Ingestor(store, api, registry)
+    incremental_metrics = canonical_metrics(registry)
     started = time.monotonic()
     for ticker in args.issuer:
         ingestor.ingest(
-            ticker, metrics=DEFAULT_METRICS,
+            ticker, metrics=incremental_metrics,
             forms=("10-K", "10-Q", "20-F", "40-F"),
         )
     store.close()
@@ -350,7 +383,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     steps.append({
         "step": "1_incremental_api",
         "issuers": list(args.issuer),
-        "metrics_in_scope": list(DEFAULT_METRICS),
+        "metrics_in_scope": list(incremental_metrics),
         "elapsed_seconds": round(time.monotonic() - started, 1),
         "observations": len(first),
         "metrics_per_issuer": {
@@ -373,10 +406,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     registry = CoreRegistry(store.connection)
     bulk = BulkFactsSource(trimmed_dir, label="bulk-trimmed")
     bulk_ingestor = Ingestor(store, bulk, registry)
+    bulk_metrics = canonical_metrics(registry)
     started = time.monotonic()
     for ticker in args.bulk_issuer or args.issuer:
         bulk_ingestor.ingest(
-            ticker, metrics=FULL_CORE_METRICS,
+            ticker, metrics=bulk_metrics,
             forms=("10-K", "10-Q", "20-F", "40-F"),
         )
     store.close()
@@ -387,7 +421,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     steps.append({
         "step": "2_bulk_into_incremental",
         "issuers": list(args.bulk_issuer or args.issuer),
-        "metrics_in_scope": list(FULL_CORE_METRICS),
+        "metrics_in_scope": list(bulk_metrics),
         "elapsed_seconds": round(time.monotonic() - started, 1),
         "observations": len(after_bulk),
         "change": bulk_change,
@@ -416,10 +450,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     store = SQLiteArchive(args.target)
     registry = CoreRegistry(store.connection)
     again = Ingestor(store, SECProvider(), registry)
+    again_metrics = canonical_metrics(registry)
     started = time.monotonic()
     for ticker in (args.bulk_issuer or args.issuer):
         again.ingest(
-            ticker, metrics=FULL_CORE_METRICS,
+            ticker, metrics=again_metrics,
             forms=("10-K", "10-Q", "20-F", "40-F"),
         )
     store.close()
@@ -429,7 +464,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     steps.append({
         "step": "3_incremental_again",
         "issuers": list(args.bulk_issuer or args.issuer),
-        "metrics_in_scope": list(FULL_CORE_METRICS),
+        "metrics_in_scope": list(again_metrics),
         "elapsed_seconds": round(time.monotonic() - started, 1),
         "observations": len(after_again),
         "change": again_change,
