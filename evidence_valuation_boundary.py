@@ -811,12 +811,13 @@ def _ambiguity_refusals(
 
 def _period_refusals(observation: Observation) -> List[Refusal]:
     """
-    Rule 7: a discrete quarter or a fiscal year, and nothing else.
+    Rule 7: an observed annual filing, and nothing else.
 
-    The bounds are the contract's own. A 181-day or 272-day cumulative stub is
-    refused because `current_revenue` is declared *trailing*, and turning a stub
-    into a trailing figure is a synthesis. Nothing here annualises, rolls forward,
-    or calls into `sec_provider`'s TTM constructions.
+    `current_revenue` is declared *trailing*, so only an observed annual filing
+    (approximately one fiscal year, 330-400 days) may cross. A discrete quarter
+    is not trailing, a cumulative stub is not trailing, and an instant is not a
+    period at all. Nothing here annualises, rolls forward, or calls into
+    `sec_provider`'s TTM constructions.
     """
     if observation.period_start is None or observation.period_end is None:
         return [
@@ -828,16 +829,23 @@ def _period_refusals(observation: Observation) -> List[Refusal]:
     days = _duration_days(observation)
     if days is None:
         return [_refusal(PERIOD_NOT_DISCRETE, "the period has no readable length")]
-    if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
-        return []
     if YEAR_MIN_DAYS <= days <= YEAR_MAX_DAYS:
         return []
+    if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
+        return [
+            _refusal(
+                PERIOD_NOT_DISCRETE,
+                f"the period spans {days} days, which is a discrete quarter, not "
+                f"the trailing annual figure `current_revenue` declares",
+            )
+        ]
     return [
         _refusal(
             PERIOD_NOT_DISCRETE,
-            f"the period spans {days} days, which is neither a discrete quarter "
-            f"({QUARTER_MIN_DAYS}-{QUARTER_MAX_DAYS}) nor a fiscal year "
-            f"({YEAR_MIN_DAYS}-{YEAR_MAX_DAYS})",
+            f"the period spans {days} days, which is neither an observed annual "
+            f"filing ({YEAR_MIN_DAYS}-{YEAR_MAX_DAYS} days) nor any other "
+            f"trailing figure; `current_revenue` is declared trailing and must "
+            f"not be synthesised from a partial or cumulative period",
         )
     ]
 
@@ -1024,12 +1032,20 @@ def _admit_one(
     # Rule 6 -- one period, one concept. Evaluated per period group over every
     # row that reached this point, so a refused claim never dilutes the question
     # and an admitted one can still be shown to have been contested.
+    #
+    # Ambiguity is scoped to the period, not the metric. A period whose own rows
+    # carry competing source concepts is refused on its own; that refusal does
+    # not veto other periods that are single-concept and single-accession. The
+    # metric-wide veto this replaces was an implementation defect: historical
+    # concept overlap (2016-2018 on MU) was blocking a clean 2026Q3 candidate
+    # that had nothing to do with the contested years.
     periods: Dict[Tuple[Optional[str], Optional[str]], List[Observation]] = {}
     for observation in admissible:
         periods.setdefault(
             (observation.period_start, observation.period_end), []
         ).append(observation)
 
+    contested_keys: Set[Tuple[Optional[str], Optional[str]]] = set()
     contested: List[Refusal] = []
     contenders: Set[str] = set()
     for key in sorted(periods, key=lambda item: (item[1] or "", item[0] or "")):
@@ -1044,21 +1060,37 @@ def _admit_one(
             [identities.get(item.observation_id) or {} for item in peers],
         )
         if found:
+            contested_keys.add(key)
             contenders.update(
                 concept
                 for concept in concepts.values()
                 if concept
             )
-        contested.extend(found)
-    if contested:
-        # A refusal for a contested period still names what contested it. The
-        # reader who cannot see the second concept cannot tell a refusal from a
-        # rule-5 refusal, and the two are answered differently.
+            contested.extend(found)
+
+    if contested_keys:
+        # Remove the contested periods from admissible. Rows from other periods
+        # survive and may still be selected by rule 10.
+        admissible = [
+            observation
+            for observation in admissible
+            if (observation.period_start, observation.period_end)
+            not in contested_keys
+        ]
+
+    if not admissible:
+        # Every surviving period was either empty or contested. The metric is
+        # refused, and the record names what contested it.
         return Admission(
             admitted=False,
             considered_observations=considered,
-            competing_concepts=tuple(sorted(contenders)),
-            refusals=tuple(contested),
+            competing_concepts=tuple(sorted(contenders)) if contenders else (),
+            refusals=tuple(contested) if contested else (
+                _refusal(
+                    UNAVAILABLE,
+                    "no admitted row was knowable at this instant",
+                ),
+            ),
             **base,
         )
 

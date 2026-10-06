@@ -81,6 +81,12 @@ YTD = ("2025-08-29", "2026-05-28")
 PARTIAL_ONLY_QUARTER = ("2015-10-17", "2016-01-16")
 CONTESTED_QUARTER = ("2017-08-27", "2017-11-26")
 
+# Annual periods for ambiguity tests (330-400 days, within concept windows)
+# PARTIAL concept window: 2007-09-29..2018-06-30
+# EXACT concept window: from 2017-09-30
+PARTIAL_ONLY_ANNUAL = ("2016-06-30", "2017-06-29")
+CONTESTED_ANNUAL = ("2017-06-30", "2018-06-29")
+
 QUARTER_VALUE = 41_456_000_000
 YTD_VALUE = 78_959_000_000
 RESTATED_VALUE = 40_900_000_000
@@ -234,15 +240,15 @@ class BoundaryFixture(unittest.TestCase):
         *,
         concept: str = EXACT_CONCEPT,
         value=QUARTER_VALUE,
-        period=QUARTER,
-        available_at: str = "2026-06-24T22:59:46.000Z",
+        period=ANNUAL,
+        available_at: str = "2025-10-03T21:02:11.000Z",
         available_at_basis: str = ACCEPTED,
         unit: str = Unit.CURRENCY.value,
         currency: str = "USD",
         fidelity: str = "EXACT",
-        form: str = "10-Q",
-        fiscal_year: int = 2026,
-        fiscal_period: str = "Q3",
+        form: str = "10-K",
+        fiscal_year: int = 2025,
+        fiscal_period: str = "FY",
         retrieved_at: str = "2026-09-29T12:00:00+00:00",
         instant: bool = False,
         accession: str = None,
@@ -341,32 +347,14 @@ class ScopeAndExistenceTests(BoundaryFixture):
 class AdmittedRevenueTests(BoundaryFixture):
     """The admitted case, and the provenance it has to carry."""
 
-    def test_a_valid_exact_revenue_quarter_is_admitted(self):
-        self.add_revenue()
+    def test_a_discrete_quarter_is_refused_as_non_trailing(self):
+        """A discrete quarter is not a trailing figure and is refused."""
+        self.add_revenue(period=QUARTER)
         inputs, admissions = self.admit_revenue()
         admitted = admissions[0]
-        self.assertTrue(admitted.admitted)
-        self.assertEqual(admitted.refusals, ())
-        self.assertEqual(inputs.current_revenue, QUARTER_VALUE)
-        self.assertEqual(admitted.metric, METRIC_REVENUE)
-        self.assertEqual(admitted.value, QUARTER_VALUE)
-        self.assertEqual(admitted.unit, "currency")
-        self.assertEqual(admitted.currency, "USD")
-        self.assertEqual(admitted.currency_basis, "REPORTED")
-        self.assertEqual(admitted.period_start, QUARTER[0])
-        self.assertEqual(admitted.period_end, QUARTER[1])
-        self.assertEqual(admitted.duration_days, 90)
-        self.assertEqual(admitted.mapping_type, "EXACT")
-        self.assertEqual(admitted.relation_kind, "IDENTITY")
-        self.assertEqual(admitted.mapping_fidelity, "EXACT")
-        self.assertEqual(admitted.form, "10-Q")
-        self.assertEqual(admitted.fiscal_year, 2026)
-        self.assertEqual(admitted.fiscal_period, "Q3")
-        self.assertEqual(admitted.availability_class, SOURCE_DECLARED)
-        self.assertEqual(admitted.available_at_basis, ACCEPTED)
-        self.assertEqual(admitted.available_at, "2026-06-24T22:59:46.000Z")
-        self.assertEqual(admitted.superseded_accessions, 0)
-        self.assertFalse(admitted.value_diverges_from_superseded)
+        self.assertFalse(admitted.admitted)
+        self.assertIn(PERIOD_NOT_DISCRETE, admitted.refusal_labels)
+        self.assertEqual(inputs.current_revenue, UNAVAILABLE)
 
     def test_the_admission_names_the_fact_it_came_from(self):
         """metric -> concept -> accession -> source_fact_id must all be readable."""
@@ -425,7 +413,7 @@ class ComparativeReReportTests(BoundaryFixture):
 
     def test_the_latest_known_accession_is_named_and_the_rest_are_counted(self):
         first = self.add_revenue()
-        second = self.add_revenue(available_at="2026-07-15T21:04:05.000Z")
+        second = self.add_revenue(available_at="2025-10-15T21:04:05.000Z")
         _, admissions = self.admit_revenue()
         admitted = admissions[0]
         self.assertTrue(admitted.admitted)
@@ -437,8 +425,8 @@ class ComparativeReReportTests(BoundaryFixture):
 
     def test_selection_is_point_in_time_and_not_merely_newest(self):
         first = self.add_revenue()
-        self.add_revenue(available_at="2026-07-15T21:04:05.000Z")
-        _, earlier = self.admit_revenue(as_of="2026-07-01")
+        self.add_revenue(available_at="2025-10-15T21:04:05.000Z")
+        _, earlier = self.admit_revenue(as_of="2025-10-10")
         self.assertTrue(earlier[0].admitted)
         self.assertEqual(
             earlier[0].accession, first.raw["sec_fact"]["accession"]
@@ -448,7 +436,7 @@ class ComparativeReReportTests(BoundaryFixture):
     def test_a_restated_value_is_disclosed_and_not_erased(self):
         self.add_revenue(value=QUARTER_VALUE)
         self.add_revenue(
-            value=RESTATED_VALUE, available_at="2026-08-01T20:00:00.000Z"
+            value=RESTATED_VALUE, available_at="2025-10-15T20:00:00.000Z"
         )
         inputs, admissions = self.admit_revenue()
         admitted = admissions[0]
@@ -462,7 +450,7 @@ class ComparativeReReportTests(BoundaryFixture):
     def test_a_disclosure_is_a_field_and_not_a_new_state(self):
         self.add_revenue(value=QUARTER_VALUE)
         self.add_revenue(
-            value=RESTATED_VALUE, available_at="2026-08-01T20:00:00.000Z"
+            value=RESTATED_VALUE, available_at="2025-10-15T20:00:00.000Z"
         )
         _, admissions = self.admit_revenue()
         admitted = admissions[0]
@@ -478,11 +466,11 @@ class MappingAndConceptTests(BoundaryFixture):
     def test_a_partial_mapping_is_refused_even_on_its_own_window(self):
         self.add_revenue(
             concept=PARTIAL_CONCEPT,
-            period=PARTIAL_ONLY_QUARTER,
+            period=PARTIAL_ONLY_ANNUAL,
             fidelity="PARTIAL",
-            fiscal_year=2016,
-            fiscal_period="Q1",
-            available_at="2016-02-02T21:03:44.000Z",
+            fiscal_year=2017,
+            fiscal_period="FY",
+            available_at="2017-02-02T21:03:44.000Z",
         )
         _, admissions = self.admit_revenue()
         admitted = admissions[0]
@@ -499,17 +487,17 @@ class MappingAndConceptTests(BoundaryFixture):
         """
         self.add_revenue(
             concept=PARTIAL_CONCEPT,
-            period=CONTESTED_QUARTER,
+            period=CONTESTED_ANNUAL,
             fidelity="PARTIAL",
             fiscal_year=2018,
-            fiscal_period="Q1",
+            fiscal_period="FY",
             available_at="2018-01-30T21:05:12.000Z",
         )
         self.add_revenue(
             concept=EXACT_CONCEPT,
-            period=CONTESTED_QUARTER,
+            period=CONTESTED_ANNUAL,
             fiscal_year=2018,
-            fiscal_period="Q1",
+            fiscal_period="FY",
             available_at="2018-01-30T21:05:12.000Z",
         )
         _, admissions = self.admit_revenue()
@@ -546,7 +534,7 @@ class MappingAndConceptTests(BoundaryFixture):
         )
         self.add_revenue(
             value=QUARTER_VALUE * 3,
-            available_at="2026-06-24T22:59:47.000Z",
+            available_at="2025-10-15T22:59:47.000Z",
             accession="0000723125-26-000777",
         )
         stored = self.store.connection.execute(
@@ -655,7 +643,7 @@ class PeriodTests(BoundaryFixture):
         self.assertIn("272 days", admitted.refusals[0].reason)
 
     def test_a_stub_is_refused_without_a_nearest_period_search(self):
-        """The valid quarter is chosen; the stub is never annualised or trimmed."""
+        """The annual is admitted; the stub is never annualised or trimmed."""
         self.add_revenue(period=YTD, value=YTD_VALUE)
         self.add_revenue()
         inputs, admissions = self.admit_revenue()
@@ -664,21 +652,134 @@ class PeriodTests(BoundaryFixture):
         self.assertEqual(inputs.current_revenue, QUARTER_VALUE)
         self.assertNotEqual(inputs.current_revenue, YTD_VALUE)
 
-    def test_an_instant_candidate_is_discarded_while_a_valid_quarter_survives(
+    def test_an_instant_candidate_is_discarded_while_a_valid_annual_survives(
         self,
     ):
         """
         The record is per metric, not per candidate, so this can only establish
         that the instant did not survive selection -- not that it was refused with
         a named reason. What it does establish is that an instant never displaces
-        a discrete quarter no matter how recently it was published.
+        a valid annual no matter how recently it was published.
         """
         self.add_revenue(instant=True)
         self.add_revenue()
         _, admissions = self.admit_revenue()
         self.assertTrue(admissions[0].admitted)
-        self.assertEqual(admissions[0].duration_days, 90)
+        self.assertEqual(admissions[0].duration_days, 364)
         self.assertEqual(admissions[0].considered_observations, 2)
+
+    def test_historical_ambiguity_does_not_block_later_clean_period(self):
+        """
+        Ambiguity is scoped to the period, not the metric. A contested historical
+        period is refused; a later clean period is not affected.
+        """
+        # 2017-2018 annual period: PARTIAL + EXACT, contested
+        self.add_revenue(
+            concept=PARTIAL_CONCEPT,
+            period=CONTESTED_ANNUAL,
+            fidelity="PARTIAL",
+            fiscal_year=2018,
+            fiscal_period="FY",
+            available_at="2018-01-30T21:05:12.000Z",
+        )
+        self.add_revenue(
+            concept=EXACT_CONCEPT,
+            period=CONTESTED_ANNUAL,
+            fiscal_year=2018,
+            fiscal_period="FY",
+            available_at="2018-01-30T21:05:12.000Z",
+        )
+        # 2026 annual period: EXACT only, clean
+        self.add_revenue(
+            concept=EXACT_CONCEPT,
+            period=ANNUAL,
+            available_at="2025-10-03T21:02:11.000Z",
+        )
+        inputs, admissions = self.admit_revenue()
+        admitted = admissions[0]
+        self.assertTrue(admitted.admitted)
+        self.assertEqual(admitted.period_start, ANNUAL[0])
+        self.assertEqual(admitted.period_end, ANNUAL[1])
+        self.assertEqual(inputs.current_revenue, QUARTER_VALUE)
+
+    def test_quarter_is_refused_as_non_trailing(self):
+        """A discrete quarter is not a trailing figure and is refused."""
+        self.add_revenue(period=QUARTER)
+        inputs, admissions = self.admit_revenue()
+        admitted = admissions[0]
+        self.assertFalse(admitted.admitted)
+        self.assertIn(PERIOD_NOT_DISCRETE, admitted.refusal_labels)
+        self.assertEqual(inputs.current_revenue, UNAVAILABLE)
+
+    def test_annual_is_admitted(self):
+        """An observed annual filing may cross; it is trailing by construction."""
+        self.add_revenue(
+            period=ANNUAL,
+            form="10-K",
+            fiscal_year=2025,
+            fiscal_period="FY",
+            available_at="2025-10-03T21:02:11.000Z",
+        )
+        inputs, admissions = self.admit_revenue()
+        admitted = admissions[0]
+        self.assertTrue(admitted.admitted)
+        self.assertEqual(inputs.current_revenue, QUARTER_VALUE)
+        self.assertEqual(admitted.duration_days, 364)
+        self.assertEqual(admitted.form, "10-K")
+
+    def test_ytd_is_refused(self):
+        """A YTD cumulative stub is not a trailing figure and is refused."""
+        self.add_revenue(period=YTD, value=YTD_VALUE)
+        _, admissions = self.admit_revenue()
+        admitted = admissions[0]
+        self.assertFalse(admitted.admitted)
+        self.assertEqual(admitted.refusal_labels, (PERIOD_NOT_DISCRETE,))
+        self.assertIn("272 days", admitted.refusals[0].reason)
+
+    def test_real_mu_shaped_period_behaviour(self):
+        """
+        Real MU-shaped fixture: old ambiguous periods, later exact quarter,
+        annual filing. Verifies period-scoped ambiguity and trailing-only period rule.
+        """
+        # Old ambiguous periods (2016-2018): PARTIAL + EXACT overlap
+        self.add_revenue(
+            concept=PARTIAL_CONCEPT,
+            period=CONTESTED_ANNUAL,
+            fidelity="PARTIAL",
+            fiscal_year=2018,
+            fiscal_period="FY",
+            available_at="2018-01-30T21:05:12.000Z",
+        )
+        self.add_revenue(
+            concept=EXACT_CONCEPT,
+            period=CONTESTED_ANNUAL,
+            fiscal_year=2018,
+            fiscal_period="FY",
+            available_at="2018-01-30T21:05:12.000Z",
+        )
+        # Later exact quarter (2026Q3) - single concept, single accession
+        # But quarter is not trailing, so it should be refused by Rule 7
+        self.add_revenue(
+            concept=EXACT_CONCEPT,
+            period=QUARTER,
+            available_at="2026-06-24T22:59:46.000Z",
+        )
+        # Annual filing (2025 FY) - trailing, should be admitted
+        self.add_revenue(
+            concept=EXACT_CONCEPT,
+            period=ANNUAL,
+            form="10-K",
+            fiscal_year=2025,
+            fiscal_period="FY",
+            available_at="2025-10-03T21:02:11.000Z",
+        )
+        inputs, admissions = self.admit_revenue()
+        admitted = admissions[0]
+        self.assertTrue(admitted.admitted)
+        # The annual should be selected (latest knowable trailing period)
+        self.assertEqual(admitted.period_start, ANNUAL[0])
+        self.assertEqual(admitted.period_end, ANNUAL[1])
+        self.assertEqual(inputs.current_revenue, QUARTER_VALUE)
 
 
 class AvailabilityTests(BoundaryFixture):
@@ -727,9 +828,9 @@ class AvailabilityTests(BoundaryFixture):
     def test_a_fact_is_knowable_once_its_declared_date_is_over(self):
         """`eligibility_for_declared_date` is start of day plus the one-day lag."""
         self.add_revenue(
-            available_at="2026-06-24", available_at_basis=FILED_DATE
+            available_at="2025-10-03", available_at_basis=FILED_DATE
         )
-        _, admitted = self.admit_revenue(as_of="2026-06-26")
+        _, admitted = self.admit_revenue(as_of="2025-10-05")
         self.assertTrue(admitted[0].admitted)
         self.assertEqual(admitted[0].availability_class, SOURCE_DECLARED)
         self.assertEqual(admitted[0].available_at_basis, FILED_DATE)
@@ -737,9 +838,9 @@ class AvailabilityTests(BoundaryFixture):
     def test_retrieval_time_is_never_the_cutoff(self):
         """A fact retrieved in December is judged by when it was published."""
         self.add_revenue(retrieved_at="2026-12-31T00:00:00+00:00")
-        _, admissions = self.admit_revenue(as_of="2026-07-01")
+        _, admissions = self.admit_revenue(as_of="2025-10-05")
         self.assertTrue(admissions[0].admitted)
-        self.assertEqual(admissions[0].available_at, "2026-06-24T22:59:46.000Z")
+        self.assertEqual(admissions[0].available_at, "2025-10-03T21:02:11.000Z")
 
     def test_the_record_reports_whether_a_knowledge_overlay_exists(self):
         self.add_revenue()
