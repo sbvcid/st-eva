@@ -1014,6 +1014,15 @@ def _latest_accepted(candidates: Sequence[Observation]) -> Optional[Observation]
     remaining dependence on input order, but it would change
     `latest_knowable`, and therefore admission rules 9 and 10. It is recorded
     here rather than taken.
+
+    3.32 examined that proposal and rejected it on evidence. Measured on the MU
+    archive, `observation_id` as a third level changes the selection for 8 of 18
+    metrics, and for `revenue` it prefers a quarter stub over the annual from the
+    same filing -- a selection rule 7 then refuses with `PERIOD_NOT_DISCRETE`,
+    so the change would turn an admission into a refusal. The exposure is
+    quantified in `selector_tie_break_ambiguity_332.py` and its committed
+    record; the candidate is still the obvious next question, and it is still
+    the wrong answer for this reason.
     """
     if not candidates:
         return None
