@@ -584,7 +584,14 @@ def _absent_observation(
     return unavailable_observation(
         metric=metric,
         provider=(source.provider if source is not None else data.provider),
-        source_type=data.source_type,
+        # The source observation's own source_type, for the same reason the
+        # five arguments beside it already read `source`: a figure that came
+        # from a filing is a filed figure, and stamping it with the view's
+        # source_type would misreport where it came from. Absent a source
+        # observation there is nothing else to read, so the view's stands.
+        source_type=(
+            source.source_type if source is not None else data.source_type
+        ),
         definition=METRIC_DEFINITIONS[metric],
         methodology=(
             source.methodology
@@ -659,7 +666,15 @@ def material_observations(data: "MarketData") -> Dict[str, Observation]:
             value=dict(value) if is_band else value,
             unit=unit,
             provider=(source.provider if source is not None else data.provider),
-            source_type=data.source_type,
+            # The source observation's own source_type. `status` and
+            # `status_reasons` immediately below already come from the source
+            # for the same reason, and `provider`, `methodology`, `currency`
+            # and `source_url` all read it too: when an adapter supplied this
+            # figure, the source it declared is the provenance of record, and
+            # the view's own source_type describes a different acquisition.
+            source_type=(
+                source.source_type if source is not None else data.source_type
+            ),
             definition=METRIC_DEFINITIONS[metric],
             methodology=(
                 source.methodology
