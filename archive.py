@@ -33,6 +33,7 @@ from data_contract import (
     Observation,
     ObservationSet,
     SourceType,
+    is_comparable_observation,
     is_number,
     parse_iso_date,
     utc_now,
@@ -471,8 +472,16 @@ def replay(
                 store, asset, as_of, price_observation, metrics=V1_CROSSING_METRICS
             )
 
-            # C4 & C5: Only admitted SEC observations enter the rebuild material candidate population.
-            # Refused or evidence-only SEC ingest rows cannot fall through into material selection.
+            # C4 & C5: Only admitted SEC observations enter the rebuild
+            # *material* candidate population. Refused SEC ingest rows cannot
+            # fall through into material selection.
+            #
+            # Comparable (`cmp-`) observations are evidence, not material
+            # inputs: market_data_from_observations excludes them from the
+            # engine's view, and the context builder carries them as
+            # cross-source / series evidence exactly as a live run does. They
+            # need no admission to be context, so they are kept. Dropping them
+            # here made the rebuilt context lack evidence the stored one had.
             admitted_sec_ids = {
                 adm.contract_id
                 for adm in admissions_recomputed
@@ -481,7 +490,8 @@ def replay(
             used = [
                 obs
                 for obs in used
-                if not (
+                if is_comparable_observation(obs)
+                or not (
                     obs.observation_id.startswith("ingest|")
                     or (
                         obs.source_type == SourceType.REGULATORY_FILING.value
