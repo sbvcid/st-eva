@@ -975,9 +975,62 @@ def describe_derived_values(
     return derived
 
 
+def _latest_accepted(candidates: Sequence[Observation]) -> Optional[Observation]:
+    """
+    The most recently accepted of `candidates`, by the contract's own key.
+
+    The key is the one `ObservationSet.latest_knowable` sorts on --
+    `(available_at, as_of)` -- reused here *without* its two filters, because a
+    view projection must not have them.
+
+    `latest_knowable` was the obvious choice for this and is wrong here, which
+    this function's existence records. It excludes an observation whose
+    `available_at` is undeclared, and it excludes one that is not
+    `is_available`, and it returns None rather than falling back. Both filters
+    are right for deciding which fact crosses into the engine -- undeclared data
+    must not look contemporaneous, and an unavailable row must not be presented
+    as a value -- and both are wrong for rebuilding the view, because the view's
+    field *is* what the live run wrote, including the fields it wrote as
+    UNAVAILABLE. Substituting it dropped two replay-fidelity tests
+    (`test_archive_replay.py:662` and `:739`, which assert a live run
+    reproduces) by discarding archived rows that faithfully recorded an
+    unavailable or undated field.
+
+    So the ordering is taken from the contract's selector and the candidate set
+    from `latest`, and this function is the only place that distinction lives.
+
+    The tie-break matches `latest_knowable` exactly -- sort, then take the last
+    of equals -- and that matters. On the MU archive 298 revenue rows share
+    only 65 distinct `available_at` values, because one filing reports an
+    annual, three quarters and year-to-date figures that all become knowable at
+    the same acceptance instant, so almost every selection is a tie. Taking the
+    first of equals instead of the last picks a different fact: at 2026-06-30 it
+    yields 41,456,000,000 where `latest_knowable`, and therefore admission,
+    yields 78,959,000,000. Two selectors that disagree under a tie are exactly
+    the second answer that 2.14 measured, so the tie-break is reproduced rather
+    than improved.
+
+    Making the tie-break *total* -- by `observation_id`, say -- would remove the
+    remaining dependence on input order, but it would change
+    `latest_knowable`, and therefore admission rules 9 and 10. It is recorded
+    here rather than taken.
+    """
+    if not candidates:
+        return None
+    ordered = sorted(
+        candidates,
+        key=lambda observation: (
+            observation.available_at or "",
+            observation.as_of or "",
+        ),
+    )
+    return ordered[-1]
+
+
 def _apply_observations_to_view(
     data: "MarketData",
     observations: Sequence[Observation],
+    as_of: Optional[str] = None,
 ) -> "MarketData":
     """
     Project an observation set onto the 2.2.3 view fields.
@@ -986,13 +1039,30 @@ def _apply_observations_to_view(
     observations stay authoritative for provenance. A field the observation
     set does not carry keeps the sentinel it already had, so nothing is
     invented here either.
+
+    `as_of` says whether this is a point-in-time rebuild. Given a cutoff, a
+    metric may have several contract ids competing -- SEC ingest mints an id
+    per fact, so the per-`contract_id` collapse in `observations_for` cannot
+    reduce them -- and the field is filled by the most recently accepted
+    candidate rather than the first. Without a cutoff the caller is projecting
+    one acquisition's own observations back onto the view they came from, where
+    canonical per-metric ids leave one row per metric and first-match is
+    unchanged.
     """
     observation_set = ObservationSet(ticker=data.ticker, observations=observations)
+
+    def select(metric: str) -> Optional[Observation]:
+        matches = [item for item in observations if item.metric == metric]
+        available = [item for item in matches if item.is_available]
+        candidates = available or matches
+        if as_of is None:
+            return candidates[0] if candidates else None
+        return _latest_accepted(candidates)
 
     for metric, field_name in VIEW_FIELD_FOR_METRIC.items():
         if metric == METRIC_PRICE:
             continue
-        observation = observation_set.latest(metric)
+        observation = select(metric)
         if observation is None:
             continue
         if observation.is_band:
@@ -1007,7 +1077,7 @@ def _apply_observations_to_view(
                 else UNAVAILABLE,
             )
 
-    consensus = observation_set.latest(METRIC_CONSENSUS_FORWARD_EPS)
+    consensus = select(METRIC_CONSENSUS_FORWARD_EPS)
     if consensus is not None and isinstance(consensus.raw, dict):
         period = consensus.raw.get("period")
         data.consensus_forward_eps_period = (
@@ -2047,6 +2117,7 @@ def market_data_from_observations(
     ticker: str,
     company_name: str = "",
     exchange: str = "",
+    as_of: Optional[str] = None,
 ) -> Optional[MarketData]:
     """
     Rebuild the 2.2.3 view from an archived observation set.
@@ -2060,6 +2131,19 @@ def market_data_from_observations(
 
     Returns None when no price observation is present, because a view without a
     price is not a view. The caller decides what an absent price means.
+
+    `as_of` is the replay cutoff. It is threaded from the caller that has one,
+    and it is what turns the first-match read below into a most-recently-
+    accepted one. See `_latest_accepted` for why the contract's
+    `latest_knowable` is the wrong selector at this site.
+
+    The rows handed in are expected to be the ones the archive returned for
+    `as_of`. `archive.replay` obtains them from `observations_for(asset,
+    as_of)`, which has already dropped everything not eligible at the cutoff,
+    and this function does not filter again -- filtering here is what
+    `latest_knowable` does, and it is the half of that behaviour that breaks a
+    rebuild. A caller passing rows the archive would not have returned at that
+    instant is passing rows this cannot recognise as ineligible.
     """
     if not observations:
         return None
@@ -2075,7 +2159,10 @@ def market_data_from_observations(
     def latest(metric: str) -> Optional[Observation]:
         matches = [item for item in material if item.metric == metric]
         available = [item for item in matches if item.is_available]
-        return (available or matches or [None])[0]
+        candidates = available or matches
+        if as_of is None:
+            return candidates[0] if candidates else None
+        return _latest_accepted(candidates)
 
     price_observation = latest(METRIC_PRICE)
     if price_observation is None or not is_number(price_observation.value):
@@ -2115,7 +2202,7 @@ def market_data_from_observations(
         provider=price_observation.provider,
         retrieved_at=price_observation.retrieved_at,
     )
-    projected = _apply_observations_to_view(market_data, material)
+    projected = _apply_observations_to_view(market_data, material, as_of=as_of)
     # The observation set carries the comparable observations too, so the 2.3-C
     # builder can register them and resolve the cross-source references, exactly
     # as a live run does. The view *fields* stay material-derived, so a second
@@ -2154,6 +2241,11 @@ def build_context_from_observations(
         ticker=ticker,
         company_name=company_name or (metadata.get("name") or ""),
         exchange=exchange or (metadata.get("exchange") or ""),
+        # The cutoff travels with the rebuild, so a metric with competing
+        # contract ids is resolved by most recently accepted rather than by
+        # position in the archive's ordering. It was already an argument here
+        # and reached nothing.
+        as_of=as_of,
     )
     if data is None:
         raise ValueError(
