@@ -270,6 +270,61 @@ def interpretation_status(connection: sqlite3.Connection,
     return stored, "APPLIED"
 
 
+def admission_identity(
+    asset_id: str,
+    decided_at: str,
+    metric: Optional[str],
+    admitted: bool,
+    contract_id: Optional[str],
+    registry_state_identity: str,
+    resolver_policy_identity: str,
+    price_contract_id: Optional[str] = None,
+) -> str:
+    """
+    The content-derived key that identifies one admission decision.
+
+    Built over the decision itself rather than over its rendering, so a
+    repeated identical decision is a read and a changed decision is a new row.
+
+    Three parts of it are the interpretation, not the data:
+
+    * both identity digests. The same asset, instant and metric under a
+      different registry or a different policy is a *different decision*, and a
+      key that omitted either would make a change of interpretation invisible.
+    * `price_contract_id`. `_currency_refusals`
+      (`evidence_valuation_boundary.py:611-648`) answers CURRENCY_UNDECLARED
+      when the price declares no currency and CURRENCY_MISMATCH when it does not
+      match, so the price decides rule 4 and therefore the outcome. Two prices
+      can decide differently, so which one decided is part of what was decided.
+      Its figure is not -- that is the observation's business.
+
+    Nothing about the payload is here: no value, no refusal text, no registry
+    content. All of it is re-derivable, and identity should not carry data that
+    can drift from the row it names.
+
+    Canonicalised the same way `registry_identity` canonicalises, for the same
+    reason: one rendering, so the same decision hashes the same way on any
+    machine.
+    """
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "asset_id": asset_id,
+                "decided_at": decided_at,
+                "metric": metric,
+                "admitted": bool(admitted),
+                "contract_id": contract_id,
+                "registry_state_identity": registry_state_identity,
+                "resolver_policy_identity": resolver_policy_identity,
+                "price_contract_id": price_contract_id,
+            },
+            sort_keys=True,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+
 class SQLiteArchive(ArchiveStore):
     """A single-file SQLite archive. One connection, opened lazily."""
 
@@ -822,7 +877,7 @@ class SQLiteArchive(ArchiveStore):
         not before. Using it from midnight would assert that EDGAR disseminated
         the filing at 00:00; measured across the two delivery routes, that made
         6,508 of 17,043 facts replayable from a moment before the filer
-        published them. The evidence is real and it is not discarded — a date
+        published them. The evidence is real and it is not discarded ??a date
         proves publication happened on that day, so the fact becomes usable once
         the day is provably elapsed.
 
@@ -1105,9 +1160,9 @@ class SQLiteArchive(ArchiveStore):
         because returning everything for an unreadable question is the failure a
         point-in-time contract exists to prevent.
 
-        Where two archived rows carry the same contract identifier — a band
+        Where two archived rows carry the same contract identifier ??a band
         restated after archival, so the canonical per-metric identifier
-        collided — the most recently eligible one is returned. That is the same
+        collided ??the most recently eligible one is returned. That is the same
         rule `latest_knowable` applies, and the earlier row is still in the
         archive and still reachable by its own id.
 
@@ -1423,6 +1478,242 @@ class SQLiteArchive(ArchiveStore):
         """
         return self._has_table("interpretations")
 
+    # -- admissions -------------------------------------------------------
+
+    def _asset_id_for_ticker(self, asset: str) -> Optional[str]:
+        """
+        The asset id for a ticker, or None if the archive has never seen it.
+
+        The same join `observations_for` uses, so an admission is filed against
+        the same asset row an observation would be. Recording against an unknown
+        ticker is refused by the foreign key; returning None here makes that a
+        decision the caller makes rather than a constraint violation it
+        discovers.
+        """
+        row = self.connection.execute(
+            "SELECT asset_id FROM assets WHERE ticker = ? LIMIT 1",
+            (asset.upper(),),
+        ).fetchone()
+        return row["asset_id"] if row is not None else None
+
+    def _admission_head(
+        self, asset_id: str, metric: Optional[str], cutoff: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        The decision currently in force: the one nothing supersedes.
+
+        Ordering by `created_at` was the obvious way to pick the latest of two
+        decisions made at one instant, and it does not work.
+        `utc_now()` is `datetime.now(timezone.utc).isoformat()`
+        (`data_contract.py:60-61`), and on Windows the underlying clock has
+        roughly 15.6ms granularity, so two insertions inside the same tick get
+        *identical* `created_at` values -- measured, not assumed. Ordering a tie
+        by a timestamp that is equal orders it by nothing.
+
+        The `supersedes` chain is the recorded order, so it is what this reads.
+        A row that no other row supersedes is the head of its chain, and there
+        is exactly one head per chain by construction, because every insert
+        points at the previous head. That makes the answer deterministic from
+        recorded data alone, with no clock and no inference from physical order.
+        """
+        clauses = ["asset_id = ?"]
+        parameters: List[Any] = [asset_id]
+        if metric is not None:
+            clauses.append("metric = ?")
+            parameters.append(metric)
+        if cutoff is not None:
+            clauses.append("decided_at <= ?")
+            parameters.append(cutoff)
+        where = " AND ".join(clauses)
+        row = self.connection.execute(
+            f"SELECT * FROM admissions WHERE {where}"
+            " AND admission_id NOT IN ("
+            "   SELECT supersedes FROM admissions"
+            f"   WHERE {where} AND supersedes IS NOT NULL"
+            " )"
+            " ORDER BY decided_at DESC, admission_id DESC LIMIT 1",
+            parameters + parameters,
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def _has_admissions(self) -> bool:
+        """
+        Whether this archive carries the 3.32 table at all.
+
+        Same reasoning as `_has_interpretations`: every archive on disk predates
+        it, so its absence is a fact about age rather than an error.
+        """
+        return self._has_table("admissions")
+
+    def record_admission(
+        self,
+        asset: str,
+        decided_at: str,
+        admission: Any,
+        registry_state_identity: str,
+        resolver_policy_identity: str,
+        price: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """
+        Record one admission decision.
+
+        `admission` is an `evidence_valuation_boundary.Admission`; it is not
+        imported here, because the archive is beneath the crossing and must not
+        depend on it. The fields this reads off it are named in the caller's
+        terms.
+
+        What is written is identity and reasons. `value`, `unit`, `currency` and
+        the period columns are deliberately not written: they belong to the
+        observation, which is already stored under `contract_id`, and a second
+        copy is a second thing that can disagree. The price is written by
+        identity for the same reason, and because `_currency_refusals` makes the
+        price decide rule 4 -- so which price decided is part of the record even
+        though what it said is not.
+
+        A repeated identical decision is a read, not a second row: `identity` is
+        content-derived and UNIQUE. A *changed* decision is a new identity and
+        supersedes the previous one for this asset and metric.
+        """
+        if not self._has_admissions():
+            return {"created": False, "reason": "this archive has no admissions table"}
+        asset_id = self._asset_id_for_ticker(asset)
+        if asset_id is None:
+            return {"created": False,
+                    "reason": f"this archive has never recorded an asset for {asset!r}"}
+
+        refusals = [
+            {"label": refusal.label, "reason": refusal.reason}
+            for refusal in getattr(admission, "refusals", ())
+        ]
+        contract_id = getattr(admission, "contract_id", None) or getattr(
+            admission, "observation_id", None
+        )
+        admitted = bool(getattr(admission, "admitted", False))
+        price_contract_id = None if price is None else getattr(
+            price, "observation_id", None
+        )
+        identity = admission_identity(
+            asset_id=asset_id,
+            decided_at=decided_at,
+            metric=getattr(admission, "metric", None),
+            admitted=admitted,
+            contract_id=contract_id,
+            registry_state_identity=registry_state_identity,
+            resolver_policy_identity=resolver_policy_identity,
+            price_contract_id=price_contract_id,
+        )
+        existing = self.connection.execute(
+            "SELECT admission_id FROM admissions WHERE identity = ?",
+            (identity,),
+        ).fetchone()
+        if existing is not None:
+            return {"created": False, "admission_id": existing["admission_id"],
+                    "reason": "an identical decision is already recorded"}
+
+        previous = self._admission_head(asset_id, getattr(admission, "metric", None))
+        row = {
+            "admission_id": "adm_" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32],
+            "asset_id": asset_id,
+            "decided_at": decided_at,
+            "metric": getattr(admission, "metric", None),
+            "admitted": 1 if admitted else 0,
+            "contract_id": contract_id if admitted else contract_id,
+            "source_fact_id": getattr(admission, "source_fact_id", None),
+            "registry_state_identity": registry_state_identity,
+            "resolver_policy_identity": resolver_policy_identity,
+            "price_contract_id": price_contract_id,
+            "price_source_fact_id": (
+                None if price is None
+                else getattr(price, "basis", {}).get("source_fact_id")
+                if isinstance(getattr(price, "basis", None), dict) else None
+            ),
+            "identity": identity,
+            "supersedes": None if previous is None else previous["admission_id"],
+            "created_at": utc_now(),
+            "refusals_json": json.dumps(refusals, sort_keys=True),
+            "considered_observations": getattr(admission, "considered_observations", None),
+            "superseded_accessions": (
+                json.dumps(sorted(set(getattr(admission, "superseded_accessions", ()))))
+                if getattr(admission, "superseded_accessions", None) is not None else None
+            ),
+            "superseded_values": (
+                len(getattr(admission, "superseded_values", ()) or ())
+                if getattr(admission, "superseded_values", None) is not None else None
+            ),
+            "competing_concepts": (
+                json.dumps(sorted(set(getattr(admission, "competing_concepts", ()))))
+                if getattr(admission, "competing_concepts", None) is not None else None
+            ),
+            "mapping_type": getattr(admission, "mapping_type", None),
+            "relation_kind": getattr(admission, "relation_kind", None),
+            "availability_class": getattr(admission, "availability_class", None),
+        }
+        columns = ", ".join(row)
+        marks = ", ".join("?" for _ in row)
+        self.connection.execute(
+            f"INSERT INTO admissions ({columns}) VALUES ({marks})",
+            tuple(row.values()),
+        )
+        self.connection.commit()
+        return {"created": True, "admission_id": row["admission_id"], "admission": row}
+
+    def admissions_for(
+        self, asset: str, metric: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Every decision recorded for one asset, newest first."""
+        if not self._has_admissions():
+            return []
+        asset_id = self._asset_id_for_ticker(asset)
+        if asset_id is None:
+            return []
+        if metric is None:
+            rows = self.connection.execute(
+                "SELECT * FROM admissions WHERE asset_id = ?"
+                " ORDER BY decided_at DESC, admission_id DESC",
+                (asset_id,),
+            ).fetchall()
+        else:
+            rows = self.connection.execute(
+                "SELECT * FROM admissions WHERE asset_id = ? AND metric = ?"
+                " ORDER BY decided_at DESC, admission_id DESC",
+                (asset_id, metric),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def effective_admission(
+        self, asset: str, metric: str, cutoff: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        The decision in force for one asset and metric at a cutoff.
+
+        Greatest `decided_at` at or before `cutoff`. This is the *comparison
+        target* a replay checks its recomputation against, never an input to it:
+        `archive.replay` re-derives the decision and reports whether the two
+        agree, and the recomputation is what stands when they do not. Reading
+        this row to *decide* would make replay a lookup, which is the one thing
+        `archive.py` forbids.
+        """
+        if not self._has_admissions():
+            return None
+        asset_id = self._asset_id_for_ticker(asset)
+        if asset_id is None:
+            return None
+        return self._admission_head(asset_id, metric, cutoff)
+
+    def get_admission(self, admission_id: str) -> Optional[Dict[str, Any]]:
+        if not self._has_admissions():
+            return None
+        row = self.connection.execute(
+            "SELECT * FROM admissions WHERE admission_id = ?", (admission_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def admission_count(self) -> int:
+        if not self._has_admissions():
+            return 0
+        return int(self.connection.execute(
+            "SELECT COUNT(*) AS n FROM admissions").fetchone()["n"])
+
     def _source_fact(self, source_fact_id: str) -> Optional[SourceFact]:
         """The source fact an interpretation refers to, from `observations`."""
         row = self.connection.execute(
@@ -1613,3 +1904,4 @@ class SQLiteArchive(ArchiveStore):
                 " ORDER BY name"
             )
         ]
+
