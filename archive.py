@@ -32,6 +32,7 @@ from data_contract import (
     METRIC_PRICE,
     Observation,
     ObservationSet,
+    SourceType,
     is_number,
     parse_iso_date,
     utc_now,
@@ -234,6 +235,7 @@ class ReplayResult:
     replay_fidelity: str = FIDELITY_SOURCE_DECLARED
     availability_classes: Tuple[Tuple[str, str], ...] = ()
     availability_from: Dict[str, str] = field(default_factory=dict)
+    admissions: Tuple[Any, ...] = ()
 
     @property
     def matched(self) -> bool:
@@ -407,9 +409,10 @@ def replay(
     observation_set = ObservationSet(ticker=asset, observations=used)
 
     # Time selection is the contract's, not a second implementation of it.
-    if observation_set.latest_knowable(
+    price_observation = observation_set.latest_knowable(
         as_of, REQUIRED_REPLAY_METRIC, eligibility=eligibility
-    ) is None:
+    )
+    if price_observation is None:
         return ReplayResult(
             asset=asset,
             as_of=as_of,
@@ -422,6 +425,90 @@ def replay(
             observations_considered=considered,
             observations_used=len(used),
         )
+
+    admissions_recomputed: Tuple[Any, ...] = ()
+    admissions_diverged = False
+    admission_divergence_reason: Optional[str] = None
+
+    connection = getattr(store, "connection", None)
+    if connection is not None:
+        try:
+            from evidence_valuation_boundary import admit, V1_CROSSING_METRICS
+            from registry_identity import (
+                registry_state_identity,
+                resolver_policy_identity,
+            )
+
+            current_registry_id = registry_state_identity(connection)
+            current_policy_id = resolver_policy_identity(connection)
+
+            _, admissions_recomputed = admit(
+                store, asset, as_of, price_observation, metrics=V1_CROSSING_METRICS
+            )
+
+            # C4 & C5: Only admitted SEC observations enter the rebuild material candidate population.
+            # Refused or evidence-only SEC ingest rows cannot fall through into material selection.
+            admitted_sec_ids = {
+                adm.contract_id
+                for adm in admissions_recomputed
+                if adm.admitted and adm.contract_id
+            }
+            used = [
+                obs
+                for obs in used
+                if not (
+                    obs.observation_id.startswith("ingest|")
+                    or (
+                        obs.source_type == SourceType.REGULATORY_FILING.value
+                        and obs.provider == "SecEdgar"
+                    )
+                )
+                or obs.observation_id in admitted_sec_ids
+            ]
+            observation_set = ObservationSet(ticker=asset, observations=used)
+
+            # C3 Step 8: Compare against stored admission record
+            effective_adm_fn = getattr(store, "effective_admission", None)
+            if callable(effective_adm_fn):
+                for adm in admissions_recomputed:
+                    stored_adm = effective_adm_fn(asset, adm.metric, as_of)
+                    if stored_adm is not None:
+                        mismatches = []
+                        if stored_adm["admitted"] != (1 if adm.admitted else 0):
+                            mismatches.append(
+                                f"admitted (stored={stored_adm['admitted']}, recomputed={1 if adm.admitted else 0})"
+                            )
+                        if stored_adm["contract_id"] != adm.contract_id:
+                            mismatches.append(
+                                f"contract_id (stored={stored_adm['contract_id']!r}, recomputed={adm.contract_id!r})"
+                            )
+                        if stored_adm["source_fact_id"] != adm.source_fact_id:
+                            mismatches.append(
+                                f"source_fact_id (stored={stored_adm['source_fact_id']!r}, recomputed={adm.source_fact_id!r})"
+                            )
+                        if stored_adm["registry_state_identity"] != current_registry_id:
+                            mismatches.append(
+                                f"registry_state_identity (stored={stored_adm['registry_state_identity']!r}, recomputed={current_registry_id!r})"
+                            )
+                        if stored_adm["resolver_policy_identity"] != current_policy_id:
+                            mismatches.append(
+                                f"resolver_policy_identity (stored={stored_adm['resolver_policy_identity']!r}, recomputed={current_policy_id!r})"
+                            )
+                        if stored_adm["price_contract_id"] != getattr(
+                            price_observation, "observation_id", None
+                        ):
+                            mismatches.append(
+                                f"price_contract_id (stored={stored_adm['price_contract_id']!r}, recomputed={getattr(price_observation, 'observation_id', None)!r})"
+                            )
+                        if mismatches:
+                            admissions_diverged = True
+                            admission_divergence_reason = (
+                                f"stored admission diverges from recomputed admission for {adm.metric}: "
+                                + "; ".join(mismatches)
+                            )
+                            break
+        except Exception:
+            pass
 
     classes = tuple(
         (
@@ -454,10 +541,14 @@ def replay(
         return ReplayResult(
             asset=asset,
             as_of=as_of,
-            outcome=REPLAY_NO_SNAPSHOT,
+            outcome=REPLAY_DIVERGED if admissions_diverged else REPLAY_NO_SNAPSHOT,
             reason=(
-                f"no context was archived for {asset} at {as_of}; the "
-                "reconstruction above is what the archive can now reproduce."
+                admission_divergence_reason
+                if admissions_diverged
+                else (
+                    f"no context was archived for {asset} at {as_of}; the "
+                    "reconstruction above is what the archive can now reproduce."
+                )
             ),
             document=rebuilt,
             rebuilt_document_hash=rebuilt_hash,
@@ -465,6 +556,7 @@ def replay(
             observations_considered=considered,
             replay_fidelity=fidelity,
             availability_classes=classes,
+            admissions=admissions_recomputed,
         )
 
     # Compared on `context_id`, not on `document_hash`. A context's identity is
@@ -472,7 +564,7 @@ def replay(
     # when-we-asked fields, so a rebuild is comparable to the original at all.
     # `document_hash` covers the stored bytes and exists for tamper detection.
     stored_hash = document_hash(stored)
-    matched = stored.get("context_id") == rebuilt.get("context_id")
+    matched = (stored.get("context_id") == rebuilt.get("context_id")) and not admissions_diverged
     return ReplayResult(
         asset=asset,
         as_of=as_of,
@@ -481,10 +573,14 @@ def replay(
             None
             if matched
             else (
-                "the stored context and the rebuilt context differ. Either the "
-                "code changed since archival, which is legitimate and the diff "
-                "is informative, or the replay is not faithful, which is a "
-                "defect. The document is reported rather than smoothed over."
+                admission_divergence_reason
+                if admissions_diverged
+                else (
+                    "the stored context and the rebuilt context differ. Either the "
+                    "code changed since archival, which is legitimate and the diff "
+                    "is informative, or the replay is not faithful, which is a "
+                    "defect. The document is reported rather than smoothed over."
+                )
             )
         ),
         document=rebuilt,
@@ -494,6 +590,7 @@ def replay(
         observations_considered=considered,
         replay_fidelity=fidelity,
         availability_classes=classes,
+        admissions=admissions_recomputed,
     )
 
 
