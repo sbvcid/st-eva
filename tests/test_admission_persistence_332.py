@@ -477,5 +477,162 @@ class TestRealIdentitiesAreAccepted(AdmissionFixture):
         self.assertEqual(row["resolver_policy_identity"], policy)
 
 
+class TestProductionAdmissionWritePath(unittest.TestCase):
+    """
+    3.34: Verify that run_st_eva / context generation writes admissions
+    to the persistent archive when context and archive are provided,
+    is idempotent, leaves source observations untouched, and never uses
+    stored admissions as engine inputs.
+    """
+
+    def setUp(self) -> None:
+        self.store = SQLiteArchive(":memory:")
+
+    def tearDown(self) -> None:
+        self.store.close()
+
+    def test_live_run_writes_admission(self):
+        import io, sys
+        from st_eva_runner import run_st_eva
+
+        self.assertEqual(self.store.admission_count(), 0)
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            result = run_st_eva(
+                ticker="MSFT",
+                mode="regression",
+                save_snapshot=False,
+                context_path="-",
+                archive=self.store,
+            )
+        finally:
+            sys.stdout = old_stdout
+
+        self.assertIsNotNone(result)
+        self.assertGreater(self.store.admission_count(), 0)
+        admissions = self.store.admissions_for("MSFT")
+        self.assertEqual(len(admissions), 1)
+        self.assertEqual(admissions[0]["metric"], "revenue")
+
+    def test_repeated_same_run_is_idempotent(self):
+        import io, sys
+        from st_eva_runner import run_st_eva
+
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            run_st_eva(
+                ticker="MSFT",
+                mode="regression",
+                save_snapshot=False,
+                context_path="-",
+                archive=self.store,
+            )
+        finally:
+            sys.stdout = old_stdout
+        count_first = self.store.admission_count()
+        self.assertGreater(count_first, 0)
+
+        # Repeated run with same inputs
+        sys.stdout = io.StringIO()
+        try:
+            run_st_eva(
+                ticker="MSFT",
+                mode="regression",
+                save_snapshot=False,
+                context_path="-",
+                archive=self.store,
+            )
+        finally:
+            sys.stdout = old_stdout
+        count_second = self.store.admission_count()
+        self.assertEqual(count_first, count_second)
+
+    def test_source_observation_remains_unchanged(self):
+        import io, sys
+        from st_eva_runner import run_st_eva
+
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            run_st_eva(
+                ticker="MSFT",
+                mode="regression",
+                save_snapshot=False,
+                context_path="-",
+                archive=self.store,
+            )
+        finally:
+            sys.stdout = old_stdout
+        obs_before = [
+            (r["observation_id"], r["metric"], r["value_json"])
+            for r in self.store.connection.execute(
+                "SELECT observation_id, metric, value_json FROM observations ORDER BY observation_id"
+            ).fetchall()
+        ]
+
+        # Re-run
+        sys.stdout = io.StringIO()
+        try:
+            run_st_eva(
+                ticker="MSFT",
+                mode="regression",
+                save_snapshot=False,
+                context_path="-",
+                archive=self.store,
+            )
+        finally:
+            sys.stdout = old_stdout
+        obs_after = [
+            (r["observation_id"], r["metric"], r["value_json"])
+            for r in self.store.connection.execute(
+                "SELECT observation_id, metric, value_json FROM observations ORDER BY observation_id"
+            ).fetchall()
+        ]
+        self.assertEqual(obs_before, obs_after)
+
+    def test_stored_admission_is_not_used_to_compute_live_valuation(self):
+        import io, sys
+        from st_eva_runner import run_st_eva
+
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            result1 = run_st_eva(
+                ticker="MSFT",
+                mode="regression",
+                save_snapshot=False,
+                context_path="-",
+                archive=self.store,
+            )
+        finally:
+            sys.stdout = old_stdout
+
+        val1 = result1["market_implied_assumptions"]["forward_eps_at_reference_multiple"]
+        self.assertGreater(self.store.admission_count(), 0)
+
+        # Run with an independent clean store (zero stored admissions)
+        clean_store = SQLiteArchive(":memory:")
+        try:
+            sys.stdout = io.StringIO()
+            try:
+                result2 = run_st_eva(
+                    ticker="MSFT",
+                    mode="regression",
+                    save_snapshot=False,
+                    context_path="-",
+                    archive=clean_store,
+                )
+            finally:
+                sys.stdout = old_stdout
+
+            val2 = result2["market_implied_assumptions"]["forward_eps_at_reference_multiple"]
+            self.assertEqual(val1, val2)
+        finally:
+            clean_store.close()
+
+
 if __name__ == "__main__":
     unittest.main()
+

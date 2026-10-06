@@ -318,6 +318,20 @@ class ArchiveStore:
     def context_at(self, asset: str, as_of: str) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
+    def record_admission(
+        self,
+        asset: str,
+        decided_at: str,
+        admission: Any,
+        registry_state_identity: str,
+        resolver_policy_identity: str,
+        price: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """
+        Record one admission decision by identity.
+        """
+        raise NotImplementedError
+
     def close(self) -> None:
         return None
 
@@ -354,6 +368,17 @@ class NullArchive(ArchiveStore):
 
     def context_hashes(self, asset: str) -> List[Dict[str, Any]]:
         return []
+
+    def record_admission(
+        self,
+        asset: str,
+        decided_at: str,
+        admission: Any,
+        registry_state_identity: str,
+        resolver_policy_identity: str,
+        price: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        return {"created": False, "reason": "NullArchive does not persist admissions"}
 
 
 # ---------------------------------------------------------------------------

@@ -1634,15 +1634,22 @@ class SQLiteArchive(ArchiveStore):
             "considered_observations": getattr(admission, "considered_observations", None),
             "superseded_accessions": (
                 json.dumps(sorted(set(getattr(admission, "superseded_accessions", ()))))
-                if getattr(admission, "superseded_accessions", None) is not None else None
+                if isinstance(getattr(admission, "superseded_accessions", None), (list, tuple, set))
+                else str(getattr(admission, "superseded_accessions", None))
+                if getattr(admission, "superseded_accessions", None) is not None
+                else None
             ),
             "superseded_values": (
-                len(getattr(admission, "superseded_values", ()) or ())
-                if getattr(admission, "superseded_values", None) is not None else None
+                len(getattr(admission, "superseded_values", ()))
+                if isinstance(getattr(admission, "superseded_values", None), (list, tuple, set))
+                else getattr(admission, "superseded_values", None)
             ),
             "competing_concepts": (
                 json.dumps(sorted(set(getattr(admission, "competing_concepts", ()))))
-                if getattr(admission, "competing_concepts", None) is not None else None
+                if isinstance(getattr(admission, "competing_concepts", None), (list, tuple, set))
+                else str(getattr(admission, "competing_concepts", None))
+                if getattr(admission, "competing_concepts", None) is not None
+                else None
             ),
             "mapping_type": getattr(admission, "mapping_type", None),
             "relation_kind": getattr(admission, "relation_kind", None),

@@ -2057,6 +2057,29 @@ def _archive_run(
         )
         archive.record_context(asset, context, replay_fidelity=fidelity)
 
+    # 3.34: Persist admission decisions by identity if archive supports admissions table
+    if getattr(archive, "_has_admissions", lambda: False)():
+        try:
+            from evidence_valuation_boundary import admit, V1_CROSSING_METRICS
+            from registry_identity import registry_state_identity, resolver_policy_identity
+
+            connection = getattr(archive, "connection", None)
+            if connection is not None:
+                reg_id = registry_state_identity(connection)
+                pol_id = resolver_policy_identity(connection)
+                price_obs = data.observations.get("ev-price-001")
+                if price_obs is not None:
+                    as_of_date = data.price_date
+                    _, run_admissions = admit(
+                        archive, asset, as_of_date, price_obs, metrics=V1_CROSSING_METRICS
+                    )
+                    for adm in run_admissions:
+                        archive.record_admission(
+                            asset, as_of_date, adm, reg_id, pol_id, price_obs
+                        )
+        except Exception:
+            pass
+
     for evidence_id in evidence.ids():
         entry = evidence.get(evidence_id)
         if entry is None:
