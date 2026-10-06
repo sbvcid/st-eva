@@ -1,0 +1,253 @@
+{
+ "purpose": "3.31 A4/A5: can each of 3.29's five states have its admission identities computed from its own material?",
+ "states": {
+  "27693a0_2.39_after_ifrs_capex": {
+   "commit": "27693a0",
+   "manifest": {
+    "migrations": [
+     "0001_initial.sql",
+     "0002_source_capture.sql",
+     "0003_observation_basis.sql",
+     "0004_source_policy.sql",
+     "0005_evidence_state.sql",
+     "0006_source_fact_identity.sql",
+     "0007_core_registry.sql",
+     "0008_ingestion_ledger.sql",
+     "0009_issuer_concept_adoption.sql",
+     "0010_issuer_business_model.sql",
+     "0011_no_observations_state.sql",
+     "0012_coverage_semantics.sql",
+     "0013_services_and_unmodelled_taxonomies.sql",
+     "0014_dimension_collisions.sql",
+     "0015_exclusion_lifecycle.sql",
+     "0016_metric_supersession.sql"
+    ],
+    "missing": [
+     "evidence_valuation_boundary.py"
+    ],
+    "present": [
+     "archive.py",
+     "core_registry.py",
+     "data_contract.py",
+     "evidence_query.py",
+     "registry_seed.py"
+    ]
+   },
+   "policy": {
+    "missing_from_manifest": [
+     "evidence_valuation_boundary.py"
+    ],
+    "reason": "the policy manifest names files this commit does not contain, so the code that would have read this registry is not in the repository in any form. No shim can supply a module that was never written without inventing the rules it contained.",
+    "resolver_policy_identity": null,
+    "status": "NOT_MATERIALIZABLE"
+   },
+   "registry": {
+    "commit": "27693a0",
+    "mapping_rows_distinct": 48,
+    "mapping_rows_physical": 48,
+    "migrations_applied": 16,
+    "registry_state_identity": "rgs:c030c30be118045637d5ac41da4003bcf15d17af85c7b4a5a7db050d9c75448a",
+    "status": "RECONSTRUCTABLE"
+   }
+  },
+  "63b1243_2.99_after_revenues_retired": {
+   "commit": "63b1243",
+   "manifest": {
+    "migrations": [
+     "0001_initial.sql",
+     "0002_source_capture.sql",
+     "0003_observation_basis.sql",
+     "0004_source_policy.sql",
+     "0005_evidence_state.sql",
+     "0006_source_fact_identity.sql",
+     "0007_core_registry.sql",
+     "0008_ingestion_ledger.sql",
+     "0009_issuer_concept_adoption.sql",
+     "0010_issuer_business_model.sql",
+     "0011_no_observations_state.sql",
+     "0012_coverage_semantics.sql",
+     "0013_services_and_unmodelled_taxonomies.sql",
+     "0014_dimension_collisions.sql",
+     "0015_exclusion_lifecycle.sql",
+     "0016_metric_supersession.sql",
+     "0017_knowledge_state_interpretations.sql",
+     "0018_mapping_relation_kind.sql"
+    ],
+    "missing": [
+     "evidence_valuation_boundary.py"
+    ],
+    "present": [
+     "archive.py",
+     "core_registry.py",
+     "data_contract.py",
+     "evidence_query.py",
+     "registry_seed.py"
+    ]
+   },
+   "policy": {
+    "missing_from_manifest": [
+     "evidence_valuation_boundary.py"
+    ],
+    "reason": "the policy manifest names files this commit does not contain, so the code that would have read this registry is not in the repository in any form. No shim can supply a module that was never written without inventing the rules it contained.",
+    "resolver_policy_identity": null,
+    "status": "NOT_MATERIALIZABLE"
+   },
+   "registry": {
+    "commit": "63b1243",
+    "mapping_rows_distinct": 49,
+    "mapping_rows_physical": 49,
+    "migrations_applied": 18,
+    "registry_state_identity": "rgs:f42b3c7daa86e0f542aca438a57828141869504a16f6daa03042a871704de40d",
+    "status": "RECONSTRUCTABLE"
+   }
+  },
+  "8696e97_2.71_after_ifrs_current_portion": {
+   "commit": "8696e97",
+   "manifest": {
+    "migrations": [
+     "0001_initial.sql",
+     "0002_source_capture.sql",
+     "0003_observation_basis.sql",
+     "0004_source_policy.sql",
+     "0005_evidence_state.sql",
+     "0006_source_fact_identity.sql",
+     "0007_core_registry.sql",
+     "0008_ingestion_ledger.sql",
+     "0009_issuer_concept_adoption.sql",
+     "0010_issuer_business_model.sql",
+     "0011_no_observations_state.sql",
+     "0012_coverage_semantics.sql",
+     "0013_services_and_unmodelled_taxonomies.sql",
+     "0014_dimension_collisions.sql",
+     "0015_exclusion_lifecycle.sql",
+     "0016_metric_supersession.sql",
+     "0017_knowledge_state_interpretations.sql"
+    ],
+    "missing": [
+     "evidence_valuation_boundary.py"
+    ],
+    "present": [
+     "archive.py",
+     "core_registry.py",
+     "data_contract.py",
+     "evidence_query.py",
+     "registry_seed.py"
+    ]
+   },
+   "policy": {
+    "missing_from_manifest": [
+     "evidence_valuation_boundary.py"
+    ],
+    "reason": "the policy manifest names files this commit does not contain, so the code that would have read this registry is not in the repository in any form. No shim can supply a module that was never written without inventing the rules it contained.",
+    "resolver_policy_identity": null,
+    "status": "NOT_MATERIALIZABLE"
+   },
+   "registry": {
+    "commit": "8696e97",
+    "mapping_rows_distinct": 49,
+    "mapping_rows_physical": 49,
+    "migrations_applied": 17,
+    "registry_state_identity": "rgs:7644eee788cafe9202e6bdd34cd680cd53f718ae934b6ff53564b8c378fbddf5",
+    "status": "RECONSTRUCTABLE"
+   }
+  },
+  "ef38c6b_2.73_pre_measured_scope": {
+   "commit": "ef38c6b",
+   "manifest": {
+    "migrations": [
+     "0001_initial.sql",
+     "0002_source_capture.sql",
+     "0003_observation_basis.sql",
+     "0004_source_policy.sql",
+     "0005_evidence_state.sql",
+     "0006_source_fact_identity.sql",
+     "0007_core_registry.sql",
+     "0008_ingestion_ledger.sql",
+     "0009_issuer_concept_adoption.sql",
+     "0010_issuer_business_model.sql",
+     "0011_no_observations_state.sql",
+     "0012_coverage_semantics.sql",
+     "0013_services_and_unmodelled_taxonomies.sql",
+     "0014_dimension_collisions.sql",
+     "0015_exclusion_lifecycle.sql",
+     "0016_metric_supersession.sql",
+     "0017_knowledge_state_interpretations.sql",
+     "0018_mapping_relation_kind.sql"
+    ],
+    "missing": [
+     "evidence_valuation_boundary.py"
+    ],
+    "present": [
+     "archive.py",
+     "core_registry.py",
+     "data_contract.py",
+     "evidence_query.py",
+     "registry_seed.py"
+    ]
+   },
+   "policy": {
+    "missing_from_manifest": [
+     "evidence_valuation_boundary.py"
+    ],
+    "reason": "the policy manifest names files this commit does not contain, so the code that would have read this registry is not in the repository in any form. No shim can supply a module that was never written without inventing the rules it contained.",
+    "resolver_policy_identity": null,
+    "status": "NOT_MATERIALIZABLE"
+   },
+   "registry": {
+    "commit": "ef38c6b",
+    "mapping_rows_distinct": 50,
+    "mapping_rows_physical": 50,
+    "migrations_applied": 18,
+    "registry_state_identity": "rgs:699f896751eb9f3f1b8881f1beab9e0bac85d7f4c4054bd2e6d56633f3604657",
+    "status": "RECONSTRUCTABLE"
+   }
+  },
+  "head": {
+   "commit": "HEAD",
+   "manifest": {
+    "migrations": [
+     "0001_initial.sql",
+     "0002_source_capture.sql",
+     "0003_observation_basis.sql",
+     "0004_source_policy.sql",
+     "0005_evidence_state.sql",
+     "0006_source_fact_identity.sql",
+     "0007_core_registry.sql",
+     "0008_ingestion_ledger.sql",
+     "0009_issuer_concept_adoption.sql",
+     "0010_issuer_business_model.sql",
+     "0011_no_observations_state.sql",
+     "0012_coverage_semantics.sql",
+     "0013_services_and_unmodelled_taxonomies.sql",
+     "0014_dimension_collisions.sql",
+     "0015_exclusion_lifecycle.sql",
+     "0016_metric_supersession.sql",
+     "0017_knowledge_state_interpretations.sql",
+     "0018_mapping_relation_kind.sql"
+    ],
+    "missing": [],
+    "present": [
+     "archive.py",
+     "core_registry.py",
+     "data_contract.py",
+     "evidence_valuation_boundary.py",
+     "evidence_query.py",
+     "registry_seed.py"
+    ]
+   },
+   "policy": {
+    "missing_from_manifest": [],
+    "resolver_policy_identity": "pol:558478459ecbe40fec0d6d4b737b5786ac754b73c6d23eba396a2d31e334c6b4",
+    "status": "MATERIALIZABLE"
+   },
+   "registry": {
+    "commit": "HEAD",
+    "mapping_rows_distinct": 50,
+    "mapping_rows_physical": 50,
+    "migrations_applied": 18,
+    "registry_state_identity": "rgs:c5cec8bdd9402297f79dd0e99817586ba71b521da7d13944d37e111751265577",
+    "status": "RECONSTRUCTABLE"
+   }
+  }
+ }
+}
