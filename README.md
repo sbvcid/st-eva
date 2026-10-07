@@ -1,5 +1,7 @@
 # ST-EVA — Reverse Valuation & Market-Implied Expectations Engine
 
+> **Architecture Constitution:** Before modifying ST-EVA, read [`docs/ST-EVA-ARCHITECTURE.md`](docs/ST-EVA-ARCHITECTURE.md).
+
 ST-EVA takes an observed market price and reverse-engineers the fundamental and valuation assumptions implied by that price, using explicit valuation references and auditable evidence.
 
 It is a deterministic calculation with a traceable result. It is not a forecast, and it does not recommend anything.
