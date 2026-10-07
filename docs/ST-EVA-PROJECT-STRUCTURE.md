@@ -55,6 +55,12 @@ nothing about methodology.
 | **New additions** | Allowed |
 | **Class** | production |
 
+Where the ignore rules actually live: the frontend is at `web/frontend/`, and
+`web/frontend/.gitignore` has ignored `node_modules` and `dist` throughout. The
+root `.gitignore` additionally carries `web/node_modules/` and `web/dist/` so the
+`web/`-level layout named above is covered too. Verified: `git ls-files --others
+--exclude-standard web/` returns 0 untracked files.
+
 ### 2.3 `tests/`
 
 | | |
@@ -203,16 +209,18 @@ Rules:
 lives outside version control, and it is large enough that tracking it would
 dominate the repository.
 
-**Implementation status: NOT YET DONE.** `/research/` is **not currently in
-`.gitignore`**. Until a separate task adds it, `research/` shows up as untracked
-in `git status`, which is cosmetic but noisy. That task is explicitly out of
-scope here: this contract does not modify `.gitignore`, and no ignore rule
-should be inferred from it being written down.
+**Implementation status: ACTIVE.** `/research/` **is** in `.gitignore`, added at
+commit `499bd6c` together with the relocation it protects. `research/` therefore
+does not appear as untracked in `git status`. Two files inside it are
+deliberate exceptions and *are* tracked, because the archive is only verifiable
+if its manifest survives with the repository: `research/README.md` and
+`research/RESEARCH-ARCHIVE-MANIFEST.json`. Everything else under `research/` is
+ignored working material.
 
 ### 3.3 Never
 
-- `git add .` in this repository. `.gitignore` does not exclude `research/`, so
-  it would stage a gigabyte of SEC filings.
+- `git add .` in this repository. Even with `/research/` ignored, a careless
+  `git add .` stages unrelated content; use an explicit path list.
 - `git clean`, `git reset`, or `git restore` as a cleanup mechanism. Removal is
   always done from an explicit, verified file list.
 
@@ -280,25 +288,31 @@ MSFT studies already use is a good default to copy.
 
 ## 6. Migration policy
 
-**This contract performs no migration and moves nothing.**
+**This contract performed no migration and moved nothing.**
 
-As of adoption, a substantial body of historical research still lives under
-`experiments/`:
+The relocation this section anticipated has since been carried out, once, as a
+move of preserved material. State as it now stands:
 
 | Location | State |
 |---|---|
 | `experiments/001-context-only/` | 15 tracked legacy files — stays |
 | `experiments/002-cold-start/` | 31 tracked + 13 gitignored — stays |
-| `experiments/aapl-historical-pe-poc/` | 829 untracked historical research — **pending relocation** |
+| `experiments/aapl-historical-pe-poc/` | **no longer present** — 829 untracked historical research relocated, not deleted |
+| `research/experiments/aapl-historical-pe-poc/` | 829 artifacts, relocated with relative paths preserved |
+| `research/experiments/` (total) | 829 artifacts, 1,147,661,516 bytes |
 
-Those 829 files will be relocated to `research/experiments/` in a single
-one-time operation **after this contract is adopted**, preserving their relative
-paths and verifying every file by hash before any source is removed. §4 governs
-that operation: it is a move of preserved material, not a cleanup.
+**Relocation: COMPLETE.** The 829 files were moved in a single one-time
+operation at commit `499bd6c`, preserving their relative paths and verifying every
+file by SHA-256 on both sides **before any source file was removed**.
+`research/RESEARCH-ARCHIVE-MANIFEST.json` is the authority: it records each
+file's relative path, byte size, and SHA-256 at source and destination, with
+`verification.result = PASS` (`file_count_source` = `file_count_destination` =
+829, `byte_total_source` = `byte_total_destination` = 1147661516, `missing` = 0,
+`extra` = 0, `mismatch` = 0). §4 governed that operation: it was a move of
+preserved material, not a cleanup, and no research artifact was deleted.
 
-Until that operation completes, `experiments/` contains historical research that
-belongs in `research/` by this contract's definitions. That is a known,
-recorded, temporary condition — not permission to delete.
+`experiments/` now holds 46 tracked legacy files and nothing else that is not
+either tracked legacy material or a gitignored `.pyc`.
 
 ---
 

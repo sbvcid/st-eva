@@ -13,20 +13,35 @@ changes no decision already recorded in the ADR, the Contract, or the Core.
 
 ## 1. Git baseline
 
-Measured at `5df7f34`, immediately before the Contract promotion recorded below.
+Measured at `0becbdc`, the commit that added
+`docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md`. This section is the **housekeeping
+checkpoint**; §4 and later retain the pre-relocation measurements, superseded
+in place where they were.
 
 | Item | Value |
 |---|---|
-| Commit | `5df7f34648b652331666b1243009a1d27869c8ba` |
-| Short | `5df7f34 docs: record ST-EVA workspace and architecture status` |
+| Commit | `0becbdc` |
+| Short | `0becbdc docs: reconcile ST-EVA data admission rules` |
 | Branch | `master` |
 | Remote | `origin` → `https://github.com/sbvcid/st-eva.git` |
 | Sync | `## master...origin/master` — **in sync, no ahead/behind** |
-| Previous commits | `5e655a7` formalize ADR + Contract · `b124123` archive: remove experiment 003 |
+| Preceding commits | `499bd6c` finalize research workspace archive · `7464422` define project structure · `5df7f34` workspace/architecture status · `5e655a7` formalize ADR + Contract · `b124123` remove experiment 003 |
+
+Housekeeping status at this checkpoint:
+
+| Item | Status |
+|---|---|
+| Workspace Stabilization Stage 2C | **COMPLETE** |
+| Research relocation | **COMPLETE** — 829 artifacts, SHA-256 verified |
+| `/research/` gitignore rule | **ACTIVE** |
+| `experiments/` freeze at 46 tracked | **COMPLETE** — 46 tracked, 0 untracked |
+| Housekeeping | **COMPLETE** |
+| Reconciliation document | **committed** — `0becbdc` |
+| Product development | **NOT STARTED** — see §3, unchanged by this checkpoint |
 
 | Count | Value |
 |---|---:|
-| Tracked files | **308** |
+| Tracked files | **311** |
 | Untracked files (`-uall`) | **0** |
 | Staged | **0** |
 | Modified (tracked) | **0** |
@@ -43,9 +58,19 @@ per-file SHA-256 verification, and `/research/` was added to `.gitignore`.
 | `research/README.md` | 1 | 1 | tracked |
 | `experiments/` | 59 | 46 | 46 tracked + 13 gitignored `.pyc`, **0 untracked** |
 
-Tracked composition: 48 root production `*.py` modules · `docs/` 16 ·
+Tracked composition: 48 root production `*.py` modules · `docs/` 19 ·
 `tests/` 47 · `reports/` 35 · `history/` 35 · `archive/` 19 ·
 `web/` 49 · repo root docs 3 · **`experiments/` 46 legacy** · `research/` 2.
+
+### 1.0 `docs/ST-EVA-DATA-LAYER-AUDIT.md` and the reconciliation that followed
+
+The audit found that the archive could not represent a conforming Historical P/E
+observation, because `evidence_class`, `legal_status_note`, `audit_status`,
+`accounting_basis` and `fiscal_year_end_month` had no home. Those five fields are
+now judged individually in `docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md`
+(`0becbdc`): one already represented, one derivable in an existing container,
+three genuinely missing. That document is analysis only — it changes no schema,
+no code, and no frozen decision.
 
 ### 1.1 `experiments/` accounting — corrected, then superseded
 
@@ -404,7 +429,8 @@ decide, and the Contract already leaves it OPEN.
 
 *Checkpoint first recorded from direct workspace inspection at `5e655a7`;
 updated at `5df7f34`; Contract promoted at `694ec96`; structure contract at
-`7464422`; research relocation completed (Stage 2C), 2026-10-07.*
+`7464422`; research relocation completed (Stage 2C), 2026-10-07; housekeeping
+closed and baseline re-measured at `0becbdc`, 2026-10-07.*
 
 *Revision history of this file: (a) the tracked/untracked accounting of
 `experiments/` was corrected — 46 legacy tracked research files exist and are
@@ -412,7 +438,10 @@ excluded from cleanup scope (§1.1); (b) the Contract was promoted to
 `docs/methodology/` with one self-referential header line changed; (c) Stage 2C
 relocated 829 research artifacts to `research/experiments/` with per-file
 SHA-256 verification (PASS), removed their source copies, and added `/research/`
-to `.gitignore`.*
+to `.gitignore`; (d) the §1 baseline was re-measured at `0becbdc` (tracked files
+308 → **311**), the relocation status in `docs/ST-EVA-PROJECT-STRUCTURE.md` §6 was
+corrected from pending to complete, and the `.gitignore` was given the two
+`web/`-level rules `docs/ST-EVA-PROJECT-STRUCTURE.md` §2.2 names.*
 
 *No research was performed. No production code, Core, Web, ADR, Contract,
 methodology content, database schema or test was modified. The 46 legacy tracked
