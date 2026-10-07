@@ -1,35 +1,84 @@
 # WORKSPACE-INVENTORY
 
-**Status:** read-only inventory. Nothing was moved, deleted, staged or committed.
-**Scope:** `C:\git\st-eva` @ branch `master` @ `b124123`
+**Status:** inventory map. Superseded figures corrected 2026-10-07 at `5df7f34`+.
+**Scope:** `C:\git\st-eva` @ branch `master`
+**Original survey:** 2026-10-07 @ `b124123`
+**Corrected:** 2026-10-07 (tracked/untracked accounting; Contract promoted to `docs/methodology/`)
 **Date:** 2026-10-07
 
 Purpose of this file: a permanent map so that future sessions do not have to
 re-derive the workspace layout. It is a description, not an instruction to act.
 Every disposition below is a *recommendation only*.
 
+> **Correction note.** The first version of this file reported
+> `experiments/` as "entire tree untracked". That was wrong, and the error was
+> produced by deriving the untracked count by subtraction from an on-disk total
+> instead of reading `git ls-files experiments/` directly. Measured now:
+> **46 files under `experiments/` are tracked** (legacy research from ST-EVA
+> 2.4.3 / 2.6.1b), and they are not part of any private-archive cleanup. The
+> three accounting figures that disagreed are reconciled in §A.1.
+
 ---
 
 ## A. Git state summary
+
+Figures below are as measured at `5df7f34`, before the Contract promotion. The
+promotion itself changes only which path the Contract lives at; see §A.1 for the
+post-promotion figures.
 
 | Category | Count | Command used |
 | --- | --- | --- |
 | **staged** | 0 | `git status --porcelain=v1 -uall` (no leading non-`?` column) |
 | **modified tracked** | 0 | same (no ` M` / `M ` entries) |
 | **deleted** | 0 | same (no ` D` / `D ` entries) |
-| **untracked (files)** | **831** | `git status --porcelain=v1 -uall` (831 lines) |
-| **tracked files** | 302 | `git ls-files` |
+| **untracked (files)** | **829** | `git status --porcelain=v1 -uall` (829 lines) |
+| **tracked files** | **307** | `git ls-files` |
 | **branch** | `master`, in sync with `origin/master` | `git status` |
 
 Untracked breakdown (`-uall`, per file, not per collapsed directory):
 
 | Untracked path | Files |
 | --- | --- |
-| `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | 1 |
-| `experiments/aapl-historical-pe-poc/**` | 830 |
+| `experiments/**` | 829 |
+| `docs/ST-EVA-DATA-LAYER-AUDIT.md` | 1 |
+| `WORKSPACE-INVENTORY.md` | 1 |
+| `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | 1 (tracked since `5e655a7`) |
 
 Note: plain `git status` collapses the experiments tree into a single line. The
-831 figure comes from `-uall`. Do not trust the collapsed form for sizing work.
+829 figure comes from `-uall`. Do not trust the collapsed form for sizing work.
+
+### A.1 Reconciling the three experiments/ figures
+
+`experiments/` holds **888 files on disk** — 889 before the Contract was promoted
+out of it. That splits three ways, and the split
+is the thing the first version of this file got wrong:
+
+| Classification | Files | Source of the number |
+| --- | ---: | --- |
+| Tracked in git | **47** | `git ls-files experiments/` |
+| Untracked | **829** | `git status --porcelain=v1 -uall -- experiments` |
+| Gitignored | **13** | `experiments/002-cold-start/__pycache__/*.pyc` |
+| Total on disk | **888** | `Get-ChildItem experiments -Recurse -File` (889 before the Contract moved out) |
+
+47 + 829 = 876; the remaining 13 are `__pycache__` `.pyc` files, gitignored and
+therefore counted in neither Git figure. Reading only the on-disk total and the
+untracked count, and inferring that the difference was tracked research,
+produced the "entirely untracked" claim. It was an inference where a direct query
+was available.
+
+The 47 tracked files break down as:
+
+| Tracked subtree | Files | Introduced by |
+| --- | ---: | --- |
+| `experiments/001-context-only/` (+ `input/`, `outputs/`) | 15 | `95373eb` — *2.4.3 Fix what the consumption experiment found* |
+| `experiments/002-cold-start/` (+ `contexts/`) | 31 | `7d86a39` — *2.6.1b: make an unknown metric and an absent figure different answers* |
+| `experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md` | 1 | `5e655a7` — this programme; since promoted to `docs/methodology/` |
+
+After the Contract promotion the tracked count under `experiments/` is **46**.
+These 46 are **legacy tracked research** and are deliberately retained: they were
+committed deliberately in the ST-EVA 2.x era, they are part of that history, and
+they are **excluded from private-archive cleanup**. Copying already-tracked files
+to private archive would produce an untracked duplicate of tracked content.
 
 Ignored but present on disk (not counted in the 831; regenerable or tooling state):
 
@@ -58,7 +107,7 @@ likely source of future "why is my repo 110 MB of nothing" confusion.
 | `.git/` | 270 | 10.6 MB | — | version control | |
 | `.kilo/` | 917 | 110.6 MB | 0 | tooling / agent worktrees | excluded via `.git/info/exclude` |
 | `web/` | 9373 | 165.8 MB | 49 | production + build artifact | `frontend/node_modules` = 165.2 MB |
-| `experiments/` | 889 | **1101.0 MB** | 0 | research | entire tree untracked |
+| `experiments/` | 888 | **1100.9 MB** | 46 | research | 47 before the Contract promotion; 46 legacy tracked + 829 untracked + 13 gitignored `.pyc` |
 | `tests/` | 174 | 5.2 MB | 47 | tests | 127 of 174 files are `__pycache__` |
 | `history/` | 35 | 2.6 MB | 35 | generated evidence records | `_market_implied_assumptions.json` per issuer |
 | `__pycache__/` (root) | 82 | 2.4 MB | 0 | cache | ignored |
@@ -82,39 +131,48 @@ and is **not** a leftover to clean.
 ## C. Research groups
 
 All research lives under `experiments/`. Three independent studies exist:
-two unrelated ones (`001`, `002`, untracked, small) and one large Historical P/E
-programme (`aapl-historical-pe-poc`, 1101 MB, itself five sub-studies).
+two unrelated ones (`001`, `002`, small, **legacy tracked**) and one large
+Historical P/E programme (`aapl-historical-pe-poc`, 1094.5 MB, five
+sub-studies, **wholly untracked** except for the Contract, which has been
+promoted to `docs/methodology/`).
+
+Note the sizes: `001` + `002` together are 6.4 MB, of which 4.8 MB is
+`002-cold-start`. The 1101 MB attributed to `experiments/` is almost entirely
+the untracked `aapl-historical-pe-poc` tree. Cleanup scope is the untracked
+portion only.
 
 ### C.1 `experiments/001-context-only`
 
 | Field | Value |
 | --- | --- |
-| Files / size | 15 files, 1.9 MB |
+| Files / size | 15 files, 1.9 MB — **all 15 tracked in git** |
 | Purpose | Context-only experiment: feed 6 issuer context JSONs, produce per-issuer markdown. Validates whether context alone yields usable output. |
 | Final artifact | Yes — `experiment_summary.md`, `self_audit.md`, `outputs/*.md` (6) |
 | Regenerable | Partially. `outputs/*.md` come from `input/*.json` but no script is retained in this folder. |
 | Raw evidence | Yes — `input/*.context.json` (6 files) |
 | Verification | No |
 | Long-term value | Medium. Documents an experiment whose conclusion is superseded by `002-cold-start`. |
-| **Disposition** | **PRIVATE_ARCHIVE** — historical research record; keep out of the repo. Do not delete; the summary documents why context-only was insufficient. |
+| **Disposition** | **LEGACY_TRACKED / KEEP_IN_REPO.** All 15 files are tracked (`95373eb`, ST-EVA 2.4.3). An earlier version of this file said `PRIVATE_ARCHIVE`; that was derived from the wrong tracked/untracked accounting and has been corrected. Already in git history — archiving would duplicate tracked content. **Not in cleanup scope.** |
 
 ### C.2 `experiments/002-cold-start`
 
 | Field | Value |
 | --- | --- |
-| Files / size | 44 files, 4.8 MB (13 of them `__pycache__`) |
+| Files / size | 44 files, 4.8 MB — **31 tracked**, 13 gitignored `__pycache__` |
 | Purpose | Cold-start experiment: cross-source / provenance / derived-metric examination over 6 issuer contexts. Produced the lineage and evidence-model thinking that later became production modules. |
 | Final artifact | Yes — `RESEARCH_REPORT_AND_SELF_AUDIT.md`, `analysis_summary.json`, `summary.txt`, `key_values.txt`, `crosssource*.txt`, `derived_detail.txt`, `val_dq.txt`, `provenance_refs.txt`, `full_structure.txt` |
 | Regenerable | **Yes**, largely. 12 `.py` scripts are retained and read `contexts/*.json`, which are also retained. The `*.txt` outputs are regenerable by rerunning. |
 | Raw evidence | Yes — `contexts/*.json` (6 files) |
 | Verification | No formal verification artifact. `RESEARCH_REPORT_AND_SELF_AUDIT.md` is the self-audit. |
 | Long-term value | High for provenance reasoning. Its conclusions are cited in production docs. |
-| **Disposition** | **PRIVATE_ARCHIVE** — the scripts + contexts + final report are the record. The 13 `.pyc` files are pure disposable cache. |
+| **Disposition** | **LEGACY_TRACKED / KEEP_IN_REPO** for the 31 tracked files (`7d86a39`, ST-EVA 2.6.1b). Corrected from `PRIVATE_ARCHIVE`. The 13 `.pyc` files are gitignored cache and are **DISPOSABLE**. **Not in cleanup scope.** |
 
 ### C.3 `experiments/aapl-historical-pe-poc` — sub-study breakdown
 
-Total: **830 files, 1101.0 MB**, all untracked. Five sub-studies, in the order
-they were executed.
+Total: **829 untracked files, 1094.5 MB** (the figure rose to 830 tracked-or-not
+when the Contract was committed at `5e655a7`; that one file has since been
+promoted to `docs/methodology/`). Five sub-studies, in the order they were
+executed. **This group is the entire cleanup scope.**
 
 #### C.3.1 Core AAPL Historical P/E POC
 
@@ -162,15 +220,21 @@ they were executed.
 
 | Field | Value |
 | --- | --- |
-| Path | `experiments/aapl-historical-pe-poc/contract/` (excluding `msft_validation/`) |
-| Files / size | **1 file, 50.4 KB** |
+| Path | **`docs/methodology/CONTRACT-HISTORICAL-PE.md`** (promoted 2026-10-07; was `experiments/aapl-historical-pe-poc/contract/`) |
+| Files / size | **1 file, 51.6 KB** |
 | Purpose | The engine interface contract: `QuarterEpsEvidence` / `HistoricalPriceEvidence` / `HistoricalPeObservation`, resolver sequence E.0–E.8, invariants F-1…F-15, replay requirements I.1–I.4, OPEN decisions K.1–K.9, consistency review L.1–L.9. |
 | Final artifact | **Yes — it is the artifact.** |
 | Regenerable | **No.** This is a decision document. It is not derivable from any other file in the workspace. |
 | Raw evidence | n/a |
 | Verification | §L is an in-document consistency review against the ADR and both POCs. |
 | Long-term value | **Highest of all.** It is the normative document an implementation is written against. §B.2.1 (Genericization Note, added 2026-10-07 from MSFT Finding C.1) is the only place the AAPL-layout parser hazard is stated. |
-| **Disposition** | **KEEP_IN_REPO.** Exception to the rule that research goes to private archive: a contract is a governed artifact, not a POC result. It is the one thing here that a future implementer must be able to read. |
+| **Disposition** | **KEEP_IN_REPO** — and now, since the promotion, it sits beside the ADR at `docs/methodology/`. The one substantive edit made during promotion was line 7's self-referential `**File:**` header, corrected from the old path. No methodology content was altered. |
+
+Note: 12 **untracked** MSFT research files still name the old Contract path
+(`compute_msft_pe.py`, `build_msft_evidence.py`, `phase1_fiscal_identity/`
+scripts and report, and five `out/` artifacts). These are frozen validation
+outputs whose bytes are hash-recorded in the private-archive manifest. They are
+deliberately **not** rewritten. See §G.6.
 
 #### C.3.5 MSFT Contract Validation
 
@@ -221,17 +285,17 @@ One disposition per group. **Recommendations only — nothing was executed.**
 
 | # | Group | Disposition | Rationale |
 | --- | --- | --- | --- |
-| 1 | `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | **KEEP_IN_REPO** | Frozen, approved methodology. Amended once (Amendment 1). A governed decision record. Currently the only untracked file in `docs/`. |
-| 2 | `experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md` | **KEEP_IN_REPO** | The normative engine contract. Not regenerable. A future implementer must be able to read it from the repo. |
+| 1 | `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | **KEEP_IN_REPO** | Frozen, approved methodology. Amended once (Amendment 1). Tracked since `5e655a7`. |
+| 2 | `docs/methodology/CONTRACT-HISTORICAL-PE.md` | **KEEP_IN_REPO** | The normative engine contract. Not regenerable. Promoted out of `experiments/` on 2026-10-07 so it sits beside the ADR. |
 | 3 | Repo root production `*.py`, `web/`, `tests/` (non-cache), `docs/` (other 13), `reports/`, `history/`, `archive/` | **KEEP_IN_REPO** | Already tracked. No action. |
 | 4 | `web/frontend/node_modules`, `web/frontend/dist`, all `__pycache__`, `.pytest_cache` | **REGENERABLE** | Build/tooling output. Already gitignored. Zero information content. Deleting costs only a reinstall/build. |
 | 5 | `.kilo/worktrees` | **NEEDS_REVIEW** | 110 MB, 0 tracked, excluded via `.git/info/exclude` rather than `.gitignore`. Contains live managed sessions (`eastern-anglerfish`, `pepper-chess`). Deleting it would destroy in-flight work. Determine first whether either session is still active. |
-| 6 | `experiments/aapl-historical-pe-poc/q4_study/` | **PRIVATE_ARCHIVE** | Primary-source evidence underpinning ADR Amendment 1. Never delete. Move to cold storage. |
-| 7 | `experiments/aapl-historical-pe-poc/raw/`, `out/` (core POC) | **PRIVATE_ARCHIVE** | The 31/31 worked example the ADR and Contract cite. Never delete. |
-| 8 | `experiments/aapl-historical-pe-poc/amendment1_verify/` | **PRIVATE_ARCHIVE** | Contains `negative_path_no_furnished.json`, the deterministic conformance artifact cited by Contract §I.3/§L.2. Never delete. |
-| 9 | `experiments/001-context-only/` | **PRIVATE_ARCHIVE** | Superseded by 002 but documents why context-only failed. Keep. |
-| 10 | `experiments/002-cold-start/` | **PRIVATE_ARCHIVE** | Provenance reasoning cited in production docs. Keep everything except `__pycache__`. |
-| 11 | `experiments/.../contract/msft_validation/` | **NEEDS_REVIEW** | See §G.1. The 12 documentation files + 8 `out/` files are the finding and should be preserved; the 1011 MB raw set is a separate decision. |
+| 6 | `experiments/aapl-historical-pe-poc/q4_study/` (untracked) | **PRIVATE_ARCHIVE** | Primary-source evidence underpinning ADR Amendment 1. Never delete. Move to cold storage. |
+| 7 | `experiments/aapl-historical-pe-poc/raw/`, `out/` (untracked) | **PRIVATE_ARCHIVE** | The 31/31 worked example the ADR and Contract cite. Never delete. |
+| 8 | `experiments/aapl-historical-pe-poc/amendment1_verify/` (untracked) | **PRIVATE_ARCHIVE** | Contains `negative_path_no_furnished.json`, the deterministic conformance artifact cited by Contract §I.3/§L.2. Never delete. |
+| 9 | `experiments/001-context-only/` — **46-file legacy tracked set, corrected from `PRIVATE_ARCHIVE`** | **LEGACY_TRACKED / KEEP_IN_REPO** | All 15 files tracked since `95373eb` (ST-EVA 2.4.3). Already in git history. **Excluded from cleanup** — archiving would duplicate tracked content. |
+| 10 | `experiments/002-cold-start/` — **31 tracked + 13 gitignored, corrected from `PRIVATE_ARCHIVE`** | **LEGACY_TRACKED / KEEP_IN_REPO**; `.pyc` **DISPOSABLE** | 31 files tracked since `7d86a39` (ST-EVA 2.6.1b). **Excluded from cleanup.** Only the 13 gitignored `.pyc` are disposable. |
+| 11 | `experiments/.../contract/msft_validation/` (untracked) | **NEEDS_REVIEW** | See §G.1. The 12 documentation files + 8 `out/` files are the finding and should be preserved; the 1011 MB raw set is a separate decision. |
 | 12 | `experiments/002-cold-start/__pycache__/` (13 `.pyc`) | **DISPOSABLE** | Pure cache. Already gitignored. |
 | 13 | `data/` (empty, tracked) | **KEEP_IN_REPO** | Empty tracked directory. Looks intentional. Not a leftover. |
 | — | **Anything not classified above** | **NEEDS_REVIEW** | — |
@@ -246,12 +310,13 @@ Ordered by consequence of loss.
 
 | Artifact | Why |
 | --- | --- |
-| `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | Frozen methodology. Decisions 1–14. Every other artifact cites it. §6.1's Q4 evidence table is derived from `q4_study`. **Untracked — single copy, no git history.** |
-| `experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md` | The engine contract. §B.2.1 is the only statement of the exhibit-layout genericization hazard. **Untracked — single copy, no git history.** |
+| `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | Frozen methodology. Decisions 1–14. Every other artifact cites it. §6.1's Q4 evidence table is derived from `q4_study`. Tracked since `5e655a7`. |
+| `docs/methodology/CONTRACT-HISTORICAL-PE.md` | The engine contract. §B.2.1 is the only statement of the exhibit-layout genericization hazard. Tracked since `5e655a7`, promoted out of `experiments/` on 2026-10-07. |
 
-Both of these are untracked. That is the single largest risk in this workspace:
-they exist in exactly one place, are not in git history, and a `git clean` or a
-worktree reset would destroy them without a trace.
+Both were untracked single copies until `5e655a7`. That was the single largest
+risk in this workspace and it is now closed: both are in git history, and the
+Contract sits beside the ADR under `docs/` rather than inside the untracked
+research tree, so a `git clean` or a worktree reset can no longer take it.
 
 ### F.2 Manifests and hashes
 
@@ -337,15 +402,14 @@ sufficient.
 Before deleting anything: confirm `raw/source_manifest.json` covers all 469 files
 under `raw/docs/`, not only the 48 top-level ones.
 
-### G.2 The two untracked single-copy documents
+### G.2 The governing documents — **RESOLVED**
 
-`docs/ADR-HISTORICAL-PE-METHODOLOGY.md` and
-`experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md` are
-untracked, unbacked, and are the two documents everything else defers to. This
-is the highest-severity item in the inventory regardless of how any cleanup
-proceeds. The Contract is also unbacked *and* sitting inside the untracked
-1.1 GB tree, which means a naive "delete the experiments folder" would take it
-with it.
+This item was written when the ADR and the Contract were untracked, unbacked
+single copies, with the Contract sitting inside the untracked 1.1 GB research
+tree — a naive "delete the experiments folder" would have taken it. Both are now
+tracked and pushed (`5e655a7`), and the Contract was promoted to
+`docs/methodology/CONTRACT-HISTORICAL-PE.md` on 2026-10-07 so that no governed
+document lives under `experiments/` at all. **Nothing here is outstanding.**
 
 ### G.3 `.kilo/worktrees` — 110.6 MB
 
@@ -356,17 +420,44 @@ workspace and it is invisible to `.gitignore`.
 
 ### G.4 `experiments/002-cold-start` — superseded status
 
-Its conclusions were carried forward into production. Whether it is a reference
-or a historical artifact is a judgement call, not a technical one. Flagged, not
-decided.
+Its conclusions were carried forward into production. 31 of its 44 files are
+tracked (ST-EVA 2.6.1b), so its status as a reference is already settled by
+history; whether the remaining disposition should change is not open. **Not in
+cleanup scope.**
 
 ### G.5 Unclassified files
 
-`git status -uall` reports 831 untracked files; §C accounts for all 830 under
-`experiments/` plus the 1 ADR. No orphans were found. But this inventory is a
+`git status -uall` reports 829 untracked files, all under `experiments/`.
+§C accounts for all of them. No orphans were found. But this inventory is a
 snapshot of directory *structure* — individual file contents were not audited,
 so a file that is structurally accounted for but semantically dead would not
 show up here.
+
+### G.6 Known archived-artifact staleness — accepted, do not "fix"
+
+Twelve **untracked** MSFT research files name the Contract's former path
+`experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md`:
+
+| File | Kind |
+| --- | --- |
+| `msft_validation/compute_msft_pe.py` | research script |
+| `msft_validation/build_msft_evidence.py` | research script |
+| `msft_validation/README.md` | research report |
+| `msft_validation/out/report.txt` | generated output |
+| `msft_validation/out/msft_pe_points.json` | generated output |
+| `msft_validation/out/msft_negative_path.json` | generated output |
+| `msft_validation/out/msft_evidence.json` | generated output |
+| `phase1_fiscal_identity/build_phase1.py` | research script |
+| `phase1_fiscal_identity/fiscal_identity.json` | generated output |
+| `phase1_fiscal_identity/report.md` | research report |
+
+These are **frozen research artifacts**. Their bytes are SHA-256 recorded in
+`C:\st-eva-private-archive\historical-pe\msft-validation-ARCHIVE-MANIFEST.json`,
+so rewriting the path inside them would break the very verification that makes
+them trustworthy. They are left as-is deliberately. The stale path is a record of
+when the validation ran, which is exactly what a research artifact should be.
+
+**No tracked file contains the old Contract path.**
 
 ---
 
@@ -379,20 +470,32 @@ irreversible action to the end.
 
 | Step | Action | Reversible? | Precondition |
 | --- | --- | --- | --- |
-| 0 | **Get the two governing documents under version control** (`git add` the ADR and the Contract explicitly, by path — never `git add .`) | Yes | none. Do this first. |
-| 1 | Verify `git status -uall` count still reads 831 before touching anything | — | baseline |
+| 0 | ~~**Get the two governing documents under version control**~~ | Yes | **done** — `5e655a7` |
+| 0b | ~~**Promote the Contract to `docs/methodology/`**~~ | Yes | **done** — 2026-10-07 |
+| 0c | ~~**Correct the tracked/untracked accounting in this file and the project-status checkpoint**~~ | Yes | **done** — see §A.1 |
+| 1 | Verify `git status -uall -- experiments` reads **829** before touching anything | — | baseline |
 | 2 | Confirm whether `.kilo/worktrees` sessions are live; leave alone if either is active | — | must resolve first |
 | 3 | Resolve §G.1 (MSFT raw bulk). Compress-then-verify rather than delete-then-hope. | — | manifest coverage confirmed |
-| 4 | Copy `experiments/**` to private archive storage, preserving paths. Verify file count and byte total before declaring success. | Yes, if verified | step 3 resolved |
-| 5 | Only after step 4 verifies, remove the `experiments/` tree from the working copy. | **No** | step 4 verified |
+| 4 | Copy the **untracked** research under `experiments/` to private archive storage, preserving paths. Verify file count and byte total before declaring success. | Yes, if verified | step 3 resolved |
+| 5 | Only after step 4 verifies, remove those **untracked** files from the working copy. | **No** | step 4 verified |
 | 6 | Delete `__pycache__`, `.pytest_cache`, `web/frontend/dist`. Leave `node_modules` unless disk pressure demands otherwise. | Yes (`npm ci`) | none |
-| 7 | Final `git status -uall`; expected untracked count drops to 0 or near it. | — | — |
+| 7 | Final `git status -uall -- experiments`; expected 0. | — | — |
 
-Two things this sequence deliberately does **not** do: it never runs `git add .`,
-`git clean`, or `git reset`; and it never deletes from `experiments/` before a
-verified copy exists elsewhere. Step 4's verification (file count + byte total
-against §D) is what makes step 5 safe — skipping it turns step 5 into the
-single most destructive action available in this workspace.
+**Scope correction, 2026-10-07.** Steps 4–5 originally read "copy `experiments/**`"
+and "remove the `experiments/` tree". That would have swept in the **46 legacy
+tracked research files** of §A.1. Steps 4 and 5 now say *untracked* research
+only. The legacy tracked files stay in the working copy and in git; they are
+already versioned and archiving them would create a duplicate that git does not
+know about. Concretely: **do not delete `experiments/001-context-only/` or
+`experiments/002-cold-start/`** — delete only `experiments/aapl-historical-pe-poc/`
+minus the already-promoted Contract.
+
+Three things this sequence deliberately does **not** do: it never runs
+`git add .`, `git clean`, or `git reset`; it never deletes from `experiments/`
+before a verified copy exists elsewhere; and it never touches tracked research.
+Step 4's verification (file count + byte total against §D) is what makes step 5
+safe — skipping it turns step 5 into the single most destructive action available
+in this workspace.
 
 ---
 
@@ -419,32 +522,44 @@ A file's directory determines its fate. Decide at creation, never later.
 | --- | --- | --- |
 | production | `*.py` at root, `web/` (minus ignored), `tests/` (minus cache) | tracked |
 | ADR / spec | `docs/` | tracked |
-| contract | `experiments/*/contract/CONTRACT-*.md` — **exception, see below** | tracked |
+| **contract** | **`docs/methodology/CONTRACT-*.md`** — **promoted out of `experiments/` 2026-10-07** | tracked |
 | tests | `tests/` | tracked |
 | report | `reports/` | tracked |
 | archive | `archive/` | tracked |
-| research | `experiments/**` (everything else) | **not** tracked |
+| research | `experiments/**` — **untracked portion only** | **not** tracked |
+| research (legacy) | `experiments/001-context-only/`, `experiments/002-cold-start/` | **tracked** — see §A.1 |
 | raw evidence | `experiments/**/raw/**` | **not** tracked |
 | generated output | `experiments/**/out/**` | **not** tracked |
 | cache | `__pycache__`, `.pytest_cache`, `web/frontend/dist` | ignored |
 
 ### The exception that must be written down
 
-**A contract is governed, not experimental.** It lives under `experiments/` by
-historical accident, but it is the document an implementation is written
-against. Governing documents take precedence over the directory they happen to
-sit in:
+**A contract is governed, not experimental.** It used to live under `experiments/`
+by historical accident. It no longer does: as of 2026-10-07 the Contract is at
+`docs/methodology/CONTRACT-HISTORICAL-PE.md`, beside the ADR, so the rule no
+longer depends on an exception being remembered:
+
+> A contract lives in `docs/methodology/`, never under `experiments/`.
+
+The governing principle remains, because it still applies to final reports and
+to anything else a tracked document cites:
 
 > If a file is an ADR, a contract, or a final report that another artifact
 > cites, it is tracked **regardless of which directory it is in**, and it is
 > never deleted as part of an experiment cleanup.
 
-The inverse also holds, and it is the rule that would have prevented today's
+The inverse also holds, and it is the rule that would have prevented the earlier
 situation:
 
 > A cleanup that targets a directory never removes a file from that directory
 > if that file is cited by a tracked document — unless the citation is updated
 > first.
+
+And a third, added after the §A.1 correction:
+
+> Cleanup scope is defined by git tracking status, not by directory. A directory
+> can contain both tracked and untracked files, and "clean up this directory"
+> means the untracked ones only.
 
 ### Operating procedure
 
@@ -468,12 +583,18 @@ situation:
 
 ### Files that would still need attention under this rule
 
-The rule is proposed, not applied. Applying it means: track the ADR and the
-Contract, move everything else under `experiments/` to private archive, and
-resolve §G.1 for the 1011 MB MSFT raw set. Steps 0 and 4 of §H.
+Applied so far: the ADR and the Contract are tracked (`5e655a7`); the Contract
+has been promoted to `docs/methodology/`; the tracked/untracked accounting in
+§A, §B, §C, §D, §E, §F, §G and §H has been corrected against direct git
+queries. Outstanding: resolve §G.1 for the 1011 MB MSFT raw set, and resolve
+§G.3 for `.kilo/worktrees`. Steps 4 and 5 of §H, scoped to untracked research
+only.
 
 ---
 
-*Inventory generated read-only. No file was moved, deleted, staged, committed,
-reset or cleaned. No `.gitignore` was modified. No production code, ADR or
-contract content was altered.*
+*Inventory first generated read-only on 2026-10-07 at `b124123`. Corrected the
+same day: the original reported `experiments/` as entirely untracked, which was
+an inference error — 46 legacy tracked research files exist there. No production
+code, ADR or methodology content was altered. The Contract was promoted to
+`docs/methodology/` with exactly one edit: line 7's self-referential `**File:**`
+header.*

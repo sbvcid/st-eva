@@ -4,7 +4,7 @@
 **Scope:** Interface, semantics, invariants and replay guarantees only.
 **Methodology baseline:** `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` (APPROVED / FROZEN, as amended by Amendment 1, Decisions 10–14).
 **Evidence base:** `experiments/aapl-historical-pe-poc/` — first POC, Q4 evidence study, Amendment 1 verification (31/31 TTM).
-**File:** `experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md`
+**File:** `docs/methodology/CONTRACT-HISTORICAL-PE.md`
 
 Nothing in this document changes the ADR, ST-EVA Core, the SEC provider, the
 admission or replay contracts, the web app, or the POC outputs. It defines what
