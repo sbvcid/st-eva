@@ -1,7 +1,0 @@
-{
-  "dataset_id": "steva-003-aapl-evidence",
-  "evaluator_sha256": "de3ffd713c76fe28ebf4d0f8b67655c4d2bdb8256b2f44b0276634736db41686",
-  "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "phase": "smoke",
-  "rows": []
-}
