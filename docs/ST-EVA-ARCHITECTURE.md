@@ -156,7 +156,7 @@ Publication / Presentation (history/, reports/, web/app.py, web/service_adapter.
 * **不屬於 `Observation` dataclass 的東西（重要）：**
   * `accession` **不是** dataclass 欄位。它必須由 `sqlite_archive.py:106-109` 的 `_accession_of()` 從 `raw["sec_fact"]["accession"]`（或 `raw["accession"]`）推導，缺失時為 `None`。
   * `concept` **不是** dataclass 欄位。它由 `sqlite_archive.py:87-103` 的 `_concept_of()` 從 `raw["sec_fact"]` 的 `taxonomy:tag` 推導，無 SEC 來源時退回 `metric`。
-  * `taxonomy`, `form`, `fiscal_year`, `fiscal_period`, `statement`, `instant`, `source_fact_id`, `source_concept_ref` 是**archive 層級的 filing identity 欄位**（見 §H.2），由 `record_observation()` 在 `filing is not None` 時另外寫入，**不在** dataclass 上。
+  * `taxonomy`, `form`, `fiscal_year`, `fiscal_period`, `statement`, `instant`, `source_fact_id`, `source_concept_ref` 是**archive 層級的 filing identity 欄位**（見 §H.2），由 `record_observation()` 在 `filing is not None` 時另外寫入，**不在** dataclass 上。注意 §H.2 的 writer boundary：此寫入只在該 `content_hash` **首次** INSERT 時發生，命中既有列時會提前 return，不 backfill。
 * **不能擁有：** 決策狀態（是否被引擎採納）、跨資料源獲勝標籤、清洗覆寫後的值。
 * **輸入：** `Ingest` 層所解析的單一事實。
 * **輸出：** 凍結的 `Observation` 資料結構，寫入 SQLite `observations` 表（Append-only）。
@@ -499,7 +499,7 @@ Source Time (available_at)
 * `archive.py`: `['data_contract']` + **function-local** `['evidence_valuation_boundary', 'registry_identity']`（見 F.2.2）
 * `sec_ingest.py`: `['archive', 'core_registry', 'coverage_semantics', 'data_contract', 'evidence_model', 'sec_provider']`
 * `investment_context.py`: `['operation_registry']` + 資料契約層依賴
-* `st_eva_runner.py`: `['archive', 'cross_validation', 'data_contract', 'evidence_valuation_boundary', 'fundamental_provider', 'investment_context', 'registry_identity', 'report_formatter', 'sec_provider', 'sqlite_archive']`
+* `st_eva_runner.py`: `['archive', 'cross_validation', 'data_contract', 'evidence_valuation_boundary', 'fundamental_provider', 'investment_context', 'registry_identity', 'report_formatter', 'sec_provider', 'sqlite_archive']`（其中 `archive` 與 `sqlite_archive` 是 **function/branch-local** import，不是 module-level；見 §F.2.3。其餘多數亦為 function-local。）
 * `web/job_manager.py`: `['web.schemas', 'web.service_adapter']`
 * `web/service_adapter.py`: `['archive', 'core_registry', 'registry_seed', 'sqlite_archive', 'st_eva_runner', 'web.schemas']`
 * `web/app.py`: `['web.job_manager', 'web.schemas']`
@@ -522,7 +522,7 @@ sqlite_archive.py:29 ──▶ archive.py
 
 ### F.2.3 分層假設被打破的三處（維護者必須知道）
 
-1. **Engine 依賴 Archive，不是反過來。** `st_eva_runner.py` 在模組層級 import `archive` 與 `sqlite_archive`，並在 CLI 路徑直接 `SQLiteArchive(args.archive_path)`（`st_eva_runner.py:2514-2516`）。§F.1 把它們畫在 Engine 之下是**語意**分層，不是 import 方向。
+1. **Engine 依賴 Archive，不是反過來。** `st_eva_runner.py` 對 `Archive` / `SQLiteArchive` 存在**實際 dependency edge**，但 import **不是 module-level**：`archive` 是 `_archive_run()` 內的 **function-local** import（`st_eva_runner.py:1985`），`sqlite_archive` 是 CLI branch 內的 function-local import（`st_eva_runner.py:2514`）。**dependency edge 與 import placement 是兩件事**，不要混為一談——runner 確實在 CLI 路徑直接 `SQLiteArchive(args.archive_path)`，但那是 branch 內取得型別，不是模組載入期建立。§F.1 把它們畫在 Engine 之下是**語意**分層，不是 import 方向。
 2. **Admission 傳遞依賴 SQLite 實作。** `evidence_valuation_boundary → evidence_query → sqlite_archive`。因此「准入層不知道儲存實作」並不成立（見規則 1 的限定說明）。
 3. **Archive 向上驅動核心管線。** replay 會重新執行 `admit()`（`archive.py:471-473`）。這是刻意的（§B.0.1），但它使 import graph 與語意分層不再是同一張圖。
 
@@ -672,9 +672,11 @@ st-eva/
 
 **Schema 已建立的欄位**（`0006:18-28`）：`taxonomy`, `accession`, `form`, `fiscal_year`, `fiscal_period`, `statement`, `instant`, `source_fact_id`（另加後續 migration 的 `source_concept_ref`）。
 
-**Writer 的實際條件**（`sqlite_archive.py:776-838`）：
+**Writer 的實際條件**（`sqlite_archive.py:756-845`）：
 
-* `record_observation()` 的預設 INSERT 欄位清單（`:776-785`）**不包含**上述任何一個欄位。
+* `record_observation()` 先計算 `content_hash = observation_content_hash(observation)`（`:756`），再以該 hash 查詢既有列（`:757-760`）。
+* **若已存在相同 `content_hash` 的列，writer 只 link documents 便 `return existing["observation_id"]`（`:761-768`）——它在 filing branch 之前就結束了。** 因此即使呼叫端傳入 `FilingRef`，只要同 hash 的列已由**不帶 `filing`** 的 writer 建立，`taxonomy/accession/form/fiscal_year/...` 就**不會**被 backfill：本路徑沒有任何 backfill（no-backfill 原則見 `0019_admissions.sql:36-39` 與 §J）。
+* 只有在**沒有**既有列時才繼續：預設 INSERT 欄位清單（`:776-785`）**不包含**任何 filing identity 欄位。
 * 只有在 **`if filing is not None:`** 分支內（`:819-838`）才會額外附加這 9 個欄位與對應的值。
 * `sqlite_archive.py:841` 是**全 repo 唯一的 `INSERT INTO observations`**，因此上述條件是唯一的寫入閘門。
 
@@ -682,17 +684,18 @@ st-eva/
 
 | 呼叫路徑 | 是否傳入 `filing` | filing identity 欄位 |
 | :--- | :--- | :--- |
-| `sec_ingest.py:1334`（SEC XBRL 增量 ingest） | **是**（`sec_ingest.py:1344` 呼叫 `_filing()`，`sec_ingest.py:1513-1542`） | 已填寫 |
+| `sec_ingest.py:1334`（SEC XBRL 增量 ingest） | **是**（`sec_ingest.py:1344` 呼叫 `_filing()`，`sec_ingest.py:1513-1542`） | 僅在該 `content_hash` **首次** INSERT 時填寫；命中既有 hash 時提前 return，不 backfill |
 | `st_eva_runner.py:2023`, `:2025`, `:2033`, `:2036`, `:2045`（price / metrics / cross-source 封存） | **否** | **全部為 NULL** |
 | `fullscope_bulk.py` | 不適用 | **不寫入**——它是雙 archive 的讀取與比對 harness（`SEMANTIC_FIELDS`, `fullscope_bulk.py:127-154`；全部為 `SELECT`），不是 writer |
 
 > [!NOTE]
 > **Current production writer paths are not uniform.**
-> 同一個 repo 內的 `docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md:356-371` 也記錄了這個落差，但其描述機制不夠精確——該文件稱「the SEC API path leaves them NULL」，實際上真正的判準是 **`filing is not None` 與否**：SEC XBRL ingest 路徑（`sec_ingest.py`）**確實**傳入了 `FilingRef`，而 `st_eva_runner.py` 的封存路徑**沒有**。
+> 同一個 repo 內的 `docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md:356-371` 也記錄了這個落差，但其描述機制不夠精確——該文件稱「the SEC API path leaves them NULL」，實際上真正的判準有兩層：**(1)** `filing is not None` 與否（SEC XBRL ingest 路徑 `sec_ingest.py` **確實**傳入 `FilingRef`，而 `st_eva_runner.py` 的封存路徑**沒有**）；**(2)** 該 `content_hash` 是否為首次寫入——**傳入 `FilingRef` 是必要條件，不是充分條件**。若同 hash 的列已由不帶 `filing` 的 writer 建立，`record_observation()` 會在 `:761-768` 提前 return，filing 欄位不會 backfill。
 > 該文件的結論本身正確且仍然有效：`observations.form` **不能**作為「哪一份申報說了這句話」的可靠 index——在非 `sec_ingest` 建立的 archive 上，該查詢會靜默回傳空結果，而證據套件本身仍帶有 form。
 
 **維護後果：**
 * 若你依賴 `observations.taxonomy` / `.form` / `.source_fact_id` 等欄位做查詢或判斷，**必須先確認該列是由哪條路徑寫入的**。
+* **傳入 `FilingRef` 是必要條件，不是充分條件：** 它只在該 `content_hash` **首次** INSERT 時生效；命中既有列時 writer 在 filing branch **之前** return（`:761-768`），**不會** backfill filing identity。不要假設「有傳 `FilingRef`」就一定有 filing 欄位。
 * 新增 ingestion 路徑時，若需要 filing identity，**必須顯式傳入 `FilingRef`**，否則欄位會靜默留空。
 * 讀取端已有雙來源容錯：`evidence_query.py` 與 `evidence_valuation_boundary.py` 都是**先讀欄位、再退回 `raw.sec_fact`**。
 
@@ -845,8 +848,19 @@ ST-EVA 今天的架構並非憑空設計，而是經歷了多輪慘痛的現實�
 ### 2.1 Historical P/E 目前【尚未】production 化（**必讀**）
 
 > [!CRITICAL]
-> **本 repo 目前沒有任何 Historical P/E 的 production pipeline。**
+> **本 repo 目前沒有任何「Historical P/E Contract 所定義的」production pipeline。**
 > 不要因為 ADR 與 Contract 寫得完整，就假設它們已被實作。
+>
+> **但這不等於 repo 完全沒有任何 historical P/E 相關的 production capability。** 既有的 legacy provider-fed `historical_pe_band` 是**另一件事**，兩者不可混為一談：
+
+**既有的 legacy capability（與 Contract 無關，不得與上述 pipeline 混淆）：**
+
+| 項目 | 路徑 | 性質 |
+| :--- | :--- | :--- |
+| `ValuationInputs.historical_pe_band` | `data_contract.py:1805` | provider-fed 的 historical P/E reference band（dataclass 欄位，預設空 dict） |
+| `STEVAEEngine.analyze()` 讀取該 band | `st_eva_runner.py:1378`（`pe_band = inputs.historical_pe_band or {}`） | 既有 reverse valuation 引擎以 band median 作為 reference multiple 之一 |
+
+> 這是 provider 餵入的粗粒度 reference band，**不是** Contract 所定義、由季度來源／證據重建出來的 engine。前者存在，後者尚未實作。
 
 **已經存在的（規格與證據）：**
 
@@ -859,9 +873,11 @@ ST-EVA 今天的架構並非憑空設計，而是經歷了多輪慘痛的現實�
 
 **尚未存在（明確清單）：**
 
-* ❌ **production Historical P/E engine**（無獨立計算模組）
-* ❌ **production runner integration**（`st_eva_runner.py` 中無 Historical P/E 路徑）
-* ❌ **production archive integration**（`0019_admissions.sql` 的 crossing scope 不含本益比類指標；見 §B.5.1）
+* ❌ **production Historical P/E engine**（無 Contract-defined 的獨立計算模組）
+* ❌ **`HistoricalPeObservation`**（Contract §C.1 定義的輸出物件；無 production 型別）
+* ❌ **quarter-level source / evidence reconstruction**（無季度證據重建）
+* ❌ **production runner integration of the new model**（`st_eva_runner.py` 中無 Contract-defined Historical P/E 路徑；既有 `historical_pe_band` 讀取**不算**，見上）
+* ❌ **production archive integration**（current evaluator crossing scope 不含本益比類指標。**這不是 migration `0019` 的限制**：`0019_admissions.sql` 建立的是 generic `admissions` persistence schema，可記錄任何 metric 的裁決；限制來自 evaluator 的常數 `V1_CROSSING_METRICS = (METRIC_REVENUE,)`（`evidence_valuation_boundary.py:103`）。見 §B.5.1）
 * ❌ **production web surface**（`web/` 中無 Historical P/E endpoint）
 
 **方法論政策 vs. 目前實作——不要混為一談：**
