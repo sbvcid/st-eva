@@ -26,21 +26,36 @@ Measured at `5df7f34`, immediately before the Contract promotion recorded below.
 
 | Count | Value |
 |---|---:|
-| Tracked files | **307** |
-| Untracked files (`-uall`) | **829** |
+| Tracked files | **308** |
+| Untracked files (`-uall`) | **0** |
 | Staged | **0** |
 | Modified (tracked) | **0** |
 | Deleted | **0** |
 
-Untracked breakdown: **all 829 are under `experiments/`**. Tracked composition:
-48 root production `*.py` modules · `docs/` 14 · `tests/` 47 · `reports/` 35 ·
-`history/` 35 · `archive/` 19 (migrations) · `web/` 49 · repo root docs 3 ·
-**`experiments/` 47** (46 legacy + the Contract, since promoted).
+Untracked breakdown: **none.** Stage 2C completed the workspace move: the last 829
+untracked research files were relocated to `research/experiments/` with
+per-file SHA-256 verification, and `/research/` was added to `.gitignore`.
 
-### 1.1 `experiments/` accounting — corrected
+| Location | Files | Tracked | Git state |
+|---|---:|---:|---|
+| `research/experiments/` | 829 | 0 | ignored (`/research/`) |
+| `research/RESEARCH-ARCHIVE-MANIFEST.json` | 1 | 1 | tracked |
+| `research/README.md` | 1 | 1 | tracked |
+| `experiments/` | 59 | 46 | 46 tracked + 13 gitignored `.pyc`, **0 untracked** |
+
+Tracked composition: 48 root production `*.py` modules · `docs/` 16 ·
+`tests/` 47 · `reports/` 35 · `history/` 35 · `archive/` 19 ·
+`web/` 49 · repo root docs 3 · **`experiments/` 46 legacy** · `research/` 2.
+
+### 1.1 `experiments/` accounting — corrected, then superseded
+
+> **Superseded by Stage 2C (2026-10-07).** The table below describes the state
+> before the relocation. `experiments/` now holds 46 tracked + 13 gitignored =
+> 59 files, with **0 untracked**. The 829 untracked research files described here
+> are at `research/experiments/`, verified hash-identical.
 
 An earlier version of this checkpoint reported the experiments tree as entirely
-untracked. That was wrong. Measured by direct query:
+untracked. That was wrong. Measured by direct query at the time:
 
 | Classification | Files | Command |
 |---|---:|---|
@@ -234,41 +249,64 @@ extended; the 20 / 24 observation requirement is unmodified.
 
 ---
 
-## 5. Current workspace cleanup state
+## 5. Current workspace state
 
-### Stage 1 complete
+### Stage 2C complete — research relocated in-repo
 
 | Step | Status |
 |---|---|
-| Governing documents tracked | **Done** — ADR and Contract committed at `5e655a7` and pushed |
-| `WORKSPACE-INVENTORY.md` | **Done** — repo root, tracked at `5df7f34` |
-| MSFT private archival copy | **Done** — 593 files / 1,063,982,608 bytes copied and SHA-256 verified, 0 mismatches, 0 missing, 0 extra |
-| Status documents tracked | **Done** — `5df7f34` |
-| Contract promoted to `docs/methodology/` | **Done** — `git mv`, one self-referential header line corrected |
-| Tracked/untracked accounting corrected | **Done** — see §1.1; 46 legacy tracked research files identified and excluded from cleanup scope |
-| Removal of research files from workspace | **Not done, by design** — nothing was deleted |
-| Cache / build cleanup | **Not done** — out of Stage 1/2 scope |
+| Governing documents tracked | **Done** — `5e655a7` |
+| `WORKSPACE-INVENTORY.md` tracked | **Done** — `5df7f34` |
+| Contract promoted to `docs/methodology/` | **Done** — `694ec96` |
+| Tracked/untracked accounting corrected | **Done** — see §1.1 |
+| Project structure contract defined | **Done** — `docs/ST-EVA-PROJECT-STRUCTURE.md`, `7464422` |
+| **829 research artifacts relocated** | **Done** — to `research/experiments/`, relative paths preserved |
+| **Archive verification** | **PASS** — 829/829 files, 1,147,661,516 bytes both sides, per-file SHA-256: missing 0, extra 0, mismatch 0 |
+| **Source research removed from `experiments/`** | **Done** — relocated, not deleted; every file exists at its new location hash-identical |
+| 46 legacy tracked experiments retained | **Done** — unmoved, un-untracked, undeleted |
+| `/research/` added to `.gitignore` | **Done** — working tree reports 0 untracked |
+| `.kilo/worktrees` | **Untouched** |
+| Cache / build cleanup | **Not done** — out of scope |
 
-### experiments — 888 files, 1100.9 MB (889 before the Contract moved out)
+**No research artifact was deleted.** The relocation is a move with hash
+verification, and the manifest
+`research/RESEARCH-ARCHIVE-MANIFEST.json` records every file's SHA-256 at both
+locations.
 
-| Directory | Files | Size | Tracked |
-|---|---:|---:|---:|
-| `experiments/aapl-historical-pe-poc/` | 829 | 1094.54 MB | 0 (Contract promoted out) |
-| ├ `contract/msft_validation/` | 593 | 1014.69 MB | 0 |
-| ├ `q4_study/` | 167 | 77.97 MB | 0 |
-| ├ root scripts | 7 | — | 0 |
-| ├ `raw/` | 48 | 1.24 MB | 0 |
-| ├ `out/` | 5 | 0.20 MB | 0 |
-| └ `amendment1_verify/` | 9 | 0.33 MB | 0 |
-| `experiments/002-cold-start/` | 44 | 4.56 MB | **31** (+13 gitignored `.pyc`) |
-| `experiments/001-context-only/` | 15 | 1.85 MB | **15** |
+### `research/` — the permanent research home (830 files, 1094.8 MB)
 
-The Contract no longer sits inside this tree — it is at
-`docs/methodology/CONTRACT-HISTORICAL-PE.md`, tracked. The rule it used to
-depend on ("a contract is governed regardless of directory") has been replaced by
-the directory itself.
+Defined by `docs/ST-EVA-PROJECT-STRUCTURE.md`. Gitignored. Contains:
 
-### Private archive — `C:\st-eva-private-archive`
+| Path | Files | Size |
+|---|---:|---:|
+| `research/experiments/aapl-historical-pe-poc/contract/msft_validation/` | 593 | 1014.69 MB |
+| `research/experiments/aapl-historical-pe-poc/q4_study/` | 167 | 77.97 MB |
+| `research/experiments/aapl-historical-pe-poc/raw/` | 48 | 1.24 MB |
+| `research/experiments/aapl-historical-pe-poc/out/` | 5 | 0.20 MB |
+| `research/experiments/aapl-historical-pe-poc/amendment1_verify/` | 9 | 0.33 MB |
+| `research/experiments/aapl-historical-pe-poc/*.py` (root scripts) | 7 | — |
+| `research/RESEARCH-ARCHIVE-MANIFEST.json` | 1 | 354 KB |
+| `research/README.md` | 1 | — |
+| **Total** | **830** | **1094.8 MB** |
+
+A study that finishes **stays here**. It is not moved "somewhere more permanent",
+and it is not moved on the basis of perceived research value.
+
+### `experiments/` — frozen legacy (59 files, 4.6 MB)
+
+| Directory | Files | Tracked |
+|---|---:|---:|
+| `experiments/001-context-only/` | 15 | **15** |
+| `experiments/002-cold-start/` | 44 | **31** (+13 gitignored `.pyc`) |
+| **Total on disk** | **59** | **46** |
+
+No new research enters this directory. The Contract no longer sits inside it — it
+is at `docs/methodology/CONTRACT-HISTORICAL-PE.md`, tracked.
+
+### Prior private archive — `C:\st-eva-private-archive` (historical)
+
+Superseded by `research/` as the working destination. Retained unchanged; not
+the primary archive.
 
 | Item | Value |
 |---|---|
@@ -303,40 +341,35 @@ private archive and the workspace copy is intact.
 
 ## 6. Next milestone
 
-### Workspace Stabilization
-
-Finish the disposition decisions that Stage 1 deliberately deferred, then execute
-the verified-copy-then-remove sequence. Per `WORKSPACE-INVENTORY.md` §H:
+### Workspace Stabilization — nearly complete
 
 | Step | Action | Reversible |
 |---:|---|---|
 | 0 | ~~Governing documents under version control~~ | **done** — `5e655a7` |
-| 0b | ~~Promote the Contract to `docs/methodology/`~~ | **done** |
+| 0b | ~~Promote the Contract to `docs/methodology/`~~ | **done** — `694ec96` |
 | 0c | ~~Correct the tracked/untracked accounting~~ | **done** — §1.1 |
-| 1 | Verify untracked baseline under `experiments/` (829) | — |
-| 2 | Determine whether `eastern-anglerfish` / `pepper-chess` are live; leave alone if active | — |
-| 3 | Decide the 1011.67 MB MSFT raw bulk | — |
-| 4 | Copy the **untracked** research under `experiments/` to private archive, preserving paths; verify file count and byte total | yes, if verified |
-| 5 | Only after step 4 verifies, remove those **untracked** files from the working copy | **no** |
+| 0d | ~~Define the permanent directory structure~~ | **done** — `7464422` |
+| 0e | ~~Relocate 829 research files to `research/experiments/`, hash-verified~~ | **done** — PASS |
+| 0f | ~~Add `/research/` to `.gitignore`~~ | **done** — 0 untracked |
+| 1 | ~~Confirm untracked baseline was 829 before touching anything~~ | **done** |
+| 2 | Determine whether `eastern-anglerfish` / `pepper-chess` worktrees are live | **outstanding** |
+| 3 | Decide whether to retain the 1011.67 MB MSFT raw bulk in `research/` | **outstanding** |
 | 6 | Delete `__pycache__`, `.pytest_cache`, `web/frontend/dist` | yes |
-| 7 | Confirm untracked count under `experiments/` reaches 0 | — |
 
-Step 4's verification against §D of the inventory is what makes step 5 safe.
-Skipping it turns step 5 into the most destructive available action.
+The relocation was the destructive step and it was completed safely: per-file
+SHA-256 was compared across all 829 files *before* any source was removed, and
+recorded in `research/RESEARCH-ARCHIVE-MANIFEST.json`. Had any file mismatched,
+every source would still have been intact.
 
-**Steps 4 and 5 are scoped to untracked research only.** The 46 legacy tracked
-research files of §1.1 — all of `001-context-only` and 31 files of
-`002-cold-start` — are already in git and are **not** copied to private archive
-and **not** removed. Concretely, do not delete those two directories; delete only
-`experiments/aapl-historical-pe-poc/`.
-
-Standing directory rule (`WORKSPACE-INVENTORY.md` §I), summarised: production /
-ADR / contract / test / spec → Git, tracked. Contract → `docs/methodology/`.
-Research / POC / raw evidence → private archive, **untracked portion only**.
-Generated output → regenerable. Cache / build → delete. Two rules must persist:
-**a cleanup targeting a directory never removes a file a tracked document cites**,
-and **cleanup scope is defined by git tracking status, not by directory** — a
-directory may hold both, and only the untracked half is in scope.
+**Standing directory rule.** `docs/ST-EVA-PROJECT-STRUCTURE.md` (`7464422`) is
+now canonical and supersedes the conventions in `WORKSPACE-INVENTORY.md` §I.
+In summary: production / methodology / contracts / tests → Git, tracked;
+contract → `docs/methodology/`; **all research → `research/`, permanently, not
+relocated when a study completes**; runtime data → `data/`; migrations →
+`archive/`; cache and build output → deletable. Two rules persist above all
+others: research artifacts are preserved by default and low value does not imply
+deletion, and cleanup scope is defined by git tracking status rather than by
+directory.
 
 ---
 
@@ -370,13 +403,20 @@ decide, and the Contract already leaves it OPEN.
 ---
 
 *Checkpoint first recorded from direct workspace inspection at `5e655a7`;
-updated at `5df7f34`; corrected and the Contract promoted 2026-10-07.*
+updated at `5df7f34`; Contract promoted at `694ec96`; structure contract at
+`7464422`; research relocation completed (Stage 2C), 2026-10-07.*
 
-*Corrections in this revision: the tracked/untracked accounting of `experiments/`
-was wrong — 46 legacy tracked research files exist and are now identified and
-excluded from cleanup scope (§1.1); the Contract was promoted to
-`docs/methodology/` with one self-referential header line changed.*
+*Revision history of this file: (a) the tracked/untracked accounting of
+`experiments/` was corrected — 46 legacy tracked research files exist and are
+excluded from cleanup scope (§1.1); (b) the Contract was promoted to
+`docs/methodology/` with one self-referential header line changed; (c) Stage 2C
+relocated 829 research artifacts to `research/experiments/` with per-file
+SHA-256 verification (PASS), removed their source copies, and added `/research/`
+to `.gitignore`.*
 
-*No research was performed. No production code, Core, Web, ADR or methodology
-content was modified. Nothing under `experiments/` was moved or deleted. The 46
-legacy tracked research files remain tracked and untouched.*
+*No research was performed. No production code, Core, Web, ADR, Contract,
+methodology content, database schema or test was modified. The 46 legacy tracked
+research files remain tracked and untouched in `experiments/`. **No research
+artifact was deleted** — the 829 files were relocated, and every one exists at
+its new location with a matching hash recorded in
+`research/RESEARCH-ARCHIVE-MANIFEST.json`.*

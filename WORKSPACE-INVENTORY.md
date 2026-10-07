@@ -31,27 +31,28 @@ post-promotion figures.
 | **staged** | 0 | `git status --porcelain=v1 -uall` (no leading non-`?` column) |
 | **modified tracked** | 0 | same (no ` M` / `M ` entries) |
 | **deleted** | 0 | same (no ` D` / `D ` entries) |
-| **untracked (files)** | **829** | `git status --porcelain=v1 -uall` (829 lines) |
-| **tracked files** | **307** | `git ls-files` |
+| **untracked (files)** | **0** | `git status --porcelain=v1 -uall` |
+| **tracked files** | **308** | `git ls-files` |
 | **branch** | `master`, in sync with `origin/master` | `git status` |
 
-Untracked breakdown (`-uall`, per file, not per collapsed directory):
+Untracked breakdown: **none.** As of 2026-10-07 (Stage 2C) the last 829 untracked
+research files were relocated to `research/experiments/` and `/research/` was
+added to `.gitignore`, so the working tree carries no untracked material.
 
-| Untracked path | Files |
-| --- | --- |
-| `experiments/**` | 829 |
-| `docs/ST-EVA-DATA-LAYER-AUDIT.md` | 1 |
-| `WORKSPACE-INVENTORY.md` | 1 |
-| `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | 1 (tracked since `5e655a7`) |
-
-Note: plain `git status` collapses the experiments tree into a single line. The
-829 figure comes from `-uall`. Do not trust the collapsed form for sizing work.
+The `research/` tree holds 830 files on disk — 829 relocated research artifacts
+plus `RESEARCH-ARCHIVE-MANIFEST.json`. It is **not** tracked and **not** counted
+here; its integrity record is
+`research/RESEARCH-ARCHIVE-MANIFEST.json`.
 
 ### A.1 Reconciling the three experiments/ figures
 
-`experiments/` holds **888 files on disk** — 889 before the Contract was promoted
-out of it. That splits three ways, and the split
-is the thing the first version of this file got wrong:
+> **Historical.** These figures describe the workspace *before* Stage 2C. The
+> 829 untracked files they describe no longer exist under `experiments/`; they
+> were relocated to `research/experiments/` with per-file SHA-256 verification.
+> The current figures are in §A.0.
+
+At the time of the survey, `experiments/` held **888 files on disk**. That splits
+three ways, and the split is the thing the first version of this file got wrong:
 
 | Classification | Files | Source of the number |
 | --- | ---: | --- |
@@ -107,7 +108,8 @@ likely source of future "why is my repo 110 MB of nothing" confusion.
 | `.git/` | 270 | 10.6 MB | — | version control | |
 | `.kilo/` | 917 | 110.6 MB | 0 | tooling / agent worktrees | excluded via `.git/info/exclude` |
 | `web/` | 9373 | 165.8 MB | 49 | production + build artifact | `frontend/node_modules` = 165.2 MB |
-| `experiments/` | 888 | **1100.9 MB** | 46 | research | 47 before the Contract promotion; 46 legacy tracked + 829 untracked + 13 gitignored `.pyc` |
+| `research/` | 830 | **1094.8 MB** | 0 | **research — permanent, gitignored** | 829 relocated research artifacts + `RESEARCH-ARCHIVE-MANIFEST.json`; verified by per-file SHA-256 |
+| `experiments/` | 59 | 4.6 MB | 46 | **legacy research — frozen** | 46 tracked legacy files + 13 gitignored `.pyc`; **0 untracked** since Stage 2C |
 | `tests/` | 174 | 5.2 MB | 47 | tests | 127 of 174 files are `__pycache__` |
 | `history/` | 35 | 2.6 MB | 35 | generated evidence records | `_market_implied_assumptions.json` per issuer |
 | `__pycache__/` (root) | 82 | 2.4 MB | 0 | cache | ignored |
@@ -425,18 +427,18 @@ tracked (ST-EVA 2.6.1b), so its status as a reference is already settled by
 history; whether the remaining disposition should change is not open. **Not in
 cleanup scope.**
 
-### G.5 Unclassified files
+### G.5 Unclassified files — **RESOLVED**
 
-`git status -uall` reports 829 untracked files, all under `experiments/`.
-§C accounts for all of them. No orphans were found. But this inventory is a
-snapshot of directory *structure* — individual file contents were not audited,
-so a file that is structurally accounted for but semantically dead would not
-show up here.
+Previously `git status -uall` reported 829 untracked files under `experiments/`.
+All 829 were relocated to `research/experiments/` in Stage 2C and verified by
+per-file SHA-256; the working tree now reports **0 untracked**. No orphans.
 
 ### G.6 Known archived-artifact staleness — accepted, do not "fix"
 
-Twelve **untracked** MSFT research files name the Contract's former path
-`experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md`:
+Twelve MSFT research files name the Contract's former path
+`experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md`. They are
+now at `research/experiments/aapl-historical-pe-poc/contract/msft_validation/`
+and remain byte-identical to what was archived:
 
 | File | Kind |
 | --- | --- |
@@ -471,31 +473,28 @@ irreversible action to the end.
 | Step | Action | Reversible? | Precondition |
 | --- | --- | --- | --- |
 | 0 | ~~**Get the two governing documents under version control**~~ | Yes | **done** — `5e655a7` |
-| 0b | ~~**Promote the Contract to `docs/methodology/`**~~ | Yes | **done** — 2026-10-07 |
-| 0c | ~~**Correct the tracked/untracked accounting in this file and the project-status checkpoint**~~ | Yes | **done** — see §A.1 |
-| 1 | Verify `git status -uall -- experiments` reads **829** before touching anything | — | baseline |
-| 2 | Confirm whether `.kilo/worktrees` sessions are live; leave alone if either is active | — | must resolve first |
-| 3 | Resolve §G.1 (MSFT raw bulk). Compress-then-verify rather than delete-then-hope. | — | manifest coverage confirmed |
-| 4 | Copy the **untracked** research under `experiments/` to private archive storage, preserving paths. Verify file count and byte total before declaring success. | Yes, if verified | step 3 resolved |
-| 5 | Only after step 4 verifies, remove those **untracked** files from the working copy. | **No** | step 4 verified |
-| 6 | Delete `__pycache__`, `.pytest_cache`, `web/frontend/dist`. Leave `node_modules` unless disk pressure demands otherwise. | Yes (`npm ci`) | none |
-| 7 | Final `git status -uall -- experiments`; expected 0. | — | — |
+| 0b | ~~**Promote the Contract to `docs/methodology/`**~~ | Yes | **done** — `694ec96` |
+| 0c | ~~**Correct the tracked/untracked accounting**~~ | Yes | **done** — see §A.1 |
+| 0d | ~~**Define the permanent directory structure**~~ | Yes | **done** — `docs/ST-EVA-PROJECT-STRUCTURE.md`, `7464422` |
+| 0e | ~~**Relocate the 829 untracked research files to `research/experiments/`**~~ | Yes, by relocation | **done** — per-file SHA-256 PASS, `missing=0 extra=0 mismatch=0` |
+| 0f | ~~**Add `/research/` to `.gitignore`**~~ | Yes | **done** — working tree now reports 0 untracked |
+| 1 | ~~Verify the relocation manifest~~ | — | **done** — `research/RESEARCH-ARCHIVE-MANIFEST.json` |
+| 2 | Confirm whether `.kilo/worktrees` sessions are live; leave alone if either is active | — | **still outstanding** |
+| 3 | Resolve §G.1 (MSFT raw bulk retention) | — | **still outstanding** |
+| 4 | Delete `__pycache__`, `.pytest_cache`, `web/frontend/dist`. Leave `node_modules` unless disk pressure demands otherwise. | Yes (`npm ci`) | none |
 
-**Scope correction, 2026-10-07.** Steps 4–5 originally read "copy `experiments/**`"
-and "remove the `experiments/` tree". That would have swept in the **46 legacy
-tracked research files** of §A.1. Steps 4 and 5 now say *untracked* research
-only. The legacy tracked files stay in the working copy and in git; they are
-already versioned and archiving them would create a duplicate that git does not
-know about. Concretely: **do not delete `experiments/001-context-only/` or
-`experiments/002-cold-start/`** — delete only `experiments/aapl-historical-pe-poc/`
-minus the already-promoted Contract.
+**Outcome.** The relocation is complete and verified. `experiments/` now contains
+**only** the 46 tracked legacy files plus 13 gitignored `.pyc` — the directory
+exists solely as the frozen legacy record required by
+`docs/ST-EVA-PROJECT-STRUCTURE.md` §2.11. All 829 research artifacts now live
+permanently under `research/experiments/`, with their relative paths, bytes and
+SHA-256 hashes recorded in the archive manifest. **Nothing was deleted**: every
+one of the 829 files exists at its new location, hash-identical.
 
-Three things this sequence deliberately does **not** do: it never runs
-`git add .`, `git clean`, or `git reset`; it never deletes from `experiments/`
-before a verified copy exists elsewhere; and it never touches tracked research.
-Step 4's verification (file count + byte total against §D) is what makes step 5
-safe — skipping it turns step 5 into the single most destructive action available
-in this workspace.
+Two things this sequence deliberately never did: it never ran `git add .`,
+`git clean`, or `git reset`; and it never removed a source file before its hash
+matched at the destination. The per-file SHA-256 comparison is what made step 0e
+reversible — had any file mismatched, the source would still be intact.
 
 ---
 
@@ -526,11 +525,17 @@ A file's directory determines its fate. Decide at creation, never later.
 | tests | `tests/` | tracked |
 | report | `reports/` | tracked |
 | archive | `archive/` | tracked |
-| research | `experiments/**` — **untracked portion only** | **not** tracked |
-| research (legacy) | `experiments/001-context-only/`, `experiments/002-cold-start/` | **tracked** — see §A.1 |
-| raw evidence | `experiments/**/raw/**` | **not** tracked |
-| generated output | `experiments/**/out/**` | **not** tracked |
+| **research** | **`research/**`** — permanent home, all new research | **not** tracked (`/research/` gitignored) |
+| research (legacy) | `experiments/001-context-only/`, `experiments/002-cold-start/` | **tracked** — frozen, see §A.1 |
+| research (historical) | `research/experiments/aapl-historical-pe-poc/**` — relocated from `experiments/` | **not** tracked |
+| raw evidence | `research/**/raw/**` | **not** tracked |
+| generated output | `research/**/out/**` | **not** tracked |
 | cache | `__pycache__`, `.pytest_cache`, `web/frontend/dist` | ignored |
+
+> **Superseded.** This section restates rules that are now canonically defined in
+> `docs/ST-EVA-PROJECT-STRUCTURE.md` (`7464422`). Where the two differ, that
+> document governs. In particular `research/` is now the permanent home for all
+> research — a completed study is **not** relocated out of it.
 
 ### The exception that must be written down
 
