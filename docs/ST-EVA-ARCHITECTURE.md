@@ -391,6 +391,24 @@ V1_CROSSING_METRICS: Tuple[str, ...] = (METRIC_REVENUE,)
 * **Why:** 價格是估值分母的核心基準。替換價格將徹底破壞歷史時間點的真實性。
 * **What breaks if violated:** 產生歷史穿透偏差，重現出完全虛假的市場估值。
 
+### 19. EDGAR-generated renderings are not distinguishable from filed documents with current evidence
+
+**VERIFIED ARCHITECTURAL FINDING — current evidence boundary, not an implementation detail.**
+
+* **Rule:** 目前歸檔的 provenance 證據，**不足以**可靠區分 EDGAR 自行產生的 rendering 與 filer 自行提交的 document。任何下游階段（3B / 3C）**嚴禁**自行發明一個 filer-authored / EDGAR-generated 分類器，也**嚴禁**僅因某文件「看起來像 EDGAR 產物」就將其排除。
+* **Evidence basis（已於 SEC 實際回應驗證，非推測）:**
+    * EDGAR directory manifest (`index.json`) 提供 `filename` / MIME `type` / `size` / `last-modified`。
+    * Full submission SGML 提供 `<DOCUMENT>` 序列與 `<TYPE>`。
+    * 在已驗證的 AAPL 樣本中，EDGAR 生成的 rendering 與 filer 相關資源**共用泛用 `<TYPE>` 值**（例如 `XML`）。`aapl-20260730_htm.xml`（filer 的 inline XBRL，3C 需要）與 `report.css`（純 EDGAR 產物）同為 `<TYPE>XML</TYPE>`，且同時出現在兩份 manifest 中。
+    * 因此**檔案副檔名與 `<TYPE>` 皆不足以**構成可靠分類的證據。
+* **Architectural consequence:**
+    * 保留此證據邊界本身。`filing_documents` 只宣告「該 filename 是此 filing 的一份文件」；它不承載 provenance role 的判定。
+    * 目前生效且唯一有實證支撐的 eligibility 規則是**雙 manifest 互證**（directory ∧ submission）。此規則確實、且僅僅排除了 EDGAR 的三個 transmission products（`-index.html`、`-index-headers.html`、`.txt`）——它們只出現在 directory manifest。
+    * 未來若要取得可靠區分，**必須先取得新的、經過驗證的證據，並另做一次架構決策**；不得在本階段默默補上。
+* **This finding does NOT imply** 所有此類檔案都是 substantive filing documents。它只表示：其 provenance role 目前無法可靠判定到足以支持推斷式分類的程度。與 invariant 11（unknown / unavailable / inapplicable / refused 不可互換）、invariant 14（不得靜默替代不可用輸入）同一性質。
+* **Why:** 3C 若為尋找 XBRL instance 而假設「`<TYPE>XML</TYPE>` 必定是 filer-authored」，將同時造成兩種破壞——對真正的 EDGAR 產物誤判為證據，以及把一個未經驗證的假設固化成架構事實。
+* **Where it is pinned:** `tests/test_sec_document_bytes.py`（14 of 17 eligible；3 個 transmission products 被排除；7 個 EDGAR-generated rendering **被納入且未經排除**）。
+
 ---
 
 # E. Architecture Philosophy
