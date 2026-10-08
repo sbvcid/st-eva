@@ -240,6 +240,11 @@ class SECDocument:
 DOCUMENT_COMPANY_CONCEPT = "SEC_COMPANY_CONCEPT"
 DOCUMENT_SUBMISSIONS = "SEC_SUBMISSIONS"
 DOCUMENT_TICKER_MAP = "SEC_TICKER_MAP"
+DOCUMENT_FILING = "SEC_FILING_DOCUMENT"
+
+ARCHIVES_HOST = "https://www.sec.gov"
+ARCHIVES_PATH = "/Archives/edgar/data/"
+ARCHIVES_API_HOST = "https://data.sec.gov"
 
 
 def _document_type_for(uri: str) -> str:
@@ -247,12 +252,452 @@ def _document_type_for(uri: str) -> str:
         return DOCUMENT_COMPANY_CONCEPT
     if "/submissions/" in uri:
         return DOCUMENT_SUBMISSIONS
+    # A filing document served off the Archives path. Checked before the
+    # fallback, so the three classifications above are unchanged and a ticker
+    # map URL is still a ticker map.
+    if ARCHIVES_PATH in uri:
+        return DOCUMENT_FILING
     return DOCUMENT_TICKER_MAP
 
 
 def content_hash_of(payload: bytes) -> str:
     """The identity of a document's bytes, always over the uncompressed form."""
     return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+# -- filing resources ------------------------------------------------------
+#
+# Four SEC resources, deliberately not one. The XBRL endpoints on `data.sec.gov`
+# are already reachable; the three below live on `www.sec.gov` and supply
+# something those endpoints cannot: which documents a filing contains, what the
+# SEC calls each of them, and their bytes.
+#
+# The registration identity for the Archives host is declared here rather than
+# written here. Registration is `store.record_source(...)` and belongs to the
+# ingestor, which is Phase 2; a provider that persisted rows would be doing
+# something this module is not allowed to do.
+#
+# `SEC_ARCHIVES_PROVIDER` repeats `sec_ingest.SEC_SOURCE` because `sec_ingest`
+# imports this module and an import back would be a cycle. The repetition is
+# pinned by a test that asserts the two constants are equal.
+SEC_ARCHIVES_PROVIDER = "SecEdgar"
+SEC_ARCHIVES_SOURCE_TYPE = SourceType.REGULATORY_FILING.value
+
+SEC_ARCHIVES_SOURCE_REGISTRATION: Dict[str, Any] = {
+    "provider": SEC_ARCHIVES_PROVIDER,
+    "source_type": SEC_ARCHIVES_SOURCE_TYPE,
+    "base_url": ARCHIVES_HOST,
+    "notes": (
+        "SEC EDGAR Archives: the documents inside one filing. The submissions "
+        "index names a filing's primary document as a filename but does not "
+        "enumerate the filing, so exhibits, the XBRL instance and the SGML "
+        "header are only reachable from here. index.json reports a MIME type "
+        "and is not the SEC <TYPE>; the two are separate vocabularies and this "
+        "source never substitutes one for the other."
+    ),
+    # Unlike the XBRL endpoints, which arrive aggregated across dimension
+    # members, a filing document is the filer's own bytes and keeps them. An
+    # EX-101 instance carries every member a fact was reported with.
+    "retains_dimensions": "NONE",
+    "aggregation_note": (
+        "Documents are stored byte-exact. Hashing is over the uncompressed "
+        "response body, so the same declaration holds whether or not the "
+        "transport compressed it."
+    ),
+}
+
+# The SGML header's ACCEPTANCE-DATETIME is a label, not a policy. It is exposed
+# so a caller can record which producer supplied an instant without this module
+# choosing between two producers or ranking them.
+ACCEPTANCE_SOURCE_SGML_HEADER = "SGML_HEADER_ACCEPTANCE_DATETIME"
+
+
+class SecFilingParseError(ValueError):
+    """
+    A filing payload that is not the shape the SEC publishes.
+
+    Distinct from a transport failure: a 404 means the filing is not there, a
+    parse error means something answered and the answer was not a filing. The two
+    are kept apart so a caller can tell "absent" from "corrupt", which are
+    different answers and neither of which is a reason to invent documents.
+    """
+
+
+@dataclass(frozen=True)
+class FetchedDocument:
+    """
+    One byte-exact response, before anything has parsed it.
+
+    `content` is the uncompressed body exactly as served. `content_hash` is
+    `content_hash_of(content)`, the same function every other capture path uses,
+    so hashing here and hashing at persistence cannot disagree.
+
+    Nothing in this object is re-encoded. A parser may decode `content` to read
+    it, and what it returns is derived from those decoded bytes; the bytes
+    themselves are never rebuilt from the parsed form.
+    """
+
+    uri: str
+    canonical_uri: Optional[str]
+    content: bytes
+    content_hash: str
+    media_type: Optional[str]
+    http_status: int
+    byte_size: int
+    fetched_at: str
+
+
+@dataclass(frozen=True)
+class DirectoryEntry:
+    """
+    One entry of an EDGAR filing directory listing.
+
+    There is no `sec_document_type` field and that is the point. `index.json`
+    does not carry the SEC `<TYPE>`; its `type` is a MIME type such as `text.gif`
+    or `compressed.gif`. An entry therefore states what the directory listing
+    said and nothing more, and it cannot be used to name an exhibit.
+
+    `source_ordinal` is this entry's 1-based position in `directory.item`, kept
+    in EDGAR's own order. It is not comparable with the ordinal of the same
+    document in the SGML `<DOCUMENT>` sequence: measured on two real filings,
+    those two sequences agree at zero of seventeen and seven of seventy-nine
+    positions respectively, so treating them as one sequence would pair every
+    document with the wrong one.
+
+    `byte_size` is `None` where EDGAR publishes an empty `size`, which it does
+    for its own index artefacts. An absent size is not a zero-byte document.
+    """
+
+    source_ordinal: int
+    filename: Optional[str]
+    mime_type: Optional[str]
+    byte_size: Optional[int]
+    last_modified: Optional[str]
+
+
+@dataclass(frozen=True)
+class FilingDirectory:
+    uri: str
+    content_hash: str
+    entries: Tuple[DirectoryEntry, ...]
+
+
+@dataclass(frozen=True)
+class SubmissionDocument:
+    """
+    One `<DOCUMENT>` block of a full submission.
+
+    `sec_document_type` is the SEC `<TYPE>`: `8-K`, `EX-99.1`, `EX-99.2`,
+    `EX-101.INS`, `GRAPHIC`, `XML`. `filename` and `description` are each
+    independently absent or empty, because a filing legitimately omits them.
+
+    `source_ordinal` is the block's 1-based position in the SGML sequence, and
+    the same `<TYPE>` legitimately repeats -- one filing carried 62 blocks of
+    `<TYPE>XML</TYPE>`, the SEC's own rendered report files. That is why neither
+    the ordinal nor the type can serve as an identity, and why this object
+    carries no assumption that a filename is unique.
+    """
+
+    source_ordinal: int
+    sec_document_type: Optional[str]
+    filename: Optional[str]
+    description: Optional[str]
+
+
+@dataclass(frozen=True)
+class SubmissionHeader:
+    """
+    The SGML header a filing carries about itself.
+
+    Every field is a raw declaration. `None` means the header did not mention
+    the field; `""` means it mentioned it and left it empty. Those are different
+    answers and neither is collapsed into the other.
+
+    `acceptance_datetime` is the header's own `ACCEPTANCE-DATETIME` element,
+    which EDGAR publishes as an Eastern Time wall clock. It is not
+    `filed_as_of_date`, which is the calendar day the filing was accepted for
+    dissemination, and the two are not interchangeable: the filings index serves
+    the same instant as a UTC timestamp, and recovering the wall clock from that
+    requires the Eastern Time offset, which no resource here supplies.
+
+    `item_information` holds the header's item *titles* verbatim and
+    `item_information_count` how many the header listed. The submissions index
+    carries item *codes* for the same filing. They are complementary rather than
+    conflicting, and this object never merges them: pairing a code with a title
+    would be an inference from list order, and this module makes inferences
+    about nothing.
+
+    `fiscal_year_end` is kept as the raw four-character form EDGAR publishes.
+    It is a date anchor, not a month: one filer's 2013 filings declared `0929`
+    and its 2026 filings declared `0926`, so reducing either to a month integer
+    would lose the drift.
+    """
+
+    accession_number: Optional[str] = None
+    conformed_submission_type: Optional[str] = None
+    conformed_period_of_report: Optional[str] = None
+    item_information: Tuple[str, ...] = ()
+    item_information_count: int = 0
+    filed_as_of_date: Optional[str] = None
+    acceptance_datetime: Optional[str] = None
+    acceptance_source: Optional[str] = None
+    public_document_count: Optional[int] = None
+    fiscal_year_end: Optional[str] = None
+
+    @property
+    def has_acceptance_datetime(self) -> bool:
+        """Whether the header declared an instant at all."""
+        return self.acceptance_datetime is not None
+
+
+@dataclass(frozen=True)
+class FullSubmission:
+    """One parsed full submission: its header and its documents, in EDGAR's order."""
+
+    uri: str
+    content_hash: str
+    header: SubmissionHeader
+    documents: Tuple[SubmissionDocument, ...]
+
+
+def filing_directory_url(cik: str, accession: str) -> str:
+    """The `index.json` that lists one filing's directory."""
+    return (
+        f"{ARCHIVES_HOST}{ARCHIVES_PATH}{int(cik)}"
+        f"/{accession.replace('-', '')}/index.json"
+    )
+
+
+def full_submission_url(cik: str, accession: str) -> str:
+    """The `.txt` carrying one filing's SGML header and every document inline."""
+    return (
+        f"{ARCHIVES_HOST}{ARCHIVES_PATH}{int(cik)}"
+        f"/{accession.replace('-', '')}/{accession}.txt"
+    )
+
+
+def filing_document_url(cik: str, accession: str, filename: str) -> str:
+    """One document inside a filing, by the filename its manifest declared."""
+    return (
+        f"{ARCHIVES_HOST}{ARCHIVES_PATH}{int(cik)}"
+        f"/{accession.replace('-', '')}/{filename}"
+    )
+
+
+def _optional_text(value: Any) -> Optional[str]:
+    """A JSON string, or `None` for an absent or non-string value.
+
+    An empty string survives as an empty string. `index.json` publishes an empty
+    `size` for its own index artefacts and an empty `name` would be a real
+    defect rather than a missing value; neither is silently promoted to a value
+    the resource did not give.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return None
+    return value
+
+
+def _optional_size(value: Any) -> Optional[int]:
+    """`index.json` publishes `size` as a *string*, and empty for index artefacts."""
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_filing_directory(payload: bytes, uri: str) -> FilingDirectory:
+    """
+    Parse an EDGAR filing directory listing, in EDGAR's own order.
+
+    Deterministic: the same bytes always yield the same entries in the same
+    sequence, and nothing is sorted, deduplicated or inferred. The three EDGAR
+    index artefacts every filing carries (`-index.html`, `-index-headers.html`
+    and the `.txt`) are returned like any other entry, because whether a
+    directory entry is a filed document or an artefact EDGAR generated is a
+    question about the SGML manifest, and answering it here would mean guessing
+    from a filename.
+    """
+    try:
+        document = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SecFilingParseError(
+            f"filing directory at {uri} is not JSON: {error}"
+        ) from error
+    if not isinstance(document, dict):
+        raise SecFilingParseError(
+            f"filing directory at {uri} is not a JSON object"
+        )
+    directory = document.get("directory")
+    if not isinstance(directory, dict):
+        raise SecFilingParseError(
+            f"filing directory at {uri} has no `directory` object"
+        )
+    items = directory.get("item")
+    if not isinstance(items, list):
+        raise SecFilingParseError(
+            f"filing directory at {uri} has no `directory.item` list"
+        )
+    entries: List[DirectoryEntry] = []
+    for position, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise SecFilingParseError(
+                f"filing directory at {uri} entry {position + 1} is not an object"
+            )
+        entries.append(DirectoryEntry(
+            source_ordinal=position + 1,
+            filename=_optional_text(item.get("name")),
+            mime_type=_optional_text(item.get("type")),
+            byte_size=_optional_size(item.get("size")),
+            last_modified=_optional_text(item.get("last-modified")),
+        ))
+    return FilingDirectory(
+        uri=uri, content_hash=content_hash_of(payload), entries=tuple(entries),
+    )
+
+
+_HEADER_LINE = re.compile(r"^([A-Z][A-Z0-9 \-]*?):[ \t]*(.*)$")
+
+
+def parse_sgml_header(text: str) -> SubmissionHeader:
+    """
+    Parse the SGML header, keeping every declaration raw.
+
+    Header lines are `KEY:<whitespace>value`, and several keys repeat --
+    `ITEM INFORMATION` once per item, `FORMER COMPANY` once per former name. A
+    repeated scalar is taken as the first occurrence rather than silently
+    concatenated, because a concatenation would invent a value EDGAR never
+    wrote.
+
+    `ACCEPTANCE-DATETIME` is not one of these: EDGAR publishes it as an XML
+    element inside the header rather than as a `KEY: value` line, so it is read
+    in its own `<ACCEPTANCE-DATETIME>` form.
+    """
+    accession: Optional[str] = None
+    form: Optional[str] = None
+    period: Optional[str] = None
+    filed: Optional[str] = None
+    acceptance: Optional[str] = None
+    document_count: Optional[int] = None
+    fiscal_year_end: Optional[str] = None
+    items: List[str] = []
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        match = _HEADER_LINE.match(stripped)
+        if match is None:
+            continue
+        key, value = match.group(1).strip(), match.group(2).strip()
+        if key == "ACCESSION NUMBER" and accession is None:
+            accession = value
+        elif key == "CONFORMED SUBMISSION TYPE" and form is None:
+            form = value
+        elif key == "CONFORMED PERIOD OF REPORT" and period is None:
+            period = value
+        elif key == "FILED AS OF DATE" and filed is None:
+            filed = value
+        elif key == "PUBLIC DOCUMENT COUNT" and document_count is None:
+            document_count = int(value) if value.isdigit() else None
+        elif key == "FISCAL YEAR END" and fiscal_year_end is None:
+            fiscal_year_end = value
+        elif key == "ITEM INFORMATION":
+            items.append(value)
+
+    # Verified against a real submission: EDGAR writes
+    # `<ACCEPTANCE-DATETIME>20260730163028` as an *unclosed* element with nothing
+    # after it on the line, and no `</ACCEPTANCE-DATETIME>` anywhere in the file.
+    # Two mistakes are available here and both are silent. Requiring a closing tag
+    # yields None for every real filing; capturing with `[^<]*` instead swallows
+    # the whole remaining header, because the next `<` is the end of the SGML
+    # header block and everything up to it is captured as the timestamp. So the
+    # value is bounded to its line and then cut at any tag.
+    element = re.search(r"<ACCEPTANCE-DATETIME>([^\r\n]*)", text)
+    if element is not None:
+        acceptance = element.group(1).split("<", 1)[0].strip() or None
+
+    return SubmissionHeader(
+        accession_number=accession,
+        conformed_submission_type=form,
+        conformed_period_of_report=period,
+        item_information=tuple(items),
+        item_information_count=len(items),
+        filed_as_of_date=filed,
+        acceptance_datetime=acceptance,
+        acceptance_source=(
+            ACCEPTANCE_SOURCE_SGML_HEADER if acceptance is not None else None
+        ),
+        public_document_count=document_count,
+        fiscal_year_end=fiscal_year_end,
+    )
+
+
+_SGML_DOCUMENT = re.compile(r"<DOCUMENT>(.*?)</DOCUMENT>", re.S)
+# Verified against a real submission: `<TYPE>8-K`, `<FILENAME>aapl-20260730.htm`
+# and `<DESCRIPTION>FORM 8-K` are likewise *unclosed* elements whose value runs
+# to the end of the line. So the capture is bounded to its line and then cut at
+# any tag, exactly as ACCEPTANCE-DATETIME is. A pattern requiring
+# `</TYPE>` returns None for every real filing.
+_SGML_FIELD = r"<{tag}>([^\r\n]*)"
+
+
+def parse_full_submission(payload: bytes, uri: str) -> FullSubmission:
+    """
+    Parse a full submission into its header and its document sequence.
+
+    A submission is recognised by its `<SEC-DOCUMENT>` marker. Without that
+    marker the payload is not a filing and this raises rather than returning an
+    empty document list, because "this is not a filing" and "this filing declares
+    no documents" are different answers and only one of them is an absence.
+
+    A `<DOCUMENT>` opened and never closed is also an error. Counting the openers
+    against the matched blocks catches it, which a non-greedy match alone would
+    not: an unclosed block would simply be absent from the results and the
+    sequence would silently shift, pairing every later document with the wrong
+    ordinal.
+
+    The document bodies are decoded with replacement rather than strict decoding
+    so that one odd byte in a multi-megabyte filing does not discard every
+    declaration in it. The decoded text is only ever read; `content_hash` covers
+    the bytes, and the bytes are what a capture stores.
+    """
+    text = payload.decode("utf-8", errors="replace")
+    if "<SEC-DOCUMENT>" not in text:
+        raise SecFilingParseError(
+            f"full submission at {uri} carries no <SEC-DOCUMENT> marker"
+        )
+    header_text = text.split("<DOCUMENT>")[0]
+    header = parse_sgml_header(header_text)
+
+    opened = text.count("<DOCUMENT>")
+    blocks = _SGML_DOCUMENT.findall(text)
+    if len(blocks) != opened:
+        raise SecFilingParseError(
+            f"full submission at {uri} declares {opened} documents but "
+            f"{len(blocks)} closed correctly"
+        )
+
+    documents: List[SubmissionDocument] = []
+    for position, block in enumerate(blocks):
+        fields = {}
+        for tag in ("TYPE", "FILENAME", "DESCRIPTION"):
+            found = re.search(_SGML_FIELD.format(tag=tag), block)
+            value = found.group(1).split("<", 1)[0] if found else None
+            fields[tag] = value.strip() if value else None
+        documents.append(SubmissionDocument(
+            source_ordinal=position + 1,
+            sec_document_type=fields["TYPE"] or None,
+            filename=fields["FILENAME"] or None,
+            description=fields["DESCRIPTION"] or None,
+        ))
+    return FullSubmission(
+        uri=uri,
+        content_hash=content_hash_of(payload),
+        header=header,
+        documents=tuple(documents),
+    )
 
 
 @dataclass(frozen=True)
@@ -858,6 +1303,132 @@ class SECProvider:
             raise ValueError(
                 f"SEC returned a non-JSON document for {url}: {error}"
             ) from error
+
+    def _fetch_bytes(
+        self,
+        url: str,
+        allow_missing: bool = False,
+    ) -> Optional[FetchedDocument]:
+        """
+        Fetch a document and return its bytes, whatever they are.
+
+        A sibling of `_get`, not an extension of it. `_get` is JSON-only and
+        asserts so: it raises `ValueError` on a body that will not parse as JSON,
+        because every caller of `_get` wanted a JSON endpoint. A filing document
+        is HTML or a full submission, so making `_get` accept it would mean
+        weakening an invariant three existing call sites depend on. The two
+        methods share `_throttle`, the user agent, gzip handling, the fetch log
+        and `_record_document`, so there is still only one SEC rate limiter and
+        one byte ledger.
+
+        What comes back is the uncompressed body exactly as served, and its hash
+        is `content_hash_of(body)` -- the same function every other capture path
+        hashes with, so a document hashed here and hashed again at persistence
+        cannot disagree. Nothing is decoded, re-encoded or normalised. A parser
+        that later reads these bytes derives from them; it does not replace them.
+
+        `allow_missing` keeps `_get`'s meaning exactly: a 404 is an answer and
+        returns `None`, and any other HTTP status raises as before. An empty body
+        is *not* a failure -- a zero-byte response is a fact about a resource, and
+        whether that resource is the thing we wanted is the parser's judgement to
+        make, not this method's.
+        """
+        self._throttle()
+        self._fetch_log.append(url)
+        self.requests_made += 1
+        request = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": self.user_agent,
+                # Not `application/json`: this method exists for the documents
+                # that are not JSON, and asking for JSON would make the response
+                # reflect our header rather than the resource.
+                "Accept": "*/*",
+                "Accept-Encoding": "gzip, deflate",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                body = response.read()
+                self.bytes_downloaded += len(body)
+                encoding = response.headers.get("Content-Encoding", "")
+                if encoding == "gzip":
+                    body = gzip.decompress(body)
+                status = response.getcode()
+                media_type = response.headers.get("Content-Type")
+        except urllib.error.HTTPError as error:
+            if error.code == 404 and allow_missing:
+                return None
+            raise
+        self._record_document(url, body, status, media_type)
+        return FetchedDocument(
+            uri=url,
+            canonical_uri=url,
+            content=body,
+            content_hash=content_hash_of(body),
+            media_type=media_type,
+            http_status=status,
+            byte_size=len(body),
+            fetched_at=utc_now(),
+        )
+
+    def filing_directory(
+        self,
+        cik: str,
+        accession: str,
+        allow_missing: bool = False,
+    ) -> Optional[FilingDirectory]:
+        """
+        Read one filing's directory listing.
+
+        Returns the manifest in EDGAR's own order, with no entry sorted away and
+        none dropped -- including the index artefacts EDGAR generates, which is
+        what lets a caller tell a filed document from a generated one by
+        comparing against the SGML manifest rather than by guessing from a name.
+        """
+        url = filing_directory_url(cik, accession)
+        fetched = self._fetch_bytes(url, allow_missing=allow_missing)
+        if fetched is None:
+            return None
+        return parse_filing_directory(fetched.content, fetched.uri)
+
+    def full_submission(
+        self,
+        cik: str,
+        accession: str,
+        allow_missing: bool = False,
+    ) -> Optional[FullSubmission]:
+        """
+        Read one filing's full submission: its SGML header and its documents.
+
+        The header and the document sequence come from one response and are
+        therefore consistent with each other, which is why they are returned
+        together rather than as two separately-fetched things.
+        """
+        url = full_submission_url(cik, accession)
+        fetched = self._fetch_bytes(url, allow_missing=allow_missing)
+        if fetched is None:
+            return None
+        return parse_full_submission(fetched.content, fetched.uri)
+
+    def filing_document(
+        self,
+        cik: str,
+        accession: str,
+        filename: str,
+        allow_missing: bool = False,
+    ) -> Optional[FetchedDocument]:
+        """
+        Fetch one document's bytes, byte-exact.
+
+        No parsing happens here and none is offered. The caller already knows the
+        filename from a manifest and is entitled to the bytes; what those bytes
+        *mean* -- which exhibit they are, whether they are furnished, which
+        concept they report -- is derived downstream from what the manifests and
+        the header declared, never from the filename or the SEC `<TYPE>` alone.
+        """
+        url = filing_document_url(cik, accession, filename)
+        return self._fetch_bytes(url, allow_missing=allow_missing)
 
     def transport_stats(self) -> Dict[str, Any]:
         """
