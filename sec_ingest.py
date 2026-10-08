@@ -76,7 +76,21 @@ from sec_provider import (
     observation_currency_of,
     xbrl_unit_to_contract_unit,
 )
-from sec_xbrl_facts import XbrlParseError, parse_xbrl_document
+from sec_xbrl_facts import (
+    AMBIGUOUS_OBSERVATION,
+    CONTEXT_AMBIGUOUS,
+    DOCUMENTS_AMBIGUOUS,
+    MATCHED,
+    NO_OBSERVATION,
+    TAXONOMY_AMBIGUOUS,
+    TAXONOMY_UNPROVEN,
+    UNIT_UNRESOLVED,
+    XbrlParseError,
+    contract_unit_of,
+    exact_source_document,
+    match_occurrence,
+    parse_xbrl_document,
+)
 
 SEC_SOURCE = "SecEdgar"
 SEC_SOURCE_TYPE = SourceType.REGULATORY_FILING.value
@@ -632,6 +646,16 @@ class Ingestor:
                     self._acquire_document_fact_occurrences(asset_id, accession)
         except Exception as error:  # noqa: BLE001
             self._record_provenance_failure("document_fact_occurrences", error)
+        # Observation <-> fact linkage runs after the occurrences exist and
+        # creates no Observation of its own, so it can only attach to what an
+        # earlier pass already stored.
+        try:
+            for entry in index:
+                accession = str(entry.get("accession") or "")
+                if accession:
+                    self._acquire_observation_fact_links(asset_id, accession)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("observation_fact_links", error)
 
         if not new_entries:
             # Nothing new was accepted, so no concept endpoint can have
@@ -2180,6 +2204,143 @@ class Ingestor:
             )
             stored += 1
         return stored
+
+    def _acquire_observation_fact_links(
+        self,
+        asset_id: str,
+        accession: str,
+    ) -> int:
+        """
+        Link Observations this archive already holds to the document facts it read.
+
+        **Nothing is created.** An occurrence whose fact no Observation describes
+        is reported and left alone: this archive has no frozen producer rule for
+        creating an Observation out of a document fact, and inventing one would
+        be a new identity decision, which is not what this phase is.
+
+        The matching is five exact comparisons (filing scope, concept local name,
+        resolved period, resolved unit, exact value) -- no tolerance, no
+        proximity, no filename, no document type, no primary-document status and
+        no accession on its own. See `sec_xbrl_facts.occurrence_matches_observation`.
+
+        Every linked occurrence is recorded, so two documents asserting one fact
+        produce two links. The exact-source assertion is a separate decision, made
+        afterwards and only when the document-grain cardinality is exactly 1; two
+        documents never produce one, which is the inline-XBRL case invariant 19
+        says current evidence cannot resolve.
+        """
+        occurrences = [
+            dict(row) for row in self.connection.execute(
+                "SELECT o.document_fact_id, o.provider, o.taxonomy, o.tag,"
+                " o.context_ref, o.unit_ref, o.period_kind, o.period_start,"
+                " o.period_end, o.resolved_value, o.filename, o.asset_id,"
+                " o.accession, o.unit_measures_json, c.captured_at,"
+                " c.capture_kind"
+                " FROM filing_document_fact_occurrences o"
+                " JOIN filing_document_captures c"
+                " ON c.asset_id = o.asset_id AND c.accession = o.accession"
+                " AND c.filename = o.filename AND c.document_id = o.document_id"
+                " WHERE o.asset_id = ? AND o.accession = ?"
+                " ORDER BY o.document_fact_id",
+                (asset_id, accession),
+            )
+        ]
+        if not occurrences:
+            return 0
+
+        observations = [
+            dict(row) for row in self.connection.execute(
+                "SELECT observation_id, asset_id, provider, accession, taxonomy, concept,"
+                " period_start, period_end, unit, value_json, source_fact_id"
+                " FROM observations WHERE asset_id = ? AND accession = ?"
+                " ORDER BY observation_id",
+                (asset_id, accession),
+            )
+        ]
+
+        matched: Dict[str, List[Dict[str, Any]]] = {}
+        taxonomies: Dict[str, set] = {}
+        for occurrence in occurrences:
+            contract_unit = contract_unit_of(occurrence["unit_measures_json"])
+            occurrence["contract_unit"] = contract_unit
+            if contract_unit is None:
+                self._record_provenance_failure(
+                    f"fact_link:{accession}:{occurrence['document_fact_id']}:"
+                    f"{UNIT_UNRESOLVED}",
+                    XbrlParseError(UNIT_UNRESOLVED),
+                )
+                continue
+            outcome = match_occurrence(occurrence, observations)
+            if outcome.reason != MATCHED:
+                self._record_provenance_failure(
+                    f"fact_link:{accession}:{occurrence['document_fact_id']}:"
+                    f"{outcome.reason}",
+                    XbrlParseError(outcome.reason),
+                )
+                continue
+            matched.setdefault(str(outcome.observation_id), []).append(occurrence)
+            taxonomies.setdefault(
+                str(outcome.observation_id), set()).add(occurrence["taxonomy"])
+
+        stored = 0
+        for observation_id, linked in matched.items():
+            # The context gate guards the *linkage*, not only the assertion.
+            # Two facts that differ only by `contextRef` are two XBRL facts, and
+            # the Observation identity has no dimension slot to say which of
+            # them produced the stored value. Linking both would make this
+            # relation a candidate set of readings, which the frozen semantics
+            # forbids -- so when the contexts disagree, nothing is linked and
+            # the ambiguity is reported instead.
+            if len({row["context_ref"] for row in linked}) != 1:
+                self._record_provenance_failure(
+                    f"fact_link:{accession}:{observation_id}:"
+                    f"{CONTEXT_AMBIGUOUS}",
+                    XbrlParseError(CONTEXT_AMBIGUOUS),
+                )
+                continue
+            if len(taxonomies[observation_id]) != 1:
+                self._record_provenance_failure(
+                    f"fact_link:{accession}:{observation_id}:"
+                    f"{TAXONOMY_AMBIGUOUS}",
+                    XbrlParseError(TAXONOMY_AMBIGUOUS),
+                )
+                continue
+            for occurrence in linked:
+                self.store.record_observation_filing_document_fact(
+                    observation_id, occurrence["document_fact_id"])
+                stored += 1
+            self._assert_exact_source_document(observation_id, accession, linked)
+        return stored
+
+    def _assert_exact_source_document(
+        self,
+        observation_id: str,
+        accession: str,
+        linked: List[Dict[str, Any]],
+    ) -> None:
+        """
+        Assert the exact source document only when its own rule permits it.
+
+        Delegates the decision entirely to `exact_source_document`, so the
+        context gate, the document-grain gate and the refusal reasons are decided
+        in one place and can be tested without an archive.
+        """
+        document, reason = exact_source_document(linked)
+        if document is None:
+            self._record_provenance_failure(
+                f"exact_source:{accession}:{observation_id}:{reason}",
+                XbrlParseError(str(reason)),
+            )
+            return
+        capture = linked[0]
+        self.store.record_observation_filing_document(
+            observation_id=observation_id,
+            asset_id=document[0],
+            accession=document[1],
+            filename=document[2],
+            captured_at=capture["captured_at"],
+            capture_kind=capture["capture_kind"],
+        )
 
     def _primary_document_filename(
         self,

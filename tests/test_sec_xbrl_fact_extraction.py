@@ -109,9 +109,8 @@ LEGACY_INSTANCE = b"""<?xml version="1.0" encoding="UTF-8"?>
     </xbrli:period>
   </xbrli:context>
   <xbrli:unit id="u-usd-per-share">
-    <xbrli:measure>USD</xbrli:measure>
     <xbrli:divide>
-      <xbrli:unitNumerator><xbrli:measure>shares</xbrli:measure></xbrli:unitNumerator>
+      <xbrli:unitNumerator><xbrli:measure>USD</xbrli:measure></xbrli:unitNumerator>
       <xbrli:unitDenominator><xbrli:measure>xbrli:shares</xbrli:measure></xbrli:unitDenominator>
     </xbrli:divide>
   </xbrli:unit>
@@ -129,16 +128,18 @@ LEGACY_INSTANCE = b"""<?xml version="1.0" encoding="UTF-8"?>
 # ---------------------------------------------------------------------------
 
 INLINE_PRIMARY = b"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>FORM 8-K</title>
+<html lang="en" xmlns:ix="http://www.xbrl.org/2013/inlineXBRL"
+  xmlns:xbrli="http://www.xbrl.org/2003/instance"
+  xmlns:us-gaap="http://fasb.org/us-gaap/2026"><head><meta charset="utf-8"><title>FORM 8-K</title>
 <meta name="dei:DocumentType" content="8-K">
 </head><body>
 <div class="cover"><h1>Apple Inc.</h1><p>Commission File No. 001-36743</p></div>
 <p>For the three months ended June&nbsp;27, 2026, diluted earnings per share was
 <ix:nonFraction name="us-gaap:EarningsPerShareDiluted" contextRef="i-2026q2" unitRef="u-eps" decimals="2" scale="2" continuedAt="cont-eps">1.65</ix:nonFraction><span class="unit">.</span></p>
 <p>Total net sales were
-<ix:nonFraction name="us-gaap:Revenues" contextRef="i-2026q2" unitRef="u-usd" decimals="-3" format="ixt:numdotdecimal">39,536,000</ix:nonFraction> thousand<br>
+<ix:nonFraction name="us-gaap:Revenues" contextRef="i-2026q2" unitRef="u-usd" decimals="-3" scale="3" format="ixt:numdotdecimal">39,536,000</ix:nonFraction> thousand<br>
 and prior-year net sales were
-<ix:nonFraction name="us-gaap:Revenues" contextRef="i-2025q2" unitRef="u-usd" decimals="-3" format="ixt:numdotdecimal">40,972,000</ix:nonFraction> thousand.</p>
+<ix:nonFraction name="us-gaap:Revenues" contextRef="i-2025q2" unitRef="u-usd" decimals="-3" scale="3" format="ixt:numdotdecimal">40,972,000</ix:nonFraction> thousand.</p>
 <div style="display:none">
 <xbrli:context id="i-2026q2">
 <xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000320193</xbrli:identifier></xbrli:entity>
@@ -152,7 +153,7 @@ and prior-year net sales were
 <xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000320193</xbrli:identifier></xbrli:entity>
 <xbrli:period><xbrli:instant>2026-06-27</xbrli:instant></xbrli:period>
 </xbrli:context>
-<xbrli:unit id="u-eps"><xbrli:measure>USD</xbrli:measure><xbrli:divide><xbrli:unitNumerator><xbrli:measure>shares</xbrli:measure></xbrli:unitNumerator><xbrli:unitDenominator><xbrli:measure>xbrli:shares</xbrli:measure></xbrli:unitDenominator></xbrli:divide></xbrli:unit>
+<xbrli:unit id="u-eps"><xbrli:divide><xbrli:unitNumerator><xbrli:measure>USD</xbrli:measure></xbrli:unitNumerator><xbrli:unitDenominator><xbrli:measure>xbrli:shares</xbrli:measure></xbrli:unitDenominator></xbrli:divide></xbrli:unit>
 <xbrli:unit id="u-usd"><xbrli:measure>USD</xbrli:measure></xbrli:unit>
 </div>
 <p class="footnote">1<span style="font-weight:bold">.</span>2</p>
@@ -172,9 +173,10 @@ EXTRACTED_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
     <entity><identifier scheme="http://www.sec.gov/CIK">0000320193</identifier></entity>
     <period><startDate>2026-03-29</startDate><endDate>2026-06-27</endDate></period>
   </context>
-  <unit id="u-eps"><measure>USD</measure><divide><unitNumerator><measure>shares</measure></unitNumerator><unitDenominator><measure>xbrli:shares</measure></unitDenominator></divide></unit>
+  <unit id="u-eps"><measure>USD</measure><divide><unitNumerator><measure>USD</measure></unitNumerator><unitDenominator><measure>xbrli:shares</measure></unitDenominator></divide></unit>
+  <unit id="u-usd"><measure>USD</measure></unit>
   <us-gaap:EarningsPerShareDiluted contextRef="i-2026q2" unitRef="u-eps" decimals="2">1.655</us-gaap:EarningsPerShareDiluted>
-  <us-gaap:Revenues contextRef="i-2026q2" unitRef="u-eps" decimals="-3">39536000000</us-gaap:Revenues>
+  <us-gaap:Revenues contextRef="i-2026q2" unitRef="u-usd" decimals="-3">39536000000</us-gaap:Revenues>
 </xbrl>
 """
 
@@ -398,8 +400,9 @@ class TestParserShapes(unittest.TestCase):
         self.assertIsNone(unit.divide)
 
     def test_i_a_divided_unit_names_both_measures(self):
+        """USD over one share: the form SEC actually writes for per-share."""
         unit = parse_xbrl_document(LEGACY_INSTANCE).units["u-usd-per-share"]
-        self.assertEqual(("shares", "xbrli:shares"), unit.measures)
+        self.assertEqual(("USD", "xbrli:shares"), unit.measures)
         self.assertEqual(1, unit.divide)
 
     def test_a_unit_that_declares_no_measure_is_refused(self):
@@ -488,7 +491,7 @@ class TestInlineXbrl(unittest.TestCase):
     def test_b_the_inline_name_attribute_names_the_concept(self):
         fact = next(fact for fact in self.parsed.facts
                     if fact.tag == "EarningsPerShareDiluted")
-        self.assertEqual("us-gaap", fact.taxonomy)
+        self.assertEqual("http://fasb.org/us-gaap/2026", fact.taxonomy)
         self.assertEqual("i-2026q2", fact.context_ref)
         self.assertEqual("u-eps", fact.unit_ref)
 
@@ -504,7 +507,20 @@ class TestInlineXbrl(unittest.TestCase):
                     if fact.tag == "Revenues" and fact.context_ref == "i-2026q2"]
         self.assertEqual(1, len(revenues))
         self.assertEqual("39,536,000", revenues[0].value_text)
-        self.assertAlmostEqual(39536000.0, revenues[0].resolved_value)
+        self.assertAlmostEqual(39536000000.0, revenues[0].resolved_value,
+                               msg="scale=3 applies on top of the format")
+
+    def test_the_inline_and_extracted_forms_of_one_fact_agree(self):
+        """EDGAR's extraction resolves the same scale, so both read 39536000000."""
+        inline = [fact for fact in self.parsed.facts
+                  if fact.tag == "Revenues" and fact.context_ref == "i-2026q2"]
+        extracted = parse_xbrl_document(EXTRACTED_XML)
+        counterparts = [fact for fact in extracted.facts
+                        if fact.tag == "Revenues"]
+        self.assertEqual(1, len(inline))
+        self.assertEqual(1, len(counterparts))
+        self.assertAlmostEqual(inline[0].resolved_value,
+                               counterparts[0].resolved_value)
 
     def test_b_an_unknown_format_is_refused_rather_than_guessed(self):
         payload = INLINE_PRIMARY.replace(b'format="ixt:numdotdecimal"',
@@ -952,12 +968,18 @@ class TestTaxonomyIdentity(unittest.TestCase):
                          {fact.value_text for fact in parsed.facts})
 
     def test_an_inline_name_resolves_against_the_scope_it_sits_in(self):
-        inline = INLINE_PRIMARY.replace(
-            b'name="us-gaap:Revenues"',
-            b'name="gaap:Revenues"', 1).replace(
-            b'<html lang="en">',
-            b'<html lang="en" xmlns:gaap="http://fasb.org/us-gaap/2026">')
-        parsed = parse_xbrl_document(inline)
+        # `xmlns:gaap` must actually be declared for this to test anything.
+        # The fixture's <html> opens with `xmlns:ix`, so the anchor has to match
+        # what is really there -- an earlier version of this test searched for a
+        # declaration it had itself never added, so the replace was a no-op and
+        # the alias went undeclared, which is a different case entirely.
+        aliased = INLINE_PRIMARY.replace(
+            b'name="us-gaap:Revenues"', b'name="gaap:Revenues"', 1).replace(
+            b'<html lang="en"',
+            b'<html lang="en" xmlns:gaap="http://fasb.org/us-gaap/2026"')
+        self.assertIn(b'xmlns:gaap="http://fasb.org/us-gaap/2026"', aliased,
+                      "the fixture patch must actually apply")
+        parsed = parse_xbrl_document(aliased)
         revenues = [fact for fact in parsed.facts
                     if fact.context_ref == "i-2026q2"
                     and fact.tag == "Revenues"]
@@ -966,6 +988,18 @@ class TestTaxonomyIdentity(unittest.TestCase):
         self.assertEqual("http://fasb.org/us-gaap/2026", revenues[0].taxonomy,
                          "`gaap:Revenues` and `us-gaap:Revenues` name the same "
                          "expanded name, so the alias must not reach identity")
+
+    def test_an_inline_name_with_no_declaration_is_refused(self):
+        """The control: same document, alias undeclared, nothing is guessed."""
+        undeclared = INLINE_PRIMARY.replace(
+            b'name="us-gaap:Revenues"', b'name="gaap:Revenues"', 1)
+        self.assertNotIn(b"xmlns:gaap", undeclared)
+        parsed = parse_xbrl_document(undeclared)
+        self.assertNotIn("Revenues",
+                         {fact.tag for fact in parsed.facts
+                          if fact.context_ref == "i-2026q2"})
+        self.assertIn("NAMESPACE_UNDECLARED",
+                      {r.reason for r in parsed.rejections})
 
     def test_the_taxonomy_is_a_namespace_not_a_prefix(self):
         parsed = parse_xbrl_document(LEGACY_INSTANCE)

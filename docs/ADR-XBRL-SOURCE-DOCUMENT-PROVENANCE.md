@@ -1211,3 +1211,76 @@ five-column uniqueness index is unchanged, and it now agrees with `dfid_` exactl
 its columns are the digest's fields minus `provider`, `asset_id` and `accession`,
 which are functionally determined by `document_id` through the composite foreign
 key.
+
+---
+---
+
+# Amendment 4 — Taxonomy Equivalence Is Currently Unproven (Option A)
+
+**Status:** FROZEN — conservative decision for Phase 3C-B2. **Implemented** by
+`sec_xbrl_facts.occurrence_matches_observation` and pinned by
+`tests/test_sec_observation_fact_links.py::TestTaxonomyUnproven`.
+**Date:** 2026-10-08
+**Supersedes:** nothing. **Bounds:** the linkage path's *production* reach; every
+other B2 gate (context, cardinality, exact-source) is exercised and unaffected.
+
+---
+
+## 1. The two taxonomy representations, and why they are not compared
+
+Two stored fields are both called `taxonomy`, and they are **not** the same
+representation:
+
+- an **Observation's** `taxonomy` is the SEC/companyconcept **prefix**
+  representation, e.g. `us-gaap` — sourced from `concept_registry.taxonomy` and
+  the companyconcept payload;
+- a **document fact's** `taxonomy` is the **resolved namespace URI** the document
+  bound that prefix to, e.g. `http://fasb.org/us-gaap/2026` (Amendment 3 §1).
+
+This repository holds **no verified prefix-to-URI mapping**. Inventing one in this
+phase is forbidden: a mapping is an evidence/architecture decision, not an
+implementation detail, and a guessed table would collapse distinct concepts
+(`us-gaap:Revenues` vs `custom:Revenues`) that share a local name, a period, a
+unit and often a value.
+
+The frozen comparison is therefore **equality only**, over the *stored* strings:
+
+> **Taxonomy equivalence is UNPROVEN unless the Observation taxonomy and the
+> document-fact taxonomy are directly comparable under existing evidence.**
+
+A prefix and a URI are never equal strings, so no equivalence between them is
+provable here and none is assumed.
+
+## 2. Consequence: the production linkage path is intentionally inactive
+
+For an **ordinary real SEC observation** (prefix form), no document fact ever
+compares equal, so:
+
+```
+TAXONOMY_UNPROVEN
+    → no observation_filing_document_facts
+    → no observation_filing_documents
+```
+
+This is **intentional**, and it is a *limitation of the evidence representation*,
+not a defect to be patched and not a reason to invent a mapping. The refusal is
+reported (`TAXONOMY_UNPROVEN`), never absorbed silently.
+
+**The accurate statement is:** *taxonomy equivalence is currently unproven by the
+archived evidence representation.* It is **not** "SEC taxonomy is incompatible,"
+and it is **not permanent**: the moment an Observation's taxonomy is persisted in
+the same representation a document fact uses (a URI), matching begins to work
+with **no change to the matching rule**, because the rule is already equality.
+
+## 3. What remains reachable, and how it is pinned
+
+The conservative gate does not make the rest of B2 dead code. The context gate,
+the document-cardinality gate, append-only behaviour, idempotency, the
+`observation_sources` bypass guard, and the no-amend rule are all independent of
+the taxonomy question, and each is exercised by tests that use an **explicitly
+comparable** taxonomy representation — both sides in the URI form — so the
+machinery stays covered without any production prefix-to-URI map existing.
+
+A future taxonomy-equivalence design, if one is wanted, requires its **own**
+evidence and architecture decision. It is out of scope for B2 and must not be
+smuggled in to make a fixture pass.

@@ -71,6 +71,7 @@ What this module refuses to do
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field, replace
 from html.parser import HTMLParser
@@ -78,6 +79,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from xml.parsers import expat
 
 from evidence_model import canonical_json
+from sec_provider import xbrl_unit_to_contract_unit
 
 #: XBRL 2.1 instance namespace. An instance document's own elements live here,
 #: including a `<xbrl>` written with or without an `xbrli:` prefix -- the two are
@@ -830,10 +832,17 @@ def _qualify(node: _Node, namespaces: Dict[str, str]) -> Tuple[str, str]:
     concept vocabulary elsewhere is `us-gaap:Tag`. That is fine because `dfid_` and
     `sfid_` are different grains and are never joined; joining a `dfid_` to the
     registry will need a prefix-to-URI mapping, which belongs to the registry.
-    """
+"""
     prefix, local = _split_qname(node.tag)
     if prefix:
-        return _resolve_prefix(prefix, namespaces) or prefix, local
+        # Only a *declared* binding may name a taxonomy. The standard-prefix
+        # fallback exists for `xbrli`/`ix`/`xbrldi`, whose spellings the
+        # specifications fix; an arbitrary prefix the document never bound is
+        # not a name for anything, and substituting the prefix text here would
+        # smuggle an alias back into the identity that Amendment 3 removed --
+        # and it would never compare equal to the URI another document binds,
+        # so the same concept would split by spelling.
+        return namespaces.get(prefix), local
     return namespaces.get("", "") or XBRLI_NS, local
 
 
@@ -853,7 +862,7 @@ def _inline_qname(raw: Optional[str],
     prefix, _, local = raw.partition(":")
     if not prefix or not local:
         return None
-    return _resolve_prefix(prefix, namespaces) or prefix, local
+    return namespaces.get(prefix), local
 
 
 def parse_xbrl_document(payload: bytes) -> XbrlDocument:
@@ -912,6 +921,10 @@ def parse_xbrl_document(payload: bytes) -> XbrlDocument:
         taxonomy, tag = _qualify(node, namespaces)
         context_ref = node.attrs.get("contextRef")
         unit_ref = node.attrs.get("unitRef")
+        if not taxonomy:
+            rejections.append(XbrlRejection(tag, tag, context_ref,
+                                            "NAMESPACE_UNDECLARED"))
+            continue
         if not context_ref or context_ref not in contexts:
             rejections.append(XbrlRejection(taxonomy, tag, context_ref,
                                             "CONTEXT_UNRESOLVED"))
@@ -1017,6 +1030,10 @@ def _read_inline_fact(node: _Node, document: Sequence[_Node],
                                         "NAME_ABSENT"))
         return None
     taxonomy, tag = qualified
+    if not taxonomy:
+        rejections.append(XbrlRejection(tag, tag, None,
+                                        "NAMESPACE_UNDECLARED"))
+        return None
 
     context_ref = node.attrs.get("contextRef")
     if not context_ref or context_ref not in contexts:
@@ -1094,3 +1111,251 @@ def _element_with_id(document: Sequence[_Node],
         if candidate.attrs.get("id") == element_id:
             return candidate
     return None
+
+
+# ---------------------------------------------------------------------------
+# Phase 3C-B2 -- linking an occurrence to an Observation that already exists
+# ---------------------------------------------------------------------------
+
+#: Refusal reasons. Every one of them means the same thing to a reader -- the
+#: exact source document is *unresolved* -- and none of them is an error to fix
+#: by guessing.
+MATCHED = "MATCHED"
+NO_OBSERVATION = "NO_OBSERVATION"
+AMBIGUOUS_OBSERVATION = "AMBIGUOUS_OBSERVATION"
+TAXONOMY_AMBIGUOUS = "TAXONOMY_AMBIGUOUS"
+TAXONOMY_UNPROVEN = "TAXONOMY_UNPROVEN"
+CONTEXT_AMBIGUOUS = "CONTEXT_AMBIGUOUS"
+DOCUMENTS_AMBIGUOUS = "DOCUMENTS_AMBIGUOUS"
+UNIT_UNRESOLVED = "UNIT_UNRESOLVED"
+
+#: The XBRL "pure" unit means one share. The companyconcept endpoint spells that
+#: as `/shares`, and that correspondence is what lets an existing frozen unit
+#: rule be reused instead of a second one being written here.
+_PURE_SHARES = ("shares", "xbrli:shares")
+
+
+def unit_spelling(unit: XbrlUnit) -> Optional[str]:
+    """
+    Render a resolved XBRL unit into the spelling the aggregate endpoint uses.
+
+    A single measure is its own name; a divided unit is `numerator/denominator`
+    with the XBRL "pure shares" denominator written the way the endpoint writes
+    it. Anything else returns None, and the caller then refuses to match rather
+    than guessing -- this is a rendering, not a conversion, and the conversion
+    that follows is `sec_provider.xbrl_unit_to_contract_unit`, which is the rule
+    the archive already uses.
+    """
+    if unit.divide is None:
+        return unit.measures[0] if len(unit.measures) == 1 else None
+    if len(unit.measures) != 2:
+        return None
+    numerator, denominator = unit.measures
+    if denominator in _PURE_SHARES:
+        denominator = "shares"
+    return f"{numerator}/{denominator}"
+
+
+def contract_unit_of(unit_measures_json: str) -> Optional[str]:
+    """
+    The contract unit of a stored `unit_measures_json`, or None if unrecognised.
+
+    The payload is the canonical `{measures, divide}` object the occurrence row
+    already holds, so this reuses the recorded evidence rather than re-reading the
+    document. The rendering is `unit_spelling`'s; the conversion is the archive's
+    existing `xbrl_unit_to_contract_unit`, imported here so that one rule decides
+    what a unit means rather than two rules disagreeing.
+    """
+    try:
+        payload = json.loads(unit_measures_json)
+    except (TypeError, ValueError):
+        return None
+    measures = payload.get("measures")
+    if not isinstance(measures, list) or not measures:
+        return None
+    unit = XbrlUnit(
+        unit_ref="", measures=tuple(measures),
+        divide=payload.get("divide"), locator={"start": 0, "end": 0},
+    )
+    spelling = unit_spelling(unit)
+    return xbrl_unit_to_contract_unit(spelling) if spelling else None
+
+
+@dataclass(frozen=True)
+class OccurrenceMatch:
+    """What the matching rule concluded about one occurrence."""
+
+    document_fact_id: str
+    observation_id: Optional[str]
+    reason: str
+
+
+def _local_name(concept: str) -> str:
+    """The local half of a `taxonomy:concept` concept string."""
+    _, _, local = concept.partition(":")
+    return local or concept
+
+
+def occurrence_matches_observation(
+    occurrence: Dict[str, Any],
+    observation: Dict[str, Any],
+) -> bool:
+    """
+    Whether one occurrence and one Observation describe the same fact.
+
+    Five exact comparisons, none of them a tolerance, a proximity or a name:
+
+    * **filing scope** -- provider, asset and accession are equal;
+    * **concept** -- the occurrence's local tag equals the Observation's concept
+      local name;
+    * **period** -- the *resolved context period* equals the Observation's
+      `period_start`/`period_end`, with an instant context requiring a NULL
+      `period_start`. The period is read from the context, never inferred from
+      the value;
+    * **unit** -- the resolved unit, rendered and passed through the archive's
+      existing `xbrl_unit_to_contract_unit`, equals the Observation's unit;
+    * **value** -- the resolved value equals the stored value exactly.
+
+    What is deliberately **not** compared: the filename, the document type, the
+    MIME type, the SGML `<TYPE>`, whether the document is the primary one, and
+    the accession on its own. Taxonomy is handled separately, because the
+    Observation records a prefix (`us-gaap`) and the occurrence records a
+    namespace URI, and no prefix-to-URI map exists in this repository to bridge
+    them. Rather than invent one, the caller requires the matching occurrences to
+    agree on a single namespace.
+    """
+    if occurrence.get("provider") != observation.get("provider"):
+        return False
+    if occurrence.get("asset_id") != observation.get("asset_id"):
+        return False
+    if occurrence.get("accession") != observation.get("accession"):
+        return False
+    if occurrence.get("tag") != _local_name(str(observation.get("concept") or "")):
+        return False
+
+    # The taxonomy must be *equal*, not merely singular. An Observation records
+    # the source's own prefix (`us-gaap`, from `concept_registry.taxonomy` and the
+    # companyconcept payload); a document fact records the namespace URI the
+    # document bound that prefix to. This repository holds no prefix-to-URI map,
+    # and inventing one is forbidden, so **no equivalence between the two is
+    # provable here** and none is assumed.
+    #
+    # Comparing local names alone would be the defect: `us-gaap:Revenues` and
+    # `custom:Revenues` share a local name, a period, a unit and often a value,
+    # and they are different concepts. A candidate set containing only the custom
+    # namespace looks singular and would be accepted, which is exactly the false
+    # exactness this relation forbids.
+    #
+    # The equality is what makes the relation fillable later: the moment an
+    # Observation's taxonomy is persisted in the same representation a document
+    # fact uses, matching begins to work with no change here.
+    if occurrence.get("taxonomy") != observation.get("taxonomy"):
+        return False
+
+    period_kind = occurrence.get("period_kind")
+    period_start = observation.get("period_start")
+    period_end = observation.get("period_end")
+    if period_kind == PERIOD_INSTANT:
+        if period_start is not None or period_end != occurrence.get("period_end"):
+            return False
+    elif period_kind == PERIOD_DURATION:
+        if period_start != occurrence.get("period_start"):
+            return False
+        if period_end != occurrence.get("period_end"):
+            return False
+    elif period_kind == PERIOD_FOREVER:
+        if period_start is not None or period_end is not None:
+            return False
+    else:
+        return False
+
+    contract_unit = occurrence.get("contract_unit")
+    if contract_unit is None or contract_unit != observation.get("unit"):
+        return False
+
+    try:
+        stored = float(observation.get("value_json"))
+    except (TypeError, ValueError):
+        return False
+    return stored == occurrence.get("resolved_value")
+
+
+def match_occurrence(
+    occurrence: Dict[str, Any],
+    observations: Sequence[Dict[str, Any]],
+) -> OccurrenceMatch:
+    """
+    Resolve one occurrence against the Observations the archive already holds.
+
+    Three refusals, each with a distinct cause, and none of them resolved by
+    preferring anything:
+
+    * `NO_OBSERVATION` -- nothing describes the same fact. This is also the case
+      for a fact the aggregate endpoint never reported, which is most of what an
+      `EX-101.INS` carries after a filer stops tagging a concept. **Nothing is
+      created for it here.**
+    * `AMBIGUOUS_OBSERVATION` -- more than one Observation matches. The
+      identity is supposed to make that impossible; if it happens, refusing beats
+      picking one.
+    * `TAXONOMY_AMBIGUOUS` -- the matching occurrences disagree on the namespace.
+      Two extensions may declare the same local name for the same period and the
+      same value, and the Observation's `us-gaap:` prefix cannot say which is
+      meant. Refusing is the only honest answer.
+    """
+    candidates = [
+        observation for observation in observations
+        if occurrence_matches_observation(occurrence, observation)
+    ]
+    if not candidates:
+        # Distinguish "nothing describes this fact" from "the concept matched and
+        # the taxonomy could not be proven". The second is the important one: it
+        # says the local name agrees and the namespaces are in different
+        # representations, which is a missing mapping rather than a missing fact.
+        if any(_local_name(str(row.get("concept") or "")) == occurrence["tag"]
+               and row.get("accession") == occurrence.get("accession")
+               for row in observations):
+            return OccurrenceMatch(
+                occurrence["document_fact_id"], None, TAXONOMY_UNPROVEN)
+        return OccurrenceMatch(
+            occurrence["document_fact_id"], None, NO_OBSERVATION)
+    if len({row["observation_id"] for row in candidates}) != 1:
+        return OccurrenceMatch(
+            occurrence["document_fact_id"], None, AMBIGUOUS_OBSERVATION)
+    return OccurrenceMatch(
+        occurrence["document_fact_id"], candidates[0]["observation_id"],
+        MATCHED)
+
+
+def exact_source_document(
+    linked: Sequence[Dict[str, Any]],
+) -> Tuple[Optional[Tuple[str, str, str]], Optional[str]]:
+    """
+    The one document to assert, or None with the reason it cannot be decided.
+
+    Two independent gates, both of which must pass:
+
+    * **context cardinality.** If the linked occurrences disagree on
+      `context_ref`, the Observation cannot say which context its stored value
+      came from. Two dimensional members carrying the same number are the
+      measured case, and preferring one would be inventing precedence.
+    * **document cardinality.** Candidates are counted over
+      `(asset_id, accession, filename)` -- the grain the frozen relation is keyed
+      at. Counting captures or `document_id`s instead would let one document
+      captured twice look like two candidates, and would break on a re-capture
+      of the same filename.
+
+    Nothing here inspects whether a document is primary, what it is named, or
+    what type it declares. An EDGAR rendering and a filed primary document are
+    the same thing to this function, which is the point.
+    """
+    if not linked:
+        return None, NO_OBSERVATION
+    if len({row["context_ref"] for row in linked}) != 1:
+        return None, CONTEXT_AMBIGUOUS
+    documents = {
+        (row["asset_id"], row["accession"], row["filename"]) for row in linked
+    }
+    if len(documents) != 1:
+        return None, DOCUMENTS_AMBIGUOUS
+    asset_id, accession, filename = documents.pop()
+    return (asset_id, accession, filename), None

@@ -1129,6 +1129,41 @@ class SQLiteArchive(ArchiveStore):
         self.connection.commit()
         return document_fact_id
 
+    def record_observation_filing_document_fact(
+        self,
+        observation_id: str,
+        document_fact_id: str,
+    ) -> str:
+        """
+        Record that one Observation was read out of one document fact.
+
+        The primary key is the whole assertion, so re-linking is a no-op and two
+        documents asserting the same fact are two rows rather than one chosen
+        between. There is deliberately no `UNIQUE(observation_id)`: two contexts
+        in one document are two facts and one Observation, and collapsing them
+        here would hide a dimension collision this phase has no vocabulary to
+        represent.
+
+        Neither column is an order and neither is a confidence: the link says a
+        fact was read, not that this document was the source. Whether it *was*
+        the source is `observation_filing_documents`, and it is a separate write
+        made only when that relation's own 0/1 rule permits it.
+        """
+        existing = self.connection.execute(
+            "SELECT document_fact_id FROM observation_filing_document_facts"
+            " WHERE observation_id = ? AND document_fact_id = ?",
+            (observation_id, document_fact_id),
+        ).fetchone()
+        if existing is not None:
+            return document_fact_id
+        self.connection.execute(
+            "INSERT INTO observation_filing_document_facts (observation_id,"
+            " document_fact_id) VALUES (?, ?)",
+            (observation_id, document_fact_id),
+        )
+        self.connection.commit()
+        return document_fact_id
+
     def record_filing_acceptance(
         self,
         declaration_id: str,
