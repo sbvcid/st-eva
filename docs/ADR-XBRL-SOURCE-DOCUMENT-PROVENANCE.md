@@ -1474,3 +1474,275 @@ In the inline XBRL dual-document case (`0000320193-26-000018`):
 | **H** | **Migration implications** | Requires a future forward-only migration for `authority_taxonomy_namespaces`. No changes to existing tables. |
 | **I** | **Amendment 5 corrected?** | **Yes.** Corrected in §§1–10 of this record. |
 | **J** | **B2 unchanged?** | **Yes.** B2 implementation and linkage logic remain 100% unchanged. |
+
+---
+---
+
+# Amendment 6 — Taxonomy Authority Relation Schema & Migration 0022 Prerequisites
+
+**Status:** FROZEN — schema & architecture audit record. **Not implemented.**
+No production code, schema, migration, or test change accompanies this amendment.
+**Date:** 2026-10-08
+**Baseline:** `1f0c321` (`docs: refine taxonomy authority evidence grain`), working tree clean, `HEAD == origin/master`
+**Refines:** Amendment 5's Option C data model, freezing the exact DDL, identity preimage,
+provenance integration, conflict handling, and acceptance criteria for Migration 0022.
+**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 19–30.
+
+> This amendment freezes the exact relational schema and trigger constraints for
+> `authority_taxonomy_namespaces`. It proves the source document integration against
+> `source_documents`, establishes contradiction refusal semantics, confirms the
+> exclusion of filing-use and custom namespaces, and defines the frozen boundary
+> for migration 0022. **Migration 0022 is not authorized by this document.**
+
+---
+
+## 1. Exact Semantic Definition of `authority_taxonomy_namespaces`
+
+The relation `authority_taxonomy_namespaces` represents a **`SOURCE_BACKED_AUTHORITY_ASSERTION`** (not an unanchored canonical identity). Each row asserts exactly one proposition:
+
+> *"According to cited authority source document `document_id`, provider `P` recognizes that the
+> standard schema identified by namespace URI `U` belongs to taxonomy family `F`,
+> release/version `V`."*
+
+It is strictly bounded as follows:
+
+| What It Is | What It Is NOT |
+|---|---|
+| A source-backed regulator / standard-setting assertion | An unanchored canonical identity (which would suffer first-writer-wins) |
+| A universal standard schema mapping backed by `document_id` | A filing-use assertion (which belongs in `filing_document_fact_occurrences`) |
+| Provider-level authority evidence | A document occurrence or node locator |
+| An immutable, content-addressed evidence record | An Observation identity or fact identity (`source_fact_id` / `dfid_`) |
+| A standard taxonomy membership check | A prefix-to-URI mapping derived from an issuer's filing |
+| An observable evidence record preserving multi-source claims | An inline-XBRL document classifier (Invariant 19) |
+
+---
+
+## 2. Exact Relational Schema (Migration 0022 DDL Specification)
+
+```sql
+CREATE TABLE IF NOT EXISTS authority_taxonomy_namespaces (
+    authority_taxonomy_id TEXT PRIMARY KEY,
+    -- Canonical JSON preimage digest: {document_id, namespace_uri, provider, taxonomy_family, taxonomy_version}
+    authority_taxonomy_identity TEXT NOT NULL UNIQUE,
+
+    -- The identity-bearing fields, verbatim
+    document_id      TEXT NOT NULL REFERENCES source_documents(document_id),
+    provider         TEXT NOT NULL,
+    taxonomy_family  TEXT NOT NULL,
+    taxonomy_version TEXT NOT NULL,
+    namespace_uri    TEXT NOT NULL,
+
+    -- Evidence payload from authority source
+    standard_prefix        TEXT,
+    file_type_name         TEXT,
+    schema_href            TEXT,
+    authority_source       TEXT NOT NULL, -- URI or canonical identifier of source
+    authority_source_class TEXT NOT NULL, -- closed vocabulary
+    authority_source_version TEXT,        -- e.g. root version="78" from edgartaxonomies.xml
+
+    -- Retrieval metadata
+    captured_at  TEXT NOT NULL,
+
+    FOREIGN KEY (document_id) REFERENCES source_documents(document_id)
+);
+
+-- Read-side composite lookup index for B2 taxonomy equivalence evaluation
+CREATE INDEX IF NOT EXISTS authority_taxonomy_lookup
+    ON authority_taxonomy_namespaces(provider, namespace_uri, taxonomy_family);
+
+-- Append-only trigger pair: mutations and deletions strictly forbidden
+CREATE TRIGGER IF NOT EXISTS authority_taxonomy_namespaces_no_update
+BEFORE UPDATE ON authority_taxonomy_namespaces
+BEGIN SELECT RAISE(ABORT, 'authority_taxonomy_namespaces is append-only; updates forbidden'); END;
+
+CREATE TRIGGER IF NOT EXISTS authority_taxonomy_namespaces_no_delete
+BEFORE DELETE ON authority_taxonomy_namespaces
+BEGIN SELECT RAISE(ABORT, 'authority_taxonomy_namespaces is append-only; deletions forbidden'); END;
+
+-- Closed vocabulary trigger for authority_source_class
+CREATE TRIGGER IF NOT EXISTS authority_taxonomy_namespaces_source_class_vocabulary
+BEFORE INSERT ON authority_taxonomy_namespaces
+WHEN NEW.authority_source_class NOT IN (
+    'MACHINE_READABLE_CATALOG',
+    'REGULATORY_MANUAL',
+    'TECHNICAL_SCHEMA'
+)
+BEGIN
+    SELECT RAISE(ABORT,
+        'authority_taxonomy_namespaces.authority_source_class outside closed vocabulary');
+END;
+
+-- Consistency trigger: refusing conflicting re-extraction of the same authority identity
+CREATE TRIGGER IF NOT EXISTS authority_taxonomy_namespaces_extraction_consistent
+BEFORE INSERT ON authority_taxonomy_namespaces
+WHEN EXISTS (
+    SELECT 1 FROM authority_taxonomy_namespaces a
+    WHERE a.authority_taxonomy_id = NEW.authority_taxonomy_id
+      AND (a.authority_taxonomy_identity <> NEW.authority_taxonomy_identity
+           OR a.document_id <> NEW.document_id
+           OR a.provider <> NEW.provider
+           OR a.taxonomy_family <> NEW.taxonomy_family
+           OR a.taxonomy_version <> NEW.taxonomy_version
+           OR a.namespace_uri <> NEW.namespace_uri)
+)
+BEGIN
+    SELECT RAISE(ABORT,
+        'conflicting authority extraction: identical authority_taxonomy_id resolved to differing fields');
+END;
+```
+
+### 2.1 Column-by-Column Architectural Justification
+
+| Column | Role | Architectural Justification |
+|---|---|---|
+| `authority_taxonomy_id` | **Primary Key** | Content-derived digest: `"atn_" + sha256(canonical_json(preimage))[:32]`. Ensures deterministic, reproducible assertion identity. |
+| `authority_taxonomy_identity` | **Unique Identity** | The verbatim canonical JSON preimage string, persisted for auditability and verification without trusting key derivation. |
+| `document_id` | **Identity (Key) & Provenance Link** | Foreign key to `source_documents(document_id)` holding the exact captured uncompressed bytes of the authority document. Part of the identity preimage, guaranteeing source-specific retention without first-writer-wins. |
+| `provider` | **Identity (Key)** | Isolates authority claims by source provider (e.g. `SecEdgar`). Basis of cross-provider isolation (Invariant 2.3-B). |
+| `taxonomy_family` | **Identity (Key)** | High-level reporting framework (e.g. `US GAAP`, `IFRS`, `DEI`). Maps to Observation `taxonomy`. |
+| `taxonomy_version` | **Identity (Key)** | Preserves exact declared authority release label (e.g. `2026`, `2025q4`). Required for regulatory release fidelity. |
+| `namespace_uri` | **Identity (Key)** | The declared XML targetNamespace URI. Required because multiple entry points coexist within one family/version. |
+| `standard_prefix` | **Evidence Payload** | Preserves standard prefix alias declared by the authority (e.g. `us-gaap`, `ffd`). Excluded from identity. |
+| `file_type_name` | **Evidence Payload** | Authority role designation (`Schema`, `Entry Point`). Descriptive metadata from source. |
+| `schema_href` | **Evidence Payload** | Official schema location URL published by the authority. |
+| `authority_source` | **Evidence Payload** | The URL/origin of the authority publication (e.g. `https://www.sec.gov/info/edgar/edgartaxonomies.xml`). |
+| `authority_source_class` | **Evidence Payload** | Closed vocabulary classifying source level without imposing arbitrary ranking. |
+| `authority_source_version`| **Evidence Payload** | Version attribute declared by the authority document itself (e.g. `version="78"` on `<Erxl>`). |
+| `captured_at` | **Transfer Metadata** | Timestamp of retrieval into ST-EVA. Excluded from identity preimage. |
+
+**Deliberately Excluded Fields:**
+- `confidence`: ST-EVA records proven assertions only; no probabilistic scores.
+- `is_current` / `superseded`: Point-in-time replay relies on immutable historical captures, not mutable boolean flags.
+- `valid_from` / `valid_to`: Not published by SEC in `edgartaxonomies.xml`. Inventing dates would fabricate provenance.
+- `precedence`: Sources are not ranked by numeric weights.
+
+### 2.2 Removal of `UNIQUE(provider, namespace_uri)` (Audit Evidence)
+
+The initial draft included `CREATE UNIQUE INDEX authority_taxonomy_namespace_unique ON authority_taxonomy_namespaces(provider, namespace_uri)`. This constraint is **empirically invalid on real SEC data** and has been removed for two conclusive reasons:
+1. **Shared Namespaces in Real SEC Taxonomies:** Empirical audit of `https://www.sec.gov/info/edgar/edgartaxonomies.xml` (`<Erxl version="78">`) proves that standard utility and linkbase role namespaces are explicitly declared under multiple families. For example:
+   - `http://www.xbrl.org/2009/role/negated` is declared under 5 families: `US GAAP`, `BASE`, `CEF`, `VIP`, `RR`.
+   - `http://www.xbrl.org/dtr/type/2020-01-21` is declared under 5 families: `US GAAP`, `BASE`, `CEF`, `VIP`, `RR`.
+   - `http://xbrl.org/2020/extensible-enumerations-2.0` is declared under `US GAAP` and `IFRS`.
+   - `http://www.xbrl.org/2009/role/net` is declared under `US GAAP` and `BASE`.
+   Enforcing `UNIQUE(provider, namespace_uri)` would cause database insertion to abort on standard, valid SEC catalog ingestion.
+2. **Provenance Contradiction Semantics:** In ST-EVA, contradictory or multi-family assertions must be retained as observable evidence states (Option B). When B2 queries `authority_taxonomy_namespaces`, if `SELECT DISTINCT taxonomy_family ...` yields more than 1 family for a given `(provider, namespace_uri)`, B2 detects ambiguity and refuses linkage with `TAXONOMY_AMBIGUOUS`.
+
+---
+
+## 3. Source Document Provenance Integration
+
+`authority_taxonomy_namespaces` integrates directly with the existing immutable document layer:
+- The raw XML response of `edgartaxonomies.xml` is stored in `source_documents` via `SQLiteArchive.record_document`.
+- Content-addressed identity: `document_id = "doc_" + sha256(content_hash)[:24]`, where `content_hash` covers uncompressed bytes.
+- Document metadata: `document_type = 'SEC_TAXONOMY_CATALOG'`, `uri = 'https://www.sec.gov/info/edgar/edgartaxonomies.xml'`.
+- Every authority row enforces `document_id NOT NULL REFERENCES source_documents(document_id)`.
+- **One-to-many relationship:** One captured authority catalog asserts all rows parsed from that release. No new blob store is introduced.
+- **Corroborating Multi-Source Preservation:** When subsequent catalog versions (e.g. `edgartaxonomies.xml` v79) or technical schemas are ingested, their assertions are preserved under their respective `document_id`s, completely eliminating first-writer-wins and silent evidence loss.
+
+---
+
+## 4. Identity, Uniqueness, and Conflict Handling (Cases A–G)
+
+The canonical authority identity preimage is:
+```json
+{
+  "document_id": "doc_a1b2c3d4e5f6789012345678",
+  "namespace_uri": "http://fasb.org/us-gaap/2026",
+  "provider": "SecEdgar",
+  "taxonomy_family": "US GAAP",
+  "taxonomy_version": "2026"
+}
+```
+
+Analysis of all uniqueness and collision cases:
+
+* **Case A (Idempotent Re-parse of Same Document):** Re-extracting identical rows from the same document produces identical `authority_taxonomy_id`. Handled via `INSERT OR IGNORE` (idempotent no-op). This also cleanly handles verbatim duplicate `<Loc>` elements inside the same SEC catalog (e.g. `http://xbrl.sec.gov/cyd/2025` which appears twice verbatim in `edgartaxonomies.xml` v78).
+* **Case B (Re-assertion in Subsequent Catalog):** A subsequent SEC catalog release (e.g. `edgartaxonomies.xml` version 79, stored under `doc_79`) re-asserts an existing mapping. Because `document_id` is part of the preimage, a new assertion row is inserted. Both source assertions are retained. When queried by B2, `SELECT DISTINCT taxonomy_family ...` returns `['US GAAP']` (cardinality 1, unambiguous). Provenance is never discarded; first-writer-wins is eliminated.
+* **Case C (Multiple Namespaces in Same Family/Version):** Valid standard taxonomy packages define multiple schemas (e.g. `us-gaap` primary vs. `us-gaap-ebp` benefit plans). Distinct `namespace_uri`s yield distinct `authority_taxonomy_id`s. They coexist cleanly.
+* **Case D (Shared Namespaces Across Families in SEC Catalog):** As proven in §2.2, standard utility/role schemas (e.g. `http://www.xbrl.org/2009/role/negated`) are assigned to multiple families (`US GAAP`, `BASE`, etc.) in `edgartaxonomies.xml`. These coexist as distinct source assertions in the table. If an observation references such a shared namespace, B2 detects `len(families) > 1` and refuses linkage via `TAXONOMY_AMBIGUOUS`.
+* **Case E (Conflicting Authority Assertions Across Sources):** If two sources disagree on the family of a concept schema (e.g. Source 1 asserts `URI-X -> US GAAP / 2026` while Source 2 asserts `URI-X -> FFD / 2026`), both assertions are persisted in `authority_taxonomy_namespaces`. Contradiction is preserved as an observable state. When B2 queries `(provider, namespace_uri)`, `SELECT DISTINCT taxonomy_family` returns `['FFD', 'US GAAP']` (cardinality 2). B2 refuses linkage with `TAXONOMY_AMBIGUOUS`. The system never picks a winning authority by heuristic or first-writer precedence.
+* **Case F (Repeated Ingestion of Identical Bytes):** Byte-identical authority files produce the same `document_id`. Re-ingestion is completely idempotent.
+* **Case G (Same Family, Multiple Release Versions):** A family has multiple annual releases (`2025`, `2026`). Each release has its own targetNamespace URI (e.g. `/us-gaap/2025`, `/us-gaap/2026`), coexisting cleanly as distinct rows.
+
+---
+
+## 5. Taxonomy Version & Prefix Treatment
+
+* **Taxonomy Version:** Preserved explicitly as declared in the SEC XML catalog `<Version>` element (e.g. `2026`, `2025q4`, `2024Q2`). It is never parsed from the URI using string heuristics.
+* **Standard Prefix:** Preserved as evidence payload (`standard_prefix`), matching `<Prefix>` in `edgartaxonomies.xml` (e.g. `us-gaap`). It is strictly **excluded** from the identity preimage and join keys:
+  * Filings choose arbitrary local XML prefixes (`xmlns:mygaap="URI"`).
+  * Document facts store resolved namespace URIs (`filing_document_fact_occurrences.taxonomy`).
+  * B2 matches resolved URI to `authority_taxonomy_namespaces.namespace_uri`. The prefix string is purely descriptive.
+
+---
+
+## 6. Custom Taxonomies Boundary
+
+* Issuer extension namespaces (e.g. `http://apple.com/20260730`) are company-specific declarations absent from SEC Standard Taxonomies catalogs.
+* They **never** enter `authority_taxonomy_namespaces`.
+* Facts tagged under issuer extension URIs have zero rows in `authority_taxonomy_namespaces` and remain `TAXONOMY_UNPROVEN` in B2.
+* When an issuer extension schema imports a standard schema (`<xs:import namespace="http://fasb.org/us-gaap/2026">`), standard facts tagged in that filing reside in the standard namespace URI and match via the authority table.
+
+---
+
+## 7. Migration 0022 Exact Boundary
+
+Migration `0022_sec_authority_taxonomies.sql` is strictly bounded as follows:
+
+### What Migration 0022 MUST Do:
+1. Run in a single, explicit, atomic transaction (`BEGIN; ... COMMIT;`).
+2. Additive DDL only:
+   - `CREATE TABLE IF NOT EXISTS authority_taxonomy_namespaces`
+   - Implicit unique index on primary key `authority_taxonomy_id`
+   - Explicit unique constraint on `authority_taxonomy_identity`
+   - Composite lookup index `authority_taxonomy_lookup` on `(provider, namespace_uri, taxonomy_family)`
+   - Two append-only triggers (`..._no_update`, `..._no_delete`)
+   - One closed-vocabulary trigger (`..._source_class_vocabulary`)
+   - One consistency trigger (`..._extraction_consistent`)
+3. Enforce FK integrity against `source_documents(document_id)`.
+4. Update `PRAGMA user_version = 22`.
+
+### What Migration 0022 MUST NOT Do:
+- **Zero Network Calls:** No HTTP fetch of `edgartaxonomies.xml`.
+- **Zero Parsing:** No XML parsing of taxonomy catalogs.
+- **Zero Data Statements:** No `INSERT`, no `UPDATE`, no `DELETE`. Table starts completely empty.
+- **Zero Backfill:** No historical data synthesized or backfilled.
+- **Zero Changes to Existing Relations:** `observations`, `source_facts`, `filing_documents`, `filing_document_captures`, and `filing_document_fact_occurrences` are untouched.
+- **Zero B2 Linkage Changes:** No changes to matching rules or activation logic.
+
+---
+
+## 8. Frozen Acceptance Criteria for Migration 0022
+
+A future implementation of Migration 0022 must satisfy all twelve acceptance criteria:
+
+1. **Clean Apply:** Migration executes cleanly on a populated archive; `PRAGMA user_version` advances to 22.
+2. **Atomic Rollback:** Any execution error rolls back all DDL statements completely; schema version remains 21.
+3. **Checksum Conformance:** SHA-256 of `0022_sec_authority_taxonomies.sql` matches the entry recorded in `schema_migrations`.
+4. **Append-Only UPDATE Refusal:** Any `UPDATE` on `authority_taxonomy_namespaces` raises an ABORT exception.
+5. **Append-Only DELETE Refusal:** Any `DELETE` on `authority_taxonomy_namespaces` raises an ABORT exception.
+6. **Closed-Vocabulary Enforcement:** Inserting an `authority_source_class` outside the allowed three values raises an ABORT exception.
+7. **Foreign Key Integrity:** Inserting an authority row referencing a non-existent `document_id` fails with a foreign key violation.
+8. **Preimage Identity Uniqueness:** Inserting two rows with the same `authority_taxonomy_identity` violates the unique constraint.
+9. **Multi-Source Assertion Retention:** Inserting two rows for the same `(provider, namespace_uri)` from different `document_id`s or with different families succeeds, preserving both source assertions.
+10. **Deterministic Extraction Consistency:** A duplicate `authority_taxonomy_id` with conflicting columns triggers an extraction consistency ABORT.
+11. **Zero Data Footprint:** Migration completes leaving `authority_taxonomy_namespaces` with exactly 0 rows.
+12. **Zero Regression:** All existing test suites (115 B2 tests, 458 SEC provenance tests) pass without modification.
+
+---
+
+## 9. Formal Architectural Decision Summary
+
+| Item | Question | Formal Decision |
+|---|---|---|
+| **A** | **Authority relation schema** | `authority_taxonomy_namespaces` with 14 columns, 1 PK, 1 unique constraint on `authority_taxonomy_identity`, 1 composite lookup index, and 4 triggers (§2). |
+| **B** | **Identity preimage** | `{document_id, namespace_uri, provider, taxonomy_family, taxonomy_version}` (§4). |
+| **C** | **Source document relationship** | Foreign key `document_id REFERENCES source_documents(document_id)` (§3). Eliminates first-writer-wins. |
+| **D** | **Prefix treatment** | Standard prefix preserved as evidence payload column (`standard_prefix`); excluded from identity (§5). |
+| **E** | **Version treatment** | Explicit `<Version>` from authority preserved verbatim; regex URI parsing forbidden (§5). |
+| **F** | **Duplicate / conflict treatment** | Re-assertions from same document are idempotent no-ops; assertions from different documents coexist; conflicting mappings of the same URI result in `TAXONOMY_AMBIGUOUS` in B2; no arbitrary tie-breaks (§4). |
+| **G** | **Custom taxonomy treatment** | Issuer extension namespaces strictly excluded; facts remain `TAXONOMY_UNPROVEN` (§6). |
+| **H** | **Migration 0022 scope** | Additive DDL only; zero data statements, zero backfill, zero code changes (§7). |
+| **I** | **Test requirements** | Twelve frozen acceptance criteria covering DDL, triggers, and FK integrity (§8). |
+| **J** | **Unresolved questions** | SEC catalog fetch scheduler; historical XML catalog capture archive; multi-year catalog merge strategy. |
+| **K** | **Is Migration 0022 authorized?** | **Not authorized.** This record freezes the schema design only. Implementation requires its own explicit authorization. |
