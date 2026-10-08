@@ -1112,3 +1112,102 @@ aggregate-route deprecation.
 **Newly unresolved by this audit:** whether a Python-level guard should accompany the
 §1.3 trigger; where the §10.8 agreement check lives (test vs. read-time derivation);
 and whether the pre-migration gate of §11 is a test or a migration step.
+
+---
+---
+
+# Amendment 3 — Taxonomy identity and locator payload, corrected
+
+**Status:** FROZEN — identity correction found by the 3C-B1 pre-commit audit.
+Implemented in the 3C-B1 extractor. **No migration change, no schema change.**
+**Date:** 2026-10-08
+**Refines:** Amendment 2 §3's `taxonomy` field and §1.1's `locators_json`.
+
+> Amendment 2 named `taxonomy` without saying which representation it held. An
+> implementation had to decide, decided it as the document-declared **prefix**,
+> and the audit reproduced two ways that is wrong. This amendment records the
+> corrected decision and the evidence for it.
+
+## 1. `taxonomy` is the namespace URI, not the prefix
+
+A prefix is an alias a document chooses; XML does not treat it as significant.
+Two failure modes were reproduced on real XML before this was settled:
+
+* **Fragmentation.** One namespace bound to two prefixes in a single document
+  (`us-gaap:` and `gaap:` for `http://fasb.org/us-gaap/2026`) produced **two**
+  `dfid_`s for one expanded name — and the five-column uniqueness index could not
+  catch it, because that index reads `taxonomy` too.
+* **Collapse — the serious direction.** XML permits a prefix to be rebound in a
+  nested scope. `xmlns:my=".../tenant-a"` on the root with
+  `xmlns:my=".../tenant-b"` inside a wrapper gave `tenant-a:Revenues = 100` and
+  `tenant-b:Revenues = 200` the **same** `dfid_`. Two distinct concepts, one
+  identity. Where the values happened to agree, the uniqueness index would not
+  even fire.
+
+The earlier justification for prefix — that us-gaap republishes its namespace each
+year, so a URI would re-identify one concept per filing — **was wrong**.
+`document_id` is already in the preimage, so a 2023 fact and a 2024 fact have
+different identities whatever `taxonomy` says; identity granularity is per
+captured document, and the year-to-year churn was never a reason.
+
+`taxonomy` therefore holds the resolved **namespace URI**, with bindings resolved
+per element against the scope that element sits in, never from a root-only map.
+A QName in an inline fact's `name` attribute is resolved the same way, so a
+concept asserted inline and the same concept asserted in an instance of one
+document share a taxonomy.
+
+**Accepted trade:** `taxonomy` here is a URI while the archive's concept
+vocabulary elsewhere is `us-gaap:Tag`. That is acceptable because `dfid_` and
+`sfid_` are different grains and are never joined. Joining a `dfid_` to the
+registry will need a prefix-to-URI mapping, which belongs to the registry and is
+not this layer's business.
+
+## 2. What counts as a fact
+
+`contextRef` alone is necessary but not sufficient: a **tuple** references a
+context and declares a unit, and it is a container. Reading one as a fact had
+produced `value_text = "2500000"` from its single numeric child — a fabricated
+fact whose value came from somewhere else entirely.
+
+The rule is now two structural conditions, neither of which is a namespace
+allow-list:
+
+1. the element declares `contextRef`; and
+2. it has **no child elements**.
+
+A fact may live in any extension namespace, so an enumeration of the namespaces
+that count would be both incomplete and fixture-driven. A prefix list was not
+introduced to patch this, and a test asserts that a namespace never heard of
+still yields a fact.
+
+## 3. `locators_json` is a list of appearances, not a flat span list
+
+A document may state one logical fact more than once. Flattening every span of
+one logical fact into a single list breaks the verification property: for a fact
+asserted twice, the concatenation of all spans is the value **twice**, and no
+longer round-trips to `value_text`.
+
+`locators_json` is therefore a canonical array of span groups, one per
+appearance. Each group independently reproduces `value_text`, so the payload is
+verifiable span by span. An `ix:continuation` chain is one appearance and stays
+one group; a fact in two separate elements is two groups.
+
+Aggregation happens in the parser, **before** the row exists. The relation is
+append-only and has no `UPDATE`, so a locator discovered after the insert could
+never be added — which is why the aggregation cannot be deferred to the writer.
+
+## 4. Conflicting repeats
+
+Two appearances of one identity that resolve **differently** are not merged and
+not written. They are a contradiction, reported as `CONFLICTING_REPEAT`. They are
+deliberately not resolved by preferring the first occurrence: inventing precedence
+is exactly what invariant 19 forbids, and it would also be silent.
+
+## 5. What did not change
+
+The eight-field preimage is unchanged. `filename`, value, period, locator,
+`captured_at`, `capture_kind` and every classifier stay out of the digest. The
+five-column uniqueness index is unchanged, and it now agrees with `dfid_` exactly:
+its columns are the digest's fields minus `provider`, `asset_id` and `accession`,
+which are functionally determined by `document_id` through the composite foreign
+key.

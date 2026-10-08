@@ -470,3 +470,93 @@ def filing_document_statement_id(
             quote_locator,
         ).encode("utf-8")
     ).hexdigest()[:32]
+
+
+# ---------------------------------------------------------------------------
+# 0021 - one logical XBRL fact asserted by one captured document
+# ---------------------------------------------------------------------------
+
+#: The eight fields that make a `dfid_`. Frozen by ADR Amendment 2 §3; the test
+#: reads them back out of the stored preimage rather than restating them.
+DOCUMENT_FACT_IDENTITY_FIELDS: Tuple[str, ...] = (
+    "provider", "asset_id", "accession", "document_id",
+    "taxonomy", "tag", "context_ref", "unit_ref",
+)
+
+
+def document_fact_identity(
+    provider: str,
+    asset_id: str,
+    accession: str,
+    document_id: str,
+    taxonomy: str,
+    tag: str,
+    context_ref: str,
+    unit_ref: str,
+) -> str:
+    """
+    The canonical preimage of a document-fact occurrence.
+
+    Unlike a statement, an occurrence has **no filename** in the key even though
+    `filing_document_fact_occurrences` carries the column: the fact lives in the
+    bytes, and two byte-identical filenames in one filing are two
+    `filing_documents` rows and one `document_id`. `filename` is stored beside
+    the digest because the foreign keys need it, and kept out of the digest
+    because putting it in would fork one fact into two.
+
+    Nor is there a `period_start`/`period_end` pair. In XBRL the period lives
+    *inside* the context, so `context_ref` already determines it; carrying it a
+    second time invites two derivations of one field to disagree and fork the
+    identity. Nor a value, a byte locator, `captured_at` or `capture_kind`: each
+    is evidence about the reading, and identity must not carry data that can
+    drift from the row it names.
+
+    `dfid_` and `sfid_` are different grains and must never be compared: this one
+    names a fact node a document asserts, the other names a reading ST-EVA took
+    from a source. Their preimages differ, so they cannot collide by accident.
+    """
+    return canonical_json({
+        "provider": provider,
+        "asset_id": asset_id,
+        "accession": accession,
+        "document_id": document_id,
+        "taxonomy": taxonomy,
+        "tag": tag,
+        "context_ref": context_ref,
+        "unit_ref": unit_ref,
+    })
+
+
+def document_fact_id(
+    provider: str,
+    asset_id: str,
+    accession: str,
+    document_id: str,
+    taxonomy: str,
+    tag: str,
+    context_ref: str,
+    unit_ref: str,
+) -> str:
+    """
+    The identity of one logical fact in one captured document.
+
+    `document_id` is what makes the identity document-scoped: a filed primary
+    HTML, an EDGAR-generated `_htm.xml` and a legacy `EX-101.INS` are three
+    different byte sequences, so the same concept reported in each is three
+    occurrences. That is deliberate and is the whole reason the relation is not a
+    source-document assertion -- deciding which of the three is *the* source is a
+    question the current evidence cannot answer (invariant 19), and this phase
+    does not answer it.
+
+    `context_ref` is in the key because two contexts can carry the same concept,
+    the same period and the *same value* and still be two reporting facts. The
+    measured case is `ifrs_capex_context_237.py:21-25`, where a dimensional and
+    an undimensional context agree numerically: under concept+period+value they
+    are one fact, and only `context_ref` tells them apart.
+    """
+    return "dfid_" + hashlib.sha256(
+        document_fact_identity(
+            provider, asset_id, accession, document_id, taxonomy, tag,
+            context_ref, unit_ref,
+        ).encode("utf-8")
+    ).hexdigest()[:32]

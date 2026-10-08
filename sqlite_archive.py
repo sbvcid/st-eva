@@ -1047,6 +1047,88 @@ class SQLiteArchive(ArchiveStore):
         self.connection.commit()
         return statement_id
 
+    def record_filing_document_fact_occurrence(
+        self,
+        document_fact_id: str,
+        document_fact_identity: str,
+        asset_id: str,
+        accession: str,
+        filename: str,
+        document_id: str,
+        provider: str,
+        taxonomy: str,
+        tag: str,
+        context_ref: str,
+        unit_ref: str,
+        entity_identifier: str,
+        entity_scheme: Optional[str],
+        period_kind: str,
+        period_start: Optional[str],
+        period_end: Optional[str],
+        dimensions_json: str,
+        unit_measures_json: str,
+        value_text: str,
+        resolved_value: float,
+        sign: Optional[str],
+        scale: Optional[str],
+        format_: Optional[str],
+        decimals: Optional[str],
+        language: Optional[str],
+        locators_json: str,
+        context_locator_json: str,
+        unit_locator_json: str,
+        captured_at: str,
+        capture_kind: str,
+    ) -> str:
+        """
+        Record one logical fact asserted by one captured byte sequence.
+
+        `document_fact_id` is a digest over the eight-field preimage, so a second
+        capture of changed bytes yields a different occurrence and leaves the
+        first alone, and one value split across several `ix:continuation` ranges
+        is still one occurrence because no locator is in the key.
+
+        Idempotency is the same read-then-write `record_filing_document_statement`
+        uses: an occurrence already held with the same evidence returns. A repeat
+        that produces *different* evidence for the same identity is a
+        non-deterministic parse, and this writer deliberately does not absorb it
+        -- the pre-check lets the write reach the database so that
+        `fact_occurrences_extraction_consistent` refuses it with a message
+        naming the non-determinism. That trigger is the authority.
+        """
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT value_text, resolved_value FROM"
+            " filing_document_fact_occurrences WHERE document_fact_id = ?",
+            (document_fact_id,),
+        ).fetchone()
+        if existing is not None and (
+            existing["value_text"] == value_text
+            and existing["resolved_value"] == resolved_value
+        ):
+            return document_fact_id
+        self.connection.execute(
+            "INSERT INTO filing_document_fact_occurrences (document_fact_id,"
+            " document_fact_identity, asset_id, accession, filename,"
+            " document_id, provider, taxonomy, tag, context_ref, unit_ref,"
+            " entity_identifier, entity_scheme, period_kind, period_start,"
+            " period_end, dimensions_json, unit_measures_json, value_text,"
+            " resolved_value, sign, scale, format_, decimals, language,"
+            " locators_json, context_locator_json, unit_locator_json,"
+            " captured_at, capture_kind)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+            " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (document_fact_id, document_fact_identity, asset_id, accession,
+             filename, document_id, provider, taxonomy, tag, context_ref,
+             unit_ref, entity_identifier, entity_scheme, period_kind,
+             period_start, period_end, dimensions_json, unit_measures_json,
+             value_text, resolved_value, sign, scale, format_, decimals,
+             language, locators_json, context_locator_json, unit_locator_json,
+             captured_at, capture_kind),
+        )
+        self.connection.commit()
+        return document_fact_id
+
     def record_filing_acceptance(
         self,
         declaration_id: str,

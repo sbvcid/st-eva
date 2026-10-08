@@ -55,8 +55,10 @@ from data_contract import (
     is_number,
     utc_now,
 )
-from evidence_model import source_fact_id
+from evidence_model import canonical_json, source_fact_id
 from sec_provenance import (
+    document_fact_id,
+    document_fact_identity,
     fiscal_calendar_declaration_id,
     filing_acceptance_id,
     filing_declaration_id,
@@ -74,6 +76,7 @@ from sec_provider import (
     observation_currency_of,
     xbrl_unit_to_contract_unit,
 )
+from sec_xbrl_facts import XbrlParseError, parse_xbrl_document
 
 SEC_SOURCE = "SecEdgar"
 SEC_SOURCE_TYPE = SourceType.REGULATORY_FILING.value
@@ -618,6 +621,17 @@ class Ingestor:
                     self._acquire_document_statements(asset_id, accession)
         except Exception as error:  # noqa: BLE001
             self._record_provenance_failure("document_statements", error)
+        # XBRL facts are read from bytes this run already captured, so this
+        # follows the capture phase and fetches nothing. It reads every captured
+        # document of the filing, not just the primary one, because a fact may be
+        # asserted in an `EX-101.INS` and nowhere else.
+        try:
+            for entry in index:
+                accession = str(entry.get("accession") or "")
+                if accession:
+                    self._acquire_document_fact_occurrences(asset_id, accession)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("document_fact_occurrences", error)
 
         if not new_entries:
             # Nothing new was accepted, so no concept endpoint can have
@@ -2040,6 +2054,131 @@ class Ingestor:
                     f"{capture['document_id']}",
                     error,
                 )
+        return stored
+
+    def _acquire_document_fact_occurrences(
+        self,
+        asset_id: str,
+        accession: str,
+    ) -> int:
+        """
+        Read XBRL facts out of the bytes this archive already holds.
+
+        Unlike the statement pass above, this reads **every** captured document
+        of the filing rather than only the primary one. A fact is asserted
+        wherever it is asserted: a legacy `EX-101.INS` may be the only document
+        carrying diluted EPS while the `EX-99.1` carries none, and the primary
+        HTML of an 8-K may carry nothing at all.
+
+        It also reads *each* document independently and writes an occurrence per
+        document that holds the fact. When the same fact appears in both a filed
+        primary document and an EDGAR-generated `_htm.xml`, two occurrences are
+        the truth: current evidence cannot decide which of them is authoritative
+        (invariant 19), and this phase refuses to decide it. Nothing here writes
+        an `observation_filing_documents` row, so no exact-source assertion is
+        implied by the existence of occurrences.
+
+        Nothing is fetched. A document with no capture has no bytes and
+        therefore yields no occurrence; the absence is the record.
+        """
+        captures = self.connection.execute(
+            "SELECT filename, document_id, captured_at, capture_kind FROM"
+            " filing_document_captures WHERE asset_id = ? AND accession = ?"
+            " ORDER BY filename, captured_at, document_id",
+            (asset_id, accession),
+        ).fetchall()
+        stored = 0
+        for capture in captures:
+            try:
+                stored += self._record_fact_occurrences_from_capture(
+                    asset_id, accession, dict(capture)
+                )
+            except Exception as error:  # noqa: BLE001
+                self._record_provenance_failure(
+                    f"fact_occurrence:{accession}:{capture['filename']}:"
+                    f"{capture['document_id']}",
+                    error,
+                )
+        return stored
+
+    def _record_fact_occurrences_from_capture(
+        self,
+        asset_id: str,
+        accession: str,
+        capture: Dict[str, Any],
+    ) -> int:
+        """Parse one capture's bytes and persist the facts they actually assert."""
+        document_id = capture["document_id"]
+        row = self.connection.execute(
+            "SELECT content_hash FROM source_documents WHERE document_id = ?",
+            (document_id,),
+        ).fetchone()
+        if row is None:
+            return 0
+        payload = self.store.content_for(row["content_hash"])
+        if payload is None:
+            # Captured as a reference rather than as content: the capture row
+            # stands and there are simply no bytes to read.
+            return 0
+
+        parsed = parse_xbrl_document(payload)
+        for rejection in parsed.rejections:
+            # Run-level only (ADR Amendment 0 §3 item 7): an absent occurrence
+            # and a never-attempted read must be distinguishable, and this is
+            # where that distinction is recorded. Nothing is written to any
+            # table for a rejection, and nothing is inferred in its place.
+            self._record_provenance_failure(
+                f"fact_rejection:{accession}:{capture['filename']}:"
+                f"{document_id}:{rejection.taxonomy}:{rejection.tag}:"
+                f"{rejection.context_ref or '-'}:{rejection.reason}",
+                XbrlParseError(rejection.reason),
+            )
+
+        stored = 0
+        for fact in parsed.facts:
+            occurrence_id = document_fact_id(
+                SEC_SOURCE, asset_id, accession, document_id,
+                fact.taxonomy, fact.tag, fact.context_ref, fact.unit_ref,
+            )
+            self.store.record_filing_document_fact_occurrence(
+                document_fact_id=occurrence_id,
+                document_fact_identity=document_fact_identity(
+                    SEC_SOURCE, asset_id, accession, document_id,
+                    fact.taxonomy, fact.tag, fact.context_ref, fact.unit_ref,
+                ),
+                asset_id=asset_id,
+                accession=accession,
+                filename=capture["filename"],
+                document_id=document_id,
+                provider=SEC_SOURCE,
+                taxonomy=fact.taxonomy,
+                tag=fact.tag,
+                context_ref=fact.context_ref,
+                unit_ref=fact.unit_ref,
+                entity_identifier=parsed.contexts[
+                    fact.context_ref].entity_identifier,
+                entity_scheme=parsed.contexts[
+                    fact.context_ref].entity_scheme,
+                period_kind=parsed.contexts[fact.context_ref].period_kind,
+                period_start=parsed.contexts[fact.context_ref].period_start,
+                period_end=parsed.contexts[fact.context_ref].period_end,
+                dimensions_json=parsed.dimensions_json(fact.context_ref),
+                unit_measures_json=parsed.unit_measures_json(fact.unit_ref),
+                value_text=fact.value_text,
+                resolved_value=fact.resolved_value,
+                sign=fact.sign,
+                scale=fact.scale,
+                format_=fact.format_,
+                decimals=fact.decimals,
+                language=fact.language,
+                locators_json=parsed.locators_json(fact),
+                context_locator_json=parsed.context_locator_json(
+                    fact.context_ref),
+                unit_locator_json=parsed.unit_locator_json(fact.unit_ref),
+                captured_at=capture["captured_at"],
+                capture_kind=capture["capture_kind"],
+            )
+            stored += 1
         return stored
 
     def _primary_document_filename(
