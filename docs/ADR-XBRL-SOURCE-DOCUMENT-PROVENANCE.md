@@ -1746,3 +1746,235 @@ A future implementation of Migration 0022 must satisfy all twelve acceptance cri
 | **I** | **Test requirements** | Twelve frozen acceptance criteria covering DDL, triggers, and FK integrity (§8). |
 | **J** | **Unresolved questions** | SEC catalog fetch scheduler; historical XML catalog capture archive; multi-year catalog merge strategy. |
 | **K** | **Is Migration 0022 authorized?** | **Not authorized.** This record freezes the schema design only. Implementation requires its own explicit authorization. |
+
+---
+
+# 15. Acquisition / Parser Design Freeze — Read-Only Phase (Post-0022)
+
+**Status:** READ-ONLY DESIGN FREEZE. No ingestion, no parsing, no new rows, no B2 change, no 0022 modification, no Observation / dfid_ / sfid_ change. This section freezes decisions A–J required before any authority ingestion phase; it does not authorize that phase.
+
+**Baseline:** `b38b1e0` (`feat: add taxonomy authority provenance schema`); `HEAD == origin/master`; working tree clean; `0022_authority_taxonomy_namespaces` applied (user_version=22); zero authority rows; `B2` unchanged; `Observation` untouched.
+
+**Evidence reviewed (current repo, not invented):**
+- `docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Amendment 5 (§3 source hierarchy, §6 B2 activation, §7 Option C), Amendment 6 (§2 DDL, §3 provenance, §4 identity/conflict, §7 boundary, §8 criteria).
+- `archive/migrations/0022_authority_taxonomy_namespaces.sql` (frozen DDL, 4 triggers, FK to `source_documents`, no `UNIQUE(provider, namespace_uri)`).
+- `archive/migrations/0001_initial.sql` (`source_documents` schema: `document_id` PK, `content_hash` UNIQUE, `uri`, `media_type`, `byte_size`, `fetched_at`, `first_seen_at`, `document_type`, `content`, `content_encoding`; idempotency by `content_hash` at `sqlite_archive.py:625-629`; `document_id` derived `"doc_" + sha256(content_hash)[:24]` at `:639`).
+- `sec_provider.py` (fetch architecture: `urllib.request`, `DEFAULT_USER_AGENT`, `timeout=15`, `SAFE_REQUEST_INTERVAL_SECONDS = 1/4`, `ARCHIVES_HOST = "https://www.sec.gov"`, `ARCHIVES_API_HOST = "https://data.sec.gov"`; no generic network layer beyond provider instance; `fetch_log`, `requests_made` tracking).
+- `sqlite_archive.py` (document recording inserts all fields above; no separate blob store; `compression`/`storage_path` optional; `provider` stored per document).
+- `evidence_model.py` (`canonical_json`: `json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",",":"))`); `sha256(canonical_json(...).encode("utf-8")).hexdigest()[:32]` convention used by `sfid_`, `adm_`, `line_`, `document_fact_id` (`sec_provenance.py:557-560`).
+- ADR Amendment 5 §3, §5 (custom/extension namespaces absent from catalog → `TAXONOMY_UNPROVEN`).
+- `tests/test_authority_taxonomy_namespace_schema.py` (20 PASS; covers identity uniqueness, no hidden unique, conflict retention, vocabulary, append-only, extraction consistency, FK, schema-only).
+
+No live `edgartaxonomies.xml` bytes are present in the repo; no cached snapshot; no historical archive evidence; no ingestion code exists. The freeze below is architectural (design of future acquisition/parser phases) and must not be interpreted as authorization of ingestion.
+
+---
+
+## 15.1 A. Exact Acquisition Route (Freeze)
+
+**Live source:** `https://www.sec.gov/info/edgar/edgartaxonomies.xml` (SEC.gov direct; not `data.sec.gov`; root `<Erxl>` versioned, e.g. `version="78"`; see ADR §3 source table and Amendment 5 §3).
+
+**Route layer:** Independent of `sec_provider.py`'s per-accession ingestion (`sec_ingest.py`). The catalog is a universal authority publication, not an issuer filing. It belongs in a **separate acquisition / archive-maintenance phase**, not in `SecEdgar`'s per-company fetch loop.
+
+**Provider identity:** `provider = "SecEdgar"` (same provider identity used by `observations.provider` and `source_documents.provider`; consistent with `SecEdgar` as the SEC filing authority; ADR §3 Source 1).
+
+**Fetch mechanism:** Existing `sec_provider.py` `urllib.request` mechanism (same `DEFAULT_USER_AGENT`, `timeout=15`, safe request interval, `ARCHIVES_HOST`) is sufficient; no new generic network layer required. The acquisition function may be a standalone CLI / scheduler call (e.g., `archive/authority_fetch.py` — not created in this phase) using the same `urllib.request` settings, or a direct `sqlite_archive.py` document-registration call with explicit `uri` and `provider`.
+
+**Headers / User-Agent:** Must use the repository's existing `DEFAULT_USER_AGENT` (SEC requires identifying User-Agent for automated access; `sec_provider.py:86-89`). Must include `User-Agent` header; must not omit it.
+
+**Timeout / error:** Same as provider default (`timeout=15`). Failure is not fatal to archive integrity (authority evidence is optional for B2; absence yields `TAXONOMY_UNPROVEN`, never a crash). Retries are out of scope for this freeze; if added later, they must be idempotent by `content_hash` (same bytes → same `document_id`).
+
+**Byte preservation:** Exact uncompressed response bytes MUST be preserved as `source_documents.content` (or `content_encoding` if compressed, with `compression` noted); `content_hash` covers uncompressed bytes (`sqlite_archive.py:620-621`). The catalog is XML text; no binary encoding conversion permitted; `media_type` = `"application/xml"` or derived from `Content-Type`; `document_type` = `"SEC_TAXONOMY_CATALOG"` (descriptive; no vocabulary constraint on `source_documents.document_type`; consistent with loose typing of existing column).
+
+**Retrieval timestamp:** `fetched_at` = retrieval time; `first_seen_at` = first retrieve time (idempotency: second retrieve with identical bytes returns existing `document_id` without updating `first_seen_at`; see `sqlite_archive.py:625-629`). `captured_at` on `authority_taxonomy_namespaces` = same retrieval semantics (transfer metadata, excluded from identity per Amendment 6 §2.1).
+
+**Retry / idempotency:** `sqlite_archive.py` already enforces idempotency by `content_hash`. If `edgartaxonomies.xml` is re-fetched with identical bytes → same `content_hash` → same `document_id`; no new authority rows created (parser must handle insert-idempotency via `INSERT OR IGNORE` / identity-check trigger). If bytes change (new SEC release, new root `version`) → new `content_hash` → new `document_id`; parser produces new authority assertions; old assertions retained (append-only; no UPDATE/DELETE per 0022 triggers).
+
+**Network access rule:** The acquisition phase is the ONLY phase permitted network access. The parser (`parse_edgar_taxonomies_catalog`) is strictly offline (consumes captured bytes from `sqlite_archive.py.content_for` / `source_documents`). 0022 is schema-only (no network); this freeze does not authorize any change to that boundary.
+
+---
+
+## 15.2 B. Exact Source Document Semantics (Freeze)
+
+**Table:** `source_documents` (`0001_initial.sql`; unchanged by 0022).
+
+**Identity of authority catalog document:** `document_id = "doc_" + sha256(content_hash)[:24]` where `content_hash = sha256(uncompressed response bytes).hexdigest()`. No accession, no filename, no ordinal. The catalog is the document; its bytes are the provenance.
+
+**Required fields (all from `sqlite_archive.py` insertion):** `document_id`, `content_hash`, `uri = "https://www.sec.gov/info/edgar/edgartaxonomies.xml"`, `canonical_uri = uri`, `http_status`, `media_type`, `byte_size = len(bytes)`, `fetched_at`, `first_seen_at`, `document_type = "SEC_TAXONOMY_CATALOG"`, `provider = "SecEdgar"`, `content = bytes` (or NULL if external storage used), `content_encoding = None` (XML is text; no encoding transformation). `compression`, `storage_path` optional.
+
+**No second store:** `source_documents` IS the authority document store. `authority_taxonomy_namespaces` refers to it via `document_id` FK (`0022` line 1529 + 1546). No `authority_document_id` separate table; Amendment 5 §7 Option C adopted; no redundant relation.
+
+**Document type value:** `SEC_TAXONOMY_CATALOG` is sufficient and consistent. `source_documents.document_type` is a loose descriptive text column with no vocabulary trigger or CHECK; existing usage is descriptive (not enforced by schema). No vocabulary change needed; no alteration to `0001`.
+
+---
+
+## 15.3 C. Exact Parser Contract (Freeze)
+
+**Function signature (design, not implemented):**
+```python
+def parse_edgar_taxonomies_catalog(payload: bytes) -> Iterable[Dict[str, str]]:
+    """Consume uncompressed XML bytes of edgartaxonomies.xml.
+    Return authority assertions with fields matching 0022 columns.
+    Preserve source values verbatim; never infer from URI syntax."""
+```
+
+**Input:** Raw uncompressed `bytes` from captured `source_documents.content` (or re-read from `sqlite_archive.py.content_for` / storage path). Must not open network; must not normalize XML (preserve whitespace/encoding of captured bytes for hash consistency; parsing may use `xml.etree.ElementTree` or `lxml` over the bytes, but output must reflect source, not reconstructed XML).
+
+**Output fields per assertion (direct mapping to `0022` columns; identity fields mandatory, evidence fields optional but preserved when present):**
+
+| Output key | 0022 column | Source element / attribute (per frozen ADR §3, §5, Amendment 6 §2.1) | Inference rule |
+|---|---|---|---|
+| `provider` | `provider` | Fixed `"SecEdgar"` (authority source identity, not from XML) | Fixed; never inferred from URI |
+| `taxonomy_family` | `taxonomy_family` | `<Family>` text / attr (e.g., `US GAAP`, `IFRS`, `FFD`, `DEI`, `ECD`, `CYD`) | Verbatim from XML; never derived from namespace content |
+| `taxonomy_version` | `taxonomy_version` | `<Version>` text / attr (e.g., `2026`, `2025q4`, `2024Q2`) | Verbatim; never parsed from URI regex |
+| `namespace_uri` | `namespace_uri` | `<Namespace>` or `namespace` attribute / text (absolute URI, e.g., `http://fasb.org/us-gaap/2026`) | Verbatim; must be absolute; never inferred |
+| `standard_prefix` | `standard_prefix` | `<Prefix>` text / attr (e.g., `us-gaap`, `ffd`) | Evidence payload; excluded from identity |
+| `file_type_name` | `file_type_name` | `<FileTypeName>` text / attr (e.g., `Schema`, `Entry Point`) | Evidence payload |
+| `schema_href` | `schema_href` | `<Href>` text / attr (URL to `.xsd`) | Evidence payload |
+| `authority_source` | `authority_source` | `"https://www.sec.gov/info/edgar/edgartaxonomies.xml"` (URI of captured document) | Fixed to source document URI |
+| `authority_source_class` | `authority_source_class` | `"MACHINE_READABLE_CATALOG"` (closed vocabulary, §6) | Fixed for this route; not derived |
+| `authority_source_version` | `authority_source_version` | Root `<Erxl version="...">` value (e.g., `"78"`) | Catalog release version; separate from taxonomy version |
+
+**Excluded from parser output / identity:** `document_id` (handled by archive layer via `content_hash` → `doc_...`), `authority_taxonomy_id` (derived from identity), `authority_taxonomy_identity` (derived from identity), `captured_at` (archive layer), `standard_prefix` (not identity; preserved only as evidence).
+
+**Structural rules (from ADR §4, §5, Amendment 6 §2.2, live catalog audit):**
+- Root: `<Erxl version="...">`.
+- Records: nested `<Loc>` (or equivalent catalog record) containing `<Family>`, `<Version>`, `<Namespace>`, `<Prefix>`, `<FileTypeName>`, `<Href>`.
+- Duplicate `<Loc>` elements inside one catalog with identical family/version/namespace/prefix/filetype/href → identical identity → idempotent via insert logic (PK uniqueness, `INSERT OR IGNORE` or identity-check trigger).
+- Same namespace URI under different families → separate assertions (no hidden unique; confirmed by Amendment 6 §2.2 empirical audit of `http://www.xbrl.org/2009/role/negated` under 5 families; `http://xbrl.org/2020/extensible-enumerations-2.0` under `US GAAP` + `IFRS`).
+- One family/version can contain multiple namespace URIs (e.g., `us-gaap` primary + `us-gaap-ebp` benefit plans); each URI yields distinct `authority_taxonomy_id`.
+- Same family/version/namespace inside same catalog repeated verbatim → one assertion (idempotent); parser must not invent duplicates from structural repetition.
+- No precedence, no ranking, no current/superseded flags (0022 explicitly excludes; Amendment 6 §2.1, §10).
+
+**Parser must NOT:** infer `taxonomy_version` from `namespace_uri` (e.g., `/2026`); infer `taxonomy_family` from `namespace_uri`; infer `standard_prefix` from file content; derive `authority_source_version` from taxonomy version; normalize `namespace_uri` (e.g., resolve relative); filter by file_type; exclude `TECHNICAL_SCHEMA` entries (if any); produce `authority_taxonomy_identity` differently from `canonical_json(preimage)`.
+
+---
+
+## 15.4 D. Exact Duplicate / Idempotency Behavior (Freeze)
+
+Based on `0022` triggers, PK, unique identity, and `sqlite_archive.py` idempotency:
+
+**A. Same `<Loc>` repeated inside one catalog:** Same all fields → same `authority_taxonomy_identity` → same PK (`authority_taxonomy_id`) → `INSERT` fails PK; `INSERT OR IGNORE` → count unchanged. Parser should emit identical dict; archive insert logic handles idempotency.
+
+**B. Same assertion encountered twice in parser output (e.g., structural duplication):** Same behavior as A. No second row.
+
+**C. Catalog re-fetched with identical bytes:** `content_hash` same → `document_id` same (`sqlite_archive.py:625-629`) → parser receives same bytes → same assertions → insert idempotent (no new rows, no UPDATE). `first_seen_at` unchanged.
+
+**D. Catalog re-fetched with changed bytes (new SEC release, new root `version`):** New `content_hash` → new `document_id` → parser produces assertions with same identity fields but different `document_id` in preimage → new `authority_taxonomy_id` (because preimage includes `document_id`) → new rows inserted; old rows retained (append-only; 0022 `BEFORE UPDATE/DELETE` aborts any attempt to modify). B2 will see both sources; if families agree, no ambiguity; if families differ, `TAXONOMY_AMBIGUOUS`. No first-writer-wins.
+
+**E. Same assertion appears in another source document:** Different `document_id` → different preimage → different `authority_taxonomy_id` → distinct rows retained (multi-source preservation; eliminates first-writer-wins; supports corroboration per ADR §3, §4 Cases B/E).
+
+---
+
+## 15.5 E. Exact Release / Version Semantics (Freeze)
+
+**Two independent version axes:**
+- `authority_source_version` = root `<Erxl version="X">` (catalog release). Example: `"78"`. This is transfer/provenance metadata (the document's version), not taxonomy metadata. Preserved as evidence payload (`0022:authority_source_version`), excluded from identity.
+- `taxonomy_version` = per-entry `<Version>` (taxonomy release). Example: `"2026"`, `"2025q4"`. This is part of identity (`0022` identity fields). Must be preserved verbatim; must not be derived from URI.
+
+**No merging:** Catalog root version must not substitute for taxonomy version. If `version="78"` but taxonomy entry says `<Version>2026</Version>`, `taxonomy_version = "2026"`; `authority_source_version = "78"`.
+
+**No regression on historical versions:** Current catalog proves current releases; historical versions (e.g., `2025`) present in current catalog if SEC includes them; if not, they are not provable from current bytes. No inference permitted.
+
+---
+
+## 15.6 F. Historical Catalog Coverage Rule (Freeze)
+
+**Evidence in repo:** None. No `edgartaxonomies.xml` snapshot; no `archive/` historical catalog directory; no `data/` taxonomy archive; `data/st-eva.sqlite` does not exist (`docs/ST-EVA-DATA-LAYER-AUDIT.md`).
+
+**Honest rule:** One captured current catalog is NOT sufficient to prove mappings for older filings (e.g., 2013 filings using older taxonomy releases). B2 must evaluate authority evidence only from captured `source_documents` + parsed `authority_taxonomy_namespaces` rows.
+
+**B2 consequence:** If a filing uses namespace `U` with taxonomy family/version that is not present in any captured authority document → no authority rows match → condition 3 of B2 activation (§12 / ADR §6) fails → `TAXONOMY_UNPROVEN` (zero `observation_filing_document_facts` rows). Never infer historical mapping from current `version="78"` catalog.
+
+**Future acquisition (unresolved, not authorized):** Historical catalog snapshots require separate acquisition schedule (e.g., SEC annual releases archived by date); multi-year merge policy requires deciding whether to retain all versions or only the latest per release; not within this freeze.
+
+---
+
+## 15.7 G. Custom Taxonomy / Extension Rule (Freeze)
+
+**Custom issuer namespaces** (e.g., `http://apple.com/20260730`) are absent from SEC catalog (`edgartaxonomies.xml`). Parser must NOT invent authority assertions for them. `authority_taxonomy_namespaces` must have zero rows for such URIs.
+
+**Standard namespace imported by extension:** If extension schema imports `http://fasb.org/us-gaap/2026`, facts with that URI are standard; authority match applies. If extension defines its own targetNamespace, it is custom; `TAXONOMY_UNPROVEN`.
+
+**Custom prefix:** `xmlns:mygaap="http://fasb.org/us-gaap/2026"` → resolved URI is standard; prefix `mygaap` is evidence payload (`standard_prefix`) excluded from identity; parser must resolve URI, not preserve prefix as identity.
+
+---
+
+## 15.8 H. Exact B2 Activation Evidence (Freeze)
+
+Per ADR Amendment 5 §6 / Amendment 6 §12 / frozen `0022` design; B2 unchanged; implementation deferred.
+
+For `taxonomy_equivalent(obs, occ)` to evaluate TRUE:
+1. `obs.provider == occ.provider` (`SecEdgar`).
+2. `_local_name(obs.concept) == occ.tag`.
+3. **Authority Recognition:** An assertion exists in `authority_taxonomy_namespaces` for `(provider, taxonomy_family=obs.taxonomy, taxonomy_version=..., namespace_uri=occ.taxonomy)` derived from captured `source_documents` document (`document_id`). Must be proven from captured evidence, not inferred.
+4. **Filing Concordance:** `occ.accession == obs.accession`; `occ.asset_id == obs.asset_id`; `occ.filename / document_id` links to `filing_document_captures` (cardinality must be resolvable to exactly 1 via `observation_filing_documents` / `filing_document_captures`; see Invariant 19 and Amendment 1 §§2–3 for cardinality rules).
+
+Only when all four hold → `TAXONOMY_EQUIVALENT` (and therefore `observation_filing_document_facts` / `observation_filing_documents` link permitted). Otherwise: `TAXONOMY_UNPROVEN`.
+
+**UNAVAILABLE (not errors):**
+- Issuer extension namespace (`TAXONOMY_UNPROVEN`).
+- Namespace not in any captured authority document (`TAXONOMY_UNPROVEN`).
+- Non-SEC source (`TAXONOMY_UNPROVEN`).
+- Candidate filing document cardinality >= 2 (`DOCUMENTS_AMBIGUOUS`; zero `observation_filing_documents`; does NOT become `TAXONOMY_EQUIVALENT` just because authority evidence exists; see Amendment 6 §9 / Amendment 1 §3 / Invariant 19).
+- Unmodelled taxonomy lacking URI mapping (`TAXONOMY_UNPROVEN`).
+
+---
+
+## 15.9 I. Exact UNAVAILABLE Cases (Freeze, for future B2 / parser design)
+
+From frozen decisions (Amendment 5 §5–§7, Amendment 6 §6, 0022 DDL, Invariant 19, ADR §D):
+
+| Case | Evidence | B2 / parser result |
+|---|---|---|
+| Issuer extension namespace (e.g., `http://apple.com/...`) | Absent from `edgartaxonomies.xml` | `TAXONOMY_UNPROVEN`; zero authority rows |
+| Standard namespace unlisted in captured catalog (e.g., newer release not yet fetched) | Zero matching `authority_taxonomy_namespaces` rows for `(provider, family, version, URI)` | `TAXONOMY_UNPROVEN` |
+| Filing with 2+ candidate documents (inline XBRL dual-document; `DOCUMENTS_AMBIGUOUS`) | `filing_document_captures` cardinality >= 2; `observation_filing_documents` = 0 | `DOCUMENTS_AMBIGUOUS`; B2 linkage refused regardless of authority evidence |
+| Custom prefix with standard URI | `namespace_uri` matches authority; prefix discarded | `TAXONOMY_EQUIVALENT` if other conditions hold |
+| Custom concept under standard namespace (local tag matches but URI matches standard) | `occ.tag` match; `occ.taxonomy` standard URI; authority evidence present | `TAXONOMY_EQUIVALENT` (concept is standard family concept; local tag is occurrence tag) |
+| Custom concept under custom namespace | `namespace_uri` not in authority; no authority evidence | `TAXONOMY_UNPROVEN` |
+
+---
+
+## 15.10 J. Implementation Split Recommendation (Freeze — Decision Reached)
+
+**Split into two independent phases with independent failure/acceptance boundaries:**
+
+1. **Phase A — Acquisition (network-dependent, external, retryable, independent of archive schema changes):** Fetch `https://www.sec.gov/info/edgar/edgartaxonomies.xml`; verify `Content-Type` / `byte_size`; compute `content_hash`; insert into `source_documents` via `sqlite_archive.py` (or direct `INSERT` if using external storage). If fetch fails, archive unchanged; no B2 impact; retry later. Acceptance: captured bytes + `document_id` + `content_hash` verified.
+
+2. **Phase B — Parsing / Insertion (offline, deterministic, dependency on Phase A):** Read `source_documents.content_for(document_id)` (or storage); run `parse_edgar_taxonomies_catalog`; derive `authority_taxonomy_id` / `authority_taxonomy_identity`; insert into `authority_taxonomy_namespaces` via `INSERT OR IGNORE` (idempotent). If parser fails (bad XML, unexpected structure), Phase A bytes remain; parser can be fixed independently; no data corruption. Acceptance: exactly 14-column rows with verified identity/preimage; trigger tests pass; zero hidden constraints.
+
+**Reasons for split (frozen):** Acquisition has external/network failure modes; parsing has internal/XML failure modes; 0022 DDL is already frozen and must not be altered by either; B2 evaluation depends on both being complete; separate phases allow independent testing (Phase A can be validated by `content_hash` + `document_type`; Phase B by identity + trigger conformance) without requiring full B2 activation.
+
+**Not authorized by this freeze:** Phase A execution (no fetch); Phase B execution (no parser invocation); any B2 linkage; any test inserting real authority assertions (existing tests use synthetic preimages; no real XML parsed).
+
+---
+
+## 15.11 Unresolved Questions (Explicitly Preserved, Not Resolved)
+
+From ADR Amendment 6 §7 / §8 / Amendment 5 / this audit. No silent assumption; no invented resolution.
+
+1. **Authority acquisition job / CLI route:** No schedule defined; no `archive/authority_fetch.py`; no cron; no CLI argument. Freeze: design exists; execution deferred.
+2. **Historical catalog availability:** No `edgartaxonomies.xml` snapshots in repo or `data/`. Freeze: current catalog only proves current releases; historical mappings require separate acquisition evidence; not assumed available.
+3. **Multi-year catalog merge policy:** If multiple years' catalogs are captured (e.g., v78 + v79), whether to retain all or keep only latest per `(family, version)` is not decided. Freeze: append-only (`0022`) permits multi-source retention; merge logic is a future ingestion policy, not a schema decision.
+4. **Issuer custom extensions:** Already frozen (§5, §11, §15.7): never enter `authority_taxonomy_namespaces`; always `TAXONOMY_UNPROVEN`. No unresolved question here — rule is fixed.
+
+---
+
+## 15.12 Formal Decision Summary (Freeze End)
+
+| Item | Decision | Evidence |
+|---|---|---|
+| **A. Acquisition route** | Independent phase; `https://www.sec.gov/info/edgar/edgartaxonomies.xml`; `SecEdgar`; existing `urllib`/user-agent/timeout mechanism sufficient; no new generic layer | ADR §3; `sec_provider.py:76-84`; `sqlite_archive.py:643` |
+| **B. Source document semantics** | `source_documents` only; `document_type="SEC_TAXONOMY_CATALOG"`; `provider="SecEdgar"`; idempotency by `content_hash`; no second store | `0001_initial.sql`; `sqlite_archive.py:625-639`; 0022 FK |
+| **C. Parser contract** | Offline; consumes uncompressed bytes; preserves `<Family>/<Version>/<Namespace>/<Prefix>/<FileTypeName>/<Href>` verbatim; identity from `{document_id, namespace_uri, provider, taxonomy_family, taxonomy_version}`; no URI inference | Amendment 5 §3; Amendment 6 §2.1–§4; `evidence_model.py` convention |
+| **D. Duplicate behavior** | Same doc same identity = idempotent; changed bytes = new `document_id`; different doc = separate rows; no update/delete | 0022 triggers (no_update/no_delete); `sqlite_archive.py:625-629`; Amendment 6 §4 |
+| **E. Release/version** | `authority_source_version` = root `<Erxl>` version; `taxonomy_version` = entry `<Version>`; not merged; preserved verbatim | Amendment 6 §2.1, §5; ADR §3 Source 1 |
+| **F. Historical coverage** | Current catalog insufficient for older filings; no historical archive in repo; `TAXONOMY_UNPROVEN` when missing; never infer | `ST-EVA-DATA-LAYER-AUDIT.md`; repo inspection (zero cached files); ADR §6 |
+| **G. Custom taxonomy** | Absent from catalog → zero authority rows; `TAXONOMY_UNPROVEN`; standard URI imported by extension → standard match | Amendment 5 §5; Amendment 6 §6 |
+| **H. B2 precondition** | Requires (1) `source_documents` captured, (2) parsed `authority_taxonomy_namespaces` rows with identity match, (3) exact `occ.taxonomy` match to family/version, (4) filing concordance, (5) cardinality == 1; B2 unchanged | Amendment 5 §6; Amendment 6 §12; 0022 schema (no B2 changes) |
+| **I. UNAVAILABLE** | Extension NS, unlisted NS after fetch, cardinality >= 2 (Document Ambiguous), unmodelled taxonomy, non-SEC source | Amendment 1 §3 (Invariant 19); Amendment 6 §6; 0022 design |
+| **J. Split** | Acquisition (network, independent) + Parsing (offline, independent); both verified separately; B2 activates only when both complete | This freeze §15.10; architecture convention (separate failure modes) |
+
+---
+
+*Design freeze complete. No ingestion executed. No 0022 edit. No Observation / B2 / dfid_ / sfid_ change. No new specification file created (update to existing ADR only). Freeze preserved for future authorization.
