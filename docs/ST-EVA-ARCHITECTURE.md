@@ -486,6 +486,37 @@ V1_CROSSING_METRICS: Tuple[str, ...] = (METRIC_REVENUE,)
 * **What breaks if violated:** 一條未被 0/1 規則保護的 `observation_sources` 斷言會靜默存在，而「修正機制無法指向文件路徑事實」會在需要重解讀時才被發現。
 * **Phase 3C-B 狀態:** **未授權。** Amendment 1 §11 列出五項新的架構／schema 前置條件，屬**第二次 design freeze**，不是 3C-B 實作。
 
+### 28. CORRECTION：文件路徑的 observation 帶 accession-scoped `sfid_`，`source_fact_id` 為 NULL 的條款已撤回
+
+**FROZEN ARCHITECTURAL CORRECTION — Amendment 2。此條款取代 invariant 27 的「Rule（後果）」前半段；invariant 27 保留於原處以記錄當時凍結了什麼。**
+
+* **Rule:** 文件路徑建立的 observation，其 `observations.source_fact_id` **必須**是 production 現有方式算出的 accession-scoped `sfid_`（與 invariant 24 同一要求），且**嚴禁**寫入 `dfid_`。**它不是 NULL。**
+* **撤回理由:** 舊條款與 invariant 24 直接矛盾——一個算不出來也不落地的 `source_fact_id` 既不提供 adapter-independence，也不提供任何去重，只是一個被丟棄的值。而且該條款會讓文件路徑事實**完全無法被更正**：`knowledge_axis.py:182-183` 對空值拋 `KnowledgeAxisError`，`0017:89-92` 的 `interpretations.source_fact_id` 為 `NOT NULL REFERENCES`，而 `interpretations` 的存在理由正是 2.53 這類「讀錯了要能改」的情況。
+* **已驗證不受阻:** `observations_source_fact_full`（`0017:54-55`）是**完整** UNIQUE index，SQLite 視 NULL 為相異，所以它從未阻擋過非 NULL 值。
+* **後果（與舊條款列出的相反）:** `interpretations`、`admissions`、`knowledge_axis` **全部照常運作**；`fullscope_bulk.py:325-346`、`merge_sources.py:124-133`、`crossframework_verify.py:331` **不需任何加寬、排除或修改**。
+* **What breaks if violated:** 一個有權威卻不可更正的證據層——比缺資料更糟，因為它讀起來像已解決。
+
+### 29. `filing_document_fact_occurrences` 是「邏輯事實」身分，不是「實體位元組位置」身分
+
+**FROZEN ARCHITECTURAL DECISION — Amendment 2。**
+
+* **Rule:** 該 relation 記錄的是**一份文件對一個邏輯 XBRL 事實的斷言**，身分為 `dfid_`；byte locator 僅為證據 payload。**同一邏輯事實在同一文件中的多個實體外觀必須收斂成一列**，所有 byte span 收進 `locators_json`（canonical、確定性排序的陣列）。不需要另外的 evidence-occurrence relation。
+* **Why:** XBRL 中 `(concept, context, unit)` 由 instance 保證**至多出現一次**，這是文件自己宣告的語意身分；實體位置則是序列化器的產物——inline XBRL 的 `ix:continuation` 讓**一個事實合法地跨越多個 byte range**。把 locator 放進身分會把單一事實分裂成數個，等於製造事實。
+* **與 0020 的差別（不可直接援引）:** statement 是沒有語意鍵的純文字節點，locator 是它僅有的識別物，故放進 key（`0020:370-372`）；XBRL fact 有 `contextRef`，故 locator 是**衍生證據**。
+* **偵測機制:** `(document_id, taxonomy, tag, context_ref, unit_ref)` 的五欄 UNIQUE index 讓「同一三元組出現兩個節點」（Case D）成為**資料庫保證的歧義偵測**，而不是 writer 的承諾。
+* **What breaks if violated:** `ix:continuation` 型式的單一事實會被存成數筆 observation 級事實。
+
+### 30. 候選文件 cardinality 以 `filing_documents` 身分計算；`observation_sources` 永不指向 filing document
+
+**FROZEN ARCHITECTURAL DECISION — Amendment 2。**
+
+* **Rule（計算粒度）:** 候選文件數 = 所有已鑄 occurrence 之中**相異 `(asset_id, accession, filename)`** 的數量。**嚴禁**以 `document_id` 或 capture 列數計算——同一 filename 的兩次不同位元組 capture（Case B）否則會把可解的 1 誤判成 2。0 → UNAVAILABLE；1 → 寫入斷言；≥2 → 不作斷言。
+* **Rule（寫入邊界）:** `observation_sources` 的語意是「這個讀取值是從哪一份**取得回應**抽出來的」。filing document 是**關於申報的證據**，不是取得回應，兩者語意不同。新增 `BEFORE INSERT` trigger：`NEW.document_id` 一旦出現在 `filing_document_captures` 即 `RAISE(ABORT)`。精確來源文件只允許由 `observation_filing_documents` 宣告。
+* **已驗證的漏洞:** `_link_documents` 在**去重提前 return 與 insert 兩條路徑上都會執行**（`sqlite_archive.py:1290,1373`），而 `document_id_for`（`:1213-1226`）以 `content_hash` 查找，filing document 的位元組**確實存在於 `source_documents`**（`sec_ingest.py:1964-1976`），唯一防線只拒絕「從未 capture 過」的 hash。`observation_sources` 亦**完全沒有 append-only trigger**（僅有 index，`0001:167-175`）。
+* **Why:** 這是**潛在的架構違反**，不是單純的證據路徑。凍結的 0/1 語意只與最弱的寫入路徑一樣強。
+* **What breaks if violated:** 一條未受 0/1 規則保護、卻會被 `documents_for()` 當成「這份 observation 來自哪個文件」回答的列會靜默存在。
+* **Phase 3C-B 狀態:** **仍未授權。** 設計問題已關閉（Amendment 2 §1–§11），剩下的閘門是實作 migration `0021` 與十項驗收標準，屬另一個任務。
+
 ---
 
 # E. Architecture Philosophy
