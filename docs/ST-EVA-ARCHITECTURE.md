@@ -443,6 +443,48 @@ V1_CROSSING_METRICS: Tuple[str, ...] = (METRIC_REVENUE,)
 * **相關事實:** `tests/test_ingestion_aapl.py:95-109` 與上述兩組測試並不矛盾——前者釘住 **preimage**（context 是一個鍵，所以真實 contextRef 會分離 member），後者釘住 **stored value**（相容性要求）。
 * **位元掃描的界限:** `concept + period`（加不加 value 都一樣）**不能**建立精確來源 provenance——單一 concept 在 TSM 20-F 即有七個 fact instance，且 dimensioned 與 undimensioned context **值相同**（`ifrs_capex_context_237.py:21-25`），因此 value 比對也無法 tiebreak。掃描只能作為候選產生器，永遠不得作為斷言。
 * **Where it is pinned:** `docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Decisions 4–5（ADR §2 / §7 為規範來源）。
+* **Amendment 1:** `docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Amendment 1 §1–§12 記錄文件讀取路徑的身分設計（invariant 24–27）。
+
+### 24. 文件讀取路徑必須沿用 `source_fact_id`，且不得企圖用它分辨文件或 dimension
+
+**FROZEN ARCHITECTURAL DECISION — Amendment 1。**
+
+* **Rule:** 未來讀取 filing document bytes 的路徑，其 observation 身分**必須**以 production 現有方式計算 `source_fact_id`（`document_ref=accession`、`context=accession`），**不得**改動 preimage。文件與 `contextRef` 資訊**不得**進入 observation 身分。
+* **結構理由（已驗證）:** `observation_id` = `ingest|{metric}|{concept}|{accession}|{period_start\|instant}|{period_end}|{unit}`（`sec_ingest.py:2391-2394`）不含 route；`content_hash` 12-key 亦不含 `source_fact_id`。`record_observation` 在 content_hash 命中既有列時提前 return 且**不回填** `source_fact_id`（`sqlite_archive.py:1284-1296`）。所以第二條路徑**在結構上無法**為同一事實建立第二筆 observation——用新命名空間當 observation 身分只會製造 duplicate reading，正是 §E.1 要拒絕的失敗。
+* **既有承諾:** `evidence_model.py:180-182` 明確承諾「two adapters that read the same filing produce the same `source_fact_id`」。`companyconcept` 路徑與文件路徑就是讀同一份 filing 的兩個 adapter，因此**必須**產生相同 id；這是 Option A 成立、Option B 與 Option C 成立的唯一理由。
+* **硬上限:** `observation_id` 沒有 dimension 槽位，所以同一 concept/period/unit 的兩個 dimension member 會在 **primary key** 上相撞，與 `source_fact_id` 及任何未來命名空間無關。文件路徑**不得**嘗試存放第二個 member；其歧義由既有 `dimension_collision` 機制記錄。
+* **What breaks if violated:** 同一個經濟事實被同一份 filing 的兩條路徑存成兩筆 observation，archive 的去重基礎失效。
+
+### 25. 文件層事實節點使用新的獨立命名空間 `document_fact_id`（前綴 `dfid_`）
+
+**FROZEN ARCHITECTURAL DECISION — Amendment 1。**
+
+* **Rule:** 文件層的事實節點（occurrence）擁有自己 8-key、value-independent、locator-independent 的 preimage：`{provider, asset_id, accession, document_id, taxonomy, tag, context_ref, unit_ref}`。`dfid_` 前綴目前未被占用（已用：`sfid_`、`doc_`、`decl_`、`fid_`、`fit_`、`fdd_`、`fac_`、`ifc_`、`fds_`）。
+* **必須包含:** `document_id`——它是**唯一**能精確區分 filed primary HTML / EDGAR 產生的 `_htm.xml` / legacy `EX-101.INS` 的身分，而且它**不含任何分類**，因此在結構上滿足 invariant 19；`accession`——`document_id` 是 content-addressed，跨 filing 可能共用相同位元組（EDGAR 產物），而兩個 filing 的相同位元組是兩次不同的申報。
+* **明確排除:** value（重述是不同事實，見 `evidence_model.py:184-188`）、byte locator（由身分化出，屬證據）、`period_start`/`period_end`（在 XBRL 內位於 context 內，由 `contextRef` 決定）、`filename`（事實存在於**位元組**中）、`captured_at`/`capture_kind`、任何 classifier 欄位。
+* **與 `source_fact_id` 的關係:** 兩者是**不同物件的身分**，preimage 不同、前綴不同，**永不比較、永不等價**。`dfid_` **嚴禁**寫入 `observations.source_fact_id`。
+* **前置條件:** `(document_id, taxonomy, tag, context_ref, unit_ref)` 在單一文件內必須唯一；違反時記為**歧義**，絕不產生第二個身分。
+* **What breaks if violated:** 兩套命名空間互相冒充，任何跨層 join 都會把「讀到的理解」與「文件實際宣告的節點」混為一談。
+
+### 26. `contextRef` 與 `unitRef` 是 occurrence 身分的必要成分；byte locator 屬證據不屬身分
+
+**FROZEN ARCHITECTURAL DECISION — Amendment 1。**
+
+* **Rule:** `contextRef` 是 instance 對**整個申報脈絡**的自身識別：entity identifier + scheme、期間（instant / start-end / forever）、以及 segment/scenario 軸上的每一個 `explicitMember`/`typedMember`。它**不可**由 period 或 value 取代。
+* **Why:** 已量測的反例——`ifrs_capex_context_237.py:21-25`：同一 concept、同一期間集，dimensional 與 undimensioned context **值完全相同**。在「concept + period（加不加 value）」之下這兩個事實不可分辨；在 `contextRef` 之下可分辨。
+* **Byte locator 屬 evidence:** 給定 `(document_id, contextRef, tag, unitRef)` 即可算出 locator；把它放進 key 會讓 parser 的 locator 策略改變時全部事實換 id，並把同一節點的兩個位元位置變成兩個事實。此處**刻意背離** `filing_document_statements` 把 locator 放進 key 的做法（`0020:370-372`）：statement 是沒有語意鍵的純文字節點，只有 locator 可用；XBRL fact 有 `contextRef`。
+* **唯一 insert 前置條件:** `(document_id, taxonomy, tag, context_ref, unit_ref)` 在文件內唯一。
+* **What breaks if violated:** dimension member 會被誤判為同一事實——正是 amendment 已記錄的「值相同但 context 不同」那一類。
+
+### 27. 文件路徑的寫入邊界：不得讓 filing document 進入 `document_hashes`，且其 observation 的 `source_fact_id` 為 NULL
+
+**FROZEN ARCHITECTURAL DECISION — Amendment 1。**
+
+* **Rule（寫入陷阱）:** 去重路徑上 `record_observation` 會呼叫 `_link_documents(existing_id, document_hashes, ...)`（`sqlite_archive.py:1290-1294`）。**嚴禁**把 filing document 的 hash 當作 `document_hashes` 傳入——那會寫出一條 `observation_sources`，主張該 observation 是從該文件讀出的，完全繞過 `observation_filing_documents` 的 0/1 精確斷言規則，而且**不發出任何錯誤**。
+* **Rule（後果）:** 文件路徑建立的 observation，其 `observations.source_fact_id` 為 **NULL**；`dfid_` 不得寫入該欄。因此這些 observation **對 `interpretations` 不可見**（`0017:91-92` 為 `NOT NULL REFERENCES observations(source_fact_id)`），`admissions.source_fact_id` 亦為 NULL，`fullscope_bulk.py:325-346`、`merge_sources.py:124-133`、`crossframework_verify.py:331` 這些以 `source_fact_id` join／select 的路徑會略過或讀到 NULL。
+* **Why:** 這些後果是**已知且被接受的**，不是缺陷；但在 `interpretations`／`admissions` 的處置被決策之前，**嚴禁**任何文件路徑的 observation 進入 valuation boundary。
+* **What breaks if violated:** 一條未被 0/1 規則保護的 `observation_sources` 斷言會靜默存在，而「修正機制無法指向文件路徑事實」會在需要重解讀時才被發現。
+* **Phase 3C-B 狀態:** **未授權。** Amendment 1 §11 列出五項新的架構／schema 前置條件，屬**第二次 design freeze**，不是 3C-B 實作。
 
 ---
 

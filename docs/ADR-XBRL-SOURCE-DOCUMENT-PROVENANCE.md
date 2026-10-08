@@ -335,3 +335,336 @@ No schema, no migration, no production code, no test, no `Observation` field, no
 historical P/E methodology, evidence classification, or `audit_status`. The only
 files written are this record and the binding invariants added to
 `docs/ST-EVA-ARCHITECTURE.md` §D.
+
+---
+---
+
+# Amendment 1 — Document-Route Fact Identity
+
+**Status:** FROZEN — design decision. **Still not implemented.** No production, schema,
+migration, or test change accompanies this amendment.
+**Date:** 2026-10-08
+**Supersedes:** nothing in §§1–7. **Refines:** §3 item 1 and §6 item 4, which this
+amendment now answers.
+**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 24–27
+
+> This amendment answers the one question §6 item 4 left open: *if ST-EVA later reads
+> actual XBRL document bytes, what identity represents a fact discovered through that
+> route?* It is an architecture decision only. **Phase 3C-B remains unauthorized** —
+> see §11.
+
+---
+
+## 1. Current identity model
+
+Three identities exist today and they are built on three different grains.
+
+| Identity | Grain | Preimage | Where |
+| --- | --- | --- | --- |
+| `observation_id` (PK) | one economic reading, per filing | `ingest\|{metric}\|{concept}\|{accession}\|{period_start\|instant}\|{period_end}\|{unit}` | `sec_ingest.py:2391-2394` |
+| `content_hash` (UNIQUE) | the content of that reading | 12-key, value-dependent, includes `observation_id` and `accession`; **does not include** `source_fact_id` | `sqlite_archive.py:143-166`, `0001:114` |
+| `source_fact_id` (partial UNIQUE) | one fact *inside one source* | `{source, document, taxonomy, concept, period_start, period_end, context}` | `evidence_model.py:168-201`, `0006:50-52` |
+
+Production fills the two document-bearing slots of `source_fact_id` with the accession
+(`sec_ingest.py:2247,2252`), so today it is **accession-scoped, not document-scoped**.
+
+Three structural facts follow from the table above, and they determine the whole answer:
+
+- **S1 — An observation's identity carries no route.** `observation_id` and
+  `content_hash` contain neither `source_fact_id`, nor a document, nor a route.
+- **S2 — A second route cannot create a second observation for the same fact.**
+  `record_observation` computes `content_hash`, finds the existing row, and returns
+  early (`sqlite_archive.py:1284-1296`). It does not insert, and it does **not**
+  backfill `source_fact_id`.
+- **S3 — Dimension members cannot coexist at all.** `observation_id` has no
+  dimension slot, so two members of one concept/period/unit in one filing collide on
+  the **primary key** — independently of `source_fact_id` and of any future identity
+  namespace.
+
+`Observation` remains a semantic/economic data contract; provenance is layer 2. Nothing
+in this amendment changes the dataclass.
+
+## 2. Problem statement
+
+A document-reading route observes something the aggregate route cannot: a **fact node**
+inside one document's bytes, addressed by `contextRef`. The question is what identity
+represents it.
+
+The naive answer — "put the document in `source_fact_id`" — collides with three
+independent commitments:
+
+1. `evidence_model.py:180-182` **promises adapter-independence**: "two adapters that
+   read the same filing produce the same `source_fact_id` and the second is recognised
+   as already held." The document route and the `companyconcept` route are two
+   adapters reading the same filing.
+2. By **S1/S2**, changing `source_fact_id` changes nothing an aggregate-route
+   observation already stored, and a document route re-reading a held fact cannot
+   write anything at all — so it cannot even assert a document for it.
+3. By **S3**, the archive cannot hold more than one member per
+   `(metric, concept, accession, period, unit)` regardless of identity. An identity
+   that distinguishes members cannot be *stored* in `observations`.
+
+So the question cannot be answered inside `source_fact_id`. It also cannot be answered
+by inventing a second observation population, because **S1/S2 make a second population
+a duplicate**, and §E.1 of the constitution treats a duplicate reading as the one thing
+the archive exists to prevent.
+
+The only remaining possibility is that the document route's product is **not an
+observation identity at all** — it is the identity of a fact *occurrence* in a
+document, which is a different object from either of the three above.
+
+## 3. Option comparison
+
+### Option A — Reuse `source_fact_id`
+
+*As the observation's identity: **accepted**, under a stated boundary.
+*As the identity of a document-level fact node: **rejected** — it has no document slot
+that can be filled truthfully, and §4.1 of Amendment 0 forbids changing it.
+
+Collision analysis, as required:
+
+| Condition | Behaviour | Verdict |
+| --- | --- | --- |
+| multiple contexts for one concept/period | identical accession-scoped id → `_fact_held` skips members 2..n; **S3** collides them on the PK regardless | collision is **owned and recorded** by `dimension_collision`; the route must not attempt to store members |
+| multiple documents contain the same fact | one id | **correct** — per Amendment 0 Decision 3, 2+ documents ⇒ no document assertion |
+| inline HTML *and* `_htm.xml` | one id | **correct** — same fact, two occurrences, no assertion |
+| one accession, multiple distinct fact instances | distinct ids (concept/period/unit differ) | no collision |
+
+Reuse is therefore safe **precisely because** it is not asked to carry document or
+context information. It is unsafe only if the route tries to use it to distinguish
+documents or members — which §11 forbids.
+
+### Option B — Change `source_fact_id`
+
+Assessed, **not adopted**. Consequences:
+
+- **Existing observations:** every stored SEC `source_fact_id` becomes non-reproducible
+  from its own coordinates. Two tests fail by construction
+  (`tests/test_ingestion_aapl.py:735-757`, `tests/test_ingestion_cross_company.py:333-352`).
+- **Append-only identity:** new ids cannot be backfilled (§S2), so the archive would
+  hold two irreconcilable identities for the same history.
+- **Historical reproducibility:** a real `contextRef` can only be obtained by re-reading
+  the original instances; ST-EVA never captured them at the time, so reconstruction
+  would be fabricated provenance.
+- **Cross-company semantics:** `source_fact_id` is the join key in
+  `fullscope_bulk.py:325-346`, `merge_sources.py:124-133`,
+  `crossframework_verify.py:331`, and `evidence_query.py:1370`. Re-keying breaks every
+  one of them at once.
+- **Replay:** `interpretation_status`, `knowledge_axis` and `interpretations` all key on
+  `source_fact_id` (`0017:91-92`); replay fidelity across a re-key is undefined.
+
+Rejected.
+
+### Option C — New document-route fact identity namespace as the *observation's* identity
+
+**Rejected**, for a reason distinct from Option A: by **S1/S2** it would let the same
+economic fact be stored twice under two identities — a duplicate reading manufactured
+by an identity change. That is precisely the "premature collapse / spurious split"
+failure §E.1 exists to prevent, and it is *not* fixed by choosing a careful preimage.
+
+Option C is therefore accepted **only in its reduced form**: a new namespace for the
+**fact occurrence**, never for the observation.
+
+### Option D — Separate fact identity from document evidence
+
+**Accepted**, with a correction to the framing. Three layers are needed, but only
+**two** new relations:
+
+1. **fact occurrence identity** (`dfid_`) — the document-level fact node;
+2. **occurrence payload** — resolved value, decimals/sign/scale, resolved period and
+   dimensions, byte locator. This is *evidence on the occurrence row*, **not** a third
+   identity: none of it is a key, and none of it may fork identity;
+3. **observation linkage** — which observation was read from which occurrence.
+
+`observation_filing_documents` is **retained unchanged** and remains the document-grain
+projection of (3), written only when the occurrence set has cardinality exactly 1. It is
+not redefined, not extended, and not given new columns.
+
+## 4. Chosen architecture
+
+```
+Observation ──source_fact_id (accession-scoped, unchanged)──▶ the reading ST-EVA holds
+     │
+     └── observation_filing_documents  (frozen: EXACT_SOURCE_DOCUMENT_ASSERTION, 0/1)
+                 ▲
+                 │ written only when the occurrence set has cardinality exactly 1
+                 │
+        observation_filing_document_facts   (observation_id, dfid_)  ← NEW, link
+                 ▲
+                 │
+   filing_document_fact_occurrences (dfid_ = fact occurrence)      ← NEW, identity
+                 ▲
+                 │ FK to the exact byte capture
+        filing_document_captures → source_documents
+```
+
+Two new relations, both additive, both in the spirit of `0020` (content-derived
+identity, append-only, no `UPDATE`/`DELETE`).
+
+## 5. Identity preimage definition
+
+**`document_fact_id` — prefix `dfid_` (free: `sfid_`, `doc_`, `decl_`, `fid_`, `fit_`,
+`fdd_`, `fac_`, `ifc_`, `fds_` are taken), 8 keys, canonical JSON, sha256, 32 hex:**
+
+```
+{ provider,        -- "SecEdgar"; cross-source separation is the basis of 2.3-B
+  asset_id,        -- 0020 keys are asset-scoped throughout
+  accession,       -- REQUIRED: document_id is content-addressed and CAN be shared
+                    -- across filings (identical generated bytes), and two filings'
+                    -- identical bytes are two different filings' assertions
+  document_id,     -- the exact captured byte sequence (source_documents.document_id)
+  taxonomy,        -- namespace
+  tag,             -- local name
+  context_ref,     -- the instance's own id for the reporting context
+  unit_ref }       -- the unit under which the fact is stated
+```
+
+**Deliberately excluded, each with its reason:**
+
+| Excluded | Reason |
+| --- | --- |
+| `value` | A restatement is a different fact, not the same fact re-valued (`evidence_model.py:184-188`). Value-independence is also what lets a corrected *reading* be recorded as an `interpretation` (`0017`) instead of a new fact. |
+| byte locator / XPath | **Derived** from the identity, not part of it. Given `(document_id, contextRef, tag, unitRef)` the locator is computable. Putting it in the key would let a parser's locator scheme re-id every fact, and would turn two byte positions of one node into two facts. This **departs deliberately** from `filing_document_statements`, where the locator *is* in the key (`0020:370-372`) — a statement is a pure text occurrence with no semantic key, so the locator is all it has; an XBRL fact has `contextRef`. |
+| `period_start` / `period_end` | In XBRL the period **lives inside the context**, so `contextRef` determines it. Including it invites two derivations of one field to disagree and fork identity. The period is stored as *resolved evidence*. This is a real departure from `source_fact_id`'s preimage and is why the two namespaces are not interchangeable. |
+| `filename` | The fact lives in the **bytes**. Two byte-identical filenames in one filing are two `filing_documents` rows and one `document_id`; including `filename` would fork one fact into two. |
+| `captured_at` / `capture_kind` | Transfer metadata about the read, never identity (`0020:234-236`). |
+| any classifier column | Invariant 19. Naming a document is allowed; describing what kind of document it is is not. |
+
+**Uniqueness assertion** (precondition for any insert): `(document_id, taxonomy, tag,
+context_ref, unit_ref)` is unique within the document. In valid XBRL that tuple occurs
+at most once, so a violation is a **detected ambiguity**, never an identity fork.
+
+## 6. Fact-vs-evidence separation
+
+The two questions are separate and have separate identities:
+
+- **"What is this fact?"** — answered at two grains. At the *reading* grain:
+  `source_fact_id` (accession-scoped, what the archive believes it read). At the
+  *occurrence* grain: `dfid_` (what the document's bytes actually assert, at a node).
+- **"Where exactly was it observed?"** — answered by the occurrence relation: the
+  `filing_document_captures` FK plus the recorded byte locator and resolved context.
+
+`contextRef` is **not** redundant with period, and is required. It is the instance's own
+identifier for *the whole reporting context*: entity identifier and scheme, the period
+(instant / start-end / forever), and every `explicitMember`/`typedMember` on segment or
+scenario axes. Two contexts can share a concept, a period and a value and still be
+different reporting facts — the measured case is `ifrs_capex_context_237.py:21-25`,
+where dimensional and undimensional contexts carry **identical values**. Under
+"concept + period" (with or without value) those two facts are indistinguishable; under
+`contextRef` they are not. **A locator is evidence** (recorded, re-derivable, never in a
+key). **A `dfid_` is never written into `source_fact_id`**, and no query may compare
+them for equality.
+
+## 7. Observation coexistence model
+
+**Supplement. Not replace. Not a new observation class.**
+
+- The `companyconcept` route is untouched and remains the only way to obtain a decade
+  of history within a request budget.
+- The document route creates an observation **only for a fact the archive does not
+  already hold**. For a held fact, **S2** makes the write a no-op, so there is nothing
+  to backfill and nothing to re-key.
+- The two routes are, by `evidence_model.py:180-182`, *two adapters reading the same
+  filing* — which is exactly why they must produce the **same** `source_fact_id`. Reuse
+  honours that promise; a new namespace as observation identity would break it.
+- There is a real, measured population the aggregate route does not supply: AAPL stopped
+  tagging quarter-length `EarningsPerShareDiluted` after FY2021 while the figure remained
+  in the 8-K Item 2.02 exhibit (`docs/ST-EVA-PROJECT-STATUS.md:161-169`). Facts like that
+  are genuinely new, so the document route's observations are additions, not duplicates.
+- Deprecating the aggregate route once a document route covers history is a **separate
+  decision** and is not made here.
+
+## 8. Inline-XBRL handling
+
+| Case | Occurrence identity (`dfid_`) | Observation identity | Document evidence | `observation_filing_documents` |
+| --- | --- | --- | --- | --- |
+| A. same fact, same accession, same document | equal | equal | equal (one occurrence) | 1 row |
+| B. same fact, two documents in one filing | **different** | equal | **different** | **no row** (2) |
+| C. same concept/period, different contexts | **different** | collide at PK (S3) — one stored | **different** | only if that one node is unique *and* only one document |
+| D. same value, different contexts | **different** — value equality must not merge them | collide at PK (S3) | **different** | as C |
+| E. inline HTML + extracted `_htm.xml` | **different** | equal | **different** | **no row** (2) |
+
+B and E have the same outcome by design: invariant 19 forbids preferring either
+occurrence, and Amendment 0 Decision 3 forbids naming one. The archive's honest output
+is: *the fact is known, its document is unresolved.*
+
+## 9. UNAVAILABLE cases (extending Amendment 0 §4)
+
+In addition to all ten cases already frozen, the document route must leave the
+occurrence **absent** and the document assertion **empty** for:
+
+11. a fact node whose `(document_id, taxonomy, tag, context_ref, unit_ref)` is not unique;
+12. a `contextRef` that does not resolve to a context node, or a `unitRef` that does not
+    resolve to a unit node;
+13. a non-numeric fact (`ix:nonNumeric`) — ST-EVA ingests numbers only, matching
+    `_store_facts`' `is_number` gate (`sec_ingest.py:2156`);
+14. an observation already held by the aggregate route — its source document remains
+    unresolved, permanently, per invariant 22;
+15. any occurrence whose parsed value cannot be reproduced from the recorded locator and
+    attributes on a re-parse.
+
+## 10. Migration / backward-compatibility implications
+
+**No migration of existing rows. No backfill. No re-key.** Two additive relations.
+
+Consequences that must be accepted explicitly:
+
+- `observations.source_fact_id` is **NULL** for document-route rows. A `dfid_` string is
+  never written into that column; a column documented to hold `sfid_` may not hold a
+  foreign namespace.
+- **Therefore document-route observations are invisible to `interpretations`**, whose
+  `source_fact_id` is `NOT NULL REFERENCES observations(source_fact_id)` (`0017:91-92`).
+  The correction machinery cannot address them.
+- **`admissions.source_fact_id` is nullable** (`0019:61`) but becomes NULL, so the
+  chain metric → concept → accession → source_fact_id breaks at its last hop for those
+  observations.
+- `fullscope_bulk.py:325-346`, `merge_sources.py:124-133` and
+  `crossframework_verify.py:331` join or select on `source_fact_id`; document-route rows
+  are skipped or read as NULL there.
+- **Write-path trap.** On the dedup path `record_observation` calls
+  `_link_documents(existing_id, document_hashes, ...)` (`sqlite_archive.py:1290-1294`).
+  Passing a *filing* document's hash through `document_hashes` would write an
+  `observation_sources` row asserting the observation was read from that document —
+  bypassing the 0/1 exact-assertion discipline of `observation_filing_documents`
+  entirely, and doing so silently. **The document route must never do this.**
+
+## 11. Exact Phase 3C-B prerequisites
+
+Amendment 0 §3 listed what evidence a 3C-B implementation needs. It did not anticipate
+this amendment, so **the list is incomplete and Phase 3C-B is not yet authorized.**
+Additions:
+
+1. Implement the two new relations with content-derived identity and the same
+   append-only trigger discipline as `0020`'s eleven relations.
+2. Implement `document_fact_id` exactly as §5 specifies, with the exclusion table
+   enforced by tests.
+3. Enforce the §5 uniqueness assertion **before** any insert, and record a violation as
+   an ambiguity rather than a second identity.
+4. Prove the write-path trap of §10 does not exist: a test that a filing-document hash
+   can never reach `observation_sources` through `document_hashes`.
+5. Decide the `interpretations` / `admissions` consequence of a NULL `source_fact_id`
+   **before** any document-route observation may reach the valuation boundary.
+6. Keep network-free fixtures at both shapes: 2026 cardinality-2 inline, 2013
+   cardinality-1 `EX-101.INS`.
+
+Items 1–5 are architecture and schema work. They are a **second design freeze**, not a
+3C-B implementation.
+
+## 12. Unresolved questions
+
+Not decided here, and not to be decided inside 3C-B:
+
+1. Whether a `source_fact_id`-keyed relation should ever let a read side answer "where
+   was this *held* fact observed" — Amendment 0 §7 constraint 5 forbids asserting it,
+   and a relation carrying that claim needs its own semantics decision.
+2. Whether `interpretations` should gain a second target identity for document-route
+   facts, and what shape the FK takes.
+3. Whether byte-identical documents under two filenames in one filing should be one
+   occurrence (this ADR says yes) or two.
+4. Whether `asset_id` belongs in the preimage, given it is functionally determined by
+   `accession` via the `filings` foreign key. Included here for consistency with
+   `0020`'s asset-scoped keys; the redundancy is *consistent*, not *conflicting*.
+5. Whether inline-XBRL and extracted-instance occurrences can ever be deduplicated.
+   **Blocked on invariant 19** — it is the authorship judgement.
+6. Whether the aggregate route is eventually deprecated. Separate decision; no pressure
+   from this one.
