@@ -409,6 +409,41 @@ V1_CROSSING_METRICS: Tuple[str, ...] = (METRIC_REVENUE,)
 * **Why:** 3C 若為尋找 XBRL instance 而假設「`<TYPE>XML</TYPE>` 必定是 filer-authored」，將同時造成兩種破壞——對真正的 EDGAR 產物誤判為證據，以及把一個未經驗證的假設固化成架構事實。
 * **Where it is pinned:** `tests/test_sec_document_bytes.py`（14 of 17 eligible；3 個 transmission products 被排除；7 個 EDGAR-generated rendering **被納入且未經排除**）。
 
+### 20. `observation_filing_documents` 只承載「精確來源文件斷言」一種語意
+
+**FROZEN ARCHITECTURAL DECISION — Phase 3C-A close-out.**
+
+* **Rule:** `observation_filing_documents`（`0020:558-568`）唯一且全部的語意是 `EXACT_SOURCE_DOCUMENT_ASSERTION`：「這個 observation 是從這一份 filing document 讀出來的，且不主張任何其他讀法」。它**不是** candidate document、**不是** supporting document、**不是** duplicate occurrence、也**不是**「含有等價事實的文件」。第二種語意必須另建 relation 並另做架構決策，嚴禁在這一張表上複用。
+* **Why:** 一個 accession 底下有多份法律地位不同的文件，且 accession 本身無法解析（`0020:552-557`：某份 8-K 的 diluted-EPS 事實來自 `EX-101.INS`，其 `EX-99.1` 完全沒有 inline XBRL）。若這張表可以同時容納「斷言」與「猜測」，讀者便無從分辨哪一列是證明、哪一列是推測——而這正是 provenance 層存在的唯一理由。
+* **What breaks if violated:** provenance 從「可稽核的宣告」退化成「看起來合理的推測」；invariant 19 的證據邊界會被一個無法驗證的斷言繞過。
+
+### 21. 精確來源文件斷言要求 cardinality 恰好為 1；2 份以上即不斷言
+
+**FROZEN ARCHITECTURAL DECISION — Phase 3C-A close-out.**
+
+* **Rule:** 0 列 = `UNAVAILABLE` / unresolved；1 列 = 精確斷言；**2 列以上 = 不作任何斷言**。嚴禁 confidence score、嚴禁 candidate 列、嚴禁排序式 tiebreak（例如「取檔名較小者」「取 manifest ordinal 較小者」「優先 primary document」）。此 cardinality 檢查是**生產端前置條件**，資料庫看不到候選集合，因此無法由 schema 保證，必須同時由 producer 執行**並由測試釘住**。
+* **Verified case:** AAPL 8-K `0000320193-26-000018` 同一個 inline XBRL 事實同時出現在 filed primary document `aapl-20260730.htm`（SGML ordinal 1）與 EDGAR 產生的 `aapl-20260730_htm.xml`（SGML ordinal 7）。**兩者皆不得被斷言為精確來源。** Option 2（primary document by virtue of being primary）被否決：它在**形式上**用的是 declared role 而非檔名啟發式，但在**實質上**執行的正是「這個是 filed 的、那個是 EDGAR 產的」這個 invariant 19 記載為不可判定的區分。Option 3（兩者皆為 occurrence）需要 per-occurrence role，同樣依賴那個被禁止的 classifier。
+* **讀端要求:** 「0 列」必須讀作「精確來源文件未解」，且必須與「從未嘗試過文件層讀取」可區分——否則計數器會把兩件相反的事讀成同一句話（這正是 2.7 產生 `NO_OBSERVATIONS` 的那個缺陷）。此區分**不得**靠在本關係表上加一列來實作。
+* **What breaks if violated:** 一個無法證明的單一文件會被寫成血統，之後每一個引用它的推導都會繼承這個偽造。
+
+### 22. 目前生產路徑未讀取任何 filing document，因此該關係對既有 observation 必須維持空
+
+**VERIFIED ARCHITECTURAL FINDING — 由程式碼路徑與 writer call site 證實。**
+
+* **Rule:** SEC observation 由 `companyconcept` 聚合端點寫入（`sec_ingest.py:985-1005`），`record_observation` 連結的是那份 concept document（`document_hashes=[document_hash]`，`:2283`）。**沒有任何寫入 observation 的程式路徑開啟過 filing document。** `record_observation_filing_document`（`sqlite_archive.py:1145-1185`）目前沒有任何 production call site。因此在本階段，`observation_filing_documents` 對所有既有 observation 必須維持 **0 列**。
+* **Why:** 斷言「這個 observation 是從某份文件讀出來的」的前提是它真的被讀過。在沒有讀取路徑的情況下寫入這一列，等於主張一個 ST-EVA 從未開啟過的位元序列。
+* **What breaks if violated:** 全量歷史 observation 會在第一次 provenance backfill 時被貼上從未發生過的文件血統，且因為 append-only 無法收回。
+
+### 23. XBRL `contextRef` 目前不可得；`source_fact_id` 的 `context=accession` 是凍結的相容性要求
+
+**FROZEN ARCHITECTURAL DECISION — 已量測的限制，不是待修的缺陷。**
+
+* **Rule:** `contextRef` **不是被 ST-EVA 遺失，而是端點從未交付**：`companyconcept` 的 unit entries 不含它，`SecFact`（`sec_provider.py:825-848`）也沒有對應欄位。其生產後果是 `context=accession` 與 `document_ref=accession` 重複（`sec_ingest.py:2247,2252`），context 槽位不帶任何 dimension 資訊；同一 `(accession, taxonomy, concept, period_start, period_end)` 的所有 dimension member 收斂為同一個 `source_fact_id`，第 2 個以後由 `_fact_held` 跳過。此收斂**是已記錄的**：一個 accession 回報多個不同值時會寫入 `dimension_collision`（kind `SAME_PERIOD_DIFFERENT_VALUE`，`:2191-2236`），讀回時為 `DIMENSION_COLLISION`（`evidence_query.py:94,349`）。
+* **凍結後果:** provenance 階段**嚴禁**變更 `source_fact_id` 的 preimage 或其 production wiring。那會為每一筆既有 SEC 事實換一個新身分、令 stored-identity 可重現性測試失敗（`tests/test_ingestion_aapl.py:735-757`、`tests/test_ingestion_cross_company.py:333-352`）、把整段 SEC 歷史以新 `source_fact_id` 重新附加，並要求重建無法重建的歷史 provenance。未來的文件讀取路徑**可以**讀 `contextRef`，但**只能**用於「定位」（證明唯一性、分離 dimension member），**不得**用於鑄造新的事實身分。
+* **相關事實:** `tests/test_ingestion_aapl.py:95-109` 與上述兩組測試並不矛盾——前者釘住 **preimage**（context 是一個鍵，所以真實 contextRef 會分離 member），後者釘住 **stored value**（相容性要求）。
+* **位元掃描的界限:** `concept + period`（加不加 value 都一樣）**不能**建立精確來源 provenance——單一 concept 在 TSM 20-F 即有七個 fact instance，且 dimensioned 與 undimensioned context **值相同**（`ifrs_capex_context_237.py:21-25`），因此 value 比對也無法 tiebreak。掃描只能作為候選產生器，永遠不得作為斷言。
+* **Where it is pinned:** `docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Decisions 4–5（ADR §2 / §7 為規範來源）。
+
 ---
 
 # E. Architecture Philosophy
