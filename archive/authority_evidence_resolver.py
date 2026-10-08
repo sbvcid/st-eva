@@ -69,3 +69,118 @@ def find_authority_evidence(
         "taxonomy_family": taxonomy_family,
         "namespace_uri": namespace_uri,
     }
+
+
+def find_authority_assertions_by_prefix(
+    archive,
+    provider: str,
+    standard_prefix: str,
+) -> dict:
+    """Query 0022 authority_taxonomy_namespaces for all source-backed assertions
+    matching provider + standard_prefix via exact string equality.
+
+    Returns complete supporting assertion rows and logical candidate grouping
+    (provider, standard_prefix, taxonomy_family, namespace_uri).
+    Zero inference: does not infer family from prefix or namespace, does not
+    infer version from URI, does not select a latest-version winner, does not
+    collapse distinct logical candidates, and does not hardcode any prefix mapping.
+    """
+    if not isinstance(provider, str) or not isinstance(standard_prefix, str) or standard_prefix is None:
+        return {
+            "evidence_found": False,
+            "provider": provider,
+            "standard_prefix": standard_prefix,
+            "assertion_count": 0,
+            "assertions": [],
+            "logical_candidates": [],
+            "candidate_count": 0,
+            "distinct_families": [],
+            "distinct_namespaces": [],
+        }
+
+    cursor = archive.connection.execute(
+        "SELECT authority_taxonomy_id, authority_taxonomy_identity, document_id, "
+        "provider, standard_prefix, taxonomy_family, taxonomy_version, namespace_uri "
+        "FROM authority_taxonomy_namespaces "
+        "WHERE provider = ? AND standard_prefix = ? "
+        "ORDER BY taxonomy_family, namespace_uri, taxonomy_version, document_id, authority_taxonomy_id",
+        (provider, standard_prefix),
+    )
+
+    cols = [col[0] for col in cursor.description] if cursor.description else []
+    raw_rows = cursor.fetchall()
+
+    assertions: List[dict] = []
+    for r in raw_rows:
+        if hasattr(r, "keys"):
+            row_dict = dict(r)
+        else:
+            row_dict = {cols[i]: r[i] for i in range(len(cols))}
+        assertions.append({
+            "authority_taxonomy_id": row_dict["authority_taxonomy_id"],
+            "authority_taxonomy_identity": row_dict["authority_taxonomy_identity"],
+            "document_id": row_dict["document_id"],
+            "provider": row_dict["provider"],
+            "standard_prefix": row_dict["standard_prefix"],
+            "taxonomy_family": row_dict["taxonomy_family"],
+            "taxonomy_version": row_dict["taxonomy_version"],
+            "namespace_uri": row_dict["namespace_uri"],
+        })
+
+    # Group into logical candidates: (provider, standard_prefix, taxonomy_family, namespace_uri)
+    # taxonomy_version is supporting evidence attribute; distinct documents corroborate candidates.
+    groups: dict = {}
+    for assertion in assertions:
+        group_key = (
+            assertion["provider"],
+            assertion["standard_prefix"],
+            assertion["taxonomy_family"],
+            assertion["namespace_uri"],
+        )
+        if group_key not in groups:
+            groups[group_key] = {
+                "provider": assertion["provider"],
+                "standard_prefix": assertion["standard_prefix"],
+                "taxonomy_family": assertion["taxonomy_family"],
+                "namespace_uri": assertion["namespace_uri"],
+                "taxonomy_versions": set(),
+                "supporting_document_ids": set(),
+                "supporting_authority_taxonomy_ids": [],
+                "supporting_assertions": [],
+            }
+        g = groups[group_key]
+        if assertion["taxonomy_version"]:
+            g["taxonomy_versions"].add(assertion["taxonomy_version"])
+        if assertion["document_id"]:
+            g["supporting_document_ids"].add(assertion["document_id"])
+        g["supporting_authority_taxonomy_ids"].append(assertion["authority_taxonomy_id"])
+        g["supporting_assertions"].append(assertion)
+
+    logical_candidates: List[dict] = []
+    for group_key in sorted(groups.keys()):
+        g = groups[group_key]
+        logical_candidates.append({
+            "provider": g["provider"],
+            "standard_prefix": g["standard_prefix"],
+            "taxonomy_family": g["taxonomy_family"],
+            "namespace_uri": g["namespace_uri"],
+            "taxonomy_versions": sorted(g["taxonomy_versions"]),
+            "supporting_document_ids": sorted(g["supporting_document_ids"]),
+            "supporting_authority_taxonomy_ids": g["supporting_authority_taxonomy_ids"],
+            "assertion_count": len(g["supporting_assertions"]),
+        })
+
+    distinct_families = sorted({c["taxonomy_family"] for c in logical_candidates})
+    distinct_namespaces = sorted({c["namespace_uri"] for c in logical_candidates})
+
+    return {
+        "evidence_found": len(assertions) > 0,
+        "provider": provider,
+        "standard_prefix": standard_prefix,
+        "assertion_count": len(assertions),
+        "assertions": assertions,
+        "logical_candidates": logical_candidates,
+        "candidate_count": len(logical_candidates),
+        "distinct_families": distinct_families,
+        "distinct_namespaces": distinct_namespaces,
+    }
