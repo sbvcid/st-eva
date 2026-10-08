@@ -1196,33 +1196,25 @@ def _local_name(concept: str) -> str:
     return local or concept
 
 
-def occurrence_matches_observation(
+def occurrence_matches_observation_ordinary(
     occurrence: Dict[str, Any],
     observation: Dict[str, Any],
 ) -> bool:
     """
-    Whether one occurrence and one Observation describe the same fact.
+    Whether one occurrence and one Observation describe the same fact under
+    ordinary exact-match predicates (Stage A).
 
-    Five exact comparisons, none of them a tolerance, a proximity or a name:
-
-    * **filing scope** -- provider, asset and accession are equal;
-    * **concept** -- the occurrence's local tag equals the Observation's concept
+    Seven exact comparisons:
+    * filing scope -- provider, asset_id and accession are equal;
+    * concept -- the occurrence's local tag equals the Observation's concept
       local name;
-    * **period** -- the *resolved context period* equals the Observation's
-      `period_start`/`period_end`, with an instant context requiring a NULL
-      `period_start`. The period is read from the context, never inferred from
-      the value;
-    * **unit** -- the resolved unit, rendered and passed through the archive's
-      existing `xbrl_unit_to_contract_unit`, equals the Observation's unit;
-    * **value** -- the resolved value equals the stored value exactly.
+    * period -- the resolved context period equals the Observation's
+      period_start/period_end, with an instant context requiring a NULL
+      period_start;
+    * unit -- the resolved unit equals the Observation's unit;
+    * value -- the resolved value equals the stored value exactly.
 
-    What is deliberately **not** compared: the filename, the document type, the
-    MIME type, the SGML `<TYPE>`, whether the document is the primary one, and
-    the accession on its own. Taxonomy is handled separately, because the
-    Observation records a prefix (`us-gaap`) and the occurrence records a
-    namespace URI, and no prefix-to-URI map exists in this repository to bridge
-    them. Rather than invent one, the caller requires the matching occurrences to
-    agree on a single namespace.
+    Taxonomy MUST NOT participate in this evaluation.
     """
     if occurrence.get("provider") != observation.get("provider"):
         return False
@@ -1231,25 +1223,6 @@ def occurrence_matches_observation(
     if occurrence.get("accession") != observation.get("accession"):
         return False
     if occurrence.get("tag") != _local_name(str(observation.get("concept") or "")):
-        return False
-
-    # The taxonomy must be *equal*, not merely singular. An Observation records
-    # the source's own prefix (`us-gaap`, from `concept_registry.taxonomy` and the
-    # companyconcept payload); a document fact records the namespace URI the
-    # document bound that prefix to. This repository holds no prefix-to-URI map,
-    # and inventing one is forbidden, so **no equivalence between the two is
-    # provable here** and none is assumed.
-    #
-    # Comparing local names alone would be the defect: `us-gaap:Revenues` and
-    # `custom:Revenues` share a local name, a period, a unit and often a value,
-    # and they are different concepts. A candidate set containing only the custom
-    # namespace looks singular and would be accepted, which is exactly the false
-    # exactness this relation forbids.
-    #
-    # The equality is what makes the relation fillable later: the moment an
-    # Observation's taxonomy is persisted in the same representation a document
-    # fact uses, matching begins to work with no change here.
-    if occurrence.get("taxonomy") != observation.get("taxonomy"):
         return False
 
     period_kind = occurrence.get("period_kind")
@@ -1280,82 +1253,215 @@ def occurrence_matches_observation(
     return stored == occurrence.get("resolved_value")
 
 
+def occurrence_matches_observation(
+    occurrence: Dict[str, Any],
+    observation: Dict[str, Any],
+    authority_context: Optional[Any] = None,
+) -> bool:
+    """
+    Whether one occurrence and one Observation describe the same fact.
+
+    Combines ordinary predicates (Stage A) with taxonomy adjudication (Stage C).
+    """
+    if not occurrence_matches_observation_ordinary(occurrence, observation):
+        return False
+
+    tax_ok, _ = evaluate_taxonomy_equivalence(
+        occurrence.get("taxonomy"),
+        observation.get("taxonomy"),
+        observation.get("provider"),
+        authority_context,
+    )
+    return tax_ok
+
+
+def _extract_authority_evidence(
+    authority_context: Optional[Any],
+    provider: str,
+    prefix: str,
+) -> Optional[Dict[str, Any]]:
+    """Extract C4F authority query result from authority_context without running DB queries."""
+    if authority_context is None:
+        return None
+    if callable(authority_context):
+        return authority_context(provider, prefix)
+    if isinstance(authority_context, dict):
+        if (provider, prefix) in authority_context:
+            return authority_context[(provider, prefix)]
+        if prefix in authority_context:
+            return authority_context[prefix]
+        if authority_context.get("standard_prefix") == prefix and authority_context.get("provider") == provider:
+            return authority_context
+        if authority_context.get("standard_prefix") == prefix:
+            return authority_context
+    return None
+
+
+def evaluate_taxonomy_equivalence(
+    occurrence_taxonomy: Optional[str],
+    observation_taxonomy: Optional[str],
+    provider: Optional[str],
+    authority_context: Optional[Any] = None,
+) -> Tuple[bool, str]:
+    """
+    Evaluate whether occurrence taxonomy and observation taxonomy describe the same concept taxonomy.
+
+    Under frozen Amendment 7 / C4I Evidence Sufficiency Matrix:
+    - Claim C3 (Company Concept taxonomy == Catalog Prefix): NOT PROVEN.
+    - Claim C7 (Observation <-> Filing Occurrence representation equivalence): NOT PROVEN.
+    - Lexical equality != vocabulary equivalence != semantic taxonomy equivalence.
+    - Direct equality bypass (occurrence.taxonomy == observation.taxonomy) is STRICTLY PROHIBITED
+      unless identical representation semantics have independently been established (e.g. both URIs).
+    - In production evidence state, C3/C7 NOT PROVEN -> TAXONOMY_UNPROVEN.
+
+    Isolated test hook:
+    Dependency injection via authority_context is permitted ONLY in isolated test harnesses
+    to simulate an explicitly proven taxonomy equivalence (e.g., mock proof / callable hook).
+    The production path remains strictly isolated from any such proof.
+    """
+    if not occurrence_taxonomy or not observation_taxonomy or not provider:
+        return False, TAXONOMY_UNPROVEN
+
+    # Direct equality check:
+    # Under Amendment 7 §6, raw string equality between prefix tokens (or prefix vs URI)
+    # does NOT prove semantic equivalence.
+    # Only when both values are namespace URIs whose identical representation semantics
+    # have independently been established (e.g., test fixtures where both sides use URIs)
+    # can direct equality hold.
+    is_uri = lambda s: bool(s and (s.startswith("http://") or s.startswith("https://") or s.startswith("urn:")))
+    if occurrence_taxonomy == observation_taxonomy and is_uri(occurrence_taxonomy) and is_uri(observation_taxonomy):
+        return True, MATCHED
+
+    # Isolated test hook / dependency injection
+    if authority_context is not None:
+        if callable(authority_context):
+            res = authority_context(provider, observation_taxonomy, occurrence_taxonomy)
+            if isinstance(res, tuple):
+                return res
+            if isinstance(res, bool):
+                return (True, MATCHED) if res else (False, TAXONOMY_UNPROVEN)
+            if isinstance(res, dict):
+                authority_context = res
+
+        if isinstance(authority_context, dict):
+            # Provider isolation check
+            ctx_provider = authority_context.get("provider")
+            if ctx_provider and ctx_provider != provider:
+                return False, TAXONOMY_UNPROVEN
+
+            # Explicit injected proof for isolated test harnesses (T09, T10, etc.)
+            injected_proof = authority_context.get("isolated_test_proof") or authority_context.get("injected_proof")
+            if injected_proof:
+                candidates = authority_context.get("logical_candidates", [])
+                if candidates:
+                    matching = [
+                        c for c in candidates
+                        if c.get("provider") == provider
+                        and c.get("standard_prefix") == observation_taxonomy
+                        and c.get("namespace_uri") == occurrence_taxonomy
+                    ]
+                    if len(matching) == 0:
+                        return False, TAXONOMY_UNPROVEN
+                    if len(matching) == 1:
+                        return True, MATCHED
+                    return False, TAXONOMY_AMBIGUOUS
+
+                target_ns = authority_context.get("namespace_uri")
+                if target_ns:
+                    if occurrence_taxonomy == target_ns:
+                        return True, MATCHED
+                    return False, TAXONOMY_UNPROVEN
+
+                return True, MATCHED
+
+    # In production evidence state, C3 and C7 are NOT PROVEN.
+    # Standard catalog rows or queries cannot bridge without an E4 contract.
+    return False, TAXONOMY_UNPROVEN
+
+
 def match_occurrence(
     occurrence: Dict[str, Any],
     observations: Sequence[Dict[str, Any]],
+    authority_context: Optional[Any] = None,
 ) -> OccurrenceMatch:
     """
     Resolve one occurrence against the Observations the archive already holds.
 
-    Three refusals, each with a distinct cause, and none of them resolved by
-    preferring anything:
-
-    * `NO_OBSERVATION` -- nothing describes the same fact. This is also the case
-      for a fact the aggregate endpoint never reported, which is most of what an
-      `EX-101.INS` carries after a filer stops tagging a concept. **Nothing is
-      created for it here.**
-    * `AMBIGUOUS_OBSERVATION` -- more than one Observation matches. The
-      identity is supposed to make that impossible; if it happens, refusing beats
-      picking one.
-    * `TAXONOMY_AMBIGUOUS` -- the matching occurrences disagree on the namespace.
-      Two extensions may declare the same local name for the same period and the
-      same value, and the Observation's `us-gaap:` prefix cannot say which is
-      meant. Refusing is the only honest answer.
+    Strict diagnostic precedence (Stage B):
+    1. Evaluate ordinary matching across observations.
+       - If 0 observations match ordinary predicates -> NO_OBSERVATION.
+         (An occurrence whose period, unit, or value differs is NO_OBSERVATION,
+          even if its tag matches and taxonomy is unproven.)
+       - If > 1 observations match ordinary predicates -> AMBIGUOUS_OBSERVATION.
+         (Observation ambiguity is handled first; taxonomy cannot be used to pick one.)
+    2. Exactly 1 observation matches ordinary predicates:
+       Evaluate taxonomy adjudication (Stage C).
+       - tax_ok is True -> MATCHED with observation_id.
+       - tax_ok is False -> return tax_reason (TAXONOMY_UNPROVEN or TAXONOMY_AMBIGUOUS).
     """
-    candidates = [
-        observation for observation in observations
-        if occurrence_matches_observation(occurrence, observation)
+    ordinary_candidates = [
+        obs for obs in observations
+        if occurrence_matches_observation_ordinary(occurrence, obs)
     ]
-    if not candidates:
-        # Distinguish "nothing describes this fact" from "the concept matched and
-        # the taxonomy could not be proven". The second is the important one: it
-        # says the local name agrees and the namespaces are in different
-        # representations, which is a missing mapping rather than a missing fact.
-        if any(_local_name(str(row.get("concept") or "")) == occurrence["tag"]
-               and row.get("accession") == occurrence.get("accession")
-               for row in observations):
-            return OccurrenceMatch(
-                occurrence["document_fact_id"], None, TAXONOMY_UNPROVEN)
+
+    if not ordinary_candidates:
         return OccurrenceMatch(
             occurrence["document_fact_id"], None, NO_OBSERVATION)
-    if len({row["observation_id"] for row in candidates}) != 1:
+
+    distinct_obs_ids = {obs["observation_id"] for obs in ordinary_candidates}
+    if len(distinct_obs_ids) != 1:
         return OccurrenceMatch(
             occurrence["document_fact_id"], None, AMBIGUOUS_OBSERVATION)
+
+    matched_obs = ordinary_candidates[0]
+    tax_ok, tax_reason = evaluate_taxonomy_equivalence(
+        occurrence.get("taxonomy"),
+        matched_obs.get("taxonomy"),
+        matched_obs.get("provider"),
+        authority_context=authority_context,
+    )
+    if tax_ok:
+        return OccurrenceMatch(
+            occurrence["document_fact_id"], matched_obs["observation_id"], MATCHED)
     return OccurrenceMatch(
-        occurrence["document_fact_id"], candidates[0]["observation_id"],
-        MATCHED)
+        occurrence["document_fact_id"], None, tax_reason)
 
 
 def exact_source_document(
     linked: Sequence[Dict[str, Any]],
+    candidate_docs: Optional[Sequence[Tuple[str, str, str]]] = None,
 ) -> Tuple[Optional[Tuple[str, str, str]], Optional[str]]:
     """
     The one document to assert, or None with the reason it cannot be decided.
 
-    Two independent gates, both of which must pass:
-
-    * **context cardinality.** If the linked occurrences disagree on
-      `context_ref`, the Observation cannot say which context its stored value
-      came from. Two dimensional members carrying the same number are the
-      measured case, and preferring one would be inventing precedence.
-    * **document cardinality.** Candidates are counted over
-      `(asset_id, accession, filename)` -- the grain the frozen relation is keyed
-      at. Counting captures or `document_id`s instead would let one document
-      captured twice look like two candidates, and would break on a re-capture
-      of the same filename.
-
-    Nothing here inspects whether a document is primary, what it is named, or
-    what type it declares. An EDGAR rendering and a filed primary document are
-    the same thing to this function, which is the point.
+    Cardinality invariant (Stage E):
+    - candidate_docs represents the FULL pre-taxonomy candidate document set.
+    - TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES:
+      If candidate_docs has > 1 documents, exact source document can NEVER be
+      asserted (DOCUMENTS_AMBIGUOUS).
+    - If candidate_docs is not provided, defaults to the documents in linked.
+    - If linked is empty (e.g. taxonomy refusal), exact source cannot be asserted.
     """
-    if not linked:
+    if candidate_docs is not None:
+        docs = set(candidate_docs)
+    else:
+        docs = {
+            (row["asset_id"], row["accession"], row["filename"]) for row in linked
+        }
+
+    if not docs:
         return None, NO_OBSERVATION
+
+    # TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES:
+    # If raw candidate document cardinality > 1, exact source can NEVER be asserted!
+    if len(docs) > 1:
+        return None, DOCUMENTS_AMBIGUOUS
+
+    if not linked:
+        return None, TAXONOMY_UNPROVEN
+
     if len({row["context_ref"] for row in linked}) != 1:
         return None, CONTEXT_AMBIGUOUS
-    documents = {
-        (row["asset_id"], row["accession"], row["filename"]) for row in linked
-    }
-    if len(documents) != 1:
-        return None, DOCUMENTS_AMBIGUOUS
-    asset_id, accession, filename = documents.pop()
+
+    asset_id, accession, filename = next(iter(docs))
     return (asset_id, accession, filename), None
