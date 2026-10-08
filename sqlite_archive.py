@@ -52,8 +52,39 @@ from knowledge_axis import (
     KnowledgeAxisError,
     SourceFact,
 )
+# The provenance writers below receive identities from `sec_provenance` and the
+# closed vocabularies those identities are validated against. Importing the
+# vocabularies rather than restating them is the point: `0020_sec_provenance.sql`
+# enforces the same sets in triggers, and a second copy here would be free to
+# drift from the migration.
+from sec_provenance import (
+    ACCEPTANCE_PRECISIONS,
+    ACCEPTANCE_SOURCES,
+    ACQUISITION_CLASSES,
+    CAPTURE_KINDS,
+    DECLARATION_SOURCES,
+    EXTRACTION_METHODS,
+    FISCAL_CALENDAR_DECLARATION_SOURCES,
+    ITEM_DECLARATION_SOURCES,
+    MANIFEST_SOURCES,
+    STATEMENT_KINDS,
+)
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "archive" / "migrations"
+
+
+def _require(field: str, value: Any, vocabulary: Tuple[str, ...]) -> None:
+    """Refuse a value outside a closed vocabulary, naming the field.
+
+    The migration's triggers are still the authority -- they fire for anything
+    that reaches the database by another route -- but refusing here means a
+    caller gets a message that names the column instead of a bare
+    `sqlite3.IntegrityError`.
+    """
+    if value not in vocabulary:
+        raise ValueError(
+            f"{field} must be one of {', '.join(vocabulary)}; got {value!r}"
+        )
 
 # Fields round-tripped verbatim between a row and an Observation. The archive
 # stores the contract's own field names, so a stored observation is a copy and
@@ -655,6 +686,503 @@ class SQLiteArchive(ArchiveStore):
         if (row["content_encoding"] or row["compression"]) == "gzip":
             return gzip.decompress(blob)
         return bytes(blob)
+
+    # -- SEC provenance (0020) ----------------------------------------------
+    #
+    # One writer per relation added by `0020_sec_provenance.sql`, in the same
+    # idiom as every other writer here: it receives an identity that has already
+    # been computed by `sec_provenance`, it performs no SEC parsing, no network
+    # access and no classification policy, and it never writes an Observation.
+    #
+    # Idempotency is a read-then-write, the shape `record_source_document` already
+    # uses: an assertion that is already held returns its existing identity and
+    # writes nothing. No writer here issues an UPDATE -- every relation refuses
+    # one -- so a re-acquisition can only add, never amend.
+    #
+    # A writer returning `True` means it created a row and `False` means the row
+    # was already there. The digest-keyed writers return the identity instead,
+    # so a caller can use the same value either way.
+
+    def record_filing(
+        self,
+        asset_id: str,
+        accession: str,
+        first_archived_at: str,
+    ) -> bool:
+        """
+        Record that a filing exists. Nothing else.
+
+        `filings` deliberately holds no filing attribute. `form`, `filing_date`,
+        `report_date`, `conformed_period_of_report`, `public_document_count`,
+        `is_xbrl` and `primary_document` are all assertions by a source and live
+        in `filing_declarations`, because a later and better source has to be able
+        to add one without mutating anything. A filing row is the fact that a
+        filing exists, not what it says.
+
+        `first_archived_at` is this archive's own clock and is not part of any
+        identity.
+        """
+        existing = self.connection.execute(
+            "SELECT 1 FROM filings WHERE asset_id = ? AND accession = ?",
+            (asset_id, accession),
+        ).fetchone()
+        if existing is not None:
+            return False
+        self.connection.execute(
+            "INSERT INTO filings (asset_id, accession, first_archived_at)"
+            " VALUES (?, ?, ?)",
+            (asset_id, accession, first_archived_at),
+        )
+        self.connection.commit()
+        return True
+
+    def record_filing_declaration(
+        self,
+        declaration_id: str,
+        asset_id: str,
+        accession: str,
+        declaration_source: str,
+        captured_at: str,
+        capture_kind: str,
+        form: Optional[str] = None,
+        filing_date: Optional[str] = None,
+        report_date: Optional[str] = None,
+        conformed_period_of_report: Optional[str] = None,
+        public_document_count: Optional[int] = None,
+        is_xbrl: Optional[int] = None,
+        primary_document: Optional[str] = None,
+        declared_at: Optional[str] = None,
+    ) -> str:
+        """
+        Record one source's assertion about a filing.
+
+        `declaration_id` comes from `sec_provenance.filing_declaration_id` and is
+        a digest of the asserted metadata, so the same assertion is a no-op and a
+        changed assertion is a second row. The earlier row is never amended, and
+        no precedence between sources is stored: which one a reader trusts is a
+        read-time decision the methodology has not made.
+        """
+        _require("declaration_source", declaration_source, DECLARATION_SOURCES)
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_declarations WHERE declaration_id = ?",
+            (declaration_id,),
+        ).fetchone()
+        if existing is not None:
+            return declaration_id
+        self.connection.execute(
+            "INSERT INTO filing_declarations (declaration_id, asset_id,"
+            " accession, declaration_source, form, filing_date, report_date,"
+            " conformed_period_of_report, public_document_count, is_xbrl,"
+            " primary_document, declared_at, captured_at, capture_kind)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (declaration_id, asset_id, accession, declaration_source, form,
+             filing_date, report_date, conformed_period_of_report,
+             public_document_count, is_xbrl, primary_document, declared_at,
+             captured_at, capture_kind),
+        )
+        self.connection.commit()
+        return declaration_id
+
+    def record_filing_item_declaration(
+        self,
+        declaration_id: str,
+        asset_id: str,
+        accession: str,
+        declaration_source: str,
+        raw_items_text: str,
+        captured_at: str,
+        capture_kind: str,
+        declared_at: Optional[str] = None,
+        declared_item_count: Optional[int] = None,
+    ) -> str:
+        """
+        Record one source's verbatim item declaration.
+
+        `raw_items_text` is stored unsplit. Splitting it into rows is a separate
+        step (`record_filing_item`), which keeps a changed parse from silently
+        discarding an item: the declaration is the source's assertion and the
+        items are this archive's reading of it.
+        """
+        _require("declaration_source", declaration_source, ITEM_DECLARATION_SOURCES)
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_item_declarations WHERE declaration_id = ?",
+            (declaration_id,),
+        ).fetchone()
+        if existing is not None:
+            return declaration_id
+        self.connection.execute(
+            "INSERT INTO filing_item_declarations (declaration_id, asset_id,"
+            " accession, declaration_source, raw_items_text,"
+            " declared_item_count, declared_at, captured_at, capture_kind)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (declaration_id, asset_id, accession, declaration_source,
+             raw_items_text, declared_item_count, declared_at, captured_at,
+             capture_kind),
+        )
+        self.connection.commit()
+        return declaration_id
+
+    def record_filing_item(
+        self,
+        item_id: str,
+        declaration_id: str,
+        item_ordinal: int,
+        item_code: str,
+        captured_at: str,
+        item_title: Optional[str] = None,
+        title_source: Optional[str] = None,
+    ) -> str:
+        """
+        Record one parsed item inside one declaration.
+
+        The ordinal is declaration-scoped. Two sources may both declare item
+        `2.02` at ordinal 1 and those are two rows, which is why the identity
+        carries the declaration rather than the accession.
+        """
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_items WHERE item_id = ?", (item_id,)
+        ).fetchone()
+        if existing is not None:
+            return item_id
+        self.connection.execute(
+            "INSERT INTO filing_items (item_id, declaration_id, item_ordinal,"
+            " item_code, item_title, title_source, captured_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (item_id, declaration_id, item_ordinal, item_code, item_title,
+             title_source, captured_at),
+        )
+        self.connection.commit()
+        return item_id
+
+    def record_filing_document_declaration(
+        self,
+        declaration_id: str,
+        asset_id: str,
+        accession: str,
+        manifest_source: str,
+        source_ordinal: int,
+        captured_at: str,
+        capture_kind: str,
+        filename: Optional[str] = None,
+        sec_document_type: Optional[str] = None,
+        mime_type: Optional[str] = None,
+        byte_size: Optional[int] = None,
+        description: Optional[str] = None,
+        last_modified: Optional[str] = None,
+    ) -> str:
+        """
+        Record one entry of one manifest.
+
+        Both manifests are recorded and neither is merged. `source_ordinal` is
+        the position inside `manifest_source` and is not comparable between
+        manifests; `sec_document_type` and `mime_type` are separate columns
+        because they are separate vocabularies from separate resources.
+
+        `last_modified` is stored for the audit trail but is not part of the
+        identity, so a re-read whose only change is an mtime stays a no-op.
+        """
+        _require("manifest_source", manifest_source, MANIFEST_SOURCES)
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_document_declarations WHERE declaration_id = ?",
+            (declaration_id,),
+        ).fetchone()
+        if existing is not None:
+            return declaration_id
+        self.connection.execute(
+            "INSERT INTO filing_document_declarations (declaration_id,"
+            " asset_id, accession, manifest_source, source_ordinal, filename,"
+            " sec_document_type, mime_type, byte_size, description,"
+            " last_modified, captured_at, capture_kind)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (declaration_id, asset_id, accession, manifest_source,
+             source_ordinal, filename, sec_document_type, mime_type, byte_size,
+             description, last_modified, captured_at, capture_kind),
+        )
+        self.connection.commit()
+        return declaration_id
+
+    def record_filing_document(
+        self,
+        asset_id: str,
+        accession: str,
+        filename: str,
+        first_declared_at: Optional[str] = None,
+    ) -> bool:
+        """
+        Record the existence of a document inside a filing.
+
+        Identity only. This row carries no source-asserted attribute -- no
+        `document_type`, no `mime_type`, no ordinal, no capture state -- so a
+        declaration can never overwrite it, and nothing it says can be
+        contradicted by a later read of a different resource.
+
+        Only a directory-manifest declaration mints this row, and the database
+        says so: `filing_documents_identity_is_declared` aborts unless a
+        `EDGAR_FILING_DIRECTORY_INDEX_JSON` declaration of this filename exists,
+        and `filing_documents_identity_is_unambiguous` aborts when the directory
+        manifest declared the filename more than once. A filename declared twice
+        therefore yields two surviving declarations and no identity row, which
+        is the unresolved state rather than a merge.
+        """
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_documents"
+            " WHERE asset_id = ? AND accession = ? AND filename = ?",
+            (asset_id, accession, filename),
+        ).fetchone()
+        if existing is not None:
+            return False
+        self.connection.execute(
+            "INSERT INTO filing_documents (asset_id, accession, filename,"
+            " first_declared_at) VALUES (?, ?, ?, ?)",
+            (asset_id, accession, filename, first_declared_at),
+        )
+        self.connection.commit()
+        return True
+
+    def record_filing_document_capture(
+        self,
+        asset_id: str,
+        accession: str,
+        filename: str,
+        document_id: str,
+        acquisition_class: str,
+        captured_at: str,
+        capture_kind: str,
+    ) -> bool:
+        """
+        Link one captured byte sequence to one document of one filing.
+
+        The key is the content identity, not a digest: `(asset_id, accession,
+        filename, document_id)`. Re-fetching identical bytes resolves to the same
+        `document_id` -- `source_documents.content_hash` is UNIQUE and
+        `document_id` derives from it -- so the retry is a no-op, while re-fetched
+        bytes are a different `document_id` and therefore a second row with the
+        first one retained.
+
+        Both prerequisites are enforced rather than assumed: the composite
+        foreign key requires the `filing_documents` row, and `document_id`
+        requires the `source_documents` row.
+        """
+        _require("acquisition_class", acquisition_class, ACQUISITION_CLASSES)
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_document_captures"
+            " WHERE asset_id = ? AND accession = ? AND filename = ?"
+            " AND document_id = ?",
+            (asset_id, accession, filename, document_id),
+        ).fetchone()
+        if existing is not None:
+            return False
+        self.connection.execute(
+            "INSERT INTO filing_document_captures (asset_id, accession,"
+            " filename, document_id, acquisition_class, captured_at,"
+            " capture_kind) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (asset_id, accession, filename, document_id, acquisition_class,
+             captured_at, capture_kind),
+        )
+        self.connection.commit()
+        return True
+
+    def record_filing_document_statement(
+        self,
+        statement_id: str,
+        statement_identity: str,
+        asset_id: str,
+        accession: str,
+        filename: str,
+        document_id: str,
+        statement_kind: str,
+        quote_locator: str,
+        quote_text: str,
+        extraction_method: str,
+        extracted_at: str,
+        capture_kind: str,
+        applies_to_document_type: Optional[str] = None,
+        applies_to_filing_item_code: Optional[str] = None,
+    ) -> str:
+        """
+        Record one verbatim quotation, bound to one captured byte sequence.
+
+        `statement_id` is a digest over the capture and the locator, so a second
+        capture of the same document yields a different statement and leaves the
+        first alone.
+
+        A re-extraction that produces the same words is a no-op here. A
+        re-extraction that produces *different* words from the same capture, kind
+        and locator is a contradiction, and it is not this writer's call to
+        absorb it: the pre-check below lets the write proceed to the database so
+        that `filing_document_statements_extraction_consistent` refuses it with a
+        message naming the non-determinism. That trigger is the authority, and
+        this writer deliberately does not reimplement the rule -- it only avoids
+        raising a primary-key violation for a genuinely idempotent repeat.
+        """
+        _require("statement_kind", statement_kind, STATEMENT_KINDS)
+        _require("extraction_method", extraction_method, EXTRACTION_METHODS)
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT quote_text, extraction_method FROM"
+            " filing_document_statements WHERE statement_id = ?",
+            (statement_id,),
+        ).fetchone()
+        if existing is not None and (
+            existing["quote_text"] == quote_text
+            and existing["extraction_method"] == extraction_method
+        ):
+            return statement_id
+        self.connection.execute(
+            "INSERT INTO filing_document_statements (statement_id,"
+            " statement_identity, asset_id, accession, filename, document_id,"
+            " statement_kind, quote_locator, quote_text, extraction_method,"
+            " extracted_at, capture_kind, applies_to_document_type,"
+            " applies_to_filing_item_code)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (statement_id, statement_identity, asset_id, accession, filename,
+             document_id, statement_kind, quote_locator, quote_text,
+             extraction_method, extracted_at, capture_kind,
+             applies_to_document_type, applies_to_filing_item_code),
+        )
+        self.connection.commit()
+        return statement_id
+
+    def record_filing_acceptance(
+        self,
+        declaration_id: str,
+        asset_id: str,
+        accession: str,
+        acceptance_source: str,
+        acceptance_precision: str,
+        captured_at: str,
+        capture_kind: str,
+        acceptance_datetime: Optional[str] = None,
+        raw_value: Optional[str] = None,
+    ) -> str:
+        """
+        Record one acceptance instant as one producer declared it.
+
+        `acceptance_source` is checked against a two-member vocabulary, so a
+        fact's filed date raises here rather than being stored as if it were a
+        dissemination instant. That fact's date stays on
+        `observations.available_at_basis` as `FILED_AS_OF_DATE`, which is a
+        different statement about a different object and lives in a different
+        relation.
+
+        Both producers persist for one filing. The SGML header publishes the ET
+        wall clock and the Submissions API publishes the same instant as UTC;
+        neither overwrites the other, and no precedence column exists because the
+        methodology has not chosen one.
+
+        `acceptance_precision = 'NONE'` is the "consulted, declared nothing" state
+        and requires a NULL `acceptance_datetime`. No row at all means the
+        producer was never consulted.
+        """
+        _require("acceptance_source", acceptance_source, ACCEPTANCE_SOURCES)
+        _require("acceptance_precision", acceptance_precision, ACCEPTANCE_PRECISIONS)
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM filing_acceptances WHERE declaration_id = ?",
+            (declaration_id,),
+        ).fetchone()
+        if existing is not None:
+            return declaration_id
+        self.connection.execute(
+            "INSERT INTO filing_acceptances (declaration_id, asset_id,"
+            " accession, acceptance_source, acceptance_datetime,"
+            " acceptance_precision, raw_value, captured_at, capture_kind)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (declaration_id, asset_id, accession, acceptance_source,
+             acceptance_datetime, acceptance_precision, raw_value, captured_at,
+             capture_kind),
+        )
+        self.connection.commit()
+        return declaration_id
+
+    def record_fiscal_calendar_declaration(
+        self,
+        declaration_id: str,
+        asset_id: str,
+        fiscal_year_end_mmdd: str,
+        declaration_source: str,
+        captured_at: str,
+        capture_kind: str,
+        declaring_accession: Optional[str] = None,
+        observed_filing_date: Optional[str] = None,
+    ) -> str:
+        """
+        Record one declared fiscal year end.
+
+        There is no `fiscal_year` argument and no such column: Contract section
+        K.4 leaves per-fiscal-year resolution open, and taking a fiscal year here
+        would freeze an undecided semantic into the schema. `declaring_accession`
+        and `observed_filing_date` keep the context a later resolution would need,
+        so deciding it later needs no migration.
+        """
+        _require(
+            "declaration_source", declaration_source,
+            FISCAL_CALENDAR_DECLARATION_SOURCES,
+        )
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM issuer_fiscal_calendar_declarations"
+            " WHERE declaration_id = ?", (declaration_id,)
+        ).fetchone()
+        if existing is not None:
+            return declaration_id
+        self.connection.execute(
+            "INSERT INTO issuer_fiscal_calendar_declarations (declaration_id,"
+            " asset_id, fiscal_year_end_mmdd, declaration_source,"
+            " declaring_accession, observed_filing_date, captured_at,"
+            " capture_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (declaration_id, asset_id, fiscal_year_end_mmdd,
+             declaration_source, declaring_accession, observed_filing_date,
+             captured_at, capture_kind),
+        )
+        self.connection.commit()
+        return declaration_id
+
+    def record_observation_filing_document(
+        self,
+        observation_id: str,
+        asset_id: str,
+        accession: str,
+        filename: str,
+        captured_at: str,
+        capture_kind: str,
+    ) -> bool:
+        """
+        Link one observation to the one document it was read from.
+
+        The link is always explicit. Nothing here derives a document from an
+        accession, and in particular nothing treats an 8-K accession as naming an
+        `EX-99.1`: measured on a real filing, the diluted-EPS facts carried by one
+        8-K accession came from an `EX-101.INS` instance while its `EX-99.1`
+        exhibit contained no inline XBRL at all. An observation with no row here
+        is a complete, honest state -- unlinked -- rather than a gap to be filled
+        by a guess.
+
+        This writer has no write path to `observations` at all. It reads an
+        observation's id and writes only this relation.
+        """
+        _require("capture_kind", capture_kind, CAPTURE_KINDS)
+        existing = self.connection.execute(
+            "SELECT 1 FROM observation_filing_documents"
+            " WHERE observation_id = ? AND asset_id = ? AND accession = ?"
+            " AND filename = ?",
+            (observation_id, asset_id, accession, filename),
+        ).fetchone()
+        if existing is not None:
+            return False
+        self.connection.execute(
+            "INSERT INTO observation_filing_documents (observation_id,"
+            " asset_id, accession, filename, captured_at, capture_kind)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (observation_id, asset_id, accession, filename, captured_at,
+             capture_kind),
+        )
+        self.connection.commit()
+        return True
 
     def documents_summary(self) -> List[Dict[str, Any]]:
         """One row per captured document, for reporting on capture coverage."""
