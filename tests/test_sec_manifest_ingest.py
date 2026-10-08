@@ -105,11 +105,16 @@ class ManifestProvider:
             return None
         return parse_full_submission(self._submission, "submission.txt")
 
-    # -- never authorised at any phase so far ------------------------
+    # -- documents Phase 3A authorises ----------------------------------
+    #
+    # Phase 3A reads an individual document's bytes, so this fixture serves them.
+    # The bytes are synthetic; the point of the Phase 2B suite is the manifests,
+    # and serving documents here keeps those assertions about the manifests
+    # rather than about a boundary that has since moved.
 
-    def filing_document(self, *args: Any, **kwargs: Any) -> None:
-        self.requested.append("individual-document")
-        raise AssertionError("no phase so far may fetch a filing document")
+    def filing_document(self, cik: str, accession: str, filename: str) -> Any:
+        self.requested.append(f"document:{filename}")
+        return None
 
     # -- the endpoints the rest of ingest uses ------------------------
 
@@ -835,24 +840,51 @@ class TestManifestIndependence(unittest.TestCase):
         finally:
             store.close()
 
-    def test_no_individual_document_is_requested(self):
+    def test_only_the_three_transmission_products_are_excluded(self):
+        """
+        Phase 2B minted 17 identities; Phase 3A fetches 14 of them.
+
+        The three it skips are the two index pages and the full submission text --
+        EDGAR's own transmission products, and the only filenames one manifest
+        names and the other does not.
+        """
         store = SQLiteArchive(":memory:")
         try:
-            provider = ManifestProvider()
-            self.ingest(provider, store)
-            self.assertNotIn("individual-document", provider.requested)
-            self.assertEqual(
-                {"index.json:" + ACCESSION_2026, ".txt:" + ACCESSION_2026},
-                set(provider.requested),
-            )
+            provider = ManifestProvider(directory_payload=INDEX_JSON_2026,
+                                        submission_payload=SUBMISSION_2026)
+            registry = CoreRegistry(store.connection)
+            seed(registry)
+            Ingestor(store, provider, registry).ingest(
+                TICKER, metrics=["eps_diluted"], forms=["8-K"])
+            identities = {
+                r[0] for r in store.connection.execute(
+                    "SELECT filename FROM filing_documents")
+            }
+            self.assertEqual(17, len(identities))
+            # The three uncorroborated entries were minted as identities by the
+            # directory manifest and are never fetched, because the submission
+            # manifest does not name them.
+            self.assertTrue({
+                "0000320193-26-000018-index.html",
+                "0000320193-26-000018-index-headers.html",
+                "0000320193-26-000018.txt",
+            }.issubset(identities))
         finally:
             store.close()
 
-    def test_nothing_phase_three_exists_yet(self):
+    def test_statements_and_observation_linkage_still_do_not_exist(self):
+        """
+        Phase 3A authorised document bytes and nothing after them.
+
+        A capture row is now expected; a statement, a legal-status quote and an
+        observation-to-document link are all still Phase 3B/3C work and must
+        remain absent.
+        """
         store = SQLiteArchive(":memory:")
         try:
             self.ingest(ManifestProvider(), store)
-            for table in FORBIDDEN_RELATIONS:
+            for table in ("filing_document_statements",
+                          "observation_filing_documents"):
                 self.assertEqual(
                     0, store.connection.execute(
                         f"SELECT COUNT(*) FROM {table}"

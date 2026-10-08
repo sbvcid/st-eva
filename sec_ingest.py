@@ -66,7 +66,11 @@ from sec_provenance import (
     parse_items,
     project_held_filings,
 )
-from sec_provider import observation_currency_of, xbrl_unit_to_contract_unit
+from sec_provider import (
+    DOCUMENT_FILING,
+    observation_currency_of,
+    xbrl_unit_to_contract_unit,
+)
 
 SEC_SOURCE = "SecEdgar"
 SEC_SOURCE_TYPE = SourceType.REGULATORY_FILING.value
@@ -591,6 +595,17 @@ class Ingestor:
             self._acquire_filing_manifests(asset_id, cik, index)
         except Exception as error:  # noqa: BLE001
             self._record_provenance_failure("filing_manifests", error)
+        # The bytes themselves, for the documents two independent manifests agree
+        # this filing contains. `new_entries` is the evidence for capture kind: an
+        # accession already in `held_filings` when this run began was not first
+        # discovered here.
+        try:
+            self._acquire_document_bytes(
+                asset_id, cik, index,
+                frozenset(entry["accession"] for entry in new_entries),
+            )
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("document_bytes", error)
 
         if not new_entries:
             # Nothing new was accepted, so no concept endpoint can have
@@ -1766,6 +1781,191 @@ class Ingestor:
                 asset_id, fiscal, self.SGML_FISCAL_YEAR_END, declared_at,
                 "FIRST_HAND", declaring_accession=accession,
             )
+
+    # -- provenance: document bytes (0020, Phase 3A) --------------------
+    #
+    # The chain, in the only order that is honest:
+    #
+    #     filing_documents            identity: this filename is a document of
+    #                                 this filing
+    #       -> filing_document_captures   a specific byte sequence was captured
+    #            for it, at a specific time, under a stated capture kind
+    #              -> source_documents    the bytes themselves, content-addressed
+    #
+    # Nothing in this chain is inferred from an accession. A capture row exists
+    # only because a fetch returned bytes and those bytes were hashed.
+
+    DOCUMENT_ACQUISITION_CLASS = "SEC_FILING_DOCUMENT"
+
+    def _acquire_document_bytes(
+        self,
+        asset_id: str,
+        cik: str,
+        index: List[Dict[str, Any]],
+        first_seen: frozenset,
+    ) -> None:
+        """
+        Fetch the bytes of every eligible document of every listed filing.
+
+        `first_seen` is the set of accessions this run saw for the first time --
+        those already in `held_filings` when the run began. It is the only
+        evidence available for whether a capture is first-hand, and it is why
+        `capture_kind` is derived from it rather than asserted: a run that
+        already held a filing did not first discover it, so bytes it fetches now
+        are a later acquisition and are labelled as one.
+        """
+        if not hasattr(self.provider, "filing_document"):
+            return
+        for entry in index:
+            accession = str(entry.get("accession") or "")
+            if not accession:
+                continue
+            try:
+                self._acquire_documents_for_filing(
+                    asset_id, cik, accession,
+                    "FIRST_HAND" if accession in first_seen
+                    else "LATER_ACQUISITION",
+                )
+            except Exception as error:  # noqa: BLE001
+                self._record_provenance_failure(f"document_bytes:{accession}",
+                                                 error)
+
+    def _eligible_document_filenames(
+        self,
+        asset_id: str,
+        accession: str,
+    ) -> List[str]:
+        """
+        Filenames both manifests agree this filing contains.
+
+        Two independent resources are required, and that is the whole rule. The
+        directory listing enumerates the filing's files; the submission's
+        `<DOCUMENT>` sequence says which of them EDGAR publishes as documents.
+        A filename only one of them names is not corroborated, and the measured
+        difference is exactly EDGAR's own transmission products -- the two index
+        pages and the full submission text. An accession, or a listing entry, is
+        never sufficient on its own.
+        """
+        corroborated = {
+            row["filename"] for row in self.connection.execute(
+                "SELECT filename FROM filing_document_declarations"
+                " WHERE asset_id = ? AND accession = ? AND manifest_source = ?"
+                " AND filename IS NOT NULL",
+                (asset_id, accession, self.MANIFEST_SUBMISSION),
+            )
+        }
+        if not corroborated:
+            # No submission was read for this filing, so nothing is corroborated
+            # and nothing is eligible. Absence of one manifest is not permission
+            # to fetch on the word of the other.
+            return []
+        declared = [
+            row["filename"] for row in self.connection.execute(
+                "SELECT filename FROM filing_documents"
+                " WHERE asset_id = ? AND accession = ? ORDER BY filename",
+                (asset_id, accession),
+            )
+        ]
+        return [name for name in declared if name in corroborated]
+
+    def _document_needs_refetch(self, asset_id: str, accession: str,
+                                filename: str) -> bool:
+        """
+        Whether this document's bytes are not already held.
+
+        A capture row for a filename means its bytes are stored, and a filed
+        document does not change under its own accession -- a changed document
+        arrives as an amendment under a new accession, which is a different
+        filing entirely. So re-fetching every document of every held filing on
+        every run would spend the whole request budget re-reading immutable
+        bytes. A document is re-fetched only when its directory declaration has
+        moved on, which is the one case where the archive has reason to look
+        again.
+        """
+        captured = self.connection.execute(
+            "SELECT MAX(captured_at) AS captured_at FROM"
+            " filing_document_captures"
+            " WHERE asset_id = ? AND accession = ? AND filename = ?",
+            (asset_id, accession, filename),
+        ).fetchone()
+        if captured is None or captured["captured_at"] is None:
+            return True
+        latest = self.connection.execute(
+            "SELECT declaration_id, captured_at FROM"
+            " filing_document_declarations"
+            " WHERE asset_id = ? AND accession = ? AND filename = ?"
+            " AND manifest_source = ?"
+            " ORDER BY captured_at DESC, declaration_id DESC LIMIT 1",
+            (asset_id, accession, filename, self.MANIFEST_DIRECTORY),
+        ).fetchone()
+        if latest is None:
+            return True
+        return latest["captured_at"] > captured["captured_at"]
+
+    def _acquire_documents_for_filing(
+        self,
+        asset_id: str,
+        cik: str,
+        accession: str,
+        capture_kind: str,
+    ) -> int:
+        """
+        Fetch and store every eligible document of one filing.
+
+        One document failing does not stop the others. The listing is walked in a
+        stable order and each fetch is isolated, because a single document the
+        server will not serve would otherwise strand every document after it,
+        and a filing's capture state would depend on alphabetical order.
+        """
+        stored = 0
+        for filename in self._eligible_document_filenames(asset_id, accession):
+            try:
+                captured = self._acquire_one_document(
+                    asset_id, cik, accession, filename, capture_kind
+                )
+            except Exception as error:  # noqa: BLE001
+                self._record_provenance_failure(
+                    f"document:{accession}:{filename}", error
+                )
+                continue
+            if captured:
+                stored += 1
+        return stored
+
+    def _acquire_one_document(
+        self,
+        asset_id: str,
+        cik: str,
+        accession: str,
+        filename: str,
+        capture_kind: str,
+    ) -> bool:
+        """Fetch one document and link the bytes it returned. True if newly stored."""
+        if not self._document_needs_refetch(asset_id, accession, filename):
+            return False
+        fetched = self.provider.filing_document(cik, accession, filename)
+        if fetched is None:
+            # A document the directory listed and the submission named, that the
+            # server will not serve. Its declarations stand; it simply has no
+            # bytes, and the absence of a capture row says so.
+            return False
+        document_id = self.store.record_source_document(StoredDocument(
+            content_hash=fetched.content_hash,
+            uri=fetched.uri,
+            canonical_uri=fetched.canonical_uri,
+            http_status=fetched.http_status,
+            media_type=fetched.media_type,
+            byte_size=fetched.byte_size,
+            fetched_at=fetched.fetched_at,
+            first_seen_at=fetched.fetched_at,
+            payload=fetched.content,
+            provider=SEC_SOURCE,
+            document_type=DOCUMENT_FILING,
+        ))
+        return self.store.record_filing_document_capture(
+            asset_id, accession, filename, document_id,
+            self.DOCUMENT_ACQUISITION_CLASS, fetched.fetched_at, capture_kind,
+        )
 
     def _store_facts(
         self,
