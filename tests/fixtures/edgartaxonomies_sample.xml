@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Erxl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="78" xsi:noNamespaceSchemaLocation="erxl.xsd">
+  <!-- Fixture: ordinary CEF 2026 entry -->
+  <Loc>
+    <Family>CEF</Family>
+    <Version>2026</Version>
+    <Href>https://xbrl.sec.gov/cef/2026/cef-2026.xsd</Href>
+    <AttType>SCH</AttType>
+    <FileTypeName>Schema</FileTypeName>
+    <Elements>1</Elements>
+    <Namespace>http://xbrl.sec.gov/cef/2026</Namespace>
+    <Prefix>cef</Prefix>
+  </Loc>
+  <!-- Fixture: duplicate identical assertion -->
+  <Loc>
+    <Family>CEF</Family>
+    <Version>2026</Version>
+    <Href>https://xbrl.sec.gov/cef/2026/cef-2026.xsd</Href>
+    <AttType>SCH</AttType>
+    <FileTypeName>Schema</FileTypeName>
+    <Elements>1</Elements>
+    <Namespace>http://xbrl.sec.gov/cef/2026</Namespace>
+    <Prefix>cef</Prefix>
+  </Loc>
+  <!-- Fixture: same namespace URI under different family (shared namespace case) -->
+  <Loc>
+    <Family>US GAAP</Family>
+    <Version>2026</Version>
+    <Href>https://xbrl.fasb.org/us-gaap/2026/us-gaap-2026.xsd</Href>
+    <AttType>SCH</AttType>
+    <FileTypeName>Schema</FileTypeName>
+    <Elements>1</Elements>
+    <Namespace>http://www.xbrl.org/2009/role/negated</Namespace>
+    <Prefix>xbrl</Prefix>
+  </Loc>
+  <Loc>
+    <Family>BASE</Family>
+    <Version>2026</Version>
+    <Href>https://xbrl.sec.gov/base/2026/base-2026.xsd</Href>
+    <AttType>SCH</AttType>
+    <FileTypeName>Schema</FileTypeName>
+    <Elements>1</Elements>
+    <Namespace>http://www.xbrl.org/2009/role/negated</Namespace>
+    <Prefix>xbrl</Prefix>
+  </Loc>
+  <!-- Fixture: multiple namespace URIs under one family/version -->
+  <Loc>
+    <Family>CEF</Family>
+    <Version>2026</Version>
+    <Href>https://xbrl.sec.gov/cef/2026/cef-pre-2026.xsd</Href>
+    <AttType>SCH</AttType>
+    <FileTypeName>Entry Point</FileTypeName>
+    <Elements>0</Elements>
+    <Namespace>http://xbrl.sec.gov/cef-pre/2026</Namespace>
+    <Prefix>cef-pre</Prefix>
+  </Loc>
+  <!-- Fixture: different version, same family -->
+  <Loc>
+    <Family>US GAAP</Family>
+    <Version>2025</Version>
+    <Href>https://xbrl.fasb.org/us-gaap/2025/us-gaap-2025.xsd</Href>
+    <FileTypeName>Schema</FileTypeName>
+    <Namespace>http://fasb.org/us-gaap/2025</Namespace>
+    <Prefix>us-gaap</Prefix>
+  </Loc>
+  <!-- Fixture: missing optional Prefix -->
+  <Loc>
+    <Family>DEI</Family>
+    <Version>2026</Version>
+    <Href>https://xbrl.sec.gov/dei/2026/dei-2026.xsd</Href>
+    <FileTypeName>Schema</FileTypeName>
+    <Namespace>http://xbrl.sec.gov/dei/2026</Namespace>
+  </Loc>
+</Erxl>
