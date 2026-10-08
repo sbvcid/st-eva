@@ -170,6 +170,22 @@ class ManifestProvider:
         return 0
 
 
+class NoItemCodesProvider(ManifestProvider):
+    """
+    A Submissions payload whose `items` column is empty.
+
+    This is the case the freeze turns on. `SUBMISSIONS_API_ITEMS` does not come
+    from either Archives manifest -- it comes from `filings.recent.items` on the
+    Submissions API, which is a third resource -- so a filing can name its items
+    in the SGML header while no code is available anywhere.
+    """
+
+    def submissions(self, cik: str) -> Dict[str, Any]:
+        payload = super().submissions(cik)
+        payload["filings"]["recent"]["items"] = [""]
+        return payload
+
+
 class ManifestBase(unittest.TestCase):
     provider_kwargs: Dict[str, Any] = {}
 
@@ -578,6 +594,80 @@ class TestHeaderAcquisition(ManifestBase):
             0, self.count("filing_items",
                           "item_code LIKE '%Financial Condition%'"),
         )
+
+
+    def test_titles_without_codes_yield_a_declaration_and_no_items(self):
+        """
+        The freeze case, pinned.
+
+        The header names two items and no code exists anywhere in the archive.
+        The declaration must survive verbatim -- it is source evidence -- while
+        `filing_items` stays empty, because that relation is a normalised
+        item-code relation and a title is not a code. And with no code to join,
+        nothing downstream may be resolved: the filing's items are unknown rather
+        than approximated.
+        """
+        report, store = self.ingest_into(NoItemCodesProvider(
+            directory_payload=INDEX_JSON_2026,
+            submission_payload=SUBMISSION_2026))
+        try:
+            self.assertEqual([], report.errors)
+            rows = store.connection.execute(
+                "SELECT declaration_source, declared_item_count,"
+                " raw_items_text FROM filing_item_declarations"
+                " ORDER BY declaration_source"
+            ).fetchall()
+            # Exactly one declaration, and it is the titles, kept verbatim.
+            self.assertEqual(1, len(rows))
+            self.assertEqual("SGML_ITEM_INFORMATION",
+                             rows[0]["declaration_source"])
+            self.assertEqual(2, rows[0]["declared_item_count"])
+            self.assertEqual(
+                "Results of Operations and Financial Condition\n"
+                "Financial Statements and Exhibits",
+                rows[0]["raw_items_text"],
+            )
+            # No codes, so no item rows. A title is never promoted into one.
+            self.assertEqual(0, store.connection.execute(
+                "SELECT COUNT(*) FROM filing_items").fetchone()[0])
+            # And nothing is resolved in its place.
+            for table in ("filing_items", "filing_item_declarations",
+                          "filing_document_declarations", "filings"):
+                columns = {
+                    r["name"] for r in store.connection.execute(
+                        f"PRAGMA table_info({table})"
+                    )
+                }
+                for forbidden in ("evidence_class", "audit_status", "sec_item",
+                                  "legal_status", "classification"):
+                    self.assertNotIn(forbidden, columns, table)
+        finally:
+            store.close()
+
+    def test_filing_items_are_written_only_by_the_code_source(self):
+        """Rule D, as an assertion about producers rather than about a value."""
+        report, store = self.ingest_into(ManifestProvider(
+            directory_payload=INDEX_JSON_2026,
+            submission_payload=SUBMISSION_2026))
+        try:
+            self.assertEqual([], report.errors)
+            producers = {
+                r[0] for r in store.connection.execute(
+                    "SELECT DISTINCT d.declaration_source"
+                    " FROM filing_items i"
+                    " JOIN filing_item_declarations d"
+                    " ON d.declaration_id = i.declaration_id"
+                )
+            }
+            self.assertEqual({"SUBMISSIONS_API_ITEMS"}, producers)
+            # Titles reached no item row from either manifest.
+            self.assertEqual(
+                {"2.02", "9.01"},
+                {r[0] for r in store.connection.execute(
+                    "SELECT item_code FROM filing_items")},
+            )
+        finally:
+            store.close()
 
 
 # --------------------------------------------------------------------------
