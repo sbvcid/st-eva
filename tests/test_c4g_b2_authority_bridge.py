@@ -1,28 +1,30 @@
 """ST-EVA Phase 3C-C4G — B2 Taxonomy Authority Bridge Integration Tests.
 
-Validates the corrected Phase 3C-C4G candidate implementation under the frozen
+Validates the corrected Phase 3C-C4G implementation under the frozen
 Amendment 7 / C4I Evidence Sufficiency Matrix contract:
 - Claim C3: Company Concept API taxonomy token == catalog Prefix -> NOT PROVEN
 - Claim C7: Observation <-> filing occurrence taxonomy equivalence -> NOT PROVEN
 - Claim C9: Historical authority validity -> UNAVAILABLE / UNPROVEN
 - Claim C10: Exact source document assertion -> UNAVAILABLE for production C4G
 - Lexical equality != vocabulary equivalence != semantic taxonomy equivalence
-- Direct taxonomy equality shortcut (occurrence.taxonomy == observation.taxonomy) is prohibited
+- Direct taxonomy equality bypass (occurrence.taxonomy == observation.taxonomy) is prohibited
 - TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES
 - Diagnostic precedence: ordinary mismatch yields NO_OBSERVATION, not masked by taxonomy
-- Isolated test hook: explicit injected proof can be tested in an isolated harness,
-  strictly isolated from production.
+- Isolated test proof: strictly separated into test-only pure decision harness;
+  production Ingestor / linker does NOT accept synthetic proofs or authority_context.
 """
 
 from __future__ import annotations
 
+import ast
 import importlib.util
+import inspect
 import json
 import os
 import sqlite3
 import sys
 import unittest
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _PROJECT_ROOT not in sys.path:
@@ -39,6 +41,7 @@ from sec_xbrl_facts import (
     DOCUMENTS_AMBIGUOUS,
     MATCHED,
     NO_OBSERVATION,
+    OccurrenceMatch,
     TAXONOMY_AMBIGUOUS,
     TAXONOMY_UNPROVEN,
     contract_unit_of,
@@ -105,6 +108,72 @@ LEGACY_SINGLE = LEGACY_INSTANCE.replace(
     b'  <us-gaap:EarningsPerShareDiluted contextRef="D2012Q3_segment"'
     b' unitRef="u-usd-per-share" decimals="2">1.36'
     b"</us-gaap:EarningsPerShareDiluted>\n", b"")
+
+
+# ---------------------------------------------------------------------------
+# Pure decision harness (test-only, strictly isolated from production Ingestor)
+# ---------------------------------------------------------------------------
+
+def evaluate_taxonomy_equivalence_with_explicit_proof(
+    occurrence_taxonomy: Optional[str],
+    observation_taxonomy: Optional[str],
+    provider: Optional[str],
+    proof: Dict[str, Any],
+) -> Tuple[bool, str]:
+    """Test-only pure decision harness for evaluating explicit hypothetical taxonomy proof.
+
+    STRICTLY TEST-ONLY: Never imported by production Ingestor or sec_ingest.
+    """
+    if not occurrence_taxonomy or not observation_taxonomy or not provider:
+        return False, TAXONOMY_UNPROVEN
+    if proof.get("provider") and proof.get("provider") != provider:
+        return False, TAXONOMY_UNPROVEN
+
+    candidates = proof.get("logical_candidates", [])
+    if candidates:
+        matching = [
+            c for c in candidates
+            if c.get("provider") == provider
+            and c.get("standard_prefix") == observation_taxonomy
+            and c.get("namespace_uri") == occurrence_taxonomy
+        ]
+        if len(matching) == 1:
+            return True, MATCHED
+        if len(matching) > 1:
+            return False, TAXONOMY_AMBIGUOUS
+        return False, TAXONOMY_UNPROVEN
+
+    if proof.get("standard_prefix") == observation_taxonomy and proof.get("namespace_uri") == occurrence_taxonomy:
+        return True, MATCHED
+
+    return False, TAXONOMY_UNPROVEN
+
+
+def pure_decision_match_occurrence(
+    occurrence: Dict[str, Any],
+    observations: Sequence[Dict[str, Any]],
+    proof: Dict[str, Any],
+) -> OccurrenceMatch:
+    """Test-only pure decision matching helper using explicit hypothetical proof."""
+    ordinary_candidates = [
+        obs for obs in observations
+        if occurrence_matches_observation_ordinary(occurrence, obs)
+    ]
+    if not ordinary_candidates:
+        return OccurrenceMatch(occurrence["document_fact_id"], None, NO_OBSERVATION)
+    distinct_obs_ids = {obs["observation_id"] for obs in ordinary_candidates}
+    if len(distinct_obs_ids) != 1:
+        return OccurrenceMatch(occurrence["document_fact_id"], None, AMBIGUOUS_OBSERVATION)
+    matched_obs = ordinary_candidates[0]
+    tax_ok, tax_reason = evaluate_taxonomy_equivalence_with_explicit_proof(
+        occurrence.get("taxonomy"),
+        matched_obs.get("taxonomy"),
+        matched_obs.get("provider"),
+        proof=proof,
+    )
+    if tax_ok:
+        return OccurrenceMatch(occurrence["document_fact_id"], matched_obs["observation_id"], MATCHED)
+    return OccurrenceMatch(occurrence["document_fact_id"], None, tax_reason)
 
 
 class _NoFetchProvider:
@@ -264,10 +333,10 @@ class C4GBase(unittest.TestCase):
         }
         values.update(overrides)
 
-        fact_id = source_fact_id(
+        fact_id = overrides.get("source_fact_id") or source_fact_id(
             source_id=SEC_SOURCE, document_ref=ACCESSION, taxonomy="us-gaap",
             concept=values["concept"], period_start=values["period_start"],
-            period_end=values["period_end"], context=ACCESSION,
+            period_end=values["period_end"], context=ACCESSION + ":" + str(values["observation_id"]),
         )
         filing = FilingRef(
             source_fact_id=fact_id, accession=ACCESSION,
@@ -306,11 +375,9 @@ class C4GBase(unittest.TestCase):
             filing=filing,
         )
 
-    def link(self, authority_context: Optional[Any] = None) -> int:
+    def link(self) -> int:
         self.ingestor._acquire_document_fact_occurrences(self.asset_id, ACCESSION)
-        return self.ingestor._acquire_observation_fact_links(
-            self.asset_id, ACCESSION, authority_context=authority_context
-        )
+        return self.ingestor._acquire_observation_fact_links(self.asset_id, ACCESSION)
 
     def links(self) -> List[sqlite3.Row]:
         return self.connection.execute(
@@ -319,156 +386,360 @@ class C4GBase(unittest.TestCase):
 
 
 class TestC4GAuthorityBridge(C4GBase):
-    def test_01_direct_taxonomy_equality_returns_unproven(self):
-        """1. Direct taxonomy equality (prefix == prefix) yields TAXONOMY_UNPROVEN."""
-        # Evaluating 'us-gaap' == 'us-gaap' without representation proof must not return MATCHED
+    def test_uri_uri_equality_does_not_prove_taxonomy(self):
+        """1. URI/URI string equality does not prove C7 semantic equivalence."""
+        tax_uri = "http://fasb.org/us-gaap/2026"
         tax_ok, reason = evaluate_taxonomy_equivalence(
-            occurrence_taxonomy="us-gaap",
-            observation_taxonomy="us-gaap",
+            occurrence_taxonomy=tax_uri,
+            observation_taxonomy=tax_uri,
             provider=SEC_SOURCE,
         )
         self.assertFalse(tax_ok)
         self.assertEqual(TAXONOMY_UNPROVEN, reason)
 
-        # Ingestion with occurrence having prefix string 'us-gaap' must not bypass gate
-        payload = b"""<?xml version="1.0"?>
-<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance">
-  <xbrli:context id="c"><xbrli:entity><xbrli:identifier scheme="s">1</xbrli:identifier></xbrli:entity>
-  <xbrli:period><xbrli:startDate>2026-03-29</xbrli:startDate><xbrli:endDate>2026-06-27</xbrli:endDate></xbrli:period></xbrli:context>
-  <xbrli:unit id="u"><xbrli:measure>USD</xbrli:measure></xbrli:unit>
-</xbrli:xbrl>"""
+        # Prefix equality also fails
+        tax_ok_pfx, reason_pfx = evaluate_taxonomy_equivalence("us-gaap", "us-gaap", SEC_SOURCE)
+        self.assertFalse(tax_ok_pfx)
+        self.assertEqual(TAXONOMY_UNPROVEN, reason_pfx)
+
+        # Cross prefix/URI equality also fails
+        tax_ok_cross, reason_cross = evaluate_taxonomy_equivalence("us-gaap", tax_uri, SEC_SOURCE)
+        self.assertFalse(tax_ok_cross)
+        self.assertEqual(TAXONOMY_UNPROVEN, reason_cross)
+
+    def test_no_production_isolated_test_proof_parameter(self):
+        """2. Production control flow and signatures cannot accept synthetic proof / authority_context."""
+        # 1. evaluate_taxonomy_equivalence signature
+        sig_eval = inspect.signature(evaluate_taxonomy_equivalence)
+        params_eval = list(sig_eval.parameters.keys())
+        self.assertEqual(["occurrence_taxonomy", "observation_taxonomy", "provider"], params_eval)
+        with self.assertRaises(TypeError):
+            evaluate_taxonomy_equivalence("a", "b", "c", authority_context={})  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            evaluate_taxonomy_equivalence("a", "b", "c", isolated_test_proof=True)  # type: ignore[call-arg]
+
+        # 2. match_occurrence signature
+        sig_match = inspect.signature(match_occurrence)
+        params_match = list(sig_match.parameters.keys())
+        self.assertEqual(["occurrence", "observations"], params_match)
+        with self.assertRaises(TypeError):
+            match_occurrence({}, [], authority_context={})  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            match_occurrence({}, [], isolated_test_proof=True)  # type: ignore[call-arg]
+
+        # 3. Ingestor._acquire_observation_fact_links signature
+        sig_link = inspect.signature(Ingestor._acquire_observation_fact_links)
+        params_link = list(sig_link.parameters.keys())
+        self.assertEqual(["self", "asset_id", "accession"], params_link)
+        with self.assertRaises(TypeError):
+            self.ingestor._acquire_observation_fact_links(self.asset_id, ACCESSION, authority_context={})  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            self.ingestor._acquire_observation_fact_links(self.asset_id, ACCESSION, isolated_test_proof=True)  # type: ignore[call-arg]
+
+    def test_candidate_docs_are_fixed_before_taxonomy_adjudication(self):
+        """3. Candidate Discovery occurs and fixes candidate_docs before taxonomy evaluation."""
         self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        self.store_observation(
+        self.declare_and_capture(FILENAME_EXTRACTED_XML, EXTRACTED_XML, ordinal=7)
+
+        obs_id = self.store_observation(
+            observation_id="obs-c4g-fixed-cand",
             concept="us-gaap:Revenues", metric="revenue",
             value=39536000000.0, unit=Unit.CURRENCY.value,
             period_start="2026-03-29", period_end="2026-06-27",
             taxonomy="us-gaap",
         )
-        # Without injected proof, link must fail with TAXONOMY_UNPROVEN
+
+        self.ingestor._acquire_document_fact_occurrences(self.asset_id, ACCESSION)
+        occurrences = [
+            dict(r) for r in self.connection.execute(
+                "SELECT * FROM filing_document_fact_occurrences WHERE asset_id = ? AND accession = ?",
+                (self.asset_id, ACCESSION),
+            ).fetchall()
+        ]
+        obs_row = dict(self.connection.execute(
+            "SELECT * FROM observations WHERE observation_id = ?", (obs_id,)
+        ).fetchone())
+
+        for occ in occurrences:
+            occ["contract_unit"] = contract_unit_of(occ["unit_measures_json"])
+
+        # Pre-taxonomy candidate discovery solely by ordinary predicates
+        pre_tax_docs = {
+            (occ["asset_id"], occ["accession"], occ["filename"])
+            for occ in occurrences
+            if occurrence_matches_observation_ordinary(occ, obs_row)
+        }
+        self.assertEqual(2, len(pre_tax_docs))
+        expected_docs = {
+            (self.asset_id, ACCESSION, FILENAME_PRIMARY),
+            (self.asset_id, ACCESSION, FILENAME_EXTRACTED_XML),
+        }
+        self.assertEqual(expected_docs, pre_tax_docs)
+
+    def test_taxonomy_refusal_preserves_two_candidates(self):
+        """4. Taxonomy refusal must not shrink pre-taxonomy candidate documents (Case A & Case B)."""
+        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
+        self.declare_and_capture(FILENAME_EXTRACTED_XML, EXTRACTED_XML, ordinal=7)
+
+        self.store_observation(
+            observation_id="obs-c4g-two-cand",
+            concept="us-gaap:Revenues", metric="revenue",
+            value=39536000000.0, unit=Unit.CURRENCY.value,
+            period_start="2026-03-29", period_end="2026-06-27",
+            taxonomy="us-gaap",
+        )
+
+        # In production, both occurrences suffer taxonomy refusal
+        stored = self.link()
+        self.assertEqual(0, stored)
+        self.assertEqual(0, self.count("observation_filing_document_facts"))
+        self.assertEqual(0, self.count("observation_filing_documents"))
+
+        # Candidate documents must not shrink to 0 or 1. Exact source reports DOCUMENTS_AMBIGUOUS!
+        self.assertTrue(any(DOCUMENTS_AMBIGUOUS in err for err in self.provenance_errors))
+
+    def test_ambiguous_observation_preserves_candidate_provenance(self):
+        """5. AMBIGUOUS_OBSERVATION preserves candidate document provenance across all matching observations."""
+        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
+
+        self.store_observation(
+            observation_id="obs-c4g-amb-1",
+            concept="us-gaap:Revenues", metric="revenue",
+            value=39536000000.0, unit=Unit.CURRENCY.value,
+            period_start="2026-03-29", period_end="2026-06-27",
+            taxonomy="us-gaap",
+        )
+        self.store_observation(
+            observation_id="obs-c4g-amb-2",
+            concept="us-gaap:Revenues", metric="revenue",
+            value=39536000000.0, unit=Unit.CURRENCY.value,
+            period_start="2026-03-29", period_end="2026-06-27",
+            taxonomy="us-gaap",
+        )
+
+        stored = self.link()
+        # No links written for ambiguous observations
+        self.assertEqual(0, stored)
+        self.assertEqual(0, self.count("observation_filing_document_facts"))
+        self.assertEqual(0, self.count("observation_filing_documents"))
+
+        # AMBIGUOUS_OBSERVATION provenance error must be recorded
+        self.assertTrue(any(AMBIGUOUS_OBSERVATION in err for err in self.provenance_errors))
+
+    def test_ambiguous_observation_cannot_enable_exact_source(self):
+        """6. Ambiguous observation cannot enable exact-source assertion or single-source upgrade."""
+        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
+
+        self.store_observation(
+            observation_id="obs-c4g-no-up-1",
+            concept="us-gaap:Revenues", metric="revenue",
+            value=39536000000.0, unit=Unit.CURRENCY.value,
+            period_start="2026-03-29", period_end="2026-06-27",
+            taxonomy="us-gaap",
+        )
+        self.store_observation(
+            observation_id="obs-c4g-no-up-2",
+            concept="us-gaap:Revenues", metric="revenue",
+            value=39536000000.0, unit=Unit.CURRENCY.value,
+            period_start="2026-03-29", period_end="2026-06-27",
+            taxonomy="us-gaap",
+        )
+
+        self.link()
+        self.assertEqual(0, self.count("observation_filing_documents"))
+        exact_errs = [e for e in self.provenance_errors if "exact_source:" in e]
+        self.assertTrue(any(AMBIGUOUS_OBSERVATION in e for e in exact_errs))
+
+    def test_taxonomy_refusal_preserves_competing_context(self):
+        """7. Taxonomy refusal must not eliminate competing context (Case F)."""
+        # LEGACY_INSTANCE contains two contexts: D2012Q3 and D2012Q3_segment
+        self.declare_and_capture(FILENAME_EX101, LEGACY_INSTANCE)
+        self.store_observation(taxonomy="us-gaap")
+
+        stored = self.link()
+        self.assertEqual(0, stored)
+        self.assertEqual(0, self.count("observation_filing_document_facts"))
+        self.assertEqual(0, self.count("observation_filing_documents"))
+
+        # Context ambiguity must be preserved and reported, not masked by taxonomy
+        self.assertTrue(any(CONTEXT_AMBIGUOUS in err for err in self.provenance_errors))
+
+    def test_ordinary_mismatch_precedes_taxonomy_diagnosis(self):
+        """8. Ordinary mismatch precedes taxonomy adjudication (Stage B before Stage C)."""
+        # Period mismatch
+        occ_period = _occurrence_row(period_start="2026-03-29", period_end="2026-06-27")
+        obs_period = _observation_row(period_start="2026-06-28", period_end="2026-09-26")
+        out_p = match_occurrence(occ_period, [obs_period])
+        self.assertEqual(NO_OBSERVATION, out_p.reason)
+
+        # Value mismatch
+        occ_val = _occurrence_row(resolved_value=100.0)
+        obs_val = _observation_row(value_json=json.dumps(200.0))
+        out_v = match_occurrence(occ_val, [obs_val])
+        self.assertEqual(NO_OBSERVATION, out_v.reason)
+
+        # Unit mismatch
+        occ_u = _occurrence_row()
+        obs_u = _observation_row(unit=CURRENCY)
+        out_u = match_occurrence(occ_u, [obs_u])
+        self.assertEqual(NO_OBSERVATION, out_u.reason)
+
+        # Tag mismatch
+        occ_tag = _occurrence_row(tag="Revenues")
+        obs_tag = _observation_row(concept="us-gaap:NetIncomeLoss")
+        out_t = match_occurrence(occ_tag, [obs_tag])
+        self.assertEqual(NO_OBSERVATION, out_t.reason)
+
+    def test_provider_mismatch_is_ordinary_mismatch(self):
+        """9. Provider mismatch is an ordinary predicate mismatch yielding NO_OBSERVATION."""
+        occ = _occurrence_row(provider=SEC_SOURCE)
+        obs = _observation_row(provider="OtherProvider")
+        outcome = match_occurrence(occ, [obs])
+        self.assertEqual(NO_OBSERVATION, outcome.reason)
+
+    def test_accession_mismatch_is_ordinary_mismatch(self):
+        """10. Accession mismatch is an ordinary predicate mismatch yielding NO_OBSERVATION."""
+        occ = _occurrence_row(accession=ACCESSION)
+        obs = _observation_row(accession="0000320193-26-999999")
+        outcome = match_occurrence(occ, [obs])
+        self.assertEqual(NO_OBSERVATION, outcome.reason)
+
+    def test_current_catalog_does_not_prove_historical_validity(self):
+        """11. Current 2026 catalog does not prove 2012 historical validity (C9 UNAVAILABLE)."""
+        self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
+        self.record_authority(
+            standard_prefix="us-gaap",
+            taxonomy_family="US GAAP",
+            namespace_uri=USGAAP_2026,
+            taxonomy_version="2026",
+        )
+        self.store_observation(taxonomy="us-gaap")
         stored = self.link()
         self.assertEqual(0, stored)
         self.assertEqual(0, self.count("observation_filing_document_facts"))
         self.assertEqual(0, self.count("observation_filing_documents"))
         self.assertTrue(any(TAXONOMY_UNPROVEN in err for err in self.provenance_errors))
 
-    def test_02_two_ordinary_candidates_one_taxonomy_refusal_cardinality_remains_two(self):
-        """2. Two ordinary candidates + one taxonomy refusal -> candidate cardinality remains 2."""
-        # Primary document asserts diluted EPS with USGAAP_2026
+    def test_c7_unproven_blocks_production_fact_link(self):
+        """12. C7 UNPROVEN blocks writing observation_filing_document_facts in production."""
         self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        # Second document asserts diluted EPS with an unproven/unmapped URI
-        unmapped_payload = EXTRACTED_XML.replace(
-            b'xmlns:us-gaap="http://fasb.org/us-gaap/2026"',
-            b'xmlns:us-gaap="http://example.com/unmapped-gaap"',
-        )
-        self.declare_and_capture(FILENAME_EXTRACTED_XML, unmapped_payload, ordinal=7)
-
-        obs_id = self.store_observation(
+        self.store_observation(
+            observation_id="obs-c4g-c7-link",
             concept="us-gaap:Revenues", metric="revenue",
             value=39536000000.0, unit=Unit.CURRENCY.value,
             period_start="2026-03-29", period_end="2026-06-27",
             taxonomy="us-gaap",
         )
+        stored = self.link()
+        self.assertEqual(0, stored)
+        self.assertEqual(0, self.count("observation_filing_document_facts"))
+        self.assertTrue(any(TAXONOMY_UNPROVEN in err for err in self.provenance_errors))
 
-        # Isolated test harness with injected proof for USGAAP_2026 only
-        injected_context = {
-            "isolated_test_proof": True,
+    def test_c7_unproven_blocks_production_exact_source(self):
+        """13. C7 UNPROVEN blocks writing observation_filing_documents in production."""
+        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
+        self.store_observation(
+            observation_id="obs-c4g-c7-source",
+            concept="us-gaap:Revenues", metric="revenue",
+            value=39536000000.0, unit=Unit.CURRENCY.value,
+            period_start="2026-03-29", period_end="2026-06-27",
+            taxonomy="us-gaap",
+        )
+        stored = self.link()
+        self.assertEqual(0, self.count("observation_filing_documents"))
+        exact_errs = [e for e in self.provenance_errors if "exact_source:" in e]
+        self.assertTrue(any(TAXONOMY_UNPROVEN in e for e in exact_errs))
+
+    def test_repo_wide_architecture_regression_no_production_bypass(self):
+        """14. Architecture regression: no production caller or method accepts synthetic proof."""
+        forbidden_terms = {"isolated_test_proof", "authority_context"}
+        prod_files = [
+            os.path.join(_PROJECT_ROOT, "sec_xbrl_facts.py"),
+            os.path.join(_PROJECT_ROOT, "sec_ingest.py"),
+            os.path.join(_PROJECT_ROOT, "sqlite_archive.py"),
+        ]
+
+        for filepath in prod_files:
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+            tree = ast.parse(content, filename=filepath)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    arg_names = {a.arg for a in node.args.args + node.args.kwonlyargs}
+                    found = arg_names.intersection(forbidden_terms)
+                    self.assertFalse(
+                        found,
+                        f"Forbidden parameter {found} in {filepath} at {node.name}()",
+                    )
+
+    def test_pure_decision_harness_with_explicit_proof(self):
+        """15. Future proof testing: pure decision harness tests explicit proof without production bypass."""
+        # 1. Single candidate with explicit proof -> link succeeds, exact source succeeds
+        occ_1 = _occurrence_row(
+            document_fact_id="dfid_1",
+            filename=FILENAME_PRIMARY,
+            taxonomy=USGAAP_2026,
+            context_ref="ctx_single",
+        )
+        obs = _observation_row(
+            observation_id="obs_iso",
+            taxonomy="us-gaap",
+        )
+        proof = {
             "provider": SEC_SOURCE,
             "standard_prefix": "us-gaap",
             "namespace_uri": USGAAP_2026,
         }
 
-        stored = self.link(authority_context=injected_context)
-        # Primary document linked successfully
-        self.assertEqual(1, stored)
-        self.assertEqual(1, self.count("observation_filing_document_facts"))
-        # TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES:
-        # Pre-taxonomy candidate docs = {FILENAME_PRIMARY, FILENAME_EXTRACTED_XML} (cardinality 2).
-        # Even though Extracted XML suffered TAXONOMY_UNPROVEN, exact source MUST NOT be asserted!
-        self.assertEqual(0, self.count("observation_filing_documents"))
-        self.assertTrue(any(DOCUMENTS_AMBIGUOUS in err for err in self.provenance_errors))
+        match_1 = pure_decision_match_occurrence(occ_1, [obs], proof=proof)
+        self.assertEqual(MATCHED, match_1.reason)
+        self.assertEqual("obs_iso", match_1.observation_id)
 
-    def test_03_two_ordinary_candidates_both_taxonomy_refusal_cardinality_remains_two(self):
-        """3. Two ordinary candidate documents + both taxonomy refusal -> cardinality remains 2."""
-        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        self.declare_and_capture(FILENAME_EXTRACTED_XML, EXTRACTED_XML, ordinal=7)
-        self.store_observation(
-            concept="us-gaap:Revenues", metric="revenue",
-            value=39536000000.0, unit=Unit.CURRENCY.value,
-            period_start="2026-03-29", period_end="2026-06-27",
-            taxonomy="us-gaap",
+        doc, reason = exact_source_document(
+            linked=[occ_1],
+            candidate_docs=[(occ_1["asset_id"], occ_1["accession"], occ_1["filename"])],
+            candidate_occurrences=[occ_1],
         )
-        # Production case without injected proof: both fail taxonomy
-        stored = self.link()
-        self.assertEqual(0, stored)
-        self.assertEqual(0, self.count("observation_filing_document_facts"))
-        self.assertEqual(0, self.count("observation_filing_documents"))
-        self.assertTrue(any(DOCUMENTS_AMBIGUOUS in err for err in self.provenance_errors))
+        self.assertEqual((occ_1["asset_id"], occ_1["accession"], FILENAME_PRIMARY), doc)
+        self.assertIsNone(reason)
 
-    def test_04_one_ordinary_candidate_taxonomy_refusal_no_link_no_exact_source(self):
-        """4. One ordinary candidate + taxonomy refusal -> no link, no exact-source."""
-        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        self.store_observation(
-            concept="us-gaap:Revenues", metric="revenue",
-            value=39536000000.0, unit=Unit.CURRENCY.value,
-            period_start="2026-03-29", period_end="2026-06-27",
-            taxonomy="us-gaap",
+        # 2. Two candidates with explicit proof -> link succeeds for both, exact source BLOCKED
+        occ_2 = _occurrence_row(
+            document_fact_id="dfid_2",
+            filename=FILENAME_EXTRACTED_XML,
+            taxonomy=USGAAP_2026,
+            context_ref="ctx_single",
         )
-        stored = self.link()
-        self.assertEqual(0, stored)
-        self.assertEqual(0, self.count("observation_filing_document_facts"))
-        self.assertEqual(0, self.count("observation_filing_documents"))
-        self.assertTrue(any(TAXONOMY_UNPROVEN in err for err in self.provenance_errors))
-
-    def test_05_ordinary_mismatch_with_taxonomy_refusal_yields_no_observation(self):
-        """5. Ordinary period/value/unit mismatch + taxonomy refusal yields NO_OBSERVATION."""
-        # Case A: Period mismatch (Q2 vs Q3)
-        occ_period_mismatch = _occurrence_row(period_start="2026-03-29", period_end="2026-06-27")
-        obs_period = _observation_row(period_start="2026-06-28", period_end="2026-09-26")
-        outcome_a = match_occurrence(occ_period_mismatch, [obs_period])
-        self.assertEqual(NO_OBSERVATION, outcome_a.reason)
-        self.assertNotEqual(TAXONOMY_UNPROVEN, outcome_a.reason)
-
-        # Case B: Value mismatch (100 vs 200)
-        occ_val = _occurrence_row(resolved_value=100.0)
-        obs_val = _observation_row(value_json=json.dumps(200.0))
-        outcome_b = match_occurrence(occ_val, [obs_val])
-        self.assertEqual(NO_OBSERVATION, outcome_b.reason)
-        self.assertNotEqual(TAXONOMY_UNPROVEN, outcome_b.reason)
-
-        # Case C: Unit mismatch (per_share vs currency)
-        occ_unit = _occurrence_row()
-        obs_unit = _observation_row(unit=CURRENCY)
-        outcome_c = match_occurrence(occ_unit, [obs_unit])
-        self.assertEqual(NO_OBSERVATION, outcome_c.reason)
-        self.assertNotEqual(TAXONOMY_UNPROVEN, outcome_c.reason)
-
-        # Case D: Concept local tag mismatch
-        occ_tag = _occurrence_row(tag="Revenues")
-        obs_tag = _observation_row(concept="us-gaap:NetIncomeLoss")
-        outcome_d = match_occurrence(occ_tag, [obs_tag])
-        self.assertEqual(NO_OBSERVATION, outcome_d.reason)
-
-    def test_06_provider_isolation(self):
-        """6. Provider isolation strictly prevents cross-provider candidate matching."""
-        self.record_authority(
-            standard_prefix="us-gaap",
-            taxonomy_family="US GAAP",
-            namespace_uri=USGAAP_2026,
-            provider="OtherProvider",
+        cand_docs = [
+            (occ_1["asset_id"], occ_1["accession"], occ_1["filename"]),
+            (occ_2["asset_id"], occ_2["accession"], occ_2["filename"]),
+        ]
+        doc_2, reason_2 = exact_source_document(
+            linked=[occ_1, occ_2],
+            candidate_docs=cand_docs,
+            candidate_occurrences=[occ_1, occ_2],
         )
-        tax_ok, reason = evaluate_taxonomy_equivalence(
+        self.assertIsNone(doc_2)
+        self.assertEqual(DOCUMENTS_AMBIGUOUS, reason_2)
+
+    def test_provider_isolation_in_pure_decision_harness(self):
+        """16. Pure decision harness enforces provider isolation."""
+        proof = {
+            "provider": "OtherProvider",
+            "standard_prefix": "us-gaap",
+            "namespace_uri": USGAAP_2026,
+        }
+        tax_ok, reason = evaluate_taxonomy_equivalence_with_explicit_proof(
             occurrence_taxonomy=USGAAP_2026,
             observation_taxonomy="us-gaap",
             provider=SEC_SOURCE,
-            authority_context=find_authority_assertions_by_prefix(
-                self.store, "OtherProvider", "us-gaap"
-            ),
+            proof=proof,
         )
         self.assertFalse(tax_ok)
         self.assertEqual(TAXONOMY_UNPROVEN, reason)
 
-    def test_07_multiple_authority_documents_and_versions_preserve_c4f_semantics(self):
-        """7. Multiple authority documents and versions corroborate; different families yield TAXONOMY_AMBIGUOUS."""
+    def test_multiple_authority_documents_and_versions_preserve_c4f_semantics(self):
+        """17. Multiple authority documents corroborate; different families yield TAXONOMY_AMBIGUOUS in decision harness."""
         self.record_authority(
             standard_prefix="us-gaap", taxonomy_family="US GAAP",
             namespace_uri=USGAAP_2026, taxonomy_version="2025",
@@ -486,7 +757,7 @@ class TestC4GAuthorityBridge(C4GBase):
         self.assertEqual(2, len(cand["supporting_document_ids"]))
         self.assertEqual(["2025", "2026"], cand["taxonomy_versions"])
 
-        # Multiple families sharing prefix and namespace yield TAXONOMY_AMBIGUOUS in isolated harness
+        # Multiple families sharing prefix and namespace yield TAXONOMY_AMBIGUOUS in pure decision harness
         shared_ns = "http://example.com/shared-ns"
         self.record_authority(
             standard_prefix="amb-pfx", taxonomy_family="FAMILY_A",
@@ -500,162 +771,14 @@ class TestC4GAuthorityBridge(C4GBase):
         )
         res_amb = find_authority_assertions_by_prefix(self.store, SEC_SOURCE, "amb-pfx")
         self.assertEqual(2, res_amb["candidate_count"])
-        res_amb["isolated_test_proof"] = True
-        tax_ok, reason = evaluate_taxonomy_equivalence(
+        tax_ok, reason = evaluate_taxonomy_equivalence_with_explicit_proof(
             occurrence_taxonomy=shared_ns,
             observation_taxonomy="amb-pfx",
             provider=SEC_SOURCE,
-            authority_context=res_amb,
+            proof=res_amb,
         )
         self.assertFalse(tax_ok)
         self.assertEqual(TAXONOMY_AMBIGUOUS, reason)
-
-    def test_08_historical_filing_vs_current_catalog_unproven(self):
-        """8. Historical 2012 filing vs 2026 authority catalog -> historical validity remains unproven."""
-        self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
-        self.record_authority(
-            standard_prefix="us-gaap",
-            taxonomy_family="US GAAP",
-            namespace_uri=USGAAP_2026,
-            taxonomy_version="2026",
-        )
-        # 2012 filing cannot be back-validated by 2026 catalog
-        self.store_observation(taxonomy="us-gaap")
-        stored = self.link()
-        self.assertEqual(0, stored)
-        self.assertEqual(0, self.count("observation_filing_document_facts"))
-        self.assertEqual(0, self.count("observation_filing_documents"))
-
-    def test_09_isolated_harness_injected_proof_one_candidate_succeeds(self):
-        """9. Isolated harness with explicit injected taxonomy proof + one candidate -> link + exact-source succeed."""
-        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        obs_id = self.store_observation(
-            observation_id="obs-c4g-iso-1",
-            concept="us-gaap:Revenues", metric="revenue",
-            value=39536000000.0, unit=Unit.CURRENCY.value,
-            period_start="2026-03-29", period_end="2026-06-27",
-            taxonomy="us-gaap",
-        )
-        injected_context = {
-            "isolated_test_proof": True,
-            "provider": SEC_SOURCE,
-            "standard_prefix": "us-gaap",
-            "namespace_uri": USGAAP_2026,
-        }
-        stored = self.link(authority_context=injected_context)
-        self.assertEqual(1, stored)
-        self.assertEqual(1, self.count("observation_filing_document_facts"))
-        self.assertEqual(1, self.count("observation_filing_documents"))
-        doc_row = self.connection.execute(
-            "SELECT filename, accession FROM observation_filing_documents WHERE observation_id = ?",
-            (obs_id,),
-        ).fetchone()
-        self.assertEqual(FILENAME_PRIMARY, doc_row["filename"])
-        self.assertEqual(ACCESSION, doc_row["accession"])
-
-    def test_10_isolated_harness_injected_proof_two_candidates_exact_source_blocked(self):
-        """10. Isolated harness with explicit injected proof + two candidates -> exact-source remains blocked."""
-        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        self.declare_and_capture(FILENAME_EXTRACTED_XML, EXTRACTED_XML, ordinal=7)
-        obs_id = self.store_observation(
-            observation_id="obs-c4g-iso-2",
-            concept="us-gaap:Revenues", metric="revenue",
-            value=39536000000.0, unit=Unit.CURRENCY.value,
-            period_start="2026-03-29", period_end="2026-06-27",
-            taxonomy="us-gaap",
-        )
-        injected_context = {
-            "isolated_test_proof": True,
-            "provider": SEC_SOURCE,
-            "standard_prefix": "us-gaap",
-            "namespace_uri": USGAAP_2026,
-        }
-        stored = self.link(authority_context=injected_context)
-        # Both documents linked
-        self.assertEqual(2, stored)
-        self.assertEqual(2, self.count("observation_filing_document_facts"))
-        # Exact source document remains BLOCKED due to cardinality 2
-        self.assertEqual(0, self.count("observation_filing_documents"))
-        self.assertTrue(any(DOCUMENTS_AMBIGUOUS in err for err in self.provenance_errors))
-
-    def test_11_taxonomy_refusal_must_not_shrink_candidate_docs(self):
-        """11. Regression: TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES.
-
-        Directly verifies that before-taxonomy candidate document cardinality is 2,
-        and after-taxonomy refusal of candidate 2, candidate document cardinality
-        remains 2 (exact source is blocked).
-        """
-        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        unmapped_payload = EXTRACTED_XML.replace(
-            b'xmlns:us-gaap="http://fasb.org/us-gaap/2026"',
-            b'xmlns:us-gaap="http://example.com/unmapped-diff"',
-        )
-        self.declare_and_capture(FILENAME_EXTRACTED_XML, unmapped_payload, ordinal=7)
-
-        obs_id = self.store_observation(
-            observation_id="obs-c4g-card-shrink",
-            concept="us-gaap:Revenues", metric="revenue",
-            value=39536000000.0, unit=Unit.CURRENCY.value,
-            period_start="2026-03-29", period_end="2026-06-27",
-            taxonomy="us-gaap",
-        )
-
-        # 1. Inspect occurrences directly from database:
-        # Both occurrences match all ordinary predicates
-        self.ingestor._acquire_document_fact_occurrences(self.asset_id, ACCESSION)
-        occurrences = [
-            dict(r) for r in self.connection.execute(
-                "SELECT * FROM filing_document_fact_occurrences WHERE asset_id = ? AND accession = ?",
-                (self.asset_id, ACCESSION),
-            ).fetchall()
-        ]
-        obs_row = dict(self.connection.execute(
-            "SELECT * FROM observations WHERE observation_id = ?", (obs_id,)
-        ).fetchone())
-
-        for occ in occurrences:
-            occ["contract_unit"] = contract_unit_of(occ["unit_measures_json"])
-
-        pre_tax_docs = {
-            (occ["asset_id"], occ["accession"], occ["filename"])
-            for occ in occurrences
-            if occurrence_matches_observation_ordinary(occ, obs_row)
-        }
-        # Verify: before taxonomy evaluation, exactly 2 candidate documents exist
-        self.assertEqual(2, len(pre_tax_docs))
-
-        # 2. Run linking with injected proof for Primary document only:
-        injected_context = {
-            "isolated_test_proof": True,
-            "provider": SEC_SOURCE,
-            "standard_prefix": "us-gaap",
-            "namespace_uri": USGAAP_2026,
-        }
-        self.ingestor._acquire_observation_fact_links(
-            self.asset_id, ACCESSION, authority_context=injected_context
-        )
-
-        # 3. Verify: candidate document cardinality remained 2 and was not shrunk to 1!
-        self.assertEqual(1, self.count("observation_filing_document_facts"))
-        self.assertEqual(0, self.count("observation_filing_documents"))
-        self.assertTrue(any(DOCUMENTS_AMBIGUOUS in err for err in self.provenance_errors))
-
-    def test_12_production_invariant_c7_not_proven_blocks_links_and_exact_source(self):
-        """12. Production invariant: under normal SEC concept route, C7 NOT PROVEN blocks links and exact source."""
-        self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
-        self.store_observation(
-            observation_id="obs-c4g-prod-inv",
-            concept="us-gaap:Revenues", metric="revenue",
-            value=39536000000.0, unit=Unit.CURRENCY.value,
-            period_start="2026-03-29", period_end="2026-06-27",
-            taxonomy="us-gaap",
-        )
-        # Production execution (no authority_context passed)
-        stored = self.link()
-        self.assertEqual(0, stored)
-        self.assertEqual(0, self.count("observation_filing_document_facts"))
-        self.assertEqual(0, self.count("observation_filing_documents"))
-        self.assertTrue(any(TAXONOMY_UNPROVEN in err for err in self.provenance_errors))
 
 
 if __name__ == "__main__":

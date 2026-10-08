@@ -99,6 +99,7 @@ from sec_xbrl_facts import (
     UNIT_UNRESOLVED,
     XbrlParseError,
     contract_unit_of,
+    evaluate_taxonomy_equivalence,
     exact_source_document,
     match_occurrence,
     occurrence_matches_observation_ordinary,
@@ -2222,7 +2223,6 @@ class Ingestor:
         self,
         asset_id: str,
         accession: str,
-        authority_context: Optional[Any] = None,
     ) -> int:
         """
         Link Observations this archive already holds to the document facts it read.
@@ -2235,7 +2235,7 @@ class Ingestor:
         The matching is five exact comparisons (filing scope, concept local name,
         resolved period, resolved unit, exact value) -- no tolerance, no
         proximity, no filename, no document type, no primary-document status and
-        no accession on its own. See `sec_xbrl_facts.occurrence_matches_observation`.
+        no accession on its own. See `sec_xbrl_facts.occurrence_matches_observation_ordinary`.
 
         Every linked occurrence is recorded, so two documents asserting one fact
         produce two links. The exact-source assertion is a separate decision, made
@@ -2272,16 +2272,27 @@ class Ingestor:
             )
         ]
 
-        # Stage A: Pre-Taxonomy Candidate Discovery & Candidate Document Tracking
+        # Stage A: Pre-Taxonomy Candidate Discovery & Candidate Tracking
+        # Formed strictly BEFORE and INDEPENDENT OF taxonomy adjudication.
         pre_taxonomy_candidates: Dict[str, List[Dict[str, Any]]] = {
             str(obs["observation_id"]): [] for obs in observations
         }
         candidate_docs: Dict[str, set] = {
             str(obs["observation_id"]): set() for obs in observations
         }
+        obs_has_ambiguity: Dict[str, bool] = {
+            str(obs["observation_id"]): False for obs in observations
+        }
+        candidate_contexts: Dict[str, set] = {
+            str(obs["observation_id"]): set() for obs in observations
+        }
 
-        matched_links: Dict[str, List[Dict[str, Any]]] = {}
-        taxonomies: Dict[str, set] = {}
+        matched_links: Dict[str, List[Dict[str, Any]]] = {
+            str(obs["observation_id"]): [] for obs in observations
+        }
+        taxonomies: Dict[str, set] = {
+            str(obs["observation_id"]): set() for obs in observations
+        }
 
         for occurrence in occurrences:
             contract_unit = contract_unit_of(occurrence["unit_measures_json"])
@@ -2294,50 +2305,76 @@ class Ingestor:
                 )
                 continue
 
-            outcome = match_occurrence(occurrence, observations, authority_context=authority_context)
-            if outcome.reason == MATCHED:
-                obs_id = str(outcome.observation_id)
-                pre_taxonomy_candidates[obs_id].append(occurrence)
-                candidate_docs[obs_id].add(
-                    (occurrence["asset_id"], occurrence["accession"], occurrence["filename"])
-                )
-                matched_links.setdefault(obs_id, []).append(occurrence)
-                taxonomies.setdefault(obs_id, set()).add(occurrence["taxonomy"])
-            elif outcome.reason in (TAXONOMY_UNPROVEN, TAXONOMY_AMBIGUOUS):
+            ordinary_matches = [
+                obs for obs in observations
+                if occurrence_matches_observation_ordinary(occurrence, obs)
+            ]
+
+            if not ordinary_matches:
                 self._record_provenance_failure(
                     f"fact_link:{accession}:{occurrence['document_fact_id']}:"
-                    f"{outcome.reason}",
-                    XbrlParseError(outcome.reason),
+                    f"{NO_OBSERVATION}",
+                    XbrlParseError(NO_OBSERVATION),
                 )
-                # Stage A: Find which observation had ordinary match to add to candidate_docs.
-                # TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES
-                ordinary_matches = [
-                    obs for obs in observations
-                    if occurrence_matches_observation_ordinary(occurrence, obs)
-                ]
-                if len(ordinary_matches) == 1:
-                    obs_id = str(ordinary_matches[0]["observation_id"])
+                continue
+
+            doc_key = (occurrence["asset_id"], occurrence["accession"], occurrence["filename"])
+
+            if len(ordinary_matches) > 1:
+                # AMBIGUOUS_OBSERVATION:
+                # Must preserve ordinary candidate provenance for all matching observations,
+                # but must NOT create fact links or allow exact source assertion.
+                self._record_provenance_failure(
+                    f"fact_link:{accession}:{occurrence['document_fact_id']}:"
+                    f"{AMBIGUOUS_OBSERVATION}",
+                    XbrlParseError(AMBIGUOUS_OBSERVATION),
+                )
+                for obs in ordinary_matches:
+                    obs_id = str(obs["observation_id"])
                     pre_taxonomy_candidates[obs_id].append(occurrence)
-                    candidate_docs[obs_id].add(
-                        (occurrence["asset_id"], occurrence["accession"], occurrence["filename"])
-                    )
+                    candidate_docs[obs_id].add(doc_key)
+                    if occurrence.get("context_ref"):
+                        candidate_contexts[obs_id].add(occurrence["context_ref"])
+                    obs_has_ambiguity[obs_id] = True
+                continue
+
+            # Exactly 1 ordinary matching observation:
+            matched_obs = ordinary_matches[0]
+            obs_id = str(matched_obs["observation_id"])
+            pre_taxonomy_candidates[obs_id].append(occurrence)
+            candidate_docs[obs_id].add(doc_key)
+            if occurrence.get("context_ref"):
+                candidate_contexts[obs_id].add(occurrence["context_ref"])
+
+            # Stage C: Taxonomy Adjudication
+            tax_ok, tax_reason = evaluate_taxonomy_equivalence(
+                occurrence.get("taxonomy"),
+                matched_obs.get("taxonomy"),
+                matched_obs.get("provider"),
+            )
+            if tax_ok:
+                matched_links[obs_id].append(occurrence)
+                taxonomies[obs_id].add(occurrence["taxonomy"])
             else:
                 self._record_provenance_failure(
                     f"fact_link:{accession}:{occurrence['document_fact_id']}:"
-                    f"{outcome.reason}",
-                    XbrlParseError(outcome.reason),
+                    f"{tax_reason}",
+                    XbrlParseError(tax_reason),
                 )
-                continue
 
         stored = 0
         for obs in observations:
             obs_id = str(obs["observation_id"])
-            linked = matched_links.get(obs_id, [])
+            candidates = pre_taxonomy_candidates[obs_id]
             raw_docs = candidate_docs[obs_id]
+            linked = matched_links[obs_id]
+            has_amb = obs_has_ambiguity[obs_id]
 
             # Stage D: Observation-Fact Linking
+            # Only when: ordinary candidate is not ambiguous, context is unique across
+            # full ordinary candidate set, and taxonomy is proven.
             if linked:
-                if len({row["context_ref"] for row in linked}) != 1:
+                if len(candidate_contexts[obs_id]) > 1:
                     self._record_provenance_failure(
                         f"fact_link:{accession}:{obs_id}:{CONTEXT_AMBIGUOUS}",
                         XbrlParseError(CONTEXT_AMBIGUOUS),
@@ -2357,7 +2394,12 @@ class Ingestor:
 
             # Stage E: Exact Source Document Assertion
             self._assert_exact_source_document(
-                obs_id, accession, linked=linked, candidate_docs=raw_docs
+                obs_id,
+                accession,
+                linked=linked,
+                candidate_docs=raw_docs,
+                candidate_occurrences=candidates,
+                has_unresolved_ambiguity=has_amb,
             )
         return stored
 
@@ -2367,6 +2409,8 @@ class Ingestor:
         accession: str,
         linked: List[Dict[str, Any]],
         candidate_docs: Optional[set] = None,
+        candidate_occurrences: Optional[List[Dict[str, Any]]] = None,
+        has_unresolved_ambiguity: bool = False,
     ) -> None:
         """
         Assert the exact source document only when its own rule permits it.
@@ -2381,7 +2425,12 @@ class Ingestor:
                 (row["asset_id"], row["accession"], row["filename"]) for row in linked
             }
 
-        document, reason = exact_source_document(linked, candidate_docs=candidate_docs)
+        document, reason = exact_source_document(
+            linked,
+            candidate_docs=candidate_docs,
+            candidate_occurrences=candidate_occurrences,
+            has_unresolved_ambiguity=has_unresolved_ambiguity,
+        )
         if document is None:
             self._record_provenance_failure(
                 f"exact_source:{accession}:{observation_id}:{reason}",

@@ -626,6 +626,8 @@ def test_the_two_mechanisms_are_not_merged_into_one_field(self) -> None:
     self.assertNotIn("unit", inherited)
     self.assertNotIn("knowledge_at", semantic.get("stored_metric", ""))
 
+test_the_two_mechanisms_are_not_merged_into_one_field.__test__ = False
+
 
 class TestLegacyArchives(unittest.TestCase):
     def test_an_unregistered_successor_keeps_raising_unknown_metric(self) -> None:

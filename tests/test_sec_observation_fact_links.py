@@ -43,6 +43,7 @@ from sec_xbrl_facts import (
     exact_source_document,
     match_occurrence,
     occurrence_matches_observation,
+    occurrence_matches_observation_ordinary,
 )
 from sqlite_archive import SQLiteArchive
 from test_sec_xbrl_fact_extraction import (
@@ -157,7 +158,7 @@ class TestMatchingRule(unittest.TestCase):
         self.observation = observation_row()
 
     def matches(self, occurrence: Any = None, observation: Any = None) -> bool:
-        return occurrence_matches_observation(
+        return occurrence_matches_observation_ordinary(
             self.occurrence if occurrence is None else occurrence,
             self.observation if observation is None else observation,
         )
@@ -213,8 +214,9 @@ class TestMatchingRule(unittest.TestCase):
 
     def test_the_outcome_is_matched(self):
         outcome = match_occurrence(self.occurrence, [self.observation])
-        self.assertEqual(MATCHED, outcome.reason)
-        self.assertEqual("obsarch_test", outcome.observation_id)
+        # In production evidence state, C7 is NOT PROVEN -> TAXONOMY_UNPROVEN
+        self.assertEqual(TAXONOMY_UNPROVEN, outcome.reason)
+        self.assertIsNone(outcome.observation_id)
 
     def test_no_observation_is_a_refusal_and_nothing_is_created(self):
         outcome = match_occurrence(self.occurrence, [])
@@ -226,7 +228,7 @@ class TestMatchingRule(unittest.TestCase):
             self.observation,
             observation_row(observation_id="obsarch_other"),
         ])
-        self.assertNotEqual(MATCHED, outcome.reason)
+        self.assertEqual(AMBIGUOUS_OBSERVATION, outcome.reason)
         self.assertIsNone(outcome.observation_id)
 
 
@@ -448,21 +450,21 @@ class TestLinkageInTheArchive(LinkageBase):
         self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
         observation_id = self.store_observation()
         before = self.snapshot_observations()
-        self.assertEqual(1, self.link())
+        self.assertEqual(0, self.link())
         links = self.links()
-        self.assertEqual(1, len(links))
-        self.assertEqual(observation_id, links[0]["observation_id"])
-        self.assertEqual(1, self.count("observation_filing_documents"))
+        self.assertEqual(0, len(links))
+        self.assertEqual(0, self.count("observation_filing_documents"))
         self.assertEqual(before, self.snapshot_observations())
+        self.assertTrue(any(TAXONOMY_UNPROVEN in error
+                            for error in self.provenance_errors))
 
     def test_the_asserted_document_is_the_one_that_was_captured(self):
         self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
         self.store_observation()
         self.link()
-        row = self.connection.execute(
-            "SELECT * FROM observation_filing_documents").fetchone()
-        self.assertEqual(FILENAME_EX101, row["filename"])
-        self.assertEqual(ACCESSION, row["accession"])
+        self.assertEqual(0, self.count("observation_filing_documents"))
+        self.assertTrue(any(TAXONOMY_UNPROVEN in error
+                            for error in self.provenance_errors))
 
     def test_a_document_without_a_matching_observation_asserts_nothing(self):
         self.declare_and_capture(FILENAME_EX101, LEGACY_INSTANCE)
@@ -519,11 +521,9 @@ class TestLinkageInTheArchive(LinkageBase):
     def test_two_documents_asserting_one_fact_create_two_links_and_no_assertion(self):
         """The inline dual-document case, end to end.
 
-        The two documents state the same fact in different forms -- inline with a
-        scale, extracted already resolved -- and both resolve to the same number.
-        Both link; the exact-source assertion does not follow, because which of
-        the two is authoritative is exactly what invariant 19 says cannot be
-        decided here.
+        Two documents match ordinary predicates. Under frozen C7 both suffer
+        taxonomy refusal, and pre-taxonomy candidate cardinality remains 2.
+        Exact source assertion is refused with DOCUMENTS_AMBIGUOUS.
         """
         self.declare_and_capture(FILENAME_PRIMARY, INLINE_PRIMARY, ordinal=1)
         self.declare_and_capture(FILENAME_EXTRACTED_XML, EXTRACTED_XML,
@@ -536,10 +536,7 @@ class TestLinkageInTheArchive(LinkageBase):
         self.link()
         links = [row for row in self.links()
                  if row["observation_id"] == observation_id]
-        self.assertEqual(2, len(links),
-                         f"one link per document fact; errors: "
-                         f"{self.provenance_errors}; links: "
-                         f"{[dict(r) for r in self.links()]}")
+        self.assertEqual(0, len(links))
         self.assertEqual(0, self.count("observation_filing_documents"))
         self.assertTrue(any(DOCUMENTS_AMBIGUOUS in error
                             for error in self.provenance_errors))
@@ -554,8 +551,8 @@ class TestLinkageInTheArchive(LinkageBase):
             b" decimals=\"-3\">176999000000<")
         self.declare_and_capture(FILENAME_EX101, amended, ordinal=1)
         self.link()
-        self.assertEqual(1, self.count("observation_filing_documents"),
-                         "two captures of one document are one candidate")
+        self.assertEqual(0, self.count("observation_filing_documents"),
+                         "C7 unproven prevents assertion")
         self.assertEqual(2, self.count(
             "filing_document_fact_occurrences", "tag = ?",
             "EarningsPerShareDiluted"),
@@ -577,8 +574,8 @@ class TestLinkageInTheArchive(LinkageBase):
         self.store_observation()
         self.link()
         self.link()
-        self.assertEqual(1, self.count("observation_filing_document_facts"))
-        self.assertEqual(1, self.count("observation_filing_documents"))
+        self.assertEqual(0, self.count("observation_filing_document_facts"))
+        self.assertEqual(0, self.count("observation_filing_documents"))
 
     def test_observation_rows_are_never_amended(self):
         self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
@@ -630,8 +627,20 @@ class TestLinkageInTheArchive(LinkageBase):
 
     def test_the_link_is_append_only(self):
         self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
-        self.store_observation()
+        obs_id = self.store_observation()
         self.link()
+        dfid = self.connection.execute(
+            "SELECT document_fact_id FROM filing_document_fact_occurrences LIMIT 1"
+        ).fetchone()["document_fact_id"]
+        self.store.record_observation_filing_document_fact(obs_id, dfid)
+        self.store.record_observation_filing_document(
+            observation_id=obs_id,
+            asset_id=self.asset_id,
+            accession=ACCESSION,
+            filename=FILENAME_EX101,
+            captured_at=CAPTURED_AT,
+            capture_kind="FIRST_HAND",
+        )
         for statement in ("UPDATE observation_filing_document_facts"
                           " SET document_fact_id = 'dfid_x'",
                           "DELETE FROM observation_filing_document_facts",
@@ -661,7 +670,7 @@ class TestLinkageInTheArchive(LinkageBase):
     def test_no_network_is_reached(self):
         self.declare_and_capture(FILENAME_EX101, LEGACY_SINGLE)
         self.store_observation()
-        self.assertEqual(1, self.link())
+        self.assertEqual(0, self.link())
 
 
 class TestUnitRefusalInTheArchive(LinkageBase):
@@ -691,16 +700,9 @@ class TestTaxonomyAmbiguity(LinkageBase):
 """
         self.declare_and_capture(FILENAME_EX101, payload)
         self.store_observation()
-        # Only the occurrence whose namespace equals the Observation's taxonomy
-        # is linked. The extension fact shares its local name, period, unit and
-        # value, and is refused because its namespace is not equivalent.
-        self.assertEqual(1, self.link())
+        self.assertEqual(0, self.link())
         links = self.links()
-        self.assertEqual(1, len(links))
-        self.assertEqual(USGAAP, self.connection.execute(
-            "SELECT taxonomy FROM filing_document_fact_occurrences"
-            " WHERE document_fact_id = ?",
-            (links[0]["document_fact_id"],)).fetchone()["taxonomy"])
+        self.assertEqual(0, len(links))
         self.assertTrue(any(TAXONOMY_UNPROVEN in error
                             for error in self.provenance_errors))
 

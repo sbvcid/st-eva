@@ -1256,7 +1256,6 @@ def occurrence_matches_observation_ordinary(
 def occurrence_matches_observation(
     occurrence: Dict[str, Any],
     observation: Dict[str, Any],
-    authority_context: Optional[Any] = None,
 ) -> bool:
     """
     Whether one occurrence and one Observation describe the same fact.
@@ -1270,38 +1269,14 @@ def occurrence_matches_observation(
         occurrence.get("taxonomy"),
         observation.get("taxonomy"),
         observation.get("provider"),
-        authority_context,
     )
     return tax_ok
-
-
-def _extract_authority_evidence(
-    authority_context: Optional[Any],
-    provider: str,
-    prefix: str,
-) -> Optional[Dict[str, Any]]:
-    """Extract C4F authority query result from authority_context without running DB queries."""
-    if authority_context is None:
-        return None
-    if callable(authority_context):
-        return authority_context(provider, prefix)
-    if isinstance(authority_context, dict):
-        if (provider, prefix) in authority_context:
-            return authority_context[(provider, prefix)]
-        if prefix in authority_context:
-            return authority_context[prefix]
-        if authority_context.get("standard_prefix") == prefix and authority_context.get("provider") == provider:
-            return authority_context
-        if authority_context.get("standard_prefix") == prefix:
-            return authority_context
-    return None
 
 
 def evaluate_taxonomy_equivalence(
     occurrence_taxonomy: Optional[str],
     observation_taxonomy: Optional[str],
     provider: Optional[str],
-    authority_context: Optional[Any] = None,
 ) -> Tuple[bool, str]:
     """
     Evaluate whether occurrence taxonomy and observation taxonomy describe the same concept taxonomy.
@@ -1311,78 +1286,20 @@ def evaluate_taxonomy_equivalence(
     - Claim C7 (Observation <-> Filing Occurrence representation equivalence): NOT PROVEN.
     - Lexical equality != vocabulary equivalence != semantic taxonomy equivalence.
     - Direct equality bypass (occurrence.taxonomy == observation.taxonomy) is STRICTLY PROHIBITED
-      unless identical representation semantics have independently been established (e.g. both URIs).
+      across prefix/prefix, URI/URI, prefix/URI, or normalized strings.
     - In production evidence state, C3/C7 NOT PROVEN -> TAXONOMY_UNPROVEN.
-
-    Isolated test hook:
-    Dependency injection via authority_context is permitted ONLY in isolated test harnesses
-    to simulate an explicitly proven taxonomy equivalence (e.g., mock proof / callable hook).
-    The production path remains strictly isolated from any such proof.
     """
     if not occurrence_taxonomy or not observation_taxonomy or not provider:
         return False, TAXONOMY_UNPROVEN
 
-    # Direct equality check:
-    # Under Amendment 7 §6, raw string equality between prefix tokens (or prefix vs URI)
-    # does NOT prove semantic equivalence.
-    # Only when both values are namespace URIs whose identical representation semantics
-    # have independently been established (e.g., test fixtures where both sides use URIs)
-    # can direct equality hold.
-    is_uri = lambda s: bool(s and (s.startswith("http://") or s.startswith("https://") or s.startswith("urn:")))
-    if occurrence_taxonomy == observation_taxonomy and is_uri(occurrence_taxonomy) and is_uri(observation_taxonomy):
-        return True, MATCHED
-
-    # Isolated test hook / dependency injection
-    if authority_context is not None:
-        if callable(authority_context):
-            res = authority_context(provider, observation_taxonomy, occurrence_taxonomy)
-            if isinstance(res, tuple):
-                return res
-            if isinstance(res, bool):
-                return (True, MATCHED) if res else (False, TAXONOMY_UNPROVEN)
-            if isinstance(res, dict):
-                authority_context = res
-
-        if isinstance(authority_context, dict):
-            # Provider isolation check
-            ctx_provider = authority_context.get("provider")
-            if ctx_provider and ctx_provider != provider:
-                return False, TAXONOMY_UNPROVEN
-
-            # Explicit injected proof for isolated test harnesses (T09, T10, etc.)
-            injected_proof = authority_context.get("isolated_test_proof") or authority_context.get("injected_proof")
-            if injected_proof:
-                candidates = authority_context.get("logical_candidates", [])
-                if candidates:
-                    matching = [
-                        c for c in candidates
-                        if c.get("provider") == provider
-                        and c.get("standard_prefix") == observation_taxonomy
-                        and c.get("namespace_uri") == occurrence_taxonomy
-                    ]
-                    if len(matching) == 0:
-                        return False, TAXONOMY_UNPROVEN
-                    if len(matching) == 1:
-                        return True, MATCHED
-                    return False, TAXONOMY_AMBIGUOUS
-
-                target_ns = authority_context.get("namespace_uri")
-                if target_ns:
-                    if occurrence_taxonomy == target_ns:
-                        return True, MATCHED
-                    return False, TAXONOMY_UNPROVEN
-
-                return True, MATCHED
-
     # In production evidence state, C3 and C7 are NOT PROVEN.
-    # Standard catalog rows or queries cannot bridge without an E4 contract.
+    # Production taxonomy adjudication must remain TAXONOMY_UNPROVEN.
     return False, TAXONOMY_UNPROVEN
 
 
 def match_occurrence(
     occurrence: Dict[str, Any],
     observations: Sequence[Dict[str, Any]],
-    authority_context: Optional[Any] = None,
 ) -> OccurrenceMatch:
     """
     Resolve one occurrence against the Observations the archive already holds.
@@ -1418,7 +1335,6 @@ def match_occurrence(
         occurrence.get("taxonomy"),
         matched_obs.get("taxonomy"),
         matched_obs.get("provider"),
-        authority_context=authority_context,
     )
     if tax_ok:
         return OccurrenceMatch(
@@ -1430,6 +1346,8 @@ def match_occurrence(
 def exact_source_document(
     linked: Sequence[Dict[str, Any]],
     candidate_docs: Optional[Sequence[Tuple[str, str, str]]] = None,
+    candidate_occurrences: Optional[Sequence[Dict[str, Any]]] = None,
+    has_unresolved_ambiguity: bool = False,
 ) -> Tuple[Optional[Tuple[str, str, str]], Optional[str]]:
     """
     The one document to assert, or None with the reason it cannot be decided.
@@ -1439,11 +1357,23 @@ def exact_source_document(
     - TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES:
       If candidate_docs has > 1 documents, exact source document can NEVER be
       asserted (DOCUMENTS_AMBIGUOUS).
-    - If candidate_docs is not provided, defaults to the documents in linked.
+    - If has_unresolved_ambiguity is True, exact source cannot be asserted
+      (AMBIGUOUS_OBSERVATION).
+    - If competing contexts exist across candidate occurrences, exact source
+      cannot be asserted (CONTEXT_AMBIGUOUS).
+    - If candidate_docs is not provided, defaults to candidate_occurrences or linked.
     - If linked is empty (e.g. taxonomy refusal), exact source cannot be asserted.
     """
+    if has_unresolved_ambiguity:
+        return None, AMBIGUOUS_OBSERVATION
+
     if candidate_docs is not None:
         docs = set(candidate_docs)
+    elif candidate_occurrences is not None:
+        docs = {
+            (row["asset_id"], row["accession"], row["filename"])
+            for row in candidate_occurrences
+        }
     else:
         docs = {
             (row["asset_id"], row["accession"], row["filename"]) for row in linked
@@ -1456,6 +1386,15 @@ def exact_source_document(
     # If raw candidate document cardinality > 1, exact source can NEVER be asserted!
     if len(docs) > 1:
         return None, DOCUMENTS_AMBIGUOUS
+
+    # Context uniqueness across full candidate set
+    if candidate_occurrences is not None:
+        contexts = {
+            row["context_ref"] for row in candidate_occurrences
+            if row.get("context_ref") is not None
+        }
+        if len(contexts) > 1:
+            return None, CONTEXT_AMBIGUOUS
 
     if not linked:
         return None, TAXONOMY_UNPROVEN

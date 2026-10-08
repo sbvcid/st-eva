@@ -442,15 +442,17 @@ class TestMigrationApplies(FactOccurrenceArchive):
             row["version"] for row in self.connection.execute(
                 "SELECT version FROM schema_migrations ORDER BY version")
         ]
-        self.assertEqual(versions, list(range(1, 22)))
+        total = len(list(Path(archive_module.MIGRATIONS_DIR).glob("*.sql")))
+        self.assertEqual(versions, list(range(1, total + 1)))
         self.assertEqual(
-            self.connection.execute("PRAGMA user_version").fetchone()[0], 21)
+            self.connection.execute("PRAGMA user_version").fetchone()[0], total)
 
     def test_reopening_applies_nothing_further(self):
         self.store.close()
         reopened = SQLiteArchive(":memory:")
+        total = len(list(Path(archive_module.MIGRATIONS_DIR).glob("*.sql")))
         try:
-            self.assertEqual(21, self.connection_count_of(reopened))
+            self.assertEqual(total, self.connection_count_of(reopened))
         finally:
             reopened.close()
 
@@ -1095,7 +1097,8 @@ class TestPreMigrationGate(unittest.TestCase):
         archive_module.MIGRATIONS_DIR = self.real_migrations
         reopened = SQLiteArchive(self.path)
         try:
-            self.assertEqual(21, reopened.connection.execute(
+            total = len(list(Path(archive_module.MIGRATIONS_DIR).glob("*.sql")))
+            self.assertEqual(total, reopened.connection.execute(
                 "PRAGMA user_version").fetchone()[0])
             self.assertIn(OCCURRENCES, self.master_names())
         finally:
