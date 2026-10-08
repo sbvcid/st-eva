@@ -460,6 +460,127 @@ class FullSubmission:
     documents: Tuple[SubmissionDocument, ...]
 
 
+@dataclass(frozen=True)
+class Section18Statement:
+    """
+    One Section 18 "not deemed filed" statement, read from captured bytes.
+
+    `quote_locator` is a `"<start>:<end>"` span of **byte** offsets into the
+    captured payload, and `quote_text` is exactly
+    `payload[start:end].decode("utf-8")` -- not a cleaned, de-tagged or
+    whitespace-normalised rendering of it. Two reasons, both about being able to
+    check the work rather than trust it:
+
+        * a reader can slice the stored bytes and see the quotation, so the
+          locator is verifiable rather than descriptive;
+        * the raw span is what the document actually says. Stripping tags or
+          collapsing whitespace would mean the locator no longer addresses the
+          quoted bytes, and the quote could no longer be located again.
+
+    The measured real filing bears this out: the sentence is wrapped in a
+    `<span style=...>` and uses HTML entities (`&#8220;filed&#8221;`), so a
+    text-level search for `"filed"` finds nothing and a tag-stripped quote would
+    not correspond to any contiguous byte range.
+
+    `applies_to_filing_item_code` is the first `Item N.NN` the *document* names.
+    In the measured filing it is at byte 29858 while the statement is at 30586 --
+    the item is named in the document's own heading, not inside the sentence --
+    so this is a document-level fact rather than part of the quotation.
+    """
+
+    quote_text: str
+    quote_locator: str
+    applies_to_filing_item_code: Optional[str]
+
+    def quote_from(self, payload: bytes) -> Optional[str]:
+        """Re-read the quotation out of the bytes the locator addresses."""
+        start, end = (int(part) for part in self.quote_locator.split(":"))
+        return payload[start:end].decode("utf-8")
+
+
+# `shall not be deemed` is the phrase the statute's non-filing statement turns on,
+# and `Section 18` is what makes it that statement rather than any other
+# "not deemed" language. Both must be present in the same sentence: either alone
+# is not sufficient, and requiring both keeps the test from firing on an
+# unrelated use of either phrase.
+_SECTION_18_MARKER = b"shall not be deemed"
+_SECTION_18_CITATION = b"section 18"
+# How far after the marker the citation may sit and still be the same sentence.
+# The measured sentence places it 56 bytes on.
+_SECTION_18_WINDOW = 400
+# "Item" and its number are often separated by a non-breaking space, which the
+# measured filing writes as `&#160;`, so a plain `\s+` misses it.
+_ITEM_SEPARATOR = rb"(?:\s|&#\d+;|&\w+;)+"
+_ITEM_CODE = re.compile(
+    rb"item" + _ITEM_SEPARATOR + rb"(\d+\.\d{2})", re.IGNORECASE
+)
+
+
+def _sentence_span_around(payload: bytes, marker_start: int) -> Optional[Tuple[int, int]]:
+    """
+    The sentence containing a marker, as a byte span, without the HTML around it.
+
+    Scans backwards to the end of the preceding tag or newline so the span opens
+    on the sentence's first character, and forwards to the full stop that ends
+    it. Both directions stop at markup rather than crossing it, so a span never
+    contains a partial tag.
+    """
+    start = marker_start
+    while start > 0 and payload[start - 1:start] not in (b">", b"\n"):
+        start -= 1
+    end = marker_start
+    limit = min(len(payload), marker_start + _SECTION_18_WINDOW)
+    while end < limit:
+        if payload[end:end + 1] == b".":
+            following = payload[end + 1:end + 2]
+            if following in (b"", b" ", b"\n", b"\t", b"<"):
+                return start, end + 1
+        end += 1
+    return None
+
+
+def extract_section18_statement(payload: bytes) -> Optional[Section18Statement]:
+    """
+    Locate a Section 18 non-filing statement in one document's captured bytes.
+
+    Deterministic and a pure function of the bytes: the same capture always
+    yields the same span, so re-extraction is idempotent, and a differing result
+    from the same bytes is a contradiction the archive rejects rather than
+    absorbs. There is no language model and no judgement of legal meaning here --
+    the rule is two literal phrases and a citation, and a document that does not
+    contain both yields `None`.
+
+    `None` is the ordinary answer for most documents in a filing. Returning
+    nothing is not a failure and must not become a fabricated statement.
+    """
+    lowered = payload.lower()
+    citation_at = lowered.find(_SECTION_18_CITATION)
+    offset = 0
+    while True:
+        marker_at = lowered.find(_SECTION_18_MARKER, offset)
+        if marker_at < 0:
+            return None
+        offset = marker_at + 1
+        # Both phrases must belong to the same sentence.
+        window_end = min(len(payload), marker_at + _SECTION_18_WINDOW)
+        if citation_at < 0 or not (
+            marker_at < citation_at < window_end
+        ):
+            continue
+        span = _sentence_span_around(payload, marker_at)
+        if span is None:
+            continue
+        start, end = span
+        item = _ITEM_CODE.search(payload)
+        return Section18Statement(
+            quote_text=payload[start:end].decode("utf-8", errors="replace"),
+            quote_locator=f"{start}:{end}",
+            applies_to_filing_item_code=(
+                item.group(1).decode("ascii") if item else None
+            ),
+        )
+
+
 def filing_directory_url(cik: str, accession: str) -> str:
     """The `index.json` that lists one filing's directory."""
     return (

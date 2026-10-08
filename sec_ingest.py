@@ -61,6 +61,8 @@ from sec_provenance import (
     filing_acceptance_id,
     filing_declaration_id,
     filing_document_declaration_id,
+    filing_document_statement_id,
+    filing_document_statement_identity,
     filing_item_declaration_id,
     filing_item_id,
     parse_items,
@@ -68,6 +70,7 @@ from sec_provenance import (
 )
 from sec_provider import (
     DOCUMENT_FILING,
+    extract_section18_statement,
     observation_currency_of,
     xbrl_unit_to_contract_unit,
 )
@@ -606,6 +609,15 @@ class Ingestor:
             )
         except Exception as error:  # noqa: BLE001
             self._record_provenance_failure("document_bytes", error)
+        # Statements are read from bytes this run already captured, so this
+        # follows the capture phase and fetches nothing.
+        try:
+            for entry in index:
+                accession = str(entry.get("accession") or "")
+                if accession:
+                    self._acquire_document_statements(asset_id, accession)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("document_statements", error)
 
         if not new_entries:
             # Nothing new was accepted, so no concept endpoint can have
@@ -1966,6 +1978,146 @@ class Ingestor:
             asset_id, accession, filename, document_id,
             self.DOCUMENT_ACQUISITION_CLASS, fetched.fetched_at, capture_kind,
         )
+
+    # -- provenance: document statements (0020, Phase 3B) -------------
+    #
+    # The whole chain, and the order it can only be built in:
+    #
+    #     filing_documents            the document is part of the filing
+    #       -> filing_document_captures   a specific byte sequence was captured
+    #            -> source_documents       the bytes, content-addressed
+    #              -> filing_document_statements  a quotation read out of them
+    #
+    # A statement is the last link and the only one that can be manufactured from
+    # nothing. Every other link is a fact about a fetch. So a statement exists
+    # only when the bytes it quotes were actually captured, and it names the
+    # capture it was read from -- `filing_document_statements` has a composite
+    # foreign key onto `filing_document_captures`, so a statement cannot float
+    # free of the bytes behind it even if a caller tries.
+
+    STATEMENT_SECTION_18 = "SECTION_18_NOT_DEEMED_FILED"
+    STATEMENT_METHOD_VERBATIM = "DECLARED_VERBATIM_QUOTE"
+
+    def _acquire_document_statements(
+        self,
+        asset_id: str,
+        accession: str,
+    ) -> int:
+        """
+        Read Section 18 statements out of the bytes this archive already holds.
+
+        Only the filing's **primary document** is read, and which document that
+        is comes from the submission manifest rather than from a filename
+        pattern: the first `<DOCUMENT>` the filing declares. That is where the
+        language was empirically observed, and it is why an exhibit is never
+        substituted here -- an EX-99.1 carries the results, not the statement
+        about their status, and this phase refuses to go looking for the second
+        in the first.
+
+        Nothing is fetched. A document with no capture has no bytes and
+        therefore yields no statement; the absence is the record.
+        """
+        primary = self._primary_document_filename(asset_id, accession)
+        if primary is None:
+            return 0
+        captures = [
+            dict(row) for row in self.connection.execute(
+                "SELECT document_id, captured_at, capture_kind FROM"
+                " filing_document_captures WHERE asset_id = ? AND accession = ?"
+                " AND filename = ? ORDER BY captured_at, document_id",
+                (asset_id, accession, primary),
+            )
+        ]
+        stored = 0
+        for capture in captures:
+            try:
+                stored += self._record_statement_from_capture(
+                    asset_id, accession, primary, capture
+                )
+            except Exception as error:  # noqa: BLE001
+                self._record_provenance_failure(
+                    f"statement:{accession}:{primary}:"
+                    f"{capture['document_id']}",
+                    error,
+                )
+        return stored
+
+    def _primary_document_filename(
+        self,
+        asset_id: str,
+        accession: str,
+    ) -> Optional[str]:
+        """
+        The filing's own first document, as its submission declares it.
+
+        The SGML manifest's first `<DOCUMENT>` is the primary document; this is
+        the submission's statement about its own contents, not a guess from a
+        name. A filing whose submission was never read has no such declaration
+        and nothing is attempted.
+        """
+        row = self.connection.execute(
+            "SELECT filename FROM filing_document_declarations"
+            " WHERE asset_id = ? AND accession = ? AND manifest_source = ?"
+            " AND source_ordinal = 1 AND filename IS NOT NULL"
+            " ORDER BY declaration_id LIMIT 1",
+            (asset_id, accession, self.MANIFEST_SUBMISSION),
+        ).fetchone()
+        return None if row is None else row["filename"]
+
+    def _record_statement_from_capture(
+        self,
+        asset_id: str,
+        accession: str,
+        filename: str,
+        capture: Dict[str, Any],
+    ) -> int:
+        """Extract from one capture's bytes and persist what was actually found."""
+        content_hash = self.connection.execute(
+            "SELECT content_hash FROM source_documents WHERE document_id = ?",
+            (capture["document_id"],),
+        ).fetchone()
+        if content_hash is None:
+            return 0
+        payload = self.store.content_for(content_hash["content_hash"])
+        if payload is None:
+            # Captured as a reference rather than as content. The capture row
+            # stands; there are simply no bytes to quote, and a statement is not
+            # written from the existence of a fetch.
+            return 0
+        statement = extract_section18_statement(payload)
+        if statement is None:
+            return 0
+        statement_id = filing_document_statement_id(
+            asset_id, accession, filename, capture["document_id"],
+            self.STATEMENT_SECTION_18, statement.quote_locator,
+        )
+        existing = self.connection.execute(
+            "SELECT quote_text, extraction_method FROM"
+            " filing_document_statements WHERE statement_id = ?",
+            (statement_id,),
+        ).fetchone()
+        if existing is not None and (
+            existing["quote_text"] == statement.quote_text
+            and existing["extraction_method"] == self.STATEMENT_METHOD_VERBATIM
+        ):
+            return 0
+        self.store.record_filing_document_statement(
+            statement_id,
+            filing_document_statement_identity(
+                asset_id, accession, filename, capture["document_id"],
+                self.STATEMENT_SECTION_18, statement.quote_locator,
+            ),
+            asset_id, accession, filename, capture["document_id"],
+            self.STATEMENT_SECTION_18, statement.quote_locator,
+            statement.quote_text, self.STATEMENT_METHOD_VERBATIM,
+            utc_now(), capture["capture_kind"],
+            # The document this statement governs is not derivable from the bytes
+            # alone, and is deliberately left unstated rather than inferred --
+            # see the Constitution's invariant 19.
+            applies_to_document_type=None,
+            applies_to_filing_item_code=statement.applies_to_filing_item_code,
+        )
+        return 1
 
     def _store_facts(
         self,
