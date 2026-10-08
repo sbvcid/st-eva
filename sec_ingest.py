@@ -32,6 +32,7 @@ an intention.
 """
 
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -55,6 +56,15 @@ from data_contract import (
     utc_now,
 )
 from evidence_model import source_fact_id
+from sec_provenance import (
+    fiscal_calendar_declaration_id,
+    filing_acceptance_id,
+    filing_declaration_id,
+    filing_item_declaration_id,
+    filing_item_id,
+    parse_items,
+    project_held_filings,
+)
 from sec_provider import observation_currency_of, xbrl_unit_to_contract_unit
 
 SEC_SOURCE = "SecEdgar"
@@ -365,6 +375,15 @@ class Ingestor:
         #  observations_stored, status) -- the row as `ingestion_scope` stores it.
         self._pending_scope: List[
             Tuple[str, str, str, int, int, int, str]] = []
+        # Provenance failures, buffered for the run report rather than raised.
+        #
+        # Provenance is strictly additive and no observation depends on it, so a
+        # provenance write that fails must not turn a run that stored facts into a
+        # run that stored none. It must also not vanish: a silent skip would make
+        # the archive look as though a filing declared nothing when in fact the
+        # declaration was never written. So the failure is collected here and
+        # flushed into `report.errors` at the end of `ingest`.
+        self._provenance_errors: List[str] = []
 
     # -- filing identity -------------------------------------------------
 
@@ -544,6 +563,28 @@ class Ingestor:
         ]
         report.filings_ingested = len(new_entries)
 
+        # Filing-level provenance, recorded before any fact is stored. The order
+        # is the foreign keys: a filing exists before anything references it.
+        #
+        # It runs on every run and not only when something is new, because a
+        # filing the index listed is still worth asserting today: the index is
+        # re-read each run precisely so that a changed declaration is noticed, and
+        # a changed declaration becomes a second row rather than an amendment.
+        #
+        # Failures are buffered rather than raised. Provenance is additive and no
+        # observation depends on it, so a write that fails here must not turn a run
+        # that stored facts into a run that stored none.
+        self._provenance_errors = []
+        submission = self._submission_recent(cik)
+        try:
+            self._acquire_filing_provenance(asset_id, index, submission)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("filing_metadata", error)
+        try:
+            self._acquire_fiscal_calendar(asset_id, submission)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("fiscal_calendar", error)
+
         if not new_entries:
             # Nothing new was accepted, so no concept endpoint can have
             # changed for a filing we already hold. Fetching them again would
@@ -559,6 +600,7 @@ class Ingestor:
                     OUTCOME_NOT_ATTEMPTED, metric,
                     "the run found no new filings, so it asked nothing",
                 )
+            report.errors.extend(self._provenance_errors)
             self._count_fetches(report)
             report.transport = self._transport_stats()
             report.elapsed_seconds = round(time.monotonic() - started, 3)
@@ -602,6 +644,7 @@ class Ingestor:
             self._record_filing(asset_id, entry, "")
         self._record_adoption(asset_id)
         self.connection.commit()
+        report.errors.extend(self._provenance_errors)
         self._count_fetches(report)
         report.transport = self._transport_stats()
         report.elapsed_seconds = round(time.monotonic() - started, 3)
@@ -1159,6 +1202,18 @@ class Ingestor:
         ).fetchone()
         if exists is not None:
             return
+        # Provenance for the accessions the submissions index never lists. This
+        # runs before the ledger insert and is independent of it, so a fact from
+        # outside the index still gets filing identity even though `held_filings`
+        # keeps no row for it. Guarded for the same reason the rest of provenance
+        # is: this sits inside the per-fact loop, and raising here would turn a
+        # provenance problem into a lost metric.
+        try:
+            self._record_fact_filing_provenance(asset_id, accession, entry)
+        except Exception as provenance_error:  # noqa: BLE001
+            self._record_provenance_failure(
+                f"fact_filing:{accession}", provenance_error
+            )
         form = str(entry.get("form") or "").strip() or None
         filed = str(entry.get("filed") or "").strip() or None
         report_date = str(entry.get("fy") or "")
@@ -1177,6 +1232,272 @@ class Ingestor:
                 "",
                 utc_now(),
             ),
+        )
+
+    # -- provenance: filing metadata (0020) --------------------------------
+    #
+    # Acquisition A. Everything here is an *assertion by a source*, written to a
+    # relation whose identity is a digest of that assertion, so a repeated run is
+    # a no-op and a changed assertion becomes a second row rather than an
+    # amendment. No writer here touches an Observation, and no observation
+    # depends on anything written here.
+    #
+    # Two producers are represented and one deliberately is not. The submissions
+    # index and an individual fact are both sources; the SGML header is a third,
+    # and this phase does not read it, so `SGML_SUBMISSION_HEADER` is absent here
+    # rather than asserted from something else. Inventing a declaration nobody
+    # made is the failure this whole layer exists to prevent.
+
+    SUBMISSIONS_INDEX = "SUBMISSIONS_API_FILING_INDEX"
+    SUBMISSIONS_ITEMS = "SUBMISSIONS_API_ITEMS"
+    SUBMISSIONS_ACCEPTANCE = "SUBMISSIONS_API_ACCEPTANCE_DATETIME"
+    SUBMISSIONS_FISCAL_YEAR_END = "SUBMISSIONS_API_FISCAL_YEAR_END"
+    FACT_RECORD = "FACT_RECORD"
+
+    def _record_provenance_failure(self, where: str, error: BaseException) -> None:
+        """
+        Note a provenance failure without ending the run.
+
+        The archive already says this about the business-model classification
+        (`:486`) for the same reason: a value this run could not write is not
+        worth losing a decade of facts over. It is not worth losing silently
+        either, so it is buffered and reported rather than swallowed.
+        """
+        self._provenance_errors.append(
+            f"provenance:{where}: {type(error).__name__}: {error}"
+        )
+
+    def _submission_recent(self, cik: str) -> Dict[str, Any]:
+        """
+        The submissions payload's `filings.recent` columns, read once.
+
+        `filing_index()` is a flattened view of exactly seven columns. Two things
+        this phase needs are not among them: `items`, which names the sections a
+        filing declares, and the issuer-level `fiscalYearEnd`, which names when
+        the filer's year ends. Both live in the payload `ingest()` has already
+        fetched, so reading them costs no request. A provider without
+        `submissions`, or one that fails, yields nothing rather than a guess.
+        """
+        absent = {"recent": {}, "fiscalYearEnd": None}
+        if not hasattr(self.provider, "submissions"):
+            return absent
+        try:
+            payload = self.provider.submissions(cik) or {}
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("submissions", error)
+            return absent
+        filings = payload.get("filings") or {}
+        return {
+            "recent": filings.get("recent") or {},
+            "fiscalYearEnd": payload.get("fiscalYearEnd"),
+        }
+
+    @staticmethod
+    def _recent_column(recent: Dict[str, Any], name: str,
+                       accession: str) -> Optional[str]:
+        """One value of a `filings.recent` column, addressed by accession.
+
+        `filings.recent` is a column-major structure, so the accession's position
+        in one array is its position in all of them. A shorter column means the
+        payload is truncated and the value is simply not available -- which is an
+        absence, not a zero.
+        """
+        values = recent.get(name) or []
+        accessions = recent.get("accessionNumber") or []
+        try:
+            position = accessions.index(accession)
+        except ValueError:
+            return None
+        if position >= len(values):
+            return None
+        value = values[position]
+        return None if value is None else str(value)
+
+    def _acquire_filing_provenance(
+        self,
+        asset_id: str,
+        index: List[Dict[str, Any]],
+        submission: Dict[str, Any],
+    ) -> None:
+        """
+        Record what the submissions index says about the filings it lists.
+
+        Order follows the foreign keys: the filing exists before anything
+        references it, an item declaration exists before its items, and the
+        acceptance declaration comes last. Every write is idempotent, so this
+        method is safe to call on every run.
+        """
+        recent = submission["recent"]
+
+        # Whatever earlier runs put in the ingestion ledger, projected onto the
+        # relations that can say so properly. This runs before the index below so
+        # that an archive created before 0020 gains filing identity at all.
+        try:
+            project_held_filings(self.store)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("held_filings_projection", error)
+
+        for entry in index:
+            accession = str(entry.get("accession") or "")
+            if not accession:
+                continue
+            try:
+                self._acquire_one_filing(
+                    asset_id, accession, entry, recent, submission
+                )
+            except Exception as error:  # noqa: BLE001
+                self._record_provenance_failure(f"filing:{accession}", error)
+
+    def _acquire_one_filing(
+        self,
+        asset_id: str,
+        accession: str,
+        entry: Dict[str, Any],
+        recent: Dict[str, Any],
+        submission: Dict[str, Any],
+    ) -> None:
+        """One filing, from the submissions index."""
+        self.store.record_filing(asset_id, accession, utc_now())
+
+        # What the index declares about the filing. `report_date` here is EDGAR's
+        # own reportDate column, which is a filing attribute; it is NOT
+        # `held_filings.report_date`, which this same archive fills with an XBRL
+        # fiscal year. The two are unrelated values that share a name.
+        self.store.record_filing_declaration(
+            filing_declaration_id(
+                asset_id, accession, self.SUBMISSIONS_INDEX,
+                form=entry.get("form") or None,
+                filing_date=entry.get("filing_date") or None,
+                report_date=entry.get("report_date") or None,
+                primary_document=entry.get("primary_document") or None,
+                is_xbrl=1 if entry.get("is_xbrl") in (1, "1", True) else 0,
+            ),
+            asset_id, accession, self.SUBMISSIONS_INDEX, utc_now(),
+            "FIRST_HAND",
+            form=entry.get("form") or None,
+            filing_date=entry.get("filing_date") or None,
+            report_date=entry.get("report_date") or None,
+            primary_document=entry.get("primary_document") or None,
+            is_xbrl=1 if entry.get("is_xbrl") in (1, "1", True) else 0,
+        )
+
+        self._acquire_filing_items(asset_id, accession, recent)
+
+        # Acceptance, only when the index declared an *instant*.
+        #
+        # A `PRECISION_DATE` value here is not a weaker EDGAR acceptance; on the
+        # bootstrap path it is a fact's own `filed` date (`sec_bulk
+        # ._derived_filing_index`), which is a different claim about a different
+        # object and already lives on the observation as `FILED_AS_OF_DATE`.
+        # Recording it here would turn a filed-date fallback into filing-level
+        # provenance, so the declared precision is what decides, and a date is
+        # simply not recorded.
+        if str(entry.get("acceptance_precision") or "") == PRECISION_INSTANT:
+            # `raw` is what the resource served and `value` is what it declared;
+            # they differ when the resource served an empty string, and both are
+            # kept so the negative observation stays auditable. `None` means the
+            # producer declared nothing; `raw_value = ''` means it was asked and
+            # answered with nothing.
+            raw = str(entry.get("acceptance_datetime") or "")
+            value = raw or None
+            precision = PRECISION_INSTANT if value else "NONE"
+            self.store.record_filing_acceptance(
+                filing_acceptance_id(
+                    asset_id, accession, self.SUBMISSIONS_ACCEPTANCE,
+                    value, precision, raw,
+                ),
+                asset_id, accession, self.SUBMISSIONS_ACCEPTANCE, precision,
+                utc_now(), "FIRST_HAND",
+                acceptance_datetime=value, raw_value=raw,
+            )
+
+    def _acquire_filing_items(
+        self,
+        asset_id: str,
+        accession: str,
+        recent: Dict[str, Any],
+    ) -> None:
+        """
+        Record the sections a filing declares, from `filings.recent.items`.
+
+        The raw string is stored unsplit and the items are parsed from it, so a
+        changed parse cannot silently discard an item and a reader can always see
+        what the source actually wrote. A filing that declares no item produces no
+        declaration at all -- EDGAR writes an empty string rather than omitting the
+        column, and an empty string is an absence, not a declaration of nothing.
+        """
+        raw = self._recent_column(recent, "items", accession)
+        if not raw or not raw.strip():
+            return
+        declaration = self.store.record_filing_item_declaration(
+            filing_item_declaration_id(
+                asset_id, accession, self.SUBMISSIONS_ITEMS, raw
+            ),
+            asset_id, accession, self.SUBMISSIONS_ITEMS, raw, utc_now(),
+            "FIRST_HAND",
+            declared_item_count=len(parse_items(raw)),
+        )
+        for ordinal, code in parse_items(raw):
+            self.store.record_filing_item(
+                filing_item_id(declaration, ordinal, code), declaration, ordinal,
+                code, utc_now(),
+            )
+
+    def _acquire_fiscal_calendar(self, asset_id: str, submission: Dict[str, Any]
+                                 ) -> None:
+        """
+        Record the issuer's declared fiscal year end.
+
+        The raw four-character form, never a month and never a fiscal year. The
+        value is a date anchor, not a month: one filer declared `0929` in a 2013
+        filing and `0926` in a 2026 one, so reducing either to a month integer
+        would lose the drift. Which declaration applies to which fiscal year is
+        Contract section K.4 and it stays open, which is why this records a
+        declaration and nothing else.
+        """
+        raw = submission.get("fiscalYearEnd")
+        if not raw or not re.fullmatch(r"\d{4}", str(raw)):
+            return
+        self.store.record_fiscal_calendar_declaration(
+            fiscal_calendar_declaration_id(
+                asset_id, str(raw), self.SUBMISSIONS_FISCAL_YEAR_END
+            ),
+            asset_id, str(raw), self.SUBMISSIONS_FISCAL_YEAR_END, utc_now(),
+            "FIRST_HAND",
+        )
+
+    def _record_fact_filing_provenance(
+        self,
+        asset_id: str,
+        accession: str,
+        entry: Dict[str, Any],
+    ) -> None:
+        """
+        Record what an individual fact says about the filing it came from.
+
+        Needed for the accessions the submissions index never lists: that index is
+        bounded to roughly the most recent thousand filings per filer while the
+        XBRL concept endpoint reaches much further back, so a fact can name an
+        accession no index will ever mention. For those, the fact is the only
+        source that has spoken about the filing at all.
+
+        Only `form` and `filed` are taken. The fact's `end` is the period the fact
+        *covers*, which is not a filing attribute, so `report_date` stays unset:
+        this archive's `held_filings.report_date` stores an XBRL fiscal year for
+        exactly this column, and nothing here is allowed to repeat that.
+        """
+        form = str(entry.get("form") or "").strip() or None
+        filed = str(entry.get("filed") or "").strip() or None
+        if not form and not filed:
+            return
+        self.store.record_filing(asset_id, accession, utc_now())
+        self.store.record_filing_declaration(
+            filing_declaration_id(
+                asset_id, accession, self.FACT_RECORD, form=form,
+                filing_date=filed,
+            ),
+            asset_id, accession, self.FACT_RECORD, utc_now(), "FIRST_HAND",
+            form=form, filing_date=filed,
         )
 
     def _store_facts(

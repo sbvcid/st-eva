@@ -222,77 +222,13 @@ def statement_id(asset_id: str, accession: str, filename: str,
 # ---------------------------------------------------------------------------
 # The approved deterministic projection
 # ---------------------------------------------------------------------------
+#
+# `project_held_filings` is production code now, in `sec_provenance`, and it is
+# imported rather than copied. It lives there because ingestion runs it; a copy
+# in this module would be free to drift from the version that actually writes
+# the rows, and a test that verifies a copy verifies nothing.
 
-
-def project_held_filings(store: SQLiteArchive) -> Dict[str, int]:
-    """
-    Project the four approved columns of `held_filings` into the new relations.
-
-    Deterministic and idempotent: the same ledger rows always produce the same
-    identity, so a second run is a no-op.
-
-    It projects `asset_id`, `accession`, `form` and `filed_at` and **nothing
-    else**. `period_end`, `report_date`, `primary_document` and `document_id`
-    are excluded on purpose: `report_date` was run-verified holding the XBRL
-    fiscal year ('2026') rather than a date, `period_end` is NULL on every row,
-    `primary_document` is NULL on every fact-path row, and `document_id` is the
-    empty string at both writers. Projecting any of them would launder a known
-    ledger defect into an authoritative filing fact.
-
-    It lives here rather than in the migration for two reasons. The migration
-    engine hashes a file and runs it as SQL, so it cannot compute a content
-    digest, and every identity in this schema is one. And wiring this into a
-    production writer is a change to `sqlite_archive.py` or `sec_ingest.py`,
-    which this task does not authorise. `capture_kind` is FIRST_HAND and
-    `captured_at` is the ledger's own `first_seen_at`, never the migration
-    timestamp: the value really was captured when the ingest that wrote the
-    ledger row saw the filing, and claiming otherwise would make the archive
-    assert it could not know the filing's form until upgrade day.
-    """
-    connection = store.connection
-    created = 0
-    rows = connection.execute(
-        "SELECT asset_id, accession, form, filed_at, first_seen_at"
-        " FROM held_filings"
-    ).fetchall()
-    for row in rows:
-        identity = filing_declaration_id(
-            row["asset_id"], row["accession"],
-            "MIGRATION_PROJECTION_HELD_FILINGS",
-            form=row["form"], filing_date=row["filed_at"],
-        )
-        if connection.execute(
-            "SELECT 1 FROM filing_declarations WHERE declaration_id = ?",
-            (identity,),
-        ).fetchone() is None:
-            created += 1
-        connection.execute(
-            "INSERT OR IGNORE INTO filings (asset_id, accession,"
-            " first_archived_at) VALUES (?, ?, ?)",
-            (row["asset_id"], row["accession"], row["first_seen_at"]),
-        )
-        connection.execute(
-            "INSERT OR IGNORE INTO filing_declarations (declaration_id,"
-            " asset_id, accession, declaration_source, form, filing_date,"
-            " report_date, conformed_period_of_report, public_document_count,"
-            " is_xbrl, primary_document, declared_at, captured_at,"
-            " capture_kind)"
-            " VALUES (?, ?, ?, 'MIGRATION_PROJECTION_HELD_FILINGS', ?, ?,"
-            " NULL, NULL, NULL, NULL, NULL, NULL, ?, 'FIRST_HAND')",
-            (
-                identity, row["asset_id"], row["accession"], row["form"],
-                row["filed_at"], row["first_seen_at"],
-            ),
-        )
-    connection.commit()
-    return {
-        "rows_seen": len(rows),
-        "created": created,
-        "declarations_held": connection.execute(
-            "SELECT COUNT(*) FROM filing_declarations"
-            " WHERE declaration_source = 'MIGRATION_PROJECTION_HELD_FILINGS'"
-        ).fetchone()[0],
-    }
+from sec_provenance import parse_items, project_held_filings  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

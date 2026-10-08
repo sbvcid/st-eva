@@ -46,7 +46,7 @@ to a reader.
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from evidence_model import canonical_json
 
@@ -131,6 +131,95 @@ def _check(field: str, value: Any, vocabulary: tuple) -> None:
         raise ValueError(
             f"{field} must be one of {', '.join(vocabulary)}; got {value!r}"
         )
+
+
+def parse_items(raw_items_text: str) -> Tuple[Tuple[int, str], ...]:
+    """
+    Split a source's verbatim item string into `(ordinal, code)` pairs.
+
+    A pure function of the string, so the same declaration always parses to the
+    same items and a re-run is a no-op. Splitting on `,`, trimming each segment
+    and discarding the empty ones is the whole rule; ordinals are then assigned
+    over the *kept* items, so a stray or trailing comma renumbers nothing.
+
+    This is the only place the Submissions API's `items` is read. The SGML
+    header's `ITEM INFORMATION` carries item *titles* rather than codes and is
+    never merged with them here: pairing a code with a title would be an
+    inference from list order, and this module makes inferences about nothing.
+    """
+    items: List[Tuple[int, str]] = []
+    for segment in raw_items_text.split(","):
+        code = segment.strip()
+        if not code:
+            continue
+        items.append((len(items) + 1, code))
+    return tuple(items)
+
+
+def project_held_filings(store: Any) -> Dict[str, int]:
+    """
+    Project the ingestion ledger into the provenance relations.
+
+    Four columns, and the four are not negotiable. `asset_id` and `accession`
+    identify the filing, `form` and `filed_at` are values both writers of
+    `held_filings` record correctly. Everything else in that table is excluded on
+    purpose:
+
+        period_end       `_ensure_filing_identity` runs before `_record_filing`
+                         and `INSERT OR IGNORE` means first write wins, so this
+                         column is NULL on every row.
+        report_date      the same writer stores `str(fact["fy"])` here -- the XBRL
+                         fiscal *year*, run-verified as '2026'. It is a year, not a
+                         date, and no row records which writer produced it, so the
+                         column cannot be trusted without knowing that.
+        primary_document NULL on every fact-path row.
+        document_id      the empty string at both writers.
+
+    Projecting any of those would launder a known ledger defect into an
+    authoritative filing fact, and '2026' becoming a filing report date is exactly
+    the failure that would be hardest to notice later.
+
+    `capture_kind` is `FIRST_HAND` and `captured_at` is the ledger's own
+    `first_seen_at`, never this function's clock. The value genuinely was
+    captured when the ingest that wrote the ledger row saw the filing; stamping
+    it with the migration time instead would make the archive claim it could not
+    know a filing's form until upgrade day.
+
+    Idempotent: the identities are digests of the assertion, so a second run over
+    the same ledger writes nothing.
+    """
+    created = 0
+    rows = store.connection.execute(
+        "SELECT asset_id, accession, form, filed_at, first_seen_at"
+        " FROM held_filings"
+    ).fetchall()
+    for row in rows:
+        identity = filing_declaration_id(
+            row["asset_id"], row["accession"],
+            "MIGRATION_PROJECTION_HELD_FILINGS",
+            form=row["form"], filing_date=row["filed_at"],
+        )
+        if store.connection.execute(
+            "SELECT 1 FROM filing_declarations WHERE declaration_id = ?",
+            (identity,),
+        ).fetchone() is None:
+            created += 1
+        store.record_filing(
+            row["asset_id"], row["accession"], row["first_seen_at"]
+        )
+        store.record_filing_declaration(
+            identity, row["asset_id"], row["accession"],
+            "MIGRATION_PROJECTION_HELD_FILINGS", row["first_seen_at"],
+            "FIRST_HAND", form=row["form"], filing_date=row["filed_at"],
+        )
+    return {
+        "rows_seen": len(rows),
+        "created": created,
+        "declarations_held": store.connection.execute(
+            "SELECT COUNT(*) FROM filing_declarations"
+            " WHERE declaration_source = 'MIGRATION_PROJECTION_HELD_FILINGS'"
+        ).fetchone()[0],
+    }
 
 
 def filing_declaration_id(
