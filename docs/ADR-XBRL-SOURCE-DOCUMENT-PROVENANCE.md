@@ -1284,3 +1284,193 @@ machinery stays covered without any production prefix-to-URI map existing.
 A future taxonomy-equivalence design, if one is wanted, requires its **own**
 evidence and architecture decision. It is out of scope for B2 and must not be
 smuggled in to make a fixture pass.
+
+---
+---
+
+# Amendment 5 — Taxonomy Equivalence Architecture & Evidence Boundary
+
+**Status:** FROZEN — design decision record and evidence audit. **Not implemented.**
+No production code, schema, migration, or test change accompanies this amendment.
+**Date:** 2026-10-08
+**Baseline:** `5e6287b` (`feat: link observations to document XBRL facts`), working tree clean, `HEAD == origin/master`
+**Refines:** Amendment 4's unproven boundary, defining the evidence requirements,
+identity grain, authority vs. filing-use separation, and decision boundary for taxonomy equivalence.
+**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 19–30.
+
+> This amendment audits whether authoritative evidence exists to bridge the SEC
+> `companyconcept` taxonomy representation (short family token, e.g. `us-gaap`) to
+> the document fact taxonomy representation (resolved namespace URI, e.g.
+> `http://fasb.org/us-gaap/2026`). It records the findings, proves the identity
+> grain separating authority assertions from filing use, establishes provenance
+> standards across SEC authority sources, and formalizes the design decision.
+> **Taxonomy mapping remains unimplemented and B2 remains strictly unchanged.**
+
+---
+
+## 1. Authority Identity vs. Filing Use
+
+Authority recognition and filing use are fundamentally different facts with different grains:
+
+* **Authority Fact (Regulator / Standard-Setting Grain):**
+  *"The SEC recognizes namespace URI `http://fasb.org/us-gaap/2026` as belonging to taxonomy family `US GAAP`, release/version `2026`."*
+  This is a universal regulatory fact published by the SEC. It is true across all filers and all filings, and does not depend on any specific company having filed an instance. Its identity grain is:
+  `{provider, taxonomy_family, taxonomy_version, namespace_uri}`.
+* **Filing-Use Fact (Filing / Occurrence Grain):**
+  *"Filing accession `0000320193-26-000018`, document `aapl-20260730.htm` contains a fact using namespace URI `http://fasb.org/us-gaap/2026`."*
+  This is an empirical observation read from captured filing bytes. Its grain is:
+  `{asset_id, accession, document_id, context_ref, tag, ...}` (the occurrence grain).
+
+**Separation Requirement:**
+Authority evidence must **not** be accession-scoped. Accession is evidence of *use*, not the identity of the authority mapping. Conflating the two would require re-asserting the regulator's taxonomy catalog for every filing, destroying identity purity.
+
+---
+
+## 2. Taxonomy Version Requirement & Identity Grain
+
+### 2.1 Why `taxonomy_version` Is Required
+The SEC's official Standard Taxonomies materials explicitly distinguish three levels:
+1. **Taxonomy Family**: The high-level framework (e.g. `US GAAP`, `IFRS`, `DEI`, `FFD`, `ECD`, `CYD`).
+2. **Taxonomy Release / Version**: The specific annual or interim release (e.g. `2026`, `2025`, `2025q4`, `2024Q2`).
+3. **Namespace URI / Schema**: The specific targetNamespace (e.g. `http://fasb.org/us-gaap/2026`, `http://xbrl.sec.gov/ffd/2024q2`).
+
+Preserving explicit `taxonomy_version` alongside `taxonomy_family` and `namespace_uri` is required because:
+- **Non-Uniform URI Conventions:** While namespace URIs are unique per release, URI formatting across families is not uniform. US-GAAP uses annual years (`/2026`); historical DEI used ISO dates (`/2013-01-31`); IFRS uses dates (`/2025-03-27/ifrs-full`); FFD, CEF, and SPAC use quarterly releases (`/2024q2`, `2021Q4`, `2025q3`). Inferring version via regex would be an unmaintainable heuristic.
+- **Regulatory Rules Key on Version:** EDGAR Filer Manual rules (EFM §6.5.7–6.5.8) regulate permitted taxonomy versions (e.g. restricting submissions to the latest 2–3 annual releases). Preserving `taxonomy_version` maintains 1:1 fidelity with SEC regulatory notices and deprecation schedules.
+- **Authority Structure:** The SEC's machine-readable catalog (`edgartaxonomies.xml`) explicitly publishes `<Version>` as an independent attribute on every location record.
+
+### 2.2 Complete Identity Preimage
+Within one `(provider, taxonomy_family, taxonomy_version)`, multiple entry points and packages exist (e.g. `us-gaap` primary vs. `us-gaap-ebp` employee benefit plans vs. `srt` SEC reporting taxonomy). Therefore, `namespace_uri` is required in the preimage.
+The canonical authority preimage is:
+```
+{ provider, taxonomy_family, taxonomy_version, namespace_uri }
+```
+
+---
+
+## 3. Exact SEC Authority Sources
+
+No single document is "the sole authoritative source". The SEC maintains a clear hierarchy of authority sources:
+
+| Source | Location / Format | What It Proves | Authority Level | Provenance Viability |
+|---|---|---|---|---|
+| **1. SEC XML Taxonomy Catalog (`edgartaxonomies.xml`)** | `https://www.sec.gov/info/edgar/edgartaxonomies.xml` (Root `<Erxl>`, versioned, e.g. `version="78"`). | Exact machine-readable binding between `<Family>`, `<Version>`, `<Namespace>`, `<Prefix>`, `<FileTypeName>`, and schema `<Href>`. | **Primary Machine-Readable Operational Authority.** Produced by SEC staff specifically for EDGAR ingestion/validation. | **High.** Capturable raw XML bytes; stored in `source_documents` with SHA-256 digest. Versioned by SEC. |
+| **2. EDGAR Filer Manual (EFM)** | SEC Form Filer Manual, Vol. II, Chap. 6 ("Interactive Data"). | Legal/regulatory mandate for acceptable taxonomy versions, permitted combinations, and tagging rules. | **Statutory / Regulatory Authority.** Promulgated by Commission rulemaking in the Federal Register. | **Very High.** Formally published per SEC release; dated and versioned. |
+| **3. Standard Entry Point Schemas (`.xsd`)** | e.g. `https://xbrl.fasb.org/us-gaap/2026/elts/us-gaap-2026.xsd`, `https://xbrl.sec.gov/dei/2026/dei-2026.xsd`. | Technical XML schema definition, official targetNamespace, element QNames, and imported schemas. | **Technical Specification Authority.** W3C XML Schema definitions. | **Permanent.** Immutable once published at official schema URIs. Capturable as text bytes. |
+| **4. SEC Standard Taxonomies Web Listing** | `https://www.sec.gov/data-research/structured-data/taxonomies-schemas/standard-taxonomies/operating-companies`. | Human-readable portal listing accepted releases, zip packages, and transition dates. | **Official Guidance.** Published by SEC Office of Structured Data. | **Medium.** Capturable as HTML; subject to CMS/portal redesigns. |
+| **5. EDGAR Release Announcements** | Commission releases (e.g. "EDGAR Release 24.1", "SEC Announces Support for 2026 Taxonomies"). | Official deployment dates and retirement schedules for specific taxonomy releases. | **Regulatory Notice.** Formal administrative timeline. | **High.** Permanent archive on SEC.gov. |
+
+*Descriptive guidance* (such as Staff Observations on Custom Tags and FAQ pages) explicitly disclaims legal authority and must not be used as an authority mapping source.
+
+---
+
+## 4. Namespace Declaration vs. Authority Recognition
+
+Two independent statements must never be merged:
+1. **Document Namespace Declaration (Filing Evidence):**
+   A filing document's XML header declares `xmlns:prefix="URI"`.
+   *Proves:* Inside that document, the author bound that prefix to that URI, yielding fact QName `(URI, tag)`.
+   *Does NOT Prove:* That `URI` is an authorized SEC standard taxonomy. A filer could bind any prefix to a custom or invalid URI.
+2. **SEC Authority Recognition (Authority Evidence):**
+   The SEC XML catalog (`edgartaxonomies.xml`) maps `URI` to `(Family, Version)`.
+   *Proves:* EDGAR recognizes `URI` as an official standard taxonomy family.
+   *Does NOT Prove:* That any particular filing used it.
+
+**Synthesis:** Linkage requires proving both: the filing document asserts the fact under `URI`, and the authority catalog proves `URI` is standard family `us-gaap`.
+
+---
+
+## 5. Custom Taxonomies & Issuer Extensions
+
+* **Issuer Extension Namespaces:** Namespaces declared by issuers (e.g. `http://apple.com/20260730`) are absent from the SEC XML catalog. They have zero authority recognition and **never** match standard observations.
+* **Custom Prefixes:** If a filer declares `xmlns:mygaap="http://fasb.org/us-gaap/2026"`, ST-EVA resolves the namespace URI per Amendment 3 §1. The arbitrary prefix string `mygaap` is discarded. Because `http://fasb.org/us-gaap/2026` is an authorized URI, it correctly matches standard `us-gaap`.
+* **Custom Concepts:** An extension element `<xs:element name="Revenues">` defined under an issuer targetNamespace shares a local name with standard `Revenues`. Because its resolved namespace URI is the issuer URI, it is refused. Local tag equality never overrides namespace mismatch.
+* **Standard Namespaces Imported by Extensions:** When an extension schema imports `http://fasb.org/us-gaap/2026`, standard facts tagged in the instance carry the standard URI and match. Extension facts carry the issuer URI and stay excluded.
+
+---
+
+## 6. Precise B2 Activation Proposition
+
+For an Observation `obs` and a document fact occurrence `occ`:
+`taxonomy_equivalent(obs, occ)` evaluates to **TRUE** if and only if:
+1. `obs.provider == occ.provider` (e.g. `"SecEdgar"`).
+2. `_local_name(obs.concept) == occ.tag`.
+3. **Authority Recognition:** An authority assertion exists in captured authority evidence proving that `occ.taxonomy` (the resolved URI) belongs to `taxonomy_family == obs.taxonomy` for that provider.
+4. **Filing Concordance:** `occ.accession == obs.accession` and `occ.asset_id == obs.asset_id`.
+
+If Condition 3 is not proven from captured authority evidence:
+`TAXONOMY_UNPROVEN` → 0 `observation_filing_document_facts` rows, 0 `observation_filing_documents` rows.
+
+---
+
+## 7. Data Model Comparison (Option C Adopted)
+
+* **Option A (Authority + Accession in One Relation):** REJECTED. Conflates authority recognition with filing use, multiplies authority rows across millions of accessions, and destroys identity purity.
+* **Option B (Separate Authority and Filing-Use Relations):** REJECTED AS REDUNDANT. `filing_document_fact_occurrences` already records `(document_id, taxonomy)` where `taxonomy` is the resolved URI. A separate `filing_document_taxonomies` table would duplicate existing layer 2 provenance.
+* **Option C (Authority Relation Only; Filing Use Derived from Occurrences):** **ACCEPTED.**
+  An append-only relation `authority_taxonomy_namespaces` records the regulator's authority mapping. Filing use is already captured by `filing_document_fact_occurrences`. B2 checks whether `occurrence.taxonomy` exists in `authority_taxonomy_namespaces` for the observation's provider and family.
+
+### Candidate Schema: `authority_taxonomy_namespaces` (Specification Only — Not Implemented)
+```sql
+CREATE TABLE IF NOT EXISTS authority_taxonomy_namespaces (
+    authority_taxonomy_id TEXT PRIMARY KEY,
+    -- Preimage: {provider, taxonomy_family, taxonomy_version, namespace_uri}
+    authority_taxonomy_identity TEXT NOT NULL UNIQUE,
+    provider              TEXT NOT NULL,
+    taxonomy_family       TEXT NOT NULL,
+    taxonomy_version      TEXT NOT NULL,
+    namespace_uri         TEXT NOT NULL,
+    standard_prefix       TEXT NOT NULL,
+    file_type_name        TEXT NOT NULL,
+    href                  TEXT NOT NULL,
+    authority_source      TEXT NOT NULL, -- e.g. 'https://www.sec.gov/info/edgar/edgartaxonomies.xml'
+    authority_document_id TEXT NOT NULL REFERENCES source_documents(document_id),
+    captured_at           TEXT NOT NULL,
+    FOREIGN KEY (authority_document_id) REFERENCES source_documents(document_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS authority_taxonomy_lookup
+    ON authority_taxonomy_namespaces(provider, namespace_uri, taxonomy_family);
+```
+
+---
+
+## 8. Mutability & Append-Only Semantics
+
+* **Authority Assertions:** Strictly append-only. Immutable once inserted. `BEFORE UPDATE` and `BEFORE DELETE` triggers abort. Updates by the SEC (new catalog versions) insert new rows; existing rows are never modified.
+* **Filing-Use Assertions:** `filing_document_fact_occurrences` is already append-only (guaranteed by triggers in `0021`). No current-value or precedence model is permitted.
+
+---
+
+## 9. Strict Separation from Invariant 19
+
+Taxonomy equivalence evaluates concept semantics; it does **not** evaluate document authoritativeness.
+In the inline XBRL dual-document case (`0000320193-26-000018`):
+- Both `aapl-20260730.htm` (inline HTML) and `aapl-20260730_htm.xml` (EDGAR extraction) declare the identical standard URI `http://fasb.org/us-gaap/2026`.
+- Taxonomy equivalence proves equivalence for **both** documents identically.
+- Both yield valid linked occurrences.
+- Document-grain cardinality is 2.
+- Under Amendment 0 Decision 3 and Amendment 2 §4.5, cardinality 2 yields `DOCUMENTS_AMBIGUOUS` and **zero rows in `observation_filing_documents`**.
+- Taxonomy equivalence cannot break this tie and does not bypass Invariant 19.
+
+---
+
+## 10. Formal Design Decision Matrix & Corrections to Prior Audit
+
+### 10.1 Corrections to Amendment 5 Initial Draft
+1. **CORRECTION on Grain:** The initial draft proposed `(provider, taxonomy_family, namespace_uri) evaluated at accession scope`. This is corrected: accession is excluded from authority identity. Authority identity is `{provider, taxonomy_family, taxonomy_version, namespace_uri}`.
+2. **CORRECTION on Authority Source:** The initial draft characterized EDGAR Standard Taxonomies as "the sole authoritative SEC-side evidence". This is corrected: `edgartaxonomies.xml` is the primary machine-readable operational catalog, governed legally by the EDGAR Filer Manual and technically by standard entry point schemas.
+
+### 10.2 Decision Matrix
+
+| Item | Question | Formal Decision |
+|---|---|---|
+| **A** | **Authority identity grain** | `{provider, taxonomy_family, taxonomy_version, namespace_uri}`. Accession is excluded. |
+| **B** | **Version required?** | **Yes.** Required to capture exact SEC release metadata (e.g. `2026`, `2025q4`) and prevent fragile regex URI parsing. |
+| **C** | **Exact SEC authority sources** | Hierarchy: 1) `edgartaxonomies.xml` (machine-readable), 2) EDGAR Filer Manual (regulatory), 3) `.xsd` entry points (technical). Guidance documents excluded. |
+| **D** | **Accession in authority identity?** | **No.** Conflating authority recognition with filing use is rejected. |
+| **E** | **Separate filing-use assertion table?** | **No (Option C adopted).** Filing use is already captured in `filing_document_fact_occurrences.taxonomy`. |
+| **F** | **Evidence to activate B2** | Captured SEC authority document in `source_documents` + parsed authority rows + exact value/unit/context match + candidate document cardinality == 1. |
+| **G** | **UNAVAILABLE cases** | Issuer extension namespaces, unmapped URIs, non-SEC sources, unmodelled taxonomies lacking URI mappings, and candidate document cardinality >= 2. |
+| **H** | **Migration implications** | Requires a future forward-only migration for `authority_taxonomy_namespaces`. No changes to existing tables. |
+| **I** | **Amendment 5 corrected?** | **Yes.** Corrected in §§1–10 of this record. |
+| **J** | **B2 unchanged?** | **Yes.** B2 implementation and linkage logic remain 100% unchanged. |
