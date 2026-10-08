@@ -118,19 +118,24 @@ class RecordingProvider:
         self.index_calls = 0
         self.document_endpoints_called: List[str] = []
 
-    # -- documents this phase must never reach -------------------------
+    # -- resources this phase must never reach -------------------------
+    #
+    # Phase 2B authorises the two manifests, so they are served -- as `None`,
+    # meaning "this provider has nothing for that accession", which is what a
+    # bootstrap archive or a provider without Archives access looks like. What is
+    # never authorised at any phase so far is an individual document.
 
-    def filing_directory(self, *args: Any, **kwargs: Any) -> None:
+    def filing_directory(self, cik: str, accession: str) -> None:
         self.document_endpoints_called.append("filing_directory")
-        raise AssertionError("Phase 2A must not fetch a filing directory")
+        return None
 
-    def full_submission(self, *args: Any, **kwargs: Any) -> None:
+    def full_submission(self, cik: str, accession: str) -> None:
         self.document_endpoints_called.append("full_submission")
-        raise AssertionError("Phase 2A must not fetch a full submission")
+        return None
 
     def filing_document(self, *args: Any, **kwargs: Any) -> None:
         self.document_endpoints_called.append("filing_document")
-        raise AssertionError("Phase 2A must not fetch a filing document")
+        raise AssertionError("no phase so far may fetch a filing document")
 
     # -- the endpoints Phase 2A does use -------------------------------
 
@@ -756,30 +761,36 @@ class TestIngestionCompatibility(AcquisitionBase):
             sources,
         )
 
-    def test_no_document_endpoint_is_reached(self):
+    def test_no_individual_document_is_requested(self):
+        """Phase 2A and Phase 2B may read manifests; neither may read a document."""
         self.ingestor.ingest(TICKER, metrics=["eps_diluted"], forms=["8-K"])
-        self.assertEqual([], self.provider.document_endpoints_called)
+        self.assertNotIn("filing_document", self.provider.document_endpoints_called)
 
-    def test_no_sgml_parser_is_reachable_from_the_ingestor(self):
-        """Phase 2A reads no SGML, and says so in code rather than in a comment."""
+    def test_no_bytes_no_statements_and_no_observation_linkage(self):
+        """Everything Phase 3 would do, none of which exists yet."""
+        self.ingestor.ingest(TICKER, metrics=["eps_diluted"], forms=["8-K"])
+        for table in ("filing_document_captures", "filing_document_statements",
+                      "observation_filing_documents"):
+            self.assertEqual(0, self.count(table), table)
+
+    def test_no_sgml_producer_is_reached_without_a_submission(self):
+        """Phase 2A reads no SGML. The manifests serve `None`, so none is reached."""
         import sec_ingest
 
-        for name in ("parse_full_submission", "parse_sgml_header",
-                     "parse_filing_directory", "FilingDirectory",
-                     "FullSubmission", "SubmissionHeader"):
+        for name in ("FullSubmission", "SubmissionHeader"):
             self.assertFalse(hasattr(sec_ingest, name), name)
-        # The vocabulary names appear only in the comment that explains why the
-        # phase does not use them, so the test asserts the absence of rows
-        # instead of the absence of the word.
         self.ingestor.ingest(TICKER, metrics=["eps_diluted"], forms=["8-K"])
         for source, table in (
             ("SGML_SUBMISSION_HEADER", "filing_declarations"),
             ("SGML_ITEM_INFORMATION", "filing_item_declarations"),
             ("SGML_HEADER_FISCAL_YEAR_END",
              "issuer_fiscal_calendar_declarations"),
+            ("SGML_HEADER_ACCEPTANCE_DATETIME", "filing_acceptances"),
         ):
             self.assertEqual(
-                0, self.count(table, "declaration_source = ?", source),
+                0, self.count(table, "declaration_source = ?", source)
+                if table != "filing_acceptances" else
+                self.count(table, "acceptance_source = ?", source),
                 f"{table} asserted a {source} declaration",
             )
 

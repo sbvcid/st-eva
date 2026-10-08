@@ -60,6 +60,7 @@ from sec_provenance import (
     fiscal_calendar_declaration_id,
     filing_acceptance_id,
     filing_declaration_id,
+    filing_document_declaration_id,
     filing_item_declaration_id,
     filing_item_id,
     parse_items,
@@ -584,6 +585,12 @@ class Ingestor:
             self._acquire_fiscal_calendar(asset_id, submission)
         except Exception as error:  # noqa: BLE001
             self._record_provenance_failure("fiscal_calendar", error)
+        # B1 and B2: the two manifests, fetched and written separately so that
+        # one being unreadable does not discard the other.
+        try:
+            self._acquire_filing_manifests(asset_id, cik, index)
+        except Exception as error:  # noqa: BLE001
+            self._record_provenance_failure("filing_manifests", error)
 
         if not new_entries:
             # Nothing new was accepted, so no concept endpoint can have
@@ -1499,6 +1506,266 @@ class Ingestor:
             asset_id, accession, self.FACT_RECORD, utc_now(), "FIRST_HAND",
             form=form, filing_date=filed,
         )
+
+    # -- provenance: filing manifests (0020, Phase 2B) -----------------
+    #
+    # Two acquisitions, kept apart on purpose.
+    #
+    #   B1  the filing's directory listing, which is the only resource that
+    #       enumerates a filing's files and the only one whose filenames are a
+    #       filesystem identity within that filing
+    #   B2  the full submission, which is the only resource that names the SEC
+    #       `<TYPE>` of each document and carries the filing's SGML header
+    #
+    # They are separate requests, separate parses and separate write phases, and
+    # they commit independently. A filing whose submission is unreadable still
+    # has its directory and its documents; a filing whose directory is unreadable
+    # still has its header. Merging them into one operation would mean a single
+    # 404 throws away whichever answer did arrive.
+    #
+    # **No document bytes are fetched here.** An individual document is not
+    # requested, its content is not read, and `filing_document_captures` and
+    # `filing_document_statements` stay empty. A filename from either manifest is
+    # a declaration that such a document exists, not a copy of it.
+
+    MANIFEST_DIRECTORY = "EDGAR_FILING_DIRECTORY_INDEX_JSON"
+    MANIFEST_SUBMISSION = "EDGAR_FULL_SUBMISSION_TEXT"
+    SGML_FILING_DECLARATION = "SGML_SUBMISSION_HEADER"
+    SGML_ITEMS = "SGML_ITEM_INFORMATION"
+    SGML_ACCEPTANCE = "SGML_HEADER_ACCEPTANCE_DATETIME"
+    SGML_FISCAL_YEAR_END = "SGML_HEADER_FISCAL_YEAR_END"
+
+    def _acquire_filing_manifests(
+        self,
+        asset_id: str,
+        cik: str,
+        index: List[Dict[str, Any]],
+    ) -> None:
+        """Run B1 and B2 for every accession the index listed."""
+        for entry in index:
+            accession = str(entry.get("accession") or "")
+            if not accession:
+                continue
+            # B1 and B2 are independent, so a failure in one is not allowed to
+            # stop the other. Each writes only after its own fetch has parsed.
+            for unit, acquire in (
+                ("directory", self._acquire_filing_directory),
+                ("submission", self._acquire_full_submission),
+            ):
+                try:
+                    acquire(asset_id, cik, accession)
+                except Exception as error:  # noqa: BLE001
+                    self._record_provenance_failure(f"{unit}:{accession}",
+                                                     error)
+
+    def _acquire_filing_directory(
+        self,
+        asset_id: str,
+        cik: str,
+        accession: str,
+    ) -> None:
+        """
+        B1: read one filing's directory listing and record what it declares.
+
+        Every entry becomes a declaration in EDGAR's own order. `sec_document_type`
+        is left unset, because `index.json` does not publish one -- its `type` is
+        a MIME type such as `text.gif`, and this is the place where confusing the
+        two would let a MIME string be read as an exhibit name.
+
+        Filing identities are minted here and only here, and only for a filename
+        the listing declared exactly once. A filename declared twice leaves both
+        declarations standing and mints nothing: an unresolved document is a
+        truthful state, and one identity row standing for two would be a merge
+        that nothing in the data supports.
+        """
+        if not hasattr(self.provider, "filing_directory"):
+            return
+        directory = self.provider.filing_directory(cik, accession)
+        if directory is None:
+            return
+        self.store.record_filing(asset_id, accession, utc_now())
+        declared_at = utc_now()
+        for entry in directory.entries:
+            self.store.record_filing_document_declaration(
+                filing_document_declaration_id(
+                    asset_id, accession, self.MANIFEST_DIRECTORY,
+                    entry.source_ordinal, entry.filename,
+                    mime_type=entry.mime_type, byte_size=entry.byte_size,
+                ),
+                asset_id, accession, self.MANIFEST_DIRECTORY,
+                entry.source_ordinal, declared_at, "FIRST_HAND",
+                filename=entry.filename, mime_type=entry.mime_type,
+                byte_size=entry.byte_size, last_modified=entry.last_modified,
+            )
+        self._mint_filing_documents(
+            asset_id, accession, directory.entries, declared_at
+        )
+
+    def _mint_filing_documents(
+        self,
+        asset_id: str,
+        accession: str,
+        entries: Any,
+        declared_at: str,
+    ) -> None:
+        """
+        Mint one identity per filename the directory listing declared once.
+
+        A filename appearing more than once is counted before anything is
+        written, and the count is what decides: the database trigger refuses an
+        ambiguous identity too, but a refusal there would abort the whole
+        declaration phase, whereas here the duplicate is skipped, reported, and
+        every other document in the filing is still recorded.
+        """
+        names = [entry.filename for entry in entries if entry.filename]
+        for name in sorted(set(names)):
+            if names.count(name) > 1:
+                self._record_provenance_failure(
+                    f"duplicate_filename:{accession}:{name}",
+                    ValueError(
+                        "the directory listing declared this filename more"
+                        " than once, so no document identity was minted; the"
+                        " declarations are kept and the document is unresolved"
+                    ),
+                )
+                continue
+            self.store.record_filing_document(
+                asset_id, accession, name, declared_at
+            )
+
+    def _acquire_full_submission(
+        self,
+        asset_id: str,
+        cik: str,
+        accession: str,
+    ) -> None:
+        """
+        B2: read one filing's full submission and record its header and documents.
+
+        The header's declarations and the document sequence are written from one
+        response, so they are consistent with each other. Neither mints a filing
+        document identity and neither captures bytes.
+        """
+        if not hasattr(self.provider, "full_submission"):
+            return
+        submission = self.provider.full_submission(cik, accession)
+        if submission is None:
+            return
+        self.store.record_filing(asset_id, accession, utc_now())
+        declared_at = utc_now()
+        self._record_sgml_documents(asset_id, accession, submission, declared_at)
+        self._record_sgml_header(asset_id, cik, accession, submission.header,
+                                 declared_at)
+
+    def _record_sgml_documents(
+        self,
+        asset_id: str,
+        accession: str,
+        submission: Any,
+        declared_at: str,
+    ) -> None:
+        """
+        One declaration per `<DOCUMENT>` block, in the submission's own order.
+
+        The same `<TYPE>XML</TYPE>` repeats -- one filing carried 62 of them --
+        so neither the type nor the position can be an identity, and a block with
+        no `<FILENAME>` is recorded with the filename absent rather than skipped.
+        Nothing here creates a document identity: this sequence says what the
+        filing declared, and identity is minted from the directory listing.
+        """
+        for document in submission.documents:
+            self.store.record_filing_document_declaration(
+                filing_document_declaration_id(
+                    asset_id, accession, self.MANIFEST_SUBMISSION,
+                    document.source_ordinal, document.filename,
+                    sec_document_type=document.sec_document_type,
+                    description=document.description,
+                ),
+                asset_id, accession, self.MANIFEST_SUBMISSION,
+                document.source_ordinal, declared_at, "FIRST_HAND",
+                filename=document.filename,
+                sec_document_type=document.sec_document_type,
+                description=document.description,
+            )
+
+    def _record_sgml_header(
+        self,
+        asset_id: str,
+        cik: str,
+        accession: str,
+        header: Any,
+        declared_at: str,
+    ) -> None:
+        """
+        The header's own assertions, each under its own producer.
+
+        `form` and `conformed_period_of_report` are the header's declarations and
+        belong to `SGML_SUBMISSION_HEADER`; they do not amend what the submissions
+        index said, because two sources disagreeing is a fact worth keeping and
+        silently preferring one is not.
+
+        `FILED AS OF DATE` is deliberately absent here. It is the day the filing
+        was accepted for dissemination, which is a filing attribute, and it is not
+        an acceptance *instant*: only `ACCEPTANCE-DATETIME` is, and that is the
+        only header field that reaches `filing_acceptances`.
+
+        The item titles are recorded as one declaration and no per-item rows are
+        written. `filing_items.item_code` is NOT NULL, and the SGML header names
+        its items rather than coding them -- storing a title in a column named
+        `code` would be the MIME-versus-SEC-type confusion one layer up. The
+        declaration keeps the titles verbatim, so nothing is lost and the join can
+        be completed once the schema question is decided.
+        """
+        self.store.record_filing_declaration(
+            filing_declaration_id(
+                asset_id, accession, self.SGML_FILING_DECLARATION,
+                form=header.conformed_submission_type,
+                filing_date=header.filed_as_of_date,
+                report_date=header.conformed_period_of_report,
+                conformed_period_of_report=header.conformed_period_of_report,
+                public_document_count=header.public_document_count,
+            ),
+            asset_id, accession, self.SGML_FILING_DECLARATION, declared_at,
+            "FIRST_HAND",
+            form=header.conformed_submission_type,
+            filing_date=header.filed_as_of_date,
+            report_date=header.conformed_period_of_report,
+            conformed_period_of_report=header.conformed_period_of_report,
+            public_document_count=header.public_document_count,
+        )
+
+        if header.acceptance_datetime:
+            self.store.record_filing_acceptance(
+                filing_acceptance_id(
+                    asset_id, accession, self.SGML_ACCEPTANCE,
+                    header.acceptance_datetime, "INSTANT",
+                    header.acceptance_datetime,
+                ),
+                asset_id, accession, self.SGML_ACCEPTANCE, "INSTANT",
+                declared_at, "FIRST_HAND",
+                acceptance_datetime=header.acceptance_datetime,
+                raw_value=header.acceptance_datetime,
+            )
+
+        if header.item_information:
+            raw = "\n".join(header.item_information)
+            self.store.record_filing_item_declaration(
+                filing_item_declaration_id(
+                    asset_id, accession, self.SGML_ITEMS, raw
+                ),
+                asset_id, accession, self.SGML_ITEMS, raw, declared_at,
+                "FIRST_HAND", declared_item_count=header.item_information_count,
+            )
+
+        fiscal = header.fiscal_year_end
+        if fiscal and re.fullmatch(r"\d{4}", fiscal):
+            self.store.record_fiscal_calendar_declaration(
+                fiscal_calendar_declaration_id(
+                    asset_id, fiscal, self.SGML_FISCAL_YEAR_END, accession
+                ),
+                asset_id, fiscal, self.SGML_FISCAL_YEAR_END, declared_at,
+                "FIRST_HAND", declaring_accession=accession,
+            )
 
     def _store_facts(
         self,
