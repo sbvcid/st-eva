@@ -133,6 +133,12 @@ CLASSIFIER_COLUMNS: Tuple[str, ...] = (
 
 DEFAULT_SPANS = [{"start": 30537, "end": 30926, "xpath": "//ix:nonFraction[1]"}]
 
+#: The approved schema head, frozen. A regression that drops, reorders or
+#: renames any approved migration must fail here rather than silently follow
+#: the file count. Moving to 0023 is a new phase and must amend this number
+#: deliberately; the test must not adopt a future head on its own.
+EXPECTED_MIGRATION_HEAD = 22
+
 
 # ---------------------------------------------------------------------------
 # Identity, in the repository's own convention
@@ -442,17 +448,45 @@ class TestMigrationApplies(FactOccurrenceArchive):
             row["version"] for row in self.connection.execute(
                 "SELECT version FROM schema_migrations ORDER BY version")
         ]
-        total = len(list(Path(archive_module.MIGRATIONS_DIR).glob("*.sql")))
-        self.assertEqual(versions, list(range(1, total + 1)))
+        self.assertEqual(len(versions), EXPECTED_MIGRATION_HEAD,
+                         "the migration ledger must hold exactly the approved"
+                         " head")
+        self.assertEqual(versions,
+                         list(range(1, EXPECTED_MIGRATION_HEAD + 1)))
         self.assertEqual(
-            self.connection.execute("PRAGMA user_version").fetchone()[0], total)
+            self.connection.execute("PRAGMA user_version").fetchone()[0],
+            EXPECTED_MIGRATION_HEAD)
+
+    def test_migration_0022_is_present_and_applied(self):
+        """The approved head is 0022: on disk, in the ledger, applied."""
+        migration_file = Path(archive_module.MIGRATIONS_DIR) / (
+            "0022_authority_taxonomy_namespaces.sql")
+        self.assertTrue(
+            migration_file.is_file(),
+            "0022_authority_taxonomy_namespaces.sql is missing from"
+            " the migration directory")
+        row = self.connection.execute(
+            "SELECT version, name FROM schema_migrations WHERE version = ?",
+            (EXPECTED_MIGRATION_HEAD,)).fetchone()
+        self.assertIsNotNone(
+            row, "0022 is not recorded in the migration ledger")
+        self.assertEqual("authority_taxonomy_namespaces", row["name"])
+        self.assertTrue(
+            self.connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table'"
+                " AND name = 'authority_taxonomy_namespaces'").fetchone(),
+            "0022 did not apply its relation")
 
     def test_reopening_applies_nothing_further(self):
         self.store.close()
         reopened = SQLiteArchive(":memory:")
-        total = len(list(Path(archive_module.MIGRATIONS_DIR).glob("*.sql")))
         try:
-            self.assertEqual(total, self.connection_count_of(reopened))
+            self.assertEqual(EXPECTED_MIGRATION_HEAD,
+                             self.connection_count_of(reopened))
+            self.assertEqual(
+                EXPECTED_MIGRATION_HEAD,
+                reopened.connection.execute(
+                    "PRAGMA user_version").fetchone()[0])
         finally:
             reopened.close()
 
@@ -1097,10 +1131,11 @@ class TestPreMigrationGate(unittest.TestCase):
         archive_module.MIGRATIONS_DIR = self.real_migrations
         reopened = SQLiteArchive(self.path)
         try:
-            total = len(list(Path(archive_module.MIGRATIONS_DIR).glob("*.sql")))
-            self.assertEqual(total, reopened.connection.execute(
-                "PRAGMA user_version").fetchone()[0])
+            self.assertEqual(EXPECTED_MIGRATION_HEAD,
+                             reopened.connection.execute(
+                                 "PRAGMA user_version").fetchone()[0])
             self.assertIn(OCCURRENCES, self.master_names())
+            self.assertIn("authority_taxonomy_namespaces", self.master_names())
         finally:
             reopened.close()
 

@@ -587,46 +587,43 @@ class TestKnowledgeStateStaysSeparate(unittest.TestCase):
         self.query.close()
         self.connection.close()
 
-def test_the_two_mechanisms_are_not_merged_into_one_field(self) -> None:
-    """
-    A single legacy debt row, three independent answers.
+    def test_the_two_mechanisms_are_not_merged_into_one_field(self) -> None:
+        """
+        A single legacy debt row, three independent answers.
 
-    The repaired rows are the IFRS ones. Those concepts now have an authorised
-    metric destination, but *this* row's `period_end` precedes the mapping's
-    window, so the destination is still unresolved here -- for the window
-    reason, not because nothing claims the concept. Stored metric identity is
-    therefore kept, metric destination explicitly unresolved, and the unit
-    corrected: three questions, three fields, none of them answering for
-    another. Module-level and uncollected at HEAD; 2.73 only corrected the
-    description.
-    """
-    row = self.connection.execute(
-        "SELECT o.*, a.ticker FROM observations o"
-        " JOIN interpretations i ON i.source_fact_id = o.source_fact_id"
-        " JOIN assets a ON a.asset_id = o.asset_id"
-        " WHERE o.concept = ? AND o.metric = ? LIMIT 1",
-        (IFRS_NONCURRENT, LEGACY)).fetchone()
-    self.assertIsNotNone(row, "no repaired IFRS debt row to exercise")
-    package = self.query.get_observation(row["contract_id"])
-    semantic = package["semantic"]
-    inherited = semantic["inherited_mapping"]
+        The repaired rows are the IFRS ones. Those concepts now have an authorised
+        metric destination, but *this* row's `period_end` precedes the mapping's
+        window, so the destination is still unresolved here -- for the window
+        reason, not because nothing claims the concept. Stored metric identity is
+        therefore kept, metric destination explicitly unresolved, and the unit
+        corrected: three questions, three fields, none of them answering for
+        another.
+        """
+        row = self.connection.execute(
+            "SELECT o.*, a.ticker FROM observations o"
+            " JOIN interpretations i ON i.source_fact_id = o.source_fact_id"
+            " JOIN assets a ON a.asset_id = o.asset_id"
+            " WHERE o.concept = ? AND o.metric = ? LIMIT 1",
+            (IFRS_NONCURRENT, LEGACY)).fetchone()
+        self.assertIsNotNone(row, "no repaired IFRS debt row to exercise")
+        package = self.query.get_observation(row["contract_id"])
+        semantic = package["semantic"]
+        inherited = semantic["inherited_mapping"]
 
-    # 1. Stored metric identity is untouched.
-    self.assertEqual(package["metric"], LEGACY)
-    self.assertEqual(semantic["stored_metric"], LEGACY)
-    # 2. Metric destination is a separate, unresolved answer.
-    self.assertEqual(inherited["status"],
-                     "UNRESOLVED_NO_APPLICABLE_MAPPING")
-    self.assertFalse(inherited["resolved"])
-    # 3. The unit correction is a third answer, and it is applied.
-    self.assertEqual(package["unit"], "currency")
-    self.assertIsNotNone(package["currency"])
-    self.assertEqual(row["unit"], "ratio")
-    # The two mechanisms do not leak into each other's fields.
-    self.assertNotIn("unit", inherited)
-    self.assertNotIn("knowledge_at", semantic.get("stored_metric", ""))
-
-test_the_two_mechanisms_are_not_merged_into_one_field.__test__ = False
+        # 1. Stored metric identity is untouched.
+        self.assertEqual(package["metric"], LEGACY)
+        self.assertEqual(semantic["stored_metric"], LEGACY)
+        # 2. Metric destination is a separate, unresolved answer.
+        self.assertEqual(inherited["status"],
+                         "UNRESOLVED_NO_APPLICABLE_MAPPING")
+        self.assertFalse(inherited["resolved"])
+        # 3. The unit correction is a third answer, and it is applied.
+        self.assertEqual(package["unit"], "currency")
+        self.assertIsNotNone(package["currency"])
+        self.assertEqual(row["unit"], "ratio")
+        # The two mechanisms do not leak into each other's fields.
+        self.assertNotIn("unit", inherited)
+        self.assertNotIn("knowledge_at", semantic.get("stored_metric", ""))
 
 
 class TestLegacyArchives(unittest.TestCase):
