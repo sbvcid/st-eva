@@ -1978,3 +1978,220 @@ From ADR Amendment 6 §7 / §8 / Amendment 5 / this audit. No silent assumption;
 ---
 
 *Design freeze complete. No ingestion executed. No 0022 edit. No Observation / B2 / dfid_ / sfid_ change. No new specification file created (update to existing ADR only). Freeze preserved for future authorization.
+
+---
+
+# Amendment 7 — Claim-Specific Evidence Sufficiency (C4I)
+
+**Status:** FROZEN — methodology / ADR only. No implementation authorization.
+**Date:** 2026-10-09
+**Baseline:** `d067444`. C4F `d067444`, C4C `879cacb`, and C4B `a7effc6` are sealed.
+**Refines:** Amendments 4–6 and their taxonomy / authority evidence boundaries.
+**Current C4G status:** `NOT SEALABLE`; its uncommitted candidate changes are outside this amendment and must remain untouched until separately authorized.
+
+This amendment defines how ST-EVA judges whether evidence is sufficient for a
+particular claim. It does not rank sources, define source precedence, combine
+grades, or select a winner. It records current sufficiency without deleting or
+rewriting the historical design decisions above. Where an earlier amendment
+describes a proposed bridge or activation design, that description is not itself
+evidence that the current cross-source claim has been proven.
+
+## 1. Evidence-Form Labels
+
+The labels below describe the form of support for one claim. They are not an
+ordinal scale, source ranking, authority hierarchy, global score, or input to a
+winner-selection rule. No grade may be summed with another grade or used to
+prefer one source over another.
+
+| Label | Evidence form | Meaning |
+|---|---|---|
+| `E0` | Unavailable | No admissible evidence is currently available for this claim. This does not establish that the claim is false. |
+| `E1` | Single-source direct observation | One source directly states or exhibits the proposition, within that source's scope. |
+| `E2` | Same-source structured relation | One source contains a structured row, identity, or scope relation connecting the relevant fields. |
+| `E3` | Independent corroboration | Multiple authoritative sources with independent provenance separately support the same explicitly stated claim. Separate support for two component claims does not prove a relation between them. |
+| `E4` | Explicit cross-source contract | An authoritative contract or schema explicitly defines the relationship between the named source fields or vocabularies. |
+
+Sufficiency is claim-specific. An `E1` direct statement may be sufficient for a
+single-source field-definition claim and insufficient for a cross-source
+equivalence claim. In particular, `E3` support for each side of a proposed
+relationship is not a substitute for `E4` evidence of that relationship.
+
+The matrix statuses are also claim outcomes, not grades:
+
+| Status | Meaning |
+|---|---|
+| `SUPPORTED` | The minimum admissible evidence for the stated scope is present. |
+| `CONDITIONAL` | The claim is supportable only when the required captured source bytes and scope evidence are available. |
+| `NOT PROVEN` | Some component claims may be supported, but a required relation or bridge is not. |
+| `UNAVAILABLE` | The source evidence needed to evaluate the claim is not present in the current evidence set. This does not mean the claim is false. |
+
+## 2. Claim-Specific Evidence Sufficiency Matrix
+
+The C1 and C2 current statuses reflect the C4G SEC-source audit: SEC material
+describes the Company Concept API taxonomy token as a taxonomy identifier and
+describes catalog namespace prefixes and their relationship to namespace URIs.
+Those findings are limited to the individual fields and do not establish C3.
+
+| Claim | Required Evidence | Current Evidence | Sufficiency Status | Allowed Use |
+|---|---|---|---|---|
+| **C1. Company Concept API `taxonomy` field semantics** | At least `E1`: SEC documentation or response semantics directly describing that API field. | The C4G source audit supports the narrow description “standard taxonomy identifier/token.” It does not define this field as the catalog `<Prefix>` vocabulary. | **SUPPORTED — narrow field semantics** | Describe the API field as SEC's taxonomy identifier/token. Do not infer a QName-prefix contract from this claim. |
+| **C2. SEC taxonomy catalog `<Prefix>` semantics** | At least `E1` for field meaning; `E2` for a particular catalog row and its associated fields. | SEC taxonomy material describes standard namespace prefixes and their relationship to namespace URIs/releases. | **SUPPORTED — narrow field semantics** | Interpret `<Prefix>` within the catalog's own vocabulary. Do not equate it with the API field based only on spelling. |
+| **C3. Company Concept `taxonomy=P` and catalog `<Prefix>=P` share one controlled vocabulary** | `E4`: an explicit authoritative contract connecting the Company Concept field to the catalog `<Prefix>` field/vocabulary. | C1 and C2 have separate support; no explicit cross-source contract has been established. Lexical equality is not that contract. | **NOT PROVEN** | Do not create or consume a cross-source prefix mapping. C1 plus C2 cannot be promoted to C3. |
+| **C4. Filing-local namespace binding `P → U`** | `E1`: actual `xmlns:P="U"` in captured bytes. To claim a fact uses that binding, also establish `E2`: the declaration is in scope for that fact QName. | The XBRL parser constructs in-scope namespace bindings and resolves fact QNames. The current occurrence output stores the URI, not the original prefix/declaration; retained filing bytes can be re-parsed. | **CONDITIONAL** on captured bytes and scope reconstruction | State only that this filing document declares/uses `P → U` in the evidenced scope. This does not prove taxonomy authority or historical validity. |
+| **C5. Authority catalog assertion `P + Family + Version + U`** | `E2`: the fields occur together in a particular captured official authority-document row, linked to that document's exact bytes and identity. | Migration `0022` defines a schema for authority assertions. The repository has only a synthetic catalog fixture for parser tests, not a production-captured catalog assertion. | **UNAVAILABLE** for a production assertion | Use schema and fixture to test parser/model behavior only. Never describe the synthetic fixture as production authority evidence. |
+| **C6. Filing occurrence uses namespace URI `U`** | `E2`: source-backed QName resolution tied to the captured filing document and a locatable occurrence. | The parser resolves the QName to a namespace URI, and `filing_document_fact_occurrences` stores that URI with the source document and occurrence evidence. Availability depends on the corresponding captured bytes. | **CONDITIONAL** on captured, locatable occurrence evidence | State that the specific occurrence uses URI `U`. Do not infer that `U` is standard or belongs to a particular family. |
+| **C7. Observation and filing occurrence taxonomy representations are equivalent** | An admissible bridge explicitly relating the Observation representation to the filing QName/URI representation (a general `E4` contract is one possible route), plus source-backed `E2` occurrence and exact fact-level correspondence. | C3 is not proven; filing-local `P → U` proves only the filing's binding. Accession/source-fact identity scopes an Observation to a filing but does not define the API taxonomy vocabulary. | **NOT PROVEN**; production result remains `TAXONOMY_UNPROVEN` | No taxonomy-equivalence claim and no exact Observation-to-occurrence link. |
+| **C8. Filing occurrence's taxonomy family** | `E2`: a captured authority row relates the occurrence URI `U` to the stated Family/Version. Preserve all conflicting or multiple assertions; do not choose a family by preference. | No production-captured catalog assertion is present in the current evidence set; the schema and synthetic fixture are not such an assertion. | **UNAVAILABLE** for a production classification | If an exact authority row is later captured, report what that row asserts for `U`. This alone does not establish C7 or historical validity. |
+| **C9. Filing-date historical authority validity** | A historical authority source applicable to the filing date, plus explicit evidence of the release's effective/applicable period at that date. | No historical catalog snapshot or filing-date authority applicability evidence is available. A current catalog describes its own captured state, not an earlier filing-date state. | **UNAVAILABLE / UNPROVEN** | Do not infer filing-date validity from a current catalog, a filing-local declaration, a namespace URI, or an accession. |
+| **C10. Exact source document assertion** | Exact Observation-to-occurrence correspondence, filing concordance, all applicable fact/context predicates, and a complete candidate set with cardinality exactly one at `(asset_id, accession, filename)`. | C7 is not proven for the production prefix/URI representations. The current C4G candidate also has an untyped direct-equality bypass and can discard taxonomy-refused candidates before exact-source cardinality. | **UNAVAILABLE** for the current C4G production case | Do not write `observation_filing_documents` unless the exact assertion and full cardinality precondition are proven. This relation remains `EXACT_SOURCE_DOCUMENT_ASSERTION`, never a candidate set. |
+
+For C5 and C8, schema existence, successful parser tests, and a synthetic fixture
+are not production authority assertions. A production assertion requires the
+actual captured authority document bytes and a parsed row whose provenance points
+to those bytes.
+
+## 3. Non-Transitive Equivalence Boundaries
+
+The following are three different claims and are not interchangeable:
+
+1. **Lexical equality:** the strings are identical, for example `"us-gaap" == "us-gaap"`.
+2. **Vocabulary equivalence:** two source fields use the same controlled vocabulary.
+3. **Semantic taxonomy equivalence:** a particular Observation and a particular filing fact belong to the same taxonomy representation.
+
+The implications are frozen as:
+
+```text
+1 does not prove 2
+2 does not prove 3
+```
+
+C3 requires evidence of the cross-source vocabulary relationship. C7 additionally
+requires evidence that the Observation corresponds to the particular filing
+occurrence. A matching spelling alone cannot discharge either requirement.
+
+## 4. Authority, Filing Use, and Historical Validity
+
+These are independent evidence layers with separate claims and identity grains:
+
+| Layer | Claim | What it establishes | What it does not establish |
+|---|---|---|---|
+| **Authority assertion** | Authority document `D` asserts `P / Family / Version / U`. | The exact statement contained in that captured authority document. | That a particular filing used `U`, or that the assertion was valid on a historical filing date. |
+| **Filing-local assertion** | Filing document `D'` binds `P → U` in scope `S`, and a fact QName uses that binding. | The namespace binding and URI used by that occurrence in those captured filing bytes. | That `U` is an SEC-authorized standard taxonomy or that the binding was historically valid as an authority matter. |
+| **Historical authority validity** | The authority relationship applied at filing date `T`. | Only what a date-applicable historical authority source and effective-period evidence establish. | It cannot be inferred merely from a current catalog row or from filing-local namespace syntax. |
+
+Neither an authority assertion nor a filing-local assertion proves
+`HISTORICAL_AUTHORITY_VALIDITY`. A current SEC catalog is not, by itself, proof of
+filing-date validity. Historical catalog acquisition and date-applicability
+analysis remain a separate future evidence phase.
+
+C7 representation equivalence and C9 historical validity are separate claims.
+The absence of C9 evidence does not, by itself, disprove a representation bridge;
+however, C7 still requires its own admissible Observation-to-occurrence bridge and
+is currently `NOT PROVEN` for the reason stated in the matrix.
+
+## 5. Exact-Source Candidate Cardinality Invariant
+
+The following invariant applies independently of taxonomy sufficiency:
+
+> **`TAXONOMY_REFUSAL_MUST_NOT_SHRINK_EXACT_SOURCE_CANDIDATES`**
+
+An occurrence that satisfies the applicable pre-taxonomy candidate predicates but
+has `TAXONOMY_UNPROVEN` or `TAXONOMY_AMBIGUOUS` must not be silently removed in a
+way that upgrades the remaining source set from cardinality 2 to cardinality 1.
+If an unresolved or ambiguous competing candidate could change the exact-source
+result, the exact-source assertion remains unresolved; taxonomy refusal is not
+evidence that the candidate does not exist.
+
+The candidate-document identity grain remains exactly:
+
+```text
+(asset_id, accession, filename)
+```
+
+Authority-row count, capture-row count, and `document_id` count must not replace
+that grain. Candidate state is not written to `observation_filing_documents`:
+that relation remains exclusively `EXACT_SOURCE_DOCUMENT_ASSERTION`, with zero
+rows when unresolved and a row only when the exact assertion's full preconditions
+are met. No confidence score or tie-break is introduced.
+
+## 6. Direct Equality Is Not a Production Bridge
+
+In the production representations described in Amendment 4, an Observation's
+`taxonomy` is a prefix/token while a filing occurrence's `taxonomy` is a resolved
+namespace URI. Therefore:
+
+```text
+occurrence.taxonomy == observation.taxonomy
+```
+
+proves at most lexical equality of the stored strings. It does not prove
+vocabulary equivalence or semantic taxonomy equivalence. An untyped direct-equality
+branch that returns `MATCHED` before authority/bridge evidence is checked is a B2
+defect, not a permitted shortcut. The production result must remain
+`TAXONOMY_UNPROVEN` until the applicable claim-specific evidence is sufficient.
+
+This clarification does not prohibit equality between values whose identical
+representation semantics have independently been established. It prohibits using
+raw string equality alone to bypass the production prefix-to-URI evidence gate.
+
+## 7. Clarification of Existing Source-Hierarchy Wording
+
+Amendment 5 §3 and its decision summary use “hierarchy” and “authority level”
+wording to describe SEC source roles. That historical text is retained; this
+amendment does not delete or rewrite it. For evidence sufficiency and conflict
+handling, those labels must not be read as global source precedence.
+
+In particular, neither an evidence grade nor an `authority_source_class` such as
+`REGULATORY_MANUAL` or `MACHINE_READABLE_CATALOG` is a global winner key. A rule
+such as `REGULATORY_MANUAL > MACHINE_READABLE_CATALOG` must not automatically select
+one assertion when sources differ. Evidence conflicts require a claim-specific
+reconciliation rule. Until such a rule is established and its claim is met,
+retain the source assertions and report the conflict as unresolved/ambiguous;
+do not silently discard or rank them.
+
+This clarification is not a new source hierarchy. It separates source role and
+legal function from the form and sufficiency of evidence for a particular claim.
+
+## 8. C4G Status and Re-Authorization Boundary
+
+C4G taxonomy correction is **PAUSED**, not permanently prohibited. C7 remains
+`NOT PROVEN`; therefore production B2 must continue to return
+`TAXONOMY_UNPROVEN` for the unresolved prefix/URI representation bridge, with no
+`observation_filing_document_facts` or `observation_filing_documents` assertion
+based on that bridge.
+
+For avoidance of doubt, Amendment 5 §6 and Amendment 6 §15.12 H record earlier
+design predicates; they are not evidence that the source-field relationship
+needed to evaluate those predicates has been established. In particular, neither
+comparing `Observation.taxonomy` with an authority `taxonomy_family` nor a
+proposed comparison with catalog `standard_prefix` proves C3. Such a predicate
+cannot activate production B2 until its required claim-specific evidence is met.
+
+Re-authorization requires either admissible evidence sufficient for the taxonomy
+bridge claim, or a separately frozen weaker claim that is not represented as
+taxonomy equivalence. For example, captured evidence may support the narrower
+claim `FILING_LOCAL_NAMESPACE_BINDING_OBSERVED`. If the only cross-source fact is
+that an Observation token and a filing prefix have the same spelling, the maximum
+claim is `OBSERVATION_PREFIX_TOKEN_MATCH_ONLY`; C7 remains `TAXONOMY_UNPROVEN` and
+that token observation does not authorize a B2 fact/document link.
+
+## 9. Architecture and Implementation Consequences
+
+This methodology freeze adds no migration, database field, evidence-grade table,
+mapping table, or identity. The ESM exists only in the ADR/methodology layer.
+Future code that evaluates one of these claims must cite its frozen claim contract
+and use the required evidence form; it must not invent or tune an implicit
+threshold, global score, source precedence, or winner rule.
+
+No C4G candidate code or tests are authorized or changed by this amendment. The
+uncommitted C4G candidate remains outside this freeze. Any direct-equality or
+candidate-cardinality correction requires a separately authorized implementation
+phase and must preserve this matrix and the existing exact-source relation
+semantics.
+
+**Freeze summary:** C3 = `NOT PROVEN`; C7 = `NOT PROVEN`; C9 = `UNAVAILABLE /
+UNPROVEN`; C10 = `UNAVAILABLE` for the current production C4G case; C4/C6 are
+conditional on captured, scoped, locatable filing evidence; C5/C8 require a
+production-captured authority assertion and are not satisfied by schema or
+synthetic fixtures. No source ranking, source precedence, or global evidence score
+is created.
