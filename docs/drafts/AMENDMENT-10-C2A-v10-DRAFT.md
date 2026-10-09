@@ -756,6 +756,27 @@ A failure before E5 is neither ACCEPTANCE_FAILED nor ACCEPTED under Decision
 10.34(a): no acceptance evaluation took place, so it is a distinct pre-E5 failure
 whose disposition is "not accepted", not a verdict on any acceptance condition.
 
+An execution that ENTERS E5 but does not complete every applicable acceptance
+condition of Decision 10.44 is a distinct interrupted-evaluation termination, and
+the consequences of this decision apply to it as well. Such an execution:
+
+- MUST NOT be labelled PRECHECK_REJECTED, ACCEPTED or ACCEPTANCE_FAILED; in
+  particular, a FAIL observed before the interruption MUST NOT be turned into an
+  ACCEPTANCE_FAILED verdict, and conditions that were never evaluated MUST NOT be
+  treated as PASS or as UNVERIFIED;
+- MUST NOT emit the successful workflow-result shape, MUST NOT claim success, and
+  MUST NOT present a partial evaluation as a complete acceptance result;
+- MAY state in a diagnostic the conditions it actually observed, but that
+  diagnostic MUST state explicitly that the acceptance evaluation was not
+  completed, and MUST NOT imply that the stated conditions are the full acceptance
+  set or that any unstated condition was satisfied;
+- MUST report only values actually read. A field whose read point was not reached
+  remains not read; a value that WAS read MUST NOT be reported as not read; and no
+  value may be synthesized, imputed or defaulted;
+- leaves rows committed at E4 in place. This clause does not roll them back, does
+  not delete them, and does not change any write, transaction or persistence
+  behaviour.
+
 **Decision 10.33 (per-call insert status not observable).** The writer's return type
 remains `str` on both the collision path and the insert path (baseline
 `record_authority_taxonomy_assertion.py` lines 98–103 and 137), so per-call insert
@@ -811,10 +832,11 @@ completed the E5 acceptance evaluation may be labelled ACCEPTED or
 ACCEPTANCE_FAILED. Each such termination that falls within one of the following is
 governed by it, and that clause determines that the execution is not accepted:
 Decision 10.7(b) for E0, Decision 10.9 for E2, Decisions 10.46 and 10.47 for E3,
-and Decision 10.32(e) for any execution that does not reach E5. No named
-disposition exists for a P1, P2 or P3 failure, for a P4 failure that is not a
-Decision 10.42(d) rejection, or for an interrupted E5 acceptance evaluation; that
-absence is a recorded normative gap and is not resolved by this clause.
+and Decision 10.32(e) both for any execution that does not reach E5 and for an
+execution that entered E5 without completing the acceptance evaluation. No named
+disposition exists for a P1, P2 or P3 failure or for a P4 failure that is not a
+Decision 10.42(d) rejection; that absence is a recorded normative gap and is not
+resolved by this clause.
 
 Rules that hold across all three dispositions:
 
@@ -1233,7 +1255,9 @@ Class B.
 **Decision 10.44 (post-run comparison, by run class).** The conditions below are the
 acceptance conditions evaluated at E5. Their outcome determines the ACCEPTED or
 ACCEPTANCE_FAILED disposition of Decision 10.34(a); reaching E5 without evaluating
-them is not a conformant execution. On Path A, after the run:
+them is not a conformant execution. A verdict exists only once EVERY applicable
+condition has been evaluated: an evaluation that is interrupted before that point
+yields no verdict and falls under Decision 10.32(e). On Path A, after the run:
 
 - universal, all run classes: `unique_identity_count` equals Class A
   `expected_unique_identity_count`; `source_loc_count` equals Class A
