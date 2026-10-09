@@ -750,8 +750,9 @@ status is not observable to the caller, and the writer is NOT modified.
 `rows_inserted_this_run` is therefore measured by the scoped before/after
 difference of I5b.
 
-**Decision 10.34(a) (output shape and field contract).** The output contract is a
-closed set of conditional shapes. A successful Path-A workflow result that reaches
+**Decision 10.34(a) (output shape and field contract).** This section defines the successful workflow-result shape and the P4
+baseline-rejection payload; other execution errors are not successful workflow
+results. A successful Path-A workflow result that reaches
 E5 MUST carry exactly fields 1–24 below, with the stated type, scope, read point
 and purpose. A P4 pre-check rejection under Decision 10.42(d) emits the separate
 `baseline_rejection` diagnostic described as field 25; that diagnostic is NOT part
