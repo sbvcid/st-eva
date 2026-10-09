@@ -11,7 +11,7 @@ This document records state. It introduces no new architectural decisions, modif
 
 ## 1. Git Baseline & Working Tree Metrics
 
-Measured directly at `10d298ffbc315c20070b27472b407ac3ed2337aa` on 2026-10-09. This section records the repository baseline state as of commit `10d298f`. The pending modification to this document ([`docs/ST-EVA-PROJECT-STATUS.md`](ST-EVA-PROJECT-STATUS.md)) is the sole in-progress change preparing this checkpoint and is distinct from the underlying Git baseline.
+Measured directly at `10d298ffbc315c20070b27472b407ac3ed2337aa` on 2026-10-09. This section records the repository baseline state as of commit `10d298f`. This checkpoint documents the repository baseline at `10d298f`. The status-file update was subsequently committed as a documentation-only change; that later commit does not alter the measured baseline described here.
 
 ### 1.1 Git Metadata
 
@@ -24,7 +24,7 @@ Measured directly at `10d298ffbc315c20070b27472b407ac3ed2337aa` on 2026-10-09. T
 | Remote URL | `origin` -> `https://github.com/sbvcid/st-eva.git` |
 | Remote Sync | `## master...origin/master` — **in sync, 0 ahead, 0 behind** |
 | Prior Checkpoint Commit | `0becbdc` (`docs: reconcile ST-EVA data admission rules`, 2026-10-07) |
-| Baseline Working Tree State | Clean tracked tree at measured baseline `10d298f` (0 staged, 0 modified, 0 deleted); only untracked `?? data/` present. *(Apart from this status document's own pending in-place update awaiting commit)* |
+| Baseline Working Tree State | At measured baseline `10d298f`: clean tracked tree (0 staged, 0 modified, 0 deleted); only untracked `?? data/` present. This describes the baseline commit, not the later documentation-only commit that records it. |
 
 ### 1.2 Progression Lineage (0becbdc -> 10d298f)
 
@@ -250,8 +250,8 @@ Aligned with the authoritative project roadmap [`docs/roadmap/ROADMAP.md`](roadm
 
 | Workstream ID | Workstream Title | Current Status | Next Action / Gate |
 |---|---|---|---|
-| **RM-0** | Baseline & Status Reconciliation | **IN PROGRESS (Fulfilled by this Checkpoint)** | Verify dated checkpoint against disk; confirm zero discrepancies. |
-| **GOV-1** | Amendment 10 Governance Track | **IN PROGRESS** | Review complete (GOV-1a). Awaits human ratification decision (GOV-1b). ADR append (GOV-1c) and implementation authorization (GOV-1d) frozen. |
+| **RM-0** | Baseline & Status Reconciliation | **CHECKPOINT RECORDED; residual items remain UNVERIFIED** | Status snapshot reconciled against baseline `10d298f`; explicitly listed worktree and research-retention uncertainties remain open and must not be treated as resolved. |
+| **GOV-1** | Amendment 10 Governance Track | **IN PROGRESS — RATIFICATION NOT DECIDED** | Whole-draft review report recommends readiness for consideration. Before GOV-1b, reconcile the report's disclosed-gap labels against their canonical source and clarify Decision 10.54's authorization wording against the planned separate implementation gate. GOV-1c and GOV-1d remain unexecuted. |
 | **HPE-1** | Historical P/E Scope & Design Prerequisites | **NOT STARTED** | Define bounded first-release scope; map blocking vs deferred open decisions; obtain required ADR governance approvals. |
 | **HPE-2** | Historical P/E Data-Model Design | **NOT STARTED** | Blocked on HPE-1. Design conforming representation resolving the 4 Class-1 data-layer gaps without altering existing boundaries. |
 | **HPE-3** | Historical P/E Production Pipeline | **NOT STARTED** | Blocked on HPE-1 and HPE-2. Implement Contract-defined pipeline in tracked modules; integrate with core archive and admission. |
