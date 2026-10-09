@@ -2195,3 +2195,247 @@ conditional on captured, scoped, locatable filing evidence; C5/C8 require a
 production-captured authority assertion and are not satisfied by schema or
 synthetic fixtures. No source ranking, source precedence, or global evidence score
 is created.
+
+
+---
+---
+
+# Amendment 8 — Official-Source Taxonomy Bridge Research (C3 / C7)
+
+**Status:** FROZEN — official research record / methodology only. No implementation authorization.
+**Date:** 2026-10-09
+**Baseline:** `9b3a8a8` (C4G implementation archived and pushed to `origin/master`).
+**Scope:** Investigation of official SEC and EDGAR publications regarding cross-source taxonomy equivalence bridging Claims C3, C7, C9, and C10.
+**Outcome:** `BRIDGE_NOT_FOUND` across all investigated official sources.
+**Claim Statuses (Unchanged):**
+- **C3:** `NOT PROVEN`
+- **C7:** `NOT PROVEN`
+- **C9:** `UNAVAILABLE / UNPROVEN`
+- **C10:** `UNAVAILABLE`
+**C4G Status:** C4G implementation is archived at baseline `9b3a8a8`; production continues to reject unproven taxonomy equivalence (`evaluate_taxonomy_equivalence` returns `False, TAXONOMY_UNPROVEN`). No authorization for C4G reimplementation.
+**Preservation:** Amendment 7 and its historical context and Evidence Sufficiency Matrix (ESM) remain intact without modification.
+
+---
+
+## 1. Context, Executive Summary & Core Finding
+
+Following the freeze of Amendment 7 and the formal archival of the C4G candidate implementation at baseline `9b3a8a8`, an official-source research investigation was conducted to determine whether an authoritative cross-source bridge exists between the SEC Company Concept API taxonomy representation and the EDGAR taxonomy catalog prefix or filing-local namespace URIs.
+
+### 1.1 Core Finding: `BRIDGE_NOT_FOUND`
+
+The empirical result across all audited official sources is **`BRIDGE_NOT_FOUND`**:
+- No official SEC specification, regulatory manual, schema definition, or API contract defines an explicit, authoritative relationship (`E4`) bridging Company Concept API taxonomy tokens to EDGAR taxonomy catalog `<Prefix>` elements or filing-local namespace URIs.
+- In accordance with the Evidence Sufficiency Matrix established in Amendment 7 §2:
+  - **C3** remains **`NOT PROVEN`** (no cross-source contract connecting API token to catalog `<Prefix>`).
+  - **C7** remains **`NOT PROVEN`** (Observation representation and filing occurrence representation equivalence unproven).
+  - **C9** remains **`UNAVAILABLE / UNPROVEN`** (historical authority validity not established by current catalog snapshots).
+  - **C10** remains **`UNAVAILABLE`** for the current production architecture.
+- Production continues to refuse unproven taxonomy equivalence: `sec_xbrl_facts.py:evaluate_taxonomy_equivalence` returns `(False, TAXONOMY_UNPROVEN)`, preventing unverified `observation_filing_document_facts` and `observation_filing_documents` rows from being created.
+
+### 1.2 Meaning and Scope of `BRIDGE_NOT_FOUND`
+
+The finding `BRIDGE_NOT_FOUND` is strictly scoped:
+1. **Scope of the finding:** Within the exhaustive scope of official SEC and EDGAR publications examined, no evidence was found to support C3 or C7.
+2. **Not a universal impossibility claim:** Stating `BRIDGE_NOT_FOUND` records the absence of bridge evidence within the investigated official sources. It **does not claim that no lawful bridge could ever exist in the world**, nor does it assert that SEC systems are incapable of being bridged under future, newly published, or uninvestigated authority sources.
+3. **Preservation of Amendment 7:** Amendment 7's text, historical context, and claim statuses are preserved verbatim. This amendment appends empirical audit findings to the record without modifying or diluting any prior decision.
+
+---
+
+## 2. Strict Separation of Four Semantic Entities
+
+To prevent conflation across distinct architectural layers, four separate semantic entities are strictly distinguished. Evidence supporting one entity must never be promoted to prove another, and single-source semantics from separate sources must not be merged into a cross-source contract:
+
+1. **Company Concept API Taxonomy Token Semantics (`obs.taxonomy`):**
+   - The token appearing in the URL path of the SEC Company Concept API (`/api/xbrl/companyconcept/CIK{cik}/{taxonomy}/{tag}.json`) and echoed in the JSON payload `taxonomy` field.
+   - Its verified official role is an API-level routing and aggregation identifier (e.g., `"us-gaap"`, `"dei"`, `"invest"`, `"srt"`, `"ifrs-full"`).
+   - It is an endpoint-scoped parameter, not a QName prefix and not an XML namespace URI.
+
+2. **Catalog `<Prefix>` Semantics and its Family, Version, and Namespace Relations:**
+   - The `<Prefix>` element defined in `edgartaxonomies.xsd` and populated in `<Loc>` entries within `edgartaxonomies.xml`.
+   - Its verified official role is a descriptive or suggested prefix associated with a specific schema entry point `<Href>`, `<Namespace>` URI, `<Family>`, and `<Version>`.
+   - It belongs strictly to the catalog's internal XML vocabulary.
+
+3. **Filing-Local Namespace Prefix → Namespace URI Binding (`xmlns:prefix="URI"`):**
+   - The XML namespace declaration bound within captured filing instance document bytes or DTS (e.g., `xmlns:us-gaap="http://fasb.org/us-gaap/2026"` or `xmlns:custom="http://fasb.org/us-gaap/2026"`).
+   - Its scope is strictly local to the filing document. Under W3C XML Namespace standards and EDGAR Filer Manual rules, filers are free to bind arbitrary prefix strings to standard target namespaces.
+
+4. **Observation → Filing Occurrence Taxonomy Equivalence:**
+   - The semantic identity assertion that an Observation extracted from the Company Concept API and a document-level fact occurrence extracted from filing bytes represent the exact same concept under the exact same accounting taxonomy.
+   - Requires proving both cross-source vocabulary equivalence and exact fact-level correspondence.
+
+```text
++-----------------------------------------------------------------------------------------+
+| STRICT NON-PROMOTION BOUNDARIES                                                         |
+|                                                                                         |
+|  [1. API Token Semantics]   <--x-- (NO PROMOTION) --x-->   [2. Catalog <Prefix>]        |
+|            |                                                       |                    |
+|            x (no cross-source promotion)                           x (no cross-source)  |
+|            v                                                       v                    |
+|  [3. Filing-Local Binding]  <--x-- (NO PROMOTION) --x-->   [4. Taxonomy Equivalence]   |
+|                                                                                         |
+| Rule: Evidence for (1), (2), or (3) DOES NOT constitute proof of (4).                   |
+| Rule: Evidence for (1) + Evidence for (2) CANNOT be merged into an E4 contract for (3).|
++-----------------------------------------------------------------------------------------+
+```
+
+---
+
+## 3. Official-Source Investigation and Audit Evidence
+
+Seven official regulatory, technical, and data delivery sources published by the SEC were audited. For each source, this record notes the exact locator/URL, version/date, specific claims supported, and strict limitations (what inferences cannot be supported).
+
+### 3.1 Source 1: SEC Company Concept API Documentation and Live Responses
+
+* **Locator / URL:**
+  - Documentation: `https://www.sec.gov/edgar/sec-api-documentation`
+  - Endpoint: `https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/[taxonomy]/[tag].json`
+* **Version / Date:** EDGAR Data Delivery RESTful APIs (Current, 2024–2026).
+* **Audited Payloads:** Live responses for CIK `0000320193` (AAPL) and other issuers under taxonomies `us-gaap` and `dei`.
+* **Specific Claims Supported:**
+  - `E1` support that `{taxonomy}` in the URL path is an accepted routing token selecting a standard taxonomy dataset (e.g., `"us-gaap"`, `"dei"`).
+  - `E1` support that response JSON payloads echo `taxonomy` as a top-level string field alongside `tag`, `label`, `description`, `entityName`, and `units`.
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **No XML prefix contract:** The API documentation nowhere specifies `{taxonomy}` as an XML namespace prefix, QName prefix, or catalog `<Prefix>`.
+  - **No namespace URI:** The API responses contain no namespace URI (e.g., `http://fasb.org/us-gaap/2026`) or schema targetNamespace.
+  - **No contextRef / dimensional breakdown:** The endpoint returns aggregated units without XBRL `contextRef` attributes (Amendment 0 Decision 4).
+  - **No cross-source bridge:** Does not cite `edgartaxonomies.xml` or declare any normative relationship with catalog `<Prefix>`.
+
+### 3.2 Source 2: EDGAR Taxonomy Catalog and its Schema (`edgartaxonomies.xml` & `edgartaxonomies.xsd`)
+
+* **Locator / URL:**
+  - Catalog: `https://www.sec.gov/info/edgar/edgartaxonomies.xml`
+  - Schema: `https://www.sec.gov/info/edgar/edgartaxonomies.xsd`
+* **Version / Date:** Schema `edgartaxonomies.xsd`; root `<Erxl version="78">` (updated per EDGAR release).
+* **Structure Audited:** Elements `<Loc>`, `<Family>`, `<Version>`, `<Namespace>`, `<Prefix>`, `<FileTypeName>`, `<Href>`.
+* **Specific Claims Supported:**
+  - `E1` support for the catalog's XML vocabulary and schema structure.
+  - `E2` support relating `<Prefix>` as a descriptive attribute associated with a schema entry point `<Href>`, `<Namespace>` URI, `<Family>`, and `<Version>`.
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **Does not govern REST APIs:** The catalog is an operational catalog for EDGAR filing acceptance; it does not define or govern REST API route parameters at `data.sec.gov`.
+  - **Does not govern filing-local prefixes:** The `<Prefix>` element is a descriptive/recommended prefix. Filers are legally and technically free to bind any local prefix string in filing XML documents.
+  - **No historical filing-date validity proof:** The current catalog reflects active and accepted taxonomies at the time of the catalog release (e.g., release version 78). It does not prove what was valid on historical filing dates years earlier (e.g., in 2013).
+
+### 3.3 Source 3: EDGAR Filer Manual (EFM Volume II: "EDGAR Filing")
+
+* **Locator / Citation:** SEC EDGAR Filer Manual, Volume II (EDGAR Filing), Chapter 6 ("Interactive Data").
+* **Version / Date:** Current EFM Volume II (Version 70+ / EDGAR Releases 24.x–25.x).
+* **Specific Claims Supported:**
+  - Regulatory requirements governing filers submitting XBRL / Inline XBRL instances to the SEC.
+  - Mandates the use of SEC-approved standard taxonomies and defines acceptable schema entry points and extension taxonomy rules.
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **Regulates inbound submissions, not outbound APIs:** The EFM specifies filing format requirements for issuers; it does not define the outbound `data.sec.gov` REST APIs or their query parameters.
+  - **No API-to-catalog bridge:** Contains no provision equating the REST API query parameter `{taxonomy}` with the catalog `<Prefix>` or with instance QName prefixes.
+  - **No cross-source equivalence contract:** Does not provide an `E4` contract bridging data consumer representations.
+
+### 3.4 Source 4: EDGAR XBRL Guide / Staff Interactive Data Guidance
+
+* **Locator / Citation:** SEC Staff Guidance on Interactive Data; EDGAR XBRL Guide; Interactive Data Test Suite documentation.
+* **Version / Date:** Staff interpretations and guidance notices (ongoing).
+* **Specific Claims Supported:**
+  - Practical guidance for issuers and filing agents regarding element selection, extension modeling, and validation practices.
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **Informational / non-normative:** Guidance notices are advisory aids for preparers, not normative engineering contracts for data consumers.
+  - **No API parameter specifications:** Does not define REST API endpoints, routing tokens, or database schemas.
+  - **Cannot bridge cross-source representations:** Provides no rule for equating API tokens to catalog prefixes or instance namespace declarations.
+
+### 3.5 Source 5: SEC XBRL Glossary
+
+* **Locator / URL:** `https://www.sec.gov/structureddata/glossary` (SEC Structured Data Glossary).
+* **Version / Date:** SEC Structured Data Materials (accessed 2026).
+* **Specific Claims Supported:**
+  - High-level, informational definitions of core XBRL terms: *Taxonomy*, *Element*, *Fact*, *Instance Document*, *Context*, *Extension*.
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **Informational dictionary only:** Contains no formal technical specifications or schema definitions.
+  - **No technical field bindings:** Does not mention API query parameters, catalog element bindings, or prefix mapping rules.
+
+### 3.6 Source 6: SEC Financial Statement Data Sets Documentation
+
+* **Locator / URL:** `https://www.sec.gov/dera/data/financial-statement-data-sets.html` (DERA Data Sets Readme and Notes).
+* **Version / Date:** DERA Quarterly Financial Statement Data Sets documentation (Current).
+* **Structure Audited:** Flat file tables (`sub.txt`, `num.txt`, `tag.txt`, `pre.txt`).
+* **Specific Claims Supported:**
+  - `E1` support for DERA's data representation: `tag.txt` uses a compound `version` field (e.g., `"us-gaap/2023"`, `"dei/2023"`, or custom accession numbers for extension concepts).
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **Distinct schema / different vocabulary:** DERA flat files use an independent naming and schema convention distinct from both the Company Concept API and `edgartaxonomies.xml`.
+  - **No cross-source merge permitted:** DERA documentation cannot be merged with Company Concept API documentation to synthesize a cross-source contract.
+  - **Does not bridge API tokens to catalog prefixes:** The existence of `"us-gaap/2023"` in DERA does not prove that Company Concept API `"us-gaap"` is catalog `<Prefix>` `"us-gaap"`.
+
+### 3.7 Source 7: SEC API Documentation and OpenAPI / Swagger Specification Review
+
+* **Locator / URL:** `https://www.sec.gov/edgar/sec-api-documentation` and EDGAR REST API OpenAPI schemas.
+* **Version / Date:** EDGAR Developer Documentation (2024–2026).
+* **Specific Claims Supported:**
+  - Documents endpoint URI patterns: `/api/xbrl/companyconcept/CIK{cik}/{taxonomy}/{tag}.json`.
+  - Declares `{taxonomy}` as a generic `string` path parameter.
+* **Limitations / Anti-Claims (What it CANNOT support):**
+  - **No enumerated taxonomy contract:** The OpenAPI specification does not define an `enum` matching catalog `<Prefix>` values.
+  - **No linkage to catalog XSD:** The OpenAPI document does not reference `edgartaxonomies.xsd` or define a schema cross-reference.
+  - **No semantic bridge:** Does not provide an explicit contract equating the path string to catalog prefixes or instance namespace URIs.
+
+---
+
+## 4. Analysis of Identifier Surfaces vs. Universal Contradiction
+
+Across the audited SEC interfaces, several distinct identifier surfaces were observed:
+
+| Surface Identifier | Source System / Interface | Example Representation | Primary Architectural Purpose |
+|---|---|---|---|
+| **API Path Token** | Company Concept REST API | `"us-gaap"`, `"dei"` | URL routing & REST resource addressing |
+| **Catalog Element** | `edgartaxonomies.xml` | `<Prefix>us-gaap</Prefix>` | Suggested prefix in operational catalog |
+| **Catalog Namespace** | `edgartaxonomies.xml` | `http://fasb.org/us-gaap/2026` | Formal targetNamespace identifier |
+| **Filing QName Prefix** | Instance XML (`xmlns:...`) | `xmlns:us-gaap="..."` (or arbitrary) | Document-local XML syntactic prefix |
+| **DERA Bulk Version** | DERA `tag.txt` | `"us-gaap/2023"` | Relational version/family compound key |
+
+### 4.1 Surface Differences Do Not Equal Universal Contradiction
+
+These observed differences must be characterized with precision:
+- **Purpose-driven specialization:** The differences in identifier format reflect distinct architectural purposes across SEC systems (REST routing, XML cataloging, XML document parsing, bulk data distribution).
+- **Not universally contradictory:** It is inaccurate to characterize these different identifier fields as fundamentally or universally contradictory. They are specialized identifiers serving different architectural layers.
+- **Surface similarity is not proof:** Conversely, the fact that several systems use the character string `"us-gaap"` on their surface does not constitute proof that they share a single controlled vocabulary or cross-source contract.
+
+---
+
+## 5. Historical Validity and Catalog Evolution (Claim C9)
+
+### 5.1 Catalog Evolution and the Snapshot Limitation
+
+The official EDGAR taxonomy catalog (`edgartaxonomies.xml`) is a dynamic document updated with each major EDGAR release (identified by the root `<Erxl version="...">` attribute, e.g., `version="78"`).
+
+Consequently:
+- A current snapshot of `edgartaxonomies.xml` reflects only the taxonomies accepted and active under that specific EDGAR release.
+- **A current snapshot cannot prove historical filing-date validity:** Capturing the current catalog does not establish whether a namespace URI used in a historical filing (e.g., an AAPL 2013 filing using `http://fasb.org/us-gaap/2013`) was recognized, accepted, or active on that historical filing date.
+
+### 5.2 Preservation of Future C9 Verification
+
+This record explicitly avoids overstating the limitation:
+- **C9 is NOT declared permanently unprovable:** ST-EVA does not assert that historical authority validity can never be established.
+- **Path to verification preserved:** Claim C9 remains `UNAVAILABLE / UNPROVEN` in current repository evidence. The architecture explicitly preserves the possibility that future acquisition of historical authority catalog snapshots, archived EDGAR release announcements, and effective-date schedules may provide the necessary evidence to evaluate C9 for historical filings.
+
+---
+
+## 6. Prohibitions and Production Integrity
+
+Under this amendment, the following prohibitions remain strictly binding:
+
+1. **No new mappings:** No hardcoded dictionaries, heuristic prefix mappings, or normalization lookup tables may be created.
+2. **No change to claim statuses:** Claims C3 and C7 remain `NOT PROVEN`. Claim C9 remains `UNAVAILABLE / UNPROVEN`. Claim C10 remains `UNAVAILABLE`.
+3. **No C4G reimplementation authorized:** The C4G candidate implementation remains archived at baseline `9b3a8a8`. Production B2 code must continue to evaluate `evaluate_taxonomy_equivalence` as `(False, TAXONOMY_UNPROVEN)`.
+4. **No DB / schema / migration additions:** No new SQLite tables, columns, or triggers are authorized.
+5. **No alteration of Amendment 7:** Amendment 7 and its Evidence Sufficiency Matrix are preserved in their entirety.
+6. **No modification of production code:** Production ingestion, linking, and archival code paths remain untouched.
+
+---
+
+## 7. Amendment 8 Summary Matrix
+
+| Dimension | Record / Status |
+|---|---|
+| **Research Result** | `BRIDGE_NOT_FOUND` across investigated official SEC/EDGAR sources |
+| **Claim C3** | `NOT PROVEN` (no cross-source contract connecting API token to catalog `<Prefix>`) |
+| **Claim C7** | `NOT PROVEN` (Observation vs. occurrence representation equivalence unproven) |
+| **Claim C9** | `UNAVAILABLE / UNPROVEN` (current catalog snapshot cannot prove historical filing-date validity; future proof preserved) |
+| **Claim C10** | `UNAVAILABLE` for current production architecture |
+| **Investigated Sources** | 7 official sources audited (Company Concept API, Catalog XML/XSD, EFM, XBRL Guide, Glossary, DERA Data Sets, OpenAPI) |
+| **Four Semantic Entities** | Strictly separated: API token, Catalog Prefix, Filing-local prefix, Observation-to-occurrence equivalence |
+| **Production State** | Baseline `9b3a8a8` intact; C4G archived; production returns `TAXONOMY_UNPROVEN`; no unproven links written |
+| **Code / DB Changes** | ZERO changes to code, tests, migrations, schemas, or DB |
