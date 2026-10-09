@@ -76,7 +76,11 @@ CORPORA: Dict[str, str] = {
 # the answer to "what does the corpus suite run?" is one readable table, and so a
 # test that starts needing a corpus has to say so.
 CORPUS_TESTS: Dict[str, Sequence[str]] = {
-    "test_eval_harness": ("snapshot",),
+    # `test_eval_harness` was archived with its experiment at `b124123`; the two
+    # assertions it made about active production modules are kept in
+    # `tests/test_evaluation_format_boundary.py`, which needs no corpus. It is not
+    # listed here because it is no longer a module of this repository's active
+    # suite, and `run_corpus_tests.py` loads every name in this table by module.
     "test_vendor_debt_projection": ("snapshot",),
     "test_basis_framework_query": ("snapshot-crossframework",),
     "test_source_conditional_metric_retrieval": ("snapshot-universe",),

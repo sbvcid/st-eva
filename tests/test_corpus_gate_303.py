@@ -146,9 +146,11 @@ class TestTheDeclarationIsComplete(unittest.TestCase):
         `test_vendor_debt_projection` appears in both tables on purpose: one test
         reads the sealed snapshot by name, another globs for any archive.
         """
+        # `test_eval_harness` dropped at `b124123` with its experiment. The two
+        # assertions it made that survived the archive need no corpus and are
+        # covered by `test_evaluation_format_boundary`, which is correctly absent.
         measured = {
             "test_basis_framework_query",
-            "test_eval_harness",
             "test_evidence_query_knowledge_state",
             "test_knowledge_state_reader_integration",
             "test_source_conditional_metric_retrieval",
@@ -169,10 +171,13 @@ class TestTheBoundaryIsHonest(unittest.TestCase):
     corpus-dependent tests at all -- which is the whole reason the gate exists.
     """
 
+    # `test_eval_harness.py` was archived at `b124123` along with its experiment.
+    # It is absent here rather than deleted from the list because these two tests
+    # open each named file: a name whose module no longer exists would fail them
+    # for a reason that has nothing to do with the corpus boundary.
     GUARDED_MODULES = (
         "test_basis_framework_query.py",
         "test_evidence_query_knowledge_state.py",
-        "test_eval_harness.py",
         "test_knowledge_state_reader_integration.py",
         "test_source_conditional_metric_retrieval.py",
         "test_vendor_debt_projection.py",

@@ -25,13 +25,21 @@ Three, and the exclusions are asserted rather than assumed:
     merge_sources            passed `metrics=DEFAULT_METRICS`, and `metrics=
                              FULL_CORE_METRICS` -- a frozen pre-2.33 list naming
                              the superseded key
-    harness/snapshot.py      passed `metrics=metrics or DEFAULT_METRICS`
+    reconcile_bulk           omitted `metrics=` altogether, which is the same
+                             implicit-default defect in a different disguise
+
+There was a fourth: `experiments/003-llm-evidence-retrieval/harness/snapshot.py`,
+which passed `metrics=metrics or DEFAULT_METRICS`. That experiment was archived at
+`b124123` and its harness package is no longer in the tree, so it cannot be a
+canonical caller of anything. It is dropped from `CALLERS` rather than kept alive by
+a stub: a retired caller that still had to be enumerated would drag the archive back
+into the active tree to satisfy a test, which is the defect in reverse.
 
 `build_crossframework_snapshot.py` also mentions `DEFAULT_METRICS`, but it defines
 its own deliberately narrowed 2.7 constant and imports only `Ingestor`: a run that
 quietly tests more than it says is a run whose scope nobody wrote down.
-`fullscope_bulk.py` and `reconcile_bulk.py` construct an `Ingestor` too, and pass an
-explicit list. None of the three is a canonical collection caller.
+`fullscope_bulk.py` constructs an `Ingestor` too, and passes an explicit list.
+Neither is a canonical collection caller.
 
 ## Why the enumeration is a query and not a frozen tuple
 
@@ -69,16 +77,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
-HARNESS = os.path.join(
-    ROOT, "experiments", "003-llm-evidence-retrieval", "harness")
-if HARNESS not in sys.path:
-    sys.path.insert(0, HARNESS)
 
 import ingest_universe  # noqa: E402
 import merge_sources  # noqa: E402
 import reconcile_bulk  # noqa: E402
 import sec_ingest  # noqa: E402
-import snapshot as harness_snapshot  # noqa: E402
 from core_registry import CoreRegistry  # noqa: E402
 from registry_seed import seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
@@ -86,20 +89,18 @@ from sqlite_archive import SQLiteArchive  # noqa: E402
 LEGACY = "debt"
 SUCCESSOR = "long_term_debt"
 
-# Imported by name rather than looked up in sys.modules, because the harness module
-# is bound to a local alias here and lives under a different key in sys.modules.
+# Every entry here is an active production module in this repository. The archived
+# `harness/snapshot.py` caller was removed when `b124123` retired experiment 003.
 CALLERS = {
     "ingest_universe": ingest_universe,
     "merge_sources": merge_sources,
     "reconcile_bulk": reconcile_bulk,
-    "harness_snapshot": harness_snapshot,
 }
 
 SOURCES = {
     "ingest_universe": os.path.join(ROOT, "ingest_universe.py"),
     "merge_sources": os.path.join(ROOT, "merge_sources.py"),
     "reconcile_bulk": os.path.join(ROOT, "reconcile_bulk.py"),
-    "harness_snapshot": os.path.join(HARNESS, "snapshot.py"),
 }
 
 # Modules that construct an Ingestor but are not canonical callers. The exclusion
@@ -506,11 +507,7 @@ class AuditDataIsPreserved(unittest.TestCase):
             names_any = any(name in text for name in
                             ("merge_sources", "ingest_universe",
                              "reconcile_bulk"))
-            harness_snapshot_user = (
-                rel.startswith("experiments/003-llm-evidence-retrieval"
-                               "/harness/")
-                and "import snapshot" in text)
-            if not (names_any or harness_snapshot_user):
+            if not names_any:
                 continue
             dotted = rel[:-3].replace("/", ".")
             if dotted.endswith(".__init__"):
@@ -519,7 +516,7 @@ class AuditDataIsPreserved(unittest.TestCase):
         self.assertTrue(dependents, "found no dependent modules to probe")
         environment = dict(os.environ)
         environment["PYTHONPATH"] = os.pathsep.join(
-            [ROOT, HARNESS, environment.get("PYTHONPATH", "")])
+            [ROOT, environment.get("PYTHONPATH", "")])
         broken: list = []
         for rel, dotted in dependents:
             result = subprocess.run(
@@ -532,9 +529,15 @@ class AuditDataIsPreserved(unittest.TestCase):
 
 
 def _bulk_facts_dir():
+    # Nothing here is tracked. The companyfacts fixture set lived under the
+    # experiment-003 harness directory and went with `b124123`; no replacement is
+    # committed. So this returns None in a clean checkout and the one ingest-driven
+    # test below skips -- which is the behaviour it has always had in one, for the
+    # same reason. The search is kept rather than the test deleted, so restoring a
+    # fixture directory is enough to re-enable the assertion.
     for name in ("bulkfacts-universe", "bulkfacts-227b", "bulkfacts",
                  "bulkfacts-227a"):
-        path = os.path.join(HARNESS, name)
+        path = os.path.join(ROOT, name)
         if os.path.isdir(path) and any(
                 entry.endswith(".json") for entry in os.listdir(path)):
             return path
