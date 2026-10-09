@@ -58,7 +58,7 @@ SEC publishes the catalog's format schema at
     Prefix       minOccurs="0"  (optional)
 
 The captured bytes validate against this XSD
-(`XSD_VALID_AGAINTS_SEC_erxl_xsd: true`).
+(`XSD_VALID_AGAINST_SEC_erxl_xsd: true`).
 
 **Decision 10.1 (cardinality fact).** In the authority's own format, `Namespace`,
 `Family` and `Version` are optional; only `Href` and `Elements` are mandatory. The
@@ -633,7 +633,7 @@ metric may be computed over the whole table.
 | Metric | Definition | Scope | Read or derived at |
 |---|---|---|---|
 | `writer_call_count` | number of `record_authority_taxonomy_assertion()` invocations in this execution | run-scoped | end of E4 |
-| `unique_identity_count` | distinct identity preimages over admitted records in this execution | run-scoped | E3 |
+| `unique_identity_count` | distinct identity preimages over `ASSERTION_ELIGIBLE` records admitted to C2B in this execution | run-scoped | E3 |
 | `document_row_total` | ALIAS of `document_row_total_after`; see Decision 10.30(b) | table-scoped by `document_id` D | E5 |
 | `rows_inserted_this_run` | `document_row_total_after - document_row_total_before`, both read for the same D | table-scoped by `document_id` D | E5; computable only under Decision 10.32(a) |
 
@@ -708,9 +708,10 @@ mechanism is authorized here.
 **PRECOND-1 is a concurrency precondition and is NOT a classification.** It
 neither determines nor qualifies `run_class`; it is NOT a run class and NOT a
 rejection outcome under Decision 10.42(d). A run in which PRECOND-1 cannot be
-asserted still has a `run_class`, drawn from exactly the three values of Decision
-10.34(a) field 21; only its acceptance expressions become UNVERIFIED under
-Decision 10.32(c). PRECOND-1 failure MUST NOT be reported as a class, as a
+asserted still receives an internal `run_class` at P4, drawn from exactly the
+three values of Decision 10.34(a) field 21; PRECOND-1 does not affect that
+classification. Only the applicable acceptance expressions become UNVERIFIED
+under Decision 10.32(c). PRECOND-1 failure MUST NOT be reported as a class, as a
 rejection, or as a change of `run_class`.
 
 **Decision 10.32(b) (computability of `rows_inserted_this_run`).**
@@ -749,11 +750,17 @@ status is not observable to the caller, and the writer is NOT modified.
 `rows_inserted_this_run` is therefore measured by the scoped before/after
 difference of I5b.
 
-**Decision 10.34(a) (output field contract).** The workflow result MUST carry
-exactly the fields below, with the stated type, scope, read point and purpose. No
-field required by Decisions 10.30(a)–(d), 10.35, 10.36(a)–(d), 10.42(c), 10.42(d) or 10.44 may
-be omitted,
-and no additional persistence of any field is authorized (§12).
+**Decision 10.34(a) (output shape and field contract).** The output contract is a
+closed set of conditional shapes. A successful Path-A workflow result that reaches
+E5 MUST carry exactly fields 1–24 below, with the stated type, scope, read point
+and purpose. A P4 pre-check rejection under Decision 10.42(d) emits the separate
+`baseline_rejection` diagnostic described as field 25; that diagnostic is NOT part
+of a successful workflow result. These two output shapes are mutually exclusive.
+If another failure occurs before E5, no successful workflow result is emitted, and
+fields whose read point has not been reached MUST be treated as not read rather
+than synthesized. No field required by Decisions 10.30(a)–(d), 10.35, 10.36(a)–(d),
+10.42(c), 10.42(d) or 10.44 may be omitted from its applicable output shape, and
+no additional persistence of any field is authorized (§12).
 
 | # | Field | Type | Scope | Read or derived at | Verification purpose |
 |---|---|---|---|---|---|
@@ -783,10 +790,14 @@ and no additional persistence of any field is authorized (§12).
 | 24 | `rows_inserted_this_run` | int | table-scoped by `document_id` D | E5; only under PRECOND-1 | 10.30(a) metric 4; I5b, I5c |
 | 25 | `baseline_rejection` | structured value per Decision 10.42(d): `outcome` str; `reason_codes` ordered tuple of str; `offending_identities` ordered tuple of str; `expected_count` int; `baseline_count` int; `document_id` str; NOT emitted on an admitted run | run; rejection outcome only | P4, at rejection | 10.42(d); mutually exclusive with field 21 |
 
-`run_class` (field 21) and `baseline_rejection` (field 25) are mutually exclusive:
-an execution emits at most one of them. The three run classes describe successful
-runs; `baseline_rejection` describes a pre-check rejection and is not a run class
-(Decision 10.42(d)).
+`run_class` and `baseline_rejection` belong to mutually exclusive output shapes.
+A `run_class` value is assigned internally at P4 on one of the three admitted
+branches and describes only the baseline identity state observed then. It does NOT
+establish that later E3/E4/E5 steps succeeded. If a later failure occurs before E5,
+no successful workflow result is emitted (Decision 10.32(e)); any failure diagnostic
+may identify the P4 classification as context but MUST NOT present it as evidence
+of overall success. An `INCONSISTENT_BASELINE` path emits the separate
+`baseline_rejection` diagnostic only and MUST NOT emit a `run_class`.
 
 The identity sets themselves — `baseline_authority_identities`,
 `baseline_authority_id_map`, `expected_identity_preimages` — are NOT emitted. They
@@ -1059,10 +1070,14 @@ establish `B == E` and MUST NOT be used in place of the set comparison, and a
 baseline larger than the expected set is NOT a legal RECOVERY.
 
 `FIRST` is tested first, so the case `E` empty and `B` empty classifies as `FIRST`.
-`run_class` is assigned ONLY on one of the three admitted branches above, and is
-then emitted as field 21 of Decision 10.34(a). On the `INCONSISTENT_BASELINE`
-branch no run class is assigned, `run_class` is reported as not emitted, and the
-run is a pre-check rejection under Decision 10.42(d).
+`run_class` is assigned internally ONLY on one of the three admitted branches
+above. It is emitted as field 21 only if the execution reaches E5 and produces the
+successful workflow result defined in Decision 10.34(a). If a later E3/E4 failure
+occurs, the execution does not emit a successful workflow result; any failure
+diagnostic may identify the P4 classification as context but MUST NOT present it
+as evidence of overall success. On the `INCONSISTENT_BASELINE` branch no run class
+is assigned and `run_class` is not emitted; the execution instead produces the
+separate pre-check rejection diagnostic of Decision 10.42(d).
 
 A run class describes ONLY the database state observed at P4. It is **not** evidence
 that any past workflow execution succeeded, and no inference about history is
@@ -1099,12 +1114,17 @@ A run that reaches `INCONSISTENT_BASELINE` at P4:
                                BASELINE_HAS_IDENTITY_OUTSIDE_EXPECTED
                                BASELINE_IS_SUPERSET_OF_EXPECTED
                                BASELINE_INCOMPARABLE_WITH_EXPECTED
-        offending_identities ordered tuple of str; the verbatim stored identity
-                             strings responsible, lexicographically sorted — for
-                             G2, the identities whose stored identifier does not
-                             match the derivation of Decision 10.36(a); for the
-                             set cases, the members of B not in E together with
-                             the members of E not in B
+        offending_identities ordered tuple of str, lexicographically sorted and
+                             de-duplicated: the union of identities implicated by
+                             the applicable reason codes. For G2, include identities
+                             whose stored identifier does not match the derivation
+                             of Decision 10.36(a). For set-comparison reasons,
+                             include the symmetric difference (B \\ E) union
+                             (E \\ B). A G1-only row-count/identity-count mismatch
+                             adds no identity by itself; if no G2 or set-comparison
+                             reason identifies a concrete identity, this tuple is
+                             empty and G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH is the
+                             diagnostic for the aggregate defect.
         expected_count       int; len(E)
         baseline_count       int; len(B)
         document_id          str; the D of Decision 10.40
