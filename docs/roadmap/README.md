@@ -1,43 +1,31 @@
-# ST-EVA Development Roadmap
+# ST-EVA Roadmap
 
-**Status:** Planning document; not an implementation contract or authorization.
-**Maintained:** 2026-10-09
-**Scope:** Project-level sequencing across governance, methodology, data, engine, tests and product integration.
+**Maintained:** 2026-10-10  
+**Role:** A concise record of the owner's current product direction, next steps and completion evidence. It should help a future session or coding agent remember what ST-EVA is being built to do and why the next task matters. It is a living plan and can change when the owner changes direction or new evidence appears.
 
-This directory answers: **what should ST-EVA work on next, why does it come next, what must precede it, and what evidence will show it is complete?**
+## Product direction
 
-It does not replace an ADR, an approved methodology contract, a data contract, the architecture constitution, or the project structure contract. It does not authorize code changes, migrations, database operations, deployment, or an ADR append.
+ST-EVA preserves verifiable, time-indexed financial evidence and deterministic reverse calculations under explicit assumptions, then packages them for external LLM research. Its distinctive long-term purpose is to retain what the market price conditionally implied at a recorded time, with the inputs and assumptions needed to study changes later.
+
+ST-EVA does not produce fair-value predictions. Its deterministic calculations are data supplied to the research process; an LLM uses the evidence package to analyse possible price-consistent assumptions. Observed facts, calculated values, conditional calculations and LLM interpretations must remain distinguishable.
 
 ## Start here
 
-- [ROADMAP.md](ROADMAP.md) — priority order, workstreams, dependencies, gates and acceptance evidence.
-- [Project status checkpoint](../ST-EVA-PROJECT-STATUS.md) — useful historical status record; its stated inspection date is 2026-10-07 and it must be revalidated before being treated as a current measurement.
-- [Architecture constitution](../ST-EVA-ARCHITECTURE.md) — canonical architectural boundaries and explicit non-goals.
-- [Project structure contract](../ST-EVA-PROJECT-STRUCTURE.md) — where files belong and how artifacts must be preserved.
-- [Data-layer audit](../ST-EVA-DATA-LAYER-AUDIT.md) and [data-admission reconciliation](../ST-EVA-DATA-ADMISSION-RECONCILIATION.md) — recorded data-model gaps and evidence behind them.
-- [Historical P/E methodology ADR](../ADR-HISTORICAL-PE-METHODOLOGY.md) and [Historical P/E contract](../methodology/CONTRACT-HISTORICAL-PE.md) — governed decisions and implementation constraints.
-- [XBRL source-document provenance ADR](../ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) — formal baseline for the Amendment 10 governance workstream.
+- [ROADMAP.md](ROADMAP.md) — current product purpose, known baseline, immediate repairs, phases, and acceptance conditions. Read this first when deciding what the project should do next.
+- [Project status checkpoint](../ST-EVA-PROJECT-STATUS.md) — dated record of a specific inspected state, not necessarily current local state.
+- [Architecture and implementation reference](../ST-EVA-ARCHITECTURE.md) — existing design rationale and code/data boundaries; useful context, but the owner may revise a prior design.
+- [Project structure reference](../ST-EVA-PROJECT-STRUCTURE.md) — current directory and artifact conventions.
+- [Investment Context specification](../ST-EVA-2.3-C-INVESTMENT-CONTEXT.md) and [Point-in-Time Archive & Replay specification](../ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md) — existing foundation for traceable agent-consumable data and historical reconstruction.
+- [Data-layer audit](../ST-EVA-DATA-LAYER-AUDIT.md) and [data-admission reconciliation](../ST-EVA-DATA-ADMISSION-RECONCILIATION.md) — prior findings to verify against the actual current implementation before relying on them.
+- [Historical P/E methodology](../ADR-HISTORICAL-PE-METHODOLOGY.md) and [contract](../methodology/CONTRACT-HISTORICAL-PE.md) — a possible evidence/reference workstream, not automatically the mainline.
+- [XBRL source-document provenance ADR](../ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) and [C2A parser retrospective](../DEVELOPMENT-LESSONS-C2A-PARSER-SCOPE-DRIFT.md) — relevant to the current known parser defect and its bounded repair.
 
-## Status vocabulary
+## How to use this roadmap
 
-Use these terms consistently:
+1. Start from the owner's current goal and the immediate acceptance condition, not from a priority label in an old plan.
+2. Check the actual code, tests, Git state and relevant local data before claiming a capability exists or is missing.
+3. Use the listed phases to keep the work sequenced; do not expand a narrow fix into unrelated governance, refactoring or feature development.
+4. Preserve historical documents as records of what was thought or observed then. Correct them when a current summary is materially misleading, without rewriting the past to make it appear that the new direction always existed.
+5. Report what was inspected or tested, what actually changed, and what remains unknown.
 
-- **DONE — verified:** required artifact exists and its stated acceptance evidence has been checked against a named repository state.
-- **IN PROGRESS:** work has begun and has an explicit next action.
-- **BLOCKED:** a named prerequisite prevents safe progress.
-- **DECISION REQUIRED:** a human or authorized decision record must resolve the question before dependent work proceeds.
-- **PLANNED:** accepted into the roadmap but not started.
-- **DEFERRED:** intentionally postponed with a reason; not an implicit commitment.
-- **NOT IN SCOPE:** explicitly excluded from the current milestone.
-
-A document being written, a design being complete, and software being implemented are different completion states. Do not mark a software capability DONE solely because a specification, proof-of-concept, or research report exists.
-
-## Update rules
-
-1. Keep `ROADMAP.md` as the single project-level sequencing index; link to detailed specifications instead of copying them.
-2. Every work item must state its objective, dependencies, deliverables, acceptance evidence, and authorization boundary.
-3. Reconcile the roadmap with the current Git baseline and governing documents when a milestone closes or a material decision changes.
-4. Preserve historical checkpoints and research artifacts according to the project structure contract; do not rewrite history merely to make old status notes appear current.
-5. Where the evidence is incomplete, state `UNVERIFIED` or `NEEDS REVALIDATION`; do not infer completion.
-
-The roadmap is a planning aid. Governing decisions and explicit authorization remain controlling.
+Status words such as DONE, IN PROGRESS, BLOCKED or DEFERRED are summaries of evidence and intent, not immutable rules. The owner can change the plan. Agents should point out consequences and dependencies rather than silently ignoring the current direction or treating an old document as unchangeable.
