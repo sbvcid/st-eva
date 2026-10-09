@@ -1,451 +1,291 @@
 # ST-EVA Project Status Checkpoint
 
-**Purpose:** a factual checkpoint of the repository as it stands, so that a later
-session can establish where things are without re-deriving it.
-**Basis:** direct inspection of `C:\git\st-eva` only. Nothing here is researched,
-inferred, or decided.
-**Date:** 2026-10-07
+**Purpose:** A factual, verifiable checkpoint of the repository state as it stands, so that any subsequent session or contributor can establish current progress, frozen boundaries, open decisions, and next steps without re-deriving or guessing.
+**Basis:** Direct, reproducible inspection of `C:\git\st-eva` at commit `10d298f` only. Nothing here is speculative, inferred, or prematurely claimed.
+**Date:** 2026-10-09
+**Status:** FACTUAL CHECKPOINT — VERIFIED AGAINST DISK & GIT
 
-This document records state. It introduces no new architectural decision, and it
-changes no decision already recorded in the ADR, the Contract, or the Core.
+This document records state. It introduces no new architectural decisions, modifies no formal ADRs, alters no methodology contracts, changes no database schemas or migrations, and confers no implementation authorizations.
 
 ---
 
-## 1. Git baseline
+## 1. Git Baseline & Working Tree Metrics
 
-Measured at `0becbdc`, the commit that added
-`docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md`. This section is the **housekeeping
-checkpoint**; §4 and later retain the pre-relocation measurements, superseded
-in place where they were.
+Measured directly at `10d298ffbc315c20070b27472b407ac3ed2337aa` on 2026-10-09. This section records the repository baseline state as of commit `10d298f`. The pending modification to this document ([`docs/ST-EVA-PROJECT-STATUS.md`](ST-EVA-PROJECT-STATUS.md)) is the sole in-progress change preparing this checkpoint and is distinct from the underlying Git baseline.
+
+### 1.1 Git Metadata
 
 | Item | Value |
 |---|---|
-| Commit | `0becbdc` |
-| Short | `0becbdc docs: reconcile ST-EVA data admission rules` |
+| Commit SHA | `10d298ffbc315c20070b27472b407ac3ed2337aa` |
+| Short SHA | `10d298f` |
+| Commit Subject | `docs: add Amendment 10 v10 draft` |
 | Branch | `master` |
-| Remote | `origin` → `https://github.com/sbvcid/st-eva.git` |
-| Sync | `## master...origin/master` — **in sync, no ahead/behind** |
-| Preceding commits | `499bd6c` finalize research workspace archive · `7464422` define project structure · `5df7f34` workspace/architecture status · `5e655a7` formalize ADR + Contract · `b124123` remove experiment 003 |
+| Remote URL | `origin` -> `https://github.com/sbvcid/st-eva.git` |
+| Remote Sync | `## master...origin/master` — **in sync, 0 ahead, 0 behind** |
+| Prior Checkpoint Commit | `0becbdc` (`docs: reconcile ST-EVA data admission rules`, 2026-10-07) |
+| Baseline Working Tree State | Clean tracked tree at measured baseline `10d298f` (0 staged, 0 modified, 0 deleted); only untracked `?? data/` present. *(Apart from this status document's own pending in-place update awaiting commit)* |
 
-Housekeeping status at this checkpoint:
+### 1.2 Progression Lineage (0becbdc -> 10d298f)
 
-| Item | Status |
-|---|---|
-| Workspace Stabilization Stage 2C | **COMPLETE** |
-| Research relocation | **COMPLETE** — 829 artifacts, SHA-256 verified |
-| `/research/` gitignore rule | **ACTIVE** |
-| `experiments/` freeze at 46 tracked | **COMPLETE** — 46 tracked, 0 untracked |
-| Housekeeping | **COMPLETE** |
-| Reconciliation document | **committed** — `0becbdc` |
-| Product development | **NOT STARTED** — see §3, unchanged by this checkpoint |
+Forty-three commits advance the repository between the 2026-10-07 checkpoint (`0becbdc`) and this checkpoint (`10d298f`), spanning eight major development clusters:
 
-| Count | Value |
-|---|---:|
-| Tracked files | **311** |
-| Untracked files (`-uall`) | **0** |
-| Staged | **0** |
-| Modified (tracked) | **0** |
-| Deleted | **0** |
-
-Untracked breakdown: **none.** Stage 2C completed the workspace move: the last 829
-untracked research files were relocated to `research/experiments/` with
-per-file SHA-256 verification, and `/research/` was added to `.gitignore`.
-
-| Location | Files | Tracked | Git state |
-|---|---:|---:|---|
-| `research/experiments/` | 829 | 0 | ignored (`/research/`) |
-| `research/RESEARCH-ARCHIVE-MANIFEST.json` | 1 | 1 | tracked |
-| `research/README.md` | 1 | 1 | tracked |
-| `experiments/` | 59 | 46 | 46 tracked + 13 gitignored `.pyc`, **0 untracked** |
-
-Tracked composition: 48 root production `*.py` modules · `docs/` 19 ·
-`tests/` 47 · `reports/` 35 · `history/` 35 · `archive/` 19 ·
-`web/` 49 · repo root docs 3 · **`experiments/` 46 legacy** · `research/` 2.
-
-### 1.0 `docs/ST-EVA-DATA-LAYER-AUDIT.md` and the reconciliation that followed
-
-The audit found that the archive could not represent a conforming Historical P/E
-observation, because `evidence_class`, `legal_status_note`, `audit_status`,
-`accounting_basis` and `fiscal_year_end_month` had no home. Those five fields are
-now judged individually in `docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md`
-(`0becbdc`): one already represented, one derivable in an existing container,
-three genuinely missing. That document is analysis only — it changes no schema,
-no code, and no frozen decision.
-
-### 1.1 `experiments/` accounting — corrected, then superseded
-
-> **Superseded by Stage 2C (2026-10-07).** The table below describes the state
-> before the relocation. `experiments/` now holds 46 tracked + 13 gitignored =
-> 59 files, with **0 untracked**. The 829 untracked research files described here
-> are at `research/experiments/`, verified hash-identical.
-
-An earlier version of this checkpoint reported the experiments tree as entirely
-untracked. That was wrong. Measured by direct query at the time:
-
-| Classification | Files | Command |
-|---|---:|---|
-| Tracked in git | **47** | `git ls-files experiments/` |
-| Untracked | **829** | `git status --porcelain=v1 -uall -- experiments` |
-| Gitignored | **13** | `experiments/002-cold-start/__pycache__/*.pyc` |
-| **Total on disk** | **888** | `Get-ChildItem experiments -Recurse -File` (889 before the Contract moved out) |
-
-47 + 829 = 876; the 13-file remainder is gitignored cache. The original error was
-deriving the tracked count by subtraction instead of running `git ls-files`.
-
-The 47 tracked files are **legacy research from the ST-EVA 2.x era**, not from
-this Historical P/E programme:
-
-| Tracked subtree | Files | Introduced by |
-|---|---:|---|
-| `experiments/001-context-only/` (+ `input/`, `outputs/`) | 15 | `95373eb` — *2.4.3 Fix what the consumption experiment found* |
-| `experiments/002-cold-start/` (+ `contexts/`) | 31 | `7d86a39` — *2.6.1b: make an unknown metric and an absent figure different answers* |
-| `experiments/aapl-historical-pe-poc/contract/CONTRACT-HISTORICAL-PE.md` | 1 | `5e655a7` — since promoted to `docs/methodology/` |
-
-**Decision (2026-10-07):** these legacy files stay tracked. They are not
-untracked, not moved, not archived, and not in cleanup scope. Workspace cleanup
-covers untracked research only — in practice, `experiments/aapl-historical-pe-poc/`
-minus the already-promoted Contract.
-
----
-
-## 2. Completed
-
-### Core — complete and tracked
-
-- ~48 production modules at repo root, including `st_eva_runner.py`,
-  `data_contract.py`, `evidence_model.py`, `evidence_query.py`,
-  `evidence_valuation_boundary.py`, `sec_provider.py`, `sec_ingest.py`,
-  `core_registry.py`, `registry_seed.py`, `operation_registry.py`,
-  `sqlite_archive.py`, `archive.py`, `investment_context.py`,
-  `issuer_identity.py`, `knowledge_axis.py`, `llm_interpreter.py`, `web/`
-- 19 migrations under `archive/migrations/` (2.4 → 3.32), forward-only,
-  checksum-verified
-- 47 tracked test files under `tests/`
-- 35 stage reports under `reports/` (`2_7_` … `2_38_`), all tracked
-- 35 evidence records under `history/`, all tracked
-- Specification set under `docs/`: 2.3-A Data Contract, 2.3-B SEC Validation,
-  2.3-C Investment Context, 2.3 Plan, 2.4 Point-in-Time Archive/Replay,
-  2.4.3 Completion, 2.5 Core Evidence Spec, 2.5 Core Registry, 2.5 Database
-  Design, 2.5 Ingestion, 2.5.1 Hardening, 2.6 Cross-Company, `USAGE.md`
-
-### Web / PWA — built, tracked, build artifacts present but untracked
-
-- `web/` — `app.py`, `job_manager.py`, `schemas.py`, `service_adapter.py`,
-  `api/`, `frontend/` (Vite + React + TypeScript, i18n, oxlint, vitest)
-- 49 tracked files. `frontend/node_modules` (9306 files, 165.17 MB) and
-  `frontend/dist` (11 files, 0.3 MB) are gitignored build output.
-- Per commit `828deb1`: i18n, registry baseline seed, replay evidence symmetry
-
-### Historical P/E ADR — APPROVED / FROZEN, tracked
-
-`docs/ADR-HISTORICAL-PE-METHODOLOGY.md`, 323 lines. Status APPROVED / FROZEN
-(Methodology Specification). 14 frozen decisions. §4 carries four OPEN items
-that the ADR explicitly declines to settle.
-
-### Amendment 1 — ratified into the ADR, tracked
-
-Same file. Introduces Decisions 10–14: `filed` / `furnished` evidence-class
-separation; unaudited not a refusal reason; `acceptance_datetime` extended to
-furnished sources with the Eastern-Time implementation lesson; the mandatory
-distinction between `XBRL fact unavailable` and `primary evidence unavailable`;
-and TTM component source mixing. §6.1 records the empirical basis. §5.6 and §5.7
-place engine implementation and parser implementation out of scope.
-
-### AAPL Historical P/E POC — complete, in `experiments/` (untracked)
-
-`experiments/aapl-historical-pe-poc/` root, `raw/`, `out/` — 7 scripts, 48 raw
-files (1.24 MB), 5 output files (0.2 MB). Result: 31/31 TTM available with
-furnished evidence admitted; 12/31 on the prior XBRL-only path; negative path
-reproduces the prior result. `out/determinism.txt` records two-run hash equality.
-
-### Q4 evidence study — complete, in `experiments/` (untracked)
-
-`experiments/aapl-historical-pe-poc/q4_study/` — 167 files, 77.97 MB (155 raw /
-77.85 MB, 6 output / 0.06 MB, 6 scripts). Established that AAPL stopped tagging
-quarter-length `EarningsPerShareDiluted` XBRL facts from FY2021 while the same
-figure remained directly stated in Form 8-K Item 2.02 EX-99.1 exhibits:
-**5/5 quarters recovered**, all accepted 16:30 ET, all landing on the next
-trading day. Source priority measured across four categories. This study is the
-stated empirical basis for Amendment 1 §6.1.
-
-### Historical P/E Contract — complete, tracked, **promoted**
-
-**`docs/methodology/CONTRACT-HISTORICAL-PE.md`**, 1178 lines / 51.6 KB. Input
-schema (§B), output schema (§C), state definitions (§D), normative resolver
-sequence E.0–E.8, invariants **F-1 … F-15**, failure semantics (§G), provenance
-requirements (§H), replay requirements (§I.1–§I.4), genericization limits (§J),
-**nine OPEN decisions §K.1–§K.9**, consistency review §L.1–§L.9.
-
-Tracked at `5e655a7` while still under `experiments/`; promoted out of the
-research tree to `docs/methodology/` on 2026-10-07 via `git mv`, so it now sits
-beside the ADR and no governed document lives under `experiments/`. Exactly one
-line of content changed: line 7's self-referential `**File:**` header, corrected
-to the new path. **No methodology content was altered.**
-
-### MSFT contract validation — complete, in `experiments/` (untracked)
-
-`experiments/aapl-historical-pe-poc/contract/msft_validation/` (+ `phase1_fiscal_identity/`)
-— 593 files, 1014.69 MB, of which 1011.67 MB is frozen SEC primary-source
-evidence. Result: contract expresses MSFT without modification.
-27 evaluation dates · **24/27 TTM AVAILABLE** with furnished evidence, **0/24**
-with it disabled · all of F-1…F-15 PASS · 7/7 failure paths PASS · independent
-second computation path with zero mismatch · two-run replay determinism.
-Four findings recorded:
-
-- **C.1** — AAPL's exhibit layout is not a universal template
-- **J.1** — the 10-K-list fiscal-identity bug misassigns 3 of 21 MSFT quarters,
-  a systematic full-year shift, worse than AAPL's 455-day window
-- **J.2** — MSFT has no before-cutoff acceptance; that branch is N/A, not PASS
-- **J.3** — evidence class is determined by the Item 2.02 item code, not by form
-
-The validation states its own weak points rather than burying them: F-6 held
-vacuously (no split in the window), F-10 not exercised (no `CURRENT_PE` emitted),
-and the non-GAAP failure path is weak because MSFT presents no non-GAAP EPS line.
-
-### C.1 genericization note — complete, tracked
-
-`CONTRACT-HISTORICAL-PE.md` **§B.2.1 "Genericization Note: Furnished Evidence
-Column Semantics"** (lines 178–221), added 2026-10-07 from Finding C.1. States
-that `period_start` / `duration_days` may be null for `STATEMENT_COLUMN_LABEL`
-evidence; prohibits requiring a fixed column count, a cumulative column, a
-narrative corroboration sentence, or any issuer-specific layout; establishes
-column-header semantics as the eligibility signal; and records that AAPL's five
-exhibits and MSFT's twenty-three are **examples, not parser contract**. Adds no
-reason code and changes no schema semantics.
-
----
-
-## 3. Not started
-
-| Item | State | Basis |
+| Commit Range / Milestones | Cluster Description | Governing Files Added / Modified |
 |---|---|---|
-| Historical P/E production Engine | **Not started** | ADR §5.6 places engine implementation out of scope of the ADR; the Contract specifies interfaces, semantics, ordering, invariants and conformance tests but no algorithm beyond the two load-bearing derivations in §E.1 and §E.3. No production `*.py` module references any P/E metric id. |
-| Integration (Engine ↔ Core / archive) | **Not started** | Contract §L.8–L.9 state the boundary with Core is respected and that no file in `st_eva_runner.py`, `data_contract.py`, `evidence_valuation_boundary.py`, the SEC provider, the web app, the ADR or the POC outputs is modified. `docs/ST-EVA-DATA-LAYER-AUDIT.md` §C–D records the data-layer gaps that would block a conforming observation. |
-| Production regression suite for P/E | **Not started** | Contract §I.3 specifies a seven-item conformance suite (replay, independent recomputation, negative path, lookahead, window integrity, provenance completeness, class integrity) as an acceptance criterion. No such suite exists in `tests/`. |
-| Web surface for P/E | **Not started** | `web/` has no P/E route, metric or display. |
+| `d138e10` | Workspace housekeeping closeout | `.gitignore`, housekeeping logs |
+| `8fdbe2b` -> `31eb227` | Canonical Architecture Constitution established | [`docs/ST-EVA-ARCHITECTURE.md`](ST-EVA-ARCHITECTURE.md) (1084 lines) |
+| `271d948` | Observation identity conformance tests formalized | [`tests/test_observation_identity_conformance.py`](../tests/test_observation_identity_conformance.py) |
+| `e6f7165` -> `8a0a487` | SEC source document provenance infrastructure (Phase 3A/3B) | Migration [`archive/migrations/0020_sec_provenance.sql`](../archive/migrations/0020_sec_provenance.sql), [`sec_provenance.py`](../sec_provenance.py), tests |
+| `3f913a9` -> `5e6287b` | XBRL document-fact provenance & observation linking | [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md), Migration [`archive/migrations/0021_sec_document_fact_occurrences.sql`](../archive/migrations/0021_sec_document_fact_occurrences.sql), [`sec_xbrl_facts.py`](../sec_xbrl_facts.py), tests |
+| `b38b1e0` -> `d067444` | SEC taxonomy authority catalog & resolution (Phase 3C-C1..C4) | Migration [`archive/migrations/0022_authority_taxonomy_namespaces.sql`](../archive/migrations/0022_authority_taxonomy_namespaces.sql), [`archive/acquire_taxonomy_catalog.py`](../archive/acquire_taxonomy_catalog.py), [`archive/parse_edgar_taxonomies_catalog.py`](../archive/parse_edgar_taxonomies_catalog.py), [`archive/record_authority_taxonomy_assertion.py`](../archive/record_authority_taxonomy_assertion.py), [`archive/authority_taxonomy_workflow.py`](../archive/authority_taxonomy_workflow.py), [`archive/authority_evidence_resolver.py`](../archive/authority_evidence_resolver.py), tests |
+| `b1e920d` -> `4680839` | C3/C7 bridge research & Shared Authority Archive Target (Amendment 9) | [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) (Amendments 7–9 ratified; C4G archived; baseline commit `4680839`) |
+| `e9e3843` -> `e2d427f` | Project development roadmap formalized | [`docs/roadmap/README.md`](roadmap/README.md), [`docs/roadmap/ROADMAP.md`](roadmap/ROADMAP.md) |
+| `10d298f` | Standalone Amendment 10 v10 draft merged to `master` | [`docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`](drafts/AMENDMENT-10-C2A-v10-DRAFT.md) (1533 lines, `DRAFT — NOT IN FORCE`) |
 
-What exists instead, entirely inside `experiments/`, is validation-only
-throwaway code: 7 root POC scripts, 6 q4_study scripts, 4 amendment1_verify
-scripts, 7 msft_validation scripts, 8 phase1_fiscal_identity scripts. None is
-production; none is importable from Core.
+### 1.3 Tracked Files Inventory (348 files total)
 
----
+Measured directly via `git ls-files`:
 
-## 4. OPEN decisions
+| Top-Level Directory / Area | Tracked Count | Description & Key Components |
+|---|---:|---|
+| Repo Root (`.`) | **61** | 50 production/core `*.py` modules + 11 root configuration/context files (`.gitignore`, `LICENSE`, `README.md`, `SPEC.md`, `WORKSPACE-INVENTORY.md`, 6 `*.context.json`) |
+| [`archive/`](../archive/) | **28** | 6 authority acquisition/parser/workflow Python modules + 22 forward-only schema migrations ([`0001`](../archive/migrations/0001_initial.sql) through [`0022`](../archive/migrations/0022_authority_taxonomy_namespaces.sql)) |
+| [`docs/`](.) | **24** | Architecture constitution, formal ADRs, roadmap, specifications, audit/reconciliation reports, and [`docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`](drafts/AMENDMENT-10-C2A-v10-DRAFT.md) |
+| [`experiments/`](../experiments/) | **46** | Frozen legacy experiments from ST-EVA 2.x (`001-context-only/` 15, `002-cold-start/` 31; 0 untracked) |
+| [`history/`](../history/) | **35** | Frozen historical evaluation reports and context snapshot fixtures |
+| [`reports/`](../reports/) | **35** | Frozen stage design/decision reports referenced by [`registry_seed.py`](../registry_seed.py) |
+| [`research/`](../research/) | **2** | [`research/README.md`](../research/README.md) and [`research/RESEARCH-ARCHIVE-MANIFEST.json`](../research/RESEARCH-ARCHIVE-MANIFEST.json) (controls for gitignored `research/experiments/`) |
+| [`tests/`](../tests/) | **68** | Automated test suite (expanded from 47 with 21 new provenance/authority tests and 1 fixture) |
+| [`web/`](../web/) | **49** | Web application: FastAPI backend (`app.py`, `job_manager.py`, `service_adapter.py`) and React PWA frontend |
+| **Total Tracked** | **348** | |
 
-Recorded as OPEN by the documents themselves. None is decided here, and none may
-be decided without the decision record the ADR or Contract specifies.
+### 1.4 Untracked Files and Working Directory Status
 
-### From the ADR §4
+Measured via `git status --short`:
+```text
+?? data/
+```
 
-| # | Item | Blocks |
-|---|---|---|
-| ADR-4.1 | **Reference Sufficiency** — whether count ≥ 20 suffices, or time span and fiscal-quarter coverage must also be met, and at what values. No threshold pre-set. | Whether a 31-observation AAPL set forms a usable reference set |
-| ADR-4.2 | **Corporate Action Evidence Schema** — source authority, ex-date timestamp precision, storage structure | Decision 8 (point-in-time split adjustment); Contract F-6 |
-| ADR-4.3 | **Sampling Frequency** — daily / weekly / monthly / event-driven, and effect on percentile stability | Historical band construction |
-| ADR-4.4 | **Annual P/E fallback policy for FPIs** — may a semi-annual/annual-only filer be declared annual-driven, and how does it interact with the TTM/Annual separation | FPI support |
+Detailed inspection of `data/`:
+* `data/archives/` (directory): exists, currently **empty**. Designated for per-ticker runtime archives (`data/archives/<TICKER>.sqlite`).
+* `data/st-eva.sqlite`: exists on disk (659,456 bytes). Designated by Amendment 9 as the central shared authority archive target.
+* `data/st-eva.sqlite-shm`: exists on disk (32,768 bytes).
+* `data/st-eva.sqlite-wal`: exists on disk (0 bytes).
 
-### From the Contract §K
+> [!IMPORTANT]
+> The database files in `data/` are untracked runtime artifacts. Under the read-only audit and safety constraints, their internal contents remain **UNVERIFIED** (no application code or SQLite queries executed). They must never be deleted, overwritten, or reset.
 
-| # | Item |
-|---|---|
-| K.1 | Reference Sufficiency threshold — restates ADR-4.1; `REASON_INSUFFICIENT_OBSERVATIONS` and `REASON_INSUFFICIENT_TIME_SPAN` exist in the closed enumeration but their triggers are undetermined |
-| K.2 | The 20 / 24 observation requirement — unchanged and untouched; whether it governs a TTM-based set, an annual-based one, or both |
-| K.3 | Sampling Frequency — restates ADR-4.3; §E.4 requires the strategy be named, versioned and monotone but does not choose one |
-| K.4 | Corporate Action evidence schema — restates ADR-4.2; also absorbs per-fiscal-year `fiscal_year_end_month` resolution |
-| K.5 | FPI fallback policy — restates ADR-4.4 |
-| K.6 | Weighting of furnished evidence in **other** valuation contexts — whether it may appear in a standalone `trailing_eps` observation, in a band, or in any non-historical-P/E crossing |
-| K.7 | `XBRL_FACT_UNAVAILABLE` observability — observation attribute or reason code? Reason-code enumeration stays closed; today it is diagnostic only |
-| K.8 | Ties among competing admissible instances — §D.3 refuses rather than tie-breaks; whether a documented precedence rule is warranted |
-| K.9 | Non-USD currency handling — whether cross-currency EPS and price may ever be paired, and under what declaration |
+### 1.5 Historical Relocation Accounting (Preserved from Stage 2C)
 
-### From Amendment 1 §6.1
-
-- Machine-observable status of `XBRL fact unavailable` (same subject as K.7)
-- Weighting of furnished evidence in reverse-valuation reference calculation, and
-  its interaction with `ANNUAL_GAAP_DILUTED_PE` (overlaps K.6)
-- Unit handling when the EPS reporting currency is not USD (overlaps K.9)
-
-**Ten distinct OPEN items** across the three documents, with four duplicated
-between ADR and Contract by design.
-
-**Unchanged by Amendment 1:** the reason-code enumeration is closed and was not
-extended; the 20 / 24 observation requirement is unmodified.
+The Stage 2C research relocation completed on 2026-10-07 remains fully intact:
+* **829 research artifacts** relocated from `experiments/` to `research/experiments/` with byte-identical SHA-256 verification (1,147,661,516 bytes both sides).
+* `/research/` rule in `.gitignore` remains active.
+* [`research/RESEARCH-ARCHIVE-MANIFEST.json`](../research/RESEARCH-ARCHIVE-MANIFEST.json) tracks all 829 relative paths and SHA-256 digests.
+* The 46 tracked legacy files in `experiments/` remain frozen and tracked.
 
 ---
 
-## 5. Current workspace state
+## 2. Capability Classification & Verification Matrix
 
-### Stage 2C complete — research relocated in-repo
+To avoid conflating specifications or research prototypes with production software, every subsystem and capability in ST-EVA is classified strictly across the following five mutually exclusive status tiers:
 
-| Step | Status |
-|---|---|
-| Governing documents tracked | **Done** — `5e655a7` |
-| `WORKSPACE-INVENTORY.md` tracked | **Done** — `5df7f34` |
-| Contract promoted to `docs/methodology/` | **Done** — `694ec96` |
-| Tracked/untracked accounting corrected | **Done** — see §1.1 |
-| Project structure contract defined | **Done** — `docs/ST-EVA-PROJECT-STRUCTURE.md`, `7464422` |
-| **829 research artifacts relocated** | **Done** — to `research/experiments/`, relative paths preserved |
-| **Archive verification** | **PASS** — 829/829 files, 1,147,661,516 bytes both sides, per-file SHA-256: missing 0, extra 0, mismatch 0 |
-| **Source research removed from `experiments/`** | **Done** — relocated, not deleted; every file exists at its new location hash-identical |
-| 46 legacy tracked experiments retained | **Done** — unmoved, un-untracked, undeleted |
-| `/research/` added to `.gitignore` | **Done** — working tree reports 0 untracked |
-| `.kilo/worktrees` | **Untouched** |
-| Cache / build cleanup | **Not done** — out of scope |
+1. **`SPECIFIED`**: Formally documented in an approved ADR, contract, or architecture document; zero production implementation code exists.
+2. **`RESEARCH-VALIDATED`**: Empirically proven and verified in standalone research scripts/POCs within `research/experiments/`; code is non-production, throwaway, and not integrated into Core.
+3. **`IMPLEMENTED`**: Code and/or schema migrations exist in tracked production modules (`*.py` or `archive/migrations/`).
+4. **`TESTED`**: Exercised and verified by automated regression tests in `tests/`.
+5. **`PRODUCTION-INTEGRATED`**: Fully wired into runtime entry points, CLI runner ([`st_eva_runner.py`](../st_eva_runner.py)), archive subsystem, or Web/API routes.
 
-**No research artifact was deleted.** The relocation is a move with hash
-verification, and the manifest
-`research/RESEARCH-ARCHIVE-MANIFEST.json` records every file's SHA-256 at both
-locations.
+Where evidence cannot be verified from disk without executing code, the state is recorded as **`UNVERIFIED`** or **`NEEDS REVALIDATION`**.
 
-### `research/` — the permanent research home (830 files, 1094.8 MB)
+### 2.1 Subsystem Status Matrix
 
-Defined by `docs/ST-EVA-PROJECT-STRUCTURE.md`. Gitignored. Contains:
-
-| Path | Files | Size |
-|---|---:|---:|
-| `research/experiments/aapl-historical-pe-poc/contract/msft_validation/` | 593 | 1014.69 MB |
-| `research/experiments/aapl-historical-pe-poc/q4_study/` | 167 | 77.97 MB |
-| `research/experiments/aapl-historical-pe-poc/raw/` | 48 | 1.24 MB |
-| `research/experiments/aapl-historical-pe-poc/out/` | 5 | 0.20 MB |
-| `research/experiments/aapl-historical-pe-poc/amendment1_verify/` | 9 | 0.33 MB |
-| `research/experiments/aapl-historical-pe-poc/*.py` (root scripts) | 7 | — |
-| `research/RESEARCH-ARCHIVE-MANIFEST.json` | 1 | 354 KB |
-| `research/README.md` | 1 | — |
-| **Total** | **830** | **1094.8 MB** |
-
-A study that finishes **stays here**. It is not moved "somewhere more permanent",
-and it is not moved on the basis of perceived research value.
-
-### `experiments/` — frozen legacy (59 files, 4.6 MB)
-
-| Directory | Files | Tracked |
-|---|---:|---:|
-| `experiments/001-context-only/` | 15 | **15** |
-| `experiments/002-cold-start/` | 44 | **31** (+13 gitignored `.pyc`) |
-| **Total on disk** | **59** | **46** |
-
-No new research enters this directory. The Contract no longer sits inside it — it
-is at `docs/methodology/CONTRACT-HISTORICAL-PE.md`, tracked.
-
-### Prior private archive — `C:\st-eva-private-archive` (historical)
-
-Superseded by `research/` as the working destination. Retained unchanged; not
-the primary archive.
-
-| Item | Value |
-|---|---|
-| Total | 2290 files, 2406.63 MB |
-| `st-eva-research-archive/` | prior archive (includes the removed experiment 003) |
-| `historical-pe/msft-validation/` | **new this session** — 593 files, 1014.69 MB, verified |
-| `historical-pe/msft-validation-ARCHIVE-MANIFEST.json` | new — records verification result, layout, confirmed artifacts, the four findings, and the validation's disclosed weaknesses |
-
-The archive copy is a preservation copy. **The workspace copy remains
-authoritative and was not deleted.**
-
-### Worktrees — outstanding
-
-`.kilo/worktrees/` holds two managed worktrees: **`eastern-anglerfish`** and
-**`pepper-chess`**, 917 files / 110.61 MB, 0 tracked. Excluded via
-`.git/info/exclude`, **not** `.gitignore`, which makes it invisible to repo-level
-ignore policy. `pepper-chess` has its own `archive/` and the removed experiment
-003 harness. Activity status of both is **unverified** — this must be resolved
-before any worktree action.
-
-### Unresolved from the inventory
-
-`docs/ST-EVA-DATA-LAYER-AUDIT.md` §G.1 flags the one genuinely contested
-judgement: whether `msft_validation/raw/docs/` (1011.67 MB) should be retained in
-full. Both readings are defensible — EDGAR filings are refetchable in principle,
-but the manifest's re-verification check is only meaningful while the bytes are
-present, and `raw/prices.json` is explicitly scratch data with no chosen
-provider. Currently **resolved in favour of keeping**: the full copy is in
-private archive and the workspace copy is intact.
+| Subsystem / Capability | Primary Source Files / References | Status Tier | Verifiable Evidence & Boundaries |
+|---|---|---|---|
+| **Reverse Valuation Engine Core** | [`st_eva_runner.py`](../st_eva_runner.py), [`data_contract.py`](../data_contract.py) | **PRODUCTION-INTEGRATED** | Deterministic arithmetic, implied forward EPS, EPS CAGR, consensus gap calculation. Consumes provider-fed `historical_pe_band` if present. |
+| **Core Observation & Evidence Model** | [`data_contract.py`](../data_contract.py), [`evidence_model.py`](../evidence_model.py) | **PRODUCTION-INTEGRATED** | Frozen `Observation` dataclass, immutable hashing, `EVIDENCE_STATES`, `ObservationIdentity`. Tested in `test_observation_identity_conformance.py`. |
+| **Core Concept Registry & Seed** | [`core_registry.py`](../core_registry.py), [`registry_seed.py`](../registry_seed.py), [`registry_identity.py`](../registry_identity.py) | **PRODUCTION-INTEGRATED** | 35 design reports mapped; pure hash registry identities; concept adoption & mapping rules. |
+| **Valuation Admission Boundary** | [`evidence_valuation_boundary.py`](../evidence_valuation_boundary.py) | **PRODUCTION-INTEGRATED** | Admission Rules 1–10. **Critical constraint:** evaluator crossing scope is strictly `V1_CROSSING_METRICS = (METRIC_REVENUE,)`. Metric admission evaluates only `revenue`. Price bypasses admission. P/E metrics are not admitted in V1. |
+| **Archive & Replay Subsystem** | [`sqlite_archive.py`](../sqlite_archive.py), [`archive.py`](../archive.py), [`archive/migrations/`](../archive/migrations/) | **PRODUCTION-INTEGRATED** | 22 forward-only migrations. Append-only triggers enforced. Replay dynamically re-evaluates admissions without reading stored rows. |
+| **Web Service & React PWA** | [`web/app.py`](../web/app.py), [`web/job_manager.py`](../web/job_manager.py), [`web/frontend/`](../web/frontend/) | **PRODUCTION-INTEGRATED** | FastAPI REST endpoints, background task jobs, React PWA dashboard. Operates over reverse-valuation outputs; zero Historical P/E surface. |
+| **SEC Filing Document Provenance (Phase 3A/3B)** | Migration [`archive/migrations/0020_sec_provenance.sql`](../archive/migrations/0020_sec_provenance.sql), [`sec_provenance.py`](../sec_provenance.py) | **TESTED** | Tracks filing documents, SGML ordinals, document raw bytes, and filing metadata. Exercised by `tests/test_sec_*`. |
+| **XBRL Document-Fact Provenance** | Migration [`archive/migrations/0021_sec_document_fact_occurrences.sql`](../archive/migrations/0021_sec_document_fact_occurrences.sql), [`sec_xbrl_facts.py`](../sec_xbrl_facts.py) | **TESTED** | Resolves document-level fact occurrences, inline XBRL vs XML instances, and observation-to-fact linking. |
+| **SEC Taxonomy Authority Acquisition & Parsers (Phase 3C-C1..C4)** | Migration [`archive/migrations/0022_authority_taxonomy_namespaces.sql`](../archive/migrations/0022_authority_taxonomy_namespaces.sql), [`archive/authority_taxonomy_workflow.py`](../archive/authority_taxonomy_workflow.py), [`archive/parse_edgar_taxonomies_catalog.py`](../archive/parse_edgar_taxonomies_catalog.py) | **TESTED** (with known trigger failure) | C1 acquisition, C2A parsing, C2B persistence, C3 workflow, C4 evidence gates. **Known defect:** baseline C2A parser aborts on official catalog `doc_eb3d9eb2...` at record #127. Gated by Amendment 9; claims C3/C7/C9 unproven; C4G archived. |
+| **Historical P/E Methodology & Architecture** | [`docs/ADR-HISTORICAL-PE-METHODOLOGY.md`](ADR-HISTORICAL-PE-METHODOLOGY.md) | **SPECIFIED** | APPROVED / FROZEN (with Amendment 1 Decisions 10–14). 4 open items in §4. |
+| **Historical P/E Contract Specification** | [`docs/methodology/CONTRACT-HISTORICAL-PE.md`](methodology/CONTRACT-HISTORICAL-PE.md) | **SPECIFIED** | Explicitly marked `Status: DESIGN ARTIFACT — not implementation, not production`. Invariants F-1..F-15, sequence E.0..E.8, 9 open decisions §K. |
+| **Historical P/E Empirical Validation** | `research/experiments/aapl-historical-pe-poc/` | **RESEARCH-VALIDATED** | AAPL POC (31/31 TTM), Q4 evidence study (5/5 quarters recovered from 8-K EX-99.1), MSFT validation (24/27 TTM). All code is throwaway research. |
+| **Historical P/E Production Engine** | None | **NOT STARTED** | Zero production Python modules exist for Contract-defined Historical P/E calculation; no `HistoricalPeObservation` type. |
+| **Historical P/E Archive Integration** | None | **NOT STARTED** | Evaluator boundary crossing scope does not include P/E metrics (`V1_CROSSING_METRICS`). Data-layer has 4 Class-1 gaps. |
+| **Historical P/E Conformance Test Suite** | None | **NOT STARTED** | Contract §I.3 specified 7-item conformance suite (replay, independent recomputation, negative path, lookahead, window integrity, provenance completeness, class integrity) does not exist in `tests/`. |
+| **Historical P/E Web / CLI Surface** | None | **NOT STARTED** | Zero routes, endpoints, or UI components exist in `web/` or CLI for Historical P/E. |
+| **ST-EVA Development Roadmap** | [`docs/roadmap/ROADMAP.md`](roadmap/ROADMAP.md) | **SPECIFIED** | Workstreams RM-0, GOV-1, HPE-1..5, PLAT-1 defined. Explicitly states it confers no implementation authorization. |
 
 ---
 
-## 6. Next milestone
+## 3. Dedicated Amendment 10 Governance Checkpoint
 
-### Workspace Stabilization — nearly complete
+Amendment 10 governs C2A catalog parsing, record classification, identity collapse, and evidence preservation for the SEC taxonomy authority layer. To prevent premature execution or governance confusion, its five distinct operational and legal statuses are recorded separately:
 
-| Step | Action | Reversible |
-|---:|---|---|
-| 0 | ~~Governing documents under version control~~ | **done** — `5e655a7` |
-| 0b | ~~Promote the Contract to `docs/methodology/`~~ | **done** — `694ec96` |
-| 0c | ~~Correct the tracked/untracked accounting~~ | **done** — §1.1 |
-| 0d | ~~Define the permanent directory structure~~ | **done** — `7464422` |
-| 0e | ~~Relocate 829 research files to `research/experiments/`, hash-verified~~ | **done** — PASS |
-| 0f | ~~Add `/research/` to `.gitignore`~~ | **done** — 0 untracked |
-| 1 | ~~Confirm untracked baseline was 829 before touching anything~~ | **done** |
-| 2 | Determine whether `eastern-anglerfish` / `pepper-chess` worktrees are live | **outstanding** |
-| 3 | Decide whether to retain the 1011.67 MB MSFT raw bulk in `research/` | **outstanding** |
-| 6 | Delete `__pycache__`, `.pytest_cache`, `web/frontend/dist` | yes |
+```text
++---------------------------------------------------------------------------------------------------------+
+|                                    AMENDMENT 10 FIVEFOLD STATUS REGISTER                                |
++------------------------------------+--------------------------------------------------------------------+
+| 1. Branch Merge Status             | MERGED into master (commit 10d298f, docs/drafts/...)              |
+| 2. Semantic Review Status          | ALL CLEAR — READY FOR RATIFICATION CONSIDERATION (0 defects)      |
+| 3. Formal Ratification Status      | DRAFT — NOT IN FORCE (pending human ratification decision)        |
+| 4. Formal ADR Update Status        | ADR-XBRL-PROVENANCE UNCHANGED (2597 lines, hash 684d985...)       |
+| 5. Implementation Authorization    | ZERO AUTHORIZATION (code, tests, migrations, and DB frozen)       |
++------------------------------------+--------------------------------------------------------------------+
+```
 
-The relocation was the destructive step and it was completed safely: per-file
-SHA-256 was compared across all 829 files *before* any source was removed, and
-recorded in `research/RESEARCH-ARCHIVE-MANIFEST.json`. Had any file mismatched,
-every source would still have been intact.
+### 3.1 Fivefold Status Details
 
-**Standing directory rule.** `docs/ST-EVA-PROJECT-STRUCTURE.md` (`7464422`) is
-now canonical and supersedes the conventions in `WORKSPACE-INVENTORY.md` §I.
-In summary: production / methodology / contracts / tests → Git, tracked;
-contract → `docs/methodology/`; **all research → `research/`, permanently, not
-relocated when a study completes**; runtime data → `data/`; migrations →
-`archive/`; cache and build output → deletable. Two rules persist above all
-others: research artifacts are preserved by default and low value does not imply
-deletion, and cleanup scope is defined by git tracking status rather than by
-directory.
+1. **Branch Merge Status: MERGED into `master`**
+   Merged into `master` at commit `10d298ffbc315c20070b27472b407ac3ed2337aa` as a standalone draft file:
+   [`docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`](drafts/AMENDMENT-10-C2A-v10-DRAFT.md) (1533 lines, blob SHA `b841fb487b26eba14888e901c157ac2a0cfac42b`).
+   The file is located in `docs/drafts/`, isolated from formal ADRs.
+2. **Semantic Review Status: ALL CLEAR — READY FOR RATIFICATION CONSIDERATION**
+   Independent full-document semantic review across §0–§14 confirmed:
+   - Exactly 84 decision clauses (44 bare headings + 40 sub-clauses across 10 compound decisions) and 25 output table rows.
+   - Internal numbering, cross-references, reason-code mappings, and disposition semantics are completely consistent.
+   - Targeted counterexample verification on Decision 10.30(d) passed across all four boundary conditions (A, B, C, D).
+   - Zero blocking semantic defects or internal contradictions remain.
+3. **Formal Ratification Status: DRAFT — NOT IN FORCE**
+   The draft states in §0 that it is `DRAFT — NOT IN FORCE`. Merging the draft to `master` does not constitute ratification. Formal adoption requires an explicit human governance decision (Roadmap Gate `GOV-1b`).
+4. **Formal ADR Update Status: FORMAL ADR UNCHANGED**
+   The governing ADR [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) remains exactly 2,597 lines (blob SHA `684d985078237a5ac9359127a3a42c5f5542022b`), byte-identical to commit `4680839`. It ends at Amendment 9. Amendment 10 has **not** been appended to the formal ADR.
+5. **Implementation Authorization Status: ZERO AUTHORIZATION CONFERRED**
+   The draft confers no authority to modify [`archive/parse_edgar_taxonomies_catalog.py`](../archive/parse_edgar_taxonomies_catalog.py), [`archive/record_authority_taxonomy_assertion.py`](../archive/record_authority_taxonomy_assertion.py), tests, database schemas, or migrations, nor does it authorize executing the C1–C2B workflow against `data/st-eva.sqlite`. All code and database work remains strictly gated behind Gate `GOV-1d`.
 
----
+### 3.2 Stable Taxonomy of Disclosed Limitations
 
-## 7. Recommended sequence after stabilization
-
-Recorded as a recommendation. No step below is authorized by this document, and
-none begins a new architectural decision.
-
-| # | Stage | Status | Notes |
-|---:|---|---|---|
-| 1 | **ST-EVA data-layer audit** | **Done — Phase 1 complete** | `docs/ST-EVA-DATA-LAYER-AUDIT.md`, tracked. Read-only. Recorded: 26-table schema, no populated instance; 7 gaps; Historical P/E cannot currently store a conforming observation. |
-| 2 | **Historical P/E implementation design** | Not started | Depends on the audit's Class-1 gaps. Its smallest recommended step is an ADR amendment in the form of Amendment 1, answering four questions: where `evidence_class` lives, where `legal_status_note` lives, the three `audit_status` values and their derivation rule, and what `accounting_basis` becomes. Decision work, no migration. |
-| 3 | **Historical P/E Engine implementation** | Not started | Blocked on #2. Contract §L.9 forbids specifying an algorithm beyond the two derivations in §E.1 / §E.3, so the implementation must follow the design, not precede it. |
-| 4 | **Regression** | Not started | Contract §I.3's seven-item conformance suite. AAPL and MSFT already produce the exact rows that would serve as the test corpus. |
-| 5 | **Web integration** | Not started | Last. `web/` currently has no P/E surface. |
-
-Ordering rationale, recorded so it is not re-litigated: the data-layer audit
-precedes implementation design because four Class-1 gaps make a conforming
-observation **unrepresentable** today — that is a correctness blocker, not a
-scale blocker, and it is the same class of problem Amendment 1 fixed for evidence
-retrieval. Design precedes implementation because the Contract deliberately
-specifies no parser. Implementation precedes regression because the conformance
-suite is defined against the Contract's own sequence. Web integration is last
-because a P/E surface over an unrepresentable observation would display a number
-the archive cannot justify.
-
-Deliberately **not** in this sequence: corporate-action schema design (ADR-4.2 /
-K.4). One split on AAPL and zero splits on MSFT is insufficient evidence to
-decide, and the Contract already leaves it OPEN.
+The final semantic review confirmed that the draft's disclosed normative limitations are honest boundaries of the official SEC catalog, not defects. They remain classified under their original stable identifiers:
+* **Class A (Upstream Format Constraints):** Unversioned namespace collisions (Decision 10.21), absence of historical effective dates (Decision 10.23), and multi-prefixed authority namespaces (Decision 10.25).
+* **Class B (Execution & Collision Defenses):** Catalog-internal collision defenses CC-1 / CC-2, distinct from archive pre-existing assertions G1 / G2 (Decision 10.29).
+* **Class C (Operational Scope):** Scope restricted to C2A authority parsing; no cross-archive reading, no B2 candidate linking, and no C4G reactivation permitted.
 
 ---
 
-*Checkpoint first recorded from direct workspace inspection at `5e655a7`;
-updated at `5df7f34`; Contract promoted at `694ec96`; structure contract at
-`7464422`; research relocation completed (Stage 2C), 2026-10-07; housekeeping
-closed and baseline re-measured at `0becbdc`, 2026-10-07.*
+## 4. Historical P/E Productization Status & Data-Layer Gaps
 
-*Revision history of this file: (a) the tracked/untracked accounting of
-`experiments/` was corrected — 46 legacy tracked research files exist and are
-excluded from cleanup scope (§1.1); (b) the Contract was promoted to
-`docs/methodology/` with one self-referential header line changed; (c) Stage 2C
-relocated 829 research artifacts to `research/experiments/` with per-file
-SHA-256 verification (PASS), removed their source copies, and added `/research/`
-to `.gitignore`; (d) the §1 baseline was re-measured at `0becbdc` (tracked files
-308 → **311**), the relocation status in `docs/ST-EVA-PROJECT-STRUCTURE.md` §6 was
-corrected from pending to complete, and the `.gitignore` was given the two
-`web/`-level rules `docs/ST-EVA-PROJECT-STRUCTURE.md` §2.2 names.*
+### 4.1 Methodology vs. Software Reality
 
-*No research was performed. No production code, Core, Web, ADR, Contract,
-methodology content, database schema or test was modified. The 46 legacy tracked
-research files remain tracked and untouched in `experiments/`. **No research
-artifact was deleted** — the 829 files were relocated, and every one exists at
-its new location with a matching hash recorded in
-`research/RESEARCH-ARCHIVE-MANIFEST.json`.*
+While ST-EVA possesses extensive research evidence and frozen methodology specifications for Historical P/E, **no production Historical P/E pipeline currently exists in the codebase**:
+
+```text
+               SPECIFICATION                 RESEARCH & PROOF                  PRODUCTION CODE
+        ┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
+        │ ADR Methodology         │     │ AAPL POC (31/31 TTM)    │     │ Production Engine:      │
+        │ APPROVED / FROZEN       │ --> │ Q4 Study (8-K EX-99.1)  │ --> │ NOT STARTED             │
+        │                         │     │ MSFT Validation (24/27) │     │                         │
+        │ Contract §A-§L          │     │                         │     │ Core Integration:       │
+        │ DESIGN ARTIFACT         │     │ All in /research/       │     │ NOT STARTED             │
+        └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
+```
+
+### 4.2 Legacy `historical_pe_band` vs. Contract-Defined Pipeline
+
+The codebase contains a legacy mechanism that must never be confused with the Contract-defined Historical P/E pipeline:
+* **Legacy Provider-Fed Band ([`data_contract.py:1805`](../data_contract.py#L1805), [`st_eva_runner.py:1378`](../st_eva_runner.py#L1378)):**
+  `ValuationInputs.historical_pe_band` is an optional dictionary supplied directly by an external provider (such as Yahoo Finance) containing pre-aggregated percentiles (e.g. median). `STEVAEEngine.analyze()` reads this band if present. It performs zero quarter-level reconstruction, enforces no point-in-time usable dates, and has no provenance.
+* **Contract-Defined Historical P/E Pipeline ([`docs/methodology/CONTRACT-HISTORICAL-PE.md`](methodology/CONTRACT-HISTORICAL-PE.md)):**
+  A deterministic, point-in-time engine that reconstructs quarter-level Diluted EPS from SEC filed statements and Form 8-K Item 2.02 furnished exhibits, pairs them with historical market closing prices under the 16:00 ET cutoff convention, enforces Invariants F-1..F-15, and emits conforming observations with complete lineage. **This pipeline is completely unwritten.**
+
+### 4.3 Data-Layer Audit Findings & Genuine Schema Gaps
+
+Per [`docs/ST-EVA-DATA-LAYER-AUDIT.md`](ST-EVA-DATA-LAYER-AUDIT.md) and [`docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md`](ST-EVA-DATA-ADMISSION-RECONCILIATION.md), the current 22-migration schema cannot store a conforming Historical P/E observation due to **four Class-1 genuine schema gaps**:
+
+1. **Evidence Class:** No machine-observable column or attribute distinguishes `filed` (Section 13(a)) from `furnished` (Form 8-K Item 2.02 EX-99.1) evidence.
+2. **Audit Status & Legal-Status Note:** No 3-valued `audit_status` field (`AUDITED`, `UNAUDITED`, `NOT_APPLICABLE`) and no required accompanying `legal_status_note` exist in `observations` or `source_facts`. Inferring audit status from form type alone is prohibited by ADR Decision 11.
+3. **Fiscal Calendar Axis:** The data layer lacks an issuer fiscal calendar table or resolved `fiscal_year_end_month` mapping on the observation time axis.
+4. **Acceptance-Instant Source Provenance:** The archive cannot distinguish whether an acceptance timestamp originated from official EDGAR SGML header bytes or an untrusted external vendor feed.
+
+These gaps represent correctness blockers. Until they are designed and resolved via approved governance, no conforming Historical P/E observation can be persisted.
+
+---
+
+## 5. Open Decisions & Unresolved Issues Register
+
+The following decisions are formally registered as **OPEN** by their governing documents. None has been decided, and none may be decided without following the required governance process.
+
+### 5.1 Historical P/E Open Decisions
+
+| Source | Identifier | Subject | Description & Status |
+|---|---|---|---|
+| ADR §4 | **ADR-4.1** | Reference Sufficiency | Minimum observation count threshold (whether >= 20 suffices, or time span and fiscal quarter coverage are also required). OPEN. |
+| ADR §4 | **ADR-4.2** | Corporate Action Schema | Source authority, ex-date timestamp precision, and split-adjustment evidence schema. OPEN. |
+| ADR §4 | **ADR-4.3** | Sampling Frequency | Frequency strategy (daily, weekly, monthly, event-driven) and impact on percentile stability. OPEN. |
+| ADR §4 | **ADR-4.4** | FPI Fallback Policy | Annual P/E fallback rules for Foreign Private Issuers reporting semi-annually. OPEN. |
+| Contract §K | **K.1** | Reference Sufficiency Threshold | Triggers for `REASON_INSUFFICIENT_OBSERVATIONS` and `REASON_INSUFFICIENT_TIME_SPAN`. OPEN. |
+| Contract §K | **K.2** | 20 / 24 Observation Scope | Whether the 20/24 threshold governs TTM sets, annual sets, or both. OPEN. |
+| Contract §K | **K.3** | Sampling Strategy | Monotone, versioned sampling strategy naming and selection. OPEN. |
+| Contract §K | **K.4** | Corporate Action Evidence | Storage structure absorbing per-fiscal-year calendar resolution. OPEN. |
+| Contract §K | **K.5** | FPI Fallback Policy | Restates ADR-4.4. OPEN. |
+| Contract §K | **K.6** | Furnished Evidence Scope | Weighting and eligibility of furnished evidence in non-historical-P/E valuation contexts. OPEN. |
+| Contract §K | **K.7** | Fact-Unavailable Observability | Machine-observable representation of `XBRL_FACT_UNAVAILABLE` (attribute vs reason code). OPEN. |
+| Contract §K | **K.8** | Precedence in Instance Ties | Documented precedence rules among competing admissible instances. OPEN. |
+| Contract §K | **K.9** | Cross-Currency Handling | Pairing cross-currency EPS and market price when reporting currency is non-USD. OPEN. |
+
+### 5.2 SEC Taxonomy Authority Unproven Claims
+
+From [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) (Amendments 7–9):
+* **Claim C3:** `NOT PROVEN` — No cross-source contract connecting API token to catalog `<Prefix>`.
+* **Claim C7:** `NOT PROVEN` — Equivalence between observation and occurrence representations unproven.
+* **Claim C9:** `UNAVAILABLE / UNPROVEN` — Historical filing-date validity cannot be proven by current catalog snapshot.
+* **Claim C10:** `UNAVAILABLE` — Production refuses unproven taxonomy equivalence.
+
+### 5.3 Workspace & Inventory Unresolved Items
+
+1. **Managed Worktrees Activity Status (`.kilo/worktrees/`):**
+   Contains two managed worktrees: `eastern-anglerfish` and `pepper-chess` (917 files, 110.61 MB, excluded via `.git/info/exclude`). Activity status remains **UNVERIFIED / NEEDS REVALIDATION**. No deletion or modification permitted.
+2. **MSFT Raw Bulk Retention Policy:**
+   `research/experiments/aapl-historical-pe-poc/contract/msft_validation/raw/docs/` holds 1011.67 MB of frozen SEC primary filings. Whether to retain this in full permanently or treat EDGAR as re-fetchable remains an unresolved design trade-off. Currently resolved in favor of **retention**.
+3. **Runtime Database Files in `data/`:**
+   `data/st-eva.sqlite` (659 KB) exists untracked. Its internal tables and contents remain **UNVERIFIED** under the read-only constraint.
+
+---
+
+## 6. Development Roadmap Alignment & Milestone Status
+
+Aligned with the authoritative project roadmap [`docs/roadmap/ROADMAP.md`](roadmap/ROADMAP.md) (established at `e2d427f`):
+
+| Workstream ID | Workstream Title | Current Status | Next Action / Gate |
+|---|---|---|---|
+| **RM-0** | Baseline & Status Reconciliation | **IN PROGRESS (Fulfilled by this Checkpoint)** | Verify dated checkpoint against disk; confirm zero discrepancies. |
+| **GOV-1** | Amendment 10 Governance Track | **IN PROGRESS** | Review complete (GOV-1a). Awaits human ratification decision (GOV-1b). ADR append (GOV-1c) and implementation authorization (GOV-1d) frozen. |
+| **HPE-1** | Historical P/E Scope & Design Prerequisites | **NOT STARTED** | Define bounded first-release scope; map blocking vs deferred open decisions; obtain required ADR governance approvals. |
+| **HPE-2** | Historical P/E Data-Model Design | **NOT STARTED** | Blocked on HPE-1. Design conforming representation resolving the 4 Class-1 data-layer gaps without altering existing boundaries. |
+| **HPE-3** | Historical P/E Production Pipeline | **NOT STARTED** | Blocked on HPE-1 and HPE-2. Implement Contract-defined pipeline in tracked modules; integrate with core archive and admission. |
+| **HPE-4** | Historical P/E Conformance & Regression | **NOT STARTED** | Blocked on HPE-3. Implement Contract §I.3 7-item conformance regression suite in `tests/`. |
+| **HPE-5** | CLI and Web/PWA Integration | **NOT STARTED** | Blocked on HPE-3 and HPE-4. Expose validated outputs to CLI and React frontend with clear provenance. |
+| **PLAT-1** | Long-Term Platform Improvements | **DEFERRED / CASE-DEPENDENT** | Undertake only when justified by a concrete correctness blocker or named consumer. |
+
+---
+
+## 7. Immediate Next Concrete Actions
+
+Following the roadmap sequencing protocol, the next concrete steps are:
+
+1. **Checkpoint Verification & Freezing (RM-0):**
+   Review this updated [`docs/ST-EVA-PROJECT-STATUS.md`](ST-EVA-PROJECT-STATUS.md) against git status and git diff to ensure complete fidelity, zero untracked file destruction, and clean working tree.
+2. **Amendment 10 Ratification Consideration (GOV-1b):**
+   Submit the review findings to project leadership for formal ratification consideration. Do NOT append to the formal ADR or begin implementation until explicit human approval is granted.
+3. **Historical P/E First-Release Scoping (HPE-1):**
+   Before any schema design or code drafting, establish a bounded first-release scope (e.g. US-GAAP filers with standard calendar and filed+furnished evidence, deferring FPI annual fallback and corporate actions) and register resolutions for the blocking decisions via the required governance path.
+
+---
+
+## 8. Checkpoint History & Revision Register
+
+* **2026-10-07 (`5e655a7`):** First recorded status checkpoint from direct workspace inspection.
+* **2026-10-07 (`5df7f34`):** Updated with workspace inventory and architecture boundaries.
+* **2026-10-07 (`694ec96`):** Promoted Historical P/E Contract to [`docs/methodology/CONTRACT-HISTORICAL-PE.md`](methodology/CONTRACT-HISTORICAL-PE.md).
+* **2026-10-07 (`7464422`):** Project structure contract formalized ([`docs/ST-EVA-PROJECT-STRUCTURE.md`](ST-EVA-PROJECT-STRUCTURE.md)).
+* **2026-10-07 (`499bd6c`):** Stage 2C research relocation completed (829 files relocated to `research/experiments/`, hash verified PASS).
+* **2026-10-07 (`0becbdc`):** Data admission reconciliation recorded; baseline measured at 311 tracked files.
+* **2026-10-09 (`10d298f`):** Updated to reflect baseline `10d298f`:
+  - Measured 348 tracked files (expanded by architecture constitution, SEC provenance, XBRL fact linking, taxonomy authority C1–C4, and roadmap).
+  - Formalized 5-tier capability matrix (`SPECIFIED`, `RESEARCH-VALIDATED`, `IMPLEMENTED`, `TESTED`, `PRODUCTION-INTEGRATED`).
+  - Recorded Amendment 10's fivefold status: merged to `master` as draft, reviewed all-clear, `DRAFT — NOT IN FORCE`, formal ADR unchanged, implementation unauthorized.
+  - Reconciled Historical P/E status: methodology specified, research validated, production unstarted, data-layer gapped (4 Class-1 gaps), legacy band separated.
+  - Aligned status with [`docs/roadmap/ROADMAP.md`](roadmap/ROADMAP.md) workstreams RM-0, GOV-1, HPE-1..5, PLAT-1.
+  - Zero modifications to code, tests, schemas, migrations, or database files.
