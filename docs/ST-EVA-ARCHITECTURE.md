@@ -1,37 +1,34 @@
-# ST-EVA Architecture Constitution & Deep-Dive
+# ST-EVA Architecture & Implementation Reference
 
 **Repository:** `sbvcid/st-eva`  
-**Document Status:** CANONICAL ARCHITECTURE CONSTITUTION  
-**Authority:** Highest Architectural Authority over `sbvcid/st-eva` Implementation  
-**Intended Audience:** All human engineers, system architects, and coding agents before modifying production code, schemas, or contracts.
+**Document Status:** Architecture and implementation reference; records prior design reasoning and known boundaries.  
+**Role:** Help maintainers and agents understand the current implementation and why particular safeguards exist. The project owner may revise a prior design or change direction. When this record conflicts with the owner's current instruction, explain the impact and update the relevant record rather than treating old wording as immutable.  
+**Intended Audience:** Maintainers and coding agents working on production code, schemas, data and tests.
 
 ---
 
-## Executive Warning to Any Modifying Agent
+## Notes for Any Modifying Agent
 
-> [!CRITICAL]
-> **READ BEFORE TOUCHING ANY CODE OR SCHEMA IN ST-EVA:**
-> ST-EVA is **not** a typical loose financial reporting script. It is an append-only, deterministic, point-in-time reverse valuation engine governed by strict mathematical and provenance invariants.
-> 
-> Boundaries that look redundant or verbose (e.g. separating a Source Fact from an Observation, separating an Observation from an Admission, separating Availability Time from Retrieval Time) were introduced to eliminate specific, historically verified data corruptions.
-> 
-> **Never collapse layers to make code shorter. Never invent synthetic data to avoid `UNAVAILABLE`. Never change a hash function to suit a downstream consumer.**
+> **Read the relevant sections before changing code, schemas, identities or data paths.**
+>
+> ST-EVA preserves sourced financial observations, provenance and point-in-time distinctions. Several boundaries (for example, Source Fact vs Observation, Observation vs Admission, and Availability Time vs Retrieval Time) were introduced to prevent specific, previously observed data errors.
+>
+> These records are engineering context, not a prohibition on owner-directed change. Do not silently alter a boundary; do explain the evidence and consequences, make the smallest sufficient change, and verify it with tests. Never invent synthetic data merely to avoid `UNAVAILABLE`.
 
 ---
 
 # A. ST-EVA 是什麼 (What ST-EVA Is)
 
 ### 1. 精確定義 (Precise Definition)
-**ST-EVA 是一個「反向估值與市場隱含預期引擎」（Reverse Valuation & Market-Implied Expectations Engine）。**  
-它接收公開市場的即時報價與明確指定的估值參考倍數（Valuation Reference Multiple），以完全確定性（Deterministic）、可審計（Auditable）且可回溯重現（Replayable）的純粹計算，反向推導出該股價所「隱含」的底層基本面與成長假設。
+**ST-EVA 是一套面向金融研究與 LLM 消費者的證據資料及市場隱含假設紀錄系統。**  
+它保存可追查的市場與財務觀測、來源及驗證結果，對明確指定的估值條件執行確定性反向計算，並將資料、公式、條件與指定時點的快照交給外部 LLM 或研究者分析。ST-EVA 本身不預測公司的合理價值，也不把條件式反推結果宣稱為市場唯一且可直接觀測的預期。
 
 ### 2. 反向估值（Reverse Valuation）的真正研究對象
-在傳統財務分析中，分析師研究的對象是「資產（Asset）」——試圖透過預測資產未來的獲利來計算目標價。  
-**ST-EVA 的研究對象不是資產，而是「假設（Assumptions）」。**  
-核心提問永遠只有一個：  
-> **「目前價格反映了什麼假設？」(What assumptions is the current price reflecting?)**
+傳統估值常從未來基本面假設推導價值；ST-EVA 採相反方向，研究「在明確估值條件下，當前價格要求哪些財務結果」。
 
-報價本身是市場所有參與者集體投票後生成的「壓縮共識裁決（Compressed Verdict）」。市場在某個價格下，已隱含了對該標的未來獲利、增長率或利潤率的預期。ST-EVA 的任務不是評判價格對不對，而是把這份被壓縮在價格裡的預期**完全解壓縮並顯性化**。
+> **「目前價格在什麼條件下說得通？這些條件隨時間如何改變？」**
+
+價格本身不能唯一揭示市場所有參與者真正相信的成長路徑。ST-EVA 記錄觀測到的價格、當時可得的證據，以及在各組明確參考條件下計算出的隱含數值；LLM 再利用這些材料提出並比較可能的解釋。條件式計算是可重現的研究輸入，不是對市場心理的直接觀測。
 
 ### 3. Price → Assumptions 的基本思路
 在給定價格 $P_0$ 與明確指定的參考倍數 $M$（例如本益比 P/E、市銷率 P/S、市現率 P/FCF、企業價值倍數 EV/EBITDA）下：
@@ -58,7 +55,7 @@ ST-EVA 明確拒絕成為下列系統：
 2. **不是 DCF（現金流折現）：** 不預測未來數十年的自由現金流，不隨意給定加權平均資金成本（WACC）或永續成長率。DCF 容易因為微小的貼現率假設變動產生巨大的估值幻覺；ST-EVA 僅反解市場現狀。
 3. **不是 Rating / Buy-Sell System（不做買賣評級）：** 不輸出 Bull/Base/Bear 劇本機率、不產出 Buy/Hold/Sell 建議。
 4. **堅持零合成財務資料（Zero Synthetic Financial Data）：** 若底層財務數據（如 EPS 或營收）缺失，系統嚴格標記為 `UNAVAILABLE` 或拒絕計算，**絕不**使用同業平均、平滑曲線、黑箱插值或隨意乘數來填補空白數值。
-5. **LLM 永遠不參與估值算術：** 語言模型（`llm_interpreter.py`）僅作為對已驗證 JSON 結構的文字解讀介面，嚴禁執行任何財務計算。
+5. **LLM 是外部分析者，不是權威資料來源：** ST-EVA 的確定性核心負責產生可重現的基礎指標與明確條件下的反向計算。LLM 可以利用相同資料包自行分析、提出候選假設或進行額外計算，但必須把其假設、公式與解釋和 ST-EVA 的來源觀測及已保存計算結果分開；不能把模型推論回寫成原始事實。目前 `llm_interpreter.py` 主要建構解讀提示詞，尚未整合即時模型呼叫。
 
 ---
 
