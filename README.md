@@ -1,6 +1,6 @@
 # ST-EVA — Financial Evidence, Point-in-Time Records & Market-Implied Assumptions
 
-> **Architecture and implementation reference:** Read [`docs/ST-EVA-ARCHITECTURE.md`](docs/ST-EVA-ARCHITECTURE.md) for existing design rationale and code/data boundaries. It is a revisable record of prior decisions, not a constraint on the owner's ability to change direction.
+> **Documentation note:** Files under `docs/` are optional historical notes, research records, design discussions, and proposals. They are not required reading and do not automatically govern current work. Consult a specific file only when it helps with the question at hand; verify behavior against the code and tests.
 
 ST-EVA builds a verifiable, time-indexed record of market prices, company financial evidence, source comparisons, and deterministic calculations. Under explicitly stated valuation conditions, it can calculate the financial values and growth requirements implied by an observed price, preserve the inputs and formulas, and package them for external LLM research.
 
@@ -117,8 +117,8 @@ A band below that threshold is still reported under `observed_valuation`, but it
   `reference.historical_band_status`.
 
 A numerically precise band built from too few points is not trustworthy, and the
-engine will not treat it as though it were. This is the defect behind the NU case
-recorded in [docs/ST-EVA-2.3-PLAN.md](docs/ST-EVA-2.3-PLAN.md).
+engine will not treat it as though it were. This is the defect behind the NU case, noted in the optional historical record
+[docs/ST-EVA-2.3-PLAN.md](docs/ST-EVA-2.3-PLAN.md).
 
 Bands that declare no `observations` count at all are treated as usable, which
 preserves static regression fixtures.
@@ -162,8 +162,9 @@ Company names are accepted (`蘋果`, `騰訊`, `台積電`, `apple`). Treat
 `--reference-multiple` as a required argument in practice: a historical band is
 only adopted automatically when it carries enough observations.
 
-See [docs/USAGE.md](docs/USAGE.md) for the full workflow, output reference,
-multi-method reverse valuation, snapshot tracking, and LLM interpretation.
+For optional extended usage details, see [docs/USAGE.md](docs/USAGE.md) for the
+workflow, output reference, multi-method reverse valuation, snapshot tracking,
+and LLM interpretation.
 
 ## Fundamental data provider
 
@@ -188,7 +189,7 @@ llm_interpreter.py      current prompt/request builder; no live model-provider c
 tests/                  unittest suite
 history/                current engine snapshots
 history/legacy-v6/      pre-2.2 artifacts, retained but not current output
-docs/                   version plans
+docs/                   optional historical notes and design references
 ```
 
 ## Architecture
@@ -230,7 +231,7 @@ Immutable-at-application-level Snapshot
         |
         +--> data_contract block (2.3-A, additive)
 
-The data contract is specified in
+An optional historical design reference for the data contract is available in
 [docs/ST-EVA-2.3-A-DATA-CONTRACT.md](docs/ST-EVA-2.3-A-DATA-CONTRACT.md).
 The engine reads `ValuationInputs`, which carries no provider field names, so
 the calculation core does not depend on Yahoo's structure. A Yahoo field name
@@ -313,7 +314,7 @@ than forced, which is the point: a comparison that reports a difference
 between two figures that answer different questions is worse than no
 comparison, because it teaches a reader to ignore the real findings.
 
-Specified in
+Optional reference (not required reading):
 [docs/ST-EVA-2.3-B-SEC-VALIDATION.md](docs/ST-EVA-2.3-B-SEC-VALIDATION.md).
 
 ## Investment Context (2.3-C)
@@ -359,7 +360,7 @@ data" is an interpretation.
 trailing_eps   NOT_REPORTED_BY_SOURCE   blocks=[der:current_pe, der:required_eps_cagr]
 ```
 
-Specified in
+Optional reference (not required reading):
 [docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md](docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md).
 
 ## Point-in-time archive and replay (2.4)
@@ -408,7 +409,7 @@ Three properties, enforced rather than documented:
   a `NullArchive` for the normal CLI path. No engine import, no storage engine
   in the Core, so SQLite can be replaced without touching the contract.
 
-Specified in
+Optional reference (not required reading):
 [docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md](docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md).
 
 ## Source capture (2.4.1)
