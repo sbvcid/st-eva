@@ -2446,3 +2446,152 @@ Under this amendment, the following prohibitions remain strictly binding:
 | **Four Semantic Entities** | Strictly separated: API token, Catalog Prefix, Filing-local prefix, Observation-to-occurrence equivalence |
 | **Production State** | Baseline `9b3a8a8` intact; C4G archived; production returns `TAXONOMY_UNPROVEN`; no unproven links written |
 | **Code / DB Changes** | ZERO changes to code, tests, migrations, schemas, or DB |
+
+
+---
+---
+
+# Amendment 9 — Shared Authority Archive Target & C1–C2B Operational Boundary
+
+**Status:** FROZEN — architectural decision / operational boundary only. No ingestion executed.
+**Date:** 2026-10-09
+**Baseline:** `62ddee6`.
+**Scope:** Designating the persistent storage target for the SEC taxonomy catalog (`edgartaxonomies.xml`) and defining the operational conditions and architectural boundaries for executing Phase 3C-C1 → C2A → C2B.
+**Decision:** Designate `data/st-eva.sqlite` as the shared central authority archive.
+**Current Disk State:** `data/st-eva.sqlite` does NOT exist. Execution is gated behind an independent audit.
+**Claim Statuses (Unchanged):**
+- **C3:** `NOT PROVEN`
+- **C7:** `NOT PROVEN`
+- **C9:** `UNAVAILABLE / UNPROVEN`
+- **C10:** `UNAVAILABLE`
+**Cross-Archive Read Boundary:** Per-ticker archives (`data/archives/<TICKER>.sqlite`) remain separate; no cross-archive reading, no B2/C4G activation, and no observation link writes are authorized.
+**Preservation:** Amendments 1–8, production code, tests, Observation identity, evidence identity, and migrations 0001–0022 remain completely untouched.
+
+---
+
+## 1. Storage Location Decision: Shared Central Authority Archive
+
+This amendment resolves the unassigned target archive question identified during preflight audit and formalizes the persistent storage destination for SEC taxonomy catalog acquisition and authority assertions.
+
+### 1.1 Designated Target: `data/st-eva.sqlite`
+
+The designated persistent archive for the official SEC taxonomy catalog (`edgartaxonomies.xml`) and its parsed authority assertions is:
+
+```text
+data/st-eva.sqlite
+```
+
+### 1.2 Decision Rationale
+
+Four architectural reasons determine this selection:
+
+1. **Alignment with canonical default:** The repository's primary SQLite interface already defaults to `data/st-eva.sqlite` (`sqlite_archive.py:364` and `st_eva_runner.py:2493`). Adopting this canonical path requires zero configuration alterations, zero new environment variables, and zero CLI argument extensions.
+2. **Shared cross-issuer authority semantics:** The SEC taxonomy catalog is a regulatory, system-wide authority published by the SEC for the entire EDGAR system. It is not tied to any single issuer or ticker. Storing it in a central archive truthfully reflects its cross-issuer scope.
+3. **Prevention of fragmented duplication:** Placing the authority catalog in a central archive avoids redundant copying of identical catalog bytes (~200+ KB) and hundreds of authority assertion rows across disparate per-ticker archives (`data/archives/<TICKER>.sqlite`).
+4. **Avoidance of redundant storage subsystems:** Designating `data/st-eva.sqlite` avoids inventing an ad-hoc, separate authority database (e.g., `data/authority.sqlite`). A separate database would introduce an unnecessary second storage lifecycle, distinct connection pooling, and dual-schema management overhead.
+
+### 1.3 Explicit Non-Existence and Initialization Baseline
+
+- **Current state:** `data/st-eva.sqlite` does **not** currently exist on disk.
+- **Controlled initialization:** When future execution is authorized, the archive will be intentionally initialized by instantiating `SQLiteArchive("data/st-eva.sqlite")`, which executes existing migrations `0001` through `0022` within its standard transactional migration runner.
+- **Honest historical record:** Initializing a fresh archive at this designated path does not imply that pre-existing historical database rows or prior corpus observations existed in the repository. It creates a dedicated, clean baseline strictly for authority catalog storage.
+
+---
+
+## 2. Acquisition Authorization and Operational Conditions
+
+Execution of the acquisition and persistence workflow is **NOT** authorized by the adoption of this decision alone. Execution remains strictly gated until this Amendment has been verified by an independent read-only audit.
+
+### 2.1 Authorized Operational Scope (Post-Audit)
+
+Only after independent audit confirmation may an operator execute the following bounded sequence:
+
+1. **Pre-flight safety verification:**
+   - Confirm that `data/st-eva.sqlite` does not pre-exist on disk immediately before initialization, ensuring no existing user or production data can be overwritten.
+   - Confirm that the parent directory `data/` exists and has proper filesystem write permissions.
+2. **Archive initialization and migration head check:**
+   - Instantiate `SQLiteArchive("data/st-eva.sqlite")`.
+   - Confirm that migration head is exactly `22` (`authority_taxonomy_namespaces`), matching frozen checksum `3347303174edb0a48040883a81edf45dc4e0120eb80fa435e86c4875c2caaed3`.
+   - Confirm that tables `source_documents` and `authority_taxonomy_namespaces` are present and empty.
+3. **Workflow execution (C1 → C2A → C2B):**
+   - Execute the existing thin orchestrator `archive/authority_taxonomy_workflow.py:run_authority_taxonomy_workflow(archive)`.
+   - **C1 Acquisition:** Fetch uncompressed bytes from `https://www.sec.gov/info/edgar/edgartaxonomies.xml` using `DEFAULT_USER_AGENT` and record into `source_documents` via `record_taxonomy_catalog`, generating canonical document ID `doc_...`.
+   - **C2A Parsing:** Parse payload bytes via `parse_edgar_taxonomies_catalog` into deterministic `ParsedAuthorityAssertion` structures without network or DB access.
+   - **C2B Persistence:** Persist parsed assertions into `authority_taxonomy_namespaces` via `record_authority_taxonomy_assertion` under the shared `document_id`.
+4. **Post-write verification:**
+   - Verify `source_documents` row: exactly 1 row with `document_type = 'SEC_TAXONOMY_CATALOG'`, `uri = 'https://www.sec.gov/info/edgar/edgartaxonomies.xml'`, and matching SHA-256 `content_hash`.
+   - Verify `authority_taxonomy_namespaces` rows: non-zero count, all rows referencing `doc_...`, all IDs starting with `atn_`, and all identity preimages verified against `canonical_json`.
+   - Verify foreign key integrity: zero orphaned authority rows.
+   - Verify idempotency: re-executing `run_authority_taxonomy_workflow(archive, payload_bytes=captured_bytes)` results in zero new rows and identical counts.
+
+### 2.2 Operational Prohibitions
+
+During acquisition and persistence:
+- **No new migrations:** No migration `0023` or schema change is permitted.
+- **No schema modification:** No table, column, trigger, or index may be altered.
+- **No per-ticker contamination:** No authority assertions may be written into `data/archives/AAPL.sqlite`, `data/archives/MSFT.sqlite`, `data/archives/TSM.sqlite`, or any other per-ticker database.
+
+---
+
+## 3. Future Cross-Archive Read Boundary
+
+The central authority archive (`data/st-eva.sqlite`) and the per-ticker runtime archives (`data/archives/<TICKER>.sqlite`) represent two distinct storage and lifecycle boundaries:
+
+```text
++-----------------------------------------------------------------------------------+
+| STORAGE BOUNDARY SEPARATION                                                       |
+|                                                                                   |
+|  [Central Authority Archive]                   [Per-Ticker Runtime Archives]      |
+|  data/st-eva.sqlite                            data/archives/<TICKER>.sqlite      |
+|  - source_documents (SEC catalog)              - filings & company concept data   |
+|  - authority_taxonomy_namespaces               - observations & admissions        |
+|                                                                                   |
+|                   <--- NO CROSS-ARCHIVE READ AUTHORIZATION --->                   |
+|                   <--- NO CROSS-DATABASE ATTACH OR FK      --->                   |
++-----------------------------------------------------------------------------------+
+```
+
+### 3.1 Non-Authorizations
+
+This amendment strictly **DOES NOT** authorize:
+1. Modifying per-ticker analysis or linking routines (`sec_xbrl_facts.py`, `sec_ingest.py`, `web/service_adapter.py`) to query the central authority archive.
+2. Activating B2 or re-implementing C4G.
+3. Writing `observation_filing_document_facts` or exact-source assertions (`observation_filing_documents`).
+4. Creating SQLite `ATTACH DATABASE` dependencies, cross-database foreign keys, or unified views connecting the central archive to per-ticker archives.
+
+### 3.2 Prerequisite for Future Cross-Archive Integration
+
+If future analytical tasks require per-ticker pipelines to consult central authority assertions, that capability requires an independent architecture and evidence integration design decision. Such a decision must define how read isolation, reproducibility, and point-in-time evidence integrity are maintained without violating Invariant 19 or the Evidence Sufficiency Matrix.
+
+---
+
+## 4. Claims and Frozen Invariants
+
+All claim evaluations established in Amendment 7 and reaffirmed in Amendment 8 remain strictly frozen:
+
+* **C3:** `NOT PROVEN` (no cross-source vocabulary contract).
+* **C7:** `NOT PROVEN` (Observation vs. occurrence taxonomy equivalence unproven).
+* **C9:** `UNAVAILABLE / UNPROVEN` (historical filing-date validity unproven by current snapshot).
+* **C10:** `UNAVAILABLE` (production refuses unproven taxonomy equivalence).
+
+**Frozen Code & Schema Boundaries:**
+- Amendments 1–8 text, context, and matrices are preserved verbatim without modification.
+- Production code (`sec_ingest.py`, `sec_xbrl_facts.py`, `sqlite_archive.py`, etc.) is unchanged.
+- Test suites and test boundaries are unchanged.
+- Observation identity and evidence models are unchanged.
+- Migrations `0001` through `0022` remain unchanged.
+
+---
+
+## 5. Amendment 9 Summary Matrix
+
+| Dimension | Specification / Decision |
+|---|---|
+| **Designated Archive Path** | `data/st-eva.sqlite` (canonical central shared archive) |
+| **Current Disk Status** | Does not exist; clean initialization when authorized |
+| **Authority Acquisition Route** | Existing C1 → C2A → C2B (`archive/authority_taxonomy_workflow.py`) |
+| **Operational Gating** | Execution blocked until independent read-only audit passes |
+| **Per-Ticker Archive Policy** | `data/archives/*.sqlite` untouched; zero authority rows written |
+| **Cross-Archive Interaction** | Strictly prohibited; no cross-DB queries, links, or FKs |
+| **Claim Statuses** | C3: `NOT PROVEN`; C7: `NOT PROVEN`; C9: `UNAVAILABLE / UNPROVEN`; C10: `UNAVAILABLE` |
+| **Code / Schema Changes** | ZERO changes to code, tests, migrations, schemas, or DB |
