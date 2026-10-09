@@ -2257,7 +2257,7 @@ To prevent conflation across distinct architectural layers, four separate semant
 
 3. **Filing-Local Namespace Prefix → Namespace URI Binding (`xmlns:prefix="URI"`):**
    - The XML namespace declaration bound within captured filing instance document bytes or DTS (e.g., `xmlns:us-gaap="http://fasb.org/us-gaap/2026"` or custom extension prefixes).
-   - Its scope is strictly local to the filing document's XML scope. While EDGAR XBRL Guide §8.2 specifies designated prefix conventions for standard taxonomies (e.g., designating `us-gaap` for US GAAP, `dei` for Document and Entity Information, `invest`, etc., and conventions for extension prefixes), filers' local prefix declarations remain syntactic bindings within the document scope.
+   - Its scope is strictly local to the filing document's XML scope. The August 2026 EDGAR XBRL Guide keeps two distinct filing-side tables separate: §1.2.2 ("Standard Taxonomies", Tables 6-5/6-6) lists standard taxonomy *entry-point abbreviations* (e.g., `us-gaap`, `dei`, `srt`, `ifrs2`, `ebp`, `cef`) — short names for taxonomy entry-point URLs such as `https://xbrl.sec.gov/us-gaap/2026/us-gaap-2026.xsd`, **not** XML namespace prefixes; §8.2 ("Standard Namespace Prefixes") is a separately tabled binding of XBRL-infrastructure XML namespace prefixes (e.g., `ix`, `i`, `iso4217`, `xlink`, `xhtml`, `xs`, `xml`, `xbrli`, `xl`, `ref`, `dtr`, `dtr-types`, `ixt`, `xbrldt`, `xbrldi`, `enum`, `enum2`, `ixt-sec`) to namespace URIs. The Company Concept API token `invest` appears in neither table — it belongs to entity 1 (API taxonomy token), not to a Guide prefix table. Neither §1.2.2 nor §8.2 is a cross-source contract bridging Company Concept API tokens to catalog `<Prefix>` or to filing-local declarations; filers' local prefix declarations remain syntactic bindings within the document scope.
    - Crucially, this limited submission-side designated prefix convention cannot be promoted into a cross-source contract bridging the SEC Company Concept API taxonomy tokens to filing occurrence taxonomy equivalence (does not prove C3 or C7).
 
 4. **Observation → Filing Occurrence Taxonomy Equivalence:**
@@ -2313,7 +2313,7 @@ Seven official regulatory, technical, and data delivery sources published by the
   - `E2` support relating `<Prefix>` as a descriptive attribute associated with a schema entry point `<Href>`, `<Namespace>` URI, `<Family>`, and `<Version>`.
 * **Limitations / Anti-Claims (What it CANNOT support):**
   - **Does not govern REST APIs:** The catalog is an operational catalog for EDGAR filing acceptance; it does not define or govern REST API route parameters at `data.sec.gov`.
-  - **Does not govern filing-local prefixes as a cross-source bridge:** While EDGAR XBRL Guide §8.2 provides designated prefix conventions for standard taxonomies during filing preparation, catalog `<Prefix>` entries do not constitute a cross-source contract equating filing-local declarations with Company Concept API query parameters.
+  - **Does not govern filing-local prefixes as a cross-source bridge:** The EDGAR XBRL Guide distinguishes §1.2.2 ("Standard Taxonomies") — which lists standard taxonomy *entry-point abbreviations* (e.g., `us-gaap`, `dei`, `srt`) — from §8.2 ("Standard Namespace Prefixes"), a table binding XBRL-infrastructure XML namespace prefixes (e.g., `ix`, `i`, `iso4217`, `xlink`) to namespace URIs; neither table equates filing-local prefix declarations with Company Concept API query parameters, so catalog `<Prefix>` entries do not constitute a cross-source contract.
   - **No historical filing-date validity proof:** The current catalog reflects active and accepted taxonomies at the time of the catalog release (e.g., release version 78). It does not prove what was valid on historical filing dates years earlier (e.g., in 2013).
 
 ### 3.3 Source 3: EDGAR Filer Manual (EFM Volume II: "EDGAR Filing")
@@ -2330,19 +2330,24 @@ Seven official regulatory, technical, and data delivery sources published by the
 
 ### 3.4 Source 4: EDGAR XBRL Guide / Staff Interactive Data Guidance
 
-* **Locator / Citation:** SEC Staff Guidance on Interactive Data; EDGAR XBRL Guide (including §8.2 designated prefix conventions); Interactive Data Test Suite documentation.
-* **Version / Date:** Staff interpretations and guidance notices (ongoing).
+* **Locator / Citation:** EDGAR XBRL Guide (Prepared by SEC Staff, August 2026, corresponding to EDGAR Filer Manual Draft Version 78), `https://www.sec.gov/files/edgar/filer-information/specifications/xbrl-guide.pdf`; §1.2.2 "Standard Taxonomies" (Tables 6-5/6-6 of standard taxonomy entry-point abbreviations); §8.2 "Standard Namespace Prefixes" (XML namespace prefix → namespace URI table); §8.3 "Standard Locations" (`edgartaxonomies.xml` cross-reference); SEC Staff Guidance on Interactive Data; Interactive Data Test Suite documentation.
+* **Version / Date:** EDGAR XBRL Guide, August 2026 (corresponds to EDGAR Filer Manual Draft Version 78; catalog root `<Erxl version="78">`).
+* **Evidence — §8.2 "Standard Namespace Prefixes" (URI → Prefix bindings, verbatim from the August 2026 table):** `http://www.w3.org/1999/xhtml`→`xhtml`; `http://www.w3.org/1999/xlink`→`xlink`; `http://www.w3.org/2001/XMLSchema`→`xs`/`xsd`; `http://www.w3.org/2001/XMLSchema-instance`→`xsi`; `http://www.w3.org/XML/1998/namespace`→`xml`; `http://www.xbrl.org/2003/instance`→`xbrli`/`i`; `http://www.xbrl.org/2003/iso4217`→`iso4217`; `http://www.xbrl.org/2003/linkbase`→`link`; `http://www.xbrl.org/2003/XLink`→`xl`; `http://www.xbrl.org/2006/ref`→`ref`; `http://www.xbrl.org/2009/dtr`→`dtr`; `http://www.xbrl.org/2013/inlineXBRL`→`ix`; `http://www.xbrl.org/dtr/type/2020-01-21`, `2022-03-31`, `2024-01-31`→`dtr-types`; `http://www.xbrl.org/inlineXBRL/transformation/2015-02-26`, `2020-02-12`, `2022-02-16`→`ixt`; `http://xbrl.org/2005/xbrldt`→`xbrldt`; `http://xbrl.org/2006/xbrldi`→`xbrldi`; `http://xbrl.org/2014/extensible-enumerations`→`enum`; `http://xbrl.org/2020/extensible-enumerations-2.0`→`enum2`; `http://www.sec.gov/inlineXBRL/transformation/2015-08-31`→`ixt-sec`. (Note: this table binds only XBRL-*infrastructure* prefixes; taxonomy abbreviations such as `us-gaap`, `dei`, `srt` are absent. The §8.2 table spells the inline namespace `http://www.xbrl.org/2013/InlineXBRL` with a capital I; the guide uses the canonical lowercase `http://www.xbrl.org/2013/inlineXBRL` elsewhere, e.g. p. 24 and p. 181.)
+* **Evidence — §1.2.2 "Standard Taxonomies" (standard taxonomy entry-point abbreviations per Tables 6-5/6-6):** `cef`, `country`, `currency`, `cyd`, `dei`, `ecd`, `exch`, `ffd`, `fnd`, `naics`, `oef`, `rr`, `rxp`, `sbs`, `sic`, `snj`, `spac`, `sro`, `stpr`, `vip`, `ifrs2`, `ebp` (a.k.a. `us-gaap-ebp`), `srt`, `us-gaap`. These name taxonomy entry-point URLs (e.g. `https://xbrl.sec.gov/us-gaap/2026/us-gaap-2026.xsd`), **not** XML namespace prefixes; `invest` is not among them.
 * **Specific Claims Supported:**
-  - Practical guidance for issuers and filing agents regarding element selection, extension modeling, designated standard prefixes (§8.2), and validation practices.
+  - §1.2.2 lists the standard taxonomy *entry-point abbreviations* that name taxonomy entry-point URLs (e.g., `us-gaap`, `dei`, `srt`, `ifrs2`, `ebp`, `cef`); these are filing-preparation identifiers locating taxonomy entry points, **not** XML namespace prefixes.
+  - §8.2 lists the standard *XML namespace prefix* bindings (prefix → namespace URI) for XBRL-infrastructure namespaces used in instance/schema/HTML documents (e.g., `ix`→inline XBRL namespace, `i`→`http://www.xbrl.org/2003/instance`, `iso4217`, `xlink`→`http://www.w3.org/1999/xlink`, `xhtml`→`http://www.w3.org/1999/xhtml`, `xs`→`http://www.w3.org/2001/XMLSchema`, `xml`→`http://www.w3.org/XML/1998/namespace`).
+  - §8.3 notes that `edgartaxonomies.xml` (EFM v68 § 6.2.2) enumerates the non-local taxonomy namespace URLs that a submission may use, and references the SEC taxonomy catalog at `https://www.sec.gov/info/edgar/edgartaxonomies.xml`.
+  - Practical guidance for issuers and filing agents regarding element selection, extension modeling, and validation practices.
 * **Limitations / Anti-Claims (What it CANNOT support):**
-  - **Informational / non-normative:** Guidance notices are advisory aids for preparers, not normative engineering contracts for data consumers.
+  - **Informational / non-normative for data consumers:** Guidance notices are advisory aids for preparers, not normative engineering contracts for data consumers.
   - **No API parameter specifications:** Does not define REST API endpoints, routing tokens, or database schemas.
-  - **Cannot bridge cross-source representations:** Provides designated prefix rules for filing preparation, but provides no rule for equating API tokens to catalog prefixes or instance namespace declarations.
+  - **Two tables, no cross-source bridge:** §1.2.2 (entry-point abbreviations) and §8.2 (namespace-prefix bindings) are distinct tables addressing different filing-side purposes; neither equates Company Concept API tokens to catalog `<Prefix>` or to filing-local namespace declarations, and neither can be promoted into a cross-source `E4` contract bridging data consumer representations.
 
 ### 3.5 Source 5: SEC XBRL Glossary of Terms
 
-* **Locator / URL:** `https://www.sec.gov/data-research/standardized-data/xbrl-glossary-of-terms` (XBRL Glossary of Terms).
-* **Version / Date:** Last reviewed or updated: June 26, 2024.
+* **Locator / URL:** `https://www.sec.gov/data-research/structured-data/inline-xbrl/xbrl-glossary-terms` (XBRL Glossary of Terms). (The path previously cited, `/data-research/standardized-data/xbrl-glossary-of-terms`, is superseded: SEC's "Office of Data Standards and Innovation Webpage Address Changes" notice (July 25, 2024) states that changed webpage addresses are automatically redirected to the respective new address, and lists the glossary under its new "Data and Research" location; the canonical live URL is the one above.)
+* **Version / Date:** Published May 28, 2024; last reviewed or updated: June 26, 2024.
 * **Specific Claims Supported:**
   - High-level, informational definitions of core XBRL terms: *Taxonomy*, *Element*, *Fact*, *Instance Document*, *Context*, *Extension*.
 * **Limitations / Anti-Claims (What it CANNOT support):**
@@ -2385,7 +2390,7 @@ Across the audited SEC interfaces, several distinct identifier surfaces were obs
 | **API Path Token** | Company Concept REST API | `"us-gaap"`, `"dei"` | URL routing & REST resource addressing |
 | **Catalog Element** | `edgartaxonomies.xml` | `<Prefix>us-gaap</Prefix>` | Suggested prefix in operational catalog |
 | **Catalog Namespace** | `edgartaxonomies.xml` | `http://fasb.org/us-gaap/2026` | Formal targetNamespace identifier |
-| **Filing QName Prefix** | Instance XML (`xmlns:...`) | `xmlns:us-gaap="..."` (subject to EFM/Guide §8.2 designated rules) | Document-local XML syntactic prefix |
+| **Filing QName Prefix** | Instance XML (`xmlns:...`) | `xmlns:us-gaap="..."` (document-local; §8.2 binds only XBRL-infrastructure namespace prefixes such as `ix`/`i`/`iso4217`/`xlink`/`xhtml`/`xs`/`xml`/`xbrli`; the taxonomy entries named by §1.2.2 abbreviations like `us-gaap`/`dei`/`srt` resolve by namespace URI per §8.3/`edgartaxonomies.xml`, not by §8.2) | Document-local XML syntactic prefix |
 | **DERA Bulk Version** | DERA `tag.txt` | `"us-gaap/2023"` | Relational version/family compound key |
 
 ### 4.1 Surface Differences Do Not Equal Universal Contradiction
