@@ -37,8 +37,8 @@ and has not been appended to it. The formal ADR
 
 **Verified totals for this revision, applying rule 3:** 54 distinct top-level
 numbers; 10 of them have their rules realized through sub-clauses — top-level
-numbers 2, 7, 12, 22, 30, 32, 34, 36, 39 and 42 — contributing 39 sub-clauses in
-total; 44 bare clauses. **Total decision clauses: 83.**
+numbers 2, 7, 12, 22, 30, 32, 34, 36, 39 and 42 — contributing 40 sub-clauses in
+total; 44 bare clauses. **Total decision clauses: 84.**
 
 ---
 
@@ -125,7 +125,7 @@ contracts carrying no normative weight from the authority**:
 - the two-channel projection and its persistence boundary (§5, §7);
 - the coverage invariants (§6);
 - the pre-run expectation, baseline and ordering contracts (§8, §9; Decisions
-  10.39(a)–(c), 10.40, 10.41, 10.42(a)–(c), 10.43, 10.44);
+  10.39(a)–(c), 10.40, 10.41, 10.42(a)–(d), 10.43, 10.44);
 - the identity-collapse disclosure and its acceptance (§7, Decisions 10.37, 10.38);
 - the identity-to-identifier collision checks (§7, Decisions 10.36(a)–(d));
 - the output field contract (§7, Decisions 10.34(a)–(d)).
@@ -705,6 +705,14 @@ through the E5 reading, no other writer inserts, updates or deletes any row in
 It is NOT established by this amendment, and no locking, transaction or other
 mechanism is authorized here.
 
+**PRECOND-1 is a concurrency precondition and is NOT a classification.** It
+neither determines nor qualifies `run_class`; it is NOT a run class and NOT a
+rejection outcome under Decision 10.42(d). A run in which PRECOND-1 cannot be
+asserted still has a `run_class`, drawn from exactly the three values of Decision
+10.34(a) field 21; only its acceptance expressions become UNVERIFIED under
+Decision 10.32(c). PRECOND-1 failure MUST NOT be reported as a class, as a
+rejection, or as a change of `run_class`.
+
 **Decision 10.32(b) (computability of `rows_inserted_this_run`).**
 `rows_inserted_this_run` is computable ONLY if PRECOND-1 is asserted. If PRECOND-1
 is not asserted, the field is UNDEFINED, MUST NOT be assigned a value, and MUST NOT
@@ -743,7 +751,7 @@ difference of I5b.
 
 **Decision 10.34(a) (output field contract).** The workflow result MUST carry
 exactly the fields below, with the stated type, scope, read point and purpose. No
-field required by Decisions 10.30(a)–(d), 10.35, 10.36(a)–(d), 10.42(c) or 10.44 may
+field required by Decisions 10.30(a)–(d), 10.35, 10.36(a)–(d), 10.42(c), 10.42(d) or 10.44 may
 be omitted,
 and no additional persistence of any field is authorized (§12).
 
@@ -769,17 +777,25 @@ and no additional persistence of any field is authorized (§12).
 | 18 | `baseline_source_document_row` | int | table-scoped by content_hash H | P2 | 10.39(b); Decision 10.40 cross-check |
 | 19 | `baseline_document_row_total` (alias `document_row_total_before`) | int | table-scoped by `document_id` D | P4 | I5b, I5d, I5e1, I5e2; 10.42(c) |
 | 20 | `baseline_authority_identity_count` | int | table-scoped by `document_id` D | P4 | I5d; G1; 10.42(c) |
-| 21 | `run_class` | str; one of `FIRST`, `FULL_REPLAY`, `RECOVERY` | run | P4 | 10.42(c); selects the applicable acceptance rule in 10.44 |
+| 21 | `run_class` | str; value domain exactly {`FIRST`, `FULL_REPLAY`, `RECOVERY`}; NOT emitted on a pre-check rejection | run; assigned only on the three admitted branches | P4 | 10.42(c); selects the applicable acceptance rule in 10.44; mutually exclusive with field 25 |
 | 22 | `document_row_total_after` | int | table-scoped by `document_id` D | E5 | I5a, I5b, I5e1 |
 | 23 | `document_row_total` | int | table-scoped by `document_id` D | E5; ALIAS of `document_row_total_after` | 10.30(a) metric 3 |
 | 24 | `rows_inserted_this_run` | int | table-scoped by `document_id` D | E5; only under PRECOND-1 | 10.30(a) metric 4; I5b, I5c |
+| 25 | `baseline_rejection` | structured value per Decision 10.42(d): `outcome` str; `reason_codes` ordered tuple of str; `offending_identities` ordered tuple of str; `expected_count` int; `baseline_count` int; `document_id` str; NOT emitted on an admitted run | run; rejection outcome only | P4, at rejection | 10.42(d); mutually exclusive with field 21 |
+
+`run_class` (field 21) and `baseline_rejection` (field 25) are mutually exclusive:
+an execution emits at most one of them. The three run classes describe successful
+runs; `baseline_rejection` describes a pre-check rejection and is not a run class
+(Decision 10.42(d)).
 
 The identity sets themselves — `baseline_authority_identities`,
 `baseline_authority_id_map`, `expected_identity_preimages` — are NOT emitted. They
 are internal to the P4 precheck (Decision 10.42(b)) and to the harness-side Class A
 computation. A harness that needs them may recompute them read-only from the same
 definitions; their absence from the result is deliberate and is not an omission
-from the acceptance rules.
+from the acceptance rules. The rejection structure of Decision 10.42(d) reports
+the offending identity strings themselves, so a rejection remains diagnosable
+without emitting either set in full.
 
 **Decision 10.34(b) (`assertion_count`, and the shared tally).** `assertion_count`
 is the number of records admitted to C2B, which is the writer call count. For any
@@ -1023,9 +1039,10 @@ following are verified against Class B:
         recomputed == stored_id
 
 The re-derivation in G2 is exact because `authority_taxonomy_identity` holds the
-canonical JSON preimage verbatim (Decision 10.36(a)). A failure of G1 or G2 MUST
-abort the run before the first C2B writer call, with an error, and with no write of
-any kind. No new migration, schema or writer capability is used or authorized.
+canonical JSON preimage verbatim (Decision 10.36(a)). A failure of G1 or G2 is a
+**pre-check rejection under Decision 10.42(d)**; it is NOT a run class and it
+produces no successful workflow result. No new migration, schema or writer
+capability is used or authorized.
 
 **Decision 10.42(c) (run classification at P4).** Using `E` from Decision 10.39(a)
 and `B` from Decision 10.39(b), evaluated in this order:
@@ -1037,18 +1054,64 @@ and `B` from Decision 10.39(b), evaluated in this order:
 
 `INCONSISTENT_BASELINE` covers every remaining situation, in particular: `B`
 contains any identity outside `E`; `B` is a strict superset of `E`; `B` and `E` are
-incomparable; or G1 or G2 failed. On `INCONSISTENT_BASELINE` the run MUST abort
-before the first C2B writer call, with an error, and with no write of any kind. A
-row count equal to the expected count does NOT establish `B == E` and MUST NOT be
-used in place of the set comparison, and a baseline larger than the expected set is
-NOT a legal RECOVERY.
+incomparable; or G1 or G2 failed. A row count equal to the expected count does NOT
+establish `B == E` and MUST NOT be used in place of the set comparison, and a
+baseline larger than the expected set is NOT a legal RECOVERY.
 
 `FIRST` is tested first, so the case `E` empty and `B` empty classifies as `FIRST`.
-`run_class` is emitted as field 21 of Decision 10.34(a).
+`run_class` is assigned ONLY on one of the three admitted branches above, and is
+then emitted as field 21 of Decision 10.34(a). On the `INCONSISTENT_BASELINE`
+branch no run class is assigned, `run_class` is reported as not emitted, and the
+run is a pre-check rejection under Decision 10.42(d).
 
 A run class describes ONLY the database state observed at P4. It is **not** evidence
 that any past workflow execution succeeded, and no inference about history is
 permitted from it.
+
+**Decision 10.42(d) (pre-check rejection outcome; distinct from a run class).**
+`INCONSISTENT_BASELINE` is a **pre-check rejection outcome**. It is NOT a run
+class, NOT a workflow result, NOT a successful outcome of any kind, and NOT a fourth
+class. It MUST NOT be added to the value domain of `run_class`, MUST NOT be
+presented as a class of run, and MUST NOT be counted among the three run classes of
+Decision 10.30(c).
+
+A run that reaches `INCONSISTENT_BASELINE` at P4:
+
+- MUST terminate with an error and MUST NOT report success;
+- MUST NOT execute E1 and MUST NOT perform any database write of any kind. The
+  ordering of Decisions 10.42(a) and 10.45 — P4 precedes E1 — is what guarantees
+  this; no other mechanism is involved and none is authorized;
+- MUST NOT assign, emit or imply any `run_class`;
+- MUST report `document_row_total_after`, `document_row_total` and
+  `rows_inserted_this_run` as not read, consistently with Decision 10.32(e);
+- MUST NOT be evaluated against Decision 10.44 or against the class-specific forms
+  I5d, I5e1 and I5e2, none of which applies to it.
+
+**Diagnostics ARE provided.** The rejection emits exactly one structure,
+`baseline_rejection` (field 25 of Decision 10.34(a)):
+
+    baseline_rejection
+        outcome              str; always "INCONSISTENT_BASELINE"
+        reason_codes         ordered tuple of str, each drawn from this CLOSED
+                             vocabulary, listed in a deterministic order:
+                               G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH
+                               G2_IDENTITY_ID_MISMATCH
+                               BASELINE_HAS_IDENTITY_OUTSIDE_EXPECTED
+                               BASELINE_IS_SUPERSET_OF_EXPECTED
+                               BASELINE_INCOMPARABLE_WITH_EXPECTED
+        offending_identities ordered tuple of str; the verbatim stored identity
+                             strings responsible, lexicographically sorted — for
+                             G2, the identities whose stored identifier does not
+                             match the derivation of Decision 10.36(a); for the
+                             set cases, the members of B not in E together with
+                             the members of E not in B
+        expected_count       int; len(E)
+        baseline_count       int; len(B)
+        document_id          str; the D of Decision 10.40
+
+`baseline_rejection` is a rejection result only. It is NOT a workflow result, MUST
+NOT be presented as one, and MUST NOT be combined with any `run_class`. Any code
+outside the reason vocabulary is a contract violation.
 
 **Decision 10.43 (expected values for the captured catalog).** Class A:
 `expected_source_loc_count` 203, `expected_assertion_eligible_count` 201,
@@ -1057,7 +1120,9 @@ distribution `{namespace_absent: 2}` with all other codes absent; `E` therefore 
 194 elements. Class B on the archive holding
 `doc_eb3d9eb2f741a4e844f7ed11`: `baseline_source_document_row` 1,
 `baseline_document_row_total` 0, `baseline_authority_identity_count` 0, `B` empty,
-and G1 and G2 hold vacuously. The run class at P4 is therefore `FIRST`.
+and G1 and G2 hold vacuously. The run class at P4 is therefore `FIRST`, and no
+pre-check rejection under Decision 10.42(d) arises for this archive at the stated
+Class B.
 
 **Decision 10.44 (post-run comparison, by run class).** On Path A, after the run:
 
@@ -1078,8 +1143,9 @@ and G1 and G2 hold vacuously. The run class at P4 is therefore `FIRST`.
   together with the derived property of Decision 10.30(d), namely that the identity
   set stored for D equals `E`.
 
-On Path R, and for any run that does not reach E5 (Decision 10.32(e)), no post-run
-comparison applies and none may be claimed.
+On Path R, for any run that does not reach E5 (Decision 10.32(e)), and for any
+pre-check rejection under Decision 10.42(d), no post-run comparison applies and none
+may be claimed.
 
 ---
 
@@ -1223,7 +1289,8 @@ child elements at either level, including no persistence of
 `RecordChildOccurrence`, `RootChildOccurrence`,
 `unknown_record_child_occurrences`, `non_record_root_element_occurrences`,
 `baseline_authority_identities`, `baseline_authority_id_map`,
-`expected_identity_preimages`, `run_class`, or any occurrence or name list defined
+`expected_identity_preimages`, `run_class`, `baseline_rejection`, or any occurrence or
+name list defined
 by Decisions 10.21, 10.22(a) and 10.23; no persistence of any field of the Decision
 10.34(a) contract; **no namespace-aware lookup contract** and no relaxation of that
 limitation, per Decision 10.2(c); no XSD validator dependency; no child-order,
