@@ -130,7 +130,7 @@ Amendment 10 governs C2A catalog parsing, record classification, identity collap
 |                                    AMENDMENT 10 FIVEFOLD STATUS REGISTER                                |
 +------------------------------------+--------------------------------------------------------------------+
 | 1. Branch Merge Status             | MERGED into master (commit 10d298f, docs/drafts/...)              |
-| 2. Semantic Review Status          | Report: 0 draft blockers; governance wording unresolved           |
+| 2. Semantic Review Status          | Report: 0 draft blockers; gap-label mapping to correct             |
 | 3. Formal Ratification Status      | DRAFT — NOT IN FORCE (pending human ratification decision)        |
 | 4. Formal ADR Update Status        | ADR-XBRL-PROVENANCE UNCHANGED (2597 lines, hash 684d985...)       |
 | 5. Implementation Authorization    | ZERO AUTHORIZATION (code, tests, migrations, and DB frozen)       |
@@ -148,13 +148,13 @@ Amendment 10 governs C2A catalog parsing, record classification, identity collap
    - Exactly 84 decision clauses (44 bare headings + 40 sub-clauses across 10 compound decisions) and 25 output table rows.
    - Internal numbering, cross-references, reason-code mappings, and disposition semantics are completely consistent.
    - Targeted counterexample verification on Decision 10.30(d) passed across all four boundary conditions (A, B, C, D).
-   - The report found no blocking defects within the draft. A separate cross-document governance question remains unresolved: Decision 10.54's post-ratification authorization wording must be reconciled with the roadmap's planned separate implementation gate GOV-1d before the human ratification decision.
+   - The report found no blocking defects within the draft. Its `GAP-2` label refers to E5 interruption diagnostics, whereas the previously established canonical `GAP-2` referred to P4 diagnostic-contract gaps outside Decision 10.42(d); its `GAP-3` label for ACCEPTANCE_FAILED report-layer diagnostics is not an established canonical identifier. Keep these classifications distinct. This is review-report nomenclature to correct, not a proved new normative defect.
 3. **Formal Ratification Status: DRAFT — NOT IN FORCE**
    The draft states in §0 that it is `DRAFT — NOT IN FORCE`. Merging the draft to `master` does not constitute ratification. Formal adoption requires an explicit human governance decision (Roadmap Gate `GOV-1b`).
 4. **Formal ADR Update Status: FORMAL ADR UNCHANGED**
    The governing ADR [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) remains exactly 2,597 lines (blob SHA `684d985078237a5ac9359127a3a42c5f5542022b`), byte-identical to commit `4680839`. It ends at Amendment 9. Amendment 10 has **not** been appended to the formal ADR.
 5. **Implementation Authorization Status: ZERO AUTHORIZATION CONFERRED**
-   While the document remains a draft, it confers no implementation, schema, migration, or database authorization. Before ratification, reconcile Decision 10.54's statement that the amendment becomes an authorization basis upon ratification with the roadmap's planned separate GOV-1d implementation gate. Until the intended post-ratification effect is explicit, no code, test, schema, migration, or database work is authorized.
+   While the document remains a draft, it confers no implementation, schema, migration, or database authorization. Under Decision 10.54, formal ratification activates an authorization basis only for the changes the amendment specifically describes, subject to §12 exclusions; it is not blanket authorization for unrelated work. GOV-1d is therefore a scope/conformance preflight, not a second authorization vote. Decision 10.50 still requires separate explicit authorization to append the amendment to the formal ADR.
 
 ### 3.2 Stable Taxonomy of Disclosed Limitations
 
@@ -251,7 +251,7 @@ Aligned with the authoritative project roadmap [`docs/roadmap/ROADMAP.md`](roadm
 | Workstream ID | Workstream Title | Current Status | Next Action / Gate |
 |---|---|---|---|
 | **RM-0** | Baseline & Status Reconciliation | **CHECKPOINT RECORDED; residual items remain UNVERIFIED** | Status snapshot reconciled against baseline `10d298f`; explicitly listed worktree and research-retention uncertainties remain open and must not be treated as resolved. |
-| **GOV-1** | Amendment 10 Governance Track | **IN PROGRESS — RATIFICATION NOT DECIDED** | Whole-draft review report recommends readiness for consideration. Before GOV-1b, reconcile the report's disclosed-gap labels against their canonical source and clarify Decision 10.54's authorization wording against the planned separate implementation gate. GOV-1c and GOV-1d remain unexecuted. |
+| **GOV-1** | Amendment 10 Governance Track | **IN PROGRESS — RATIFICATION NOT DECIDED** | Before GOV-1b, correct the review report's non-canonical GAP-2/GAP-3 labels; apply Decision 10.54 as bounded authority upon ratification. GOV-1d is a scope preflight, not separate authorization. GOV-1c remains separately authorized. |
 | **HPE-1** | Historical P/E Scope & Design Prerequisites | **NOT STARTED** | Define bounded first-release scope; map blocking vs deferred open decisions; obtain required ADR governance approvals. |
 | **HPE-2** | Historical P/E Data-Model Design | **NOT STARTED** | Blocked on HPE-1. Design conforming representation resolving the 4 Class-1 data-layer gaps without altering existing boundaries. |
 | **HPE-3** | Historical P/E Production Pipeline | **NOT STARTED** | Blocked on HPE-1 and HPE-2. Implement Contract-defined pipeline in tracked modules; integrate with core archive and admission. |
@@ -268,7 +268,7 @@ Following the roadmap sequencing protocol, the next concrete steps are:
 1. **Checkpoint Verification & Freezing (RM-0):**
    Review this updated [`docs/ST-EVA-PROJECT-STATUS.md`](ST-EVA-PROJECT-STATUS.md) against git status and git diff to ensure complete fidelity, zero untracked file destruction, and clean working tree.
 2. **Amendment 10 Ratification Consideration (GOV-1b):**
-   First reconcile Decision 10.54's post-ratification authorization wording with the planned separate GOV-1d implementation gate, and reconcile the review report's disclosed-gap labels against the canonical prior classification. Then make an explicit human ratification decision. Formal ADR append remains subject to separate explicit authorization under GOV-1c.
+   Correct the review report's GAP-2/GAP-3 nomenclature against the canonical classification. Then make an explicit human ratification decision with the bounded effect stated in Decision 10.54 understood: only the changes described by the amendment and allowed by §12 are covered. GOV-1d checks scope/conformance but does not grant authority. Formal ADR append remains subject to separate explicit authorization under GOV-1c.
 3. **Historical P/E First-Release Scoping (HPE-1):**
    Before any schema design or code drafting, establish a bounded first-release scope (e.g. US-GAAP filers with standard calendar and filed+furnished evidence, deferring FPI annual fallback and corporate actions) and register resolutions for the blocking decisions via the required governance path.
 
@@ -285,7 +285,7 @@ Following the roadmap sequencing protocol, the next concrete steps are:
 * **2026-10-09 (`10d298f`):** Updated to reflect baseline `10d298f`:
   - Measured 348 tracked files (expanded by architecture constitution, SEC provenance, XBRL fact linking, taxonomy authority C1–C4, and roadmap).
   - Formalized 5-tier capability matrix (`SPECIFIED`, `RESEARCH-VALIDATED`, `IMPLEMENTED`, `TESTED`, `PRODUCTION-INTEGRATED`).
-  - Recorded Amendment 10's fivefold status: merged to `master` as draft, reviewed all-clear, `DRAFT — NOT IN FORCE`, formal ADR unchanged, implementation unauthorized.
+  - Recorded Amendment 10's fivefold status: merged to `master` as draft, review report recommends consideration, `DRAFT — NOT IN FORCE`, formal ADR unchanged, no authority active before ratification; any post-ratification authority is bounded by Decision 10.54 and §12, while ADR append remains separately authorized.
   - Reconciled Historical P/E status: methodology specified, research validated, production unstarted, data-layer gapped (4 Class-1 gaps), legacy band separated.
   - Aligned status with [`docs/roadmap/ROADMAP.md`](roadmap/ROADMAP.md) workstreams RM-0, GOV-1, HPE-1..5, PLAT-1.
   - Zero modifications to code, tests, schemas, migrations, or database files.
