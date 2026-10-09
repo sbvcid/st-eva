@@ -28,7 +28,7 @@ history. The brief forbids exactly that, so those states are reported
 `NOT_MATERIALIZABLE` with the reason, and the registry half is reported
 separately because it *is* recoverable.
 
-Run:  python historical_state_reconstruction_331.py
+Run:  python scripts/research/historical_state_reconstruction_331.py
 """
 
 from __future__ import annotations

@@ -75,7 +75,7 @@ and is *not* independent of input order -- 4 of 18 metrics change when the
 reader output is reversed -- so any caller that reorders observations before
 selecting is outside what the contract currently promises.
 
-Run:  python selector_tie_break_ambiguity_332.py
+Run:  python scripts/research/selector_tie_break_ambiguity_332.py
 """
 
 from __future__ import annotations
