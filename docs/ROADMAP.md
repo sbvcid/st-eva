@@ -1,7 +1,8 @@
-# ST-EVA Product Roadmap
+# ST-EVA Roadmap Notes
 
-**Updated:** 2026-10-10  
-**Role:** Current product direction and working sequence. This is a living plan written to remember the owner's current intent; it is not an immutable charter. Change it when the goal or evidence changes.
+**Recorded:** 2026-10-10
+
+Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
 
 ## 1. Product purpose
 
@@ -55,7 +56,7 @@ For a chosen company and time T, a successful ST-EVA data package should let a c
 
 The goal is not to force all LLMs to reach the same interpretation. The goal is to make their evidence base inspectable and their differences attributable to assumptions, methods or reasoning rather than hidden differences in fetched data.
 
-## 5. Current implementation: known baseline
+## 5. Implementation baseline recorded at the time
 
 This section consolidates known repository facts. It is not a substitute for checking the current local checkout, running tests, or inspecting local database files before a change.
 
@@ -70,7 +71,7 @@ This section consolidates known repository facts. It is not a substitute for che
 | Historical P/E | Research and detailed methodology/contract exist, but the contract-defined production pipeline is recorded as not implemented; an older provider-fed historical band is a separate, narrower capability. | Keep as a potential source/reference workstream, not the automatic mainline. Advance only when justified by the data-package use case. |
 | Local database and runtime data | The user's read-only audit on 2026-10-09 found a central data/st-eva.sqlite with one source_documents row and empty other central tables, plus separate AAPL/MSFT/TSM archives. The tracked status checkpoint predates or does not reflect all of that local database detail. | Re-check local state read-only before any operation. Never assume the archive is empty, and never delete/reset SQLite or WAL/SHM files as housekeeping. |
 
-## 6. Capability map: from evidence package to operational interpretation
+## 6. Capability map considered at the time
 
 The five-part proposal is a useful product-level acceptance checklist. It combines existing calculation and provenance capabilities with some research surfaces that still need to be demonstrated. The items below describe the intended outcome; they do not assert that every output or end-to-end workflow is already implemented.
 
@@ -83,7 +84,7 @@ The five-part proposal is a useful product-level acceptance checklist. It combin
 | **Disclosure/event alignment** | SEC source-document capture, accession/form identity, filing lineage and source-declared acceptance timestamps are part of the evidence architecture. | Automatic association between a change in implied assumptions and a filing/event window is not yet confirmed as a production feature. If added, account for time zone, after-hours/pre-market disclosure, next trading session, price sampling and multiple simultaneous events. Report temporal association and candidate catalysts; do not claim that one filing caused the market move from timestamp proximity alone. |
 
 These capabilities support a grounded LLM interpretation such as “under reference X and horizon Y, the price requires condition Z, which is above/below the issuer's observed historical range.” That statement is only warranted when the cited source data, sample coverage, period comparability and calculation provenance actually support it. Phrases such as “historically never achieved,” “growth expectations doubled,” or “risk shifted toward an unproven future” are model interpretations that must be qualified and backed by the package; they are not ST-EVA facts by themselves.
-## 7. Work sequence
+## 7. Work sequence considered at the time
 
 ### P0 — Repair known defects and protect current data
 
@@ -172,14 +173,14 @@ If model analyses are archived, store them as separate, versioned research artef
 - Broad platform expansion simply to increase metric count or issuer coverage.
 - Large governance-document rewrites whose completion does not change or verify software behaviour.
 
-## 10. Immediate next actions
+## 10. Next actions considered at the time
 
 1. Finish the P0 parser and runtime-file protection work as two bounded changes with separate verification.
 2. Reconcile the tested local state with the dated status checkpoint, keeping historical checkpoints as historical records rather than rewriting them to look current.
 3. Run the P1 single-company trace and inspect the actual Investment Context/data package.
 4. Update this roadmap only when evidence changes the next action; do not create a parallel roadmap or treat this file as a reason to resist a new owner decision.
 
-## 11. Completion and reporting
+## 11. Completion and reporting ideas recorded at the time
 
 A roadmap item is complete when the relevant code/artifact exists and its acceptance evidence has actually been run or inspected. A plan, specification, research POC, model response or documentation review is not a substitute for that evidence.
 
