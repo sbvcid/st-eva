@@ -635,7 +635,7 @@ metric may be computed over the whole table.
 | `writer_call_count` | number of `record_authority_taxonomy_assertion()` invocations in this execution | run-scoped | end of E4 |
 | `unique_identity_count` | distinct identity preimages over `ASSERTION_ELIGIBLE` records admitted to C2B in this execution | run-scoped | E3 |
 | `document_row_total` | ALIAS of `document_row_total_after`; see Decision 10.30(b) | table-scoped by `document_id` D | E5 |
-| `rows_inserted_this_run` | `document_row_total_after - document_row_total_before`, both read for the same D | table-scoped by `document_id` D | E5 if PRECOND-1 is asserted; otherwise report UNDEFINED with no numeric value |
+| `rows_inserted_this_run` | `document_row_total_after - document_row_total_before`, both read for the same D | table-scoped by `document_id` D | E5 if PRECOND-1 is asserted; otherwise UNDEFINED, omitted from the successful workflow-result shape under Decision 10.34(a), and reported without a numeric value |
 
 **Decision 10.30(b) (before, after and the alias).** Because the same table is read
 twice, the two readings are distinct quantities with distinct read points and are
@@ -673,6 +673,11 @@ that the shared value is correct.
 I5a, I5b, I5c and I5f apply to ALL run classes. I5d, I5e1 and I5e2 are the
 class-specific forms; run classification is defined at P4 by Decision 10.42(c) and
 is defined on identity SETS, never on row counts alone.
+
+The invariants I5a–I5f are evaluated at E5. A violation of any applicable
+invariant yields the ACCEPTANCE_FAILED disposition of Decision 10.34(a); it does
+not retroactively change the truth of the invariant, and it does not roll back or
+delete any committed row.
 
 **Decision 10.30(d) (derived property: post-run identity set).** After a successful
 run on any legal class, the identity set stored for D equals the expected identity
@@ -726,6 +731,10 @@ be reported as passed. That set is exactly: I5a, I5b, I5c, I5e1, I5f, and the
 RECOVERY acceptance condition of Decision 10.44. The baseline side of those
 expressions is a single P4 reading and remains a well-defined observation.
 
+An UNVERIFIED condition MUST NOT be counted as PASS, and MUST NOT be counted as
+FAIL merely because it is UNVERIFIED. The disposition rules that consume these
+conditions are in Decision 10.34(a).
+
 **Decision 10.32(d) (what remains valid without PRECOND-1).** The following are
 unaffected by concurrency and remain verifiable: C1–C8; A1–A4; V1–V4; R1–R3; the
 Class A comparisons on `source_loc_count`, `assertion_eligible_count`,
@@ -742,6 +751,10 @@ a failure inside E4 — NO post-run acceptance expression may be claimed as pass
 be reported as not read. The run MUST NOT report success. Rows committed before
 the failure remain in place; this amendment does not roll them back and does not
 delete them.
+
+A failure before E5 is neither ACCEPTANCE_FAILED nor ACCEPTED under Decision
+10.34(a): no acceptance evaluation took place, so it is a distinct pre-E5 failure
+whose disposition is "not accepted", not a verdict on any acceptance condition.
 
 **Decision 10.33 (per-call insert status not observable).** The writer's return type
 remains `str` on both the collision path and the insert path (baseline
@@ -766,6 +779,39 @@ fields whose read point has not been reached MUST be treated as not read rather
 than synthesized. No field required by Decisions 10.30(a)–(d), 10.35, 10.36(a)–(d),
 10.42(c), 10.42(d) or 10.44 may be omitted from its applicable output shape, and
 no additional persistence of any field is authorized (§12).
+
+**Terminal dispositions.** Every execution has exactly ONE terminal disposition,
+and the three are mutually exclusive:
+
+- **PRECHECK_REJECTED** — the P4 pre-check rejection of Decision 10.42(d). Carries
+  no successful workflow result, no `run_class`, and reaches no E5 evaluation.
+  This is not an E5 outcome.
+- **ACCEPTED** — the execution reached E5 and every applicable acceptance condition
+  of Decision 10.44 is either PASS or UNVERIFIED, with none FAIL. The successful
+  workflow-result shape (fields 1–23, plus field 24 when PRECOND-1 is asserted) is
+  emitted, the run reports success, and the acceptance report states explicitly
+  which applicable conditions are UNVERIFIED.
+- **ACCEPTANCE_FAILED** — the execution reached E5 and at least one applicable
+  acceptance condition that IS verifiable returned FAIL. The successful
+  workflow-result shape MUST NOT be emitted, the run MUST NOT report success, and
+  the diagnostic MUST name each failing condition together with its observed
+  values.
+
+Rules that hold across all three dispositions:
+
+- **Reaching E5 does not by itself constitute success.** E5 MUST evaluate the
+  applicable acceptance conditions of Decision 10.44 for the assigned `run_class`;
+  an execution that reaches E5 without performing that evaluation is not conformant.
+- A condition designated UNVERIFIED by Decision 10.32(c) MUST NOT be counted as
+  PASS, MUST NOT be counted as FAIL, and MUST NOT, by virtue of being UNVERIFIED
+  alone, produce ACCEPTANCE_FAILED. Consequently an execution in the legal
+  situation where PRECOND-1 cannot be asserted (Decision 10.32(b)) MAY be ACCEPTED
+  provided no applicable verifiable condition is FAIL.
+- Neither ACCEPTANCE_FAILED nor its diagnostic may suggest overall success, and
+  neither may present `run_class` as evidence of it (Decision 10.42(c)).
+- These dispositions introduce no new contract field and no new output structure.
+  The failure diagnostic and the acceptance report are report content; nothing new
+  is persisted, and the non-persistence boundary of §12 is unchanged.
 
 | # | Field | Type | Scope | Read or derived at | Verification purpose |
 |---|---|---|---|---|---|
@@ -1060,29 +1106,44 @@ canonical JSON preimage verbatim (Decision 10.36(a)). A failure of G1 or G2 is a
 produces no successful workflow result. No new migration, schema or writer
 capability is used or authorized.
 
+**G1 and G2 are preconditions of classification.** They are evaluated at P4 BEFORE
+Decision 10.42(c) examines `B` and `E`. If either fails, the execution is rejected
+at P4 and MUST NOT enter any run-class branch: it can never be classified FIRST,
+FULL_REPLAY or RECOVERY. The five-code rejection vocabulary of Decision 10.42(d)
+covers this case directly through `G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH` and
+`G2_IDENTITY_ID_MISMATCH`.
+
 **Decision 10.42(c) (run classification at P4).** Using `E` from Decision 10.39(a)
-and `B` from Decision 10.39(b), evaluated in this order:
+and `B` from Decision 10.39(b), evaluated in this order, after the G1 and G2
+pre-gate of Decision 10.42(b) has passed:
 
-    if B is empty                                         -> FIRST
-    elif G1 and G2 hold and B == E                        -> FULL_REPLAY
-    elif G1 and G2 hold and B is a PROPER SUBSET of E      -> RECOVERY
-    else                                                   -> INCONSISTENT_BASELINE
+    if not (G1 and G2 hold)                              -> INCONSISTENT_BASELINE
+    elif B is empty                                       -> FIRST
+    elif B == E                                           -> FULL_REPLAY
+    elif B is a PROPER SUBSET of E                        -> RECOVERY
+    else                                                  -> INCONSISTENT_BASELINE
 
-`INCONSISTENT_BASELINE` covers every remaining situation, in particular: `B`
-contains any identity outside `E`; `B` is a strict superset of `E`; `B` and `E` are
-incomparable; or G1 or G2 failed. A row count equal to the expected count does NOT
-establish `B == E` and MUST NOT be used in place of the set comparison, and a
-baseline larger than the expected set is NOT a legal RECOVERY.
+The first line is a gate, not a classification: a G1 or G2 failure rejects at P4
+and MUST NOT be classified FIRST, FULL_REPLAY or RECOVERY, regardless of the
+values of `B` and `E`. Only after both checks pass are the three run classes
+reachable.
+
+`INCONSISTENT_BASELINE` also covers every remaining situation in which the gate
+passed, in particular: `B` contains any identity outside `E`; `B` is a strict
+superset of `E`; `B` and `E` are incomparable. A row count equal to the expected
+count does NOT establish `B == E` and MUST NOT be used in place of the set
+comparison, and a baseline larger than the expected set is NOT a legal RECOVERY.
+
+`B` empty is tested before `B == E`, so the case `E` empty and `B` empty — with G1
+and G2 passing — is classified FIRST, as required.
 
 `FIRST` is tested first, so the case `E` empty and `B` empty classifies as `FIRST`.
 `run_class` is assigned internally ONLY on one of the three admitted branches
-above. It is emitted as field 21 only if the execution reaches E5 and produces the
-successful workflow result defined in Decision 10.34(a). If a later E3/E4 failure
-occurs, the execution does not emit a successful workflow result; any failure
-diagnostic may identify the P4 classification as context but MUST NOT present it
-as evidence of overall success. On the `INCONSISTENT_BASELINE` branch no run class
-is assigned and `run_class` is not emitted; the execution instead produces the
-separate pre-check rejection diagnostic of Decision 10.42(d).
+above. It is emitted as field 21 only in the ACCEPTED disposition of Decision
+10.34(a). If the disposition is ACCEPTANCE_FAILED or PRECHECK_REJECTED, no
+successful workflow-result shape is emitted and `run_class` is not emitted; a
+failure diagnostic may identify the P4 classification as context but MUST NOT
+present it as evidence of overall success.
 
 A run class describes ONLY the database state observed at P4. It is **not** evidence
 that any past workflow execution succeeded, and no inference about history is
@@ -1150,7 +1211,10 @@ and G1 and G2 hold vacuously. The run class at P4 is therefore `FIRST`, and no
 pre-check rejection under Decision 10.42(d) arises for this archive at the stated
 Class B.
 
-**Decision 10.44 (post-run comparison, by run class).** On Path A, after the run:
+**Decision 10.44 (post-run comparison, by run class).** The conditions below are the
+acceptance conditions evaluated at E5. Their outcome determines the ACCEPTED or
+ACCEPTANCE_FAILED disposition of Decision 10.34(a); reaching E5 without evaluating
+them is not a conformant execution. On Path A, after the run:
 
 - universal, all run classes: `unique_identity_count` equals Class A
   `expected_unique_identity_count`; `source_loc_count` equals Class A
@@ -1191,7 +1255,9 @@ may be claimed.
     E4    only after E3 passes in full: call the C2B writer for eligible records;
           if the eligible set is empty, make no writer call at all
           (Decision 10.34(d))
-    E5    read post-run metrics, apply Decision 10.44 for the run class
+    E5    read post-run metrics; evaluate the applicable acceptance conditions of
+          Decision 10.44 for the run class; determine the ACCEPTED or
+          ACCEPTANCE_FAILED disposition of Decision 10.34(a)
 
 **Decision 10.46 (gate before C2B).** C1–C8, A1–A4, R1–R3, V1–V4, CC-1 and CC-2
 are evaluated at E3, after C2A has produced both channels and BEFORE the first C2B
