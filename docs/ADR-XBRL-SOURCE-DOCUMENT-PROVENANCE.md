@@ -2224,7 +2224,7 @@ Following the freeze of Amendment 7 and the formal archival of the C4G candidate
 ### 1.1 Core Finding: `BRIDGE_NOT_FOUND`
 
 The empirical result across all audited official sources is **`BRIDGE_NOT_FOUND`**:
-- No official SEC specification, regulatory manual, schema definition, or API contract defines an explicit, authoritative relationship (`E4`) bridging Company Concept API taxonomy tokens to EDGAR taxonomy catalog `<Prefix>` elements or filing-local namespace URIs.
+- No official SEC specification, regulatory manual, XML catalog schema, or developer API documentation establishes an explicit, authoritative relationship (`E4`) bridging Company Concept API taxonomy tokens to EDGAR taxonomy catalog `<Prefix>` elements or filing-local namespace URIs.
 - In accordance with the Evidence Sufficiency Matrix established in Amendment 7 §2:
   - **C3** remains **`NOT PROVEN`** (no cross-source contract connecting API token to catalog `<Prefix>`).
   - **C7** remains **`NOT PROVEN`** (Observation representation and filing occurrence representation equivalence unproven).
@@ -2251,13 +2251,14 @@ To prevent conflation across distinct architectural layers, four separate semant
    - It is an endpoint-scoped parameter, not a QName prefix and not an XML namespace URI.
 
 2. **Catalog `<Prefix>` Semantics and its Family, Version, and Namespace Relations:**
-   - The `<Prefix>` element defined in `edgartaxonomies.xsd` and populated in `<Loc>` entries within `edgartaxonomies.xml`.
+   - The `<Prefix>` element defined in schema `erxl.xsd` and populated in `<Loc>` entries within `edgartaxonomies.xml`.
    - Its verified official role is a descriptive or suggested prefix associated with a specific schema entry point `<Href>`, `<Namespace>` URI, `<Family>`, and `<Version>`.
    - It belongs strictly to the catalog's internal XML vocabulary.
 
 3. **Filing-Local Namespace Prefix → Namespace URI Binding (`xmlns:prefix="URI"`):**
-   - The XML namespace declaration bound within captured filing instance document bytes or DTS (e.g., `xmlns:us-gaap="http://fasb.org/us-gaap/2026"` or `xmlns:custom="http://fasb.org/us-gaap/2026"`).
-   - Its scope is strictly local to the filing document. Under W3C XML Namespace standards and EDGAR Filer Manual rules, filers are free to bind arbitrary prefix strings to standard target namespaces.
+   - The XML namespace declaration bound within captured filing instance document bytes or DTS (e.g., `xmlns:us-gaap="http://fasb.org/us-gaap/2026"` or custom extension prefixes).
+   - Its scope is strictly local to the filing document's XML scope. While EDGAR XBRL Guide §8.2 specifies designated prefix conventions for standard taxonomies (e.g., designating `us-gaap` for US GAAP, `dei` for Document and Entity Information, `invest`, etc., and conventions for extension prefixes), filers' local prefix declarations remain syntactic bindings within the document scope.
+   - Crucially, this limited submission-side designated prefix convention cannot be promoted into a cross-source contract bridging the SEC Company Concept API taxonomy tokens to filing occurrence taxonomy equivalence (does not prove C3 or C7).
 
 4. **Observation → Filing Occurrence Taxonomy Equivalence:**
    - The semantic identity assertion that an Observation extracted from the Company Concept API and a document-level fact occurrence extracted from filing bytes represent the exact same concept under the exact same accounting taxonomy.
@@ -2300,19 +2301,19 @@ Seven official regulatory, technical, and data delivery sources published by the
   - **No contextRef / dimensional breakdown:** The endpoint returns aggregated units without XBRL `contextRef` attributes (Amendment 0 Decision 4).
   - **No cross-source bridge:** Does not cite `edgartaxonomies.xml` or declare any normative relationship with catalog `<Prefix>`.
 
-### 3.2 Source 2: EDGAR Taxonomy Catalog and its Schema (`edgartaxonomies.xml` & `edgartaxonomies.xsd`)
+### 3.2 Source 2: EDGAR Taxonomy Catalog and its Schema (`edgartaxonomies.xml` & `erxl.xsd`)
 
 * **Locator / URL:**
   - Catalog: `https://www.sec.gov/info/edgar/edgartaxonomies.xml`
-  - Schema: `https://www.sec.gov/info/edgar/edgartaxonomies.xsd`
-* **Version / Date:** Schema `edgartaxonomies.xsd`; root `<Erxl version="78">` (updated per EDGAR release).
+  - Schema: `https://www.sec.gov/info/edgar/erxl.xsd` (declared via `xsi:noNamespaceSchemaLocation="erxl.xsd"`)
+* **Version / Date:** Schema `erxl.xsd`; root `<Erxl version="78">` (updated per EDGAR release).
 * **Structure Audited:** Elements `<Loc>`, `<Family>`, `<Version>`, `<Namespace>`, `<Prefix>`, `<FileTypeName>`, `<Href>`.
 * **Specific Claims Supported:**
-  - `E1` support for the catalog's XML vocabulary and schema structure.
+  - `E1` support for the catalog's XML vocabulary and schema structure governed by `erxl.xsd`.
   - `E2` support relating `<Prefix>` as a descriptive attribute associated with a schema entry point `<Href>`, `<Namespace>` URI, `<Family>`, and `<Version>`.
 * **Limitations / Anti-Claims (What it CANNOT support):**
   - **Does not govern REST APIs:** The catalog is an operational catalog for EDGAR filing acceptance; it does not define or govern REST API route parameters at `data.sec.gov`.
-  - **Does not govern filing-local prefixes:** The `<Prefix>` element is a descriptive/recommended prefix. Filers are legally and technically free to bind any local prefix string in filing XML documents.
+  - **Does not govern filing-local prefixes as a cross-source bridge:** While EDGAR XBRL Guide §8.2 provides designated prefix conventions for standard taxonomies during filing preparation, catalog `<Prefix>` entries do not constitute a cross-source contract equating filing-local declarations with Company Concept API query parameters.
   - **No historical filing-date validity proof:** The current catalog reflects active and accepted taxonomies at the time of the catalog release (e.g., release version 78). It does not prove what was valid on historical filing dates years earlier (e.g., in 2013).
 
 ### 3.3 Source 3: EDGAR Filer Manual (EFM Volume II: "EDGAR Filing")
@@ -2329,19 +2330,19 @@ Seven official regulatory, technical, and data delivery sources published by the
 
 ### 3.4 Source 4: EDGAR XBRL Guide / Staff Interactive Data Guidance
 
-* **Locator / Citation:** SEC Staff Guidance on Interactive Data; EDGAR XBRL Guide; Interactive Data Test Suite documentation.
+* **Locator / Citation:** SEC Staff Guidance on Interactive Data; EDGAR XBRL Guide (including §8.2 designated prefix conventions); Interactive Data Test Suite documentation.
 * **Version / Date:** Staff interpretations and guidance notices (ongoing).
 * **Specific Claims Supported:**
-  - Practical guidance for issuers and filing agents regarding element selection, extension modeling, and validation practices.
+  - Practical guidance for issuers and filing agents regarding element selection, extension modeling, designated standard prefixes (§8.2), and validation practices.
 * **Limitations / Anti-Claims (What it CANNOT support):**
   - **Informational / non-normative:** Guidance notices are advisory aids for preparers, not normative engineering contracts for data consumers.
   - **No API parameter specifications:** Does not define REST API endpoints, routing tokens, or database schemas.
-  - **Cannot bridge cross-source representations:** Provides no rule for equating API tokens to catalog prefixes or instance namespace declarations.
+  - **Cannot bridge cross-source representations:** Provides designated prefix rules for filing preparation, but provides no rule for equating API tokens to catalog prefixes or instance namespace declarations.
 
-### 3.5 Source 5: SEC XBRL Glossary
+### 3.5 Source 5: SEC XBRL Glossary of Terms
 
-* **Locator / URL:** `https://www.sec.gov/structureddata/glossary` (SEC Structured Data Glossary).
-* **Version / Date:** SEC Structured Data Materials (accessed 2026).
+* **Locator / URL:** `https://www.sec.gov/data-research/standardized-data/xbrl-glossary-of-terms` (XBRL Glossary of Terms).
+* **Version / Date:** Last reviewed or updated: June 26, 2024.
 * **Specific Claims Supported:**
   - High-level, informational definitions of core XBRL terms: *Taxonomy*, *Element*, *Fact*, *Instance Document*, *Context*, *Extension*.
 * **Limitations / Anti-Claims (What it CANNOT support):**
@@ -2360,17 +2361,18 @@ Seven official regulatory, technical, and data delivery sources published by the
   - **No cross-source merge permitted:** DERA documentation cannot be merged with Company Concept API documentation to synthesize a cross-source contract.
   - **Does not bridge API tokens to catalog prefixes:** The existence of `"us-gaap/2023"` in DERA does not prove that Company Concept API `"us-gaap"` is catalog `<Prefix>` `"us-gaap"`.
 
-### 3.7 Source 7: SEC API Documentation and OpenAPI / Swagger Specification Review
+### 3.7 Source 7: SEC EDGAR Developer API Documentation and Machine-Readable Contract Investigation
 
-* **Locator / URL:** `https://www.sec.gov/edgar/sec-api-documentation` and EDGAR REST API OpenAPI schemas.
-* **Version / Date:** EDGAR Developer Documentation (2024–2026).
+* **Locator / URL:** `https://www.sec.gov/edgar/sec-api-documentation`
+* **Version / Date:** EDGAR Developer Documentation (Current, 2024–2026).
 * **Specific Claims Supported:**
-  - Documents endpoint URI patterns: `/api/xbrl/companyconcept/CIK{cik}/{taxonomy}/{tag}.json`.
-  - Declares `{taxonomy}` as a generic `string` path parameter.
+  - Prose developer documentation defines endpoint URI patterns: `/api/xbrl/companyconcept/CIK{cik}/[taxonomy]/[tag].json`.
+  - Documents `[taxonomy]` and `[tag]` path components and describes their high-level role in selecting company concept disclosures.
 * **Limitations / Anti-Claims (What it CANNOT support):**
-  - **No enumerated taxonomy contract:** The OpenAPI specification does not define an `enum` matching catalog `<Prefix>` values.
-  - **No linkage to catalog XSD:** The OpenAPI document does not reference `edgartaxonomies.xsd` or define a schema cross-reference.
-  - **No semantic bridge:** Does not provide an explicit contract equating the path string to catalog prefixes or instance namespace URIs.
+  - **No published machine-readable contract:** The investigation found no official machine-readable OpenAPI or Swagger schema definition published by the SEC for the `data.sec.gov` Company Concept API.
+  - **No normative schema binding:** Because no machine-readable OpenAPI schema is published, there is no formal schema contract or enum defining acceptable taxonomy tokens against the XML catalog schema `erxl.xsd`.
+  - **No semantic bridge:** The prose documentation describes query parameters for web consumers but does not define an explicit cross-source bridge equating API taxonomy tokens to catalog `<Prefix>` or instance namespace URIs.
+  - **Conclusion:** No formal machine-readable cross-source contract exists between the Company Concept API and the EDGAR taxonomy catalog.
 
 ---
 
@@ -2383,7 +2385,7 @@ Across the audited SEC interfaces, several distinct identifier surfaces were obs
 | **API Path Token** | Company Concept REST API | `"us-gaap"`, `"dei"` | URL routing & REST resource addressing |
 | **Catalog Element** | `edgartaxonomies.xml` | `<Prefix>us-gaap</Prefix>` | Suggested prefix in operational catalog |
 | **Catalog Namespace** | `edgartaxonomies.xml` | `http://fasb.org/us-gaap/2026` | Formal targetNamespace identifier |
-| **Filing QName Prefix** | Instance XML (`xmlns:...`) | `xmlns:us-gaap="..."` (or arbitrary) | Document-local XML syntactic prefix |
+| **Filing QName Prefix** | Instance XML (`xmlns:...`) | `xmlns:us-gaap="..."` (subject to EFM/Guide §8.2 designated rules) | Document-local XML syntactic prefix |
 | **DERA Bulk Version** | DERA `tag.txt` | `"us-gaap/2023"` | Relational version/family compound key |
 
 ### 4.1 Surface Differences Do Not Equal Universal Contradiction
@@ -2435,7 +2437,7 @@ Under this amendment, the following prohibitions remain strictly binding:
 | **Claim C7** | `NOT PROVEN` (Observation vs. occurrence representation equivalence unproven) |
 | **Claim C9** | `UNAVAILABLE / UNPROVEN` (current catalog snapshot cannot prove historical filing-date validity; future proof preserved) |
 | **Claim C10** | `UNAVAILABLE` for current production architecture |
-| **Investigated Sources** | 7 official sources audited (Company Concept API, Catalog XML/XSD, EFM, XBRL Guide, Glossary, DERA Data Sets, OpenAPI) |
+| **Investigated Sources** | 7 official sources audited (Company Concept API, Catalog XML/erxl.xsd, EFM, XBRL Guide, Glossary of Terms, DERA Data Sets, Developer API Docs) |
 | **Four Semantic Entities** | Strictly separated: API token, Catalog Prefix, Filing-local prefix, Observation-to-occurrence equivalence |
 | **Production State** | Baseline `9b3a8a8` intact; C4G archived; production returns `TAXONOMY_UNPROVEN`; no unproven links written |
 | **Code / DB Changes** | ZERO changes to code, tests, migrations, schemas, or DB |
