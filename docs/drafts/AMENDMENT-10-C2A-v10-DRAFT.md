@@ -1178,7 +1178,6 @@ comparison, and a baseline larger than the expected set is NOT a legal RECOVERY.
 `B` empty is tested before `B == E`, so the case `E` empty and `B` empty — with G1
 and G2 passing — is classified FIRST, as required.
 
-`FIRST` is tested first, so the case `E` empty and `B` empty classifies as `FIRST`.
 `run_class` is assigned internally ONLY on one of the three admitted branches
 above. It is emitted as field 21 only in the ACCEPTED disposition of Decision
 10.34(a). If the disposition is ACCEPTANCE_FAILED or PRECHECK_REJECTED, no
