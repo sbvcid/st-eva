@@ -780,8 +780,11 @@ than synthesized. No field required by Decisions 10.30(a)–(d), 10.35, 10.36(a)
 10.42(c), 10.42(d) or 10.44 may be omitted from its applicable output shape, and
 no additional persistence of any field is authorized (§12).
 
-**Terminal dispositions.** Every execution has exactly ONE terminal disposition,
-and the three are mutually exclusive:
+**Terminal dispositions.** The three dispositions below apply to exactly two cases:
+a P4 pre-check rejection as defined in Decision 10.42(d), and an execution that
+completed the E5 acceptance evaluation of Decision 10.44. An execution in either
+case has exactly ONE of the three dispositions below, and the three are mutually
+exclusive:
 
 - **PRECHECK_REJECTED** — the P4 pre-check rejection of Decision 10.42(d). Carries
   no successful workflow result, no `run_class`, and reaches no E5 evaluation.
@@ -796,6 +799,22 @@ and the three are mutually exclusive:
   workflow-result shape MUST NOT be emitted, the run MUST NOT report success, and
   the diagnostic MUST name each failing condition together with its observed
   values.
+
+**Scope exclusion.** An execution that terminates for any other reason is NOT
+assigned any of these three dispositions. This includes an E0 Stage 0 refusal
+(Decision 10.7(b)); a failure during P1, P2 or P3; a P4 failure that is not a
+Decision 10.42(d) rejection; a failure at E1, E2, E3 or E4; and any execution that
+did not complete the E5 acceptance evaluation. Such an execution MUST NOT be
+labelled PRECHECK_REJECTED, ACCEPTED or ACCEPTANCE_FAILED. Only a Decision
+10.42(d) rejection may be labelled PRECHECK_REJECTED, and only an execution that
+completed the E5 acceptance evaluation may be labelled ACCEPTED or
+ACCEPTANCE_FAILED. Each such termination that falls within one of the following is
+governed by it, and that clause determines that the execution is not accepted:
+Decision 10.7(b) for E0, Decision 10.9 for E2, Decisions 10.46 and 10.47 for E3,
+and Decision 10.32(e) for any execution that does not reach E5. No named
+disposition exists for a P1, P2 or P3 failure, for a P4 failure that is not a
+Decision 10.42(d) rejection, or for an interrupted E5 acceptance evaluation; that
+absence is a recorded normative gap and is not resolved by this clause.
 
 Rules that hold across all three dispositions:
 
