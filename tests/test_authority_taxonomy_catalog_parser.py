@@ -16,6 +16,8 @@ spec.loader.exec_module(_parser_mod)
 parse_edgar_taxonomies_catalog = _parser_mod.parse_edgar_taxonomies_catalog
 ParsedAuthorityAssertion = _parser_mod.ParsedAuthorityAssertion
 CatalogParseError = _parser_mod.CatalogParseError
+NonAssertionLoc = _parser_mod.NonAssertionLoc
+CatalogParseResult = _parser_mod.CatalogParseResult
 
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
@@ -129,13 +131,19 @@ class TaxonomyCatalogParserTest(unittest.TestCase):
         self.assertTrue(dei)
         self.assertIsNone(dei[0].standard_prefix)
 
-    # 13. missing required fields refused
-    def test_13_missing_required_fields_refused(self):
-        bad = b"<?xml version='1.0'?><Erxl version='78'><Loc><Family>US GAAP</Family></Loc></Erxl>"
-        with self.assertRaises(CatalogParseError) as ctx:
-            parse_edgar_taxonomies_catalog(bad)
-        msg = str(ctx.exception)
-        self.assertIn("missing required", msg)
+    # 13. missing required identity fields classified as non-assertions (not fatal catalog error)
+    def test_13_missing_identity_fields_classified_as_non_assertion(self):
+        sample = b"<?xml version='1.0'?><Erxl version='78'><Loc><Family>US GAAP</Family></Loc></Erxl>"
+        result = parse_edgar_taxonomies_catalog(sample)
+        self.assertEqual(len(result.assertions), 0)
+        self.assertEqual(len(result.non_assertions), 1)
+        self.assertEqual(result.total_loc_count, 1)
+        na = result.non_assertions[0]
+        self.assertEqual(na.source_loc_index, 0)
+        self.assertEqual(na.taxonomy_family, "US GAAP")
+        self.assertEqual(na.missing_fields, ("Version", "Namespace"))
+        self.assertIn("version_absent", na.reason)
+        self.assertIn("namespace_absent", na.reason)
 
     # 14. malformed XML refused
     def test_14_malformed_xml_refused(self):
@@ -189,6 +197,103 @@ class TaxonomyCatalogParserTest(unittest.TestCase):
         # Parser is pure bytes-in; no urllib, no sqlite, no external dependency
         assertions = parse_edgar_taxonomies_catalog(_fixture("edgartaxonomies_sample.xml"))
         self.assertGreaterEqual(len(assertions), 1)
+
+    # 21. captured official SEC catalog regression: counts and classification (203 / 201 / 2)
+    def test_21_captured_catalog_regression_counts(self):
+        payload = _fixture("edgartaxonomies_captured.xml")
+        result = parse_edgar_taxonomies_catalog(payload)
+        # Total Loc count is 203
+        self.assertEqual(result.total_loc_count, 203)
+        self.assertEqual(len(result.records), 203)
+        # 201 eligible assertions
+        self.assertEqual(result.assertion_eligible_count, 201)
+        self.assertEqual(len(result.assertions), 201)
+        self.assertEqual(len(result), 201)
+        # 2 non-assertions due to missing Namespace
+        self.assertEqual(result.non_assertion_count, 2)
+        self.assertEqual(len(result.non_assertions), 2)
+        self.assertEqual(result.reason_distribution, {"namespace_absent": 2})
+
+    # 22. captured official SEC catalog regression: non-assertion details (records 126, 127)
+    def test_22_captured_catalog_non_assertions_details(self):
+        payload = _fixture("edgartaxonomies_captured.xml")
+        result = parse_edgar_taxonomies_catalog(payload)
+        na0, na1 = result.non_assertions
+        self.assertEqual(na0.source_loc_index, 126)
+        self.assertEqual(na0.missing_fields, ("Namespace",))
+        self.assertEqual(na0.reason, "namespace_absent")
+        self.assertEqual(na0.taxonomy_family, "IFRS")
+        self.assertEqual(na0.taxonomy_version, "2025")
+        self.assertEqual(
+            na0.schema_href,
+            "https://xbrl.ifrs.org/taxonomy/2025-03-27/full_ifrs/dimensions/dim_full_ifrs_2025-03-27_role-995000.xml",
+        )
+        self.assertEqual(na0.att_type, "DEF")
+        self.assertEqual(na0.file_type_name, "Definition, Dimensions")
+        self.assertEqual(na0.elements, "0")
+
+        self.assertEqual(na1.source_loc_index, 127)
+        self.assertEqual(na1.missing_fields, ("Namespace",))
+        self.assertEqual(na1.reason, "namespace_absent")
+        self.assertEqual(na1.taxonomy_family, "IFRS")
+        self.assertEqual(na1.taxonomy_version, "2025")
+        self.assertEqual(
+            na1.schema_href,
+            "https://xbrl.ifrs.org/taxonomy/2025-03-27/full_ifrs/dimensions-ea/dim_ifrs_ea_2025-03-27_role-995000.xml",
+        )
+        self.assertEqual(na1.att_type, "DEF")
+        self.assertEqual(na1.file_type_name, "Definition, Dimensions")
+        self.assertEqual(na1.elements, "0")
+
+    # 23. captured official SEC catalog regression: unique identity set and fingerprint (194)
+    def test_23_captured_catalog_unique_identity_set_and_fingerprint(self):
+        import hashlib, json
+        payload = _fixture("edgartaxonomies_captured.xml")
+        result = parse_edgar_taxonomies_catalog(payload)
+
+        doc_id = "doc_eb3d9eb2f741a4e844f7ed11"
+        def canonical_json(p):
+            return json.dumps(p, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+        identities = set()
+        for a in result.assertions:
+            preimage = {
+                "document_id": doc_id,
+                "namespace_uri": a.namespace_uri,
+                "provider": a.provider,
+                "taxonomy_family": a.taxonomy_family,
+                "taxonomy_version": a.taxonomy_version,
+            }
+            identities.add(canonical_json(preimage))
+
+        # Expected unique identity count is 194
+        self.assertEqual(len(identities), 194)
+
+        # Reproducible identity set fingerprint verification
+        sorted_identities = sorted(identities)
+        fingerprint = hashlib.sha256("\n".join(sorted_identities).encode("utf-8")).hexdigest()
+        self.assertEqual(fingerprint, "398ab08774e78f6803a55eb9fad0f5cf037554f7920875f76bbb41eb482b9e3d")
+
+    # 24. captured official SEC catalog regression: source order and record accounting
+    def test_24_captured_catalog_source_order_and_record_accounting(self):
+        payload = _fixture("edgartaxonomies_captured.xml")
+        result = parse_edgar_taxonomies_catalog(payload)
+
+        # All 203 records accounted in source order
+        self.assertEqual(len(result.records), 203)
+        self.assertIsInstance(result.records[125], ParsedAuthorityAssertion)
+        self.assertIsInstance(result.records[126], NonAssertionLoc)
+        self.assertIsInstance(result.records[127], NonAssertionLoc)
+        self.assertIsInstance(result.records[128], ParsedAuthorityAssertion)
+
+        # Check that records[126] and [127] are the exact non-assertions
+        self.assertIs(result.records[126], result.non_assertions[0])
+        self.assertIs(result.records[127], result.non_assertions[1])
+
+        # Verify source loc indices match 0..202
+        for idx, rec in enumerate(result.records):
+            self.assertEqual(rec.source_loc_index, idx)
+
 
 
 # Additional empirical checks from live catalog observation (not persisted; only assertions)

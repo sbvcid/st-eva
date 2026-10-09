@@ -140,3 +140,27 @@ class TestAuthorityTaxonomyIntegration:
         with open("archive/migrations/0022_authority_taxonomy_namespaces.sql", "rb") as f:
             h = hashlib.sha256(f.read()).hexdigest()[:16]
         assert h == "3347303174edb0a4"
+
+    # H. workflow completes with captured official catalog fixture (201 eligible assertions persisted, 194 unique identities in DB, 2 non-assertions excluded from writer)
+    def test_h_workflow_captured_official_catalog(self):
+        with open("tests/fixtures/edgartaxonomies_captured.xml", "rb") as f:
+            captured_bytes = f.read()
+
+        result = workflow.run_authority_taxonomy_workflow(
+            self.archive, payload_bytes=captured_bytes,
+            provider="SecEdgar", document_type="SEC_TAXONOMY_CATALOG",
+        )
+        assert result["document_id"].startswith("doc_")
+        assert result["assertion_count"] == 201
+        assert len(result["authority_taxonomy_ids"]) == 201
+        assert result.get("non_assertion_count") == 2
+        assert result.get("total_loc_count") == 203
+
+        # Exactly 194 unique rows in DB
+        db_rows = self.archive.connection.execute(
+            "SELECT COUNT(*), COUNT(DISTINCT authority_taxonomy_identity) FROM authority_taxonomy_namespaces WHERE document_id = ?",
+            (result["document_id"],),
+        ).fetchone()
+        assert db_rows[0] == 194
+        assert db_rows[1] == 194
+

@@ -62,11 +62,13 @@ def run_authority_taxonomy_workflow(
     )
 
     # 2. Parser (C2A layer) — pure bytes, no network, no DB
-    assertions = parse_edgar_taxonomies_catalog(payload_bytes)
+    parsed = parse_edgar_taxonomies_catalog(payload_bytes)
 
     # 3. Persistence (C2B layer) — one assertion at a time with shared document_id
+    # Only eligible assertions with complete identity fields are passed to writer
+    eligible_assertions = getattr(parsed, "assertions", parsed)
     atn_ids = []
-    for assertion in assertions:
+    for assertion in eligible_assertions:
         atn_id = record_authority_taxonomy_assertion(
             archive, assertion, document_id, captured_at=captured_at
         )
@@ -76,4 +78,6 @@ def run_authority_taxonomy_workflow(
         "document_id": document_id,
         "assertion_count": len(atn_ids),
         "authority_taxonomy_ids": atn_ids,
+        "non_assertion_count": getattr(parsed, "non_assertion_count", 0),
+        "total_loc_count": getattr(parsed, "total_loc_count", len(atn_ids)),
     }
