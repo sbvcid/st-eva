@@ -635,7 +635,7 @@ metric may be computed over the whole table.
 | `writer_call_count` | number of `record_authority_taxonomy_assertion()` invocations in this execution | run-scoped | end of E4 |
 | `unique_identity_count` | distinct identity preimages over `ASSERTION_ELIGIBLE` records admitted to C2B in this execution | run-scoped | E3 |
 | `document_row_total` | ALIAS of `document_row_total_after`; see Decision 10.30(b) | table-scoped by `document_id` D | E5 |
-| `rows_inserted_this_run` | `document_row_total_after - document_row_total_before`, both read for the same D | table-scoped by `document_id` D | E5; computable only under Decision 10.32(a) |
+| `rows_inserted_this_run` | `document_row_total_after - document_row_total_before`, both read for the same D | table-scoped by `document_id` D | E5 if PRECOND-1 is asserted; otherwise report UNDEFINED with no numeric value |
 
 **Decision 10.30(b) (before, after and the alias).** Because the same table is read
 twice, the two readings are distinct quantities with distinct read points and are
@@ -753,8 +753,12 @@ difference of I5b.
 **Decision 10.34(a) (output shape and field contract).** This section defines the successful workflow-result shape and the P4
 baseline-rejection payload; other execution errors are not successful workflow
 results. A successful Path-A workflow result that reaches
-E5 MUST carry exactly fields 1–24 below, with the stated type, scope, read point
-and purpose. A P4 pre-check rejection under Decision 10.42(d) emits the separate
+E5 MUST carry fields 1–23 below, with the stated type, scope, read point and
+purpose. Field 24 is included as a numeric field ONLY when PRECOND-1 is asserted;
+otherwise it MUST be omitted from the successful result, and the acceptance report
+MUST state that `rows_inserted_this_run` is UNDEFINED without assigning a numeric
+value (Decision 10.32(b)). A P4 pre-check rejection under Decision 10.42(d) emits
+the separate
 `baseline_rejection` diagnostic described as field 25; that diagnostic is NOT part
 of a successful workflow result. These two output shapes are mutually exclusive.
 If another failure occurs before E5, no successful workflow result is emitted, and
@@ -788,7 +792,7 @@ no additional persistence of any field is authorized (§12).
 | 21 | `run_class` | str; value domain exactly {`FIRST`, `FULL_REPLAY`, `RECOVERY`}; NOT emitted on a pre-check rejection | run; assigned only on the three admitted branches | P4 | 10.42(c); selects the applicable acceptance rule in 10.44; mutually exclusive with field 25 |
 | 22 | `document_row_total_after` | int | table-scoped by `document_id` D | E5 | I5a, I5b, I5e1 |
 | 23 | `document_row_total` | int | table-scoped by `document_id` D | E5; ALIAS of `document_row_total_after` | 10.30(a) metric 3 |
-| 24 | `rows_inserted_this_run` | int | table-scoped by `document_id` D | E5; only under PRECOND-1 | 10.30(a) metric 4; I5b, I5c |
+| 24 | `rows_inserted_this_run` | int; emitted only if PRECOND-1 is asserted | table-scoped by `document_id` D | E5, only under PRECOND-1; otherwise omitted and UNDEFINED | 10.30(a) metric 4; I5b, I5c |
 | 25 | `baseline_rejection` | structured value per Decision 10.42(d): `outcome` str; `reason_codes` ordered tuple of str; `offending_identities` ordered tuple of str; `expected_count` int; `baseline_count` int; `document_id` str; NOT emitted on an admitted run | run; rejection outcome only | P4, at rejection | 10.42(d); mutually exclusive with field 21 |
 
 `run_class` and `baseline_rejection` belong to mutually exclusive output shapes.
