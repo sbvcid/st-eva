@@ -83,7 +83,7 @@ The five-part proposal is a useful product-level acceptance checklist. It combin
 | **Disclosure/event alignment** | SEC source-document capture, accession/form identity, filing lineage and source-declared acceptance timestamps are part of the evidence architecture. | Automatic association between a change in implied assumptions and a filing/event window is not yet confirmed as a production feature. If added, account for time zone, after-hours/pre-market disclosure, next trading session, price sampling and multiple simultaneous events. Report temporal association and candidate catalysts; do not claim that one filing caused the market move from timestamp proximity alone. |
 
 These capabilities support a grounded LLM interpretation such as “under reference X and horizon Y, the price requires condition Z, which is above/below the issuer's observed historical range.” That statement is only warranted when the cited source data, sample coverage, period comparability and calculation provenance actually support it. Phrases such as “historically never achieved,” “growth expectations doubled,” or “risk shifted toward an unproven future” are model interpretations that must be qualified and backed by the package; they are not ST-EVA facts by themselves.
-## 6. Work sequence
+## 7. Work sequence
 
 ### P0 — Repair known defects and protect current data
 
@@ -163,7 +163,7 @@ Only after the package has demonstrated value, consider a model-provider adapter
 
 If model analyses are archived, store them as separate, versioned research artefacts linked to the input snapshot, model identity/configuration, prompt or task definition and creation time. A model analysis must never overwrite the snapshot, source evidence or deterministic calculation results.
 
-## 8. Work that is not on the immediate critical path
+## 9. Work that is not on the immediate critical path
 
 - Full production Historical P/E implementation before checking whether the first LLM evidence package can already be useful.
 - Blanket implementation of every open methodology decision; decide only what the chosen feature and issuer cohort require.
@@ -172,14 +172,14 @@ If model analyses are archived, store them as separate, versioned research artef
 - Broad platform expansion simply to increase metric count or issuer coverage.
 - Large governance-document rewrites whose completion does not change or verify software behaviour.
 
-## 9. Immediate next actions
+## 10. Immediate next actions
 
 1. Finish the P0 parser and runtime-file protection work as two bounded changes with separate verification.
 2. Reconcile the tested local state with the dated status checkpoint, keeping historical checkpoints as historical records rather than rewriting them to look current.
 3. Run the P1 single-company trace and inspect the actual Investment Context/data package.
 4. Update this roadmap only when evidence changes the next action; do not create a parallel roadmap or treat this file as a reason to resist a new owner decision.
 
-## 10. Completion and reporting
+## 11. Completion and reporting
 
 A roadmap item is complete when the relevant code/artifact exists and its acceptance evidence has actually been run or inspected. A plan, specification, research POC, model response or documentation review is not a substitute for that evidence.
 
