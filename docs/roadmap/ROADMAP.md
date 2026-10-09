@@ -65,7 +65,7 @@ This section consolidates known repository facts. It is not a substitute for che
 | Data contract and evidence | Observation, evidence, validation, source adapters and cross-source comparison exist. | Audit actual metric coverage and semantics before adding new data models or sources. |
 | Investment Context | Existing context builder packages source observations, validation, derivations, unavailable states and provenance for machine consumption. | Reuse and assess it as the likely starting point for the LLM evidence package. |
 | Archive and point-in-time replay | Archive, source-document capture and replay facilities exist. Availability semantics distinguish source-declared publication from archive-first-seen data. | Verify real end-to-end replay behaviour and the completeness of saved market-implied snapshots. |
-| LLM consumer | llm_interpreter.py currently builds an interpretation prompt; it is not a live model-provider integration and its prompt is narrower than the intended independent hypothesis-analysis use case. | Treat as a starting adapter, not as completed LLM integration. No in-app model API is required for the first data-package validation. |
+| LLM consumer | llm_interpreter.py currently builds an interpretation prompt; it is not a live model-provider integration. SPEC.md also records prior agent/evidence-consumption experiments covering grounding, discoverability and semantic interpretation. | Reuse existing experiment evidence. The remaining product question is whether a fixed, versioned package supports useful analysis of price-implied assumptions, not whether generic evidence retrieval works at all. |
 | SEC taxonomy catalogue parser | A known defect: parsing the captured official catalogue aborts at a Loc record whose Namespace is absent. | Repair with focused offline tests before broader work. |
 | Historical P/E | Research and detailed methodology/contract exist, but the contract-defined production pipeline is recorded as not implemented; an older provider-fed historical band is a separate, narrower capability. | Keep as a potential source/reference workstream, not the automatic mainline. Advance only when justified by the data-package use case. |
 | Local database and runtime data | The user's read-only audit on 2026-10-09 found a central data/st-eva.sqlite with one source_documents row and empty other central tables, plus separate AAPL/MSFT/TSM archives. The tracked status checkpoint predates or does not reflect all of that local database detail. | Re-check local state read-only before any operation. Never assume the archive is empty, and never delete/reset SQLite or WAL/SHM files as housekeeping. |
@@ -119,17 +119,18 @@ The point-in-time record should answer: what inputs and conditional calculations
 
 **Acceptance:** package schema and version are explicit; important fields are traceable; two builds from the same archived inputs and logic reproduce the expected document; changes in inputs/logic are visible as changed versions or snapshots; missing history remains missing instead of being backfilled silently.
 
-### P3 — Test whether LLMs can use the same package to analyse price-implied assumptions
+### P3 — Validate LLM analysis of price-implied assumptions
 
-**Objective:** Validate the product value before adding live model integrations.
+**Objective:** Reuse the agent-consumption work already documented in SPEC.md and test the new product question: can an LLM turn a fixed ST-EVA evidence package into a traceable analysis of the conditions that may explain a market price?
 
-- Supply the exact same versioned package to at least two models, without allowing the test to silently substitute fresh web data.
-- Ask each model to identify possible price-consistent business assumptions, compare conditional calculations with current/historical financial evidence and market consensus, state which conclusions depend on which assumptions, and name unresolved evidence gaps.
-- Require every factual claim to cite a package reference; require model-created assumptions and calculations to be labelled as analysis rather than ST-EVA observations.
-- Compare grounding, calculation correctness, assumption transparency, treatment of missing/conflicting data and repeatability across runs. Differences in conclusions are acceptable when their premises and methods are explicit.
-- Use failures to decide what needs improvement: missing data is a collection gap; inaccessible data is a package/query gap; misread semantics is a presentation/consumer problem; bad arithmetic is a calculation or model-verification problem.
+- First map prior experiments and findings; do not repeat generic retrieval/grounding probes that are already covered unless a regression or a distinct question justifies it.
+- Supply the exact same versioned package to at least two models, without allowing the experiment to silently substitute fresh web data.
+- Ask each model to explore possible price-consistent business assumptions, use the supplied reverse calculations as inputs, compare them with financial history and available market expectations, and state which conclusions depend on which assumptions.
+- Require factual claims to cite package references and require model-created assumptions or calculations to be labelled as analysis rather than ST-EVA observations.
+- Compare the usefulness and traceability of the resulting hypotheses, arithmetic correctness, treatment of missing/conflicting data and repeatability. Different conclusions are acceptable when methods and premises are explicit.
+- Use failures to locate the actual gap: absent evidence is a collection issue; inaccessible evidence is a package/query issue; misunderstood semantics is a consumer/presentation issue; incorrect deterministic calculations are a core issue; unsupported interpretation is a model-analysis issue.
 
-**Acceptance:** a reproducible consumption experiment shows what models can reliably do with a fixed package and produces an evidence-backed backlog. This phase can initially use exported files and external LLMs; a live in-product LLM API is not a prerequisite.
+**Acceptance:** a reproducible experiment determines whether the current Investment Context plus existing archive is sufficient for the target research task, and yields a concrete evidence-backed backlog. Use exported files and external LLMs first; a live in-product LLM API is not a prerequisite.
 
 ### P4 — Close only evidence gaps demonstrated by the consumer test
 
