@@ -2,8 +2,8 @@
 
 **Status:** Initial project-level plan — not an implementation authorization.
 **Review date:** 2026-10-09
-**Master baseline checked for this document:** `468083941357efeb54e4cb61a607d6b08039a2ca`
-**Separate Amendment 10 draft reviewed:** branch `draft/amendment-10-v10`, commit `fb57e593b1b6187e2e8b518d4f91616684c00a07`
+**Initial planning baseline (historical):** `468083941357efeb54e4cb61a607d6b08039a2ca` (the baseline used when this roadmap was first drafted; not the current HEAD).
+**Amendment 10 draft:** [`docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`](../drafts/AMENDMENT-10-C2A-v10-DRAFT.md), consolidated onto `master` by [PR #1](https://github.com/sbvcid/st-eva/pull/1) at `10d298ffbc315c20070b27472b407ac3ed2337aa`; still `DRAFT — NOT IN FORCE`. The source branch `draft/amendment-10-v10` has been retired.
 **Scope:** Sequence work across governance, Historical P/E productization, core data platform and user-facing integration.
 
 > **Authority boundary:** This roadmap does not ratify Amendment 10, append anything to an ADR, settle an OPEN methodology decision, authorize an implementation, authorize a migration, or authorize a database operation. Each such step remains subject to its governing document and any required explicit approval. A roadmap status cannot override an ADR or contract.
@@ -25,8 +25,8 @@ The current strategic priority is:
 
 | ID | Workstream | Initial state | Priority | Next gate |
 |---|---|---|---|---|
-| RM-0 | Current baseline and status reconciliation | NEEDS REVALIDATION | P0 | Confirm current master, governing documents, tests and known gaps |
-| GOV-1 | Amendment 10 governance | Draft-only; targeted semantic review reported complete | P0, separate track | Full approval-readiness review and explicit ratification decision |
+| RM-0 | Current baseline and status reconciliation | CHECKPOINT RECORDED; residual items remain UNVERIFIED | P0 | Carry forward the explicitly listed worktree and research-retention uncertainties; revalidate them before any relevant action |
+| GOV-1 | Amendment 10 governance | Draft consolidated to master; whole-draft review report recommends readiness; ratification pending | P0, separate track | Reconcile authorization semantics and review-report gap labels, then obtain explicit human ratification decision |
 | HPE-1 | Historical P/E scope and design prerequisites | Methodology/contract exist; production path not yet implemented per architecture/status documents | P1 | Identify blocking decisions for the first release and record decisions through the required governance path |
 | HPE-2 | Historical P/E data-model design | Blocked by HPE-1 decisions and data-layer gaps | P1 | Approved design with provenance fields, identity/basis handling and migration scope |
 | HPE-3 | Historical P/E production pipeline | Not started per existing status documents; revalidate before execution | P1 | Contract-conformant implementation and archive integration |
@@ -43,8 +43,8 @@ Priority labels indicate recommended sequencing, not permission to execute.
 ### Required work
 
 - Confirm the current `master` SHA and working-tree state locally before any implementation work.
-- Reconcile `docs/ST-EVA-PROJECT-STATUS.md` (dated 2026-10-07) with the current tracked tree. Its findings remain historical evidence, not automatically current measurements.
-- Confirm the state of the architecture constitution, methodology contract, formal ADRs, migrations, test suite, web surface and the separately maintained Amendment 10 branch.
+- Reconcile `docs/ST-EVA-PROJECT-STATUS.md` (dated 2026-10-09; measured baseline `10d298f`) with the tracked tree. The checkpoint file was subsequently committed as documentation; its measured baseline remains `10d298f` and must not be confused with the later documentation commit.
+- Confirm the state of the architecture constitution, methodology contract, formal ADRs, migrations, test suite and web surface. Amendment 10 is now a draft file on `master`; its former source branch was deleted after PR #1 merged. Do not equate branch consolidation with ratification.
 - Classify each major capability as `SPECIFIED`, `RESEARCH-VALIDATED`, `IMPLEMENTED`, `TESTED`, or `PRODUCTION-INTEGRATED`. These labels must not be used interchangeably.
 - Carry unresolved inventory, worktree and research-retention questions forward without deleting or moving material merely to simplify the report.
 
@@ -58,19 +58,19 @@ A dated status checkpoint with the exact Git baseline, links to source documents
 
 ### Current evidence and next actions
 
-- The latest draft is on `draft/amendment-10-v10` at `fb57e593b1b6187e2e8b518d4f91616684c00a07`; it is not part of `master` and remains `DRAFT — NOT IN FORCE`.
-- The targeted independent review of Decision 10.30(d) reports that its four counterexamples pass. This is a targeted review, not a substitute for the final whole-draft approval checklist.
-- Before any ratification decision, conduct a final review of all disclosed normative gaps, cross-references, the output contract, decision counts, and the distinction between the draft and formal ADR.
+- The draft file is now in `master` at `docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`, consolidated by PR #1 at `10d298ffbc315c20070b27472b407ac3ed2337aa`. The source branch was deleted after merge. The document remains `DRAFT — NOT IN FORCE`; consolidation is not ratification.
+- The supplied whole-draft review report for source commit `fb57e593b1b6187e2e8b518d4f91616684c00a07` reports zero blocking semantic defects, 84 decision clauses, 25 output-field rows, and clean diff checks, and recommends readiness for ratification consideration. This is a review report, not a ratification decision; its disclosed-gap labels must be reconciled against their canonical prior classification before they are treated as authoritative.
+- Before ratification, resolve a cross-document governance ambiguity: Decision 10.54 says that upon ratification the amendment becomes the separate authorization basis for the changes it describes, while this roadmap's GOV-1d defines implementation authorization as a distinct gate. Explicitly decide whether ratification itself authorizes the described implementation or whether Decision 10.54 must be clarified to preserve a separate implementation authorization. The roadmap does not override the draft; do not ratify while this intended boundary is unclear.
 - Keep the existing normative-gap identifiers stable. If a review report classifies a limitation differently, reconcile the classification against the governing draft rather than silently renumbering gaps in an audit report.
 
 ### Gates and non-authorizations
 
-1. **GOV-1a — Whole-draft readiness review:** check the draft at an exact commit; produce a list of remaining defects and disclosed limitations.
-2. **GOV-1b — Ratification decision:** requires an explicit human decision. A clean review report alone does not ratify the draft.
-3. **GOV-1c — Formal ADR append:** requires the separate explicit authorization stated by the governing draft; preserve the existing baseline bytes and verify the resulting append.
-4. **GOV-1d — Implementation authorization:** a distinct gate before any production code, test, schema, migration or database work governed by the amendment.
+1. **GOV-1a — Whole-draft readiness review:** a review report has been supplied and recommends readiness, but its gap labels still need reconciliation against the canonical classification. The report is evidence for consideration, not approval.
+2. **GOV-1b — Ratification decision:** an explicit human decision is required and remains pending. Resolve the intended relationship between ratification and implementation authorization before this gate is exercised.
+3. **GOV-1c — Formal ADR append:** requires separate, explicit authorization after ratification under Decision 10.50; preserve the first 2,597 baseline lines byte-identically and verify the append.
+4. **GOV-1d — Implementation authorization:** the project plan intends this as a separate gate before any production code, test, schema, migration or database work. Clarify Decision 10.54 first so this gate does not conflict with the draft's post-ratification authorization wording.
 
-Do not merge this draft branch to `master`, edit the formal ADR, or execute a database workflow merely because the targeted review passed.
+PR #1 has already consolidated the draft file onto `master`; do not treat that merge as ratification. Do not edit the formal ADR or execute a database workflow merely because the review report passed.
 
 ## 5. HPE-1 — Scope and close required Historical P/E design decisions
 
