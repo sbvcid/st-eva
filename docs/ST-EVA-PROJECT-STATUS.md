@@ -130,7 +130,7 @@ Amendment 10 governs C2A catalog parsing, record classification, identity collap
 |                                    AMENDMENT 10 FIVEFOLD STATUS REGISTER                                |
 +------------------------------------+--------------------------------------------------------------------+
 | 1. Branch Merge Status             | MERGED into master (commit 10d298f, docs/drafts/...)              |
-| 2. Semantic Review Status          | ALL CLEAR — READY FOR RATIFICATION CONSIDERATION (0 defects)      |
+| 2. Semantic Review Status          | Report: 0 draft blockers; governance wording unresolved           |
 | 3. Formal Ratification Status      | DRAFT — NOT IN FORCE (pending human ratification decision)        |
 | 4. Formal ADR Update Status        | ADR-XBRL-PROVENANCE UNCHANGED (2597 lines, hash 684d985...)       |
 | 5. Implementation Authorization    | ZERO AUTHORIZATION (code, tests, migrations, and DB frozen)       |
