@@ -185,7 +185,9 @@ fundamental_provider.py Yahoo fundamental acquisition adapter
 llm_interpreter.py      current prompt/request builder; no live model-provider call
 tests/                  unittest suite
 history/                current engine snapshots
+history/contexts/       machine-readable company context snapshots
 history/legacy-v6/      pre-2.2 artifacts, retained but not current output
+scripts/research/       research and corpus-operation scripts
 docs/                   research notes and design references, including ROADMAP.md
 ```
 

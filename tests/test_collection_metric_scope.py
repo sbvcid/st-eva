@@ -77,6 +77,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+SCRIPT_DIR = os.path.join(ROOT, "scripts", "research")
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
 
 import ingest_universe  # noqa: E402
 import merge_sources  # noqa: E402
@@ -98,9 +101,9 @@ CALLERS = {
 }
 
 SOURCES = {
-    "ingest_universe": os.path.join(ROOT, "ingest_universe.py"),
-    "merge_sources": os.path.join(ROOT, "merge_sources.py"),
-    "reconcile_bulk": os.path.join(ROOT, "reconcile_bulk.py"),
+    "ingest_universe": os.path.join(ROOT, "scripts", "research", "ingest_universe.py"),
+    "merge_sources": os.path.join(ROOT, "scripts", "research", "merge_sources.py"),
+    "reconcile_bulk": os.path.join(ROOT, "scripts", "research", "reconcile_bulk.py"),
 }
 
 # Modules that construct an Ingestor but are not canonical callers. The exclusion
@@ -337,7 +340,7 @@ class NoCallerFallsBackOnTheDefault(unittest.TestCase):
         assumed: each of these passes an explicit metric list at every call site.
         """
         for name in NOT_CANONICAL:
-            path = os.path.join(ROOT, "%s.py" % name)
+            path = os.path.join(ROOT, "scripts", "research", "%s.py" % name)
             with io.open(path, encoding="utf-8") as handle:
                 lines = handle.read().splitlines()
             sites = [index for index, line in enumerate(lines)

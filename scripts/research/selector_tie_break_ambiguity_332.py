@@ -82,11 +82,16 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
-HERE = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parents[2]
+for _path in (HERE, SCRIPT_DIR):
+    if str(_path) not in sys.path:
+        sys.path.insert(0, str(_path))
 HARNESS = HERE / "experiments" / "003-llm-evidence-retrieval" / "harness"
 ARTIFACT = HARNESS / "332-selector-tie-break-ambiguity.json"
 MU_ARCHIVE = HARNESS / "pilot-mu.sqlite"

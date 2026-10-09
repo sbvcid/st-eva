@@ -440,7 +440,7 @@ class TestHistoricalStateCorpus(unittest.TestCase):
     def setUpClass(cls) -> None:
         if not cls.ARTIFACT.exists():
             raise unittest.SkipTest(
-                "run historical_state_reconstruction_331.py to build the corpus"
+                "run scripts/research/historical_state_reconstruction_331.py to build the corpus"
             )
         cls.corpus = json.loads(cls.ARTIFACT.read_text(encoding="utf-8"))
 

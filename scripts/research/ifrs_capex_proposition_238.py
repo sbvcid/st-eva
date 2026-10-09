@@ -50,11 +50,14 @@ import sys
 from collections import Counter, defaultdict
 # Issuer identity comes from the payload's own `cik`; see
 # issuer_identity.py for why the filename is a diagnostic only.
-import issuer_identity  # noqa: E402
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-if HERE not in sys.path:
-    sys.path.insert(0, HERE)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+for _path in (HERE, SCRIPT_DIR):
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
+import issuer_identity  # noqa: E402
 
 H = os.path.join(HERE, "experiments", "003-llm-evidence-retrieval", "harness")
 

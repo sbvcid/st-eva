@@ -12,9 +12,9 @@ somewhere else, and this is where it happens. Without it, "skipped in CI" is
 indistinguishable from "never checked", and the whole point of gating rather than
 fixing is that the gated tests still get run.
 
-    python run_corpus_tests.py            # the corpus-dependent tests
-    python run_corpus_tests.py --census   # what is present and what is not
-    python run_corpus_tests.py --all      # production suite, then the corpus one
+    python scripts/research/run_corpus_tests.py            # the corpus-dependent tests
+    python scripts/research/run_corpus_tests.py --census   # what is present and what is not
+    python scripts/research/run_corpus_tests.py --all      # production suite, then the corpus one
 
 ## What it will not do
 
@@ -34,6 +34,18 @@ them into one list.
 
 from __future__ import annotations
 
+# Keep repository modules, repository-relative data paths, and sibling research
+# scripts available after this utility is stored under scripts/research/.
+import os as _os
+import sys as _sys
+from pathlib import Path as _Path
+
+_SCRIPT_DIR = _Path(__file__).resolve().parent
+_REPO_ROOT = _SCRIPT_DIR.parents[1]
+for _path in (str(_REPO_ROOT), str(_SCRIPT_DIR)):
+    if _path not in _sys.path:
+        _sys.path.insert(0, _path)
+
 import argparse
 import io
 import json
@@ -41,7 +53,7 @@ import os
 import sys
 import unittest
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = str(_REPO_ROOT)
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 

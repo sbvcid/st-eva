@@ -30,9 +30,11 @@ import json
 import os
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-if HERE not in sys.path:
-    sys.path.insert(0, HERE)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+for _path in (HERE, SCRIPT_DIR):
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
 
 import data_contract  # noqa: E402
 from core_registry import CoreRegistry  # noqa: E402

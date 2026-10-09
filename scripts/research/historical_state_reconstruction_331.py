@@ -41,8 +41,11 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-REPO = Path(__file__).resolve().parent
-sys.path.insert(0, str(REPO))
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO = Path(__file__).resolve().parents[2]
+for _path in (REPO, SCRIPT_DIR):
+    if str(_path) not in sys.path:
+        sys.path.insert(0, str(_path))
 
 from registry_identity import (  # noqa: E402
     _POLICY_FILES,
@@ -51,7 +54,7 @@ from registry_identity import (  # noqa: E402
 )
 import registry_identity  # noqa: E402
 
-HERE = Path(__file__).resolve().parent
+HERE = REPO
 HARNESS = (
     HERE / "experiments" / "003-llm-evidence-retrieval" / "harness"
 )

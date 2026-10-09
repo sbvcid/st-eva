@@ -38,6 +38,18 @@ bytes, which is honest on both sides and is not a disagreement about anything.
 
 from __future__ import annotations
 
+# Keep repository modules, repository-relative data paths, and sibling research
+# scripts available after this utility is stored under scripts/research/.
+import os as _os
+import sys as _sys
+from pathlib import Path as _Path
+
+_SCRIPT_DIR = _Path(__file__).resolve().parent
+_REPO_ROOT = _SCRIPT_DIR.parents[1]
+for _path in (str(_REPO_ROOT), str(_SCRIPT_DIR)):
+    if _path not in _sys.path:
+        _sys.path.insert(0, _path)
+
 import argparse
 import json
 import os
@@ -47,7 +59,7 @@ import time
 from collections import Counter
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = str(_REPO_ROOT)
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 

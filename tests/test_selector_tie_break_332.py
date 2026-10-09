@@ -208,7 +208,7 @@ class TestTheAmbiguityIsRecorded(unittest.TestCase):
     def setUpClass(cls) -> None:
         if not ARTIFACT.exists():
             raise unittest.SkipTest(
-                "run selector_tie_break_ambiguity_332.py to build the record"
+                "run scripts/research/selector_tie_break_ambiguity_332.py to build the record"
             )
         cls.record = json.loads(ARTIFACT.read_text(encoding="utf-8"))
 
