@@ -70,6 +70,19 @@ This section consolidates known repository facts. It is not a substitute for che
 | Historical P/E | Research and detailed methodology/contract exist, but the contract-defined production pipeline is recorded as not implemented; an older provider-fed historical band is a separate, narrower capability. | Keep as a potential source/reference workstream, not the automatic mainline. Advance only when justified by the data-package use case. |
 | Local database and runtime data | The user's read-only audit on 2026-10-09 found a central data/st-eva.sqlite with one source_documents row and empty other central tables, plus separate AAPL/MSFT/TSM archives. The tracked status checkpoint predates or does not reflect all of that local database detail. | Re-check local state read-only before any operation. Never assume the archive is empty, and never delete/reset SQLite or WAL/SHM files as housekeeping. |
 
+## 6. Capability map: from evidence package to operational interpretation
+
+The five-part proposal is a useful product-level acceptance checklist. It combines existing calculation and provenance capabilities with some research surfaces that still need to be demonstrated. The items below describe the intended outcome; they do not assert that every output or end-to-end workflow is already implemented.
+
+| Dimension | Existing foundation | Gap / acceptance requirement |
+|---|---|---|
+| **Operational hurdles** | `required_eps_cagr`, consensus EPS gap, implied FCF / EBITDA / revenue, implied net margin and several valuation ratios are defined in the calculation/context design. | Verify current end-to-end outputs. Make explicit which reference multiple, horizon, current financial basis and share/period assumptions each result uses. A full revenue-growth-versus-margin sensitivity surface is not established merely because `implied_revenue` and `implied_net_margin` exist; add scenario calculations only under explicit assumptions. |
+| **Triangulation anchors** | Consensus forward EPS and `eps_gap_vs_consensus` exist in the context design. Historical PE / PS / EV-to-EBITDA bands and percentile calculations are also represented, subject to data and sample-quality limits. | Preserve the forecast period and source basis of consensus EPS. Treat an EPS gap as conditional on the selected valuation reference, not as a direct observation of the market's forecast. Historical 3–5 year EPS-CAGR distributions and peak-margin history are not confirmed as complete standard production outputs; build them only after checking comparable time-series coverage. Never imply a 5–10 year valuation distribution if the actual sample does not cover it. |
+| **Time-series deltas** | Point-in-time archive and replay exist, with source-declared versus archive-first-seen availability distinctions and context reproducibility requirements. | A reliable replay does not by itself mean there is a validated cross-snapshot delta product. Compare snapshots only when metric definition, period basis, currency, reference multiple, horizon and relevant calculation logic are aligned or differences are explicitly isolated. Otherwise emit an appropriate non-comparable state rather than a numeric delta. Separate movement caused by a changing share price from movement caused by changing reference assumptions. |
+| **Closed negative states** | The project already uses explicit missingness, validation and applicability states, including `UNAVAILABLE`, `NOT_APPLICABLE`, `SOURCE_SILENT`, and `METHODOLOGY_MISMATCH`; archive availability distinguishes `SOURCE_DECLARED`, `UNDECLARED`, and `ARCHIVE_FIRST_SEEN`. | Confirm every downstream package carries the applicable state and reason code, not just a null numeric value. Preserve distinct meanings and the layer-specific vocabulary; do not combine all failure modes into a new universal status or let an LLM infer why evidence is absent. `NOT_COMPARABLE` belongs on comparisons that fail comparability checks, not as a synonym for missing data. |
+| **Disclosure/event alignment** | SEC source-document capture, accession/form identity, filing lineage and source-declared acceptance timestamps are part of the evidence architecture. | Automatic association between a change in implied assumptions and a filing/event window is not yet confirmed as a production feature. If added, account for time zone, after-hours/pre-market disclosure, next trading session, price sampling and multiple simultaneous events. Report temporal association and candidate catalysts; do not claim that one filing caused the market move from timestamp proximity alone. |
+
+These capabilities support a grounded LLM interpretation such as “under reference X and horizon Y, the price requires condition Z, which is above/below the issuer's observed historical range.” That statement is only warranted when the cited source data, sample coverage, period comparability and calculation provenance actually support it. Phrases such as “historically never achieved,” “growth expectations doubled,” or “risk shifted toward an unproven future” are model interpretations that must be qualified and backed by the package; they are not ST-EVA facts by themselves.
 ## 6. Work sequence
 
 ### P0 — Repair known defects and protect current data
@@ -117,7 +130,9 @@ The package should group, without conflating:
 
 The point-in-time record should answer: what inputs and conditional calculations did this snapshot contain at T? It cannot truthfully claim to record a unique, directly observed belief held by the whole market.
 
-**Acceptance:** package schema and version are explicit; important fields are traceable; two builds from the same archived inputs and logic reproduce the expected document; changes in inputs/logic are visible as changed versions or snapshots; missing history remains missing instead of being backfilled silently.
+For the first useful package, explicitly report which of the five dimensions in §6 are PRESENT, PARTIAL, UNAVAILABLE or NOT YET IMPLEMENTED. Do not conceal an unimplemented feature behind a generic completeness claim.
+
+**Acceptance:** package schema and version are explicit; important fields are traceable; operational hurdles name the assumptions and reference conditions; anchors show their source periods and historical sample limits; time comparisons enforce comparability; unavailable/negative states retain their reasons; filing times retain their point-in-time basis; two builds from the same archived inputs and logic reproduce the expected document; changes in inputs/logic are visible as changed versions or snapshots; missing history remains missing instead of being backfilled silently.
 
 ### P3 — Validate LLM analysis of price-implied assumptions
 
@@ -130,7 +145,7 @@ The point-in-time record should answer: what inputs and conditional calculations
 - Compare the usefulness and traceability of the resulting hypotheses, arithmetic correctness, treatment of missing/conflicting data and repeatability. Different conclusions are acceptable when methods and premises are explicit.
 - Use failures to locate the actual gap: absent evidence is a collection issue; inaccessible evidence is a package/query issue; misunderstood semantics is a consumer/presentation issue; incorrect deterministic calculations are a core issue; unsupported interpretation is a model-analysis issue.
 
-**Acceptance:** a reproducible experiment determines whether the current Investment Context plus existing archive is sufficient for the target research task, and yields a concrete evidence-backed backlog. Use exported files and external LLMs first; a live in-product LLM API is not a prerequisite.
+**Acceptance:** a reproducible experiment determines whether the current Investment Context plus existing archive is sufficient for the target research task, and yields a concrete evidence-backed backlog. Include at least one example each of an operational-hurdle explanation, a consensus/historical anchor comparison, a comparable time delta or explicit refusal, and a filing/event alignment where the timestamps support it. The model must not invent absent history or claim causality from temporal proximity. Use exported files and external LLMs first; a live in-product LLM API is not a prerequisite.
 
 ### P4 — Close only evidence gaps demonstrated by the consumer test
 
@@ -148,7 +163,7 @@ Only after the package has demonstrated value, consider a model-provider adapter
 
 If model analyses are archived, store them as separate, versioned research artefacts linked to the input snapshot, model identity/configuration, prompt or task definition and creation time. A model analysis must never overwrite the snapshot, source evidence or deterministic calculation results.
 
-## 7. Work that is not on the immediate critical path
+## 8. Work that is not on the immediate critical path
 
 - Full production Historical P/E implementation before checking whether the first LLM evidence package can already be useful.
 - Blanket implementation of every open methodology decision; decide only what the chosen feature and issuer cohort require.
@@ -157,14 +172,14 @@ If model analyses are archived, store them as separate, versioned research artef
 - Broad platform expansion simply to increase metric count or issuer coverage.
 - Large governance-document rewrites whose completion does not change or verify software behaviour.
 
-## 8. Immediate next actions
+## 9. Immediate next actions
 
 1. Finish the P0 parser and runtime-file protection work as two bounded changes with separate verification.
 2. Reconcile the tested local state with the dated status checkpoint, keeping historical checkpoints as historical records rather than rewriting them to look current.
 3. Run the P1 single-company trace and inspect the actual Investment Context/data package.
 4. Update this roadmap only when evidence changes the next action; do not create a parallel roadmap or treat this file as a reason to resist a new owner decision.
 
-## 9. Completion and reporting
+## 10. Completion and reporting
 
 A roadmap item is complete when the relevant code/artifact exists and its acceptance evidence has actually been run or inspected. A plan, specification, research POC, model response or documentation review is not a substitute for that evidence.
 
