@@ -1,9 +1,9 @@
-# ST-EVA 2.2.3 Specification
+# ST-EVA Development History and Accumulated Technical Notes
 
 ## 0. Data contract (2.3-A) and cross-source validation (2.3-B)
 
 The data layer is defined by
-[docs/ST-EVA-2.3-A-DATA-CONTRACT.md](docs/ST-EVA-2.3-A-DATA-CONTRACT.md).
+[docs/ST-EVA-2.3-A-DATA-CONTRACT.md](ST-EVA-2.3-A-DATA-CONTRACT.md).
 
     Provider -> Observation -> Evidence -> Validation -> Derived
 
@@ -16,7 +16,7 @@ it. `Derived` values record the observations they consumed and can be
 recomputed from them.
 
 2.3-B adds the SEC as a second source for seven metrics, specified in
-[docs/ST-EVA-2.3-B-SEC-VALIDATION.md](docs/ST-EVA-2.3-B-SEC-VALIDATION.md). Its
+[docs/ST-EVA-2.3-B-SEC-VALIDATION.md](ST-EVA-2.3-B-SEC-VALIDATION.md). Its
 governing rule:
 
 > Validation is a third thing. It is not a modification of an Observation.
@@ -38,7 +38,7 @@ fundamentals do not.
 ## 0.2 Investment Context (2.3-C)
 
 Specified in
-[docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md](docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md).
+[docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md](ST-EVA-2.3-C-INVESTMENT-CONTEXT.md).
 An opt-in `--context` flag emits the verifiable research material ST-EVA holds
 about one asset at one point in time.
 
@@ -78,7 +78,7 @@ time.
 ## 0.3 Point-in-time archive (2.4)
 
 Specified in
-[docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md](docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md).
+[docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md](ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md).
 An opt-in `--archive` flag persists a run's observations and context, and
 `archive.replay` answers what was knowable at an earlier instant.
 
