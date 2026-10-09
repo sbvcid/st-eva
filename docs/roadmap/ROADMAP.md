@@ -1,219 +1,170 @@
-# ST-EVA Project Roadmap
+# ST-EVA Product Roadmap
 
-**Status:** Initial project-level plan — not an implementation authorization.
-**Review date:** 2026-10-09
-**Initial planning baseline (historical):** `468083941357efeb54e4cb61a607d6b08039a2ca` (the baseline used when this roadmap was first drafted; not the current HEAD).
-**Amendment 10 draft:** [`docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`](../drafts/AMENDMENT-10-C2A-v10-DRAFT.md), consolidated onto `master` by [PR #1](https://github.com/sbvcid/st-eva/pull/1) at `10d298ffbc315c20070b27472b407ac3ed2337aa`; still `DRAFT — NOT IN FORCE`. The source branch `draft/amendment-10-v10` has been retired.
-**Scope:** Sequence work across governance, Historical P/E productization, core data platform and user-facing integration.
+**Updated:** 2026-10-10  
+**Role:** Current product direction and working sequence. This is a living plan written to remember the owner's current intent; it is not an immutable charter. Change it when the goal or evidence changes.
 
-> **Authority boundary:** This roadmap does not ratify Amendment 10, append anything to an ADR, settle an OPEN methodology decision, authorize an implementation, authorize a migration, or authorize a database operation. Each such step remains subject to its governing document and any required explicit approval. A roadmap status cannot override an ADR or contract.
+## 1. Product purpose
 
-## 1. Executive direction
+ST-EVA exists to preserve and provide **verifiable, time-indexed financial evidence and conditional market-implied calculations for LLM research**.
 
-ST-EVA already has a substantial deterministic reverse-valuation engine, data/evidence contracts, an append-only archive architecture, cross-source validation, research artifacts, a web/PWA foundation, and extensive methodology documentation. The key near-term problem is not a lack of possible features; it is making the current state and the next critical path unambiguous.
+At a given market time, ST-EVA should be able to assemble the price and the financial information available for the company, retain where each input came from, compute transparent financial ratios and reverse calculations under explicitly stated assumptions, and save a reproducible snapshot. An LLM can use that same package to investigate what kinds of future earnings, growth, margins, cash flow, or valuation conditions could be consistent with the observed price.
 
-The current strategic priority is:
+The long-term research value is not merely a database of prices and financial statements. It is a growing record of **what a market price required under stated assumptions at each recorded time**, backed by the inputs and calculations needed to revisit the question later.
 
-1. Establish a trustworthy, current project baseline and preserve the separation between draft governance work and the production branch.
-2. Complete the Amendment 10 governance review as its own workstream, without treating semantic review as ratification or implementation permission.
-3. Advance the approved Historical P/E design toward a production capability, resolving only those methodology and data-model decisions required by the explicitly chosen initial scope.
-4. Implement and verify that capability through the existing evidence architecture and conformance requirements.
-5. Integrate it into CLI/Web surfaces only after the core workflow and its tests meet their acceptance criteria.
-6. Defer broad platform expansion until there is a demonstrated dependency or use case.
+Important distinction: market participants' actual beliefs are not directly observable and a price does not identify one unique forecast. ST-EVA records observed facts and conditional calculations. LLM-generated explanations are hypotheses, not source facts, and must remain separately identified if they are retained.
 
-## 2. Workstream overview
+## 2. Division of work
 
-| ID | Workstream | Initial state | Priority | Next gate |
-|---|---|---|---|---|
-| RM-0 | Current baseline and status reconciliation | CHECKPOINT RECORDED; residual items remain UNVERIFIED | P0 | Carry forward the explicitly listed worktree and research-retention uncertainties; revalidate them before any relevant action |
-| GOV-1 | Amendment 10 governance | Draft consolidated to master; whole-draft review report recommends readiness; ratification pending | P0, separate track | Reconcile authorization semantics and review-report gap labels, then obtain explicit human ratification decision |
-| HPE-1 | Historical P/E scope and design prerequisites | Methodology/contract exist; production path not yet implemented per architecture/status documents | P1 | Identify blocking decisions for the first release and record decisions through the required governance path |
-| HPE-2 | Historical P/E data-model design | Blocked by HPE-1 decisions and data-layer gaps | P1 | Approved design with provenance fields, identity/basis handling and migration scope |
-| HPE-3 | Historical P/E production pipeline | Not started per existing status documents; revalidate before execution | P1 | Contract-conformant implementation and archive integration |
-| HPE-4 | Historical P/E conformance and regression | Required acceptance suite documented; production suite must be confirmed against current tree | P1 | All required deterministic and negative-path checks pass |
-| HPE-5 | CLI and Web/PWA integration | Web Historical P/E surface recorded as not implemented; revalidate current tree | P2 | Present only validated outputs with provenance and missing-data status |
-| PLAT-1 | Long-term evidence-platform improvements | Research items recorded; not all are on the first-release critical path | P3 / case-dependent | Add only when a named consumer or correctness blocker justifies the work |
+### ST-EVA provides
 
-Priority labels indicate recommended sequencing, not permission to execute.
+- Source-backed market and company financial observations with units, currency, period, source, availability and retrieval times where known, plus preserved source-document identity or payload when available.
+- Explicit validation and comparison results. Conflicts, incompatible definitions, missing data, stale data and undeclared publication times remain visible; the system must not silently choose a winner or fill gaps with invented values.
+- Deterministic, reproducible calculations that are useful inputs to research: ratios and descriptive metrics, plus reverse calculations under explicit valuation-reference assumptions. Every conditional result records its operands, formula/version and assumptions.
+- Point-in-time snapshots and archive/replay facilities so a later run can distinguish what a source had published from what ST-EVA had archived, and avoid silently replacing historical inputs with newer ones.
+- A portable, machine-readable evidence package that an external LLM or analyst can inspect without needing to know ST-EVA's internal implementation.
 
-## 3. RM-0 — Reconcile the current baseline
+### The LLM provides
 
-**Objective:** Stop relying on stale completion summaries and establish an auditable starting point for subsequent work.
+- Independent analysis of the shared evidence package: candidate explanations for the price, required business outcomes, alternative assumptions, trade-offs, and questions needing more evidence.
+- Additional analysis or calculations where useful, while explicitly disclosing the model's own method and assumptions and keeping them separate from ST-EVA's recorded facts and deterministic outputs.
+- Interpretation across time: explanations for how the price-implied conditions may have changed as new prices, financial results and expectations became available.
 
-### Required work
+ST-EVA does not need to call a particular LLM from its core data pipeline. The first goal is a high-quality data package that can be supplied to different models. Provider-specific model integration can be added later if it solves a demonstrated workflow problem.
 
-- Confirm the current `master` SHA and working-tree state locally before any implementation work.
-- Reconcile `docs/ST-EVA-PROJECT-STATUS.md` (dated 2026-10-09; measured baseline `10d298f`) with the tracked tree. The checkpoint file was subsequently committed as documentation; its measured baseline remains `10d298f` and must not be confused with the later documentation commit.
-- Confirm the state of the architecture constitution, methodology contract, formal ADRs, migrations, test suite and web surface. Amendment 10 is now a draft file on `master`; its former source branch was deleted after PR #1 merged. Do not equate branch consolidation with ratification.
-- Classify each major capability as `SPECIFIED`, `RESEARCH-VALIDATED`, `IMPLEMENTED`, `TESTED`, or `PRODUCTION-INTEGRATED`. These labels must not be used interchangeably.
-- Carry unresolved inventory, worktree and research-retention questions forward without deleting or moving material merely to simplify the report.
+## 3. What ST-EVA is not trying to become
 
-### Acceptance evidence
+- It does not predict a company's fair value, forecast its actual future financial results, or produce a target price as a core system output.
+- It does not turn a conditional reverse calculation into a claim that the market has one uniquely identifiable expectation.
+- It does not produce buy/sell recommendations, investment rankings, model scores or probabilities as authoritative data.
+- It does not treat an LLM's narrative as a raw observation, validation verdict or deterministic calculation.
+- It does not collect every possible financial field just to increase coverage. Each addition must improve a defined research use case or close a demonstrated evidence gap.
+- It does not require a fully rebuilt Historical P/E pipeline before the broader evidence package and point-in-time record can be useful.
 
-A dated status checkpoint with the exact Git baseline, links to source documents, commands or tests actually run, explicit `UNVERIFIED` entries, and a list of any discrepancies found. No migration or production change is required to complete this stage.
+## 4. What success looks like
 
-## 4. GOV-1 — Amendment 10 governance track
+For a chosen company and time T, a successful ST-EVA data package should let a consumer:
 
-**Objective:** Determine whether the standalone Amendment 10 draft is suitable for formal ratification consideration while preserving the formal ADR and production baseline until the authorized steps occur.
+1. Identify the market price being explained and the exact time/date and currency it represents.
+2. Inspect current and historical financial facts and market expectations where available, with definitions and periods that make their comparability clear.
+3. Distinguish source-reported facts, validation judgements, deterministic derived values, and conditional reverse calculations.
+4. Trace each important number to its source observation and, where applicable, to the formula and assumptions that produced it.
+5. See unavailable, unverified, conflicting, stale, or non-comparable information rather than having the system guess.
+6. Rebuild or replay a saved time-indexed package without later information silently changing the old record.
+7. Supply the identical package to different LLMs and examine differences in their hypotheses without conflating different inputs with different reasoning.
+8. If an LLM analysis is saved for later research, link it to the exact package/version and record the model/configuration and analysis time; never merge the model's claims into authoritative observations.
 
-### Current evidence and next actions
+The goal is not to force all LLMs to reach the same interpretation. The goal is to make their evidence base inspectable and their differences attributable to assumptions, methods or reasoning rather than hidden differences in fetched data.
 
-- The draft file is now in `master` at `docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`, consolidated by PR #1 at `10d298ffbc315c20070b27472b407ac3ed2337aa`. The source branch was deleted after merge. The document remains `DRAFT — NOT IN FORCE`; consolidation is not ratification.
-- The supplied whole-draft review report for source commit `fb57e593b1b6187e2e8b518d4f91616684c00a07` reports zero blocking defects within the draft, 84 decision clauses, 25 output-field rows, and clean diff checks. This remains a review report, not a ratification decision. Its `GAP-1` broadly corresponds to the previously recorded absence of named dispositions/diagnostics for P1–P3 failures and P4 failures outside `baseline_rejection`; however, the report uses `GAP-2` for E5 interruption diagnostics, whereas the prior canonical `GAP-2` designation concerned P4 diagnostic-contract gaps outside Decision 10.42(d). The report's `GAP-3` label for ACCEPTANCE_FAILED report-layer diagnostics is likewise not an established canonical identifier. Preserve the original categories; treat this as review-report nomenclature to correct, not as a new normative defect.
-- Apply Decision 10.54 as written: while the text is a draft, it authorizes nothing; upon formal ratification, it becomes the authorization basis only for the changes it specifically describes, subject to the exclusions in §12. Do not add a second implementation-authorization vote that contradicts that wording. A scope/conformance preflight may still be performed before execution, but it is not a separate source of authority and cannot expand the amendment's scope. Decision 10.50 continues to require separate explicit authorization for appending the amendment to the formal ADR.
-- Keep the existing normative-gap identifiers stable. If a review report classifies a limitation differently, reconcile the classification against the governing draft rather than silently renumbering gaps in an audit report.
+## 5. Current implementation: known baseline
 
-### Gates and non-authorizations
+This section consolidates known repository facts. It is not a substitute for checking the current local checkout, running tests, or inspecting local database files before a change.
 
-1. **GOV-1a — Whole-draft readiness review:** the supplied report recommends readiness. Preserve the draft's normative limitation categories; correct the report's non-canonical `GAP-2` / `GAP-3` labels in any subsequent review note. This is an audit-label correction, not itself a proved normative defect.
-2. **GOV-1b — Ratification decision:** an explicit human decision remains pending. Upon ratification, Decision 10.54 activates only the bounded authorization basis for changes described by the amendment and allowed by §12; ratification is not a blanket authorization for unrelated work.
-3. **GOV-1c — Formal ADR append:** requires separate, explicit authorization after ratification under Decision 10.50; preserve the first 2,597 baseline lines byte-identically and verify the append.
-4. **GOV-1d — In-scope implementation preflight (not a separate authorization):** before execution, map each proposed change to the ratified amendment and verify that it does not violate §12 exclusions. If a proposed change exceeds the amendment's authority, stop and obtain the applicable separate authorization or normative revision; this preflight cannot confer authority by itself.
-
-PR #1 has already consolidated the draft file onto `master`; do not treat that merge as ratification. Do not append to the formal ADR without the separate authorization required by Decision 10.50.
-
-## 5. HPE-1 — Scope and close required Historical P/E design decisions
-
-**Objective:** Turn the approved Historical P/E method and contract into a buildable, testable production plan without inventing rules that the methodology has left OPEN.
-
-The architecture constitution and existing status documents distinguish the legacy provider-fed `historical_pe_band` from the Contract-defined Historical P/E evidence pipeline. The former does not establish that the latter exists.
-
-### Known prerequisite areas
-
-The data-layer audit and reconciliation documents identify four material gaps on the Historical P/E path:
-
-1. **Evidence class:** a machine-observable distinction between filed and furnished evidence.
-2. **Audit status and legal-status note:** a three-valued status model and the required accompanying note, without inferring audit status from form alone.
-3. **Fiscal calendar:** resolution of the applicable fiscal-year end on the correct time axis.
-4. **Acceptance-instant provenance:** the ability to tell which source supplied the acceptance time, including the contract-required distinction between SGML-header data and a non-conformant alternative.
-
-The Historical P/E ADR and contract also record open decision areas, including reference sufficiency, observation-window/sample requirements, sampling frequency, corporate-action evidence and split adjustment, FPI annual fallback, furnished-evidence treatment in other valuation contexts, XBRL fact-unavailable observability, competing admissible instances, and non-USD currency handling.
-
-The first design task is **not** to close every open question indiscriminately. It is to classify each item as (a) blocking the chosen first release, (b) explicitly deferred with a safe refusal/unavailable path, or (c) outside scope. Any normative choice must be made through its required ADR/contract process, not by an implementation agent.
-
-### Acceptance evidence
-
-- A bounded first-release scope and non-goals.
-- A decision register mapping each relevant OPEN item to its governing source, owner/decision route, status and dependency.
-- A data-model design demonstrating that required provenance and semantic distinctions can actually be represented.
-- Explicit treatment of unavailable, refused and inapplicable evidence.
-- No code or migration work before required design decisions and authorization are complete.
-
-## 6. HPE-2 — Approve the data-model and integration design
-
-**Dependency:** HPE-1 decisions that affect the selected first-release path.
-
-Design the smallest conforming representation needed for a Historical P/E observation and its evidence lineage. Cover instrument identity, price basis, corporate-action/split evidence, fiscal-calendar resolution, filed/furnished class, audit status, legal-status note, acceptance-instant provenance, derived-value dependencies and replay.
-
-The design must respect the existing boundaries among source documents, observations, evidence, validation, admission, derived values and replay. It must not weaken append-only behaviour, identity rules, immutable source records or migration checksums to make the first implementation easier.
-
-### Acceptance evidence
-
-- An approved ADR/design update where required.
-- A field-to-contract traceability matrix.
-- Migration and rollback/recovery implications documented within the existing forward-only policy.
-- An explicit list of tables/files/identities that change and those that must not change.
-- A review of how old records behave when required attributes are absent.
-
-No schema or migration is authorized by this roadmap.
-
-## 7. HPE-3 — Implement the Contract-defined Historical P/E pipeline
-
-**Dependency:** Approved HPE-1 decisions and HPE-2 design, plus explicit implementation authorization where required.
-
-Recommended implementation sequence:
-
-1. Establish the contract-facing production types and validation boundary.
-2. Reconstruct quarter-level price/EPS evidence with source documents and required timing/basis metadata.
-3. Implement the historical reference calculation only as specified by the approved contract.
-4. Integrate the pipeline with the current core registry, archive, admission and replay path at explicit interfaces.
-5. Preserve missing-data/refusal states rather than supplying inferred or synthetic values.
-6. Ensure the legacy provider-fed `historical_pe_band` remains clearly distinguished from the new contract-defined path until a separately verified integration decision says otherwise.
-
-### Acceptance evidence
-
-- Traceable mapping from each contract obligation to implementation and test.
-- Deterministic recomputation from preserved inputs.
-- No silent fallback to an unapproved reference or data source.
-- Replay that does not substitute newer inputs for historical ones.
-- Migration checksums, idempotence and preservation behaviour verified where applicable.
-
-## 8. HPE-4 — Conformance and regression gate
-
-**Dependency:** A production implementation exists on a controlled branch.
-
-The Historical P/E contract documents a conformance suite covering, at minimum:
-
-- point-in-time replay;
-- independent recomputation;
-- negative/refusal path;
-- look-ahead prevention;
-- window integrity;
-- provenance completeness;
-- evidence-class integrity.
-
-Confirm the exact test names and coverage from the current contract before implementation; do not assume a proof-of-concept or old validation script is an equivalent production test.
-
-### Acceptance evidence
-
-- Offline deterministic tests for expected, missing, contradictory and invalid cases.
-- Negative-path assertions showing that invalid evidence refuses or remains unavailable rather than being coerced.
-- At least one independent recomputation path.
-- Regression results recorded against a named commit and fixture/input hashes.
-- Relevant existing suite passes; live provider checks are supplementary and must be clearly separated from deterministic tests.
-
-## 9. HPE-5 — CLI and Web/PWA integration
-
-**Dependency:** HPE-3 and HPE-4 acceptance gates pass.
-
-Only then expose the new Historical P/E workflow to users. Keep the current deterministic engine as the owner of valuation arithmetic; any LLM component remains interpretation-only. The interface should show the valuation reference, source/time basis, provenance, missing fields and verification status, and should not turn conditional inferences into ratings, targets, probabilities or buy/sell instructions.
-
-### Acceptance evidence
-
-- CLI output and machine-readable schema are consistent.
-- Web/API output has documented field provenance and missing-data semantics.
-- UI labels distinguish observed inputs from derived and conditional-inference values.
-- End-to-end tests cover the supported path and refusal/unavailable states.
-- Existing reverse-valuation output compatibility is assessed explicitly.
-
-## 10. PLAT-1 — Long-term platform work, only when justified
-
-These topics are real architecture concerns, not automatic commitments to immediate implementation:
-
-| Topic | Why it exists | Sequencing rule |
+| Area | Known state | Meaning for the roadmap |
 |---|---|---|
-| Research-run and research-artifact relations | Findings and verification evidence do not yet have a canonical first-class relation in the audited data layer | Revisit when several active studies need queryable provenance and lifecycle tracking |
-| First-class price time series and instrument identity | Price and EPS need an explicit instrument/basis relationship for more complex securities and long histories | Design only against a named consumer and its contract requirements |
-| Corporate-action/split-adjustment evidence | Historical comparisons can be invalid if price and EPS bases are not reconcilable | Resolve for Historical P/E only when the required evidence and decision basis are sufficient |
-| Archive/corpus convergence | Existing CLI, web and research workflows have used different database-file conventions | Do not undertake a broad unification without a migration, compatibility and recovery plan |
-| Wider issuer/framework support | TSM/IFRS and NU/financial-sector cases differ materially from the initial US-GAAP cross-company set | Add one bounded cohort at a time, with explicit coverage and refusal criteria |
-| Storage-backend interface injection | The architecture notes that some engine paths still depend directly on SQLite implementation details | Defer until a second backend or concrete testing/isolation requirement justifies the work |
-| Additional valuation methods | Other multiples/models could broaden the tool | Do not pre-build before Historical P/E is production-conformant and a real consumer is identified |
+| Reverse calculations | Production code computes current ratios and conditional reverse calculations such as implied forward EPS, EPS gap and required CAGR. | Preserve as a source of machine-checkable research data; do not expand into fair-value prediction by default. |
+| Data contract and evidence | Observation, evidence, validation, source adapters and cross-source comparison exist. | Audit actual metric coverage and semantics before adding new data models or sources. |
+| Investment Context | Existing context builder packages source observations, validation, derivations, unavailable states and provenance for machine consumption. | Reuse and assess it as the likely starting point for the LLM evidence package. |
+| Archive and point-in-time replay | Archive, source-document capture and replay facilities exist. Availability semantics distinguish source-declared publication from archive-first-seen data. | Verify real end-to-end replay behaviour and the completeness of saved market-implied snapshots. |
+| LLM consumer | llm_interpreter.py currently builds an interpretation prompt; it is not a live model-provider integration and its prompt is narrower than the intended independent hypothesis-analysis use case. | Treat as a starting adapter, not as completed LLM integration. No in-app model API is required for the first data-package validation. |
+| SEC taxonomy catalogue parser | A known defect: parsing the captured official catalogue aborts at a Loc record whose Namespace is absent. | Repair with focused offline tests before broader work. |
+| Historical P/E | Research and detailed methodology/contract exist, but the contract-defined production pipeline is recorded as not implemented; an older provider-fed historical band is a separate, narrower capability. | Keep as a potential source/reference workstream, not the automatic mainline. Advance only when justified by the data-package use case. |
+| Local database and runtime data | The user's read-only audit on 2026-10-09 found a central data/st-eva.sqlite with one source_documents row and empty other central tables, plus separate AAPL/MSFT/TSM archives. The tracked status checkpoint predates or does not reflect all of that local database detail. | Re-check local state read-only before any operation. Never assume the archive is empty, and never delete/reset SQLite or WAL/SHM files as housekeeping. |
 
-## 11. Operating protocol for agents and contributors
+## 6. Work sequence
 
-Every new work item must use this sequence:
+### P0 — Repair known defects and protect current data
 
-1. **Read:** current architecture constitution, project structure contract, relevant governing ADR/contract and this roadmap.
-2. **Baseline:** state exact branch, HEAD, worktree and files in scope. Do not assume a status checkpoint is current.
-3. **Classify:** distinguish observation, design question, implementation task, test task and authorization gate.
-4. **Propose:** state expected edits, non-edits, dependencies, failure modes and acceptance evidence before consequential changes.
-5. **Authorize:** obtain required explicit decision/approval before changing a governed artifact, schema, migration, production behaviour or database.
-6. **Implement and verify:** make bounded changes; run the prescribed tests and checks; preserve data and historical artifacts.
-7. **Report:** include commit, exact changed files, tests actually run, limitations and any state not verified.
-8. **Update roadmap:** change status only when acceptance evidence supports it.
+**Objective:** Restore trustworthy behaviour without turning a focused bug into a broad architecture or governance project.
 
-The repository structure contract remains controlling: research goes under `research/`, governed methodology belongs in its established location, and existing research/data artifacts must not be deleted merely because they are untracked or inconvenient.
+1. Confirm the local Git baseline and worktree status. Inspect runtime database paths read-only before relevant operations.
+2. Update .gitignore to keep local SQLite databases, WAL/SHM files and runtime archives out of Git. Verify the rules without deleting or moving any file.
+3. Fix the SEC taxonomy parser against the captured XML. Distinguish document structural validity from record eligibility for an authority assertion, and from persistence success.
+4. Add focused offline regression tests. For the captured fixture, examine all 203 Loc records, expect 201 eligible assertions and 2 non-assertions because Namespace is missing, and verify the actual unique identity set (expected 194 for this fixture) rather than checking counts alone. These are fixture expectations, not constants in production logic.
+5. Keep the existing migration 0022, identity computation, NOT NULL schema, writer, archive boundaries and database data unchanged unless evidence demonstrates one is necessary to fix the defect.
+6. Run the targeted tests and appropriate existing regression suite. Record only checks actually run and the remaining limitations.
 
-## 12. Definition of roadmap completion
+**Acceptance:** the captured catalogue is fully accounted for; ineligible records do not become authoritative assertions; eligible identity results match the fixture expectation; no live database write is performed during parser regression; local database/runtime files remain intact.
 
-A roadmap item is not complete because an agent says it is done. Mark it **DONE — verified** only when:
+**Separate track:** Amendment 10 remains a draft unless and until the owner decides otherwise. Its existence does not block the minimal parser correction. If investigation demonstrates that a broader rule or schema change is necessary, explain the evidence and options rather than silently treating the draft as adopted.
 
-- its specified deliverables exist at a named commit;
-- all required reviews/decisions and authorization gates are satisfied;
-- acceptance evidence is recorded and reproducible;
-- required tests pass, or any non-run test is explicitly disclosed;
-- known limitations and follow-on work remain visible;
-- the change respects the project structure, immutable evidence and governing methodology.
+### P1 — Verify the current evidence-to-package path
 
-This roadmap is expected to evolve as evidence and authorized decisions change. It should be updated at milestone boundaries, not expanded into a speculative catalogue of every possible feature.
+**Objective:** Learn exactly what ST-EVA can reliably provide today before designing new features.
+
+- Trace one company from source acquisition through observations, validation, existing deterministic calculations, Investment Context, archive persistence and replay.
+- Start with an issuer that already has research/archive evidence (AAPL is a practical candidate), but verify the current local data before selecting the fixture.
+- Inventory the facts actually present: price/time series, financial history, available consensus or forward estimates, identifiers, source documents, validation states, derived calculations and unavailable fields.
+- Check whether every important figure exposes its source, definition, period, currency, availability status and derivation where applicable.
+- Distinguish source-declared point-in-time history from archive-first-seen history. Do not promise historical knowability where source publication time is unknown.
+- Record concrete data gaps revealed by this trace; do not add data providers or tables before a specific gap is shown to matter.
+
+**Acceptance:** one evidence-based report of the tested data path, the actual package it emits, which properties are verified, and which information is absent, ambiguous or not replayable.
+
+### P2 — Establish the LLM-ready evidence package and time-indexed record
+
+**Objective:** Use the existing Investment Context and archive as the baseline, extending them only where the end-to-end check proves they are insufficient.
+
+The package should group, without conflating:
+
+- asset identity and requested market time;
+- observed market prices and source financial facts;
+- source documents, provenance and availability/knowledge timestamps;
+- source comparisons and validation results, preserving conflicts instead of selecting a winner;
+- deterministic derived values with formula/version and operand references;
+- conditional reverse calculations across explicitly named reference assumptions, not one hidden or unexplained multiple;
+- unavailable/refused/not-applicable states and known limitations;
+- stable snapshot identity and enough input/version information to reproduce or compare it.
+
+The point-in-time record should answer: what inputs and conditional calculations did this snapshot contain at T? It cannot truthfully claim to record a unique, directly observed belief held by the whole market.
+
+**Acceptance:** package schema and version are explicit; important fields are traceable; two builds from the same archived inputs and logic reproduce the expected document; changes in inputs/logic are visible as changed versions or snapshots; missing history remains missing instead of being backfilled silently.
+
+### P3 — Test whether LLMs can use the same package to analyse price-implied assumptions
+
+**Objective:** Validate the product value before adding live model integrations.
+
+- Supply the exact same versioned package to at least two models, without allowing the test to silently substitute fresh web data.
+- Ask each model to identify possible price-consistent business assumptions, compare conditional calculations with current/historical financial evidence and market consensus, state which conclusions depend on which assumptions, and name unresolved evidence gaps.
+- Require every factual claim to cite a package reference; require model-created assumptions and calculations to be labelled as analysis rather than ST-EVA observations.
+- Compare grounding, calculation correctness, assumption transparency, treatment of missing/conflicting data and repeatability across runs. Differences in conclusions are acceptable when their premises and methods are explicit.
+- Use failures to decide what needs improvement: missing data is a collection gap; inaccessible data is a package/query gap; misread semantics is a presentation/consumer problem; bad arithmetic is a calculation or model-verification problem.
+
+**Acceptance:** a reproducible consumption experiment shows what models can reliably do with a fixed package and produces an evidence-backed backlog. This phase can initially use exported files and external LLMs; a live in-product LLM API is not a prerequisite.
+
+### P4 — Close only evidence gaps demonstrated by the consumer test
+
+**Objective:** Improve data depth and semantics where they materially constrain LLM research.
+
+Possible work includes longer price/fundamental history, better availability timestamps, additional independent sources, improved market-expectation coverage, fiscal-period alignment, or specific point-in-time limitations. Choose only from findings of P1–P3 and define a test for every addition.
+
+Historical P/E work belongs here unless the initial evidence trace proves it is required earlier. It may become valuable as a reproducible historical reference series, but it is not a prerequisite for producing useful conditional reverse calculations from an explicit reference.
+
+**Acceptance:** each added source/metric closes a named gap, carries provenance and missingness semantics, is covered by regression tests, and improves the evidence package without weakening existing history.
+
+### P5 — Optional LLM integration and wider coverage
+
+Only after the package has demonstrated value, consider a model-provider adapter, tool/query surface, stored LLM-analysis records, wider issuer/accounting-framework coverage, or additional valuation-reference families.
+
+If model analyses are archived, store them as separate, versioned research artefacts linked to the input snapshot, model identity/configuration, prompt or task definition and creation time. A model analysis must never overwrite the snapshot, source evidence or deterministic calculation results.
+
+## 7. Work that is not on the immediate critical path
+
+- Full production Historical P/E implementation before checking whether the first LLM evidence package can already be useful.
+- Blanket implementation of every open methodology decision; decide only what the chosen feature and issuer cohort require.
+- General database/corpus convergence or storage-backend refactoring without a concrete consumer and recovery plan.
+- Automatic LLM calls, model ranking or consensus aggregation before a fixed-package consumption test establishes what the product needs.
+- Broad platform expansion simply to increase metric count or issuer coverage.
+- Large governance-document rewrites whose completion does not change or verify software behaviour.
+
+## 8. Immediate next actions
+
+1. Finish the P0 parser and runtime-file protection work as two bounded changes with separate verification.
+2. Reconcile the tested local state with the dated status checkpoint, keeping historical checkpoints as historical records rather than rewriting them to look current.
+3. Run the P1 single-company trace and inspect the actual Investment Context/data package.
+4. Update this roadmap only when evidence changes the next action; do not create a parallel roadmap or treat this file as a reason to resist a new owner decision.
+
+## 9. Completion and reporting
+
+A roadmap item is complete when the relevant code/artifact exists and its acceptance evidence has actually been run or inspected. A plan, specification, research POC, model response or documentation review is not a substitute for that evidence.
+
+Every closeout should state the files changed, the Git commit or baseline, tests/checks actually run, results, data operations (if any), and remaining uncertainty. Preserve source data and research artifacts. When the owner changes direction, explain consequences and update this plan; do not let the plan override the owner.
