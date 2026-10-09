@@ -1,10 +1,10 @@
-# ST-EVA — Reverse Valuation & Market-Implied Expectations Engine
+# ST-EVA — Financial Evidence, Point-in-Time Records & Market-Implied Assumptions
 
-> **Architecture Constitution:** Before modifying ST-EVA, read [`docs/ST-EVA-ARCHITECTURE.md`](docs/ST-EVA-ARCHITECTURE.md).
+> **Architecture and implementation reference:** Read [`docs/ST-EVA-ARCHITECTURE.md`](docs/ST-EVA-ARCHITECTURE.md) for existing design rationale and code/data boundaries. It is a revisable record of prior decisions, not a constraint on the owner's ability to change direction.
 
-ST-EVA takes an observed market price and reverse-engineers the fundamental and valuation assumptions implied by that price, using explicit valuation references and auditable evidence.
+ST-EVA builds a verifiable, time-indexed record of market prices, company financial evidence, source comparisons, and deterministic calculations. Under explicitly stated valuation conditions, it can calculate the financial values and growth requirements implied by an observed price, preserve the inputs and formulas, and package them for external LLM research.
 
-It is a deterministic calculation with a traceable result. It is not a forecast, and it does not recommend anything.
+ST-EVA does not predict fair value or claim that price uniquely identifies what the market believes. Its long-term purpose is to make the conditional assumptions supported by a price at a recorded time inspectable and comparable with later records. LLMs use the same evidence package to analyse possible explanations; their interpretations remain distinct from observed facts and recorded deterministic results.
 
 ## What it asks
 
@@ -75,9 +75,9 @@ ST-EVA does not:
 - use arbitrary price multipliers when fundamentals are unavailable;
 - output a buy/sell stance;
 - claim that one P/E multiple is objectively what the market assumes;
-- ask an LLM to perform valuation arithmetic.
+- treat an LLM's interpretation as an observed market fact or allow it to overwrite source records or deterministic calculation results.
 
-An optional provider-agnostic LLM interpretation adapter is included in `llm_interpreter.py`. It receives the validated JSON and interprets it without performing valuation arithmetic. The calculation core remains deterministic Python.
+`llm_interpreter.py` currently builds an interpretation prompt/request; it does not call an LLM provider. Its current prompt asks the model to interpret supplied calculations rather than perform additional arithmetic. The product direction is broader: external LLMs should be able to analyse a shared, provenance-carrying evidence package and develop further conditional hypotheses. Any model-created calculations or interpretations must remain separate from ST-EVA's source facts and deterministic outputs.
 
 ## Data categories
 
@@ -184,7 +184,7 @@ archive.py              archive interface + point-in-time replay driver (2.4)
 sqlite_archive.py       SQLite archive implementation (2.4)
 archive/migrations/     forward-only schema migrations (2.4 / 2.4.1)
 fundamental_provider.py Yahoo fundamental acquisition adapter
-llm_interpreter.py      optional non-arithmetic LLM adapter
+llm_interpreter.py      current prompt/request builder; no live model-provider call
 tests/                  unittest suite
 history/                current engine snapshots
 history/legacy-v6/      pre-2.2 artifacts, retained but not current output
