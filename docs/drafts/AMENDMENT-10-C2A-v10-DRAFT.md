@@ -218,6 +218,13 @@ stated condition, and no other condition refuses. The error code emitted is the
 code of the first violated condition in S1–S5 order. If Stage 0 refused the input,
 this decision does not apply.
 
+**Data state on Axis S refusal at E2.** Decision 10.45 orders E1 before E2. If
+Axis S refuses the catalog at E2, the source-document row recorded or confirmed at
+E1 remains in `source_documents`; this amendment does not roll it back or delete
+it. The retained source remains available at Layer `L1` (Decision 10.48). Because
+Axis S refusal occurs before E3 and E4, this execution MUST NOT begin any C2B
+authority-row write.
+
 **Decision 10.10 (S1 strict; qualified root refused).** S1 is exact-tag matching,
 applied to the root element only. A namespace-qualified root element is REFUSED in
 every case, and the pre-existing defensive local-name branch (baseline lines
@@ -670,13 +677,24 @@ that the shared value is correct.
     I5f  document_row_total(D) is INVARIANT to the presence of any other catalog
          document in the archive
 
-I5a, I5b, I5c and I5f apply to ALL run classes. I5d, I5e1 and I5e2 are the
-class-specific forms; run classification is defined at P4 by Decision 10.42(c) and
-is defined on identity SETS, never on row counts alone.
+I5a, I5b and I5c apply to ALL run classes. I5d, I5e1 and I5e2 are the
+class-specific forms evaluated at E5 under Decision 10.44; run classification is
+defined at P4 by Decision 10.42(c) and is defined on identity SETS, never on row
+counts alone.
 
-The invariants I5a–I5f are evaluated at E5. A violation of any applicable
-invariant yields the ACCEPTANCE_FAILED disposition of Decision 10.34(a); it does
-not retroactively change the truth of the invariant, and it does not roll back or
+I5f is an architectural scoping invariant: the implementation MUST scope both
+before/after row-count queries to `authority_taxonomy_namespaces.document_id = D`
+(Decision 10.31). I5f is NOT a single-run E5 acceptance condition and MUST NOT
+produce `ACCEPTANCE_FAILED`. Its verification belongs to cross-document tests
+that confirm adding rows for another catalog document does not alter the count
+for D.
+
+The applicable invariants and other conditions listed in Decision 10.44 are
+evaluated at E5. Only after every applicable condition has been evaluated can a
+verifiable FAIL produce the ACCEPTANCE_FAILED disposition of Decision 10.34(a).
+If E5 evaluation is interrupted before all applicable conditions are evaluated,
+Decision 10.32(e) governs and no acceptance verdict is assigned. No observed
+condition changes the truth of an invariant, and a failure does not roll back or
 delete any committed row.
 
 **Decision 10.30(d) (derived property: post-run identity set).** After a successful
@@ -727,7 +745,7 @@ be defaulted.
 **Decision 10.32(c) (what becomes UNVERIFIED without PRECOND-1).** Without
 PRECOND-1, EVERY acceptance expression whose left-hand side is
 `document_row_total_after` or `rows_inserted_this_run` is UNVERIFIED and MUST NOT
-be reported as passed. That set is exactly: I5a, I5b, I5c, I5e1, I5f, and the
+be reported as passed. That set is exactly: I5a, I5b, I5c, I5e1, and the
 RECOVERY acceptance condition of Decision 10.44. The baseline side of those
 expressions is a single P4 reading and remains a well-defined observation.
 
@@ -788,11 +806,14 @@ difference of I5b.
 baseline-rejection payload; other execution errors are not successful workflow
 results. A successful Path-A workflow result that reaches
 E5 MUST carry fields 1–23 below, with the stated type, scope, read point and
-purpose. Field 24 is included as a numeric field ONLY when PRECOND-1 is asserted;
-otherwise it MUST be omitted from the successful result, and the acceptance report
-MUST state that `rows_inserted_this_run` is UNDEFINED without assigning a numeric
-value (Decision 10.32(b)). A P4 pre-check rejection under Decision 10.42(d) emits
-the separate
+purpose. In addition to these numbered fields, the successful workflow result MUST
+preserve the baseline envelope key `document_id`, established at P2 under Decision
+10.40. This existing envelope key is outside the numbered field table and does not
+change its numbering. Field 24 is included as a numeric field ONLY when PRECOND-1
+is asserted; otherwise it MUST be omitted from the successful result, and the
+acceptance report MUST state that `rows_inserted_this_run` is UNDEFINED without
+assigning a numeric value (Decision 10.32(b)). A P4 pre-check rejection under
+Decision 10.42(d) emits the separate
 `baseline_rejection` diagnostic described as field 25; that diagnostic is NOT part
 of a successful workflow result. These two output shapes are mutually exclusive.
 If another failure occurs before E5, no successful workflow result is emitted, and
@@ -1023,6 +1044,18 @@ The concrete exception type used to signal this failure is an implementation
 choice and is NOT fixed by this amendment, provided it is distinguishable from other
 failure modes. Fail-closed specifies the required OUTCOME.
 
+**Temporal scope of the CC-2 guarantee.** CC-2 is evaluated at E3 against the
+database state observable at that step. If PRECOND-1 is asserted, its no-other-writer
+condition keeps that observed baseline free from concurrent insert, update or delete
+changes through E4, so the pre-write CC-2 result remains valid through the C2B
+writes. If PRECOND-1 is NOT asserted, CC-2 guarantees only that a collision present
+and observed at E3 prevents commencement of C2B writes. It does NOT guarantee that
+a new collision cannot be introduced between E3 and E4. In that case the existing
+primary-key, UNIQUE and extraction-consistency constraints remain the uncoordinated
+database-level defense at the point of the conflicting write; an E4 error may still
+leave earlier per-record commits in place, as stated in Decision 10.32(e). This
+paragraph authorizes no locking, transaction or concurrency mechanism.
+
 **Decision 10.37 (disclosed pre-existing identity collapse).** The frozen preimage
 `{document_id, namespace_uri, provider, taxonomy_family, taxonomy_version}`
 excludes `href` (Amendment 6). For the captured catalog, 201 eligible records yield
@@ -1150,7 +1183,7 @@ capability is used or authorized.
 **G1 and G2 are preconditions of classification.** They are evaluated at P4 BEFORE
 Decision 10.42(c) examines `B` and `E`. If either fails, the execution is rejected
 at P4 and MUST NOT enter any run-class branch: it can never be classified FIRST,
-FULL_REPLAY or RECOVERY. The five-code rejection vocabulary of Decision 10.42(d)
+FULL_REPLAY or RECOVERY. The four-code rejection vocabulary of Decision 10.42(d)
 covers this case directly through `G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH` and
 `G2_IDENTITY_ID_MISMATCH`.
 
@@ -1170,10 +1203,11 @@ values of `B` and `E`. Only after both checks pass are the three run classes
 reachable.
 
 `INCONSISTENT_BASELINE` also covers every remaining situation in which the gate
-passed, in particular: `B` contains any identity outside `E`; `B` is a strict
-superset of `E`; `B` and `E` are incomparable. A row count equal to the expected
-count does NOT establish `B == E` and MUST NOT be used in place of the set
-comparison, and a baseline larger than the expected set is NOT a legal RECOVERY.
+passed: `B` is a strict superset of `E`, or `B` and `E` are incomparable. These
+are the only set-relation rejection cases after the G1/G2 gate passes. A row count
+equal to the expected count does NOT establish `B == E` and MUST NOT be used in
+place of the set comparison, and a baseline larger than the expected set is NOT a
+legal RECOVERY.
 
 `B` empty is tested before `B == E`, so the case `E` empty and `B` empty — with G1
 and G2 passing — is classified FIRST, as required.
@@ -1217,7 +1251,6 @@ A run that reaches `INCONSISTENT_BASELINE` at P4:
                              vocabulary, listed in a deterministic order:
                                G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH
                                G2_IDENTITY_ID_MISMATCH
-                               BASELINE_HAS_IDENTITY_OUTSIDE_EXPECTED
                                BASELINE_IS_SUPERSET_OF_EXPECTED
                                BASELINE_INCOMPARABLE_WITH_EXPECTED
         offending_identities ordered tuple of str, lexicographically sorted and
@@ -1235,6 +1268,27 @@ A run that reaches `INCONSISTENT_BASELINE` at P4:
         baseline_count       int; len(B), the distinct baseline identity count
         baseline_row_count   int; baseline_document_row_total
         document_id          str; the D of Decision 10.40
+
+The `reason_codes` tuple is determined by this exhaustive mapping, in the listed
+deterministic order:
+
+- Evaluate G1 and G2 first. Include
+  `G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH` if and only if G1 fails, and include
+  `G2_IDENTITY_ID_MISMATCH` if and only if G2 fails.
+- If either G1 or G2 fails, do NOT evaluate or emit any set-comparison reason code.
+  Emit only the applicable G1/G2 code or codes, with G1 before G2.
+- Only if both G1 and G2 pass, the set relation that reaches
+  `INCONSISTENT_BASELINE` MUST emit exactly one set-comparison code:
+  `BASELINE_IS_SUPERSET_OF_EXPECTED` if E is a strict subset of B, or
+  `BASELINE_INCOMPARABLE_WITH_EXPECTED` if neither B is a subset of E nor E is a
+  subset of B. These two cases are mutually exclusive and cover every
+  set-comparison rejection branch of Decision 10.42(c).
+
+The `offending_identities` tuple includes identities implicated by the emitted
+codes only: for G2, identities whose stored identifier fails the derivation in
+Decision 10.36(a); for a set-comparison code, the symmetric difference of B and E.
+A G1-only mismatch adds no identity by itself, so this tuple is empty when no G2
+or set-comparison code identifies a concrete identity.
 
 `baseline_rejection` is a rejection result only. It is NOT a workflow result, MUST
 NOT be presented as one, and MUST NOT be combined with any `run_class`. Any code
@@ -1315,6 +1369,9 @@ landed.
 governs C2B writes only. E1's source-document record is an existing idempotent
 behaviour and may already be committed; that is permitted and preserves the bytes
 unchanged.
+
+The source-document persistence rule for an earlier Axis S refusal at E2 is stated
+in Decision 10.9.
 
 On failure at E3:
 
