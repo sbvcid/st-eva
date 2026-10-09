@@ -793,7 +793,7 @@ no additional persistence of any field is authorized (§12).
 | 22 | `document_row_total_after` | int | table-scoped by `document_id` D | E5 | I5a, I5b, I5e1 |
 | 23 | `document_row_total` | int | table-scoped by `document_id` D | E5; ALIAS of `document_row_total_after` | 10.30(a) metric 3 |
 | 24 | `rows_inserted_this_run` | int; emitted only if PRECOND-1 is asserted | table-scoped by `document_id` D | E5, only under PRECOND-1; otherwise omitted and UNDEFINED | 10.30(a) metric 4; I5b, I5c |
-| 25 | `baseline_rejection` | structured value per Decision 10.42(d): `outcome` str; `reason_codes` ordered tuple of str; `offending_identities` ordered tuple of str; `expected_count` int; `baseline_count` int; `document_id` str; NOT emitted on an admitted run | run; rejection outcome only | P4, at rejection | 10.42(d); mutually exclusive with field 21 |
+| 25 | `baseline_rejection` | structured value per Decision 10.42(d): `outcome` str; `reason_codes` ordered tuple of str; `offending_identities` ordered tuple of str; `expected_count` int; `baseline_count` int (identity count); `baseline_row_count` int; `document_id` str; NOT emitted on an admitted run | run; rejection outcome only | P4, at rejection | 10.42(d); mutually exclusive with field 21 |
 
 `run_class` and `baseline_rejection` belong to mutually exclusive output shapes.
 A `run_class` value is assigned internally at P4 on one of the three admitted
@@ -1124,14 +1124,15 @@ A run that reaches `INCONSISTENT_BASELINE` at P4:
                              the applicable reason codes. For G2, include identities
                              whose stored identifier does not match the derivation
                              of Decision 10.36(a). For set-comparison reasons,
-                             include the symmetric difference (B \\ E) union
-                             (E \\ B). A G1-only row-count/identity-count mismatch
+                             include identities in the symmetric difference, defined as identities present in
+                             exactly one of B and E. A G1-only row-count/identity-count mismatch
                              adds no identity by itself; if no G2 or set-comparison
                              reason identifies a concrete identity, this tuple is
                              empty and G1_ROW_COUNT_IDENTITY_COUNT_MISMATCH is the
                              diagnostic for the aggregate defect.
         expected_count       int; len(E)
-        baseline_count       int; len(B)
+        baseline_count       int; len(B), the distinct baseline identity count
+        baseline_row_count   int; baseline_document_row_total
         document_id          str; the D of Decision 10.40
 
 `baseline_rejection` is a rejection result only. It is NOT a workflow result, MUST
