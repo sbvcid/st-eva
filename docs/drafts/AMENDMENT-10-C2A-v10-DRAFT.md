@@ -697,14 +697,20 @@ Decision 10.32(e) governs and no acceptance verdict is assigned. No observed
 condition changes the truth of an invariant, and a failure does not roll back or
 delete any committed row.
 
-**Decision 10.30(d) (derived property: post-run identity set).** After a successful
-run on any legal class, the identity set stored for D equals the expected identity
-set. Derivation: at P4 the baseline set is a subset of the expected set for every
-legal class (Decision 10.42(c)); this run inserts only identities drawn from the
-expected set; therefore the final set is a subset of the expected set; and I5a
-together with `|expected| == unique_identity_count` gives a final cardinality equal
-to the expected cardinality. Hence the two sets are equal. No additional emitted
-field is required for this property.
+**Decision 10.30(d) (derived property: post-run identity set).** For an execution
+that asserts PRECOND-1 and for which I5a is evaluated and passes at E5, the identity
+set stored for D at E5 equals the expected identity set. Derivation: at P4 the
+baseline set is a subset of the expected set for every legal class (Decision
+10.42(c)); this run inserts only identities drawn from the expected set; and
+PRECOND-1 excludes concurrent inserts, updates or deletes in
+`authority_taxonomy_namespaces` from the P4 reading through the E5 reading
+(Decision 10.32(a)). Therefore the final set at E5 is a subset of the expected set.
+I5a, together with `|expected| == unique_identity_count`, gives it the same
+cardinality as the expected set; hence the two sets are equal. When PRECOND-1 is
+not asserted, this derivation does not establish that the post-run identity set
+equals the expected set, because the applicable post-run conditions may be
+UNVERIFIED under Decision 10.32(c). No additional emitted field is required for
+this property.
 
 **Decision 10.30(e) (worked illustration, non-normative).** A first run that
 committed 57 rows and then raised at the 58th writer call leaves a baseline of 57
