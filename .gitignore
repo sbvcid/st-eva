@@ -16,3 +16,13 @@ venv/
 # a web/-level frontend would be ignored too. Belt and braces, not a fix.
 web/node_modules/
 web/dist/
+
+# Local SQLite databases, sidecars, and runtime archive data
+/data/*.sqlite
+/data/*.sqlite-wal
+/data/*.sqlite-shm
+/data/**/*.sqlite
+/data/**/*.sqlite-wal
+/data/**/*.sqlite-shm
+/data/archives/
+
