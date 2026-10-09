@@ -436,7 +436,7 @@ round-tripping byte-identically. A *second* run against the same archive added
 until a new filing lands. Content addressing makes the long-run cost the
 cumulative set of distinct filings rather than the cumulative set of runs.
 
-The deterministic core now supports P/E, P/FCF, EV/EBITDA, and P/S reverse valuation. Future work can add additional providers and an optional LLM interpretation layer without moving arithmetic into the LLM.
+The deterministic core supports P/E, P/FCF, EV/EBITDA, and P/S reverse calculations under explicit assumptions. These calculations are research inputs, not fair-value predictions. An external LLM can use them together with the evidence package to analyse possible price-consistent assumptions and perform further conditional reasoning. Such model-generated calculations and interpretations remain separate from ST-EVA's observed facts and deterministic records. The repository currently has a prompt builder, not a live model-provider integration.
 
 ## Scope
 
