@@ -143,18 +143,18 @@ Amendment 10 governs C2A catalog parsing, record classification, identity collap
    Merged into `master` at commit `10d298ffbc315c20070b27472b407ac3ed2337aa` as a standalone draft file:
    [`docs/drafts/AMENDMENT-10-C2A-v10-DRAFT.md`](drafts/AMENDMENT-10-C2A-v10-DRAFT.md) (1533 lines, blob SHA `b841fb487b26eba14888e901c157ac2a0cfac42b`).
    The file is located in `docs/drafts/`, isolated from formal ADRs.
-2. **Semantic Review Status: ALL CLEAR — READY FOR RATIFICATION CONSIDERATION**
-   Independent full-document semantic review across §0–§14 confirmed:
+2. **Semantic Review Status: submitted report recommends ratification consideration**
+   The submitted full-document semantic review report for source commit `fb57e593b1b6187e2e8b518d4f91616684c00a07` reports:
    - Exactly 84 decision clauses (44 bare headings + 40 sub-clauses across 10 compound decisions) and 25 output table rows.
    - Internal numbering, cross-references, reason-code mappings, and disposition semantics are completely consistent.
    - Targeted counterexample verification on Decision 10.30(d) passed across all four boundary conditions (A, B, C, D).
-   - Zero blocking semantic defects or internal contradictions remain.
+   - The report found no blocking defects within the draft. A separate cross-document governance question remains unresolved: Decision 10.54's post-ratification authorization wording must be reconciled with the roadmap's planned separate implementation gate GOV-1d before the human ratification decision.
 3. **Formal Ratification Status: DRAFT — NOT IN FORCE**
    The draft states in §0 that it is `DRAFT — NOT IN FORCE`. Merging the draft to `master` does not constitute ratification. Formal adoption requires an explicit human governance decision (Roadmap Gate `GOV-1b`).
 4. **Formal ADR Update Status: FORMAL ADR UNCHANGED**
    The governing ADR [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) remains exactly 2,597 lines (blob SHA `684d985078237a5ac9359127a3a42c5f5542022b`), byte-identical to commit `4680839`. It ends at Amendment 9. Amendment 10 has **not** been appended to the formal ADR.
 5. **Implementation Authorization Status: ZERO AUTHORIZATION CONFERRED**
-   The draft confers no authority to modify [`archive/parse_edgar_taxonomies_catalog.py`](../archive/parse_edgar_taxonomies_catalog.py), [`archive/record_authority_taxonomy_assertion.py`](../archive/record_authority_taxonomy_assertion.py), tests, database schemas, or migrations, nor does it authorize executing the C1–C2B workflow against `data/st-eva.sqlite`. All code and database work remains strictly gated behind Gate `GOV-1d`.
+   While the document remains a draft, it confers no implementation, schema, migration, or database authorization. Before ratification, reconcile Decision 10.54's statement that the amendment becomes an authorization basis upon ratification with the roadmap's planned separate GOV-1d implementation gate. Until the intended post-ratification effect is explicit, no code, test, schema, migration, or database work is authorized.
 
 ### 3.2 Stable Taxonomy of Disclosed Limitations
 
@@ -268,7 +268,7 @@ Following the roadmap sequencing protocol, the next concrete steps are:
 1. **Checkpoint Verification & Freezing (RM-0):**
    Review this updated [`docs/ST-EVA-PROJECT-STATUS.md`](ST-EVA-PROJECT-STATUS.md) against git status and git diff to ensure complete fidelity, zero untracked file destruction, and clean working tree.
 2. **Amendment 10 Ratification Consideration (GOV-1b):**
-   Submit the review findings to project leadership for formal ratification consideration. Do NOT append to the formal ADR or begin implementation until explicit human approval is granted.
+   First reconcile Decision 10.54's post-ratification authorization wording with the planned separate GOV-1d implementation gate, and reconcile the review report's disclosed-gap labels against the canonical prior classification. Then make an explicit human ratification decision. Formal ADR append remains subject to separate explicit authorization under GOV-1c.
 3. **Historical P/E First-Release Scoping (HPE-1):**
    Before any schema design or code drafting, establish a bounded first-release scope (e.g. US-GAAP filers with standard calendar and filed+furnished evidence, deferring FPI annual fallback and corporate actions) and register resolutions for the blocking decisions via the required governance path.
 
