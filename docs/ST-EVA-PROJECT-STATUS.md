@@ -1,9 +1,13 @@
 # ST-EVA Project Status Checkpoint
 
-**Purpose:** A factual, verifiable checkpoint of the repository state as it stands, so that any subsequent session or contributor can establish current progress, frozen boundaries, open decisions, and next steps without re-deriving or guessing.
-**Basis:** Direct, reproducible inspection of `C:\git\st-eva` at commit `10d298f` only. Nothing here is speculative, inferred, or prematurely claimed.
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
+**Historical purpose:** A checkpoint of repository state at a prior commit. It is not a current status source, implementation plan, or source of permission gates.
+**Historical basis:** Inspection of `C:\git\st-eva` at commit `10d298f` only. Later changes may invalidate any state claim below.
 **Date:** 2026-10-09
-**Status:** FACTUAL CHECKPOINT — VERIFIED AGAINST DISK & GIT
+**Historical status:** Checkpoint verified against its recorded baseline only; not current repository status.
 
 This document records state. It introduces no new architectural decisions, modifies no formal ADRs, alters no methodology contracts, changes no database schemas or migrations, and confers no implementation authorizations.
 
@@ -33,7 +37,7 @@ Full detail is in [`docs/ROADMAP.md`](ROADMAP.md) §19.
 - Verified future dividend assumption is explicitly declared: D = 1.06 (TTM from chart events, source `Market chart events`), with indicated 1.08 strictly a run-rate (`4 × 0.27`) and never guaranteed. Total-return scenarios labelled separately (`CASH_DIVIDENDS_RETAINED`, `DIVIDENDS_REINVESTED_AT_TARGET_RETURN`) and not double-counted.
 - Confirmed historical return endpoint `2026-10-06` (1y/3y/5y) is distinct from valuation price date `2026-10-09`; no mislabeling. Cash-retained and DRIP returns reproducible from split-adjusted chart events (`data/historical_pe/AAPL/daily_prices.json`, 35 discrete payments 2018–2026, Aug 2020 4:1 split tracked). Interim cash earns no return (formula has no interest term); DRIP uses closest-prior-trading-day close at each ex-date.
 - Versioned Phase H outputs (`history/AAPL_research_dossier_20261010_phase_h.json` / `.txt`) and frozen Phase F outputs (`history/AAPL_research_dossier_20261009.json` / `archive/st-eva-phase-f.sqlite`) remain byte-identical before and after testing.
-- No Phase I authorization granted; Phase H reverse requirements confirmed internally consistent and reproducible.
+- At the time of this 2026-10-10 note, no Phase I follow-up work had been approved within that phase plan. This historical statement is not a current authorization gate. Phase H reverse requirements were recorded as internally consistent and reproducible.
 
 ---
 
@@ -344,7 +348,7 @@ Amendment 10 governs C2A catalog parsing, record classification, identity collap
    The draft states in §0 that it is `DRAFT — NOT IN FORCE`. Merging the draft to `master` does not constitute ratification. Formal adoption requires an explicit human governance decision (Roadmap Gate `GOV-1b`).
 4. **Formal ADR Update Status: FORMAL ADR UNCHANGED**
    The governing ADR [`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md`](ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md) remains exactly 2,597 lines (blob SHA `684d985078237a5ac9359127a3a42c5f5542022b`), byte-identical to commit `4680839`. It ends at Amendment 9. Amendment 10 has **not** been appended to the formal ADR.
-5. **Implementation Authorization Status: ZERO AUTHORIZATION CONFERRED**
+5. **Historical draft status at that time: no implementation authorization was conferred by the draft; this is not a current permission gate.**
    While the document remains a draft, it confers no implementation, schema, migration, or database authorization. Under Decision 10.54, formal ratification activates an authorization basis only for the changes the amendment specifically describes, subject to §12 exclusions; it is not blanket authorization for unrelated work. GOV-1d is therefore a scope/conformance preflight, not a second authorization vote. Decision 10.50 still requires separate explicit authorization to append the amendment to the formal ADR.
 
 ### 3.2 Stable Taxonomy of Disclosed Limitations

@@ -1,5 +1,9 @@
 # ST-EVA Data Layer Audit — Phase 1: Existing Data Inventory
 
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
 **Status:** READ-ONLY AUDIT. Nothing was designed, implemented, migrated or modified.
 **Scope:** the data layer that already exists in `C:\git\st-eva` at commit `5e655a7`.
 **Question asked:** can this data layer serve as the canonical data layer for

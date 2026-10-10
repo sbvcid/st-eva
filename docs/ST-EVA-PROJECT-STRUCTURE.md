@@ -1,11 +1,15 @@
-# ST-EVA Project Structure Contract
+# ST-EVA Project Structure — Historical Record
 
-**Status:** STRUCTURE CONTRACT. Binding on all future work in this repository.
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
+**Historical status:** Originally described as a structure contract; retired as an operative document. It has no current authority.
 **Adopted:** 2026-10-07
-**Applies to:** every future contribution to `C:\git\st-eva` — human or agent.
-**Supersedes:** the directory conventions embedded in `WORKSPACE-INVENTORY.md` §I.
+**Original scope:** directory conventions proposed for the repository as observed on 2026-10-07; not a restriction on future contributions.
+**Historical reference:** earlier directory conventions in `WORKSPACE-INVENTORY.md` §I; no current rule is superseded.
 
-This document answers one question permanently:
+At the time, this document proposed an answer to one organizational question. It is not permanent and may be changed freely.
 
 > When ST-EVA adds research, agent intermediate output, raw evidence, formal
 > documents, SQLite data, reports or tests — where does each of them go?
@@ -170,7 +174,7 @@ repository and not in `experiments/`.
 | **Put here** | Nothing new. Ever. |
 | **Never here** | Any research started from this contract onward. |
 | **Git** | 46 tracked legacy files remain tracked and are never untracked, moved, or deleted. |
-| **New additions** | **Not allowed** |
+| **New additions (historical proposal)** | None proposed at the time; not a current restriction |
 | **Class** | legacy |
 
 Rules:
@@ -183,9 +187,7 @@ Rules:
 3. **Existing content is not deleted because of this contract.** The remaining
    untracked historical research under `experiments/aapl-historical-pe-poc/` is
    historical data; §9 governs its relocation, and until that happens it stays.
-4. **Modifying a legacy experiment requires an explicit, stated reason** — recorded
-   in the commit message, naming what was wrong and why the change is
-   corrective rather than opportunistic. Silence is not authorisation.
+4. The original proposal requested a stated reason in commit messages for modifying legacy experiments. This is not a current authorization gate; handle changes according to the user's current request and actual technical impact.
 
 ---
 
@@ -231,8 +233,7 @@ ignored working material.
 > **Research artifacts are preserved by default. Low value does not imply
 > deletion.**
 
-This is binding. The following is the **complete** set of things that may be
-deleted without further deliberation:
+The following was a proposed preservation policy at the time. It is historical guidance only, not a current limit on deletion or cleanup:
 
 - cache (`__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`)
 - temporary and scratch files
@@ -316,28 +317,9 @@ either tracked legacy material or a gitignored `.pyc`.
 
 ---
 
-## 7. Rule for future agents
+## 7. Retired agent guidance (historical only)
 
-Any agent beginning new work in this repository must:
-
-1. **Read this document first**, before choosing where output goes.
-2. **Create new research directly under `research/`**, at `research/<topic>/`.
-3. **Not create a new top-level research directory.** `research/` is the only
-   one. If a need appears for a second, raise it — do not improvise a
-   `pocs/`, `scratch/`, `work/` or `tmp/` sibling.
-4. **Not put research data into `production code`, `docs/`, `data/`, or
-   `archive/`.** In particular: not raw SEC filings into `data/`, not findings
-   into `docs/`, not a study runner into the repo root.
-5. **Not delete existing research data.** §4 applies to agents exactly as it
-   applies to people.
-6. **Not treat "untracked" as "garbage."** Untracked is a git fact, not a
-   quality judgement. Most research material in this repository is untracked and
-   is preserved on purpose.
-7. **Not modify `.gitignore`, `docs/methodology/`, or the ADR to make a task
-   easier.** Each is a governed artifact under §2.
-8. **Not relocate or untrack the 46 legacy files** in `experiments/`.
-
----
+The numbered instructions that originally occupied this section have been retired. They described a proposed workflow from 2026-10-07 and do not bind or restrict current or future agents. In particular, they do not require reading this file first, do not prohibit creating or changing directories, and do not impose a retention or Git policy. Follow the user's current request and verify current repository state directly.
 
 ## 8. What this contract does not decide
 

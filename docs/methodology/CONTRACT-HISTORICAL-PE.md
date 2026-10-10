@@ -1,15 +1,16 @@
 # ST-EVA Historical P/E Engine — Contract Design
 
-**Status:** DESIGN ARTIFACT — not implementation, not production.
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
+**Historical status:** Originally described as a design artifact before the later implementation work; this label is not current implementation status or a governing contract.
 **Scope:** Interface, semantics, invariants and replay guarantees only.
-**Methodology baseline:** `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` (APPROVED / FROZEN, as amended by Amendment 1, Decisions 10–14).
+**Historical baseline reference:** `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` (recorded at the time as approved/frozen, as amended by Amendment 1, Decisions 10–14); this reference is not current authority.
 **Evidence base:** `experiments/aapl-historical-pe-poc/` — first POC, Q4 evidence study, Amendment 1 verification (31/31 TTM).
 **File:** `docs/methodology/CONTRACT-HISTORICAL-PE.md`
 
-Nothing in this document changes the ADR, ST-EVA Core, the SEC provider, the
-admission or replay contracts, the web app, or the POC outputs. It defines what
-a Historical P/E engine must consume and must produce, so that an implementation
-written later has no freedom to invent semantics.
+This document originally described a proposed Historical P/E engine interface and the semantics its author wanted an implementation to follow. It is retained as historical technical context only; it does not constrain current implementation, grant or deny permission, or override the user's current request.
 
 ---
 

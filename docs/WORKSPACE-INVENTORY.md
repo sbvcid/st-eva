@@ -1,14 +1,16 @@
 # WORKSPACE-INVENTORY
 
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
 **Status:** inventory map. Superseded figures corrected 2026-10-07 at `5df7f34`+.
 **Scope:** `C:\git\st-eva` @ branch `master`
 **Original survey:** 2026-10-07 @ `b124123`
 **Corrected:** 2026-10-07 (tracked/untracked accounting; Contract promoted to `docs/methodology/`)
 **Date:** 2026-10-07
 
-Purpose of this file: a permanent map so that future sessions do not have to
-re-derive the workspace layout. It is a description, not an instruction to act.
-Every disposition below is a *recommendation only*.
+This file records a workspace survey and recommendations from October 2026. Paths, counts, and dispositions may be stale. Every disposition below is a historical recommendation only, not a current instruction to keep, delete, publish, or withhold any file.
 
 > **Correction note.** The first version of this file reported
 > `experiments/` as "entire tree untracked". That was wrong, and the error was
@@ -188,7 +190,7 @@ executed. **This group is the entire cleanup scope.**
 | Raw evidence | Yes — `raw/` 48 files / 1.24 MB: `manifest.json`, `daily_prices.json`, `eps_diluted_concept.json`, `filing_acceptance_evidence.json`, `submissions.json`, `headers/` (43 SGML headers with `ACCEPTANCE-DATETIME`) |
 | Verification | **Yes — `out/verification.txt`, `out/determinism.txt`** (two-run hash equality) |
 | Long-term value | **Very high.** This is the evidence base the ADR Amendment 1 and the whole Contract rest on. |
-| **Disposition** | **PRIVATE_ARCHIVE** — do not commit; do not delete. Contains the 31/31 TTM worked example cited by the ADR and the Contract. |
+| **Disposition** | **PRIVATE_ARCHIVE** — historical recommendation only; not a current Git or retention rule. Contains the 31/31 TTM worked example cited by the ADR and the Contract. |
 
 #### C.3.2 AAPL Q4 Study
 
@@ -292,7 +294,7 @@ One disposition per group. **Recommendations only — nothing was executed.**
 | 3 | Repo root production `*.py`, `web/`, `tests/` (non-cache), `docs/` (other 13), `reports/`, `history/`, `archive/` | **KEEP_IN_REPO** | Already tracked. No action. |
 | 4 | `web/frontend/node_modules`, `web/frontend/dist`, all `__pycache__`, `.pytest_cache` | **REGENERABLE** | Build/tooling output. Already gitignored. Zero information content. Deleting costs only a reinstall/build. |
 | 5 | `.kilo/worktrees` | **NEEDS_REVIEW** | 110 MB, 0 tracked, excluded via `.git/info/exclude` rather than `.gitignore`. Contains live managed sessions (`eastern-anglerfish`, `pepper-chess`). Deleting it would destroy in-flight work. Determine first whether either session is still active. |
-| 6 | `experiments/aapl-historical-pe-poc/q4_study/` (untracked) | **PRIVATE_ARCHIVE** | Primary-source evidence underpinning ADR Amendment 1. Never delete. Move to cold storage. |
+| 6 | `experiments/aapl-historical-pe-poc/q4_study/` (untracked) | **PRIVATE_ARCHIVE** | Primary-source evidence underpinning ADR Amendment 1. The original note recommended retention at that time; this is not a current retention instruction. Move to cold storage. |
 | 7 | `experiments/aapl-historical-pe-poc/raw/`, `out/` (untracked) | **PRIVATE_ARCHIVE** | The 31/31 worked example the ADR and Contract cite. Never delete. |
 | 8 | `experiments/aapl-historical-pe-poc/amendment1_verify/` (untracked) | **PRIVATE_ARCHIVE** | Contains `negative_path_no_furnished.json`, the deterministic conformance artifact cited by Contract §I.3/§L.2. Never delete. |
 | 9 | `experiments/001-context-only/` — **46-file legacy tracked set, corrected from `PRIVATE_ARCHIVE`** | **LEGACY_TRACKED / KEEP_IN_REPO** | All 15 files tracked since `95373eb` (ST-EVA 2.4.3). Already in git history. **Excluded from cleanup** — archiving would duplicate tracked content. |
@@ -304,7 +306,7 @@ One disposition per group. **Recommendations only — nothing was executed.**
 
 ---
 
-## F. Important artifacts — must not be deleted by accident
+## F. Artifacts flagged for possible preservation at the time (historical)
 
 Ordered by consequence of loss.
 

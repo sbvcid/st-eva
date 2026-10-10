@@ -1,19 +1,19 @@
 # ST-EVA Architecture & Implementation Reference
 
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
 **Repository:** `sbvcid/st-eva`  
-**Document Status:** Architecture and implementation reference; records prior design reasoning and known boundaries.  
+**Historical status:** Architecture and implementation notes recorded at the time; not a current instruction source or authority.  
 **Role:** Help maintainers and agents understand the current implementation and why particular safeguards exist. The project owner may revise a prior design or change direction. When this record conflicts with the owner's current instruction, explain the impact and update the relevant record rather than treating old wording as immutable.  
 **Intended Audience:** Maintainers and coding agents working on production code, schemas, data and tests.
 
 ---
 
-## Notes for Any Modifying Agent
+## Historical contributor notes (retired)
 
-> **Read the relevant sections before changing code, schemas, identities or data paths.**
->
-> ST-EVA preserves sourced financial observations, provenance and point-in-time distinctions. Several boundaries (for example, Source Fact vs Observation, Observation vs Admission, and Availability Time vs Retrieval Time) were introduced to prevent specific, previously observed data errors.
->
-> These records are engineering context, not a prohibition on owner-directed change. Do not silently alter a boundary; do explain the evidence and consequences, make the smallest sufficient change, and verify it with tests. Never invent synthetic data merely to avoid `UNAVAILABLE`.
+The original version of this document asked modifying agents to read relevant sections before changing code and treated some boundaries as fixed. Those statements record the workflow proposed at the time; they are not current instructions, permissions, or restrictions. The technical sections below preserve earlier reasoning and may be outdated or superseded. For current work, follow the user's current request and verify actual behavior against current source code, tests, and repository state.
 
 ---
 
@@ -887,7 +887,7 @@ Replay 的目的就是檢驗：**「以今天的代碼和註冊表，重新審�
 
 任何開發者或 AI Agent 在修改 ST-EVA 生產代碼前，**必須依序回答以下 12 道自我審查清單：**
 
-### 12 條強制維護通訊協定 (Mandatory Maintenance Checklist)
+### Historical maintenance checklist (not an active gate)
 1. **Which layer am I changing?** （我正在改動哪一層？Raw, Ingest, Observation, Evidence, Admission, Engine, Snapshot, Replay, Web?）
 2. **What semantic object owns this information?** （這項資訊的語意擁有者是誰？嚴禁把屬於 Admission 的概念塞給 Observation。）
 3. **Is this a fact, evidence, interpretation, decision, derivation, or presentation concern?** （這是一個客觀事實、讀取證據、解讀、准入決策、推導計算，還是純展示需求？）

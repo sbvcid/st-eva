@@ -1,10 +1,10 @@
 # Amendment 10 — C2A Record Classification, Eligibility, Identity Collapse and Evidence Preservation
 
-**Status:** DRAFT v10 — NOT IN FORCE. Document layer only. No code, test, schema,
-data, or ADR(1–9) modification executed. This document confers NO authorization
-of any kind: not an ADR append, not an implementation, not a deployment, not a
-database operation. Every decision below takes effect only upon formal
-ratification.
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
+**Historical status (2026-10-09):** Draft v10, recorded at the time as not in force. The original draft did not itself execute code, test, schema, data, or ADR(1–9) changes. Its authorization language describes that draft's historical status only and does not act as a current permission gate or restrict owner-directed work.
 **Date:** 2026-10-09
 **Baseline:** `468083941357efeb54e4cb61a607d6b08039a2ca`. Amendments 1–9
 preserved byte-identically.
@@ -19,7 +19,7 @@ preserved byte-identically.
 and has not been appended to it. The formal ADR
 `docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` is unchanged.
 
-## 0. Numbering Convention (binding)
+## 0. Numbering convention used in the draft (historical)
 
 1. Every rule carries a top-level number `10.1` … `10.54`. A top-level number
    identifies exactly ONE rule.
