@@ -766,6 +766,10 @@ def _render_metrics(section: Dict[str, Any]) -> List[str]:
         lines.append("  狀態: %s (門檻需求 >= %s 筆有效觀測值)" % (status, min_req))
         if sample_count > 0:
             lines.append("  有效樣本數: %s   涵蓋期間: %s 至 %s" % (sample_count, p_start, p_end))
+            cadence = dist.get("sampling_cadence")
+            cadence_desc = dist.get("evaluation_schedule_description")
+            if cadence:
+                lines.append("  抽樣時程: %s (%s)" % (cadence, cadence_desc or "定期財報時點"))
             lines.append(
                 "  統計: 平均數 %s   標準差 %s   最小值 %s   最大值 %s"
                 % (_number(dist.get("mean")), _number(dist.get("std")), _number(dist.get("min")), _number(dist.get("max")))

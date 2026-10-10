@@ -347,6 +347,11 @@ class HistoricalPeDistribution:
     reason_detail: Optional[str] = None
     excluded_observations: List[Dict[str, Any]] = field(default_factory=list)
     observations: List[Dict[str, Any]] = field(default_factory=list)
+    sampling_cadence: str = "PERIODIC_FILING_USABLE_DATES"
+    evaluation_schedule_description: str = (
+        "Evaluated on periodic SEC filing and earnings release usable dates (10-Q, 10-K, 8-K Item 2.02); "
+        "not a continuous daily trading history."
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -901,15 +906,24 @@ def load_aapl_historical_pe(
 ) -> HistoricalPeResult:
     """Load AAPL frozen dataset and execute production historical P/E pipeline."""
     if base_dir is None:
-        base_dir = Path("research/experiments/aapl-historical-pe-poc")
+        canonical_dir = Path("data/historical_pe/AAPL")
+        if (canonical_dir / "daily_prices.json").exists():
+            base_dir = canonical_dir
+        else:
+            base_dir = Path("research/experiments/aapl-historical-pe-poc")
 
-    raw_dir = base_dir / "raw"
-    q4_out_dir = base_dir / "q4_study" / "out"
-
-    prices_path = raw_dir / "daily_prices.json"
-    concept_path = raw_dir / "eps_diluted_concept.json"
-    acceptance_path = raw_dir / "filing_acceptance_evidence.json"
-    q4_records_path = q4_out_dir / "q4_evidence_records.json"
+    if (base_dir / "daily_prices.json").exists():
+        prices_path = base_dir / "daily_prices.json"
+        concept_path = base_dir / "eps_diluted_concept.json"
+        acceptance_path = base_dir / "filing_acceptance_evidence.json"
+        q4_records_path = base_dir / "q4_evidence_records.json"
+    else:
+        raw_dir = base_dir / "raw"
+        q4_out_dir = base_dir / "q4_study" / "out"
+        prices_path = raw_dir / "daily_prices.json"
+        concept_path = raw_dir / "eps_diluted_concept.json"
+        acceptance_path = raw_dir / "filing_acceptance_evidence.json"
+        q4_records_path = q4_out_dir / "q4_evidence_records.json"
 
     price_payload = json.loads(prices_path.read_text(encoding="utf-8"))["chart"]["result"][0]
     quote = price_payload["indicators"]["quote"][0]

@@ -1,0 +1,27 @@
+{
+  "ticker": "AAPL",
+  "issuer_id": "CIK0000320193",
+  "role": "canonical_runtime_historical_pe_dataset",
+  "provenance": {
+    "daily_prices.json": {
+      "bytes": 243631,
+      "sha256": "bc259131ac0168a4f641dda7cadd9c7faa1c13265325f9f547d26a7233122741",
+      "source": "YahooFinance as-traded and split history"
+    },
+    "eps_diluted_concept.json": {
+      "bytes": 48741,
+      "sha256": "d58cd0fce2baed8be20b7b6587917b03bb46c08fc0b527d53a4867cab9317acf",
+      "source": "SEC EDGAR company facts EarningsPerShareDiluted (CIK0000320193)"
+    },
+    "filing_acceptance_evidence.json": {
+      "bytes": 31823,
+      "sha256": "a7530957b0154d15531b3366b5aff80c8917c0f4e694416c31bddcd60f9eaece",
+      "source": "SEC EDGAR SGML header ACCEPTANCE-DATETIME index"
+    },
+    "q4_evidence_records.json": {
+      "bytes": 29995,
+      "sha256": "6a691279f1996d4dd78bb55bb6fd20e57fa9bec89772a6d853f6c2c5a43ded5d",
+      "source": "SEC Form 8-K Item 2.02 EX-99.1 earnings release furnished Q4 EPS records"
+    }
+  }
+}

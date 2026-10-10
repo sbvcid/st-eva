@@ -424,6 +424,10 @@ def render_report(
         lines.append(f"狀態: {status} (門檻 >= {min_req} 筆有效觀測值)")
         if sample_count > 0:
             lines.append(f"有效樣本數: {sample_count}   涵蓋期間: {p_start} 至 {p_end}")
+            cadence = dist.get("sampling_cadence")
+            cadence_desc = dist.get("evaluation_schedule_description")
+            if cadence:
+                lines.append(f"抽樣時程: {cadence} ({cadence_desc})")
             p_rows = []
             for p_key, p_lbl in (
                 ("10th", "10th 分位"),
@@ -437,6 +441,9 @@ def render_report(
             lines.append(f"排除樣本: {len(excluded)} 筆")
         else:
             lines.append(f"無有效樣本: {dist.get('reason_detail') or dist.get('reason_code') or '無資料'}")
+            cadence = dist.get("sampling_cadence")
+            if cadence:
+                lines.append(f"抽樣時程: {cadence}")
         lines.append("")
 
     # ---- reference ----
