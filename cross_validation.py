@@ -240,7 +240,7 @@ COMPARABILITY: Dict[str, ComparabilitySpec] = {
             "(capital leases on one side only), so a summed total is not always "
             "the filer's own. No vendor figure is expected for this metric: the "
             "Yahoo projection that once supplied one projected a *total* debt "
-            "into a long-term-debt metric and was retired rather than caveated."
+            "into a long-term-debt metric and was retired rather than caveated.",
         ),
     ),
     METRIC_SHARES_OUTSTANDING: ComparabilitySpec(

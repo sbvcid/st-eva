@@ -1085,6 +1085,8 @@ def valuation_method_scenarios(
     ebitda: Optional[float],
     revenue: Optional[float],
     trailing_eps: Optional[float],
+    observed_net_margin: Optional[float] = None,
+    observed_net_margin_period: Optional[str] = None,
     multiples: Dict[str, ReferenceMultiple],
 ) -> Dict[str, Any]:
     """
@@ -1246,6 +1248,15 @@ def valuation_method_scenarios(
         else None,
         implied_shares,
     )
+    observed_margin: Optional[float] = None
+    observed_margin_period: Optional[str] = None
+    margin_gap: Optional[float] = None
+    if combined is not None and observed_net_margin is not None:
+        observed_margin = observed_net_margin
+        margin_gap = combined - observed_margin
+        if observed_net_margin_period:
+            observed_margin_period = observed_net_margin_period
+
     methods["implied_net_margin"] = {
         "implied": combined,
         "unit": "ratio",
@@ -1253,14 +1264,25 @@ def valuation_method_scenarios(
             "pe": pe_multiple.contract_view() if pe_multiple else None,
             "revenue": revenue_multiple.contract_view() if revenue_multiple else None,
         },
-        "observed": None,
-        "observed_label": None,
-        "gap_implied_vs_observed": None,
+        "observed": observed_margin,
+        "observed_label": (
+            "observed net margin for %s" % observed_margin_period if observed_margin_period else None
+        ),
+        "observed_margin_period": observed_margin_period,
+        "gap_implied_vs_observed": margin_gap,
         "status": "COMPUTED" if combined is not None else "NOT_COMPUTED",
         "notes": [
             "Requires a P/E multiple, a P/S multiple and an implied share count at once.",
             "The share count is derived from market cap divided by price rather than taken "
             "from the filings, so this margin describes the vendor's share basis.",
+            (
+                "The observed net margin is the margin the filings report for the stated "
+                "period. It is compared here rather than left as a separate series, because "
+                "the implied margin is a statement about exactly that quantity."
+            )
+            if margin_gap is not None
+            else "No observed net margin was available for the same measure, so no gap is "
+            "reported.",
         ],
     }
 
@@ -1331,6 +1353,8 @@ def build_reverse_requirements_report(
     pfcf_multiple: Optional[float] = None,
     ev_ebitda_multiple: Optional[float] = None,
     ps_multiple: Optional[float] = None,
+    observed_net_margin: Optional[float] = None,
+    observed_net_margin_period: Optional[str] = None,
     valuation_multiples: Optional[Dict[str, ReferenceMultiple]] = None,
     shares: Optional[float] = None,
     risk_free_rates: Sequence[RiskFreeRate] = (),
@@ -1387,6 +1411,8 @@ def build_reverse_requirements_report(
         ebitda=ebitda,
         revenue=revenue,
         trailing_eps=(start_anchor.value if start_anchor is not None else None),
+        observed_net_margin=observed_net_margin,
+        observed_net_margin_period=observed_net_margin_period,
         multiples=valuation_multiples or {},
     )
     unavailable: List[Dict[str, Any]] = list(unavailable or [])

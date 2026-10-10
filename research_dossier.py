@@ -95,6 +95,7 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
     sections: Dict[str, Any] = {}
 
     # ---- 1. market and company ----
+    cross_source = reverse.get("cross_source_validation") or {}
     sections["market_and_company"] = {
         "title": SECTION_TITLES["market_and_company"],
         "asset": {
@@ -120,6 +121,7 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
             "acquisition_errors": quality.get("acquisition_errors") or [],
             "consensus_forward_eps_period": quality.get("consensus_forward_eps_period"),
         },
+        "cross_source_validation": cross_source,
         "notes": [
             "Market capitalization and enterprise value are taken as observed from the "
             "provider. They are not rebuilt from price times shares plus net debt, because "
@@ -254,11 +256,13 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
                 "status": block.get("status"),
             }
         )
+    margin_block = (methods.get("methods") or {}).get("implied_net_margin") or {}
     sections["comparison_to_observations"] = {
         "title": SECTION_TITLES["comparison_to_observations"],
         "per_method": comparisons,
         "required_at_reference_multiple": required,
-        "implied_net_margin": (methods.get("methods") or {}).get("implied_net_margin"),
+        "implied_net_margin": margin_block,
+        "net_margin_context": _net_margin_context(history, margin_block),
         "notes": [
             "The gap is the implied figure against the observed figure for the same "
             "method. It is not a forecast error and has no sign meaning.",
@@ -317,6 +321,38 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
             "scenarios, rank them, or combine them into a single expected value. A "
             "conditional figure is the fundamental a chosen multiple corresponds to, not "
             "a claim about what the market expects."
+        ),
+    }
+
+
+def _net_margin_context(history: Dict[str, Any], margin_block: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    The implied net margin beside the margin the filings actually report.
+
+    The implied figure is derived from a chosen P/E and P/S. The only thing it
+    can be checked against is the margin the company earns today, so that
+    series is carried next to it rather than being left in another section.
+    """
+    rows = ((history.get("margins") or {}).get("net_margin.annual")) or []
+    comparable = [row for row in rows if row.get("comparable") and row.get("margin") is not None]
+    series = [
+        {"period_end": row.get("period_end"), "margin": row.get("margin")} for row in comparable
+    ]
+    return {
+        "implied": margin_block.get("implied"),
+        "implied_reference": margin_block.get("reference_multiple"),
+        "observed_latest": series[-1] if series else None,
+        "observed_series": series,
+        "gap": margin_block.get("gap_implied_vs_observed"),
+        "gap_basis": margin_block.get("observed_label"),
+        "status": (
+            "COMPARED"
+            if margin_block.get("implied") is not None and series
+            else "NOT_COMPARED"
+        ),
+        "note": (
+            "The implied margin depends on both reference multiples. It is the margin "
+            "those two multiples jointly require, not a margin the market has stated."
         ),
     }
 
@@ -408,9 +444,43 @@ def _render_market(section: Dict[str, Any]) -> List[str]:
     if quality.get("consensus_forward_eps_period"):
         lines.append("  共識 EPS 期間: %s" % quality["consensus_forward_eps_period"])
     lines.append("")
+    lines.append("跨來源比對 (CROSS-SOURCE VERIFICATION):")
+    cross = section.get("cross_source_validation") or {}
+    if cross.get("performed"):
+        lines.append("  %s" % cross.get("summary"))
+        lines.append("  %-22s %-22s %-12s %s" % ("指標", "狀態", "差異", "說明"))
+        for metric, verdict in sorted((cross.get("verdicts") or {}).items()):
+            lines.append(
+                "  %-22s %-22s %-12s %s"
+                % (
+                    metric,
+                    verdict.get("status"),
+                    _format_difference(verdict),
+                    (verdict.get("explanation") or "")[:0],
+                )
+            )
+            explanation = (verdict.get("explanation") or "").replace("\n", " ")
+            if explanation:
+                lines.append("      %s" % explanation)
+        lines.append("")
+        lines.append("  未採用任何一方為權威值；每個數值皆保留原值。")
+    else:
+        lines.append("  未執行: %s" % cross.get("reason"))
+    lines.append("")
     for note in section.get("notes") or []:
         lines.append("  * %s" % note)
     return lines
+
+
+def _format_difference(verdict: Dict[str, Any]) -> str:
+    """A short difference cell: percentage when both sides exist, else a dash."""
+    vendor = verdict.get("vendor_value")
+    filing = verdict.get("filing_value")
+    if not isinstance(vendor, (int, float)) or not isinstance(filing, (int, float)):
+        return "-"
+    if not filing:
+        return "-"
+    return "%.4f%%" % (abs(vendor - filing) / abs(filing) * 100.0)
 
 
 def _render_history(section: Dict[str, Any]) -> List[str]:
@@ -701,12 +771,37 @@ def _render_comparison(section: Dict[str, Any]) -> List[str]:
                 % (_number(multiple.get("value"), 2), multiple.get("source"), multiple.get("sample_size"))
             )
     lines.append("")
+    context = section.get("net_margin_context") or {}
+    if context.get("status") == "COMPARED":
+        lines.append("隱含淨利率 vs 實際淨利率:")
+        lines.append(
+            "  隱含淨利率 (由 P/E + P/S 聯合反推): %.2f%%"
+            % (context["implied"] * 100.0)
+        )
+        observed = context.get("observed_latest") or {}
+        lines.append(
+            "  實際淨利率 @%s: %s"
+            % (observed.get("period_end"), "%.2f%%" % (observed["margin"] * 100.0))
+        )
+        lines.append(
+            "  差異: %+.3f 個百分點" % (context["gap"] * 100.0)
+        )
+        lines.append("  歷史序列:")
+        for row in context.get("observed_series") or []:
+            lines.append("    %-12s %.2f%%" % (row["period_end"], row["margin"] * 100.0))
+        lines.append("  %s" % context.get("note"))
+        lines.append("")
+    else:
+        lines.append("隱含淨利率: 無法與實際淨利率比較 (缺少可比較的實際序列)")
+        lines.append("")
+
     for note in section.get("notes") or []:
         lines.append("  * %s" % note)
     return lines
 
 
 def _render_rates(section: Dict[str, Any]) -> List[str]:
+    lines: List[str] = []
     lines: List[str] = []
     risk_free = section.get("risk_free_rate") or {}
     observations = risk_free.get("observations") or []

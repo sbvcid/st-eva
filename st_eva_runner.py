@@ -1781,6 +1781,7 @@ def run_st_eva(
         equity_risk_premium=equity_risk_premium,
         risk_free_tenor=risk_free_tenor,
         sec_observations=sec_evidence.get("observations") if include_financial_history else None,
+        cross_validation=sec_evidence.get("cross_validation") if wants_sec else None,
     )
 
     if context_path is not None:
@@ -2012,6 +2013,7 @@ def _build_reverse_requirements(
     equity_risk_premium: Optional[float],
     risk_free_tenor: str,
     sec_observations: Optional[Sequence[Any]] = None,
+    cross_validation: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the V1 reverse requirements package from what this run observed.
@@ -2201,6 +2203,14 @@ def _build_reverse_requirements(
     ebitda = safe_float(analysis["fundamental_snapshot"].get("current_ebitda"))
     revenue = safe_float(analysis["fundamental_snapshot"].get("current_revenue"))
 
+    observed_net_margin: Optional[float] = None
+    observed_net_margin_period: Optional[str] = None
+    history_observations = list(sec_observations or [])
+    if history_observations:
+        latest = _latest_net_margin(history_observations)
+        if latest is not None:
+            observed_net_margin, observed_net_margin_period = latest
+
     report = build_reverse_requirements_report(
         price=data.price,
         ticker=data.ticker,
@@ -2224,6 +2234,8 @@ def _build_reverse_requirements(
         pfcf_multiple=pfcf_multiple,
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,
+        observed_net_margin=observed_net_margin,
+        observed_net_margin_period=observed_net_margin_period,
         valuation_multiples=valuation_multiples,
         risk_free_rates=risk_free_rates,
         cost_of_equity_inputs=cost_of_equity_inputs,
@@ -2262,6 +2274,11 @@ def _build_reverse_requirements(
                 }
             ],
         }
+
+    # Cross-source verdicts. These were already computed by the filing pass on
+    # this path; without this they would be discarded, and the report would
+    # continue to describe a single-source run while holding two.
+    report["cross_source_validation"] = _serialise_cross_validation(cross_validation)
 
     if anchor is None or not scenario_multiples:
         # The matrix could not be built. Say so at the top level rather than
@@ -2331,6 +2348,93 @@ def _dcf_inputs_from_run(
         "present_value": present_value,
         "present_value_source": present_value_source,
         "base_cash_flow": free_cash_flow,
+    }
+
+
+def _latest_net_margin(
+    observations: Sequence[Any],
+) -> Optional[Tuple[float, str]]:
+    """
+    The most recent margin the filings support, and the period it covers.
+
+    The implied net margin answers a question about net income per unit of
+    revenue, so it is only meaningful beside a margin computed the same way from
+    reported figures. Taking the latest annual one keeps the two on the same
+    basis; where no margin exists the value stays absent rather than being
+    borrowed from a different period.
+    """
+    from financial_history import build_financial_history
+
+    history = build_financial_history(list(observations))
+    rows = (history.get("margins") or {}).get("net_margin.annual") or []
+    comparable = [row for row in rows if row.get("comparable") and row.get("margin") is not None]
+    if not comparable:
+        return None
+    latest = comparable[-1]
+    return float(latest["margin"]), str(latest.get("period_end") or "")
+
+
+def _serialise_cross_validation(verdicts: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Flatten the cross-source verdicts into the run result.
+
+    The verdicts are objects; the result is JSON. Each entry keeps its status,
+    its explanation, the two observation ids it compared, and the basis it
+    compared on, so a reader can see *why* two figures agree rather than only
+    that they do. A metric that could not be compared keeps its reason instead
+    of being dropped.
+    """
+    if not verdicts:
+        return {
+            "performed": False,
+            "reason": (
+                "No second source was consulted for this run, so no metric was "
+                "cross-checked. A single-source figure is reported as such rather "
+                "than presented as corroborated."
+            ),
+            "verdicts": {},
+            "counts": {},
+        }
+
+    flattened: Dict[str, Any] = {}
+    for metric, verdict in verdicts.items():
+        record = getattr(verdict, "validation", None)
+        if record is not None and hasattr(record, "contract_dict"):
+            flattened[metric] = record.contract_dict()
+        else:
+            flattened[metric] = {
+                "status": str(getattr(verdict, "status", "UNKNOWN")),
+                "reasons": [],
+                "comparison_basis": {},
+                "explanation": "",
+                "references": [],
+            }
+        basis = flattened[metric].get("comparison_basis") or {}
+        flattened[metric]["vendor_observation"] = basis.get("vendor_observation")
+        flattened[metric]["filing_observation"] = basis.get("filing_observation")
+        flattened[metric]["vendor_value"] = basis.get("vendor_value")
+        flattened[metric]["filing_value"] = basis.get("filing_value")
+        flattened[metric]["period_offset_days"] = basis.get("period_offset_days")
+        flattened[metric]["independence"] = basis.get("independence")
+
+    counts: Dict[str, int] = {}
+    for entry in flattened.values():
+        status = str(entry.get("status") or "UNKNOWN")
+        counts[status] = counts.get(status, 0) + 1
+
+    return {
+        "performed": True,
+        "reason": "",
+        "verdicts": flattened,
+        "counts": counts,
+        "summary": (
+            "%d of %d metrics were cross-checked against a second source: %s."
+            % (
+                len(flattened),
+                len(flattened),
+                ", ".join("%d %s" % (count, status) for status, count in sorted(counts.items())),
+            )
+        ),
     }
 
 
