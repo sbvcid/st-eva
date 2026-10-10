@@ -28,6 +28,13 @@ This addendum records Phase H, which implements source-backed dividend observati
 
 Full detail is in [`docs/ROADMAP.md`](ROADMAP.md) §19.
 
+**Phase H Audit Closeout (2026-10-10, commit `fec9b24` verified):**
+- Reconciled EPS CAGR identity: starting EPS = 8.72 TTM (12.0 mo, period undeclared by source, Yahoo Finance+YahooFinanceFundamentals), growth window = 3.0 years (not 2.0), terminal EPS = 448.07 / 28.95 = 15.478. Confirmed CAGR = 21.08% (price-only), 20.79% (cash-retained), 20.76% (DRIP). Earlier `ROADMAP.md` example value 33.07% reflected a mismatched ~2-year growth window; corrected in separate commit with regression tests (`test_dividends.py::TestPhaseHAuditRegression`, 5 new tests, all passing).
+- Verified future dividend assumption is explicitly declared: D = 1.06 (TTM from chart events, source `Market chart events`), with indicated 1.08 strictly a run-rate (`4 × 0.27`) and never guaranteed. Total-return scenarios labelled separately (`CASH_DIVIDENDS_RETAINED`, `DIVIDENDS_REINVESTED_AT_TARGET_RETURN`) and not double-counted.
+- Confirmed historical return endpoint `2026-10-06` (1y/3y/5y) is distinct from valuation price date `2026-10-09`; no mislabeling. Cash-retained and DRIP returns reproducible from split-adjusted chart events (`data/historical_pe/AAPL/daily_prices.json`, 35 discrete payments 2018–2026, Aug 2020 4:1 split tracked). Interim cash earns no return (formula has no interest term); DRIP uses closest-prior-trading-day close at each ex-date.
+- Versioned Phase H outputs (`history/AAPL_research_dossier_20261010_phase_h.json` / `.txt`) and frozen Phase F outputs (`history/AAPL_research_dossier_20261009.json` / `archive/st-eva-phase-f.sqlite`) remain byte-identical before and after testing.
+- No Phase I authorization granted; Phase H reverse requirements confirmed internally consistent and reproducible.
+
 ---
 
 ## 0.6. Addendum, 2026-10-10 — Phase G: Capital Structure Closure and Enterprise Value Reconciliation (supersedes nothing above)

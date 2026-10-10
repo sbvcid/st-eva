@@ -392,6 +392,136 @@ class TestResearchDossierIntegration(unittest.TestCase):
         self.assertIn("[反推要求條件比較: 純股價報酬 vs 總報酬", rendered)
 
 
+class TestPhaseHAuditRegression(unittest.TestCase):
+    """
+    Phase H closeout audit: reconcile EPS CAGR identity, verify growth
+    window, starting EPS basis, and consistency between JSON / report / ROADMAP.
+    """
+
+    def test_eps_cagr_identity_3yr_10pct_28_95(self):
+        """
+        Verify the identity for the documented AAPL reverse hurdle:
+        start EPS = 8.72 (TTM, 12 months, source Yahoo Finance+
+        YahooFinanceFundamentals, period undeclared), terminal = 448.07 / 28.95
+        = 15.478, window = 3.0 years (TTM anchor at valuation date 2026-10-09).
+        Earlier reported 33.07% reflected a mismatched ~2-year window, not a
+        different EPS basis.
+        """
+        start_eps = 8.72
+        terminal_eps = 448.07 / 28.95  # = 15.477374784...
+        window_years = 3.0
+        cagr = (terminal_eps / start_eps) ** (1.0 / window_years) - 1.0
+        # Confirmed value ~21.08%; the erroneous 33.07% only appears at ~2yr
+        self.assertAlmostEqual(cagr, 0.2108, places=3)
+        self.assertGreater(cagr, 0.20)
+        self.assertLess(cagr, 0.22)
+
+    def test_growth_window_ttm_anchor_is_3_years_not_2(self):
+        from reverse_requirements import growth_window_years, EpsAnchor, ANCHOR_TTM
+        anchor = EpsAnchor(value=8.72, basis=ANCHOR_TTM, months_covered=12.0,
+                           period_label="trailing twelve months (assumed; source stated no period)",
+                           period_undeclared_by_source=True)
+        window = growth_window_years(anchor, 3.0)
+        self.assertAlmostEqual(window, 3.0, places=6)
+        self.assertNotAlmostEqual(window, 2.0, places=6)
+
+    def test_dividend_scenario_assumption_explicit_not_historical_as_future(self):
+        """
+        The total-return reverse scenarios use D = 1.06 (TTM from chart
+        events, source = Market chart events) as an explicit scenario
+        input, not as a guaranteed future payment. Indicated = 1.08 is
+        strictly a run-rate (latest 0.27 x 4) and never presented as
+        guaranteed.
+        """
+        from reverse_requirements import build_scenario, ReferenceMultiple, EpsAnchor, ANCHOR_TTM
+        anchor = EpsAnchor(value=8.72, basis=ANCHOR_TTM, months_covered=12.0,
+                           period_label="TTM", period_undeclared_by_source=True)
+        mult = ReferenceMultiple(value=28.95, source="user_supplied",
+                                 period_label="historical P/E median")
+        # Cash retained scenario uses TTM 1.06 as explicit annual assumption
+        cash = build_scenario(
+            price=336.64, horizon_years=3.0, required_return=0.10,
+            exit_multiple=mult, start_anchor=anchor,
+            dividend_per_share=1.06,
+            dividend_convention="CASH_DIVIDENDS_RETAINED",
+            as_of="2026-10-09",
+        )
+        self.assertAlmostEqual(cash.required_exit_price, 444.88784, places=2)
+        self.assertAlmostEqual(cash.required_terminal_eps, 15.3682, places=2)
+        self.assertAlmostEqual(cash.required_eps_cagr, 0.2079, places=3)
+        self.assertEqual(cash.dividend_convention, "CASH_DIVIDENDS_RETAINED")
+        # DRIP scenario
+        drip = build_scenario(
+            price=336.64, horizon_years=3.0, required_return=0.10,
+            exit_multiple=mult, start_anchor=anchor,
+            dividend_per_share=1.06,
+            dividend_convention="DIVIDENDS_REINVESTED_AT_TARGET_RETURN",
+            as_of="2026-10-09",
+        )
+        self.assertAlmostEqual(drip.required_exit_price, 444.55924, places=2)
+        self.assertAlmostEqual(drip.required_terminal_eps, 15.3568, places=2)
+        self.assertAlmostEqual(drip.required_eps_cagr, 0.2076, places=3)
+
+    def test_dividends_not_double_counted_separate_labels(self):
+        """Price-only, cash-retained, DRIP must remain separately labelled."""
+        from reverse_requirements import (DIVIDEND_CONVENTION_PRICE_ONLY,
+                                          DIVIDEND_CONVENTION_CASH_RETAINED,
+                                          DIVIDEND_CONVENTION_REINVESTED)
+        self.assertNotEqual(DIVIDEND_CONVENTION_PRICE_ONLY,
+                            DIVIDEND_CONVENTION_CASH_RETAINED)
+        self.assertNotEqual(DIVIDEND_CONVENTION_CASH_RETAINED,
+                            DIVIDEND_CONVENTION_REINVESTED)
+
+    def test_json_and_report_use_same_start_eps_and_window(self):
+        """Phase H versioned outputs must agree on starting EPS and growth window."""
+        import json
+        report_json = Path("history/AAPL_research_dossier_20261010_phase_h.json")
+        if not report_json.exists():
+            self.skipTest("Versioned Phase H JSON not present")
+        with open(report_json, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        rr = data["sections"]["reverse_requirements"]
+        # Starting EPS from dossier
+        self.assertEqual(rr.get("starting_eps", {}).get("value"), 8.72)
+        self.assertEqual(rr.get("starting_eps", {}).get("basis"), "TRAILING_TWELVE_MONTHS")
+        # 3y 10% 28.95 price-only row
+        matrix = rr.get("matrix", [])
+        row = None
+        for r in matrix:
+            if r.get("horizon_years") == 3.0 and abs(r.get("required_return", 0) - 0.10) < 1e-3:
+                mult = r.get("exit_multiple", {})
+                val = mult.get("value") if isinstance(mult, dict) else mult
+                if val and abs(float(val) - 28.95) < 0.5:
+                    row = r
+                    break
+        self.assertIsNotNone(row, "3y 10% ~28.9 matrix row missing")
+        self.assertAlmostEqual(row.get("growth_years"), 3.0, places=6)
+        if row.get("required_eps_cagr") is not None:
+            self.assertAlmostEqual(row["required_eps_cagr"], 0.2108, places=2)
+        # Dividend comparison section also present and consistent
+        div = data["sections"].get("dividends_and_total_return", {})
+        comp = div.get("price_vs_total_return_comparison", [])
+        comp_row = None
+        for r in comp:
+            if r.get("horizon_years") == 3.0 and abs(r.get("required_return", 0) - 0.10) < 1e-3:
+                mult = r.get("exit_multiple", {})
+                val = mult.get("value") if isinstance(mult, dict) else mult
+                if val and abs(float(val) - 28.95) < 0.5:
+                    comp_row = r
+                    break
+        if comp_row is not None:
+            price_only = comp_row.get("price_only", {})
+            cash = comp_row.get("cash_dividends_retained", {})
+            drip = comp_row.get("dividends_reinvested_at_target_return", {})
+            # All three must have same start EPS and 3-year window
+            for sub in (price_only, cash, drip):
+                start = sub.get("start_eps", {}) if isinstance(sub, dict) else {}
+                if isinstance(start, dict) and start.get("value") is not None:
+                    self.assertAlmostEqual(start.get("value"), 8.72, places=2)
+            # Growth window is at comparison-row level, verified above via row search
+            self.assertAlmostEqual(comp_row.get("horizon_years"), 3.0, places=6)
+
+
 class TestCanonicalAaplDataset(unittest.TestCase):
     def test_canonical_aapl_dividend_extraction(self):
         daily_json = Path("data/historical_pe/AAPL/daily_prices.json")
