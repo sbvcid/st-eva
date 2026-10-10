@@ -918,7 +918,82 @@ ISSUER_CONFIGS = {
         data_dir=Path("data/historical_pe/AAPL"),
         canonical_path=Path("research/experiments/aapl-historical-pe-poc"),
     ),
+    "MSFT": IssuerHistoricalPeConfig(
+        ticker="MSFT",
+        issuer_id="CIK0000789019",
+        fye_month=6,
+        data_dir=Path("research/experiments/aapl-historical-pe-poc/contract/msft_validation"),
+        canonical_path=None,
+    ),
 }
+
+
+
+def _load_msft_filing_acceptance(base_dir: Path) -> Dict[str, Dict[str, Any]]:
+    """Load MSFT filing acceptance dates from SGML headers.
+    
+    MSFT POC uses header files in raw/headers/ to extract acceptance datetime
+    instead of a pre-computed filing_acceptance_evidence.json file.
+    
+    Returns: dict keyed by accession number with acceptance_datetime_header_et, form, period_end
+    """
+    raw_dir = base_dir / "raw"
+    headers_dir = raw_dir / "headers"
+    submissions_path = raw_dir / "submissions.json"
+    
+    if not headers_dir.exists() or not submissions_path.exists():
+        raise FileNotFoundError(f"MSFT headers or submissions not found at {raw_dir}")
+    
+    submissions = json.loads(submissions_path.read_text(encoding="utf-8"))
+    recent = submissions["filings"]["recent"]
+    
+    # Map accession to filing metadata from submissions
+    by_accession = {}
+    for accn, form, period_end, items in zip(
+        recent.get("accessionNumber", []),
+        recent.get("form", []),
+        recent.get("reportDate", []),
+        recent.get("items", []),
+    ):
+        by_accession[accn] = {
+            "form": form,
+            "period_end": period_end,
+            "items": items or "",
+        }
+    
+    filings_index: Dict[str, Dict[str, Any]] = {}
+    
+    # Extract acceptance datetime from each header file
+    for header_file in sorted(headers_dir.glob("*.txt")):
+        accession = header_file.stem
+        if accession not in by_accession:
+            continue
+        
+        try:
+            header_text = header_file.read_text(encoding="utf-8", errors="replace")
+            # Search for ACCEPTANCE-DATETIME in SGML format
+            match = re.search(r"ACCEPTANCE-DATETIME&gt;(\d{14})", header_text)
+            if not match:
+                continue
+            
+            acceptance_str = match.group(1)
+            # Parse YYYYMMDDHHMMSS to ISO format with ET timezone
+            acceptance_dt = datetime.datetime.strptime(acceptance_str, "%Y%m%d%H%M%S").replace(tzinfo=ET)
+            
+            filings_index[accession] = {
+                "form": by_accession[accession]["form"],
+                "acceptance_datetime": acceptance_dt.isoformat(),
+                "acceptance_datetime_header_et": acceptance_dt.isoformat(),
+                "period_end": by_accession[accession]["period_end"],
+            }
+        except Exception:
+            # Skip files we can't parse
+            continue
+    
+    if not filings_index:
+        raise ValueError(f"Could not extract any filing acceptance dates from {headers_dir}")
+    
+    return filings_index
 
 
 def _resolve_issuer_paths(
@@ -931,20 +1006,28 @@ def _resolve_issuer_paths(
     """
     base_dir = issuer_config.data_dir
     
-    # Check canonical production layout
+    # Check canonical production layout (AAPL)
     if (base_dir / "daily_prices.json").exists():
         prices_path = base_dir / "daily_prices.json"
         concept_path = base_dir / "eps_diluted_concept.json"
         acceptance_path = base_dir / "filing_acceptance_evidence.json"
         q4_records_path = base_dir / "q4_evidence_records.json" if (base_dir / "q4_evidence_records.json").exists() else None
-    # Check POC research layout
-    elif (base_dir / "raw" / "daily_prices.json").exists():
+    # Check AAPL POC research layout
+    elif (base_dir / "raw" / "daily_prices.json").exists() and (base_dir / "raw" / "eps_diluted_concept.json").exists():
         raw_dir = base_dir / "raw"
         q4_out_dir = base_dir / "q4_study" / "out"
         prices_path = raw_dir / "daily_prices.json"
         concept_path = raw_dir / "eps_diluted_concept.json"
         acceptance_path = raw_dir / "filing_acceptance_evidence.json"
         q4_records_path = q4_out_dir / "q4_evidence_records.json" if (q4_out_dir / "q4_evidence_records.json").exists() else None
+    # Check MSFT POC layout (uses eps_diluted.json instead of eps_diluted_concept.json)
+    elif (base_dir / "raw" / "prices.json").exists() and (base_dir / "raw" / "eps_diluted.json").exists():
+        raw_dir = base_dir / "raw"
+        prices_path = raw_dir / "prices.json"
+        concept_path = raw_dir / "eps_diluted.json"
+        # MSFT uses headers directory for acceptance dates
+        acceptance_path = raw_dir / "headers"  # Marker path; actual loading uses headers
+        q4_records_path = None
     else:
         raise FileNotFoundError(
             f"Could not find Historical P/E data for {issuer_config.ticker} at {base_dir} "
@@ -1027,20 +1110,34 @@ def load_issuer_historical_pe(
         )
     
     # Filing acceptance evidence
-    acceptance_evidence = json.loads(acceptance_path.read_text(encoding="utf-8"))
-    concept_sha = hashlib.sha256(concept_path.read_bytes()).hexdigest()
+    # MSFT uses header files; others use pre-computed JSON
+    if acceptance_path.name == "headers" and acceptance_path.is_dir():
+        # MSFT: load from headers directory
+        filings_index = _load_msft_filing_acceptance(issuer_config.data_dir)
+    else:
+        # AAPL and others: load from pre-computed acceptance JSON
+        acceptance_evidence = json.loads(acceptance_path.read_text(encoding="utf-8"))
+        filings_index: Dict[str, Dict[str, Any]] = {}
+        for row in acceptance_evidence:
+            acceptance_dt = datetime.datetime.fromisoformat(row["acceptance_datetime_header_et"])
+            usable_d, usable_r = resolve_usable_date(acceptance_dt, trading_days)
+            filings_index[row["accession"]] = {
+                "form": row["form"],
+                "acceptance_datetime": acceptance_dt.isoformat(),
+                "usable_date": usable_d,
+                "usable_date_rule": usable_r,
+                "period_end": row["period_end"],
+            }
     
-    filings_index: Dict[str, Dict[str, Any]] = {}
-    for row in acceptance_evidence:
-        acceptance_dt = datetime.datetime.fromisoformat(row["acceptance_datetime_header_et"])
-        usable_d, usable_r = resolve_usable_date(acceptance_dt, trading_days)
-        filings_index[row["accession"]] = {
-            "form": row["form"],
-            "acceptance_datetime": acceptance_dt.isoformat(),
-            "usable_date": usable_d,
-            "usable_date_rule": usable_r,
-            "period_end": row["period_end"],
-        }
+    # Apply usable-date rules to filings_index entries (for MSFT which doesn't have them pre-computed)
+    for accession in filings_index:
+        if "usable_date" not in filings_index[accession]:
+            acceptance_dt = datetime.datetime.fromisoformat(filings_index[accession]["acceptance_datetime"])
+            usable_d, usable_r = resolve_usable_date(acceptance_dt, trading_days)
+            filings_index[accession]["usable_date"] = usable_d
+            filings_index[accession]["usable_date_rule"] = usable_r
+    
+    concept_sha = hashlib.sha256(concept_path.read_bytes()).hexdigest()
     
     # Quarterly and annual evidence from filed XBRL facts
     concept_payload = json.loads(concept_path.read_text(encoding="utf-8"))
