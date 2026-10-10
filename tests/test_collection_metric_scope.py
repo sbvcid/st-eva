@@ -497,14 +497,25 @@ class AuditDataIsPreserved(unittest.TestCase):
             if os.path.basename(rel) == "__main__.py":
                 continue  # a package entry point is not importable by name
             parts = rel.split("/")
+            directory = os.path.dirname(path)
+            # A module is probeable either as a dotted name, when its leading
+            # directory is a real package, or as a leaf name against its own
+            # directory, when it is a flat script directory such as
+            # `scripts/research/`. `tests/` is neither: it is not a package and
+            # nothing puts it on sys.path, so a file living there is skipped.
+            # This file itself lives there, which is why it cannot be probed.
             if len(parts) > 1:
-                # A path is importable as a dotted name only when its leading
-                # directory is a real package. `tests/` has no `__init__.py`, so
-                # `tests.test_x` is not a module -- and this file lives there, so
-                # probing it would fail once it is tracked.
-                if not os.path.exists(os.path.join(ROOT, parts[0],
-                                                   "__init__.py")):
+                if os.path.exists(os.path.join(ROOT, parts[0], "__init__.py")):
+                    dotted = rel[:-3].replace("/", ".")
+                    if dotted.endswith(".__init__"):
+                        dotted = dotted[:-9]
+                elif os.path.basename(directory) == "research" and os.path.basename(
+                        os.path.dirname(directory)) == "scripts":
+                    dotted = parts[-1][:-3]
+                else:
                     continue
+            else:
+                dotted = parts[0][:-3]
             with io.open(path, encoding="utf-8") as handle:
                 text = handle.read()
             names_any = any(name in text for name in
@@ -512,16 +523,13 @@ class AuditDataIsPreserved(unittest.TestCase):
                              "reconcile_bulk"))
             if not names_any:
                 continue
-            dotted = rel[:-3].replace("/", ".")
-            if dotted.endswith(".__init__"):
-                dotted = dotted[:-9]
-            dependents.append((rel, dotted))
+            dependents.append((rel, dotted, directory))
         self.assertTrue(dependents, "found no dependent modules to probe")
-        environment = dict(os.environ)
-        environment["PYTHONPATH"] = os.pathsep.join(
-            [ROOT, environment.get("PYTHONPATH", "")])
         broken: list = []
-        for rel, dotted in dependents:
+        for rel, dotted, directory in dependents:
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = os.pathsep.join(
+                [directory, ROOT, environment.get("PYTHONPATH", "")])
             result = subprocess.run(
                 [sys.executable, "-c", "import " + dotted],
                 cwd=ROOT, capture_output=True, text=True, env=environment,

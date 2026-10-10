@@ -229,7 +229,7 @@ class TestTheBoundaryIsHonest(unittest.TestCase):
         keep that promise, so it must be a real entry point rather than a
         suggestion in a docstring.
         """
-        runner = os.path.join(ROOT, "run_corpus_tests.py")
+        runner = os.path.join(ROOT, "scripts", "research", "run_corpus_tests.py")
         self.assertTrue(os.path.isfile(runner))
         with open(runner, encoding="utf-8") as handle:
             body = handle.read()
