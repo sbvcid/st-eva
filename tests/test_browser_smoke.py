@@ -8,6 +8,7 @@ Verifies real Chromium execution against live FastAPI static serving and backgro
 import time
 import threading
 import socket
+import tempfile
 import unittest
 import uvicorn
 from playwright.sync_api import sync_playwright
@@ -26,13 +27,21 @@ class TestBrowserSmoke(unittest.TestCase):
     server = None
     port = None
     base_url = None
+    archive_dir = None
+    _archive_tmp = None
 
     @classmethod
     def setUpClass(cls):
         cls.port = find_free_port()
         cls.base_url = f"http://127.0.0.1:{cls.port}"
 
-        app = create_app()
+        # These tests run real analyses for real tickers. The archive directory
+        # is redirected to a temporary directory so a test run never writes into
+        # the operator's own archives under `data/archives`.
+        cls._archive_tmp = tempfile.TemporaryDirectory(prefix="steva-browser-smoke-")
+        cls.archive_dir = cls._archive_tmp.name
+
+        app = create_app(archives_dir=cls.archive_dir)
         config = uvicorn.Config(app, host="127.0.0.1", port=cls.port, log_level="warning")
         cls.server = uvicorn.Server(config)
 
@@ -51,8 +60,10 @@ class TestBrowserSmoke(unittest.TestCase):
     def tearDownClass(cls):
         if cls.server:
             cls.server.should_exit = True
-            if cls.server_thread:
-                cls.server_thread.join(timeout=2.0)
+        if cls.server_thread:
+            cls.server_thread.join(timeout=2.0)
+        if cls._archive_tmp is not None:
+            cls._archive_tmp.cleanup()
 
     def test_desktop_aapl_full_flow(self):
         with sync_playwright() as p:
@@ -185,7 +196,15 @@ class TestBrowserSmoke(unittest.TestCase):
                 msft_btn = page.locator("button:has-text('MSFT')")
                 msft_btn.click()
 
-                page.wait_for_selector("text=Analysis Verdict", timeout=30000)
+                # The analysis itself takes about three seconds against a cold
+                # archive. Thirty seconds was enough when this suite reused a
+                # pre-seeded archive under `data/archives`; now that it runs
+                # against a fresh temporary directory every time, the first
+                # request also pays for registry seeding, and a loaded machine
+                # running the whole suite alongside it can exceed the old
+                # budget. The wait is for a real completion condition, so a
+                # longer budget costs nothing when the page is ready.
+                page.wait_for_selector("text=Analysis Verdict", timeout=90000)
 
                 # Verify cards are within viewport width
                 card_box = page.locator("text=Microsoft Corporation").bounding_box()

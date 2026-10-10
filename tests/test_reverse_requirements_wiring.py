@@ -75,13 +75,33 @@ class TestRunProducesReverseRequirements(unittest.TestCase):
 
 
 class TestMatrixReflectsTheObservedPrice(unittest.TestCase):
-    def test_matrix_size_matches_horizon_return_and_multiple_counts(self):
+    def test_matrix_size_is_the_full_cross_product(self):
+        # The MSFT fixture carries a historical band with no declared
+        # observation count, which the existing engine treats as usable, so the
+        # matrix runs over the band's percentile set plus the supplied point.
         result = _run(
             reverse_horizons=(1.0, 2.0),
             required_returns=(0.10, 0.12),
             reference_multiple=20.0,
         )
-        self.assertEqual(result["reverse_requirements"]["matrix_size"], 4)
+        multiples = {
+            row["exit_multiple"]["value"]
+            for row in result["reverse_requirements"]["reverse_requirements_matrix"]
+        }
+        expected = result["reverse_requirements"]["matrix_size"]
+        self.assertEqual(expected, 2 * 2 * len(multiples))
+        self.assertGreater(len(multiples), 1, "a single multiple is not a scenario set")
+
+    def test_a_supplied_multiple_overrides_the_band(self):
+        # An explicitly supplied multiple replaces the band median rather than
+        # being added alongside it, so the user gets the reference they named.
+        result = _run(reference_multiple=27.0)
+        sources = {
+            row["exit_multiple"]["value"]: row["exit_multiple"]["source"]
+            for row in result["reverse_requirements"]["reverse_requirements_matrix"]
+        }
+        self.assertIn(27.0, sources)
+        self.assertEqual(sources[27.0], "user_supplied")
 
     def test_matrix_is_absent_without_an_exit_multiple(self):
         # The MSFT fixture carries a historical band with no declared
@@ -103,9 +123,12 @@ class TestMatrixReflectsTheObservedPrice(unittest.TestCase):
 
     def test_every_row_names_its_exit_multiple(self):
         result = _run(reference_multiple=20.0)
+        seen = set()
         for row in result["reverse_requirements"]["reverse_requirements_matrix"]:
-            self.assertEqual(row["exit_multiple"]["value"], 20.0)
+            seen.add(row["exit_multiple"]["source"])
             self.assertIn("conditionality", row["exit_multiple"])
+            self.assertGreater(row["exit_multiple"]["value"], 0)
+        self.assertIn("user_supplied", seen)
 
     def test_rows_carry_the_return_basis(self):
         result = _run(reference_multiple=20.0)
@@ -122,9 +145,14 @@ class TestMatrixReflectsTheObservedPrice(unittest.TestCase):
     def test_distinct_exit_multiples_produce_distinct_eps(self):
         low = _run(reference_multiple=16.0)["reverse_requirements"]
         high = _run(reference_multiple=24.0)["reverse_requirements"]
-        low_eps = low["reverse_requirements_matrix"][0]["required_terminal_eps"]
-        high_eps = high["reverse_requirements_matrix"][0]["required_terminal_eps"]
-        self.assertGreater(low_eps, high_eps)
+
+        def eps_at(package, multiple):
+            for row in package["reverse_requirements_matrix"]:
+                if abs(row["exit_multiple"]["value"] - multiple) < 1e-12:
+                    return row["required_terminal_eps"]
+            return None
+
+        self.assertGreater(eps_at(low, 16.0), eps_at(high, 24.0))
 
 
 class TestRateFamiliesInAReport(unittest.TestCase):

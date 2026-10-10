@@ -968,13 +968,19 @@ class TestNoMergeGuarantee(unittest.TestCase):
             "the comparison is not imported at all, which would mean the "
             "2.3-C context cannot carry cross-source verdicts",
         )
-        # Two legitimate call sites. `_build_context_if_requested` assembles a
-        # live context. `build_context_from_observations` reassembles one
-        # during a 2.4 replay, and it *must* recompute the verdicts rather than
-        # reuse the archived ones: a replayed document that reported a verdict
-        # computed from data the replay did not have would be lying. Neither
-        # is the valuation engine, and neither feeds it.
-        allowed = ("_build_context_if_requested", "build_context_from_observations")
+        # Three legitimate call sites. `_acquire_sec_evidence` performs the one
+        # filing pass whose observations feed the Investment Context and the
+        # financial history. `_build_context_if_requested` assembles a live
+        # context. `build_context_from_observations` reassembles one during a
+        # 2.4 replay, and it *must* recompute the verdicts rather than reuse the
+        # archived ones: a replayed document that reported a verdict computed
+        # from data the replay did not have would be lying. None of them is the
+        # valuation engine, and none feeds it -- see the ordering test below.
+        allowed = (
+            "_acquire_sec_evidence",
+            "_build_context_if_requested",
+            "build_context_from_observations",
+        )
         for consumer in consumers:
             self.assertIn(
                 consumer,
@@ -986,7 +992,13 @@ class TestNoMergeGuarantee(unittest.TestCase):
         engine_source = inspect.getsource(
             st_eva_runner.MarketImpliedAssumptionsEngine
         )
-        for forbidden in ("cross_validation", "sec_provider", "cmp-"):
+        for forbidden in (
+            "cross_validation",
+            "sec_provider",
+            "cmp-",
+            "sec_observations",
+            "sec_evidence",
+        ):
             self.assertNotIn(
                 forbidden,
                 engine_source,
@@ -996,6 +1008,31 @@ class TestNoMergeGuarantee(unittest.TestCase):
         evidence_source = inspect.getsource(st_eva_runner.build_evidence)
         for forbidden in ("cross_validation", "sec_provider", "cmp-"):
             self.assertNotIn(forbidden, evidence_source)
+
+    def test_the_valuation_engine_runs_before_any_filing_is_fetched(self):
+        """
+        The structural guarantee, stated positively.
+
+        The allowlist above says which functions may reach cross-source code.
+        This says why the engine cannot be fed by one: inside `run_st_eva` the
+        engine is evaluated before the SEC is contacted at all, so a second
+        source has no opportunity to influence any number it produced. Wiring
+        filing data into the engine's inputs would break this ordering, and
+        this test fails if it does.
+        """
+        import inspect
+
+        import st_eva_runner
+
+        source = inspect.getsource(st_eva_runner.run_st_eva)
+        engine_at = source.index("MarketImpliedAssumptionsEngine.analyze(")
+        sec_at = source.index("_acquire_sec_evidence(")
+        self.assertLess(
+            engine_at,
+            sec_at,
+            "the valuation engine must be evaluated before the filing pass, "
+            "otherwise a second source could reach it",
+        )
 
     def test_the_legacy_result_carries_no_cross_source_verdict(self):
         result = run_st_eva("MSFT", mode="regression", save_snapshot=False)

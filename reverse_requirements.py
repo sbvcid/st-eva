@@ -999,6 +999,295 @@ def build_exit_multiples(
     return multiples, unavailable
 
 
+def exit_multiples_from_band(
+    band: Optional[Dict[str, Any]],
+    *,
+    min_observations: int,
+    percentiles: Sequence[float] = (10.0, 25.0, 50.0, 75.0, 90.0),
+) -> Tuple[List[ReferenceMultiple], List[Dict[str, Any]]]:
+    """
+    Exit multiple scenarios taken from a historical distribution.
+
+    Only a band with enough observations to read a percentile from is used.
+    When the sample is thin the band's own median is still reported as a
+    descriptive figure, but it is not turned into a scenario, because calling
+    an 8-sample median a historical distribution would present an under-sampled
+    statistic as though it were an established fact about the past.
+
+    The returned multiples are labelled with the percentile they came from and
+    carry the sample size, so a reader can see how thin the history is.
+    """
+    multiples: List[ReferenceMultiple] = []
+    unavailable: List[Dict[str, Any]] = []
+    band = band or {}
+
+    band_median = _safe_float(band.get("median"))
+    if band_median is None:
+        return multiples, unavailable
+
+    declared = band.get("observations")
+    if declared is None:
+        # No declared count: treated as usable, matching the existing engine's
+        # rule that keeps explicit user input and fixtures working.
+        usable = True
+        count_text = "not declared"
+    else:
+        count = int(declared)
+        usable = count >= min_observations
+        count_text = str(count)
+
+    if not usable:
+        unavailable.append(
+            {
+                "item": "exit_multiple.band_scenarios",
+                "reason": (
+                    "The historical P/E band holds %s observations, below the %d required "
+                    "to read a percentile from it. The band's median of %.4g is reported as "
+                    "a descriptive statistic only and is not used as a scenario exit "
+                    "multiple." % (count_text, min_observations, band_median)
+                ),
+                "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+                "blocks": ["exit_multiple.band_scenarios"],
+            }
+        )
+        return multiples, unavailable
+
+    for percentile in percentiles:
+        key = {10.0: "10th", 25.0: "25th", 50.0: "median", 75.0: "75th", 90.0: "90th"}.get(
+            float(percentile)
+        )
+        if key is None:
+            continue
+        value = _safe_float(band.get(key))
+        if value is None or value <= 0:
+            continue
+        multiples.append(
+            ReferenceMultiple(
+                value=value,
+                source="historical_pe_band_percentile",
+                period_label=str(band.get("period_label") or ""),
+                sample_size=declared,
+                sample_period=(
+                    "band percentiles from %s observations" % count_text
+                ),
+            )
+        )
+    return multiples, unavailable
+
+
+def valuation_method_scenarios(
+    *,
+    price: float,
+    shares: Optional[float],
+    market_cap: Optional[float],
+    enterprise_value: Optional[float],
+    free_cash_flow: Optional[float],
+    ebitda: Optional[float],
+    revenue: Optional[float],
+    trailing_eps: Optional[float],
+    multiples: Dict[str, ReferenceMultiple],
+) -> Dict[str, Any]:
+    """
+    Conditional results per valuation method, kept as separate answers.
+
+    The earnings method, the revenue method, the cash flow method and the
+    enterprise-value method are four different questions. When they disagree
+    they are reported as disagreeing. This function does not rank them, pick a
+    winner, or average them into a single number, because doing so would
+    manufacture a consensus the underlying evidence does not contain.
+    """
+    unavailable: List[Dict[str, Any]] = []
+    methods: Dict[str, Any] = {}
+
+    cap = _safe_float(market_cap)
+    ev = _safe_float(enterprise_value)
+    share_count = _safe_float(shares)
+
+    def record(
+        name: str,
+        *,
+        implied: Optional[float],
+        observed: Optional[float],
+        multiple: Optional[ReferenceMultiple],
+        unit: str,
+        missing_reason: str,
+        observed_label: str,
+        notes: Sequence[str] = (),
+    ) -> None:
+        if multiple is None:
+            unavailable.append(
+                {
+                    "item": "valuation_method.%s" % name,
+                    "reason": missing_reason,
+                    "reason_kind": "NO_REFERENCE_MULTIPLE",
+                    "blocks": ["valuation_method.%s" % name],
+                }
+            )
+        elif implied is None:
+            unavailable.append(
+                {
+                    "item": "valuation_method.%s" % name,
+                    "reason": (
+                        "The %s reference multiple is available but the input it inverts "
+                        "(%s) was not observed, so no implied figure is produced."
+                        % (name, missing_reason)
+                    ),
+                    "reason_kind": "MISSING_INPUT",
+                    "blocks": ["valuation_method.%s" % name],
+                }
+            )
+        methods[name] = {
+            "implied": implied,
+            "unit": unit,
+            "reference_multiple": multiple.contract_view() if multiple else None,
+            "observed": observed,
+            "observed_label": observed_label,
+            "gap_implied_vs_observed": _gap(implied, observed),
+            "notes": list(notes),
+            "status": "COMPUTED" if implied is not None else "NOT_COMPUTED",
+        }
+
+    price_value = _safe_float(price)
+    # A non-positive price is a degenerate input, not a reason to abort a whole
+    # report. The public helpers refuse it loudly because they are also called
+    # directly; here the affected figures simply stay absent.
+    usable_price = price_value if price_value is not None and price_value > 0 else None
+    pe_multiple = multiples.get("pe")
+    eps = _safe_float(trailing_eps)
+    record(
+        "earnings_multiple",
+        implied=(
+            implied_eps_at_multiple(usable_price, pe_multiple.value)
+            if usable_price is not None and pe_multiple is not None
+            else None
+        ),
+        observed=eps,
+        multiple=pe_multiple,
+        unit="per_share",
+        missing_reason="the current share price",
+        observed_label="observed trailing EPS",
+        notes=(
+            "This is the EPS the chosen P/E corresponds to at the current price. It is not "
+            "a forecast and not a statement about what the market expects.",
+        ),
+    )
+
+    revenue_multiple = multiples.get("revenue")
+    record(
+        "revenue_multiple",
+        implied=(
+            required_revenue_at_multiple(cap, revenue_multiple.value)
+            if cap is not None and revenue_multiple is not None
+            else None
+        ),
+        observed=_safe_float(revenue),
+        multiple=revenue_multiple,
+        unit="currency",
+        missing_reason="market capitalization",
+        observed_label="the observed trailing revenue",
+        notes=(
+            "Market capitalization divided by the chosen P/S. It prices the company's "
+            "current equity value, so it says nothing about enterprise value.",
+        ),
+    )
+
+    fcf_multiple = multiples.get("cash_flow")
+    record(
+        "cash_flow_multiple",
+        implied=(
+            required_fcf_at_multiple(cap, fcf_multiple.value)
+            if cap is not None and fcf_multiple is not None
+            else None
+        ),
+        observed=_safe_float(free_cash_flow),
+        multiple=fcf_multiple,
+        unit="currency",
+        missing_reason="market capitalization",
+        observed_label="the observed trailing free cash flow",
+        notes=(
+            "The free cash flow definition behind the observed figure is the provider's. "
+            "It is not reconciled to an operating cash flow minus capital expenditure "
+            "bridge, so the implied and observed figures share whatever definition the "
+            "provider applied.",
+        ),
+    )
+
+    ev_ebitda_multiple = multiples.get("enterprise_value")
+    record(
+        "enterprise_value_multiple",
+        implied=(
+            required_ebitda_at_multiple(ev, ev_ebitda_multiple.value)
+            if ev is not None and ev_ebitda_multiple is not None
+            else None
+        ),
+        observed=_safe_float(ebitda),
+        multiple=ev_ebitda_multiple,
+        unit="currency",
+        missing_reason="enterprise value",
+        observed_label="the observed trailing EBITDA",
+        notes=(
+            "Enterprise value divided by the chosen EV/EBITDA. Enterprise value is taken "
+            "as observed rather than rebuilt from market cap plus net debt, because the "
+            "provider's debt and cash definitions are not reconciled to the market cap's.",
+        ),
+    )
+
+    # A combined earnings-and-revenue answer is only meaningful when both
+    # multiples and the share count are all present and consistent.
+    implied_shares = None
+    if cap is not None and usable_price is not None:
+        implied_shares = cap / usable_price
+    combined = implied_net_margin_at_multiples(
+        implied_eps_at_multiple(usable_price, pe_multiple.value)
+        if usable_price is not None and pe_multiple is not None
+        else None,
+        required_revenue_at_multiple(cap, revenue_multiple.value)
+        if cap is not None and revenue_multiple is not None
+        else None,
+        implied_shares,
+    )
+    methods["implied_net_margin"] = {
+        "implied": combined,
+        "unit": "ratio",
+        "reference_multiple": {
+            "pe": pe_multiple.contract_view() if pe_multiple else None,
+            "revenue": revenue_multiple.contract_view() if revenue_multiple else None,
+        },
+        "observed": None,
+        "observed_label": None,
+        "gap_implied_vs_observed": None,
+        "status": "COMPUTED" if combined is not None else "NOT_COMPUTED",
+        "notes": [
+            "Requires a P/E multiple, a P/S multiple and an implied share count at once.",
+            "The share count is derived from market cap divided by price rather than taken "
+            "from the filings, so this margin describes the vendor's share basis.",
+        ],
+    }
+
+    computed = [name for name, block in methods.items() if block["status"] == "COMPUTED"]
+    spread = None
+    if len(computed) >= 2:
+        spread = {
+            "methods_computed": sorted(computed),
+            "note": (
+                "These methods answer different questions and can disagree. They are "
+                "reported side by side and no winner is selected: averaging them would "
+                "produce a single number that none of the inputs supports."
+            ),
+        }
+
+    return {
+        "methods": methods,
+        "disagreement": spread,
+        "unavailable": unavailable,
+        "reading_notes": [
+            "Each method is conditional on its own reference multiple and carries that "
+            "multiple's provenance.",
+            "No method is ranked against another and no composite valuation is produced.",
+        ],
+    }
+
+
 def compute_fingerprint(payload: Dict[str, Any]) -> str:
     """
     A stable digest of the inputs and the formula version.
@@ -1042,6 +1331,8 @@ def build_reverse_requirements_report(
     pfcf_multiple: Optional[float] = None,
     ev_ebitda_multiple: Optional[float] = None,
     ps_multiple: Optional[float] = None,
+    valuation_multiples: Optional[Dict[str, ReferenceMultiple]] = None,
+    shares: Optional[float] = None,
     risk_free_rates: Sequence[RiskFreeRate] = (),
     cost_of_equity_inputs: Optional[Dict[str, Any]] = None,
     investor_required_returns: Optional[Dict[str, Any]] = None,
@@ -1087,6 +1378,19 @@ def build_reverse_requirements_report(
 
     dcf_block = _dcf_block(dcf_inputs)
 
+    methods_block = valuation_method_scenarios(
+        price=price,
+        shares=shares,
+        market_cap=market_cap,
+        enterprise_value=enterprise_value,
+        free_cash_flow=free_cash_flow,
+        ebitda=ebitda,
+        revenue=revenue,
+        trailing_eps=(start_anchor.value if start_anchor is not None else None),
+        multiples=valuation_multiples or {},
+    )
+    unavailable: List[Dict[str, Any]] = list(unavailable or [])
+
     fingerprint_payload = {
         "ticker": ticker,
         "as_of": as_of,
@@ -1095,6 +1399,10 @@ def build_reverse_requirements_report(
         "horizons_years": list(horizons_years),
         "required_returns": list(required_returns),
         "exit_multiples": [m.contract_view() for m in exit_multiples],
+        "valuation_multiples": {
+            key: value.contract_view() for key, value in (valuation_multiples or {}).items()
+        },
+        "shares": shares,
         "start_anchor": start_anchor.contract_view(),
         "current_pe": current_pe,
         "consensus_eps": consensus_eps,
@@ -1121,6 +1429,7 @@ def build_reverse_requirements_report(
         "reverse_requirements_matrix": [s.contract_view() for s in scenarios],
         "matrix_size": len(scenarios),
         "cash_flow_cross_checks": cash_flow_cross_checks,
+        "valuation_methods": methods_block,
         "rate_families": rate_families,
         "dcf": dcf_block,
         "unavailable": list(unavailable or []),

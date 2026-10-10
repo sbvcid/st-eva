@@ -45,13 +45,21 @@ def default_replay_doc_builder(
     )
 
 
+# Where per-ticker archives live unless a caller says otherwise. Named so the
+# default is visible at every use site and so a test can assert against it.
+DEFAULT_ARCHIVES_DIR = "data/archives"
+
+
 class AnalysisServiceAdapter:
     """
     Adapter interfacing with ST-EVA production runner and SQLiteArchive.
     """
 
-    def __init__(self, archives_dir: str = "data/archives") -> None:
-        self.archives_dir = Path(archives_dir)
+    def __init__(self, archives_dir: Optional[str] = None) -> None:
+        # None means "the operator's real archive directory". Callers that must
+        # not touch real data -- a test run, a dry run -- pass an explicit
+        # directory instead, which is the only supported way to isolate.
+        self.archives_dir = Path(archives_dir) if archives_dir else Path(DEFAULT_ARCHIVES_DIR)
         self.archives_dir.mkdir(parents=True, exist_ok=True)
 
     def get_archive_path(self, ticker: str) -> Path:
@@ -68,7 +76,7 @@ class AnalysisServiceAdapter:
     @staticmethod
     def ensure_registry_seeded(archive: SQLiteArchive) -> None:
         """
-        Ensures the canonical ST-EVA core registry baseline is seeded into the archive.
+        Ensures the canonical ST-EVA core registry         baseline is seeded into the archive.
         Uses registry_seed.seed(CoreRegistry(archive.connection)).
         """
         row = archive.connection.execute(

@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from web.job_manager import JobManager
+from web.service_adapter import AnalysisServiceAdapter
 from web.schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
@@ -36,7 +37,17 @@ def validate_ticker(ticker: str) -> str:
 def create_app(
     job_manager: Optional[JobManager] = None,
     frontend_dist: Optional[str] = None,
+    archives_dir: Optional[str] = None,
 ) -> FastAPI:
+    """
+    Build the application.
+
+    `archives_dir` is the directory per-ticker archives are written to. It
+    exists so a test run can point at a temporary directory: without it, any
+    test that exercises a real analysis would write into the operator's own
+    archives under `data/archives`. It is threaded through to the adapter
+    rather than patched at the call site so the isolation is explicit.
+    """
     app = FastAPI(
         title="ST-EVA Web API",
         description="HTTP/JSON REST API for ST-EVA reverse valuation engine.",
@@ -52,7 +63,7 @@ def create_app(
         allow_headers=["*"],
     )
 
-    manager = job_manager or JobManager()
+    manager = job_manager or JobManager(adapter=AnalysisServiceAdapter(archives_dir))
     app.state.job_manager = manager
 
     @app.get("/api/health", response_model=HealthResponse)

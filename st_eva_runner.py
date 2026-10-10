@@ -1712,6 +1712,9 @@ def run_st_eva(
     beta: Optional[float] = None,
     equity_risk_premium: Optional[float] = None,
     risk_free_tenor: str = "10_YEAR",
+    include_financial_history: bool = False,
+    dossier_path: Optional[str] = None,
+    render_dossier_report: bool = False,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
@@ -1753,6 +1756,16 @@ def run_st_eva(
     cross_source_observations: List[Any] = []
     captured_documents: List[Any] = []
 
+    # One SEC pass feeds both the financial history and the Investment
+    # Context, so a run that wants both reaches the filings once and the two
+    # cannot disagree. Either can be asked for on its own. The default asks for
+    # neither, so an ordinary run still touches no filing endpoint and the
+    # analysis output is unchanged by the context flag.
+    wants_sec = context_path is not None or include_financial_history
+    sec_evidence = (
+        _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
+    )
+
     reverse_requirements = _build_reverse_requirements(
         data,
         analysis,
@@ -1767,6 +1780,7 @@ def run_st_eva(
         beta=beta,
         equity_risk_premium=equity_risk_premium,
         risk_free_tenor=risk_free_tenor,
+        sec_observations=sec_evidence.get("observations") if include_financial_history else None,
     )
 
     if context_path is not None:
@@ -1786,7 +1800,7 @@ def run_st_eva(
             pfcf_multiple=pfcf_multiple,
             ev_ebitda_multiple=ev_ebitda_multiple,
             ps_multiple=ps_multiple,
-            context_sources=context_sources,
+            sec_evidence=sec_evidence,
         )
         if context_path == "-":
             print(json.dumps(investment_context, ensure_ascii=False, indent=2))
@@ -1837,7 +1851,7 @@ def run_st_eva(
         if value in (None, UNAVAILABLE, {}):
             missing_data.append(name)
 
-    return {
+    result = {
         "analysis_type": VERSION_METADATA["analysis_type"],
         "research_id": research_id,
         "ticker": data.ticker,
@@ -1884,6 +1898,103 @@ def run_st_eva(
         "version_metadata": VERSION_METADATA,
     }
 
+    if dossier_path is not None or render_dossier_report:
+        # Assembled from the finished result rather than from the intermediate
+        # values, so the dossier and the JSON package cannot disagree about
+        # what this run produced.
+        from research_dossier import build_dossier, render_dossier
+
+        dossier = build_dossier(result)
+        result["research_dossier"] = dossier
+        if dossier_path == "-":
+            print(render_dossier(dossier))
+        elif dossier_path is not None:
+            atomic_json_write(Path(dossier_path), dossier)
+        if render_dossier_report:
+            result["dossier_report_text"] = render_dossier(dossier)
+
+    return result
+
+
+def _build_valuation_multiples(
+    *,
+    reference_multiple: Optional[float],
+    pfcf_multiple: Optional[float],
+    ev_ebitda_multiple: Optional[float],
+    ps_multiple: Optional[float],
+    historical_band: Optional[Dict[str, Any]],
+    min_observations: int,
+) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    """
+    The reference multiple for each valuation method, keyed by method.
+
+    Each method gets its own multiple and its own provenance. A P/E and a P/S
+    are not interchangeable, and a method with no multiple supplied is left
+    absent rather than filled from another method's number.
+    """
+    from reverse_requirements import ReferenceMultiple, exit_multiples_from_band
+
+    multiples: Dict[str, Any] = {}
+    unavailable: List[Dict[str, Any]] = []
+
+    band_scenarios, band_unavailable = exit_multiples_from_band(
+        historical_band, min_observations=min_observations
+    )
+    # The band warning is already reported by the scenario builder for the
+    # matrix. Emitting it again here would double-count one gap in the
+    # limitations section and make the totals misleading.
+    unavailable.extend(
+        entry for entry in band_unavailable if entry["item"] != "exit_multiple.band_scenarios"
+    )
+
+    user_pe = safe_float(reference_multiple)
+    if user_pe is not None and user_pe > 0:
+        multiples["pe"] = ReferenceMultiple(value=user_pe, source="user_supplied")
+    elif band_scenarios:
+        # The median percentile is the single representative the method view
+        # uses; the full percentile set is returned separately as scenarios.
+        median = next(
+            (m for m in band_scenarios if m.period_label == "" and m.sample_size is not None),
+            band_scenarios[len(band_scenarios) // 2],
+        )
+        multiples["pe"] = median
+    else:
+        unavailable.append(
+            {
+                "item": "valuation_method.earnings_multiple",
+                "reason": (
+                    "No P/E reference is available: none was supplied and the historical "
+                    "band did not carry enough observations."
+                ),
+                "reason_kind": "NO_REFERENCE_MULTIPLE",
+                "blocks": ["valuation_methods"],
+            }
+        )
+
+    for key, value, label in (
+        ("cash_flow", pfcf_multiple, "P/FCF"),
+        ("enterprise_value", ev_ebitda_multiple, "EV/EBITDA"),
+        ("revenue", ps_multiple, "P/S"),
+    ):
+        number = safe_float(value)
+        if number is not None and number > 0:
+            multiples[key] = ReferenceMultiple(value=number, source="user_supplied")
+        else:
+            unavailable.append(
+                {
+                    "item": "valuation_method.%s" % key,
+                    "reason": (
+                        "No %s reference multiple was supplied, so this method produces no "
+                        "implied figure. It is not filled from another method's multiple."
+                        % label
+                    ),
+                    "reason_kind": "NO_REFERENCE_MULTIPLE",
+                    "blocks": ["valuation_methods.%s" % key],
+                }
+            )
+
+    return multiples, unavailable
+
 
 def _build_reverse_requirements(
     data: Any,
@@ -1900,6 +2011,7 @@ def _build_reverse_requirements(
     beta: Optional[float],
     equity_risk_premium: Optional[float],
     risk_free_tenor: str,
+    sec_observations: Optional[Sequence[Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the V1 reverse requirements package from what this run observed.
@@ -1909,10 +2021,12 @@ def _build_reverse_requirements(
     to the pure module. Every optional input that was not supplied leaves its
     figure absent rather than defaulted.
     """
+    from financial_history import build_financial_history
     from reverse_requirements import (
         build_exit_multiples,
         build_reverse_requirements_report,
         build_start_anchor,
+        exit_multiples_from_band,
     )
     from risk_free_rate_provider import (
         fetch_risk_free_rates,
@@ -1941,6 +2055,39 @@ def _build_reverse_requirements(
         min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
     )
     unavailable.extend(multiple_unavailable)
+
+    # Scenario exit multiples. A usable historical band contributes its
+    # percentile set; a user-supplied multiple contributes its own labelled
+    # point. Both are kept separate so the reader can tell a distribution
+    # scenario from a stated assumption.
+    scenario_multiples: List[Any] = []
+    band_scenarios, band_unavailable = exit_multiples_from_band(
+        data.historical_pe_band,
+        min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+    )
+    for entry in band_unavailable:
+        if entry["item"] not in {item["item"] for item in multiple_unavailable}:
+            unavailable.append(entry)
+    scenario_multiples.extend(band_scenarios)
+    user_multiple = safe_float(reference_multiple)
+    if user_multiple is not None and user_multiple > 0:
+        from reverse_requirements import ReferenceMultiple
+
+        scenario_multiples.append(
+            ReferenceMultiple(value=user_multiple, source="user_supplied")
+        )
+    if not scenario_multiples:
+        scenario_multiples = list(multiples)
+
+    valuation_multiples, method_unavailable = _build_valuation_multiples(
+        reference_multiple=reference_multiple,
+        pfcf_multiple=pfcf_multiple,
+        ev_ebitda_multiple=ev_ebitda_multiple,
+        ps_multiple=ps_multiple,
+        historical_band=data.historical_pe_band,
+        min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+    )
+    unavailable.extend(method_unavailable)
 
     risk_free_rates = []
     cost_of_equity_inputs: Optional[Dict[str, Any]] = None
@@ -2062,7 +2209,7 @@ def _build_reverse_requirements(
         price_source=data.price_source,
         horizons_years=horizons_years,
         required_returns=required_returns,
-        exit_multiples=multiples,
+        exit_multiples=scenario_multiples,
         start_anchor=anchor,
         current_pe=current_pe,
         consensus_eps=consensus_eps,
@@ -2077,6 +2224,7 @@ def _build_reverse_requirements(
         pfcf_multiple=pfcf_multiple,
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,
+        valuation_multiples=valuation_multiples,
         risk_free_rates=risk_free_rates,
         cost_of_equity_inputs=cost_of_equity_inputs,
         investor_required_returns={f"scenario_{index:02d}": value for index, value in enumerate(required_returns)},
@@ -2084,7 +2232,38 @@ def _build_reverse_requirements(
         unavailable=unavailable,
     )
 
-    if anchor is None or not multiples:
+    # Financial history from the same run's sourced observations. When no SEC
+    # observations were acquired the block reports that rather than showing an
+    # empty history that reads like a company with no filings.
+    history_observations = list(sec_observations or [])
+    if history_observations:
+        report["financial_history"] = build_financial_history(history_observations)
+        report["financial_history"]["observation_count"] = len(history_observations)
+        report["financial_history"]["source_provider"] = str(
+            getattr(history_observations[0], "provider", "")
+        )
+    else:
+        report["financial_history"] = {
+            "formula_version": "financial-history/1.0",
+            "series": {},
+            "growth": {},
+            "margins": {},
+            "observation_count": 0,
+            "source_provider": None,
+            "unavailable": [
+                {
+                    "item": "financial_history",
+                    "reason": (
+                        "No filing observations were acquired for this run, so no financial "
+                        "history is presented. Pass --financial-history to acquire them."
+                    ),
+                    "reason_kind": "NOT_ACQUIRED",
+                    "blocks": ["financial_history"],
+                }
+            ],
+        }
+
+    if anchor is None or not scenario_multiples:
         # The matrix could not be built. Say so at the top level rather than
         # leaving an empty list to be read as "no scenarios were interesting".
         report["status"] = "NOT_COMPUTED"
@@ -2633,6 +2812,71 @@ def build_context_from_observations(
     )
 
 
+def _empty_sec_evidence() -> Dict[str, Any]:
+    """The no-SEC shape, so callers never branch on whether it was fetched."""
+    return {
+        "observations": [],
+        "documents": [],
+        "cik": None,
+        "entity_name": None,
+        "cross_validation": {},
+        "acquired": False,
+    }
+
+
+def _acquire_sec_evidence(
+    data: MarketData,
+    context_sources: Sequence[str],
+) -> Dict[str, Any]:
+    """
+    Reach the SEC once and return what it contributed.
+
+    Both the Investment Context and the financial history need the same filing
+    observations. Fetching them in one place keeps a single answer to "what did
+    the filings say" and avoids two network passes that could disagree if the
+    upstream data changed between them.
+
+    The cross-source pass is network-bound, so it happens only on the opt-in
+    path. A run without it is still complete: the cross-source verdicts are
+    simply absent, and the consumer can see that because the report states
+    which sources it covers.
+    """
+    sources = {str(source).lower() for source in (context_sources or ())}
+    empty: Dict[str, Any] = {
+        "observations": [],
+        "documents": [],
+        "cik": None,
+        "entity_name": None,
+        "cross_validation": {},
+        "acquired": False,
+    }
+    if "sec" not in sources:
+        return empty
+
+    from cross_validation import cross_validate_all
+    from sec_provider import SECProvider
+
+    acquisition = SECProvider().fetch(data.ticker)
+    observations = list(acquisition.observations)
+    vendor = [
+        observation
+        for observation in (
+            data.observations.get(identifier)
+            for identifier in data.observations.ids()
+        )
+        if observation is not None
+        and is_comparable_observation(observation)
+    ]
+    return {
+        "observations": observations,
+        "documents": list(acquisition.documents),
+        "cik": acquisition.company.cik if acquisition.company is not None else None,
+        "entity_name": acquisition.company.name if acquisition.company is not None else None,
+        "cross_validation": cross_validate_all(vendor, acquisition.observations),
+        "acquired": True,
+    }
+
+
 def _build_context_if_requested(
     data: MarketData,
     analysis: Dict[str, Any],
@@ -2643,54 +2887,20 @@ def _build_context_if_requested(
     pfcf_multiple: Optional[float],
     ev_ebitda_multiple: Optional[float],
     ps_multiple: Optional[float],
-    context_sources: Sequence[str],
+    sec_evidence: Dict[str, Any],
 ) -> Any:
     """
-    Assemble an Investment Context, reaching the SEC only when asked to.
+    Assemble an Investment Context from evidence already acquired.
 
     Returns the document, the observations a second source contributed, and the
     source documents fetched. All three go to the archive: a snapshot that
     references facts the archive never saw cannot be replayed, and an
     observation that does not name the document it came from is a number with
     an unverifiable origin.
-
-    The cross-source pass is network-bound, so it happens on the opt-in path
-    only. A context built without it is still a valid document: the
-    cross-source verdicts are simply absent, and the consumer can see that
-    because the section reports which sources it covers.
     """
     from investment_context import build_investment_context
 
-    sources = {str(source).lower() for source in (context_sources or ())}
-    cross_validation: Dict[str, Any] = {}
-    sec_observations: List[Any] = []
-    sec_documents: List[Any] = []
-    cik: Optional[str] = None
-    sec_entity_name: Optional[str] = None
-
-    if "sec" in sources:
-        from cross_validation import cross_validate_all
-        from sec_provider import SECProvider
-
-        acquisition = SECProvider().fetch(data.ticker)
-        if acquisition.company is not None:
-            cik = acquisition.company.cik
-            sec_entity_name = acquisition.company.name
-        sec_observations = list(acquisition.observations)
-        sec_documents = list(acquisition.documents)
-        vendor = [
-            observation
-            for observation in (
-                data.observations.get(identifier)
-                for identifier in data.observations.ids()
-            )
-            if observation is not None
-            and is_comparable_observation(observation)
-        ]
-        cross_validation = cross_validate_all(
-            vendor,
-            acquisition.observations,
-        )
+    sec_observations = list(sec_evidence.get("observations") or [])
 
     return build_investment_context(
         data=data,
@@ -2708,10 +2918,10 @@ def _build_context_if_requested(
         pfcf_multiple=pfcf_multiple,
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,
-        cross_validation=cross_validation,
-        cik=cik,
-        sec_entity_name=sec_entity_name,
-    ), sec_observations, sec_documents
+        cross_validation=sec_evidence.get("cross_validation") or {},
+        cik=sec_evidence.get("cik"),
+        sec_entity_name=sec_evidence.get("entity_name"),
+    ), sec_observations, list(sec_evidence.get("documents") or [])
 
 
 def main() -> None:
@@ -2792,6 +3002,33 @@ def main() -> None:
         type=float,
         default=None,
         help="Equity risk premium for a CAPM cost of equity, as a decimal.",
+    )
+    parser.add_argument(
+        "--dossier",
+        dest="dossier_path",
+        nargs="?",
+        const="-",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Opt-in: write the ordered research dossier. Use '-' for stdout. "
+            "Built from the same result as --json, so the two cannot disagree."
+        ),
+    )
+    parser.add_argument(
+        "--dossier-report",
+        action="store_true",
+        help="Also render the dossier as readable text alongside the standard report.",
+    )
+    parser.add_argument(
+        "--financial-history",
+        action="store_true",
+        help=(
+            "Acquire SEC filings and present revenue, earnings and EPS history "
+            "with growth rates and margins. Off by default because it reaches the "
+            "network. When combined with --context the filings are fetched once "
+            "and both use them."
+        ),
     )
     parser.add_argument(
         "--no-dcf",
@@ -2885,6 +3122,9 @@ def main() -> None:
         beta=args.beta,
         equity_risk_premium=args.equity_risk_premium,
         risk_free_tenor=args.risk_free_tenor,
+        include_financial_history=args.financial_history,
+        dossier_path=args.dossier_path,
+        render_dossier_report=args.dossier_report,
     )
 
     if result is None:
