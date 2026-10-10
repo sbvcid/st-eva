@@ -118,6 +118,192 @@ def _table(rows: Sequence[Sequence[str]], headers: Sequence[str]) -> List[str]:
     return lines
 
 
+def _render_reverse_requirements(reverse: Any) -> List[str]:
+    """
+    The reverse requirements matrix and its supporting blocks.
+
+    Pure formatting. Every number is quoted from the package, and where the
+    package reports a figure as not computable, that is printed as such rather
+    than being replaced by a blank or a zero.
+    """
+    if not reverse:
+        return []
+
+    lines: List[str] = []
+    lines.append(_rule("-"))
+    lines.append("反向要求矩陣 (REVERSE REQUIREMENTS)")
+    lines.append(_rule("-"))
+
+    status = reverse.get("status")
+    if status != "COMPUTED":
+        lines.append("未計算。")
+        reason = reverse.get("status_reason")
+        if reason:
+            lines.append(f"原因: {reason}")
+        lines.append("")
+        return lines
+
+    anchor_block = None
+    for row in reverse.get("reverse_requirements_matrix") or []:
+        anchor_block = row.get("start_eps") or anchor_block
+    if anchor_block:
+        lines.append(
+            f"起算 EPS: {_number(anchor_block.get('value'), 4)} "
+            f"({anchor_block.get('basis')}, 涵蓋 {anchor_block.get('months_covered')} 個月)"
+        )
+        if anchor_block.get("period_undeclared_by_source"):
+            lines.append("  注意: 來源未宣告 EPS 涵蓋期間，期間為假設值。")
+        lines.append(f"目前價格: {_number(reverse.get('market_price', {}).get('value'))}"
+                     f"  {reverse.get('market_price', {}).get('currency') or ''}")
+        lines.append("")
+
+    rows: List[List[str]] = []
+    for row in reverse.get("reverse_requirements_matrix") or []:
+        multiple = row.get("exit_multiple") or {}
+        rows.append([
+            f"{_number(row.get('horizon_years'), 1)}年",
+            _percent(row.get("required_return"), 0),
+            _number(multiple.get("value"), 1),
+            _number(row.get("required_exit_price")),
+            _number(row.get("required_terminal_eps"), 4),
+            _percent(row.get("required_eps_cagr")),
+        ])
+    lines.extend(_table(rows, ["期間", "要求報酬", "期末P/E", "期末需求價", "所需EPS", "所需CAGR"]))
+    lines.append("")
+    lines.append("  要求報酬為價格報酬，不含股息。CAGR 僅在兩端 EPS 期間可比較時計算。")
+    lines.append("")
+
+    flags = sorted({
+        flag
+        for row in reverse.get("reverse_requirements_matrix") or []
+        for flag in row.get("flags") or []
+    })
+    if flags:
+        lines.append("  情境標記: " + ", ".join(flags))
+        lines.append("")
+
+    _render_rate_families(lines, reverse.get("rate_families") or {})
+    _render_cash_flow_cross_checks(lines, reverse.get("cash_flow_cross_checks") or {})
+    _render_dcf(lines, reverse.get("dcf") or {})
+
+    unavailable = reverse.get("unavailable") or []
+    if unavailable:
+        lines.append(_rule("-"))
+        lines.append(f"缺漏與不可計算 ({len(unavailable)})")
+        lines.append(_rule("-"))
+        for item in unavailable:
+            reason = str(item.get("reason", "")).replace("\n", " ")
+            lines.append(f"  - {item.get('item', '?')}: {reason}")
+        lines.append("")
+
+    return lines
+
+
+def _render_rate_families(lines: List[str], families: Dict[str, Any]) -> None:
+    """The three rate families, printed separately and never merged."""
+    risk_free = families.get("risk_free_rate") or {}
+    observations = risk_free.get("observations") or []
+    cost_of_equity = families.get("cost_of_equity") or {}
+    investor = families.get("investor_required_return") or {}
+
+    lines.append(_rule("-"))
+    lines.append("利率家族 (RATE FAMILIES)")
+    lines.append(_rule("-"))
+
+    if observations:
+        lines.append("無風險利率 (觀測值):")
+        rows = [
+            [str(item.get("tenor_label")), _number(item.get("rate"), 3),
+             str(item.get("as_of", "")), str(item.get("provider", ""))]
+            for item in observations
+        ]
+        lines.extend(_table(rows, ["期限", "殖利率%", "觀測日", "來源"]))
+    else:
+        lines.append("無風險利率 (觀測值): 未取得 (需 --risk-free-rates)")
+    lines.append("")
+
+    status = cost_of_equity.get("status")
+    if status == "COMPUTED":
+        inputs = cost_of_equity.get("inputs") or {}
+        lines.append(
+            f"CAPM 股權要求報酬 (估計): {_signed_percent(cost_of_equity.get('value'))}"
+        )
+        lines.append(
+            f"  Rf {_signed_percent(inputs.get('risk_free_rate_decimal'))}"
+            f" ({inputs.get('risk_free_rate_as_of') or '?'})"
+            f" + beta {_number(inputs.get('beta'), 2)}"
+            f" × ERP {_signed_percent(inputs.get('equity_risk_premium_decimal'))}"
+        )
+    else:
+        lines.append(f"CAPM 股權要求報酬: {status}")
+        if cost_of_equity.get("missing_inputs"):
+            lines.append("  缺: " + ", ".join(cost_of_equity["missing_inputs"]))
+    lines.append("")
+
+    values = investor.get("values")
+    if values:
+        rendered = ", ".join(f"{key} {_signed_percent(item)}" for key, item in sorted(values.items()))
+        lines.append(f"投資人設定報酬率 (情境輸入): {rendered}")
+    else:
+        lines.append("投資人設定報酬率 (情境輸入): 未另行設定")
+    lines.append("")
+
+
+def _render_cash_flow_cross_checks(lines: List[str], block: Dict[str, Any]) -> None:
+    """Cash flow cross-checks, with observed and reverse-solved kept apart."""
+    observed = block.get("observed") or {}
+    required = block.get("required_at_reference_multiple") or {}
+
+    lines.append(_rule("-"))
+    lines.append("現金流交叉驗證 (CASH FLOW CROSS-CHECKS)")
+    lines.append(_rule("-"))
+
+    lines.append("已觀察:")
+    lines.extend(_table([
+        ["P/FCF", _number(observed.get("p_fcf"))],
+        ["FCF 殖利率", _signed_percent(observed.get("fcf_yield"))],
+        ["EV/EBITDA", _number(observed.get("ev_ebitda"))],
+        ["EBITDA / EV", _signed_percent(observed.get("ebitda_yield_on_ev"))],
+        ["P/S", _number(observed.get("p_s"))],
+        ["營收 / 市值", _signed_percent(observed.get("revenue_yield_on_market_cap"))],
+    ], ["指標", "數值"]))
+    lines.append("")
+
+    rows: List[List[str]] = []
+    for key, label in (("fcf", "隱含 FCF"), ("ebitda", "隱含 EBITDA"), ("revenue", "隱含營收")):
+        entry = required.get(key) or {}
+        rows.append([
+            label,
+            _number(entry.get("multiple"), 1),
+            _number(entry.get("required_fcf") or entry.get("required_ebitda") or entry.get("required_revenue")),
+            _percent(entry.get("gap_vs_observed_fcf") or entry.get("gap_vs_observed_ebitda")
+                     or entry.get("gap_vs_observed_revenue")),
+        ])
+    lines.append("在指定參考倍數下反推:")
+    lines.extend(_table(rows, ["項目", "參考倍數", "所需金額", "vs 實際"]))
+    lines.append("")
+
+
+def _render_dcf(lines: List[str], block: Dict[str, Any]) -> None:
+    """The discounted cash flow block, including what it could not do."""
+    feasibility = block.get("feasibility") or {}
+    status = block.get("status", "NOT_ATTEMPTED")
+
+    lines.append(_rule("-"))
+    lines.append("折現現金流 (DCF)")
+    lines.append(_rule("-"))
+    lines.append(f"狀態: {status}")
+    lines.append(f"現金流定義: {feasibility.get('cash_flow_basis_status', 'UNDECLARED')}")
+
+    implied = block.get("implied_explicit_growth_rate")
+    if implied is not None:
+        lines.append(f"隱含顯性期 FCF 成長率: {_signed_percent(implied)}")
+    missing = feasibility.get("missing_inputs") or []
+    if missing:
+        lines.append("缺少欄位: " + ", ".join(missing))
+    lines.append("")
+
+
 def render_report(
     result: Dict[str, Any],
     show_json: bool = False,
@@ -167,6 +353,12 @@ def render_report(
     if period:
         lines.append(f"           共識 EPS 期間: {period}")
     lines.append("")
+
+    # ---- reverse requirements matrix ----
+    # Placed first because it is the answer the run exists to produce: what
+    # the current price demands, given a stated return, horizon and exit
+    # multiple.
+    lines.extend(_render_reverse_requirements(result.get("reverse_requirements")))
 
     # ---- observed valuation ----
     lines.append(_rule("-"))

@@ -1705,6 +1705,13 @@ def run_st_eva(
     context_path: Optional[str] = None,
     context_sources: Sequence[str] = ("yahoo", "sec"),
     archive: Optional[Any] = None,
+    reverse_horizons: Sequence[float] = (1.0, 2.0, 3.0, 5.0),
+    required_returns: Sequence[float] = (0.08, 0.10, 0.12, 0.15),
+    include_risk_free_rates: bool = False,
+    include_dcf: bool = True,
+    beta: Optional[float] = None,
+    equity_risk_premium: Optional[float] = None,
+    risk_free_tenor: str = "10_YEAR",
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
@@ -1745,6 +1752,23 @@ def run_st_eva(
     investment_context = None
     cross_source_observations: List[Any] = []
     captured_documents: List[Any] = []
+
+    reverse_requirements = _build_reverse_requirements(
+        data,
+        analysis,
+        horizons_years=reverse_horizons,
+        required_returns=required_returns,
+        reference_multiple=reference_multiple,
+        pfcf_multiple=pfcf_multiple,
+        ev_ebitda_multiple=ev_ebitda_multiple,
+        ps_multiple=ps_multiple,
+        include_risk_free_rates=include_risk_free_rates,
+        include_dcf=include_dcf,
+        beta=beta,
+        equity_risk_premium=equity_risk_premium,
+        risk_free_tenor=risk_free_tenor,
+    )
+
     if context_path is not None:
         # Opt-in only. Nothing above this line changes when a context is not
         # requested, so the default path is byte-identical to 2.2.3.
@@ -1844,6 +1868,7 @@ def run_st_eva(
         "fundamental_snapshot": analysis["fundamental_snapshot"],
         "reference": analysis["reference"],
         "market_metrics": metrics,
+        "reverse_requirements": reverse_requirements,
         "missing_data": missing_data,
         "evidence_ids": evidence.ids(),
         "validation": {
@@ -1857,6 +1882,276 @@ def run_st_eva(
             "This output is descriptive valuation analysis, not a buy/sell signal.",
         ],
         "version_metadata": VERSION_METADATA,
+    }
+
+
+def _build_reverse_requirements(
+    data: Any,
+    analysis: Dict[str, Any],
+    *,
+    horizons_years: Sequence[float],
+    required_returns: Sequence[float],
+    reference_multiple: Optional[float],
+    pfcf_multiple: Optional[float],
+    ev_ebitda_multiple: Optional[float],
+    ps_multiple: Optional[float],
+    include_risk_free_rates: bool,
+    include_dcf: bool,
+    beta: Optional[float],
+    equity_risk_premium: Optional[float],
+    risk_free_tenor: str,
+) -> Dict[str, Any]:
+    """
+    Assemble the V1 reverse requirements package from what this run observed.
+
+    Nothing here re-derives a number the acquisition stage already produced; it
+    selects among observed values, names what is missing, and hands the result
+    to the pure module. Every optional input that was not supplied leaves its
+    figure absent rather than defaulted.
+    """
+    from reverse_requirements import (
+        build_exit_multiples,
+        build_reverse_requirements_report,
+        build_start_anchor,
+    )
+    from risk_free_rate_provider import (
+        fetch_risk_free_rates,
+        rate_as_decimal,
+        select_rate,
+    )
+
+    unavailable: List[Dict[str, Any]] = []
+
+    trailing_eps = safe_float(data.current_eps)
+    forward_eps = safe_float(data.forward_eps)
+    consensus_eps = safe_float(data.consensus_forward_eps)
+
+    anchor, anchor_unavailable = build_start_anchor(
+        trailing_eps=trailing_eps,
+        forward_eps=forward_eps,
+        consensus_eps=consensus_eps,
+        currency=data.currency,
+        provider=data.provider,
+    )
+    unavailable.extend(anchor_unavailable)
+
+    multiples, multiple_unavailable = build_exit_multiples(
+        historical_pe_band=data.historical_pe_band,
+        user_pe_multiple=reference_multiple,
+        min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+    )
+    unavailable.extend(multiple_unavailable)
+
+    risk_free_rates = []
+    cost_of_equity_inputs: Optional[Dict[str, Any]] = None
+    if include_risk_free_rates:
+        fetched = fetch_risk_free_rates()
+        risk_free_rates = list(fetched.rates)
+        unavailable.extend(
+            dict(item) for item in fetched.unavailable
+        )
+        selected_rate = select_rate(risk_free_rates, risk_free_tenor)
+        if selected_rate is None:
+            unavailable.append(
+                {
+                    "item": f"risk_free_rate.{risk_free_tenor}",
+                    "reason": (
+                        f"The {risk_free_tenor} Treasury yield was not observed for "
+                        f"{data.price_date}, so no cost of equity is modelled."
+                    ),
+                    "reason_kind": "MISSING",
+                    "blocks": ["cost_of_equity"],
+                }
+            )
+        cost_of_equity_inputs = {
+            "risk_free_rate_decimal": rate_as_decimal(selected_rate),
+            "risk_free_rate_source": (
+                f"{selected_rate.provider} {selected_rate.instrument}"
+                if selected_rate
+                else ""
+            ),
+            "risk_free_rate_as_of": selected_rate.as_of if selected_rate else "",
+            "beta": beta,
+            "beta_source": "user_supplied",
+            "beta_estimation_window": "not declared by the user",
+            "equity_risk_premium_decimal": equity_risk_premium,
+            "equity_risk_premium_source": "user_supplied",
+            "equity_risk_premium_estimation_window": "not declared by the user",
+        }
+        if beta is None or equity_risk_premium is None or selected_rate is None:
+            # Some but not all inputs arrived. Passing them through lets the
+            # package name exactly which ones are absent, instead of reporting
+            # the whole cost of equity as unavailable.
+            missing = []
+            if selected_rate is None:
+                missing.append("risk_free_rate")
+            if beta is None:
+                missing.append("beta")
+            if equity_risk_premium is None:
+                missing.append("equity_risk_premium_decimal")
+            unavailable.append(
+                {
+                    "item": "cost_of_equity",
+                    "reason": (
+                        "A CAPM cost of equity needs a risk-free rate, a beta and an equity "
+                        f"risk premium. Missing: {', '.join(missing)}."
+                    ),
+                    "reason_kind": "MISSING",
+                    "blocks": ["cost_of_equity"],
+                }
+            )
+    else:
+        unavailable.append(
+            {
+                "item": "risk_free_rate",
+                "reason": (
+                    "No risk-free rate was requested, so no cost of equity is modelled and "
+                    "the rate family is empty. Pass --risk-free-rates with --beta and "
+                    "--equity-risk-premium to compute one."
+                ),
+                "reason_kind": "NOT_REQUESTED",
+                "blocks": ["cost_of_equity"],
+            }
+        )
+
+    current_pe = safe_float(analysis["observed_valuation"].get("current_pe"))
+    consensus_basis = ""
+    consensus_months: Optional[float] = None
+    if consensus_eps is not None:
+        if data.consensus_forward_eps_period:
+            consensus_basis = "FORWARD_TWELVE_MONTHS"
+            consensus_months = 12.0
+        else:
+            # The vendor returned a figure without stating which period it
+            # covers. Comparing it against a terminal EPS would silently assume
+            # it, so it is recorded as unusable for period comparison.
+            unavailable.append(
+                {
+                    "item": "consensus_forward_eps_period",
+                    "reason": (
+                        "The consensus EPS carries no declared period, so it cannot be "
+                        "lined up against a terminal EPS for a specific horizon."
+                    ),
+                    "reason_kind": "UNDECLARED",
+                    "blocks": ["consensus_comparison"],
+                }
+            )
+
+    dcf_inputs: Optional[Dict[str, Any]] = None
+    if include_dcf:
+        dcf_inputs = _dcf_inputs_from_run(
+            data=data,
+            analysis=analysis,
+            cost_of_equity_inputs=cost_of_equity_inputs,
+            required_returns=required_returns,
+        )
+
+    market_cap = safe_float(analysis["fundamental_snapshot"].get("current_market_cap"))
+    enterprise_value = safe_float(
+        analysis["fundamental_snapshot"].get("current_enterprise_value")
+    )
+    free_cash_flow = safe_float(analysis["fundamental_snapshot"].get("current_fcf"))
+    ebitda = safe_float(analysis["fundamental_snapshot"].get("current_ebitda"))
+    revenue = safe_float(analysis["fundamental_snapshot"].get("current_revenue"))
+
+    report = build_reverse_requirements_report(
+        price=data.price,
+        ticker=data.ticker,
+        currency=data.currency,
+        as_of=data.price_date,
+        price_source=data.price_source,
+        horizons_years=horizons_years,
+        required_returns=required_returns,
+        exit_multiples=multiples,
+        start_anchor=anchor,
+        current_pe=current_pe,
+        consensus_eps=consensus_eps,
+        consensus_basis=consensus_basis,
+        consensus_months_covered=consensus_months,
+        dividend_per_share=None,
+        market_cap=market_cap,
+        enterprise_value=enterprise_value,
+        free_cash_flow=free_cash_flow,
+        ebitda=ebitda,
+        revenue=revenue,
+        pfcf_multiple=pfcf_multiple,
+        ev_ebitda_multiple=ev_ebitda_multiple,
+        ps_multiple=ps_multiple,
+        risk_free_rates=risk_free_rates,
+        cost_of_equity_inputs=cost_of_equity_inputs,
+        investor_required_returns={f"scenario_{index:02d}": value for index, value in enumerate(required_returns)},
+        dcf_inputs=dcf_inputs,
+        unavailable=unavailable,
+    )
+
+    if anchor is None or not multiples:
+        # The matrix could not be built. Say so at the top level rather than
+        # leaving an empty list to be read as "no scenarios were interesting".
+        report["status"] = "NOT_COMPUTED"
+        report["status_reason"] = (
+            "The reverse requirements matrix needs a positive starting EPS and at least "
+            "one exit multiple. See `unavailable` for what was missing."
+        )
+    else:
+        report["status"] = "COMPUTED"
+        report["status_reason"] = None
+    return report
+
+
+def _dcf_inputs_from_run(
+    *,
+    data: Any,
+    analysis: Dict[str, Any],
+    cost_of_equity_inputs: Optional[Dict[str, Any]],
+    required_returns: Sequence[float],
+) -> Dict[str, Any]:
+    """
+    Gather what a discounted cash flow model would need from this run.
+
+    The inputs that a run can genuinely observe are filled in. The ones it
+    cannot observe are left absent, which is what makes the feasibility check
+    report the gap instead of the model quietly assuming a value.
+    """
+    snapshot = analysis.get("fundamental_snapshot") or {}
+    free_cash_flow = safe_float(snapshot.get("current_fcf"))
+    market_cap = safe_float(snapshot.get("current_market_cap"))
+    enterprise_value = safe_float(snapshot.get("current_enterprise_value"))
+
+    discount_rate = None
+    discount_rate_source = ""
+    if cost_of_equity_inputs and cost_of_equity_inputs.get("risk_free_rate_decimal") is not None:
+        discount_rate = cost_of_equity_inputs.get("risk_free_rate_decimal")
+        discount_rate_source = "not set from CAPM here; equity discount rate pending"
+
+    if enterprise_value and market_cap and market_cap > 0:
+        present_value = enterprise_value
+        present_value_source = "observed enterprise value"
+    elif market_cap:
+        present_value = market_cap
+        present_value_source = "observed market capitalization"
+    else:
+        present_value = None
+        present_value_source = ""
+
+    return {
+        # Present, but the bridge from reported earnings to unlevered cash flow
+        # is not observable from a vendor free cash flow figure alone.
+        "cash_flow_basis": "",
+        "free_cash_flow": free_cash_flow,
+        "depreciation_amortisation": None,
+        "capex": None,
+        "working_capital_change": None,
+        "cost_of_debt": None,
+        "market_value_of_debt": None,
+        "tax_rate": None,
+        "discount_rate_decimal": discount_rate,
+        "discount_rate_source": discount_rate_source,
+        "explicit_years": 5,
+        "terminal_growth_decimal": None,
+        "terminal_growth_source": "",
+        "present_value": present_value,
+        "present_value_source": present_value_source,
+        "base_cash_flow": free_cash_flow,
     }
 
 
@@ -2453,6 +2748,60 @@ def main() -> None:
     parser.add_argument("--ps-multiple", type=float, default=None)
     parser.add_argument("--event", default=None)
     parser.add_argument("--horizon", default="1-8 weeks")
+    parser.add_argument(
+        "--reverse-horizons",
+        type=float,
+        nargs="+",
+        default=(1.0, 2.0, 3.0, 5.0),
+        metavar="YEARS",
+        help="Holding periods, in years, the reverse requirements matrix is built over.",
+    )
+    parser.add_argument(
+        "--required-returns",
+        type=float,
+        nargs="+",
+        default=(0.08, 0.10, 0.12, 0.15),
+        metavar="RATE",
+        help=(
+            "Required price returns, as decimals, the matrix is built over. "
+            "These are the investor's own hurdles, not a modelled cost of equity."
+        ),
+    )
+    parser.add_argument(
+        "--risk-free-rates",
+        action="store_true",
+        help="Fetch observed US Treasury yields for the valuation date.",
+    )
+    parser.add_argument(
+        "--risk-free-tenor",
+        default="10_YEAR",
+        choices=("13_WEEK", "5_YEAR", "10_YEAR", "30_YEAR"),
+        help="Which observed yield a CAPM cost of equity would use.",
+    )
+    parser.add_argument(
+        "--beta",
+        type=float,
+        default=None,
+        help=(
+            "Beta for a CAPM cost of equity. A user-supplied assumption, not an "
+            "observation; it is recorded with that provenance in the output."
+        ),
+    )
+    parser.add_argument(
+        "--equity-risk-premium",
+        type=float,
+        default=None,
+        help="Equity risk premium for a CAPM cost of equity, as a decimal.",
+    )
+    parser.add_argument(
+        "--no-dcf",
+        dest="include_dcf",
+        action="store_false",
+        help=(
+            "Skip the discounted cash flow feasibility check. The check reports "
+            "which inputs are missing; it does not estimate them."
+        ),
+    )
     parser.add_argument("--no-snapshot", action="store_true")
     parser.add_argument("--test", action="store_true")
     parser.add_argument(
@@ -2529,6 +2878,13 @@ def main() -> None:
         context_path=args.context_path,
         context_sources=args.context_sources,
         archive=archive,
+        reverse_horizons=tuple(args.reverse_horizons),
+        required_returns=tuple(args.required_returns),
+        include_risk_free_rates=args.risk_free_rates,
+        include_dcf=args.include_dcf,
+        beta=args.beta,
+        equity_risk_premium=args.equity_risk_premium,
+        risk_free_tenor=args.risk_free_tenor,
     )
 
     if result is None:
