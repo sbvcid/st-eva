@@ -1,14 +1,16 @@
 # ADR: XBRL Source-Document Provenance Identity (Phase 3C-A Close-Out)
 
-**Status:** FROZEN — architectural decision record. **Not implemented.** No production, schema, migration, or test change accompanies this document.
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
+**Historical status (2026-10-08):** Recorded as a frozen architectural decision record and not implemented at that time. This is not current implementation status or a restriction on subsequent work.
 **Date:** 2026-10-08
 **Baseline:** `8a0a487` (`feat: extract SEC filing document statements`), working tree clean, `HEAD == origin/master`
 **Scope:** ST-EVA Evidence Provenance Layer — `observation_filing_documents`, `source_fact_id`, and the boundary between a fact's *document* and a fact's *filing*
-**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 20–23, and §D invariant 19 (unchanged, extended in effect by Decision 3)
+**Invariants referenced at the time (historical):** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 20–23, and §D invariant 19 (unchanged, extended in effect by Decision 3)
 
-> Phase 3C-B is **not authorized by this document.** This record freezes five
-> questions that must be decided before any code is written, because every one of
-> them has at least one implementation that is easier and wrong.
+> At the time, Phase 3C-B was recorded as not authorized by this design note, and five open questions were listed for discussion before implementation. This is historical phase status, not a current permission gate or restriction on owner-directed work.
 
 ---
 
@@ -1079,7 +1081,7 @@ Amendment 0 §4's ten cases stand, extended by Amendment 1 §9's five, plus:
 
 ## 12. Whether Phase 3C-B is authorized
 
-**Not authorized.** The design questions are now closed (§§1–11), so the remaining gate
+**Historical status at the time:** not authorized under that phase note; this is not a current permission gate. The design questions are now closed (§§1–11), so the remaining gate
 is no longer a design question but an implementation one: writing migration `0021`,
 plus the ten acceptance criteria. That is a distinct task with its own verification, and
 the six unresolved questions of Amendment 1 §12 remain open.

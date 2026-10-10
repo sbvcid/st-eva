@@ -1,6 +1,10 @@
 # ADR: Historical P/E Valuation Reference Methodology
 
-**Status:** APPROVED / FROZEN (Methodology Specification)  
+> **歷史資料／非現行指令。** 本文件只記錄撰寫時的設計、狀態、計畫或決策，不具有授權、禁止、限制或要求未來工作的效力。文中任何「binding」「frozen」「approved」「not authorized」「must」等措辭均為歷史內容，不得凌駕使用者目前的要求。當前狀態以現行程式碼、測試及實際 Git 狀態為準。
+>
+> **HISTORICAL ARCHIVE — NOT CURRENT INSTRUCTIONS.** This document records prior design, status, plans, or decisions. It does not grant, deny, restrict, or require work. Any “binding,” “frozen,” “approved,” “not authorized,” or “must” wording below is historical and does not override the user's current request. Determine current state from current source code, tests, and Git state.
+
+**Historical status (2026-10-07):** Recorded as APPROVED / FROZEN at the time; this label has no current authority and does not restrict owner-directed changes.  
 **Date:** 2026-10-07  
 **Amended:** 2026-10-07 (Amendment 1 — evidence class separation; see §2.1 and §6.1)  
 **Scope:** ST-EVA Valuation Core & Evidence-Valuation Boundary  
@@ -9,9 +13,7 @@
 > **Amendment 1 is minimal and additive.** It introduces a second primary
 > evidence class (§2.1 Decision 10–14), corrects one stated rationale in
 > Decision 4 without relaxing it, and disambiguates `REASON_MISSING_Q4_EPS`.
-> No existing decision is withdrawn. Decisions 1–9 and 10–14 are equally
-> frozen; an engine implementing only the original nine is incomplete for any
-> issuer that stops tagging quarter-length EPS in its 10-K.
+> No existing decision is withdrawn. Decisions 1–9 and 10–14 were described as frozen at the time. This historical characterization does not restrict later implementation or establish current implementation status.
 
 ---
 
@@ -26,9 +28,9 @@ ST-EVA 要求逆向工程（Reverse Valuation）之參考倍數（Reference Mult
 
 ---
 
-## 2. Frozen Decisions (已定案架構決策)
+## 2. Decisions recorded as frozen at the time (historical)
 
-以下決策已經過充分論證並正式封存，後續實作 Engine 時**嚴禁變更**：
+以下內容記錄當時被視為已封存的決策。此歷史記錄不限制使用者目前的要求或後續實作；當前實作應依現行程式碼與測試判斷。
 
 1. **方案 B 核心架構**：
    - 估值倍數不是外部 Provider 提供的原語，而是由 ST-EVA Engine 由「經過驗證的原始市場價格時間序列」與「SEC EDGAR 點時申報事實」嚴格計算得出。
