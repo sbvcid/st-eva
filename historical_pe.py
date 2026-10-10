@@ -1248,12 +1248,20 @@ def load_issuer_historical_pe(
             )
             quarter_evidence.append(furn_ev)
     
+    # Compute digest of Q4 records if loaded
+    q4_records_hash = None
+    if enable_furnished and q4_records_path and q4_records_path.exists():
+        q4_records_hash = hashlib.sha256(q4_records_path.read_bytes()).hexdigest()
+    
     input_manifest = {
         "prices": str(prices_path),
         "concepts": str(concept_path),
         "acceptances": str(acceptance_path),
         "enable_furnished": enable_furnished,
     }
+    if q4_records_hash:
+        input_manifest["q4_records"] = q4_records_hash
+    
     input_set_id = canonical_json_hash(input_manifest)
     
     # Use evaluation dates within the specified date window
