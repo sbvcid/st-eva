@@ -1027,7 +1027,8 @@ def _resolve_issuer_paths(
         concept_path = raw_dir / "eps_diluted.json"
         # MSFT uses headers directory for acceptance dates
         acceptance_path = raw_dir / "headers"  # Marker path; actual loading uses headers
-        q4_records_path = None
+        # MSFT furnished Q4 evidence from 8-K Item 2.02 exhibits
+        q4_records_path = (base_dir / "q4_evidence_records.json") if (base_dir / "q4_evidence_records.json").exists() else None
     else:
         raise FileNotFoundError(
             f"Could not find Historical P/E data for {issuer_config.ticker} at {base_dir} "
