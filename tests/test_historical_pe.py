@@ -393,6 +393,34 @@ class TestSufficiencyGate(unittest.TestCase):
             self.assertEqual(m.source, "production_historical_pe_percentile")
             self.assertEqual(m.sample_size, 25)
 
+    def test_distribution_min_max_agree_with_underlying_observations(self):
+        obs_values = [14.5, 18.2, 22.0, 25.5, 28.0, 31.2, 35.8, 39.4] * 3
+        observations = [
+            HistoricalPeObservation(
+                observation_id=f"obs-{i}",
+                issuer_id="TEST",
+                instrument_id="TEST",
+                metric_id=METRIC_TTM_GAAP_DILUTED_PE,
+                evaluation_date=f"2020-0{i % 9 + 1}-01",
+                evaluation_date_is_trading_day=True,
+                status=STATUS_AVAILABLE,
+                reason_code=None,
+                reason_detail=None,
+                value=val,
+                unit="multiple",
+                currency=None,
+                eps_state={},
+                price_state={},
+                pe_state={},
+                source_lineage={},
+            )
+            for i, val in enumerate(obs_values)
+        ]
+        dist = compute_historical_pe_distribution(observations, min_observations=20)
+        self.assertEqual(dist.min, min(obs_values))
+        self.assertEqual(dist.max, max(obs_values))
+
+
 
 class TestAaplEndToEndAndNegativePath(unittest.TestCase):
     """AAPL real dataset end-to-end and negative-path verification."""
@@ -411,6 +439,27 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
 
         # 0 excluded
         self.assertEqual(len(res.distribution.excluded_observations), 0)
+
+    def test_aapl_distribution_min_max_agree_with_eligible_observations(self):
+        res = load_aapl_historical_pe(enable_furnished=True)
+        dist = res.distribution
+        self.assertEqual(dist.status, STATUS_USABLE_FOR_REFERENCE)
+        self.assertTrue(dist.usable_for_reference)
+
+        eligible_values = [o.value for o in res.observations if o.value is not None and o.status == STATUS_AVAILABLE]
+        self.assertEqual(len(eligible_values), 31)
+
+        expected_min = min(eligible_values)
+        expected_max = max(eligible_values)
+
+        # Reported min and max must strictly equal the min and max of underlying eligible observations
+        self.assertEqual(dist.min, expected_min)
+        self.assertEqual(dist.max, expected_max)
+
+        # Audited canonical values for AAPL: 13.6875 to 37.4603
+        self.assertAlmostEqual(dist.min, 13.6875, places=4)
+        self.assertAlmostEqual(dist.max, 37.460317, places=4)
+
 
     def test_aapl_with_furnished_disabled_negative_path(self):
         # Negative path per CONTRACT §I.3: Disabling furnished path reproduces 12 valid, 19 missing Q4

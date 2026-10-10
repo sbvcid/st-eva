@@ -1,0 +1,28 @@
+{
+  "experiment": "Phase F Independent LLM Dossier Evaluation",
+  "as_of_date": "2026-10-09",
+  "timestamp": "2026-10-10T17:10:00+08:00",
+  "frozen_package": {
+    "json_path": "history/AAPL_research_dossier_20261009.json",
+    "report_path": "history/AAPL_research_dossier_20261009_report.txt",
+    "json_sha256": "4C6E1A8AFE3D9B205463B68CCC5118AC921C6BA8CBDDB03CFE7D594869F256E4",
+    "content_fingerprint": "98f7827bca0f865f3f8d710318ab1fcd36f6f6892476e758613b3a858d49eca5",
+    "git_commit": "c76f615"
+  },
+  "models": [
+    {
+      "model_label": "Model 1 (Flash)",
+      "model_tier": "flash",
+      "conversation_id": "699eb33e-b1c5-4cd8-9f19-b3bd7383d80a",
+      "raw_output_path": "reports/experiments/llm_dossier_eval/flash_raw_response.md",
+      "raw_output_chars": 21527
+    },
+    {
+      "model_label": "Model 2 (Pro)",
+      "model_tier": "pro",
+      "conversation_id": "0da7a07e-0ffb-459c-a670-a710c98516ef",
+      "raw_output_path": "reports/experiments/llm_dossier_eval/pro_raw_response.md",
+      "raw_output_chars": 5727
+    }
+  ]
+}

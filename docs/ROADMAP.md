@@ -2,7 +2,7 @@
 
 **Recorded:** 2026-10-10
 
-**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, and Phase E**
+**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, Phase E, and Phase F**
 
 P0 (parser regression) is complete and verified; see §12. The Reverse
 Requirements Report V1 is implemented, wired into every run and verified
@@ -11,7 +11,9 @@ multiples, financial history, per-method conditional valuation and the research
 dossier; see §14. Phase D adds point-in-time financial data, balance-sheet
 evidence, capital-structure reconciliation and multi-multiple matrices; see §15.
 Phase E implements the production point-in-time Historical P/E pipeline and
-evaluation sufficiency gate; see §16. Each section records what was actually run.
+evaluation sufficiency gate; see §16. Phase F verifies portability, reconciles
+distribution ranges, freezes research packages, and runs independent LLM evaluations; see §17.
+Each section records what was actually run.
 
 Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
 
@@ -492,7 +494,7 @@ Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09:
 - **Furnished Enabled (Standard Production Path):**
   - Observations: 31 candidate dates evaluated, 31 valid observations produced spanning 2019-01-31 to 2026-07-31.
   - Zero mismatches across all 31 dates against `amendment1_pe_points.json`.
-  - Distribution: min 15.01, 10th 20.97, 25th 25.86, 50th (median) 28.95, 75th 33.02, 90th 36.19, max 41.52.
+  - Distribution: min 13.69, 10th 20.99, 25th 25.93, 50th (median) 28.95, 75th 33.05, 90th 36.19, max 37.46. *(Audited and reconciled in Phase F Closeout; earlier 15.01–41.52 draft text corrected).*
   - Status: `USABLE_FOR_REFERENCE` (exceeds $\ge 20$ threshold).
   - Reverse matrix: 80 rows across 5 percentiles (21.0, 25.9, 28.9, 33.0, 36.2), 4 holding periods (1.0, 2.0, 3.0, 5.0 years), and 4 required returns (8%, 10%, 12%, 15%).
 - **Negative Path (`--no-furnished-pe`):**
@@ -502,3 +504,37 @@ Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09:
   - Reverse matrix: refuses ungrounded distribution; reports descriptive median only; does not generate percentile scenarios.
 - **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical before and after tests.
 - **Test Suite Results:** Full test suite passed: 1864 passed, 168 skipped (16 new tests in `test_historical_pe.py`, 0 failures).
+
+## 17. Phase F — Portability Audit, Frozen Research Package, and LLM Dossier Experiment
+
+**Date:** 2026-10-10.
+
+### What was verified and delivered
+
+1. **Historical P/E Pipeline Portability Audit:**
+   - Identified that `historical_pe.py` previously had a fallback dependency on gitignored `research/experiments/aapl-historical-pe-poc/raw/` artifacts.
+   - Established canonical runtime dataset under `data/historical_pe/AAPL/` (5 files, ~352 KB, fully tracked by Git).
+   - Audited imports and data reads to guarantee zero reliance on untracked or user-local experimental directories.
+   - Verified 100% clean-checkout reproducibility in a detached worktree without access to untracked artifacts: all 16 Historical P/E tests passed cleanly.
+   - Explicitly clarified observation cadence as `PERIODIC_FILING_USABLE_DATES` (not a daily continuous trading history) in schema and reports.
+
+2. **Frozen Research Package Generation:**
+   - Generated and retained deterministic research package for `as_of = 2026-10-09` under `history/`:
+     - `history/AAPL_research_dossier_20261009.json` (1,247,681 bytes, SHA-256: `4C6E1A8AFE3D9B205463B68CCC5118AC921C6BA8CBDDB03CFE7D594869F256E4`).
+     - `history/AAPL_research_dossier_20261009_report.txt` (586 lines, 42,651 chars).
+     - Fingerprint: `98f7827bca0f865f3f8d710318ab1fcd36f6f6892476e758613b3a858d49eca5`.
+
+3. **Independent LLM Dossier Evaluation:**
+   - Deployed two independent LLM evaluation subagents (`flash` and `pro`) using the frozen dossier as sole source truth without fresh market fetching.
+   - Both models successfully performed reverse-engineering operating hurdle calculations (implied revenue/margins) across multiple holding periods and historical percentiles.
+   - Model 1 (`flash`) caught the narrative documentation discrepancy between the draft prompt (15.01–41.52) and the actual dossier (13.69–37.46).
+   - Preserved all prompts, model metadata, and full raw responses under `reports/experiments/llm_dossier_eval/`.
+   - Comprehensive comparative evaluation and semantic review published in `reports/PHASE-F-LLM-EXPERIMENT.md`.
+
+4. **Historical P/E Range Reconciliation & Semantic Review:**
+   - Confirmed that the mathematical calculation and frozen dossier have always produced min `13.6875` and max `37.4603`. Corrected the Phase E draft narrative in §16.
+   - Added regression test `test_aapl_distribution_min_max_agree_with_eligible_observations` to prevent drift.
+   - Semantically reviewed Model 1's claim of a "negative equity risk premium", clarifying the distinction between a descriptive accounting earnings yield spread and a formal ex-ante expected excess return ($ERP \equiv E[R_{equity}] - R_f$).
+
+5. **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical.
+

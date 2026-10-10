@@ -7,7 +7,26 @@
 
 This document records state. It introduces no new architectural decisions, modifies no formal ADRs, alters no methodology contracts, changes no database schemas or migrations, and confers no implementation authorizations.
 
-## 0.4. Addendum, 2026-10-10 — Phase E: Production Historical P/E Pipeline (newest; supersedes nothing above)
+## 0.5. Addendum, 2026-10-10 — Phase F: Portability Audit, Frozen Research Package, and LLM Dossier Experiment (newest; supersedes nothing above)
+
+This addendum records Phase F, which verifies that the production Historical P/E pipeline is fully portable and reproducible outside local developer environments, freezes an authoritative research dossier package for `AAPL` (`as_of = 2026-10-09`), reconciles historical distribution documentation ranges, and audits independent LLM research consumption.
+
+**Added & verified capabilities:**
+- **Portable Runtime Dataset (`data/historical_pe/AAPL/`):** Established canonical tracked dataset (5 files, ~352 KB) replacing gitignored research artifact dependencies. Verified 100% clean-checkout portability in detached worktree (16/16 tests passed).
+- **Frozen Research Package (`history/`):** Preserved deterministic benchmark package for `as_of = 2026-10-09` with fingerprint `98f7827bca0f865f3f8d710318ab1fcd36f6f6892476e758613b3a858d49eca5` (`AAPL_research_dossier_20261009.json` and `report.txt`).
+- **Historical P/E Range Reconciliation:** Reconciled draft narrative range ($15.01–41.52$) in §16 with audited calculations ($13.69–37.46$ across 31 eligible observations). Added regression tests to `tests/test_historical_pe.py`.
+- **LLM Experiment Preservation & Semantic Review:** Conducted independent evaluations across two model tiers (`flash` and `pro`). Preserved full prompts, metadata, and raw responses under `reports/experiments/llm_dossier_eval/`. Completed comprehensive review in `reports/PHASE-F-LLM-EXPERIMENT.md` clarifying the difference between descriptive earnings-yield spreads and formal ex-ante equity risk premiums.
+
+**Deliberately unchanged & protected:**
+- ST-EVA remains an evidence and deterministic-calculation engine: no scenario probabilities, no ranking, and no expected-value aggregation.
+- All persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical.
+- All tests pass (18 passed in `test_historical_pe.py`).
+
+Full detail is in [`docs/ROADMAP.md`](ROADMAP.md) §17 and [`reports/PHASE-F-LLM-EXPERIMENT.md`](../reports/PHASE-F-LLM-EXPERIMENT.md).
+
+---
+
+## 0.4. Addendum, 2026-10-10 — Phase E: Production Historical P/E Pipeline (supersedes nothing above)
 
 This addendum records Phase E, which implements the production point-in-time (`PIT`) Historical P/E pipeline conforming to `docs/methodology/CONTRACT-HISTORICAL-PE.md` and `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` Amendment 1, connecting verified historical valuation references to the research dossier and reverse requirements sensitivity matrix.
 
