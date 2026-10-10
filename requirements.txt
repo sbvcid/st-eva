@@ -1,0 +1,7 @@
+# Historical P/E Runtime Dependencies
+# 
+# tzdata is required for cross-platform timezone support.
+# ZoneInfo (Python 3.9+) uses tzdata for timezone database on all platforms,
+# especially Windows where system IANA timezone data is not available.
+
+tzdata>=2024.1
