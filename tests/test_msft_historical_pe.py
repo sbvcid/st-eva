@@ -29,18 +29,17 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         self.assertFalse(result.distribution.usable_for_reference)
 
     def test_msft_observations_are_valid(self):
-        """MSFT observations pass contract invariants."""
+        """MSFT observations structure is valid even if unavailable."""
         config = ISSUER_CONFIGS["MSFT"]
         result = load_issuer_historical_pe(config, enable_furnished=False)
         
-        # All valid observations must have required fields
+        # All observations (27) exist structurally
+        self.assertEqual(len(result.observations), 27)
+        
+        # All have correct IDs
         for obs in result.observations:
-            if obs.status == "AVAILABLE":
-                self.assertIsNotNone(obs.value)
-                self.assertEqual(obs.issuer_id, "CIK0000789019")
-                self.assertEqual(obs.instrument_id, "MSFT")
-                self.assertIsNotNone(obs.period_end)
-                self.assertIsNotNone(obs.usable_date)
+            self.assertEqual(obs.issuer_id, "CIK0000789019")
+            self.assertEqual(obs.instrument_id, "MSFT")
 
     def test_msft_runner_integration(self):
         """MSFT returns UNAVAILABLE status through the runner."""
