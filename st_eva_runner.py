@@ -1774,9 +1774,10 @@ def run_st_eva(
     production_historical_pe = None
     if include_historical_pe:
         try:
-            from historical_pe import load_aapl_historical_pe
-            if data.ticker == "AAPL":
-                pe_result = load_aapl_historical_pe(enable_furnished=enable_furnished_pe)
+            from historical_pe import ISSUER_CONFIGS, load_issuer_historical_pe
+            if data.ticker in ISSUER_CONFIGS:
+                config = ISSUER_CONFIGS[data.ticker]
+                pe_result = load_issuer_historical_pe(config, enable_furnished=enable_furnished_pe)
                 production_historical_pe = pe_result.to_dict()
             else:
                 production_historical_pe = {

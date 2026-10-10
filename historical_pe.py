@@ -899,32 +899,87 @@ def build_historical_pe(
 # AAPL POC Raw Fixture Loader (Verified Byte-Identical to Amendment 1)
 # ---------------------------------------------------------------------------
 
-def load_aapl_historical_pe(
-    base_dir: Optional[Path] = None,
-    enable_furnished: bool = True,
-    min_observations: int = MIN_OBSERVATIONS_FOR_REFERENCE,
-) -> HistoricalPeResult:
-    """Load AAPL frozen dataset and execute production historical P/E pipeline."""
-    if base_dir is None:
-        canonical_dir = Path("data/historical_pe/AAPL")
-        if (canonical_dir / "daily_prices.json").exists():
-            base_dir = canonical_dir
-        else:
-            base_dir = Path("research/experiments/aapl-historical-pe-poc")
+@dataclass
+class IssuerHistoricalPeConfig:
+    """Configuration for loading Historical P/E dataset for an issuer."""
+    ticker: str
+    issuer_id: str
+    fye_month: int
+    data_dir: Path
+    canonical_path: Optional[Path] = None
 
+
+# Known issuer configurations
+ISSUER_CONFIGS = {
+    "AAPL": IssuerHistoricalPeConfig(
+        ticker="AAPL",
+        issuer_id="CIK0000320193",
+        fye_month=9,
+        data_dir=Path("data/historical_pe/AAPL"),
+        canonical_path=Path("research/experiments/aapl-historical-pe-poc"),
+    ),
+}
+
+
+def _resolve_issuer_paths(
+    issuer_config: IssuerHistoricalPeConfig,
+) -> Tuple[Path, Path, Path, Optional[Path]]:
+    """Resolve data file paths for an issuer.
+    
+    Returns: (prices_path, concept_path, acceptance_path, q4_records_path)
+    Raises FileNotFoundError if required files not found.
+    """
+    base_dir = issuer_config.data_dir
+    
+    # Check canonical production layout
     if (base_dir / "daily_prices.json").exists():
         prices_path = base_dir / "daily_prices.json"
         concept_path = base_dir / "eps_diluted_concept.json"
         acceptance_path = base_dir / "filing_acceptance_evidence.json"
-        q4_records_path = base_dir / "q4_evidence_records.json"
-    else:
+        q4_records_path = base_dir / "q4_evidence_records.json" if (base_dir / "q4_evidence_records.json").exists() else None
+    # Check POC research layout
+    elif (base_dir / "raw" / "daily_prices.json").exists():
         raw_dir = base_dir / "raw"
         q4_out_dir = base_dir / "q4_study" / "out"
         prices_path = raw_dir / "daily_prices.json"
         concept_path = raw_dir / "eps_diluted_concept.json"
         acceptance_path = raw_dir / "filing_acceptance_evidence.json"
-        q4_records_path = q4_out_dir / "q4_evidence_records.json"
+        q4_records_path = q4_out_dir / "q4_evidence_records.json" if (q4_out_dir / "q4_evidence_records.json").exists() else None
+    else:
+        raise FileNotFoundError(
+            f"Could not find Historical P/E data for {issuer_config.ticker} at {base_dir} "
+            f"(checked canonical and POC layouts)"
+        )
+    
+    # Verify required files exist
+    for path in [prices_path, concept_path, acceptance_path]:
+        if not path.exists():
+            raise FileNotFoundError(f"Missing required file: {path}")
+    
+    return prices_path, concept_path, acceptance_path, q4_records_path
 
+
+def load_issuer_historical_pe(
+    issuer_config: IssuerHistoricalPeConfig,
+    enable_furnished: bool = True,
+    min_observations: int = MIN_OBSERVATIONS_FOR_REFERENCE,
+) -> HistoricalPeResult:
+    """Load Historical P/E dataset for an issuer using generic pipeline.
+    
+    Args:
+        issuer_config: IssuerHistoricalPeConfig with ticker, CIK, FYE month, data paths
+        enable_furnished: Enable Form 8-K Item 2.02 furnished evidence
+        min_observations: Minimum observations required for reference distribution
+    
+    Returns:
+        HistoricalPeResult with observations, distribution, and status
+    
+    Raises:
+        FileNotFoundError: If required data files not found
+    """
+    prices_path, concept_path, acceptance_path, q4_records_path = _resolve_issuer_paths(issuer_config)
+    
+    # Load and process prices
     price_payload = json.loads(prices_path.read_text(encoding="utf-8"))["chart"]["result"][0]
     quote = price_payload["indicators"]["quote"][0]
     bars = {
@@ -933,43 +988,48 @@ def load_aapl_historical_pe(
         if quote["close"][idx] is not None
     }
     trading_days = sorted(bars.keys())
-
-    split_stamp = min(price_payload["events"]["splits"].keys())
-    split_entry = price_payload["events"]["splits"][split_stamp]
-    split_ex_date = datetime.datetime.fromtimestamp(int(split_stamp), UTC).date().isoformat()
-    split_ratio = float(split_entry["numerator"]) / float(split_entry["denominator"])
-
+    
+    # Handle stock splits
+    splits = price_payload.get("events", {}).get("splits", {})
+    split_ex_date = None
+    split_ratio = 1.0
+    split_entry_data = None
+    
+    if splits:
+        split_stamp = min(splits.keys())
+        split_entry = splits[split_stamp]
+        split_ex_date = datetime.datetime.fromtimestamp(int(split_stamp), UTC).date().isoformat()
+        split_ratio = float(split_entry["numerator"]) / float(split_entry["denominator"])
+        split_entry_data = split_entry
+    
     # Build price evidence with as-traded close restoration
     prices_map: Dict[str, HistoricalPriceEvidence] = {}
     for day, close in bars.items():
         restored_close = close
         provenance = []
-        if split_ex_date > day:
+        if split_ex_date and split_ex_date > day and split_entry_data:
             restored_close = close * split_ratio
             provenance.append({
                 "ex_date": split_ex_date,
-                "split_ratio": split_entry["splitRatio"],
+                "split_ratio": split_entry_data.get("splitRatio"),
                 "vendor_adjusted_close": close,
                 "restored_as_traded_close": restored_close,
             })
         prices_map[day] = HistoricalPriceEvidence(
-            price_evidence_id=f"price-AAPL-{day}",
-            issuer_id="CIK0000320193",
-            instrument_id="AAPL",
+            price_evidence_id=f"price-{issuer_config.ticker}-{day}",
+            issuer_id=issuer_config.issuer_id,
+            instrument_id=issuer_config.ticker,
             price_date=day,
             close=round(restored_close, 4),
             currency="USD",
             accounting_basis="as_traded",
             corporate_action_provenance=tuple(provenance),
         )
-
-    # AAPL Fiscal Year End month is 9 (September)
-    fye_month = 9
-
+    
     # Filing acceptance evidence
     acceptance_evidence = json.loads(acceptance_path.read_text(encoding="utf-8"))
     concept_sha = hashlib.sha256(concept_path.read_bytes()).hexdigest()
-
+    
     filings_index: Dict[str, Dict[str, Any]] = {}
     for row in acceptance_evidence:
         acceptance_dt = datetime.datetime.fromisoformat(row["acceptance_datetime_header_et"])
@@ -981,12 +1041,12 @@ def load_aapl_historical_pe(
             "usable_date_rule": usable_r,
             "period_end": row["period_end"],
         }
-
+    
     # Quarterly and annual evidence from filed XBRL facts
     concept_payload = json.loads(concept_path.read_text(encoding="utf-8"))
     quarter_evidence: List[QuarterEpsEvidence] = []
     annual_evidence: List[QuarterEpsEvidence] = []
-
+    
     for fact in concept_payload["units"]["USD/shares"]:
         if not fact.get("start"):
             continue
@@ -998,13 +1058,13 @@ def load_aapl_historical_pe(
             continue
         filing_meta = filings_index[accn]
         form = filing_meta["form"]
-
+        
         if QUARTER_MIN_DAYS <= span <= QUARTER_MAX_DAYS:
-            fy = fiscal_year_of(end_d, fye_month)
-            fq = quarter_number(end_d, fye_month)
+            fy = fiscal_year_of(end_d, issuer_config.fye_month)
+            fq = quarter_number(end_d, issuer_config.fye_month)
             q_ev = QuarterEpsEvidence(
                 evidence_id=f"ev-filed-{accn}-{end_d.isoformat()}",
-                issuer_id="CIK0000320193",
+                issuer_id=issuer_config.issuer_id,
                 evidence_class=EVIDENCE_CLASS_FILED,
                 form=form,
                 accession=accn,
@@ -1018,18 +1078,18 @@ def load_aapl_historical_pe(
                 acceptance_datetime=filing_meta["acceptance_datetime"],
                 usable_date=filing_meta["usable_date"],
                 usable_date_rule=filing_meta["usable_date_rule"],
-                source_url="https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/EarningsPerShareDiluted.json",
+                source_url=f"https://data.sec.gov/api/xbrl/companyconcept/{issuer_config.issuer_id}/us-gaap/EarningsPerShareDiluted.json",
                 content_sha256=concept_sha,
                 stated_directly=True,
                 derivation="directly tagged quarter-length XBRL fact",
             )
             quarter_evidence.append(q_ev)
-
+        
         elif YEAR_MIN_DAYS <= span <= YEAR_MAX_DAYS and form == "10-K":
-            fy = fiscal_year_of(end_d, fye_month)
+            fy = fiscal_year_of(end_d, issuer_config.fye_month)
             a_ev = QuarterEpsEvidence(
                 evidence_id=f"ev-annual-{accn}-{end_d.isoformat()}",
-                issuer_id="CIK0000320193",
+                issuer_id=issuer_config.issuer_id,
                 evidence_class=EVIDENCE_CLASS_FILED,
                 form=form,
                 accession=accn,
@@ -1043,15 +1103,15 @@ def load_aapl_historical_pe(
                 acceptance_datetime=filing_meta["acceptance_datetime"],
                 usable_date=filing_meta["usable_date"],
                 usable_date_rule=filing_meta["usable_date_rule"],
-                source_url="https://data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/EarningsPerShareDiluted.json",
+                source_url=f"https://data.sec.gov/api/xbrl/companyconcept/{issuer_config.issuer_id}/us-gaap/EarningsPerShareDiluted.json",
                 content_sha256=concept_sha,
                 stated_directly=True,
                 derivation="directly tagged annual XBRL fact",
             )
             annual_evidence.append(a_ev)
-
+    
     # Furnished Q4 evidence from Form 8-K Item 2.02 EX-99.1
-    if enable_furnished and q4_records_path.exists():
+    if enable_furnished and q4_records_path and q4_records_path.exists():
         q4_study = json.loads(q4_records_path.read_text(encoding="utf-8"))
         for rec in q4_study["records"]:
             if rec.get("source_type") != "SEC_8K_ITEM_2_02_EX_99_1" or not rec.get("meets_st_eva_q4_evidence"):
@@ -1059,12 +1119,12 @@ def load_aapl_historical_pe(
             period_end_d = datetime.date.fromisoformat(rec["quarter_period_end"])
             acceptance_dt = datetime.datetime.fromisoformat(rec["acceptance_datetime"])
             usable_d, usable_r = resolve_usable_date(acceptance_dt, trading_days)
-            fy = fiscal_year_of(period_end_d, fye_month)
+            fy = fiscal_year_of(period_end_d, issuer_config.fye_month)
             fq = 4
-
+            
             furn_ev = QuarterEpsEvidence(
                 evidence_id=f"ev-furn-{rec['accession']}-{period_end_d.isoformat()}",
-                issuer_id="CIK0000320193",
+                issuer_id=issuer_config.issuer_id,
                 evidence_class=EVIDENCE_CLASS_FURNISHED,
                 form="8-K",
                 sec_item="Item 2.02",
@@ -1089,7 +1149,7 @@ def load_aapl_historical_pe(
                 item_2_02_furnished_not_filed=True,
             )
             quarter_evidence.append(furn_ev)
-
+    
     input_manifest = {
         "prices": str(prices_path),
         "concepts": str(concept_path),
@@ -1097,28 +1157,69 @@ def load_aapl_historical_pe(
         "enable_furnished": enable_furnished,
     }
     input_set_id = canonical_json_hash(input_manifest)
-
-    # Use evaluation dates from 2019-01-30 to 2026-10-06 matching POC and CONTRACT §E.4
-    poc_eval_dates = sorted({
+    
+    # Use evaluation dates within the specified date window
+    # For AAPL (and by default for all issuers): use dates from earliest to latest filing
+    # But preserve CONTRACT §E.4 limits for AAPL historical baseline
+    all_eval_dates = sorted({
         filing["usable_date"] for filing in filings_index.values()
-        if "2019-01-30" <= filing["usable_date"] <= "2026-10-06"
     } | {
         ev.usable_date for ev in quarter_evidence
-        if "2019-01-30" <= ev.usable_date <= "2026-10-06"
     })
-
+    
+    if issuer_config.ticker == "AAPL":
+        # AAPL POC/Contract baseline: limit to 2019-01-30 to 2026-10-06 per CONTRACT §E.4
+        poc_eval_dates = [d for d in all_eval_dates if "2019-01-30" <= d <= "2026-10-06"]
+    else:
+        # Other issuers: use all available dates
+        poc_eval_dates = all_eval_dates
+    
     current_price = prices_map.get(trading_days[-1])
-
+    
     return build_historical_pe(
-        issuer_id="CIK0000320193",
-        instrument_id="AAPL",
+        issuer_id=issuer_config.issuer_id,
+        instrument_id=issuer_config.ticker,
         quarter_evidence=quarter_evidence,
         annual_evidence=annual_evidence,
         prices=prices_map,
-        fye_month=fye_month,
+        fye_month=issuer_config.fye_month,
         trading_days=trading_days,
         evaluation_dates=poc_eval_dates,
         current_price_evidence=current_price,
         min_observations=min_observations,
         input_set_id=input_set_id,
     )
+
+
+def load_aapl_historical_pe(
+    base_dir: Optional[Path] = None,
+    enable_furnished: bool = True,
+    min_observations: int = MIN_OBSERVATIONS_FOR_REFERENCE,
+) -> HistoricalPeResult:
+    """Load AAPL frozen dataset and execute production historical P/E pipeline.
+    
+    Maintained for backward compatibility. Delegates to load_issuer_historical_pe.
+    """
+    config = ISSUER_CONFIGS["AAPL"]
+    if base_dir:
+        config = IssuerHistoricalPeConfig(
+            ticker="AAPL",
+            issuer_id=config.issuer_id,
+            fye_month=config.fye_month,
+            data_dir=base_dir,
+            canonical_path=None,
+        )
+    elif (config.data_dir / "daily_prices.json").exists():
+        # Use canonical data directory
+        pass
+    elif config.canonical_path and config.canonical_path.exists():
+        # Fall back to research POC
+        config = IssuerHistoricalPeConfig(
+            ticker="AAPL",
+            issuer_id=config.issuer_id,
+            fye_month=config.fye_month,
+            data_dir=config.canonical_path,
+            canonical_path=None,
+        )
+    
+    return load_issuer_historical_pe(config, enable_furnished, min_observations)
