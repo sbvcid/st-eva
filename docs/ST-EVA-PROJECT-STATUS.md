@@ -9,7 +9,46 @@ This document records state. It introduces no new architectural decisions, modif
 
 ---
 
-## 0. Addendum, 2026-10-10 (newest first — this supersedes nothing above)
+## 0.2. Addendum, 2026-10-10 — Phase C (newest; supersedes nothing above)
+
+Sections §12 and §13 below describe P0 and the Reverse Requirements V1. This
+addendum records Phase C, which adds multi-scenario exit multiples, financial
+history, per-method conditional valuation and the research dossier, and fixes a
+data-safety defect.
+
+**Data-safety defect, found and fixed.** `tests/test_browser_smoke.py` built its
+application with `create_app()`, which defaulted to a real
+`AnalysisServiceAdapter` writing to `data/archives`. Because that suite runs
+genuine end-to-end analyses, every test run wrote into the operator's own
+per-ticker archives. `create_app` now accepts an explicit `archives_dir`, the
+browser suite points at a `TemporaryDirectory`, and
+`tests/test_archive_isolation.py` pins the behaviour. Verified: the browser
+suite now leaves every file under `data/archives` byte-identical.
+
+**Added capabilities.** Reverse requirements matrix with band-derived and
+user-supplied exit multiple scenarios; annual and quarterly financial history
+from SEC filings with year-over-year growth and within-period net margin;
+earnings, revenue, cash flow and enterprise-value methods reported side by side
+with no winner selected; an ordered research dossier with eight sections
+available from `--dossier`.
+
+**Deliberately unchanged.** The valuation engine still runs before the filing
+pass and consumes vendor data only; a new test pins that ordering now that a
+single SEC acquisition feeds both the history and the Investment Context. The
+documented invariant that `--context` does not alter the analysis output also
+still holds: `--financial-history` is a separate opt-in.
+
+**Not done, and recorded as not done.** DCF on live data still reports
+`NOT_COMPUTED` and names the six missing inputs. No production historical P/E
+distribution exists. No dividend data is acquired. No probability, ranking or
+expected value is attached to any scenario.
+
+Full detail, including the AAPL acceptance figures, is in
+[`docs/ROADMAP.md`](ROADMAP.md) §14.
+
+---
+
+## 0.1. Addendum, 2026-10-10 (P0 and Reverse Requirements V1)
 
 The sections below are the 2026-10-09 checkpoint at `10d298f` and are preserved
 as a historical record. This addendum records the two changes made since. It

@@ -2,14 +2,16 @@
 
 **Recorded:** 2026-10-10
 
-**Status update, 2026-10-10 — P0 and the Reverse Requirements V1 build**
+**Status update, 2026-10-10 — P0, the Reverse Requirements V1 build, and Phase C**
 
-P0 (parser regression) is complete and verified; see §8. The Reverse
+P0 (parser regression) is complete and verified; see §12. The Reverse
 Requirements Report V1 is implemented, wired into every run and verified
-end-to-end on live AAPL data; see §9. Both sections record what was actually
-run, not what is intended.
+end-to-end on live AAPL data; see §13. Phase C adds multi-scenario exit
+multiples, financial history, per-method conditional valuation and the research
+dossier, and fixes a data-safety defect in the test suite; see §14. Each
+section records what was actually run, not what is intended.
 
-Everything below §8 is unchanged and still describes proposals rather than
+Everything below §12 is unchanged and still describes proposals rather than
 completed work.
 
 Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
@@ -321,3 +323,85 @@ changing the exit multiple, the required returns or the price changed it.
   yet; the return basis is labelled accordingly.
 - No schema change, no new provider beyond the Treasury rate feed, and no
   modification to existing formulas was required or made.
+
+## 14. Phase C — multi-scenario reverse results and the research dossier
+
+**Date:** 2026-10-10.
+
+### Capability tiers
+
+Each capability is stated at the tier actually reached, not the tier intended.
+"Implemented and tested" means the code exists, is wired into a real run, and
+the behaviour is covered by tests that were executed.
+
+| Capability | Tier | Evidence |
+|---|---|---|
+| Reverse requirements matrix over horizon x required return x exit multiple | **Implemented, tested, integrated** | Runs on every invocation; 16 live AAPL cells |
+| Exit multiple scenarios from a historical distribution | **Implemented, tested** | `exit_multiples_from_band`; refuses a thin band |
+| User-supplied exit multiple, labelled as such | **Implemented, tested** | Recorded with `source: user_supplied` |
+| Financial history: annual and quarterly revenue, net income, diluted EPS | **Implemented, tested, integrated** | 71 SEC observations for AAPL; 6 series |
+| Year-over-year growth with comparability rules | **Implemented, tested** | Growth refused across mismatched windows |
+| Net margin computed inside one period | **Implemented, tested** | Refused when period ends differ |
+| Earnings / revenue / cash flow / enterprise-value methods, kept separate | **Implemented, tested, integrated** | All four computed on live AAPL |
+| Observed P/E, P/S, P/FCF, EV/EBITDA and yields | **Implemented, tested, integrated** | Present in the dossier |
+| Risk-free rates at four tenors with observation dates | **Implemented, tested, integrated** | 2026-10-09 curve fetched live |
+| CAPM cost of equity with disclosed provenance | **Implemented, tested** | Rf + beta x ERP, each part labelled |
+| Investor target return as a separate scenario input | **Implemented, tested, integrated** | Never merged with the model output |
+| DCF reverse solve (implied explicit growth rate) | **Implemented, tested** | Reproduces a known value to 1e-6 |
+| DCF on live data | **Not done — blocked on data** | Names six missing inputs |
+| Production historical P/E distribution | **Not done** | ADR-HISTORICAL-PE-METHODOLOGY work |
+| Dividend / total-return scenarios | **Not done** | No dividend data is acquired |
+| Probability, ranking or expected value over scenarios | **Deliberately not done** | Out of scope by design |
+
+### Data-safety defect found and fixed
+
+`tests/test_browser_smoke.py` built its application with `create_app()`, which
+defaulted to a real `AnalysisServiceAdapter` writing to `data/archives`. That
+suite runs genuine end-to-end analyses, so **every test run was writing into the
+operator's own per-ticker archives**. Confirmed by comparing sizes and
+modification times across a run.
+
+Fixed by threading an explicit `archives_dir` from `create_app` to the adapter
+and pointing the browser suite at a `TemporaryDirectory`.
+`tests/test_archive_isolation.py` pins the behaviour: the default is still the
+operator's directory, an explicit directory is honoured, importing the web
+package touches nothing, and the browser suite passes an explicit directory.
+Verified after the change: the browser suite leaves every file under
+`data/archives` byte-identical.
+
+### AAPL acceptance actually performed
+
+`as_of` 2026-10-09, price 336.64 USD, run twice with identical arguments:
+
+- Both runs produced an identical package fingerprint and an identical dossier.
+- Financial history: 4 annual and 8 quarterly points each for revenue, net
+  income and diluted EPS, from 71 SEC observations. Year-over-year growth at
+  2025-09-27: revenue +6.43%, net income +19.50%, diluted EPS +22.70%. Net
+  margin 23.97% -> 26.92% -> 27.15% -> 27.62%.
+- All four method results independently recomputed outside the production code
+  and matched to 1e-6: EPS at 32x, revenue at 9x P/S, FCF at 30x, EBITDA at
+  24x EV/EBITDA.
+- Matrix spot checks at a 10% required return: 1 year target 370.3040 and EPS
+  11.5720; 5 year target 542.1621 and EPS 16.9426. Both matched hand
+  recomputation.
+- Rates: 13-week 4.057%, 5-year 5.021%, 10-year 5.244%, 30-year 5.600%, all
+  observed 2026-10-09. CAPM cost of equity 11.24%.
+
+### Gaps carried forward
+
+- The DCF block still reports `NOT_COMPUTED` on live data. The solver is
+  implemented and tested, but no current provider observes
+  `depreciation_amortisation`, `capex`, `working_capital_change`,
+  `cost_of_debt`, `market_value_of_debt` or `tax_rate`, and no
+  `cash_flow_basis` is declared. FCFF, FCFE, WACC and the equity discount rate
+  remain separated rather than mixed, and the gap is named rather than filled.
+- The vendor P/E band holds 8 observations against the 20 threshold, so it is
+  descriptive only and the live run supplied the reference multiple explicitly.
+  This is why the AAPL matrix shows a single user-supplied multiple rather than
+  a percentile set: the percentile path is exercised by fixtures instead.
+- The vendor `trailingEps` declares no period; the 12-month window is flagged as
+  an assumption.
+- No dividend data, so every required return remains a price return.
+- Enterprise value and market capitalization are taken as observed rather than
+  rebuilt from price times shares plus net debt, because the provider's debt
+  and cash definitions are not reconciled to its share count.

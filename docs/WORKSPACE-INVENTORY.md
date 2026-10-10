@@ -631,3 +631,12 @@ point for a single-company acceptance run.
 
 Everything else in this inventory was re-measured on 2026-10-07 and is left as
 recorded; only the `data/` claim was found to be wrong.
+
+**Correction, 2026-10-10 (Phase C).** These archives were also being *written*
+by the test suite, not only read. `tests/test_browser_smoke.py` constructed its
+app through `create_app()`, which defaulted to a real `AnalysisServiceAdapter`
+pointing at `data/archives`, and that suite runs genuine end-to-end analyses.
+`create_app` now accepts an explicit `archives_dir` and the browser suite
+points at a `TemporaryDirectory`, pinned by `tests/test_archive_isolation.py`.
+The files listed above were read for verification only and were not modified;
+the browser suite now leaves them byte-identical.
