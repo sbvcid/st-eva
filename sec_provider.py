@@ -49,6 +49,7 @@ from data_contract import (
     METRIC_ASSETS,
     METRIC_CASH,
     METRIC_COMMERCIAL_PAPER,
+    METRIC_DIVIDENDS_PER_SHARE,
     METRIC_LONG_TERM_DEBT,
     METRIC_MARKETABLE_SECURITIES_CURRENT,
     METRIC_DEFINITIONS,
@@ -186,17 +187,30 @@ SEC_CONCEPTS: Dict[str, Tuple[Concept, ...]] = {
     METRIC_COMMERCIAL_PAPER: (
         Concept("us-gaap", "CommercialPaper"),
     ),
+    METRIC_DIVIDENDS_PER_SHARE: (
+        Concept("us-gaap", "CommonStockDividendsPerShareDeclared"),
+        Concept("us-gaap", "CommonStockDividendsPerShareCashDeclared"),
+    ),
 }
 
 # A duration metric needs a trailing-twelve-month view on the SEC side so it can
 # be compared with a vendor trailing figure. An instant metric does not.
-TTM_METRICS = (METRIC_REVENUE, METRIC_NET_INCOME, METRIC_EPS_DILUTED)
+TTM_METRICS = (
+    METRIC_REVENUE,
+    METRIC_NET_INCOME,
+    METRIC_EPS_DILUTED,
+    METRIC_DIVIDENDS_PER_SHARE,
+)
 
 # Default metrics acquired by SECProvider.fetch: includes cross-source comparable
-# metrics plus capital-structure balance-sheet components.
+# metrics plus capital-structure balance-sheet components and dividend observations.
 SEC_DEFAULT_METRICS: Tuple[str, ...] = tuple(
     list(COMPARABLE_METRICS)
-    + [METRIC_MARKETABLE_SECURITIES_CURRENT, METRIC_COMMERCIAL_PAPER]
+    + [
+        METRIC_MARKETABLE_SECURITIES_CURRENT,
+        METRIC_COMMERCIAL_PAPER,
+        METRIC_DIVIDENDS_PER_SHARE,
+    ]
 )
 
 

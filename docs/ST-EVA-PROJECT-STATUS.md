@@ -7,7 +7,30 @@
 
 This document records state. It introduces no new architectural decisions, modifies no formal ADRs, alters no methodology contracts, changes no database schemas or migrations, and confers no implementation authorizations.
 
-## 0.6. Addendum, 2026-10-10 — Phase G: Capital Structure Closure and Enterprise Value Reconciliation (newest; supersedes nothing above)
+## 0.7. Addendum, 2026-10-10 — Phase H: Dividend Evidence and Total-Return Calculations (newest; supersedes nothing above)
+
+This addendum records Phase H, which implements source-backed dividend observations from chart events and SEC filings, computes trailing twelve-month dividends ($D_{\text{TTM}}$), TTM dividend yield, indicated annual dividend rate and yield, YoY dividend growth, evaluates historical price vs total returns across matched holding periods (Cash-retained and DRIP-reinvested), and connects total-return scenarios to the reverse-requirements engine with explicit dividend relief metrics.
+
+**Added & verified capabilities:**
+- **Dividend Evidence Acquisition (`dividend_history.py`):** Extended data contract (`data_contract.py`) and SEC provider (`sec_provider.py`) with standard dividend metrics and concepts (`us-gaap:CommonStockDividendsPerShareDeclared`). Tracks discrete cash payments, declaration/ex/record/pay dates, currency, and pre/post stock-split adjustment basis (e.g. 2020 4:1 split).
+- **Deterministic Dividend Metrics:** Sums trailing 4 quarters ($D_{\text{TTM}} = \$1.06$ on AAPL at \$336.64, yield 0.315%), calculates indicated annual dividend rate ($4 \times \$0.27 = \$1.08$, yield 0.321%), and calculates YoY TTM dividend growth (+3.92%).
+- **Historical Total Returns Engine:** Evaluates matched 1y, 3y, 5y CAGR for Price Return (ex-dividend), Total Return (Cash Dividends Retained), and Total Return (DRIP Reinvested). For AAPL ending 2026-10-06: 1Y Price 30.00% vs DRIP TR 30.48%; 3Y Price 23.13% vs DRIP TR 23.68%; 5Y Price 18.63% vs DRIP TR 19.22%.
+- **Reverse Requirements Extension:** Adds explicit dividend conventions: `PRICE_RETURN_ONLY` ($P_T = P_0(1+r)^T$), `CASH_DIVIDENDS_RETAINED` ($P_T = P_0(1+r)^T - T \times D$), and `DIVIDENDS_REINVESTED_AT_TARGET_RETURN` ($P_T = P_0(1+r)^T - D \frac{(1+r)^T - 1}{r}$). Formulates exact dividend relief metrics ($\Delta P_T$, $\Delta \text{EPS}_T$, $\Delta \text{CAGR}$).
+- **Dossier & Report Rendering (`research_dossier.py`):** Dedicated Section 6 (`dividends_and_total_return`) formatting dividend summary, historical comparison table, reverse hurdle relief table, and trailing 8 quarters payment records.
+- **Versioned Phase H Package:** Emitted `history/AAPL_research_dossier_20261010_phase_h.json` and human-readable text report alongside frozen Phase F benchmark.
+
+**Deliberately unchanged & protected:**
+- ST-EVA remains an evidence and deterministic-calculation engine: no scenario probabilities, no ranking, and no expected-value aggregation.
+- Price-return calculations remain the untouched baseline; dividends are never silently added to price hurdles without explicit convention declaration.
+- Frozen Phase F package (`AAPL_research_dossier_20261009.json`) remains 100% byte-identical.
+- All persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified SHA-256 byte-identical.
+- Full test suite passed: 488 passed, 11 skipped in 41.61s (9 new tests in `test_dividends.py`, zero failures).
+
+Full detail is in [`docs/ROADMAP.md`](ROADMAP.md) §19.
+
+---
+
+## 0.6. Addendum, 2026-10-10 — Phase G: Capital Structure Closure and Enterprise Value Reconciliation (supersedes nothing above)
 
 This addendum records Phase G, which closes balance-sheet and capital-structure data required to reconstruct enterprise value, discovers the exact mathematical bridge connecting provider enterprise value to filed SEC facts for AAPL, reconciles EV/EBITDA valuation multiples, and enforces strict PARTIAL status governance and accounting limitation disclosures.
 

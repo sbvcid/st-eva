@@ -1,0 +1,634 @@
+==============================================================================
+ST-EVA 研究資料冊  |  AAPL  |  2026-10-09
+dossier research-dossier/1.0
+==============================================================================
+
+This dossier records sourced evidence and deterministic calculations made under explicitly stated assumptions. It does not assign probabilities to scenarios, rank them, or combine them into a single expected value. A conditional figure is the fundamental a chosen multiple corresponds to, not a claim about what the market expects.
+
+------------------------------------------------------------------------------
+市場與公司資料 / Market and company data
+------------------------------------------------------------------------------
+公司: AAPL (Live Acquired) (AAPL)  交易所: NMS  幣別: USD
+估值時點: 2026-10-09
+
+市場資料:
+  股價 336.64 USD   來源 YahooFinance+YahooFinanceFundamentals (API_LIVE)   來源欄位 Yahoo Finance chart API
+  市值 4,918,530,543,600   企業價值 4,940,475,543,600
+
+資料品質:
+  狀態: UNVERIFIABLE
+  取得錯誤: 無
+  共識 EPS 期間: +1y
+
+跨來源比對 (CROSS-SOURCE VERIFICATION):
+  7 of 7 metrics were cross-checked against a second source: 3 CONSISTENT, 1 METHODOLOGY_MISMATCH, 1 PERIOD_MISMATCH, 2 UNAVAILABLE.
+  指標                     狀態                     差異           說明
+  assets                 UNAVAILABLE            -            
+      assets could not be cross-checked: vendor side unavailable. Neither side is treated as the correct answer.
+  cash                   METHODOLOGY_MISMATCH   57.7964%     
+      cash was not compared because the two sources define it differently: currency differs: vendor None against filing 'USD' No numeric verdict is issued, both values are retained unchanged, and neither source is treated as authoritative.
+  eps_diluted            CONSISTENT             0.0000%      
+      eps_diluted agrees across the two sources. The vendor reports 8.72 and the filing source 8.719999999999999, a difference of 0.0000%, within the declared tolerance of 1.00% relative and 0.01 absolute (effective 0.01). Both values are retained unchanged.
+  long_term_debt         UNAVAILABLE            -            
+      long_term_debt could not be cross-checked: vendor side unavailable. Neither side is treated as the correct answer.
+  net_income             CONSISTENT             0.0000%      
+      net_income agrees across the two sources. The vendor reports 128930000000.0 and the filing source 128930000000.0, a difference of 0.0000%, within the declared tolerance of 0.50% relative and 50000000 absolute (effective 50000000). Both values are retained unchanged. The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified.
+  revenue                CONSISTENT             0.0000%      
+      revenue agrees across the two sources. The vendor reports 466823000000.0 and the filing source 466823000000.0, a difference of 0.0000%, within the declared tolerance of 0.50% relative and 50000000 absolute (effective 50000000). Both values are retained unchanged. The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified.
+  shares_outstanding     PERIOD_MISMATCH        0.0000%      
+      shares_outstanding could not be period-aligned: the vendor publishes 14594180000.0 with no date, while the filing source reports 14594180000.0 as of 2026-07-17. The two values are identical, which is consistent with the same underlying figure, but an undated value cannot be confirmed to be contemporaneous, so the agreement is reported and not validated.
+
+  未採用任何一方為權威值；每個數值皆保留原值。
+
+  * Market capitalization and enterprise value are taken as observed from the provider. They are not rebuilt from price times shares plus net debt, because the provider's debt and cash definitions are not reconciled to its share count.
+
+------------------------------------------------------------------------------
+歷史財務變化 / Financial history
+------------------------------------------------------------------------------
+來源: SecEdgar   觀測筆數: 100
+
+[revenue / ANNUAL]  4 筆
+   期間末 2024-09-28    值 391.04B              單位 currency   可用日 2024-11-01   來源 SecEdgar 
+   期間末 2025-09-27    值 416.16B              單位 currency   可用日 2025-10-31   來源 SecEdgar ANNUAL_FACT_AS_TRAILING_WINDOW
+   期間末 2026-03-28    值 451.44B              單位 currency   可用日 2026-05-01   來源 SecEdgar ANNUAL_ROLL_FORWARD
+   期間末 2026-06-27    值 466.82B              單位 currency   可用日 2026-07-31   來源 SecEdgar ANNUAL_ROLL_FORWARD
+
+[revenue / QUARTERLY]  8 筆
+   期間末 2024-03-30    值 90.75B               單位 currency   可用日 2024-05-03   來源 SecEdgar 
+   期間末 2024-06-29    值 85.78B               單位 currency   可用日 2024-08-02   來源 SecEdgar 
+   期間末 2024-12-28    值 124.30B              單位 currency   可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-03-29    值 95.36B               單位 currency   可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-06-28    值 94.04B               單位 currency   可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-12-27    值 143.76B              單位 currency   可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-03-28    值 111.18B              單位 currency   可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-06-27    值 109.42B              單位 currency   可用日 2026-07-31   來源 SecEdgar 
+
+[net_income / ANNUAL]  4 筆
+   期間末 2024-09-28    值 93.74B               單位 currency   可用日 2024-11-01   來源 SecEdgar 
+   期間末 2025-09-27    值 112.01B              單位 currency   可用日 2025-10-31   來源 SecEdgar ANNUAL_FACT_AS_TRAILING_WINDOW
+   期間末 2026-03-28    值 122.58B              單位 currency   可用日 2026-05-01   來源 SecEdgar ANNUAL_ROLL_FORWARD
+   期間末 2026-06-27    值 128.93B              單位 currency   可用日 2026-07-31   來源 SecEdgar ANNUAL_ROLL_FORWARD
+
+[net_income / QUARTERLY]  8 筆
+   期間末 2024-03-30    值 23.64B               單位 currency   可用日 2024-05-03   來源 SecEdgar 
+   期間末 2024-06-29    值 21.45B               單位 currency   可用日 2024-08-02   來源 SecEdgar 
+   期間末 2024-12-28    值 36.33B               單位 currency   可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-03-29    值 24.78B               單位 currency   可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-06-28    值 23.43B               單位 currency   可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-12-27    值 42.10B               單位 currency   可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-03-28    值 29.58B               單位 currency   可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-06-27    值 29.79B               單位 currency   可用日 2026-07-31   來源 SecEdgar 
+
+[eps_diluted / ANNUAL]  4 筆
+   期間末 2024-09-28    值 6.08                 單位 per_share  可用日 2024-11-01   來源 SecEdgar 
+   期間末 2025-09-27    值 7.46                 單位 per_share  可用日 2025-10-31   來源 SecEdgar ANNUAL_FACT_AS_TRAILING_WINDOW
+   期間末 2026-03-28    值 8.26                 單位 per_share  可用日 2026-05-01   來源 SecEdgar ANNUAL_ROLL_FORWARD
+   期間末 2026-06-27    值 8.72                 單位 per_share  可用日 2026-07-31   來源 SecEdgar ANNUAL_ROLL_FORWARD
+
+[eps_diluted / QUARTERLY]  8 筆
+   期間末 2024-03-30    值 1.53                 單位 per_share  可用日 2024-05-03   來源 SecEdgar 
+   期間末 2024-06-29    值 1.40                 單位 per_share  可用日 2024-08-02   來源 SecEdgar 
+   期間末 2024-12-28    值 2.40                 單位 per_share  可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-03-29    值 1.65                 單位 per_share  可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-06-28    值 1.57                 單位 per_share  可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-12-27    值 2.84                 單位 per_share  可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-03-28    值 2.01                 單位 per_share  可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-06-27    值 2.02                 單位 per_share  可用日 2026-07-31   來源 SecEdgar 
+
+[assets / INSTANT]  8 筆
+   期間末 2024-09-28    值 364.98B              單位 currency   可用日 2024-11-01   來源 SecEdgar 
+   期間末 2024-12-28    值 344.08B              單位 currency   可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-03-29    值 331.23B              單位 currency   可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-06-28    值 331.50B              單位 currency   可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-09-27    值 359.24B              單位 currency   可用日 2025-10-31   來源 SecEdgar 
+   期間末 2025-12-27    值 379.30B              單位 currency   可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-03-28    值 371.08B              單位 currency   可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-06-27    值 383.27B              單位 currency   可用日 2026-07-31   來源 SecEdgar 
+
+[cash / INSTANT]  8 筆
+   期間末 2024-09-28    值 29.94B               單位 currency   可用日 2024-11-01   來源 SecEdgar 
+   期間末 2024-12-28    值 30.30B               單位 currency   可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-03-29    值 28.16B               單位 currency   可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-06-28    值 36.27B               單位 currency   可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-09-27    值 35.93B               單位 currency   可用日 2025-10-31   來源 SecEdgar 
+   期間末 2025-12-27    值 45.32B               單位 currency   可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-03-28    值 45.57B               單位 currency   可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-06-27    值 39.54B               單位 currency   可用日 2026-07-31   來源 SecEdgar 
+
+[long_term_debt / INSTANT]  8 筆
+   期間末 2024-09-28    值 96.66B               單位 currency   可用日 2024-11-01   來源 SecEdgar 
+   期間末 2024-12-28    值 94.80B               單位 currency   可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-03-29    值 92.20B               單位 currency   可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-06-28    值 91.78B               單位 currency   可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-09-27    值 90.68B               單位 currency   可用日 2025-10-31   來源 SecEdgar 
+   期間末 2025-12-27    值 88.51B               單位 currency   可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-03-28    值 82.71B               單位 currency   可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-06-27    值 82.35B               單位 currency   可用日 2026-07-31   來源 SecEdgar 
+
+[shares_outstanding / INSTANT]  8 筆
+   期間末 2024-10-18    值 15.12B               單位 count      可用日 2024-11-01   來源 SecEdgar 
+   期間末 2025-01-17    值 15.02B               單位 count      可用日 2025-01-31   來源 SecEdgar 
+   期間末 2025-04-18    值 14.94B               單位 count      可用日 2025-05-02   來源 SecEdgar 
+   期間末 2025-07-18    值 14.84B               單位 count      可用日 2025-08-01   來源 SecEdgar 
+   期間末 2025-10-17    值 14.78B               單位 count      可用日 2025-10-31   來源 SecEdgar 
+   期間末 2026-01-16    值 14.68B               單位 count      可用日 2026-01-30   來源 SecEdgar 
+   期間末 2026-04-17    值 14.69B               單位 count      可用日 2026-05-01   來源 SecEdgar 
+   期間末 2026-07-17    值 14.59B               單位 count      可用日 2026-07-31   來源 SecEdgar 
+
+成長率 (年增率):
+  [revenue.annual]
+   2024-09-28   值 391.04B              成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2025-09-27   值 416.16B              成長 +6.4%      可比較 是
+   2026-03-28   值 451.44B              成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2026-06-27   值 466.82B              成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+  [revenue.quarterly]
+   2024-03-30   值 90.75B               成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2024-06-29   值 85.78B               成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2024-12-28   值 124.30B              成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2025-03-29   值 95.36B               成長 +5.1%      可比較 是
+   2025-06-28   值 94.04B               成長 +9.6%      可比較 是
+   2025-12-27   值 143.76B              成長 +15.7%     可比較 是
+   2026-03-28   值 111.18B              成長 +16.6%     可比較 是
+   2026-06-27   值 109.42B              成長 +16.4%     可比較 是
+  [net_income.annual]
+   2024-09-28   值 93.74B               成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2025-09-27   值 112.01B              成長 +19.5%     可比較 是
+   2026-03-28   值 122.58B              成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2026-06-27   值 128.93B              成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+  [net_income.quarterly]
+   2024-03-30   值 23.64B               成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2024-06-29   值 21.45B               成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2024-12-28   值 36.33B               成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2025-03-29   值 24.78B               成長 +4.8%      可比較 是
+   2025-06-28   值 23.43B               成長 +9.3%      可比較 是
+   2025-12-27   值 42.10B               成長 +15.9%     可比較 是
+   2026-03-28   值 29.58B               成長 +19.4%     可比較 是
+   2026-06-27   值 29.79B               成長 +27.1%     可比較 是
+  [eps_diluted.annual]
+   2024-09-28   值 6.08                 成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2025-09-27   值 7.46                 成長 +22.7%     可比較 是
+   2026-03-28   值 8.26                 成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2026-06-27   值 8.72                 成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+  [eps_diluted.quarterly]
+   2024-03-30   值 1.53                 成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2024-06-29   值 1.40                 成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2024-12-28   值 2.40                 成長 N/A        可比較 否
+       原因: No observation of this metric covering a comparable window about a year earlier was acquired, so no year-over-year rate is computed.
+   2025-03-29   值 1.65                 成長 +7.8%      可比較 是
+   2025-06-28   值 1.57                 成長 +12.1%     可比較 是
+   2025-12-27   值 2.84                 成長 +18.3%     可比較 是
+   2026-03-28   值 2.01                 成長 +21.8%     可比較 是
+   2026-06-27   值 2.02                 成長 +28.7%     可比較 是
+  [assets.instant]
+   2024-09-28   值 364.98B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2024-12-28   值 344.08B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-03-29   值 331.23B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-06-28   值 331.50B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-09-27   值 359.24B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-12-27   值 379.30B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-03-28   值 371.08B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-06-27   值 383.27B              成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+  [cash.instant]
+   2024-09-28   值 29.94B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2024-12-28   值 30.30B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-03-29   值 28.16B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-06-28   值 36.27B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-09-27   值 35.93B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-12-27   值 45.32B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-03-28   值 45.57B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-06-27   值 39.54B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+  [long_term_debt.instant]
+   2024-09-28   值 96.66B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2024-12-28   值 94.80B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-03-29   值 92.20B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-06-28   值 91.78B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-09-27   值 90.68B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-12-27   值 88.51B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-03-28   值 82.71B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-06-27   值 82.35B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+  [shares_outstanding.instant]
+   2024-10-18   值 15.12B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-01-17   值 15.02B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-04-18   值 14.94B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-07-18   值 14.84B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2025-10-17   值 14.78B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-01-16   值 14.68B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-04-17   值 14.69B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+   2026-07-17   值 14.59B               成長 N/A        可比較 否
+       原因: This is a point-in-time balance observed at an effective date. It has no duration to compound over, so no growth rate is computed for it.
+
+利潤率:
+  [net_margin.annual]
+   2024-09-28   分子 93.74B             分母 391.04B            利潤率 24.0%
+   2025-09-27   分子 112.01B            分母 416.16B            利潤率 26.9%
+   2026-03-28   分子 122.58B            分母 451.44B            利潤率 27.2%
+   2026-06-27   分子 128.93B            分母 466.82B            利潤率 27.6%
+  [net_margin.quarterly]
+   2024-03-30   分子 23.64B             分母 90.75B             利潤率 26.0%
+   2024-06-29   分子 21.45B             分母 85.78B             利潤率 25.0%
+   2024-12-28   分子 36.33B             分母 124.30B            利潤率 29.2%
+   2025-03-29   分子 24.78B             分母 95.36B             利潤率 26.0%
+   2025-06-28   分子 23.43B             分母 94.04B             利潤率 24.9%
+   2025-12-27   分子 42.10B             分母 143.76B            利潤率 29.3%
+   2026-03-28   分子 29.58B             分母 111.18B            利潤率 26.6%
+   2026-06-27   分子 29.79B             分母 109.42B            利潤率 27.2%
+
+  * Growth is year-over-year within one window shape. A quarterly figure is never differenced against an annual one.
+  * A margin is computed only where numerator and denominator cover the same period end; a missing counterpart produces a stated reason, not a padded number.
+  * A period with no observation is absent from the series rather than interpolated.
+  * Each point keeps its own availability date, so a reader can tell when a figure became knowable rather than only when it covered.
+
+------------------------------------------------------------------------------
+資產負債表與資本結構 / Balance sheet and capital structure
+------------------------------------------------------------------------------
+[時點觀測值 (INSTANT)]  有效日期為觀測當日，非期間金額
+  欄位                 值                  單位/幣別        有效日          可用日          可用基準                   來源
+  assets             383.27B            currency/USD 2026-06-27   2026-07-31   ACCEPTANCE_DATETIME    SecEdgar [UNAVAILABLE]
+    * 比較限制: assets could not be cross-checked: vendor side unavailable. Neither side is treated as the correct answer.
+    * 注意: no usable value from the vendor side
+  cash               39.54B             currency/USD 2026-06-27   2026-07-31   ACCEPTANCE_DATETIME    SecEdgar [METHODOLOGY_MISMATCH]
+    * 比較限制: cash was not compared because the two sources define it differently: currency differs: vendor None against filing 'USD' No numeric verdict is issued, both values are retained unchanged, and neither source is treated as authoritative.
+    * 注意: currency differs: vendor None against filing 'USD'
+  commercial_paper   2.00B              currency/USD 2026-06-27   2026-07-31   ACCEPTANCE_DATETIME    SecEdgar [UNVERIFIABLE]
+    * 注意: a single official source cannot cross-validate itself
+  long_term_debt     82.35B             currency/USD 2026-06-27   2026-07-31   ACCEPTANCE_DATETIME    SecEdgar [UNAVAILABLE]
+    * 比較限制: long_term_debt could not be cross-checked: vendor side unavailable. Neither side is treated as the correct answer.
+    * 注意: no usable value from the vendor side
+  marketable_securities_current 22.86B             currency/USD 2026-06-27   2026-07-31   ACCEPTANCE_DATETIME    SecEdgar [UNVERIFIABLE]
+    * 注意: a single official source cannot cross-validate itself
+  shares_outstanding 14.59B             count        2026-07-17   2026-07-31   ACCEPTANCE_DATETIME    SecEdgar [PERIOD_MISMATCH]
+    * 比較限制: shares_outstanding could not be period-aligned: the vendor publishes 14594180000.0 with no date, while the filing source reports 14594180000.0 as of 2026-07-17. The two values are identical, which is consistent with the same underlying figure, but an undated value cannot be confirmed to be contemporaneous, so the agreement is reported and not validated.
+    * 注意: one side states no period end and no as-of date, so the two figures cannot be attributed to the same moment
+
+[觀察值 vs 重建值]
+  項目                 觀察值(來源)                重建值                    差異            
+  市值                 4,918,530,543,600      4,912,984,755,200      -0.1128%      
+  企業價值               4,940,475,543,600      4,934,929,755,200      -0.1123%      
+  EV/EBITDA倍數        29.41                  29.38                  -0.1123%      
+
+  重建市值定義: price x point-in-time shares outstanding
+  輸入: 價格 336.64 @2026-10-09  ×  股數 14.59B @2026-07-17
+  日期對齊: The price is dated 2026-10-09 and the share count 2026-07-17. They are not from the same date.
+    - The share count and the price are not from the same date. The product is a reconstruction under that mismatch, not a corrected market capitalization.
+    - This is a cover-page shares-outstanding count. It is not the weighted-average diluted share count used in EPS, and the two differ; neither is substituted for the other.
+
+  重建企業價值: PARTIAL
+    定義: market capitalization + total debt (long-term debt + commercial paper) - liquid funds (cash + current marketable securities)
+    值: 4,934,929,755,200
+    淨負債組成: 總負債 84.34B (長期負債 82.35B + 商業本票 2.00B) - 流動資金 62.40B (現金 39.54B + 流動有價證券 22.86B) = 淨負債 21.95B
+    重建 EV/EBITDA: 29.38x (觀察值: 29.41x, EBITDA: 167.96B)
+    已具備組成: long_term_debt, commercial_paper, total_debt, cash, marketable_securities_current
+    缺少組成: short_term_borrowings, non_controlling_interests, preferred_equity
+    - This is not a complete enterprise value. It omits short_term_borrowings, non_controlling_interests, preferred_equity.
+    - Commercial paper (1,997,000,000.00) is included in total debt (84,344,000,000.00) alongside long-term debt (82,347,000,000.00); short-term borrowings are not double-counted.
+    - Current marketable securities (22,855,000,000.00) are included in liquid funds (62,399,000,000.00) alongside cash (39,544,000,000.00).
+    - It also combines a share-count date (2026-07-17), a price date (2026-10-09) and a balance-sheet date (2026-06-27) that need not coincide.
+    - Status remains PARTIAL because reconstructed EV omits non-current marketable securities, operating leases under ASC 842, and off-balance sheet commitments. An arithmetic match with provider net debt does not constitute exhaustive accounting coverage.
+
+  股數口徑: Shares outstanding here is a point-in-time cover-page count. EPS uses a weighted-average diluted count over a window. The two answer different questions and neither is substituted for the other.
+
+  * Provider observations and reconstructed values are reported side by side. Neither overwrites the other and neither is declared correct.
+  * A reconstructed enterprise value built from balance-sheet components is partial by construction and is labelled as such.
+
+------------------------------------------------------------------------------
+估值指標 / Valuation metrics
+------------------------------------------------------------------------------
+目前倍數 (以現價與已報告數字計算):
+  P/E (TTM)        38.61
+  前瞻 P/E           35.11
+  共識前瞻 P/E         35.14
+  P/S              10.54
+  P/FCF            35.98
+  EV/EBITDA        29.41
+
+殖利率:
+  FCF 殖利率          2.8%
+  EBITDA / EV      3.4%
+  營收 / 市值          9.5%
+
+歷史估值區間:
+  P/E        中位數 35.65      觀測數 8        可否作參考: DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS
+  P/S        中位數 9.44       觀測數 9        可否作參考: DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS
+  P/FCF      中位數 N/A        觀測數 未宣告      可否作參考: UNAVAILABLE
+  EV/EBITDA  中位數 27.01      觀測數 8        可否作參考: DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS
+  (採用門檻: 歷史區間需 >= 20 個觀測值方可作為參考)
+
+生產級點時歷史 P/E 分布 (PRODUCTION PIT HISTORICAL P/E):
+  狀態: USABLE_FOR_REFERENCE (門檻需求 >= 20 筆有效觀測值)
+  有效樣本數: 31   涵蓋期間: 2019-01-31 至 2026-07-31
+  抽樣時程: PERIODIC_FILING_USABLE_DATES (Evaluated on periodic SEC filing and earnings release usable dates (10-Q, 10-K, 8-K Item 2.02); not a continuous daily trading history.)
+  統計: 平均數 28.81   標準差 5.89   最小值 13.69   最大值 37.46
+  分位數參考:
+    10th 分位              20.99
+    25th 分位              25.93
+    50th 分位(中位數)         28.95
+    75th 分位              33.05
+    90th 分位              36.19
+  排除樣本數: 0 筆
+  估值參考狀態: 合格，已可作為多情境反推矩陣之參考倍數來源。
+
+共識交叉檢核:
+  共識前瞻 EPS          9.5804
+  以歷史中位數倍數計之價格 N/A
+  該價格 vs 現價        N/A
+
+  * An observed multiple is the multiple the market is applying to a reported figure today. It is not a reference and it does not imply what the market expects.
+  * A historical band whose observation count is below the stated threshold is reported but is not used as a reference multiple.
+  * Production historical P/E requires at least 20 valid point-in-time observations to qualify as a reference distribution.
+
+------------------------------------------------------------------------------
+股利資料與總報酬分析 / Dividends and total-return analysis
+------------------------------------------------------------------------------
+[股利與殖利率概況]
+  狀態: COMPUTED
+  過去12個月累計現金股利 (TTM): 1.0600 USD (殖利率: 0.31%)
+  最新單季配息: 0.2700 (USD, 除息日: 2026-08-10)
+  指示年化股利 (Indicated, 4x最新季配): 1.0800 (指示殖利率: 0.32%)
+  TTM 股利年增率 (YoY Growth): +3.92%
+  股利資料來源: Market chart events
+
+[歷史報酬率比較: 股價報酬 vs 總報酬 (Price Return vs Total Return)]
+  期間     起始日          結束日          純股價報酬CAGR        現金保留總報酬          DRIP再投資總報酬       股利貢獻(DRIP)    
+  1y     2025-10-06   2026-10-06   30.00%           30.41%           30.48%           +0.48%        
+  3y     2023-10-09   2026-10-06   23.13%           23.51%           23.68%           +0.55%        
+  5y     2021-10-06   2026-10-06   18.63%           18.98%           19.22%           +0.59%        
+
+[反推要求條件比較: 純股價報酬 vs 總報酬 (Reverse Requirements Comparison)]
+  (說明: 納入股利後，達到相同年化報酬率所需之終端股價與獲利門檻相應減輕)
+  持有期    目標報酬     出場PE     純股價要求(目標價/EPS/CAGR)  現金保留總報酬(目標價/EPS/CAGR/減免) 再投資總報酬(目標價/EPS/CAGR/減免) 
+  1y     8.0%     21.0x    363.57 / 17.32 / 98.6% 362.51 / 17.27 / 98.0% (-0.58%) 362.51 / 17.27 / 98.0% (-0.58%)
+  1y     8.0%     25.9x    363.57 / 14.02 / 60.8% 362.51 / 13.98 / 60.4% (-0.47%) 362.51 / 13.98 / 60.4% (-0.47%)
+  1y     8.0%     28.9x    363.57 / 12.56 / 44.0% 362.51 / 12.52 / 43.6% (-0.42%) 362.51 / 12.52 / 43.6% (-0.42%)
+  1y     8.0%     33.0x    363.57 / 11.00 / 26.2% 362.51 / 10.97 / 25.8% (-0.37%) 362.51 / 10.97 / 25.8% (-0.37%)
+  1y     8.0%     36.2x    363.57 / 10.05 / 15.2% 362.51 / 10.02 / 14.9% (-0.34%) 362.51 / 10.02 / 14.9% (-0.34%)
+  1y     10.0%    21.0x    370.30 / 17.64 / 102.3% 369.24 / 17.59 / 101.7% (-0.58%) 369.24 / 17.59 / 101.7% (-0.58%)
+  1y     10.0%    25.9x    370.30 / 14.28 / 63.8% 369.24 / 14.24 / 63.3% (-0.47%) 369.24 / 14.24 / 63.3% (-0.47%)
+  1y     10.0%    28.9x    370.30 / 12.79 / 46.7% 369.24 / 12.76 / 46.3% (-0.42%) 369.24 / 12.76 / 46.3% (-0.42%)
+  1y     10.0%    33.0x    370.30 / 11.21 / 28.5% 369.24 / 11.17 / 28.1% (-0.37%) 369.24 / 11.17 / 28.1% (-0.37%)
+  1y     10.0%    36.2x    370.30 / 10.23 / 17.3% 369.24 / 10.20 / 17.0% (-0.34%) 369.24 / 10.20 / 17.0% (-0.34%)
+  1y     12.0%    21.0x    377.04 / 17.96 / 106.0% 375.98 / 17.91 / 105.4% (-0.58%) 375.98 / 17.91 / 105.4% (-0.58%)
+  1y     12.0%    25.9x    377.04 / 14.54 / 66.8% 375.98 / 14.50 / 66.3% (-0.47%) 375.98 / 14.50 / 66.3% (-0.47%)
+  1y     12.0%    28.9x    377.04 / 13.02 / 49.4% 375.98 / 12.99 / 48.9% (-0.42%) 375.98 / 12.99 / 48.9% (-0.42%)
+  1y     12.0%    33.0x    377.04 / 11.41 / 30.8% 375.98 / 11.38 / 30.5% (-0.37%) 375.98 / 11.38 / 30.5% (-0.37%)
+  1y     12.0%    36.2x    377.04 / 10.42 / 19.5% 375.98 / 10.39 / 19.1% (-0.34%) 375.98 / 10.39 / 19.1% (-0.34%)
+  ... (共 80 組情境比對，詳見機器可讀 JSON 檔案)
+
+[近 8 季現金股利發放紀錄 (最新在前)]:
+  除息日          每股金額         拆股前原始金額          幣別         資料來源                
+  2026-08-10   0.2700       0.2700           USD        Market chart events 
+  2026-05-11   0.2700       0.2700           USD        Market chart events 
+  2026-02-09   0.2600       0.2600           USD        Market chart events 
+  2025-11-10   0.2600       0.2600           USD        Market chart events 
+  2025-08-11   0.2600       0.2600           USD        Market chart events 
+  2025-05-12   0.2600       0.2600           USD        Market chart events 
+  2025-02-10   0.2500       0.2500           USD        Market chart events 
+  2024-11-08   0.2500       0.2500           USD        Market chart events 
+
+  * Dividends are reported as verifiable point-in-time facts based on declared ex-dividend dates.
+  * Indicated annual dividend is strictly an annualized run-rate (latest quarterly payment x 4), distinguished from historical trailing twelve-month dividends and never guaranteed.
+  * Total returns are computed under two explicit conventions: (1) simple cash retention without reinvestment, and (2) full dividend reinvestment (DRIP) on ex-dates.
+  * Dividends are reported as verifiable point-in-time facts based on declared dates.
+  * Indicated annual dividend is strictly an annualized run-rate (latest quarterly payment x 4), never guaranteed.
+  * Total returns are computed under explicit conventions: (1) simple cash retention and (2) DRIP reinvestment.
+
+------------------------------------------------------------------------------
+目前價格的反推要求 / Reverse requirements at the current price
+------------------------------------------------------------------------------
+現價 336.64 USD (Yahoo Finance chart API)
+起始 EPS 8.7200  基礎 TRAILING_TWELVE_MONTHS  涵蓋 12.0 個月  期間 trailing twelve months (assumed; source stated no period)
+  注意: 來源未宣告 EPS 涵蓋期間，上列期間為假設值。
+
+  期間   要求報酬  期末P/E  期末需求價  所需EPS  所需CAGR  vs共識
+  -----  --------  -------  ----------  -------  --------  -------
+  1.0年   +8%       21.0     363.57      17.3192  +98.6%    +80.8%
+  1.0年   +8%       25.9     363.57      14.0239  +60.8%    +46.4%
+  1.0年   +8%       28.9     363.57      12.5592  +44.0%    +31.1%
+  1.0年   +8%       33.0     363.57      11.0015  +26.2%    +14.8%
+  1.0年   +8%       36.2     363.57      10.0450  +15.2%    +4.8%
+  1.0年   +10%      21.0     370.30      17.6399  +102.3%   +84.1%
+  1.0年   +10%      25.9     370.30      14.2836  +63.8%    +49.1%
+  1.0年   +10%      28.9     370.30      12.7918  +46.7%    +33.5%
+  1.0年   +10%      33.0     370.30      11.2053  +28.5%    +17.0%
+  1.0年   +10%      36.2     370.30      10.2311  +17.3%    +6.8%
+  1.0年   +12%      21.0     377.04      17.9606  +106.0%   +87.5%
+  1.0年   +12%      25.9     377.04      14.5433  +66.8%    +51.8%
+  1.0年   +12%      28.9     377.04      13.0244  +49.4%    +35.9%
+  1.0年   +12%      33.0     377.04      11.4090  +30.8%    +19.1%
+  1.0年   +12%      36.2     377.04      10.4171  +19.5%    +8.7%
+  1.0年   +15%      21.0     387.14      18.4417  +111.5%   +92.5%
+  1.0年   +15%      25.9     387.14      14.9329  +71.2%    +55.9%
+  1.0年   +15%      28.9     387.14      13.3732  +53.4%    +39.6%
+  1.0年   +15%      33.0     387.14      11.7146  +34.3%    +22.3%
+  1.0年   +15%      36.2     387.14      10.6961  +22.7%    +11.6%
+  2.0年   +8%       21.0     392.66      18.7047  +46.5%    -
+  2.0年   +8%       25.9     392.66      15.1458  +31.8%    -
+  2.0年   +8%       28.9     392.66      13.5639  +24.7%    -
+  2.0年   +8%       33.0     392.66      11.8817  +16.7%    -
+  2.0年   +8%       36.2     392.66      10.8486  +11.5%    -
+  2.0年   +10%      21.0     407.33      19.4039  +49.2%    -
+  2.0年   +10%      25.9     407.33      15.7120  +34.2%    -
+  2.0年   +10%      28.9     407.33      14.0710  +27.0%    -
+  2.0年   +10%      33.0     407.33      12.3258  +18.9%    -
+  2.0年   +10%      36.2     407.33      11.2542  +13.6%    -
+  2.0年   +12%      21.0     422.28      20.1159  +51.9%    -
+  2.0年   +12%      25.9     422.28      16.2885  +36.7%    -
+  2.0年   +12%      28.9     422.28      14.5873  +29.3%    -
+  2.0年   +12%      33.0     422.28      12.7781  +21.1%    -
+  2.0年   +12%      36.2     422.28      11.6671  +15.7%    -
+  2.0年   +15%      21.0     445.21      21.2080  +56.0%    -
+  2.0年   +15%      25.9     445.21      17.1728  +40.3%    -
+  2.0年   +15%      28.9     445.21      15.3792  +32.8%    -
+  2.0年   +15%      33.0     445.21      13.4718  +24.3%    -
+  2.0年   +15%      36.2     445.21      12.3005  +18.8%    -
+  3.0年   +8%       21.0     424.07      20.2011  +32.3%    -
+  3.0年   +8%       25.9     424.07      16.3575  +23.3%    -
+  3.0年   +8%       28.9     424.07      14.6490  +18.9%    -
+  3.0年   +8%       33.0     424.07      12.8322  +13.7%    -
+  3.0年   +8%       36.2     424.07      11.7165  +10.3%    -
+  3.0年   +10%      21.0     448.07      21.3443  +34.8%    -
+  3.0年   +10%      25.9     448.07      17.2832  +25.6%    -
+  3.0年   +10%      28.9     448.07      15.4780  +21.1%    -
+  3.0年   +10%      33.0     448.07      13.5584  +15.9%    -
+  3.0年   +10%      36.2     448.07      12.3796  +12.4%    -
+  3.0年   +12%      21.0     472.95      22.5298  +37.2%    -
+  3.0年   +12%      25.9     472.95      18.2431  +27.9%    -
+  3.0年   +12%      28.9     472.95      16.3378  +23.3%    -
+  3.0年   +12%      33.0     472.95      14.3115  +18.0%    -
+  3.0年   +12%      36.2     472.95      13.0672  +14.4%    -
+  3.0年   +15%      21.0     511.99      24.3892  +40.9%    -
+  3.0年   +15%      25.9     511.99      19.7487  +31.3%    -
+  3.0年   +15%      28.9     511.99      17.6861  +26.6%    -
+  3.0年   +15%      33.0     511.99      15.4926  +21.1%    -
+  3.0年   +15%      36.2     511.99      14.1456  +17.5%    -
+  5.0年   +8%       21.0     494.63      23.5626  +22.0%    -
+  5.0年   +8%       25.9     494.63      19.0794  +17.0%    -
+  5.0年   +8%       28.9     494.63      17.0867  +14.4%    -
+  5.0年   +8%       33.0     494.63      14.9675  +11.4%    -
+  5.0年   +8%       36.2     494.63      13.6662  +9.4%     -
+  5.0年   +10%      21.0     542.16      25.8266  +24.3%    -
+  5.0年   +10%      25.9     542.16      20.9126  +19.1%    -
+  5.0年   +10%      28.9     542.16      18.7284  +16.5%    -
+  5.0年   +10%      33.0     542.16      16.4056  +13.5%    -
+  5.0年   +10%      36.2     542.16      14.9793  +11.4%    -
+  5.0年   +12%      21.0     593.27      28.2614  +26.5%    -
+  5.0年   +12%      25.9     593.27      22.8842  +21.3%    -
+  5.0年   +12%      28.9     593.27      20.4941  +18.6%    -
+  5.0年   +12%      33.0     593.27      17.9523  +15.5%    -
+  5.0年   +12%      36.2     593.27      16.3915  +13.5%    -
+  5.0年   +15%      21.0     677.10      32.2547  +29.9%    -
+  5.0年   +15%      25.9     677.10      26.1177  +24.5%    -
+  5.0年   +15%      28.9     677.10      23.3898  +21.8%    -
+  5.0年   +15%      33.0     677.10      20.4889  +18.6%    -
+  5.0年   +15%      36.2     677.10      18.7076  +16.5%    -
+
+  * 期末 P/E 取自歷史區間分位數; 未標示者為使用者指定情境。
+  要求報酬為價格報酬，不含股息。CAGR 僅在兩端 EPS 期間可比較時計算。
+
+  情境標記: CONSENSUS_PERIOD_NOT_COMPARABLE, REQUIRED_RETURN_EXCLUDES_DIVIDENDS
+
+  * A required return is a price return unless a dividend was supplied as an input.
+  * A required terminal EPS is the EPS that the chosen exit multiple corresponds to, not a forecast and not a market expectation.
+  * A CAGR is reported only when the gap between the two EPS anchors is long enough to annualise; otherwise the raw EPS change is reported without a rate.
+  * Risk-free rates, modelled cost of equity and investor target returns are three separate kinds of number and are never merged into one figure.
+  * This matrix is a set of conditional results under stated assumptions. It carries no probabilities, no weighting and no ranking, and it does not state which scenario is more likely.
+
+------------------------------------------------------------------------------
+多組假設下的估值結果 / Valuation under multiple assumptions
+------------------------------------------------------------------------------
+  方法                     隱含值        實際值        差異       參考倍數
+  盈利倍數法 (P/E)            11.6289       8.72          +33.4%     28.95 x (user_supplied)
+  營收倍數法 (P/S)            不可計算          466.82B       -          -
+  現金流倍數法 (P/FCF)         不可計算          136.68B       -          -
+  企業價值法 (EV/EBITDA)      不可計算          167.96B       -          -
+  隱含淨利率 (P/S + P/E 聯合)   不可計算          -             -          P/E 28.95 + P/S N/A
+
+  隱含淨利率股數基準拆解:
+    * derived share count (market capitalization / price): 隱含淨利率 N/A (股數 14.61B)
+    * observed shares outstanding (point-in-time): 隱含淨利率 N/A (股數 14.59B @2026-07-17)
+      - A cover-page shares-outstanding count is not the weighted-average diluted count EPS uses. Using it changes the implied net income, so the result is labelled rather than presented as the same measure.
+
+  期末倍數情境來源: production_historical_pe_percentile
+
+  - valuation_method.revenue_multiple: market capitalization
+  - valuation_method.cash_flow_multiple: market capitalization
+  - valuation_method.enterprise_value_multiple: enterprise value
+
+  * Each method is conditional on its own reference multiple and carries that multiple's provenance.
+  * No method is ranked against another and no composite valuation is produced.
+  * Each method is conditional on its own reference multiple and carries that multiple's provenance and sample size.
+
+------------------------------------------------------------------------------
+與歷史及市場預估比較 / Comparison to history and estimates
+------------------------------------------------------------------------------
+  方法                 隱含值          實際值          差異      實際值定義
+  EPS                11.6289         8.72            +33.4%     observed trailing EPS
+  Revenue            不可計算            466.82B         -          the observed trailing revenue
+  FCF                不可計算            136.68B         -          the observed trailing free cash flow
+  EBITDA             不可計算            167.96B         -          the observed trailing EBITDA
+
+隱含淨利率: 無法與實際淨利率比較 (缺少可比較的實際序列)
+
+  * The gap is the implied figure against the observed figure for the same method. It is not a forecast error and has no sign meaning.
+  * A positive gap means the reference multiple would require more than the company currently reports; it does not mean the company will deliver it.
+
+------------------------------------------------------------------------------
+利率與報酬條件 / Rates and return conditions
+------------------------------------------------------------------------------
+[1] 無風險利率 (觀測值):
+    期限        殖利率%    觀測日        單位                 來源
+    13_WEEK     4.057      2026-10-09     percent_per_annum    CBOETreasuryYieldIndex
+    5_YEAR      5.021      2026-10-09     percent_per_annum    CBOETreasuryYieldIndex
+    10_YEAR     5.244      2026-10-09     percent_per_annum    CBOETreasuryYieldIndex
+    30_YEAR     5.600      2026-10-09     percent_per_annum    CBOETreasuryYieldIndex
+
+[2] CAPM 股權要求報酬 (模型估計):
+    狀態: INCOMPLETE_INPUTS
+    缺少: beta, equity_risk_premium_decimal
+
+[3] 投資人設定報酬率 (情境輸入):
+    scenario_00    8.0%
+    scenario_01    10.0%
+    scenario_02    12.0%
+    scenario_03    15.0%
+
+  * These three are never averaged together. Substituting a single rate for all three would present an observation, a model estimate and a chosen hurdle as if they were the same kind of number.
+
+------------------------------------------------------------------------------
+資料限制 / Data limitations
+------------------------------------------------------------------------------
+[缺少資料 (本次執行的 acquisition 層)]
+  - historical_pfcf_band
+
+[不可計算 / 不適用 (含原因)]
+  - exit_multiple.band_scenarios [INSUFFICIENT_OBSERVATIONS]: The historical P/E band holds 8 observations, below the 20 required to read a percentile from it. The band's median of 35.65 is reported as a descriptive statistic only and is not used as a scenario exit multiple.
+  - valuation_method.cash_flow [NO_REFERENCE_MULTIPLE]: No P/FCF reference multiple was supplied, so this method produces no implied figure. It is not filled from another method's multiple.
+  - valuation_method.enterprise_value [NO_REFERENCE_MULTIPLE]: No EV/EBITDA reference multiple was supplied, so this method produces no implied figure. It is not filled from another method's multiple.
+  - valuation_method.revenue [NO_REFERENCE_MULTIPLE]: No P/S reference multiple was supplied, so this method produces no implied figure. It is not filled from another method's multiple.
+  - cost_of_equity [MISSING]: A CAPM cost of equity needs a risk-free rate, a beta and an equity risk premium. Missing: beta, equity_risk_premium_decimal.
+
+[折現現金流 (DCF)]
+  狀態: NOT_COMPUTED
+  現金流定義: UNDECLARED
+  缺少欄位: capex, cost_of_debt, depreciation_amortisation, market_value_of_debt, tax_rate, working_capital_change
+  The inputs required for a discounted cash flow model were not all observed, so no implied growth rate is reported. The missing inputs are named so a later run can close the gap rather than guess at it.
+
+[不可計算項目統計] 共 5 筆
+  INSUFFICIENT_OBSERVATIONS    1
+  MISSING                      1
+  NO_REFERENCE_MULTIPLE        3
+
+[執行層限制說明]
+  - Current price does not uniquely identify one future fundamental path.
+  - Reverse-engineered earnings/growth are conditional on the selected valuation multiple.
+  - ST-EVA does not invent EPS, consensus, probabilities, or target prices.
+  - This output is descriptive valuation analysis, not a buy/sell signal.
+
+  * An item listed here was requested and not produced, or was produced under conditions that limit it. Nothing listed here has been filled with a default, an interpolation or a borrowed value from a related metric.

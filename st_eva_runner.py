@@ -174,6 +174,7 @@ class MarketData:
     discrepancy_status: str = "SINGLE_SOURCE"
     observations: ObservationSet = field(default_factory=ObservationSet)
     retrieved_at: str = ""
+    chart_events: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if self.historical_pe_band is None:
@@ -1164,6 +1165,7 @@ class YahooFinanceProvider:
                 provider=f"{self.name}+{acquisition.provider}",
                 errors=list(acquisition.errors),
                 retrieved_at=retrieved_at,
+                chart_events=result.get("events"),
             )
 
             _apply_observations_to_view(
@@ -1946,7 +1948,12 @@ def run_st_eva(
         elif dossier_path is not None:
             atomic_json_write(Path(dossier_path), dossier)
         if render_dossier_report:
-            result["dossier_report_text"] = render_dossier(dossier)
+            report_text = render_dossier(dossier)
+            result["dossier_report_text"] = report_text
+            if dossier_path is not None and dossier_path != "-":
+                report_file = Path(dossier_path).with_name(f"{Path(dossier_path).stem}_report.txt")
+                with open(report_file, "w", encoding="utf-8") as f:
+                    f.write(report_text)
 
     return result
 
@@ -2381,6 +2388,31 @@ def _build_reverse_requirements(
         observed_shares = safe_float(shares_latest.get("value"))
         observed_shares_date = shares_latest.get("effective_date")
 
+    # Sourced dividend observations and total-return inputs.
+    from dividend_history import build_dividend_package
+    from pathlib import Path
+    chart_events = getattr(data, "chart_events", None)
+    if not chart_events:
+        daily_json = Path(f"data/historical_pe/{data.ticker}/daily_prices.json")
+        if daily_json.exists():
+            try:
+                with open(daily_json, "r", encoding="utf-8") as f:
+                    pdata = json.load(f)
+                    chart_events = (((pdata.get("chart") or {}).get("result") or [{}])[0] or {}).get("events")
+            except Exception:
+                chart_events = None
+
+    dividend_pkg = build_dividend_package(
+        ticker=data.ticker,
+        price=data.price,
+        as_of=data.price_date,
+        currency=data.currency,
+        chart_events=chart_events,
+        sec_observations=history_observations,
+    )
+    div_per_share = safe_float((dividend_pkg.get("summary") or {}).get("trailing_twelve_month_dividends"))
+    div_source = str((dividend_pkg.get("summary") or {}).get("trailing_dividends_source") or "")
+
     report = build_reverse_requirements_report(
         price=data.price,
         ticker=data.ticker,
@@ -2395,7 +2427,8 @@ def _build_reverse_requirements(
         consensus_eps=consensus_eps,
         consensus_basis=consensus_basis,
         consensus_months_covered=consensus_months,
-        dividend_per_share=None,
+        dividend_per_share=div_per_share,
+        dividend_source=div_source,
         market_cap=market_cap,
         enterprise_value=enterprise_value,
         free_cash_flow=free_cash_flow,
@@ -2416,6 +2449,12 @@ def _build_reverse_requirements(
         unavailable=unavailable,
         production_historical_pe=production_historical_pe,
     )
+
+    report["dividends"] = dividend_pkg
+    if dividend_pkg.get("unavailable"):
+        for unav in dividend_pkg["unavailable"]:
+            if unav["item"] not in {it.get("item") for it in report.get("unavailable", [])}:
+                report["unavailable"].append(dict(unav))
 
     # Financial history from the same run's sourced observations. When no SEC
     # observations were acquired the block reports that rather than showing an

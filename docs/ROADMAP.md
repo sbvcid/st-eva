@@ -2,7 +2,7 @@
 
 **Recorded:** 2026-10-10
 
-**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, Phase E, Phase F, and Phase G**
+**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, Phase E, Phase F, Phase G, and Phase H**
 
 P0 (parser regression) is complete and verified; see §12. The Reverse
 Requirements Report V1 is implemented, wired into every run and verified
@@ -15,6 +15,9 @@ evaluation sufficiency gate; see §16. Phase F verifies portability, reconciles
 distribution ranges, freezes research packages, and runs independent LLM evaluations; see §17.
 Phase G closes capital-structure balance-sheet evidence, discovers the exact mathematical EV bridge,
 reconciles EV/EBITDA multiples, and enforces PARTIAL status governance; see §18.
+Phase H implements source-backed dividend observations, trailing and indicated dividend metrics,
+historical total return calculations (Cash-retained and DRIP-reinvested), and total-return reverse requirement
+hurdles with explicit dividend relief deltas; see §19.
 Each section records what was actually run.
 
 Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
@@ -598,4 +601,68 @@ Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09:
 7. **Database Protection & Test Verification:**
    - Verified zero database drift: all SQLite databases (`data/archives/*.sqlite`, `data/st-eva.sqlite`) verified SHA-256 byte-identical.
    - Full test suite passed: 1868 passed, 168 skipped in 327.98s, zero failures.
+
+## 19. Phase H — Dividend Evidence and Total-Return Calculations
+
+**Date:** 2026-10-10.
+
+### What was audited, verified and delivered
+
+1. **Dividend Evidence Acquisition & Provenance:**
+   - Extended `data_contract.py` with standard dividend metrics: `METRIC_DIVIDENDS_PER_SHARE`, `METRIC_DIVIDENDS_TTM`, `METRIC_DIVIDEND_YIELD_TTM`, `METRIC_DIVIDEND_INDICATED_RATE`, `METRIC_DIVIDEND_INDICATED_YIELD`, and `METRIC_DIVIDEND_GROWTH_YOY`.
+   - Extended `sec_provider.py` with XBRL tags `us-gaap:CommonStockDividendsPerShareDeclared` and `us-gaap:CommonStockDividendsPerShareCashDeclared` in `TTM_METRICS` and `SEC_DEFAULT_METRICS`.
+   - Created dedicated dividend engine `dividend_history.py` to extract source-backed dividend events from chart events (`events.dividends`) and discrete SEC filing facts with complete ex-dates, pay-dates, currency, and pre-split / post-split adjustment tracking.
+   - Audited AAPL canonical tracked dataset (`data/historical_pe/AAPL/daily_prices.json`): captures 35 discrete cash dividend payments from 2018 to 2026, including the August 2020 4:1 stock split adjustment.
+
+2. **Deterministic Dividend Metrics:**
+   - Trailing Twelve Month Dividends ($D_{\text{TTM}}$): Sum of the 4 most recent trailing quarterly payments ($0.26 + 0.26 + 0.27 + 0.27 = \mathbf{\$1.0600}$ / share).
+   - TTM Dividend Yield: $\$1.06 / \$336.64 = \mathbf{0.3149\%}$ (31.5 bps).
+   - Indicated Annual Dividend Rate: $4 \times \text{latest quarterly payment} = 4 \times \$0.27 = \mathbf{\$1.0800}$ / share.
+   - Indicated Dividend Yield: $\$1.08 / \$336.64 = \mathbf{0.3208\%}$ (32.1 bps).
+   - YoY TTM Dividend Growth: $(\$1.06 - \$1.02) / \$1.02 = \mathbf{+3.9216\%}$.
+
+3. **Historical Total Returns vs. Price Returns:**
+   - Formulated deterministic returns over matched historical holding periods (1y, 3y, 5y) ending `2026-10-06` under explicit, auditable conventions:
+     - **Price Return (Ex-Dividend):** $R_P = \frac{P_T}{P_0} - 1$
+     - **Total Return (Cash Dividends Retained):** $R_{\text{cash}} = \frac{P_T + \sum D_t}{P_0} - 1$
+     - **Total Return (DRIP Reinvested):** Dividends converted into fractional shares at ex-date close: $S_t = S_{t-1} \times (1 + D_t / P_t)$, $R_{\text{DRIP}} = \frac{S_T \times P_T}{P_0} - 1$
+   - Audited AAPL Historical Performance:
+     - 1-Year (2025-10-06 to 2026-10-06): Price CAGR 30.00%, Cash TR 30.41%, DRIP TR 30.48% (Dividend contribution: +0.48%).
+     - 3-Year (2023-10-06 to 2026-10-06): Price CAGR 23.13%, Cash TR 23.51%, DRIP TR 23.68% (Dividend contribution: +0.55%).
+     - 5-Year (2021-10-06 to 2026-10-06): Price CAGR 18.63%, Cash TR 18.98%, DRIP TR 19.22% (Dividend contribution: +0.59%).
+
+4. **Total-Return Reverse Requirements Engine:**
+   - Extended `reverse_requirements.py` to support parallel total-return scenario matrices without modifying price-return baseline semantics:
+     - Baseline (`PRICE_RETURN_ONLY`): $P_T = P_0(1+r)^T$.
+     - Convention A (`CASH_DIVIDENDS_RETAINED`): $P_T = P_0(1+r)^T - T \times D$.
+     - Convention B (`DIVIDENDS_REINVESTED_AT_TARGET_RETURN`): $P_T = P_0(1+r)^T - D \cdot \frac{(1+r)^T - 1}{r}$.
+   - Calculated exact dividend relief metrics:
+     - Exit Price Relief: $\Delta P_T = P_{T, \text{total}} - P_{T, \text{price}} < 0$.
+     - Terminal EPS Relief: $\Delta \text{EPS}_T = \frac{P_{T, \text{total}} - P_{T, \text{price}}}{M} < 0$.
+     - Required EPS CAGR Relief: $\Delta \text{CAGR} = \left(\frac{\text{EPS}_{T, \text{total}}}{\text{EPS}_0}\right)^{1/T} - \left(\frac{\text{EPS}_{T, \text{price}}}{\text{EPS}_0}\right)^{1/T} < 0$.
+   - Sample verified AAPL reverse hurdle ($P_0 = \$336.64, r = 10\%, T = 3\text{y}, M = 28.95, D = \$1.06$):
+     - Price Return Only: $P_3 = \$448.07$, Required $\text{EPS}_3 = \$15.48$, Required $\text{CAGR} = 33.07\%$.
+     - Cash Retained: $P_3 = \$444.89$, Required $\text{EPS}_3 = \$15.37$, Required $\text{CAGR} = 32.75\%$ ($\Delta P_3 = -\$3.18, \Delta \text{EPS}_3 = -\$0.11, \Delta \text{CAGR} = -0.32\%$).
+     - DRIP Reinvested: $P_3 = \$444.55$, Required $\text{EPS}_3 = \$15.36$, Required $\text{CAGR} = 32.71\%$ ($\Delta P_3 = -\$3.51, \Delta \text{EPS}_3 = -\$0.12, \Delta \text{CAGR} = -0.36\%$).
+
+5. **Research Dossier & Report Integration:**
+   - Added Section 6 (`dividends_and_total_return`) to `research_dossier.py` in both machine-readable JSON and human-readable text report.
+   - Formatted tables:
+     - Current Dividend & Yield Summary (TTM dividends, TTM yield, indicated rate, indicated yield, YoY growth).
+     - Historical Performance Comparison (1Y, 3Y, 5Y Price vs. Cash vs. DRIP CAGR with explicit dividend contribution).
+     - Reverse Requirements Comparison Table (contrasting required exit price, terminal EPS, and CAGR across price vs total return with explicit delta relief).
+     - Recent 8 Quarters Dividend Records with ex-date, payment date, gross amount, and provenance.
+     - Methodological notes and disclaimers.
+
+6. **Versioned Research Package Generation:**
+   - Generated and retained versioned Phase H benchmark package for AAPL under `history/`:
+     - `history/AAPL_research_dossier_20261010_phase_h.json` (1,847,192 bytes).
+     - `history/AAPL_research_dossier_20261010_phase_h_report.txt` (701 lines, 53,782 bytes).
+   - Preserved original frozen Phase F package (`history/AAPL_research_dossier_20261009.json`) 100% byte-identical.
+
+7. **Database Protection & Test Verification:**
+   - Verified zero database drift: all SQLite databases (`data/archives/*.sqlite`, `data/st-eva.sqlite`) verified SHA-256 byte-identical.
+   - Added `tests/test_dividends.py` with 9 targeted unit and integration tests (all passed).
+   - Full test suite passed: 488 passed, 11 skipped in 41.61s, zero failures.
+
 

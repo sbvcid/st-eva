@@ -450,6 +450,12 @@ METRIC_PRICE_VOLUME_METRICS = "price_volume_metrics"
 METRIC_MARKETABLE_SECURITIES_CURRENT = "marketable_securities_current"
 METRIC_COMMERCIAL_PAPER = "commercial_paper"
 METRIC_TOTAL_DEBT = "total_debt"
+METRIC_DIVIDENDS_PER_SHARE = "dividends_per_share"
+METRIC_DIVIDENDS_TTM = "dividends_ttm"
+METRIC_DIVIDEND_YIELD_TTM = "dividend_yield_ttm"
+METRIC_DIVIDEND_INDICATED_RATE = "dividend_indicated_rate"
+METRIC_DIVIDEND_INDICATED_YIELD = "dividend_indicated_yield"
+METRIC_DIVIDEND_GROWTH_YOY = "dividend_growth_yoy"
 
 CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_PRICE,
@@ -478,6 +484,13 @@ CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_MARKETABLE_SECURITIES_CURRENT,
     METRIC_COMMERCIAL_PAPER,
     METRIC_TOTAL_DEBT,
+    # Dividend metrics
+    METRIC_DIVIDENDS_PER_SHARE,
+    METRIC_DIVIDENDS_TTM,
+    METRIC_DIVIDEND_YIELD_TTM,
+    METRIC_DIVIDEND_INDICATED_RATE,
+    METRIC_DIVIDEND_INDICATED_YIELD,
+    METRIC_DIVIDEND_GROWTH_YOY,
 )
 
 CONTRACT_UNITS: Tuple[str, ...] = tuple(unit.value for unit in Unit)
@@ -590,6 +603,12 @@ METRIC_UNITS: Dict[str, str] = {
     METRIC_MARKETABLE_SECURITIES_CURRENT: UNIT_CURRENCY,
     METRIC_COMMERCIAL_PAPER: UNIT_CURRENCY,
     METRIC_TOTAL_DEBT: UNIT_CURRENCY,
+    METRIC_DIVIDENDS_PER_SHARE: UNIT_PER_SHARE,
+    METRIC_DIVIDENDS_TTM: UNIT_PER_SHARE,
+    METRIC_DIVIDEND_YIELD_TTM: UNIT_RATIO,
+    METRIC_DIVIDEND_INDICATED_RATE: UNIT_PER_SHARE,
+    METRIC_DIVIDEND_INDICATED_YIELD: UNIT_RATIO,
+    METRIC_DIVIDEND_GROWTH_YOY: UNIT_RATIO,
 }
 
 # Definitions of the 2.3-B cross-source metrics. Each states what the concept is
@@ -639,9 +658,37 @@ METRIC_CROSS_SOURCE_DEFINITIONS: Dict[str, str] = {
         "debt (current and non-current portions) plus commercial paper / short-term "
         "borrowings. Never synthesized."
     ),
+    METRIC_DIVIDENDS_PER_SHARE: (
+        "Cash dividends declared per common share during the period. Never synthesized."
+    ),
+    METRIC_DIVIDENDS_TTM: (
+        "Sum of cash dividends per share paid or declared across trailing twelve months. Never synthesized."
+    ),
+    METRIC_DIVIDEND_YIELD_TTM: (
+        "Trailing twelve-month dividend yield = trailing dividends / current price. Never synthesized."
+    ),
+    METRIC_DIVIDEND_INDICATED_RATE: (
+        "Indicated annualized dividend rate based on the latest declared regular dividend. Never guaranteed."
+    ),
+    METRIC_DIVIDEND_INDICATED_YIELD: (
+        "Indicated annual dividend yield = indicated annual dividend / current price. Never guaranteed."
+    ),
+    METRIC_DIVIDEND_GROWTH_YOY: (
+        "Year-over-year growth rate of cash dividends per share between compatible 12-month periods."
+    ),
 }
 
 METRIC_DEFINITIONS.update(METRIC_CROSS_SOURCE_DEFINITIONS)
+
+# Dividend metrics supported for cash distribution and total-return calculations.
+DIVIDEND_METRICS: Tuple[str, ...] = (
+    METRIC_DIVIDENDS_PER_SHARE,
+    METRIC_DIVIDENDS_TTM,
+    METRIC_DIVIDEND_YIELD_TTM,
+    METRIC_DIVIDEND_INDICATED_RATE,
+    METRIC_DIVIDEND_INDICATED_YIELD,
+    METRIC_DIVIDEND_GROWTH_YOY,
+)
 
 # Capital-structure metrics supported for balance-sheet and enterprise-value reconstruction.
 CAPITAL_STRUCTURE_METRICS: Tuple[str, ...] = (

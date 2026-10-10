@@ -55,6 +55,11 @@ MIN_GROWTH_YEARS = 0.5
 RETURN_BASIS_PRICE_ONLY = "PRICE_RETURN_ONLY"
 RETURN_BASIS_TOTAL = "TOTAL_RETURN_WITH_SUPPLIED_DIVIDEND"
 
+# Dividend conventions for total return reverse hurdles.
+DIVIDEND_CONVENTION_PRICE_ONLY = "PRICE_RETURN_ONLY"
+DIVIDEND_CONVENTION_CASH_RETAINED = "CASH_DIVIDENDS_RETAINED"
+DIVIDEND_CONVENTION_REINVESTED = "DIVIDENDS_REINVESTED_AT_TARGET_RETURN"
+
 # EPS anchors. The anchor declares what period its EPS covers; the growth
 # arithmetic depends on that declaration, not on the label alone.
 ANCHOR_TTM = "TRAILING_TWELVE_MONTHS"
@@ -229,9 +234,14 @@ class EpsScenario:
     flags: Tuple[str, ...] = ()
     price: Optional[float] = None
     as_of: Optional[str] = None
+    dividend_per_share: Optional[float] = None
+    dividend_convention: Optional[str] = None
+    dividend_relief_exit_price: Optional[float] = None
+    dividend_relief_terminal_eps: Optional[float] = None
+    dividend_relief_cagr: Optional[float] = None
 
     def contract_view(self) -> Dict[str, Any]:
-        return {
+        view = {
             "price": self.price,
             "as_of": self.as_of,
             "horizon_years": self.horizon_years,
@@ -241,7 +251,7 @@ class EpsScenario:
             "required_exit_price": self.required_exit_price,
             "required_exit_price_basis": "PRICE_ONLY_EXCLUDES_DIVIDENDS"
             if self.required_return_basis == RETURN_BASIS_PRICE_ONLY
-            else "INCLUDES_SUPPLIED_DIVIDEND",
+            else (self.dividend_convention or "INCLUDES_SUPPLIED_DIVIDEND"),
             "required_terminal_eps": self.required_terminal_eps,
             "start_eps": self.start_anchor.contract_view(),
             "growth_years": self.growth_years,
@@ -254,6 +264,13 @@ class EpsScenario:
             "flags": list(self.flags),
             "formula_version": FORMULA_VERSION,
         }
+        if self.dividend_per_share is not None:
+            view["dividend_per_share"] = self.dividend_per_share
+            view["dividend_convention"] = self.dividend_convention
+            view["dividend_relief_exit_price"] = self.dividend_relief_exit_price
+            view["dividend_relief_terminal_eps"] = self.dividend_relief_terminal_eps
+            view["dividend_relief_cagr"] = self.dividend_relief_cagr
+        return view
 
 
 def required_exit_price(
@@ -281,6 +298,46 @@ def required_exit_price(
     if years is None or years <= 0:
         raise ReverseRequirementError(f"Horizon must be positive, got {horizon_years!r}")
     return price_value * ((1.0 + rate) ** years)
+
+
+def required_total_return_exit_price(
+    price: float,
+    required_return: float,
+    horizon_years: float,
+    dividend_per_share: Optional[float] = None,
+    convention: str = DIVIDEND_CONVENTION_CASH_RETAINED,
+) -> float:
+    """
+    The terminal share price hurdle required when dividend income is included.
+
+    Conventions:
+    - PRICE_RETURN_ONLY: P_T = P_0 * (1 + r)^T
+    - CASH_DIVIDENDS_RETAINED: P_T = P_0 * (1 + r)^T - T * D
+      Cumulative cash dividends are retained without reinvestment and deducted
+      from the required terminal share price hurdle.
+    - DIVIDENDS_REINVESTED_AT_TARGET_RETURN: P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r
+      Annual dividends are reinvested at the target rate of return r; the future value
+      of the dividend annuity is deducted from the required terminal share price hurdle.
+    """
+    base_exit = required_exit_price(price, required_return, horizon_years)
+    div = _safe_float(dividend_per_share)
+    if div is None or div <= 0 or convention == DIVIDEND_CONVENTION_PRICE_ONLY:
+        return base_exit
+
+    years = float(horizon_years)
+    rate = float(required_return)
+
+    if convention == DIVIDEND_CONVENTION_CASH_RETAINED:
+        cumulative_cash = div * years
+        return max(0.0, base_exit - cumulative_cash)
+    elif convention == DIVIDEND_CONVENTION_REINVESTED:
+        if abs(rate) < 1e-12:
+            fv_annuity = div * years
+        else:
+            fv_annuity = div * (((1.0 + rate) ** years - 1.0) / rate)
+        return max(0.0, base_exit - fv_annuity)
+    else:
+        raise ReverseRequirementError(f"Unknown dividend convention: {convention!r}")
 
 
 def implied_eps_at_multiple(price: float, multiple: float) -> float:
@@ -432,6 +489,7 @@ def build_scenario(
     dividend_per_share: Optional[float] = None,
     currency: Optional[str] = None,
     as_of: Optional[str] = None,
+    dividend_convention: str = DIVIDEND_CONVENTION_PRICE_ONLY,
 ) -> EpsScenario:
     """
     One row of the matrix: what this horizon, return and exit multiple demand.
@@ -444,17 +502,44 @@ def build_scenario(
     notes: List[str] = []
     flags: List[str] = []
 
-    return_basis = (
-        RETURN_BASIS_TOTAL if _safe_float(dividend_per_share) is not None else RETURN_BASIS_PRICE_ONLY
-    )
-    if return_basis == RETURN_BASIS_PRICE_ONLY:
+    div_val = _safe_float(dividend_per_share)
+    if div_val is not None and div_val > 0:
+        return_basis = RETURN_BASIS_TOTAL
+        conv = (
+            dividend_convention
+            if dividend_convention != DIVIDEND_CONVENTION_PRICE_ONLY
+            else DIVIDEND_CONVENTION_CASH_RETAINED
+        )
+        target_price = required_total_return_exit_price(
+            price, required_return, horizon_years, div_val, convention=conv
+        )
+        price_only_target = required_exit_price(price, required_return, horizon_years)
+        relief_exit_price = target_price - price_only_target
+
+        terminal_eps = implied_eps_at_multiple(target_price, exit_multiple.value)
+        price_only_eps = implied_eps_at_multiple(price_only_target, exit_multiple.value)
+        relief_terminal_eps = terminal_eps - price_only_eps
+
+        window = growth_window_years(start_anchor, horizon_years)
+        cagr = required_eps_cagr(start_anchor, terminal_eps, window)
+        price_only_cagr = required_eps_cagr(start_anchor, price_only_eps, window)
+        relief_cagr = (
+            cagr - price_only_cagr
+            if (cagr is not None and price_only_cagr is not None)
+            else None
+        )
+    else:
+        div_val = None
+        conv = None
+        return_basis = RETURN_BASIS_PRICE_ONLY
         flags.append("REQUIRED_RETURN_EXCLUDES_DIVIDENDS")
-
-    target_price = required_exit_price(price, required_return, horizon_years)
-    terminal_eps = implied_eps_at_multiple(target_price, exit_multiple.value)
-
-    window = growth_window_years(start_anchor, horizon_years)
-    cagr = required_eps_cagr(start_anchor, terminal_eps, window)
+        target_price = required_exit_price(price, required_return, horizon_years)
+        terminal_eps = implied_eps_at_multiple(target_price, exit_multiple.value)
+        window = growth_window_years(start_anchor, horizon_years)
+        cagr = required_eps_cagr(start_anchor, terminal_eps, window)
+        relief_exit_price = None
+        relief_terminal_eps = None
+        relief_cagr = None
 
     if window < MIN_GROWTH_YEARS:
         flags.append("GROWTH_WINDOW_TOO_SHORT_FOR_CAGR")
@@ -533,6 +618,11 @@ def build_scenario(
         flags=tuple(flags),
         price=float(price) if price is not None else None,
         as_of=as_of,
+        dividend_per_share=div_val,
+        dividend_convention=conv,
+        dividend_relief_exit_price=relief_exit_price,
+        dividend_relief_terminal_eps=relief_terminal_eps,
+        dividend_relief_cagr=relief_cagr,
     )
 
 
@@ -591,6 +681,7 @@ def build_matrix(
     dividend_per_share: Optional[float] = None,
     currency: Optional[str] = None,
     as_of: Optional[str] = None,
+    dividend_convention: str = DIVIDEND_CONVENTION_PRICE_ONLY,
 ) -> List[EpsScenario]:
     """The full cross product of horizons, required returns and exit multiples."""
     scenarios: List[EpsScenario] = []
@@ -611,6 +702,7 @@ def build_matrix(
                         dividend_per_share=dividend_per_share,
                         currency=currency,
                         as_of=as_of,
+                        dividend_convention=dividend_convention,
                     )
                 )
     return scenarios
@@ -1512,6 +1604,7 @@ def build_reverse_requirements_report(
     Assemble the whole V1 package: the matrix, the cash flow cross-checks, the
     separated rate families, and an explicit statement of what is missing.
     """
+    # Baseline price-return matrix is strictly preserved as price return only.
     scenarios = build_matrix(
         price=price,
         horizons_years=horizons_years,
@@ -1522,10 +1615,100 @@ def build_reverse_requirements_report(
         consensus_eps=consensus_eps,
         consensus_basis=consensus_basis,
         consensus_months_covered=consensus_months_covered,
-        dividend_per_share=dividend_per_share,
+        dividend_per_share=None,
         currency=currency,
         as_of=as_of,
+        dividend_convention=DIVIDEND_CONVENTION_PRICE_ONLY,
     )
+
+    unavailable: List[Dict[str, Any]] = list(unavailable or [])
+
+    div_val = _safe_float(dividend_per_share)
+    total_return_scenarios = None
+    comparison_rows = []
+    dividend_basis_block = None
+
+    if div_val is not None and div_val > 0:
+        cash_scenarios = build_matrix(
+            price=price,
+            horizons_years=horizons_years,
+            required_returns=required_returns,
+            exit_multiples=exit_multiples,
+            start_anchor=start_anchor,
+            current_pe=current_pe,
+            consensus_eps=consensus_eps,
+            consensus_basis=consensus_basis,
+            consensus_months_covered=consensus_months_covered,
+            dividend_per_share=div_val,
+            currency=currency,
+            as_of=as_of,
+            dividend_convention=DIVIDEND_CONVENTION_CASH_RETAINED,
+        )
+        reinvested_scenarios = build_matrix(
+            price=price,
+            horizons_years=horizons_years,
+            required_returns=required_returns,
+            exit_multiples=exit_multiples,
+            start_anchor=start_anchor,
+            current_pe=current_pe,
+            consensus_eps=consensus_eps,
+            consensus_basis=consensus_basis,
+            consensus_months_covered=consensus_months_covered,
+            dividend_per_share=div_val,
+            currency=currency,
+            as_of=as_of,
+            dividend_convention=DIVIDEND_CONVENTION_REINVESTED,
+        )
+
+        for p_scen, c_scen, r_scen in zip(scenarios, cash_scenarios, reinvested_scenarios):
+            comparison_rows.append({
+                "horizon_years": p_scen.horizon_years,
+                "required_return": p_scen.required_return,
+                "exit_multiple": p_scen.exit_multiple.value,
+                "exit_multiple_source": p_scen.exit_multiple.source,
+                "price_only": {
+                    "required_exit_price": p_scen.required_exit_price,
+                    "required_terminal_eps": p_scen.required_terminal_eps,
+                    "required_eps_cagr": p_scen.required_eps_cagr,
+                },
+                "cash_dividends_retained": {
+                    "required_exit_price": c_scen.required_exit_price,
+                    "required_terminal_eps": c_scen.required_terminal_eps,
+                    "required_eps_cagr": c_scen.required_eps_cagr,
+                    "delta_exit_price": c_scen.dividend_relief_exit_price,
+                    "delta_terminal_eps": c_scen.dividend_relief_terminal_eps,
+                    "delta_eps_cagr": c_scen.dividend_relief_cagr,
+                },
+                "dividends_reinvested_at_target_return": {
+                    "required_exit_price": r_scen.required_exit_price,
+                    "required_terminal_eps": r_scen.required_terminal_eps,
+                    "required_eps_cagr": r_scen.required_eps_cagr,
+                    "delta_exit_price": r_scen.dividend_relief_exit_price,
+                    "delta_terminal_eps": r_scen.dividend_relief_terminal_eps,
+                    "delta_eps_cagr": r_scen.dividend_relief_cagr,
+                },
+            })
+
+        total_return_scenarios = {
+            "cash_dividends_retained": [s.contract_view() for s in cash_scenarios],
+            "dividends_reinvested_at_target_return": [s.contract_view() for s in reinvested_scenarios],
+        }
+        dividend_basis_block = {
+            "dividend_per_share": div_val,
+            "dividend_source": dividend_source or "Observed market chart events / SEC filings",
+            "conventions": [
+                {
+                    "convention": DIVIDEND_CONVENTION_CASH_RETAINED,
+                    "formula": "P_T = P_0 * (1 + r)^T - T * D",
+                    "description": "Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.",
+                },
+                {
+                    "convention": DIVIDEND_CONVENTION_REINVESTED,
+                    "formula": "P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r",
+                    "description": "Dividends reinvested annually at the target required return rate r; future value of dividend annuity is subtracted from required exit share price.",
+                },
+            ],
+        }
 
     cash_flow_cross_checks = _cash_flow_cross_checks(
         market_cap=market_cap,
@@ -1563,7 +1746,6 @@ def build_reverse_requirements_report(
         observed_shares_date=observed_shares_date,
         multiples=valuation_multiples or {},
     )
-    unavailable: List[Dict[str, Any]] = list(unavailable or [])
 
     fingerprint_payload = {
         "ticker": ticker,
@@ -1609,6 +1791,9 @@ def build_reverse_requirements_report(
         "rate_families": rate_families,
         "dcf": dcf_block,
         "production_historical_pe": production_historical_pe,
+        "total_return_scenarios": total_return_scenarios,
+        "price_vs_total_return_comparison": comparison_rows,
+        "dividend_basis": dividend_basis_block,
         "unavailable": list(unavailable or []),
         "reading_notes": [
             "A required return is a price return unless a dividend was supplied as an input.",

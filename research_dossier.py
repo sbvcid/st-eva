@@ -41,6 +41,7 @@ SECTION_ORDER: Sequence[str] = (
     "financial_history",
     "balance_sheet_and_capital_structure",
     "valuation_metrics",
+    "dividends_and_total_return",
     "reverse_requirements",
     "valuation_scenarios",
     "comparison_to_observations",
@@ -55,6 +56,9 @@ SECTION_TITLES: Dict[str, str] = {
         "資產負債表與資本結構 / Balance sheet and capital structure"
     ),
     "valuation_metrics": "估值指標 / Valuation metrics",
+    "dividends_and_total_return": (
+        "股利資料與總報酬分析 / Dividends and total-return analysis"
+    ),
     "reverse_requirements": "目前價格的反推要求 / Reverse requirements at the current price",
     "valuation_scenarios": "多組假設下的估值結果 / Valuation under multiple assumptions",
     "comparison_to_observations": "與歷史及市場預估比較 / Comparison to history and estimates",
@@ -213,7 +217,37 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
         ],
     }
 
-    # ---- 4. reverse requirements ----
+    # ---- 5. dividends and total return ----
+    dividends = reverse.get("dividends") or {}
+    div_summary = dividends.get("summary") or {}
+    div_returns = dividends.get("historical_returns") or []
+    div_payments = dividends.get("recent_payments") or []
+    div_sec = dividends.get("sec_filing_evidence") or []
+    div_unavailable = dividends.get("unavailable") or []
+    comparison_table = reverse.get("price_vs_total_return_comparison") or []
+    dividend_basis = reverse.get("dividend_basis") or {}
+    total_return_scenarios = reverse.get("total_return_scenarios") or {}
+
+    sections["dividends_and_total_return"] = {
+        "title": SECTION_TITLES["dividends_and_total_return"],
+        "status": dividends.get("status", "NOT_ACQUIRED"),
+        "summary": div_summary,
+        "historical_returns": div_returns,
+        "recent_payments": div_payments,
+        "sec_filing_evidence": div_sec,
+        "price_vs_total_return_comparison": comparison_table,
+        "total_return_scenarios": total_return_scenarios,
+        "dividend_basis": dividend_basis,
+        "unavailable": div_unavailable,
+        "notes": (dividends.get("notes") or [])
+        + [
+            "Dividends are reported as verifiable point-in-time facts based on declared dates.",
+            "Indicated annual dividend is strictly an annualized run-rate (latest quarterly payment x 4), never guaranteed.",
+            "Total returns are computed under explicit conventions: (1) simple cash retention and (2) DRIP reinvestment.",
+        ],
+    }
+
+    # ---- 6. reverse requirements ----
     matrix = reverse.get("reverse_requirements_matrix") or []
     sections["reverse_requirements"] = {
         "title": SECTION_TITLES["reverse_requirements"],
@@ -1166,11 +1200,134 @@ def _render_limitations(section: Dict[str, Any]) -> List[str]:
     return lines
 
 
+def _render_dividends_and_total_return(section: Dict[str, Any]) -> List[str]:
+    lines: List[str] = []
+    status = section.get("status", "NOT_ACQUIRED")
+    summary = section.get("summary") or {}
+    returns = section.get("historical_returns") or []
+    payments = section.get("recent_payments") or []
+    comparison = section.get("price_vs_total_return_comparison") or []
+
+    lines.append("[股利與殖利率概況]")
+    lines.append("  狀態: %s" % status)
+    if summary and summary.get("trailing_twelve_month_dividends") is not None:
+        ttm_div = summary.get("trailing_twelve_month_dividends")
+        ttm_yield = summary.get("trailing_twelve_month_yield")
+        latest_payment = summary.get("latest_payment_amount")
+        latest_date = summary.get("latest_payment_date")
+        indicated_rate = summary.get("indicated_annual_dividend_rate")
+        indicated_yield = summary.get("indicated_annual_dividend_yield")
+        yoy_growth = summary.get("dividend_growth_yoy")
+        source = summary.get("trailing_dividends_source")
+
+        lines.append("  過去12個月累計現金股利 (TTM): %s %s (殖利率: %s)" % (
+            _number(ttm_div, 4), summary.get("currency", "USD"), _percent(ttm_yield, 2)
+        ))
+        lines.append("  最新單季配息: %s (%s, 除息日: %s)" % (
+            _number(latest_payment, 4), summary.get("currency", "USD"), latest_date or "-"
+        ))
+        lines.append("  指示年化股利 (Indicated, 4x最新季配): %s (指示殖利率: %s)" % (
+            _number(indicated_rate, 4), _percent(indicated_yield, 2)
+        ))
+        if yoy_growth is not None:
+            lines.append("  TTM 股利年增率 (YoY Growth): %s" % _percent(yoy_growth, 2, signed=True))
+        if source:
+            lines.append("  股利資料來源: %s" % source)
+    else:
+        lines.append("  無有效股利觀測資料或無配息。")
+    lines.append("")
+
+    if returns:
+        lines.append("[歷史報酬率比較: 股價報酬 vs 總報酬 (Price Return vs Total Return)]")
+        lines.append(
+            "  %-6s %-12s %-12s %-16s %-16s %-16s %-14s"
+            % ("期間", "起始日", "結束日", "純股價報酬CAGR", "現金保留總報酬", "DRIP再投資總報酬", "股利貢獻(DRIP)")
+        )
+        for row in returns:
+            lines.append(
+                "  %-6s %-12s %-12s %-16s %-16s %-16s %-14s"
+                % (
+                    row.get("horizon_label", "-"),
+                    row.get("start_date", "-"),
+                    row.get("end_date", "-"),
+                    _percent(row.get("price_return_cagr"), 2),
+                    _percent(row.get("total_return_cash_cagr"), 2),
+                    _percent(row.get("total_return_reinvested_cagr"), 2),
+                    _percent(row.get("dividend_contribution_reinvested_cagr"), 2, signed=True),
+                )
+            )
+        lines.append("")
+
+    if comparison:
+        lines.append("[反推要求條件比較: 純股價報酬 vs 總報酬 (Reverse Requirements Comparison)]")
+        lines.append("  (說明: 納入股利後，達到相同年化報酬率所需之終端股價與獲利門檻相應減輕)")
+        lines.append(
+            "  %-6s %-8s %-8s %-20s %-24s %-24s"
+            % ("持有期", "目標報酬", "出場PE", "純股價要求(目標價/EPS/CAGR)", "現金保留總報酬(目標價/EPS/CAGR/減免)", "再投資總報酬(目標價/EPS/CAGR/減免)")
+        )
+        for row in comparison[:15]:
+            h = f"{int(row['horizon_years'])}y" if float(row['horizon_years']).is_integer() else f"{row['horizon_years']:g}y"
+            r = _percent(row["required_return"], 1)
+            pe = f"{row['exit_multiple']:.1f}x"
+            p_only = row.get("price_only") or {}
+            c_ret = row.get("cash_dividends_retained") or {}
+            r_inv = row.get("dividends_reinvested_at_target_return") or {}
+
+            p_str = "%s / %s / %s" % (
+                _number(p_only.get("required_exit_price")),
+                _number(p_only.get("required_terminal_eps")),
+                _percent(p_only.get("required_eps_cagr"), 1),
+            )
+            c_str = "%s / %s / %s (%s)" % (
+                _number(c_ret.get("required_exit_price")),
+                _number(c_ret.get("required_terminal_eps")),
+                _percent(c_ret.get("required_eps_cagr"), 1),
+                _percent(c_ret.get("delta_eps_cagr"), 2, signed=True),
+            )
+            r_str = "%s / %s / %s (%s)" % (
+                _number(r_inv.get("required_exit_price")),
+                _number(r_inv.get("required_terminal_eps")),
+                _percent(r_inv.get("required_eps_cagr"), 1),
+                _percent(r_inv.get("delta_eps_cagr"), 2, signed=True),
+            )
+            lines.append("  %-6s %-8s %-8s %-20s %-24s %-24s" % (h, r, pe, p_str, c_str, r_str))
+        if len(comparison) > 15:
+            lines.append("  ... (共 %d 組情境比對，詳見機器可讀 JSON 檔案)" % len(comparison))
+        lines.append("")
+
+    if payments:
+        lines.append("[近 8 季現金股利發放紀錄 (最新在前)]:")
+        lines.append("  %-12s %-12s %-16s %-10s %-20s" % ("除息日", "每股金額", "拆股前原始金額", "幣別", "資料來源"))
+        for p in reversed(payments[-8:]):
+            unadj_str = _number(p.get("unadjusted_amount"), 4) if p.get("unadjusted_amount") is not None else "-"
+            lines.append(
+                "  %-12s %-12s %-16s %-10s %-20s"
+                % (
+                    p.get("ex_date", "-"),
+                    _number(p.get("amount"), 4),
+                    unadj_str,
+                    p.get("currency", "USD"),
+                    p.get("source", "-"),
+                )
+            )
+        lines.append("")
+
+    for unav in section.get("unavailable") or []:
+        lines.append("  - %s [%s]: %s" % (unav.get("item"), unav.get("reason_kind"), unav.get("reason")))
+    if section.get("unavailable"):
+        lines.append("")
+
+    for note in section.get("notes") or []:
+        lines.append("  * %s" % note)
+    return lines
+
+
 _SECTION_RENDERERS = {
     "market_and_company": _render_market,
     "financial_history": _render_history,
     "balance_sheet_and_capital_structure": _render_capital_structure,
     "valuation_metrics": _render_metrics,
+    "dividends_and_total_return": _render_dividends_and_total_return,
     "reverse_requirements": _render_reverse,
     "valuation_scenarios": _render_scenarios,
     "comparison_to_observations": _render_comparison,
