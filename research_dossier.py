@@ -647,7 +647,14 @@ def _render_capital_structure(section: Dict[str, Any]) -> List[str]:
     lines.append("[觀察值 vs 重建值]")
     lines.append("  %-18s %-22s %-22s %-14s" % ("項目", "觀察值(來源)", "重建值", "差異"))
     for row in section.get("observed_vs_reconstructed") or []:
-        label = "市值" if row["metric"] == "market_cap" else "企業價值"
+        if row["metric"] == "market_cap":
+            label = "市值"
+        elif row["metric"] == "enterprise_value":
+            label = "企業價值"
+        elif row["metric"] == "ev_ebitda":
+            label = "EV/EBITDA倍數"
+        else:
+            label = row["metric"]
         observed_value = row.get("observed")
         reconstructed_value = row.get("reconstructed")
         difference = row.get("difference")
@@ -686,6 +693,29 @@ def _render_capital_structure(section: Dict[str, Any]) -> List[str]:
     if reconstructed_ev.get("value") is not None:
         lines.append("    定義: %s" % reconstructed_ev.get("definition"))
         lines.append("    值: %s" % _number(reconstructed_ev.get("value")))
+        inputs = reconstructed_ev.get("inputs") or {}
+        if inputs.get("total_debt") is not None and inputs.get("liquid_funds") is not None:
+            lines.append(
+                "    淨負債組成: 總負債 %s (長期負債 %s + 商業本票 %s) - 流動資金 %s (現金 %s + 流動有價證券 %s) = 淨負債 %s"
+                % (
+                    _number(inputs.get("total_debt")),
+                    _number(inputs.get("long_term_debt")),
+                    _number(inputs.get("commercial_paper")),
+                    _number(inputs.get("liquid_funds")),
+                    _number(inputs.get("cash")),
+                    _number(inputs.get("marketable_securities_current")),
+                    _number(inputs.get("net_debt")),
+                )
+            )
+        if reconstructed_ev.get("ev_to_ebitda") is not None:
+            lines.append(
+                "    重建 EV/EBITDA: %.2fx (觀察值: %.2fx, EBITDA: %s)"
+                % (
+                    reconstructed_ev["ev_to_ebitda"],
+                    reconstructed_ev.get("observed_ev_to_ebitda") or 0.0,
+                    _number(inputs.get("observed_ebitda")),
+                )
+            )
         lines.append(
             "    已具備組成: %s" % ", ".join(reconstructed_ev.get("components_present") or [])
         )

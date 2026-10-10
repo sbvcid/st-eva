@@ -48,7 +48,9 @@ from data_contract import (
     CurrencyBasis,
     METRIC_ASSETS,
     METRIC_CASH,
+    METRIC_COMMERCIAL_PAPER,
     METRIC_LONG_TERM_DEBT,
+    METRIC_MARKETABLE_SECURITIES_CURRENT,
     METRIC_DEFINITIONS,
     METRIC_EPS_DILUTED,
     METRIC_NET_INCOME,
@@ -178,11 +180,24 @@ SEC_CONCEPTS: Dict[str, Tuple[Concept, ...]] = {
     METRIC_SHARES_OUTSTANDING: (
         Concept("dei", "EntityCommonStockSharesOutstanding"),
     ),
+    METRIC_MARKETABLE_SECURITIES_CURRENT: (
+        Concept("us-gaap", "MarketableSecuritiesCurrent"),
+    ),
+    METRIC_COMMERCIAL_PAPER: (
+        Concept("us-gaap", "CommercialPaper"),
+    ),
 }
 
 # A duration metric needs a trailing-twelve-month view on the SEC side so it can
 # be compared with a vendor trailing figure. An instant metric does not.
 TTM_METRICS = (METRIC_REVENUE, METRIC_NET_INCOME, METRIC_EPS_DILUTED)
+
+# Default metrics acquired by SECProvider.fetch: includes cross-source comparable
+# metrics plus capital-structure balance-sheet components.
+SEC_DEFAULT_METRICS: Tuple[str, ...] = tuple(
+    list(COMPARABLE_METRICS)
+    + [METRIC_MARKETABLE_SECURITIES_CURRENT, METRIC_COMMERCIAL_PAPER]
+)
 
 
 @dataclass(frozen=True)
@@ -2446,7 +2461,7 @@ class SECProvider:
     def fetch(
         self,
         ticker: str,
-        metrics: Sequence[str] = COMPARABLE_METRICS,
+        metrics: Sequence[str] = SEC_DEFAULT_METRICS,
     ) -> SecAcquisition:
         """
         Acquire SEC observations for a ticker.

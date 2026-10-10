@@ -2374,6 +2374,7 @@ def _build_reverse_requirements(
         currency=data.currency,
         observed_market_cap=market_cap,
         observed_enterprise_value=enterprise_value,
+        observed_ebitda=ebitda,
     )
     shares_latest = ((capital_early.get("observations") or {}).get("shares_outstanding") or {}).get("latest") or {}
     if shares_latest.get("present"):
@@ -2469,12 +2470,13 @@ def _build_reverse_requirements(
             currency=data.currency,
             observed_market_cap=market_cap,
             observed_enterprise_value=enterprise_value,
+            observed_ebitda=ebitda,
             cross_source=report.get("cross_source_validation"),
         )
         unavailable.extend(report["capital_structure"]["unavailable"])
     else:
         report["capital_structure"] = {
-            "formula_version": "capital-structure/1.0",
+            "formula_version": "capital-structure/2.0",
             "status": "NOT_ACQUIRED",
             "observations": {},
             "observed": {},

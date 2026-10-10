@@ -35,7 +35,7 @@ from financial_history import (
 )
 
 
-CAPITAL_FORMULA_VERSION = "capital-structure/1.0"
+CAPITAL_FORMULA_VERSION = "capital-structure/2.0"
 
 # The components a complete enterprise-value bridge would need. Naming them
 # lets the module say which are present and which are missing rather than
@@ -43,9 +43,10 @@ CAPITAL_FORMULA_VERSION = "capital-structure/1.0"
 EV_BRIDGE_COMPONENTS = (
     "total_debt",
     "long_term_debt",
+    "commercial_paper",
     "short_term_borrowings",
-    "cash_and_equivalents",
-    "short_term_investments",
+    "cash",
+    "marketable_securities_current",
     "non_controlling_interests",
     "preferred_equity",
 )
@@ -55,6 +56,12 @@ def _latest(series_points: Sequence[HistoryPoint]) -> Optional[HistoryPoint]:
     if not series_points:
         return None
     return series_points[-1]
+
+
+def _format_amount(val: Optional[float]) -> str:
+    if val is None:
+        return "N/A"
+    return f"{val:,.2f}"
 
 
 def _point_view(
@@ -98,6 +105,7 @@ def build_capital_structure(
     currency: Optional[str] = None,
     observed_market_cap: Optional[float] = None,
     observed_enterprise_value: Optional[float] = None,
+    observed_ebitda: Optional[float] = None,
     cross_source: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
@@ -112,7 +120,14 @@ def build_capital_structure(
 
     series = {
         metric: build_series(observations, metric, _WINDOW_INSTANT)
-        for metric in ("assets", "cash", "long_term_debt", "shares_outstanding")
+        for metric in (
+            "assets",
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "long_term_debt",
+            "shares_outstanding",
+        )
     }
     unavailable: List[Dict[str, Any]] = []
 
@@ -135,9 +150,16 @@ def build_capital_structure(
     shares = latest.get("shares_outstanding")
     cash = latest.get("cash")
     debt = latest.get("long_term_debt")
+    cp = latest.get("commercial_paper")
+    msc = latest.get("marketable_securities_current")
 
     currency_issues: List[str] = []
-    for name, point in (("cash", cash), ("long_term_debt", debt)):
+    for name, point in (
+        ("cash", cash),
+        ("long_term_debt", debt),
+        ("commercial_paper", cp),
+        ("marketable_securities_current", msc),
+    ):
         if point is not None and point.currency and currency and not currencies_match(point.currency, currency):
             currency_issues.append(
                 "%s is denominated in %s while the price is %s; no reconstruction combining "
@@ -197,38 +219,120 @@ def build_capital_structure(
         "inputs": {},
         "notes": [],
     }
-    present_components = [name for name, point in (("long_term_debt", debt), ("cash", cash)) if point]
+
+    present_components: List[str] = []
+    if debt is not None:
+        present_components.append("long_term_debt")
+    if cp is not None:
+        present_components.append("commercial_paper")
+    if debt is not None and cp is not None:
+        present_components.append("total_debt")
+    if cash is not None:
+        present_components.append("cash")
+    if msc is not None:
+        present_components.append("marketable_securities_current")
+
     absent = [name for name in EV_BRIDGE_COMPONENTS if name not in present_components]
     reconstructed_ev["components_present"] = present_components
     reconstructed_ev["components_absent"] = absent
+
+    total_debt_val: Optional[float] = None
+    if debt is not None or cp is not None:
+        total_debt_val = (debt.value if debt else 0.0) + (cp.value if cp else 0.0)
+
+    liquid_funds_val: Optional[float] = None
+    if cash is not None or msc is not None:
+        liquid_funds_val = (cash.value if cash else 0.0) + (msc.value if msc else 0.0)
+
+    net_debt_val: Optional[float] = None
+    if total_debt_val is not None and liquid_funds_val is not None:
+        net_debt_val = total_debt_val - liquid_funds_val
+
     reconstructed_ev["inputs"] = {
+        "market_cap": reconstructed_market_cap.get("value"),
         "long_term_debt": debt.value if debt else None,
         "long_term_debt_date": debt.period_end if debt else None,
+        "commercial_paper": cp.value if cp else None,
+        "commercial_paper_date": cp.period_end if cp else None,
+        "total_debt": total_debt_val,
         "cash": cash.value if cash else None,
         "cash_date": cash.period_end if cash else None,
-        "market_cap": reconstructed_market_cap.get("value"),
+        "marketable_securities_current": msc.value if msc else None,
+        "marketable_securities_current_date": msc.period_end if msc else None,
+        "liquid_funds": liquid_funds_val,
+        "net_debt": net_debt_val,
+        "observed_ebitda": observed_ebitda,
     }
 
-    if reconstructed_market_cap["value"] is not None and debt is not None and cash is not None:
+    if reconstructed_market_cap["value"] is not None and net_debt_val is not None:
         reconstructed_ev["value"] = (
-            reconstructed_market_cap["value"] + debt.value - cash.value
+            reconstructed_market_cap["value"] + net_debt_val
         )
         reconstructed_ev["status"] = "PARTIAL"
+
+        if cp is not None and msc is not None:
+            reconstructed_ev["definition"] = (
+                "market capitalization + total debt (long-term debt + commercial paper) - "
+                "liquid funds (cash + current marketable securities)"
+            )
+        else:
+            reconstructed_ev["definition"] = (
+                "market capitalization + long-term debt - cash and cash equivalents"
+            )
+
         reconstructed_ev["notes"].append(
-            "This is not a complete enterprise value. It omits %s, none of which was "
-            "acquired for this run." % ", ".join(absent)
+            "This is not a complete enterprise value. It omits %s."
+            % (", ".join(absent) if absent else "none")
         )
+        if cp is not None:
+            reconstructed_ev["notes"].append(
+                "Commercial paper (%s) is included in total debt (%s) alongside long-term debt (%s); "
+                "short-term borrowings are not double-counted."
+                % (
+                    _format_amount(cp.value),
+                    _format_amount(total_debt_val),
+                    _format_amount(debt.value if debt else 0.0),
+                )
+            )
+        if msc is not None:
+            reconstructed_ev["notes"].append(
+                "Current marketable securities (%s) are included in liquid funds (%s) alongside cash (%s)."
+                % (
+                    _format_amount(msc.value),
+                    _format_amount(liquid_funds_val),
+                    _format_amount(cash.value if cash else 0.0),
+                )
+            )
         reconstructed_ev["notes"].append(
-            "It also combines a share-count date, a price date and a balance-sheet date "
+            "It also combines a share-count date (%s), a price date (%s) and a balance-sheet date (%s) "
             "that need not coincide."
+            % (
+                shares.period_end if shares else "-",
+                price_date or "-",
+                debt.period_end if debt else (cash.period_end if cash else "-"),
+            )
         )
+        reconstructed_ev["notes"].append(
+            "Status remains PARTIAL because reconstructed EV omits non-current marketable securities, "
+            "operating leases under ASC 842, and off-balance sheet commitments. An arithmetic match with "
+            "provider net debt does not constitute exhaustive accounting coverage."
+        )
+
+        if observed_ebitda is not None and observed_ebitda > 0:
+            reconstructed_ev["ev_to_ebitda"] = (
+                reconstructed_ev["value"] / observed_ebitda
+            )
+            if observed_enterprise_value is not None:
+                reconstructed_ev["observed_ev_to_ebitda"] = (
+                    observed_enterprise_value / observed_ebitda
+                )
     else:
         missing = [
             name
             for name, present in (
                 ("a reconstructed market capitalization", reconstructed_market_cap["value"] is not None),
-                ("long-term debt", debt is not None),
-                ("cash", cash is not None),
+                ("debt components", total_debt_val is not None),
+                ("cash or liquid investment components", liquid_funds_val is not None),
             )
             if not present
         ]
@@ -269,12 +373,18 @@ def build_capital_structure(
             recon_dates = {
                 "market_cap_date": price_date,
                 "long_term_debt_date": debt.period_end if debt else None,
+                "commercial_paper_date": cp.period_end if cp else None,
                 "cash_date": cash.period_end if cash else None,
+                "marketable_securities_current_date": msc.period_end if msc else None,
             }
+            if cp and msc:
+                bridge_desc = "(market cap + long-term debt + commercial paper - cash - current marketable securities)"
+            else:
+                bridge_desc = "(market cap + long-term debt - cash)"
             def_diff = (
                 "Observed is provider enterprise value; reconstructed is a partial bridge "
-                "(market cap + long-term debt - cash) omitting: %s."
-                % (", ".join(absent) if absent else "none")
+                "%s omitting: %s."
+                % (bridge_desc, ", ".join(absent) if absent else "none")
             )
 
         comparisons.append(
@@ -301,6 +411,50 @@ def build_capital_structure(
             }
         )
 
+    if observed_ebitda is not None and observed_ebitda > 0:
+        obs_ev_ebitda = (
+            observed_enterprise_value / observed_ebitda
+            if observed_enterprise_value is not None
+            else None
+        )
+        recon_ev_ebitda = (
+            reconstructed_ev["value"] / observed_ebitda
+            if reconstructed_ev.get("value") is not None
+            else None
+        )
+        diff_ev_ebitda = (
+            recon_ev_ebitda - obs_ev_ebitda
+            if recon_ev_ebitda is not None and obs_ev_ebitda is not None
+            else None
+        )
+        rel_diff_ev_ebitda = (
+            diff_ev_ebitda / obs_ev_ebitda
+            if diff_ev_ebitda is not None and obs_ev_ebitda not in (None, 0)
+            else None
+        )
+        comparisons.append(
+            {
+                "metric": "ev_ebitda",
+                "observed": obs_ev_ebitda,
+                "observed_date": price_date,
+                "observed_definition": "provider enterprise value / observed trailing EBITDA",
+                "reconstructed": recon_ev_ebitda,
+                "reconstructed_status": reconstructed_ev.get("status"),
+                "reconstructed_dates": {
+                    "market_cap_date": price_date,
+                    "balance_sheet_date": debt.period_end if debt else None,
+                    "ebitda_basis": "trailing_twelve_months",
+                },
+                "definition": "reconstructed enterprise value / observed trailing EBITDA",
+                "definition_difference": (
+                    "Observed is provider EV / trailing EBITDA; reconstructed is partial reconstructed EV / "
+                    "trailing EBITDA. The delta reflects the share count timing mismatch."
+                ),
+                "difference": diff_ev_ebitda,
+                "relative_difference": rel_diff_ev_ebitda,
+            }
+        )
+
     has_any = any(len(value.points) > 0 for value in series.values())
     status = "COMPUTED" if has_any else "NOT_ACQUIRED"
     verdicts = (cross_source or {}).get("verdicts") or {}
@@ -324,6 +478,7 @@ def build_capital_structure(
         "observed": {
             "market_cap": observed_market_cap,
             "enterprise_value": observed_enterprise_value,
+            "ebitda": observed_ebitda,
             "basis": "as published by the market data provider",
         },
         "reconstructed_market_cap": reconstructed_market_cap,
@@ -339,7 +494,7 @@ def build_capital_structure(
         "notes": [
             "Provider observations and reconstructed values are reported side by side. "
             "Neither overwrites the other and neither is declared correct.",
-            "A reconstructed enterprise value built from long-term debt and cash alone is "
+            "A reconstructed enterprise value built from balance-sheet components is "
             "partial by construction and is labelled as such.",
         ],
     }

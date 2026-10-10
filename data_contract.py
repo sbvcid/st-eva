@@ -447,6 +447,9 @@ METRIC_SHARES_OUTSTANDING = "shares_outstanding"
 METRIC_ENTERPRISE_VALUE = "enterprise_value"
 METRIC_MARKET_CAP = "market_cap"
 METRIC_PRICE_VOLUME_METRICS = "price_volume_metrics"
+METRIC_MARKETABLE_SECURITIES_CURRENT = "marketable_securities_current"
+METRIC_COMMERCIAL_PAPER = "commercial_paper"
+METRIC_TOTAL_DEBT = "total_debt"
 
 CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_PRICE,
@@ -472,6 +475,9 @@ CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_CASH,
     METRIC_LONG_TERM_DEBT,
     METRIC_SHARES_OUTSTANDING,
+    METRIC_MARKETABLE_SECURITIES_CURRENT,
+    METRIC_COMMERCIAL_PAPER,
+    METRIC_TOTAL_DEBT,
 )
 
 CONTRACT_UNITS: Tuple[str, ...] = tuple(unit.value for unit in Unit)
@@ -581,6 +587,9 @@ METRIC_UNITS: Dict[str, str] = {
     METRIC_CASH: UNIT_CURRENCY,
     METRIC_LONG_TERM_DEBT: UNIT_CURRENCY,
     METRIC_SHARES_OUTSTANDING: Unit.COUNT.value,
+    METRIC_MARKETABLE_SECURITIES_CURRENT: UNIT_CURRENCY,
+    METRIC_COMMERCIAL_PAPER: UNIT_CURRENCY,
+    METRIC_TOTAL_DEBT: UNIT_CURRENCY,
 }
 
 # Definitions of the 2.3-B cross-source metrics. Each states what the concept is
@@ -613,9 +622,36 @@ METRIC_CROSS_SOURCE_DEFINITIONS: Dict[str, str] = {
         "Shares outstanding at a stated date. Never synthesized. A period "
         "average diluted share count is a different concept."
     ),
+    METRIC_MARKETABLE_SECURITIES_CURRENT: (
+        "Current marketable securities at a balance-sheet date. Liquid "
+        "investments with original or remaining maturities between 3 and 12 "
+        "months (such as commercial paper, certificates of deposit, and short-term "
+        "government obligations). Never synthesized."
+    ),
+    METRIC_COMMERCIAL_PAPER: (
+        "Commercial paper liabilities at a balance-sheet date. Short-term "
+        "unsecured promissory notes issued under commercial paper programs. "
+        "A component of short-term borrowings; never double-counted with generic "
+        "short-term borrowings. Never synthesized."
+    ),
+    METRIC_TOTAL_DEBT: (
+        "Total debt obligations at a balance-sheet date, comprising long-term "
+        "debt (current and non-current portions) plus commercial paper / short-term "
+        "borrowings. Never synthesized."
+    ),
 }
 
 METRIC_DEFINITIONS.update(METRIC_CROSS_SOURCE_DEFINITIONS)
+
+# Capital-structure metrics supported for balance-sheet and enterprise-value reconstruction.
+CAPITAL_STRUCTURE_METRICS: Tuple[str, ...] = (
+    METRIC_ASSETS,
+    METRIC_CASH,
+    METRIC_MARKETABLE_SECURITIES_CURRENT,
+    METRIC_COMMERCIAL_PAPER,
+    METRIC_LONG_TERM_DEBT,
+    METRIC_SHARES_OUTSTANDING,
+)
 
 
 def observation_id_for(metric: str) -> str:

@@ -2,7 +2,7 @@
 
 **Recorded:** 2026-10-10
 
-**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, Phase E, and Phase F**
+**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, Phase E, Phase F, and Phase G**
 
 P0 (parser regression) is complete and verified; see §12. The Reverse
 Requirements Report V1 is implemented, wired into every run and verified
@@ -13,6 +13,8 @@ evidence, capital-structure reconciliation and multi-multiple matrices; see §15
 Phase E implements the production point-in-time Historical P/E pipeline and
 evaluation sufficiency gate; see §16. Phase F verifies portability, reconciles
 distribution ranges, freezes research packages, and runs independent LLM evaluations; see §17.
+Phase G closes capital-structure balance-sheet evidence, discovers the exact mathematical EV bridge,
+reconciles EV/EBITDA multiples, and enforces PARTIAL status governance; see §18.
 Each section records what was actually run.
 
 Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
@@ -537,4 +539,63 @@ Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09:
    - Semantically reviewed Model 1's claim of a "negative equity risk premium", clarifying the distinction between a descriptive accounting earnings yield spread and a formal ex-ante expected excess return ($ERP \equiv E[R_{equity}] - R_f$).
 
 5. **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical.
+
+## 18. Phase G — Capital Structure Closure and Enterprise Value Reconciliation
+
+**Date:** 2026-10-10.
+
+### What was audited, verified and delivered
+
+1. **Balance-Sheet Component Acquisition:**
+   - Extended `data_contract.py` with `METRIC_MARKETABLE_SECURITIES_CURRENT`, `METRIC_COMMERCIAL_PAPER`, and `METRIC_TOTAL_DEBT`.
+   - Wired `sec_provider.py` to acquire `us-gaap:MarketableSecuritiesCurrent` and `us-gaap:CommercialPaper` by default (`SEC_DEFAULT_METRICS`).
+   - Verified issuer XBRL tagging: Apple CIK 0000320193 files `MarketableSecuritiesCurrent` (liquid short-term investments) and `CommercialPaper` (short-term promissory notes) rather than generic `ShortTermInvestments` or `ShortTermBorrowings`.
+
+2. **Exact Mathematical EV Bridge Discovery:**
+   - Audited the exact bridge between provider market capitalization and provider enterprise value on AAPL:
+     - Provider Observed Market Cap: $4,918,530,543,600.0 (`2026-10-09`)
+     - Provider Observed Enterprise Value: $4,940,475,543,600.0 (`2026-10-09`)
+     - Implied Provider Net Debt Addition: $\text{EV} - \text{Market Cap} = \mathbf{+\$21,945,000,000.00}$.
+   - Traced to SEC Filing for AAPL at `2026-06-27` (10-Q accession `0000320193-26-000020`):
+     - `us-gaap:LongTermDebtNoncurrent`: $71,340,000,000
+     - `us-gaap:LongTermDebtCurrent`: $11,007,000,000
+     - $\rightarrow$ Long-Term Debt Total: $82,347,000,000
+     - `us-gaap:CommercialPaper`: $1,997,000,000
+     - $\rightarrow$ Total Debt: $\mathbf{\$84,344,000,000}$
+     - `us-gaap:CashAndCashEquivalentsAtCarryingValue`: $39,544,000,000
+     - `us-gaap:MarketableSecuritiesCurrent`: $22,855,000,000
+     - $\rightarrow$ Liquid Cash & Current Investments: $\mathbf{\$62,399,000,000}$
+     - $\rightarrow$ **Net Debt**: $\$84,344,000,000 - \$62,399,000,000 = \mathbf{+\$21,945,000,000.00}$ (exact match down to the dollar!).
+   - Audited Market Cap & Reconstructed EV:
+     - Reconstructed Market Cap: $336.64 \times 14,594,180,000$ cover-page shares (`2026-07-17`) = $4,912,984,755,200.0.
+     - Difference from Observed Market Cap: $-\$5,545,788,400.00$ (-0.1128%).
+     - Reconstructed EV: $\$4,912,984,755,200.0 + \$21,945,000,000.0 = \mathbf{\$4,934,929,755,200.00}$.
+     - Difference from Observed EV: $-\$5,545,788,400.00$ (-0.1123%), which exactly equals the market capitalization difference, confirming the net debt bridge is 100% mathematically sound.
+
+3. **Status Governance & Accounting Limitation Declaration:**
+   - Preserved `status: "PARTIAL"` for reconstructed Enterprise Value.
+   - Enforced the ST-EVA principle: a successful arithmetic match is not proof of exhaustive accounting coverage.
+   - Reconstructed EV explicitly documents the omission of:
+     - Non-current marketable securities ($90,695,000,000 on balance sheet).
+     - Operating lease liabilities under ASC 842.
+     - Off-balance-sheet commitments and contingent liabilities.
+     - Preferred equity and minority interests (zero/unreported for AAPL).
+
+4. **EV/EBITDA Multiple Reconciliation:**
+   - Observed EV/EBITDA: $4,940.48\text{B} / 167.97\text{B} = 29.4128\text{x}$.
+   - Reconstructed EV/EBITDA: $4,934.93\text{B} / 167.97\text{B} = 29.3798\text{x}$.
+   - Difference: $-0.0330\text{x}$ (-0.1123%), attributable solely to the cover-page share date timing delta (-0.1128%). Reconstructed EV is compatible with trailing EBITDA because both cover contemporaneous USD valuation.
+
+5. **Anti-Double-Counting Guard:**
+   - Verified that commercial paper liabilities are treated as a distinct component of short-term borrowings and are never added twice if generic short-term debt concepts are evaluated.
+
+6. **Dossier & Report Rendering:**
+   - Updated `research_dossier.py` (`_render_capital_structure`) to display:
+     - All instant balance-sheet observations with dates, availability, and provenance.
+     - Side-by-side observed vs reconstructed rows for Market Cap, Enterprise Value, and EV/EBITDA.
+     - Explicit bridge equation: Total Debt (Long-Term Debt + Commercial Paper) - Liquid Funds (Cash + Current Marketable Securities) = Net Debt.
+
+7. **Database Protection & Test Verification:**
+   - Verified zero database drift: all SQLite databases (`data/archives/*.sqlite`, `data/st-eva.sqlite`) verified SHA-256 byte-identical.
+   - Full test suite passed: 1868 passed, 168 skipped in 327.98s, zero failures.
 

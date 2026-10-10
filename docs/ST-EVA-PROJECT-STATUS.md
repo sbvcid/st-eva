@@ -7,7 +7,27 @@
 
 This document records state. It introduces no new architectural decisions, modifies no formal ADRs, alters no methodology contracts, changes no database schemas or migrations, and confers no implementation authorizations.
 
-## 0.5. Addendum, 2026-10-10 — Phase F: Portability Audit, Frozen Research Package, and LLM Dossier Experiment (newest; supersedes nothing above)
+## 0.6. Addendum, 2026-10-10 — Phase G: Capital Structure Closure and Enterprise Value Reconciliation (newest; supersedes nothing above)
+
+This addendum records Phase G, which closes balance-sheet and capital-structure data required to reconstruct enterprise value, discovers the exact mathematical bridge connecting provider enterprise value to filed SEC facts for AAPL, reconciles EV/EBITDA valuation multiples, and enforces strict PARTIAL status governance and accounting limitation disclosures.
+
+**Added & verified capabilities:**
+- **Balance-Sheet Acquisition Expansion:** Extended data contract (`data_contract.py`) and SEC provider (`sec_provider.py`) to acquire `METRIC_MARKETABLE_SECURITIES_CURRENT` (`us-gaap:MarketableSecuritiesCurrent`) and `METRIC_COMMERCIAL_PAPER` (`us-gaap:CommercialPaper`).
+- **Exact Mathematical EV Bridge Discovery:** Reconciled provider observed EV ($4,940,475,543,600.0) against provider market cap ($4,918,530,543,600.0), proving an implied net debt addition of $+\$21,945,000,000.00$. Traced to 10-Q filing `2026-06-27`: Total Debt ($84,344M) - Liquid Funds ($62,399M) = $+\$21,945,000,000.00$ (exact dollar match).
+- **Status Governance & Accounting Limitation Declarations:** Reconstructed EV retains `PARTIAL` status even with the exact arithmetic match. Reconstructed EV explicitly documents the omission of non-current marketable securities ($90.7B), operating leases under ASC 842, and off-balance sheet liabilities.
+- **EV/EBITDA Multiple Reconciliation:** Reconciled observed EV/EBITDA ($29.4128\text{x}$) against reconstructed EV/EBITDA ($29.3798\text{x}$), demonstrating that the minor -0.11% discrepancy is wholly explained by the cover-page share date timing mismatch.
+- **Dossier & Report Rendering:** Updated `research_dossier.py` to format all balance-sheet observations, side-by-side reconciliation rows, and detailed net debt bridge arithmetic.
+
+**Deliberately unchanged & protected:**
+- ST-EVA remains an evidence and deterministic-calculation engine: no scenario probabilities, no ranking, and no expected-value aggregation.
+- All persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical.
+- All tests pass: 1868 passed, 168 skipped in 327.98s, zero failures.
+
+Full detail is in [`docs/ROADMAP.md`](ROADMAP.md) §18.
+
+---
+
+## 0.5. Addendum, 2026-10-10 — Phase F: Portability Audit, Frozen Research Package, and LLM Dossier Experiment (supersedes nothing above)
 
 This addendum records Phase F, which verifies that the production Historical P/E pipeline is fully portable and reproducible outside local developer environments, freezes an authoritative research dossier package for `AAPL` (`as_of = 2026-10-09`), reconciles historical distribution documentation ranges, and audits independent LLM research consumption.
 
