@@ -409,6 +409,36 @@ def render_report(
     lines.extend(_table(band_rows, ["倍數", "中位數", "觀測數", "目前分位", "可否作參考"]))
     lines.append("")
 
+    prod_pe = result.get("production_historical_pe") or (result.get("reverse_requirements") or {}).get("production_historical_pe")
+    if isinstance(prod_pe, dict):
+        dist = prod_pe.get("distribution") if isinstance(prod_pe.get("distribution"), dict) else prod_pe
+        status = dist.get("status")
+        sample_count = dist.get("sample_count", 0)
+        p_start = dist.get("period_start")
+        p_end = dist.get("period_end")
+        min_req = dist.get("min_observations_required", 20)
+        percentiles = dist.get("percentiles") or {}
+        excluded = dist.get("excluded_observations") or []
+
+        lines.append("生產級點時歷史 P/E 分布 (PRODUCTION PIT HISTORICAL P/E)")
+        lines.append(f"狀態: {status} (門檻 >= {min_req} 筆有效觀測值)")
+        if sample_count > 0:
+            lines.append(f"有效樣本數: {sample_count}   涵蓋期間: {p_start} 至 {p_end}")
+            p_rows = []
+            for p_key, p_lbl in (
+                ("10th", "10th 分位"),
+                ("25th", "25th 分位"),
+                ("median", "50th 分位 (中位數)"),
+                ("75th", "75th 分位"),
+                ("90th", "90th 分位"),
+            ):
+                p_rows.append([p_lbl, _number(percentiles.get(p_key))])
+            lines.extend(_table(p_rows, ["分位數", "P/E 倍數"]))
+            lines.append(f"排除樣本: {len(excluded)} 筆")
+        else:
+            lines.append(f"無有效樣本: {dist.get('reason_detail') or dist.get('reason_code') or '無資料'}")
+        lines.append("")
+
     # ---- reference ----
     lines.append(_rule("-"))
     lines.append("參考倍數 (REFERENCE)")

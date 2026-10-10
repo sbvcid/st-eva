@@ -7,9 +7,27 @@
 
 This document records state. It introduces no new architectural decisions, modifies no formal ADRs, alters no methodology contracts, changes no database schemas or migrations, and confers no implementation authorizations.
 
+## 0.4. Addendum, 2026-10-10 — Phase E: Production Historical P/E Pipeline (newest; supersedes nothing above)
+
+This addendum records Phase E, which implements the production point-in-time (`PIT`) Historical P/E pipeline conforming to `docs/methodology/CONTRACT-HISTORICAL-PE.md` and `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` Amendment 1, connecting verified historical valuation references to the research dossier and reverse requirements sensitivity matrix.
+
+**Added capabilities:**
+- **Point-in-Time Historical P/E Engine (`historical_pe.py`):** Pairs historical prices with strictly knowable EPS evidence (zero lookahead). Implements EDGAR SGML header acceptance cutoff (< 16:00 ET -> same day; >= 16:00 ET -> next day). Enforces stated-directly quarterly EPS evidence (Invariant F-1) from filed 10-Q/10-K and furnished 8-K Item 2.02 (prohibiting arithmetic subtraction), fiscal calendar anchoring (Invariants F-2, F-3) requiring 4 consecutive quarters and Q4, non-positive EPS rejection, accounting basis/restatement alignment (Invariant F-6, R-PIT-SUPERSEDE), closed reason codes (Invariant F-11), and canonical JSON content hashes (Invariant F-13).
+- **Sufficiency Gate & Status Governance:** Enforces the $\ge 20$ valid observations policy for `USABLE_FOR_REFERENCE`. Samples $< 20$ remain descriptive only (`INSUFFICIENT_OBSERVATIONS`). Maintains strict separation between production PIT historical P/E and provider-fed `historical_pe_band`.
+- **Dossier & Reverse Matrix Integration:** Dossier Section 5 (`valuation_metrics.production_historical_pe`) and human-readable report display complete distribution table and notes. When qualified, percentiles feed the reverse sensitivity matrix (80 rows on AAPL across 5 percentiles, 4 holding periods, 4 return rates).
+- **CLI Flags & Negative Path:** Added `--historical-pe` and `--no-furnished-pe` (negative path reproducing the 12/31 rejection).
+
+**Deliberately unchanged & protected:**
+- ST-EVA remains an evidence and deterministic-calculation engine: no scenario probabilities, no ranking, and no expected-value aggregation.
+- The 20-observation threshold policy is strictly maintained without exception.
+- All persistent archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical.
+- Full test suite: 1864 passed, 168 skipped (16 new tests in `test_historical_pe.py`, 0 failures).
+
+Full detail, including AAPL acceptance verification, is in [`docs/ROADMAP.md`](ROADMAP.md) §16.
+
 ---
 
-## 0.3. Addendum, 2026-10-10 — Phase D: Point-in-Time Financial Data and Multi-Exit-Multiple Dossier (newest; supersedes nothing above)
+## 0.3. Addendum, 2026-10-10 — Phase D: Point-in-Time Financial Data and Multi-Exit-Multiple Dossier (supersedes nothing above)
 
 This addendum records Phase D, which closes two concrete research-product gaps: presenting point-in-time (`INSTANT`) balance-sheet evidence and share-count observations with reconstructed capitalization reconciliation, and expanding the reverse requirements matrix to support multi-exit-multiple scenarios across holding periods and return hurdles.
 

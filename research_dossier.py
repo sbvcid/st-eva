@@ -188,6 +188,10 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
             "pfcf": observed.get("historical_pfcf_band"),
             "ev_ebitda": observed.get("historical_ev_ebitda_band"),
         },
+        "production_historical_pe": (
+            reverse.get("production_historical_pe")
+            or result.get("production_historical_pe")
+        ),
         "band_eligibility": (result.get("reference") or {}).get("historical_band_status") or {},
         "min_observations_for_reference": (result.get("reference") or {}).get(
             "min_observations_for_reference"
@@ -205,6 +209,7 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
             "expects.",
             "A historical band whose observation count is below the stated threshold is "
             "reported but is not used as a reference multiple.",
+            "Production historical P/E requires at least 20 valid point-in-time observations to qualify as a reference distribution.",
         ],
     }
 
@@ -745,6 +750,44 @@ def _render_metrics(section: Dict[str, Any]) -> List[str]:
     if minimum:
         lines.append("  (採用門檻: 歷史區間需 >= %s 個觀測值方可作為參考)" % minimum)
     lines.append("")
+
+    prod_pe = section.get("production_historical_pe")
+    if isinstance(prod_pe, dict):
+        dist = prod_pe.get("distribution") if isinstance(prod_pe.get("distribution"), dict) else prod_pe
+        status = dist.get("status")
+        sample_count = dist.get("sample_count", 0)
+        p_start = dist.get("period_start")
+        p_end = dist.get("period_end")
+        min_req = dist.get("min_observations_required", 20)
+        percentiles = dist.get("percentiles") or {}
+        excluded = dist.get("excluded_observations") or []
+
+        lines.append("生產級點時歷史 P/E 分布 (PRODUCTION PIT HISTORICAL P/E):")
+        lines.append("  狀態: %s (門檻需求 >= %s 筆有效觀測值)" % (status, min_req))
+        if sample_count > 0:
+            lines.append("  有效樣本數: %s   涵蓋期間: %s 至 %s" % (sample_count, p_start, p_end))
+            lines.append(
+                "  統計: 平均數 %s   標準差 %s   最小值 %s   最大值 %s"
+                % (_number(dist.get("mean")), _number(dist.get("std")), _number(dist.get("min")), _number(dist.get("max")))
+            )
+            lines.append("  分位數參考:")
+            for p_key, p_lbl in (
+                ("10th", "10th 分位"),
+                ("25th", "25th 分位"),
+                ("median", "50th 分位(中位數)"),
+                ("75th", "75th 分位"),
+                ("90th", "90th 分位"),
+            ):
+                val = percentiles.get(p_key)
+                lines.append("    %-20s %s" % (p_lbl, _number(val)))
+            lines.append("  排除樣本數: %d 筆" % len(excluded))
+            if dist.get("usable_for_reference"):
+                lines.append("  估值參考狀態: 合格，已可作為多情境反推矩陣之參考倍數來源。")
+            else:
+                lines.append("  估值參考狀態: 樣本數不足，僅呈報描述性統計，不得升格為合格估值參考或情境倍數。")
+        else:
+            lines.append("  無有效樣本: %s" % (dist.get("reason_detail") or dist.get("reason_code") or "無資料"))
+        lines.append("")
 
     consensus = section.get("consensus") or {}
     if consensus.get("consensus_forward_eps") is not None:

@@ -1084,6 +1084,81 @@ def exit_multiples_from_band(
     return multiples, unavailable
 
 
+def exit_multiples_from_production_distribution(
+    distribution: Optional[Dict[str, Any]],
+    *,
+    min_observations: int = 20,
+    percentiles: Sequence[float] = (10.0, 25.0, 50.0, 75.0, 90.0),
+) -> Tuple[List[ReferenceMultiple], List[Dict[str, Any]]]:
+    """
+    Exit multiple scenarios taken from a production point-in-time historical P/E distribution.
+
+    Strictly enforces ADR Decision 9 & CONTRACT §K.2: only a distribution with >= min_observations
+    qualifies for reference distribution status. If below the threshold, descriptive statistics
+    are reported, but no scenario multiples are produced.
+    """
+    multiples: List[ReferenceMultiple] = []
+    unavailable: List[Dict[str, Any]] = []
+    if not distribution:
+        return multiples, unavailable
+
+    sample_count = distribution.get("sample_count")
+    status = distribution.get("status")
+    period_start = distribution.get("period_start")
+    period_end = distribution.get("period_end")
+    percentiles_dict = distribution.get("percentiles") or {}
+    median = _safe_float(percentiles_dict.get("median"))
+
+    if sample_count is None or median is None:
+        return multiples, unavailable
+
+    usable = bool(
+        distribution.get("usable_for_reference")
+        or (status == "USABLE_FOR_REFERENCE")
+        or (sample_count >= min_observations)
+    )
+
+    if not usable:
+        unavailable.append(
+            {
+                "item": "exit_multiple.production_historical_pe_scenarios",
+                "reason": (
+                    "The production historical P/E distribution holds %d observations, below the %d "
+                    "required to establish an authoritative reference distribution. The median of %.4g "
+                    "is reported as a descriptive statistic only and is not used as a scenario exit "
+                    "multiple." % (sample_count, min_observations, median)
+                ),
+                "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+                "blocks": ["exit_multiple.production_historical_pe_scenarios"],
+            }
+        )
+        return multiples, unavailable
+
+    period_label = f"{period_start} to {period_end}" if period_start and period_end else ""
+    for percentile in percentiles:
+        key = {10.0: "10th", 25.0: "25th", 50.0: "median", 75.0: "75th", 90.0: "90th"}.get(
+            float(percentile)
+        )
+        if key is None:
+            continue
+        val = _safe_float(percentiles_dict.get(key))
+        if val is None or val <= 0:
+            continue
+        multiples.append(
+            ReferenceMultiple(
+                value=val,
+                source="production_historical_pe_percentile",
+                period_label=f"{key} ({period_label})" if period_label else key,
+                sample_size=sample_count,
+                sample_period=(
+                    "production historical P/E %s from %d observations (%s)"
+                    % (key, sample_count, period_label)
+                ),
+            )
+        )
+    return multiples, unavailable
+
+
 def valuation_method_scenarios(
     *,
     price: float,
@@ -1431,6 +1506,7 @@ def build_reverse_requirements_report(
     investor_required_returns: Optional[Dict[str, Any]] = None,
     dcf_inputs: Optional[Dict[str, Any]] = None,
     unavailable: Optional[Iterable[Dict[str, Any]]] = None,
+    production_historical_pe: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the whole V1 package: the matrix, the cash flow cross-checks, the
@@ -1532,6 +1608,7 @@ def build_reverse_requirements_report(
         "valuation_methods": methods_block,
         "rate_families": rate_families,
         "dcf": dcf_block,
+        "production_historical_pe": production_historical_pe,
         "unavailable": list(unavailable or []),
         "reading_notes": [
             "A required return is a price return unless a dividend was supplied as an input.",

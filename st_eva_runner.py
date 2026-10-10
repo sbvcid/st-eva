@@ -1716,6 +1716,8 @@ def run_st_eva(
     include_financial_history: bool = False,
     dossier_path: Optional[str] = None,
     render_dossier_report: bool = False,
+    include_historical_pe: bool = False,
+    enable_furnished_pe: bool = True,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
@@ -1767,6 +1769,34 @@ def run_st_eva(
         _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
     )
 
+    production_historical_pe = None
+    if include_historical_pe:
+        try:
+            from historical_pe import load_aapl_historical_pe
+            if data.ticker == "AAPL":
+                pe_result = load_aapl_historical_pe(enable_furnished=enable_furnished_pe)
+                production_historical_pe = pe_result.to_dict()
+            else:
+                production_historical_pe = {
+                    "distribution": {
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_detail": f"Production historical P/E dataset is not yet established for {data.ticker}.",
+                    }
+                }
+        except Exception as exc:
+            production_historical_pe = {
+                "distribution": {
+                    "status": "UNAVAILABLE",
+                    "usable_for_reference": False,
+                    "sample_count": 0,
+                    "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                    "reason_detail": str(exc),
+                }
+            }
+
     reverse_requirements = _build_reverse_requirements(
         data,
         analysis,
@@ -1784,6 +1814,7 @@ def run_st_eva(
         risk_free_tenor=risk_free_tenor,
         sec_observations=sec_evidence.get("observations") if include_financial_history else None,
         cross_validation=sec_evidence.get("cross_validation") if wants_sec else None,
+        production_historical_pe=production_historical_pe,
     )
 
     if context_path is not None:
@@ -1886,6 +1917,7 @@ def run_st_eva(
         "reference": analysis["reference"],
         "market_metrics": metrics,
         "reverse_requirements": reverse_requirements,
+        "production_historical_pe": production_historical_pe,
         "missing_data": missing_data,
         "evidence_ids": evidence.ids(),
         "validation": {
@@ -1924,6 +1956,7 @@ def _build_exit_multiple_scenarios(
     historical_band: Optional[Dict[str, Any]],
     user_multiples: Sequence[Optional[float]],
     min_observations: int,
+    production_historical_pe: Optional[Dict[str, Any]] = None,
 ) -> Tuple[List[Any], List[Dict[str, Any]]]:
     """
     The exit multiples the matrix runs over.
@@ -1934,18 +1967,37 @@ def _build_exit_multiple_scenarios(
     a distribution and which from a stated assumption, and a single fixed
     multiple cannot silently stand in for a sensitivity range.
     """
-    from reverse_requirements import ReferenceMultiple, exit_multiples_from_band
+    from reverse_requirements import (
+        ReferenceMultiple,
+        exit_multiples_from_band,
+        exit_multiples_from_production_distribution,
+    )
 
     scenarios: List[Any] = []
     unavailable: List[Dict[str, Any]] = []
+
+    # Production historical P/E distribution if provided
+    prod_dist = (
+        production_historical_pe.get("distribution")
+        if isinstance(production_historical_pe, dict)
+        else None
+    )
+    if prod_dist:
+        prod_scenarios, prod_unavailable = exit_multiples_from_production_distribution(
+            prod_dist, min_observations=min_observations
+        )
+        unavailable.extend(prod_unavailable)
+        scenarios.extend(prod_scenarios)
 
     band_scenarios, band_unavailable = exit_multiples_from_band(
         historical_band, min_observations=min_observations
     )
     unavailable.extend(band_unavailable)
-    scenarios.extend(band_scenarios)
-
     seen = {round(m.value, 10) for m in scenarios}
+    for cand in band_scenarios:
+        if round(cand.value, 10) not in seen:
+            seen.add(round(cand.value, 10))
+            scenarios.append(cand)
     for candidate in user_multiples or ():
         number = safe_float(candidate)
         if number is None or number <= 0:
@@ -2004,6 +2056,7 @@ def _build_valuation_multiples(
     ps_multiple: Optional[float],
     historical_band: Optional[Dict[str, Any]],
     min_observations: int,
+    production_historical_pe: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """
     The reference multiple for each valuation method, keyed by method.
@@ -2012,10 +2065,25 @@ def _build_valuation_multiples(
     are not interchangeable, and a method with no multiple supplied is left
     absent rather than filled from another method's number.
     """
-    from reverse_requirements import ReferenceMultiple, exit_multiples_from_band
+    from reverse_requirements import (
+        ReferenceMultiple,
+        exit_multiples_from_band,
+        exit_multiples_from_production_distribution,
+    )
 
     multiples: Dict[str, Any] = {}
     unavailable: List[Dict[str, Any]] = []
+
+    prod_scenarios: List[Any] = []
+    prod_dist = (
+        production_historical_pe.get("distribution")
+        if isinstance(production_historical_pe, dict)
+        else None
+    )
+    if prod_dist:
+        prod_scenarios, _ = exit_multiples_from_production_distribution(
+            prod_dist, min_observations=min_observations
+        )
 
     band_scenarios, band_unavailable = exit_multiples_from_band(
         historical_band, min_observations=min_observations
@@ -2030,6 +2098,13 @@ def _build_valuation_multiples(
     user_pe = safe_float(reference_multiple)
     if user_pe is not None and user_pe > 0:
         multiples["pe"] = ReferenceMultiple(value=user_pe, source="user_supplied")
+    elif prod_scenarios:
+        # Use median from production historical distribution
+        median = next(
+            (m for m in prod_scenarios if "median" in m.period_label or "median" in m.source),
+            prod_scenarios[len(prod_scenarios) // 2],
+        )
+        multiples["pe"] = median
     elif band_scenarios:
         # The median percentile is the single representative the method view
         # uses; the full percentile set is returned separately as scenarios.
@@ -2043,8 +2118,8 @@ def _build_valuation_multiples(
             {
                 "item": "valuation_method.earnings_multiple",
                 "reason": (
-                    "No P/E reference is available: none was supplied and the historical "
-                    "band did not carry enough observations."
+                    "No P/E reference is available: none was supplied and neither the production "
+                    "historical distribution nor the historical band carried enough observations."
                 ),
                 "reason_kind": "NO_REFERENCE_MULTIPLE",
                 "blocks": ["valuation_methods"],
@@ -2094,6 +2169,7 @@ def _build_reverse_requirements(
     risk_free_tenor: str,
     sec_observations: Optional[Sequence[Any]] = None,
     cross_validation: Optional[Dict[str, Any]] = None,
+    production_historical_pe: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the V1 reverse requirements package from what this run observed.
@@ -2144,6 +2220,7 @@ def _build_reverse_requirements(
         historical_band=data.historical_pe_band,
         user_multiples=reference_multiples,
         min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+        production_historical_pe=production_historical_pe,
     )
     for entry in scenario_unavailable:
         if entry["item"] not in {item["item"] for item in unavailable}:
@@ -2161,6 +2238,7 @@ def _build_reverse_requirements(
         ps_multiple=ps_multiple,
         historical_band=data.historical_pe_band,
         min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+        production_historical_pe=production_historical_pe,
     )
     unavailable.extend(method_unavailable)
 
@@ -2335,6 +2413,7 @@ def _build_reverse_requirements(
         investor_required_returns={f"scenario_{index:02d}": value for index, value in enumerate(required_returns)},
         dcf_inputs=dcf_inputs,
         unavailable=unavailable,
+        production_historical_pe=production_historical_pe,
     )
 
     # Financial history from the same run's sourced observations. When no SEC
@@ -3339,6 +3418,21 @@ def main() -> None:
             "the output is unchanged."
         ),
     )
+    parser.add_argument(
+        "--historical-pe",
+        dest="historical_pe",
+        action="store_true",
+        help=(
+            "Opt-in: build production point-in-time historical P/E series and reference "
+            "distribution from SEC filings and pricing history."
+        ),
+    )
+    parser.add_argument(
+        "--no-furnished-pe",
+        dest="no_furnished_pe",
+        action="store_true",
+        help="Negative path: disable Form 8-K Item 2.02 furnished evidence in historical P/E.",
+    )
 
     args = parser.parse_args()
 
@@ -3380,6 +3474,8 @@ def main() -> None:
         include_financial_history=args.financial_history,
         dossier_path=args.dossier_path,
         render_dossier_report=args.dossier_report,
+        include_historical_pe=args.historical_pe,
+        enable_furnished_pe=not args.no_furnished_pe,
     )
 
     if result is None:

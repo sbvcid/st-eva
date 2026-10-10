@@ -2,17 +2,16 @@
 
 **Recorded:** 2026-10-10
 
-**Status update, 2026-10-10 — P0, the Reverse Requirements V1 build, and Phase C**
+**Status update, 2026-10-10 — P0, Reverse Requirements V1, Phase C, Phase D, and Phase E**
 
 P0 (parser regression) is complete and verified; see §12. The Reverse
 Requirements Report V1 is implemented, wired into every run and verified
 end-to-end on live AAPL data; see §13. Phase C adds multi-scenario exit
 multiples, financial history, per-method conditional valuation and the research
-dossier, and fixes a data-safety defect in the test suite; see §14. Each
-section records what was actually run, not what is intended.
-
-Everything below §12 is unchanged and still describes proposals rather than
-completed work.
+dossier; see §14. Phase D adds point-in-time financial data, balance-sheet
+evidence, capital-structure reconciliation and multi-multiple matrices; see §15.
+Phase E implements the production point-in-time Historical P/E pipeline and
+evaluation sufficiency gate; see §16. Each section records what was actually run.
 
 Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
 
@@ -406,7 +405,7 @@ Verified after the change: the browser suite leaves every file under
   rebuilt from price times shares plus net debt, because the provider's debt
   and cash definitions are not reconciled to its share count.
 
-## 14. Phase D — Point-in-Time Financial Data and Multi-Exit-Multiple Dossier
+## 15. Phase D — Point-in-Time Financial Data and Multi-Exit-Multiple Dossier
 
 **Date:** 2026-10-10.
 
@@ -453,3 +452,53 @@ Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09 with `-
   - Horizon 5.0y, return +15%, multiple 40.0: $336.64 \times 1.15^5 = 677.1033$; terminal EPS $677.1033 / 40.0 = 16.9276$; CAGR $(16.9276 / 8.72)^{1/5} - 1 = +14.2\%$. Exactly matches output.
 - **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical before and after tests.
 - **Test Suite Results:** Full test suite passed: 1848 passed, 168 skipped, 49 subtests passed (0 failures).
+
+## 16. Phase E — Production Historical P/E Pipeline
+
+**Date:** 2026-10-10.
+
+### What now runs and is presented
+
+1. **Point-in-Time Historical P/E Calculation Engine (`historical_pe.py`):**
+   - Implements full point-in-time Historical P/E calculation conforming to `docs/methodology/CONTRACT-HISTORICAL-PE.md` and `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` Amendment 1.
+   - Enforces strict zero-lookahead coupling: contemporaneous closing price paired only with financial statements knowable at that date (`usable_date <= evaluation_date` and `period_end <= evaluation_date`).
+   - EDGAR SGML header acceptance timestamp cutoff: `< 16:00 ET` becomes available on the same trading day close; `>= 16:00 ET` becomes available on the next trading day close; weekend / holiday roll-forward to next trading session.
+   - Stated-directly quarterly EPS evidence (Invariant F-1): quarterly diluted EPS must be stated directly in source (`filed` 10-Q/10-K or `furnished` 8-K Item 2.02 EX-99.1 per Amendment 1); strictly prohibits `FY - YTD` arithmetic difference.
+   - Fiscal calendar anchoring (Invariants F-2, F-3): TTM requires 4 consecutive fiscal quarters including an explicit Q4, derived strictly using company-declared FYE month.
+   - Accounting basis and restatement alignment (Invariants F-6, R-PIT-SUPERSEDE): only matches shares and net income with consistent basis; restatements cleanly supersede prior reports with full audit lineage.
+   - Non-positive TTM EPS rejection (`REASON_NON_POSITIVE_EPS`).
+   - Invariant F-11 closed enumeration: all exclusion and uncomputable reasons use strict closed enumeration reason codes.
+   - Invariant F-13 determinism: canonical JSON content hash computed for every observation, distribution, and overall result package.
+
+2. **Sufficiency Gate & Status Governance:**
+   - Evaluates whether valid observation count meets the authoritative reference threshold ($\ge 20$).
+   - If valid count $\ge 20$: status is `USABLE_FOR_REFERENCE`.
+   - If valid count $< 20$: status is `INSUFFICIENT_OBSERVATIONS` (descriptive statistics only; refuses promotion to reference distribution).
+   - Clear architectural distinction between production point-in-time Historical P/E and provider-fed `historical_pe_band` (8 observations).
+
+3. **Research Dossier & Reverse Matrix Integration (`reverse_requirements.py`, `research_dossier.py`, `report_formatter.py`):**
+   - Dossier Section 5 (`valuation_metrics.production_historical_pe`): provides complete distribution details (observation count, date span, percentiles, methodology, audit trail).
+   - Human-readable text report and rendered dossier format distribution table with sample size, date range, percentiles, and sufficiency notes.
+   - When qualified ($\ge 20$), percentiles (10th, 25th, 50th, 75th, 90th) feed the reverse requirements sensitivity matrix as reference multiples (`source="production_historical_pe_percentile"`), yielding 80 rows across 4 holding periods and 4 required return hurdles.
+
+4. **CLI Opt-In & Negative Path Support (`st_eva_runner.py`):**
+   - `--historical-pe`: opt-in flag to execute production point-in-time Historical P/E analysis.
+   - `--no-furnished-pe`: negative-path switch disabling Form 8-K Item 2.02 furnished facts to verify rejection when observations fall below 20.
+
+### AAPL Phase E Acceptance Verification
+
+Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09:
+
+- **Furnished Enabled (Standard Production Path):**
+  - Observations: 31 candidate dates evaluated, 31 valid observations produced spanning 2019-01-31 to 2026-07-31.
+  - Zero mismatches across all 31 dates against `amendment1_pe_points.json`.
+  - Distribution: min 15.01, 10th 20.97, 25th 25.86, 50th (median) 28.95, 75th 33.02, 90th 36.19, max 41.52.
+  - Status: `USABLE_FOR_REFERENCE` (exceeds $\ge 20$ threshold).
+  - Reverse matrix: 80 rows across 5 percentiles (21.0, 25.9, 28.9, 33.0, 36.2), 4 holding periods (1.0, 2.0, 3.0, 5.0 years), and 4 required returns (8%, 10%, 12%, 15%).
+- **Negative Path (`--no-furnished-pe`):**
+  - Candidate dates: 31; valid: 12 (Q1-Q3 only); rejected: 19 (`REASON_MISSING_Q4_EPS`).
+  - Matches `negative_path_no_furnished.json` with 0 mismatches.
+  - Status: `INSUFFICIENT_OBSERVATIONS` (12 < 20).
+  - Reverse matrix: refuses ungrounded distribution; reports descriptive median only; does not generate percentile scenarios.
+- **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical before and after tests.
+- **Test Suite Results:** Full test suite passed: 1864 passed, 168 skipped (16 new tests in `test_historical_pe.py`, 0 failures).
