@@ -6,8 +6,8 @@
 
 **Repository:** `sbvcid/st-eva`  
 **Historical status:** Architecture and implementation notes recorded at the time; not a current instruction source or authority.  
-**Role:** Help maintainers and agents understand the current implementation and why particular safeguards exist. The project owner may revise a prior design or change direction. When this record conflicts with the owner's current instruction, explain the impact and update the relevant record rather than treating old wording as immutable.  
-**Intended Audience:** Maintainers and coding agents working on production code, schemas, data and tests.
+**Historical role:** Intended to explain the implementation and reasoning as understood when written. It may no longer describe the current implementation and does not direct agents to read or update this document.  
+**Original intended audience:** Maintainers and agents at the time of writing; this label creates no current obligation to consult the document.
 
 ---
 

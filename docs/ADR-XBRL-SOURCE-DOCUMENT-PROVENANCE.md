@@ -348,7 +348,7 @@ migration, or test change accompanies this amendment.
 **Date:** 2026-10-08
 **Supersedes:** nothing in §§1–7. **Refines:** §3 item 1 and §6 item 4, which this
 amendment now answers.
-**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 24–27
+**Invariants referenced as binding by this historical note:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 24–27
 
 > This amendment answers the one question §6 item 4 left open: *if ST-EVA later reads
 > actual XBRL document bytes, what identity represents a fact discovered through that
@@ -680,7 +680,7 @@ Not decided here, and not to be decided inside 3C-B:
 schema, migration, or test change accompanies this amendment.
 **Date:** 2026-10-08
 **Audits:** the five prerequisites of Amendment 1 §11, item by item.
-**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 28–30
+**Invariants referenced as binding by this historical note:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 28–30
 **Supersedes:** Amendment 1 §10's `source_fact_id = NULL` consequence, and Amendment 1
 §8's Case-C entry. Both are withdrawn, not rewritten — see §8 and §5.
 
@@ -1079,12 +1079,9 @@ Amendment 0 §4's ten cases stand, extended by Amendment 1 §9's five, plus:
 - Existing relations are **not** altered. `observations.source_fact_id` keeps accepting
   non-NULL values; `interpretations` and `admissions` are untouched.
 
-## 12. Whether Phase 3C-B is authorized
+## 12. Historical Phase 3C-B status (as recorded at the time)
 
-**Historical status at the time:** not authorized under that phase note; this is not a current permission gate. The design questions are now closed (§§1–11), so the remaining gate
-is no longer a design question but an implementation one: writing migration `0021`,
-plus the ten acceptance criteria. That is a distinct task with its own verification, and
-the six unresolved questions of Amendment 1 §12 remain open.
+**Historical status at the time:** this note recorded Phase 3C-B as not authorized and listed migration `0021` plus ten acceptance criteria as anticipated follow-up work. This description is not a current requirement, restriction, or permission gate; determine current work from the user's current instructions and actual implementation.
 
 ### Status of every decision
 
@@ -1298,7 +1295,7 @@ No production code, schema, migration, or test change accompanies this amendment
 **Baseline:** `5e6287b` (`feat: link observations to document XBRL facts`), working tree clean, `HEAD == origin/master`
 **Refines:** Amendment 4's unproven boundary, defining the evidence requirements,
 identity grain, authority vs. filing-use separation, and decision boundary for taxonomy equivalence.
-**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 19–30.
+**Invariants referenced as binding by this historical note:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 19–30.
 
 > This amendment audits whether authoritative evidence exists to bridge the SEC
 > `companyconcept` taxonomy representation (short family token, e.g. `us-gaap`) to
@@ -1488,7 +1485,7 @@ No production code, schema, migration, or test change accompanies this amendment
 **Baseline:** `1f0c321` (`docs: refine taxonomy authority evidence grain`), working tree clean, `HEAD == origin/master`
 **Refines:** Amendment 5's Option C data model, freezing the exact DDL, identity preimage,
 provenance integration, conflict handling, and acceptance criteria for Migration 0022.
-**Binding invariants:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 19–30.
+**Invariants referenced as binding by this historical note:** `docs/ST-EVA-ARCHITECTURE.md` §D invariants 19–30.
 
 > This amendment freezes the exact relational schema and trigger constraints for
 > `authority_taxonomy_namespaces`. It proves the source document integration against

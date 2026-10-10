@@ -190,7 +190,7 @@ executed. **This group is the entire cleanup scope.**
 | Raw evidence | Yes — `raw/` 48 files / 1.24 MB: `manifest.json`, `daily_prices.json`, `eps_diluted_concept.json`, `filing_acceptance_evidence.json`, `submissions.json`, `headers/` (43 SGML headers with `ACCEPTANCE-DATETIME`) |
 | Verification | **Yes — `out/verification.txt`, `out/determinism.txt`** (two-run hash equality) |
 | Long-term value | **Very high.** This is the evidence base the ADR Amendment 1 and the whole Contract rest on. |
-| **Disposition** | **PRIVATE_ARCHIVE** — historical recommendation only; not a current Git or retention rule. Contains the 31/31 TTM worked example cited by the ADR and the Contract. |
+| **Disposition** | **HISTORICAL_SUGGESTION_PRIVATE_ARCHIVE** — historical recommendation only; not a current Git or retention rule. Contains the 31/31 TTM worked example cited by the ADR and the Contract. |
 
 #### C.3.2 AAPL Q4 Study
 
@@ -204,7 +204,7 @@ executed. **This group is the entire cleanup scope.**
 | Raw evidence | **Yes — the highest-value raw set in the repo.** `raw/docs/` (155 files / 77.9 MB): 10 accessions' complete EDGAR document trees, including `_htm.xml` inline-XBRL, `_lab.xml`, `_pre.xml`, `.xsd`, and embedded `.jpg` images. `raw/headers/` (10 SGML headers). `raw/ir/apple_earnings_release_index.htm`. `raw/source_manifest.json`. |
 | Verification | **Yes — `out/verification.txt`**, plus `additivity_check.txt` (explicitly demonstrating that FY − YTD differencing does **not** reconcile, supporting ADR Decision 4) |
 | Long-term value | **Highest.** `raw/` here is the primary-source evidence that ADR §6.1 tabulates accession-by-accession. Losing it would make the ADR unverifiable. |
-| **Disposition** | **PRIVATE_ARCHIVE** — must never be deleted; move to cold storage rather than repo. |
+| **Disposition** | **HISTORICAL_SUGGESTION_PRIVATE_ARCHIVE** — must never be deleted; move to cold storage rather than repo. |
 
 #### C.3.3 Amendment 1 Verification
 
@@ -218,7 +218,7 @@ executed. **This group is the entire cleanup scope.**
 | Raw evidence | No — inherits from C.3.1 and C.3.2 |
 | Verification | **Yes — `out/verification.txt`.** The negative path here is the artifact that proves furnished admission is what changed the result, not a data accident. |
 | Long-term value | **Very high.** `negative_path_no_furnished.json` is what Contract §I.3 item 3 and §L.2 cite as the byte-for-byte reproduction of the prior 12/31 state. |
-| **Disposition** | **PRIVATE_ARCHIVE** — the negative-path file is a deterministic conformance artifact. Keep both the JSON and the verification text. |
+| **Disposition** | **HISTORICAL_SUGGESTION_PRIVATE_ARCHIVE** — the negative-path file is a deterministic conformance artifact. Keep both the JSON and the verification text. |
 
 #### C.3.4 Historical P/E Contract
 
@@ -232,7 +232,7 @@ executed. **This group is the entire cleanup scope.**
 | Raw evidence | n/a |
 | Verification | §L is an in-document consistency review against the ADR and both POCs. |
 | Long-term value | **Highest of all.** It is the normative document an implementation is written against. §B.2.1 (Genericization Note, added 2026-10-07 from MSFT Finding C.1) is the only place the AAPL-layout parser hazard is stated. |
-| **Disposition** | **KEEP_IN_REPO** — and now, since the promotion, it sits beside the ADR at `docs/methodology/`. The one substantive edit made during promotion was line 7's self-referential `**File:**` header, corrected from the old path. No methodology content was altered. |
+| **Disposition** | **HISTORICAL_SUGGESTION_KEEP_IN_REPO** — and now, since the promotion, it sits beside the ADR at `docs/methodology/`. The one substantive edit made during promotion was line 7's self-referential `**File:**` header, corrected from the old path. No methodology content was altered. |
 
 Note: 12 **untracked** MSFT research files still name the old Contract path
 (`compute_msft_pe.py`, `build_msft_evidence.py`, `phase1_fiscal_identity/`
@@ -252,7 +252,7 @@ deliberately **not** rewritten. See §G.6.
 | Raw evidence | **Yes — the largest raw set. 570 files / 1013.8 MB.** `raw/docs/` 469 files / 1011.7 MB (48 accessions' complete EDGAR trees, incl. `_htm.xml` inline-XBRL and many embedded `.jpg` page images from the FY2026 Q1 8-K), `raw/headers/` 48 SGML headers, `raw/index/` 47 filing index pages, `raw/submissions.json`, `raw/eps_diluted.json`, `raw/eps_basic.json`, `raw/net_income.json`, `raw/prices.json`, `raw/source_manifest.json` (sha256 manifest). |
 | Verification | **Yes — `out/verification.txt` (independent second computation path, PIT checks, F-1…F-15 matrix, two-run hash equality, frozen-input hash re-verification), `out/failure_paths.txt` (7 refusal scenarios), `phase1_fiscal_identity/verification.txt`.** |
 | Long-term value | **High for the findings, low for the bulk bytes.** The 12 documentation files + 8 `out/` files carry the entire result. The 1011 MB of `raw/docs/` is bulky primary source whose only unique contribution is byte-level re-verifiability, which is served by `raw/source_manifest.json`. |
-| **Disposition** | **NEEDS_REVIEW** — this is the one group where the "regenerable vs. keep" judgement is genuinely contested, and it is also where 92% of the workspace's bytes sit. See §G. |
+| **Disposition** | **HISTORICAL_SUGGESTION_NEEDS_REVIEW** — this is the one group where the "regenerable vs. keep" judgement is genuinely contested, and it is also where 92% of the workspace's bytes sit. See §G. |
 
 ---
 
@@ -289,20 +289,20 @@ One disposition per group. **Recommendations only — nothing was executed.**
 
 | # | Group | Disposition | Rationale |
 | --- | --- | --- | --- |
-| 1 | `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | **KEEP_IN_REPO** | Frozen, approved methodology. Amended once (Amendment 1). Tracked since `5e655a7`. |
-| 2 | `docs/methodology/CONTRACT-HISTORICAL-PE.md` | **KEEP_IN_REPO** | The normative engine contract. Not regenerable. Promoted out of `experiments/` on 2026-10-07 so it sits beside the ADR. |
-| 3 | Repo root production `*.py`, `web/`, `tests/` (non-cache), `docs/` (other 13), `reports/`, `history/`, `archive/` | **KEEP_IN_REPO** | Already tracked. No action. |
+| 1 | `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` | **HISTORICAL_SUGGESTION_KEEP_IN_REPO** | Frozen, approved methodology. Amended once (Amendment 1). Tracked since `5e655a7`. |
+| 2 | `docs/methodology/CONTRACT-HISTORICAL-PE.md` | **HISTORICAL_SUGGESTION_KEEP_IN_REPO** | The normative engine contract. Not regenerable. Promoted out of `experiments/` on 2026-10-07 so it sits beside the ADR. |
+| 3 | Repo root production `*.py`, `web/`, `tests/` (non-cache), `docs/` (other 13), `reports/`, `history/`, `archive/` | **HISTORICAL_SUGGESTION_KEEP_IN_REPO** | Already tracked. No action. |
 | 4 | `web/frontend/node_modules`, `web/frontend/dist`, all `__pycache__`, `.pytest_cache` | **REGENERABLE** | Build/tooling output. Already gitignored. Zero information content. Deleting costs only a reinstall/build. |
-| 5 | `.kilo/worktrees` | **NEEDS_REVIEW** | 110 MB, 0 tracked, excluded via `.git/info/exclude` rather than `.gitignore`. Contains live managed sessions (`eastern-anglerfish`, `pepper-chess`). Deleting it would destroy in-flight work. Determine first whether either session is still active. |
-| 6 | `experiments/aapl-historical-pe-poc/q4_study/` (untracked) | **PRIVATE_ARCHIVE** | Primary-source evidence underpinning ADR Amendment 1. The original note recommended retention at that time; this is not a current retention instruction. Move to cold storage. |
-| 7 | `experiments/aapl-historical-pe-poc/raw/`, `out/` (untracked) | **PRIVATE_ARCHIVE** | The 31/31 worked example the ADR and Contract cite. Never delete. |
-| 8 | `experiments/aapl-historical-pe-poc/amendment1_verify/` (untracked) | **PRIVATE_ARCHIVE** | Contains `negative_path_no_furnished.json`, the deterministic conformance artifact cited by Contract §I.3/§L.2. Never delete. |
+| 5 | `.kilo/worktrees` | **HISTORICAL_SUGGESTION_NEEDS_REVIEW** | 110 MB, 0 tracked, excluded via `.git/info/exclude` rather than `.gitignore`. Contains live managed sessions (`eastern-anglerfish`, `pepper-chess`). Deleting it would destroy in-flight work. Determine first whether either session is still active. |
+| 6 | `experiments/aapl-historical-pe-poc/q4_study/` (untracked) | **HISTORICAL_SUGGESTION_PRIVATE_ARCHIVE** | Primary-source evidence underpinning ADR Amendment 1. The original note recommended retention at that time; this is not a current retention instruction. Move to cold storage. |
+| 7 | `experiments/aapl-historical-pe-poc/raw/`, `out/` (untracked) | **HISTORICAL_SUGGESTION_PRIVATE_ARCHIVE** | The 31/31 worked example the ADR and Contract cite. The original note recommended retention at that time; this is not a current retention instruction. |
+| 8 | `experiments/aapl-historical-pe-poc/amendment1_verify/` (untracked) | **HISTORICAL_SUGGESTION_PRIVATE_ARCHIVE** | Contains `negative_path_no_furnished.json`, the deterministic conformance artifact cited by Contract §I.3/§L.2. The original note recommended retention at that time; this is not a current retention instruction. |
 | 9 | `experiments/001-context-only/` — **46-file legacy tracked set, corrected from `PRIVATE_ARCHIVE`** | **LEGACY_TRACKED / KEEP_IN_REPO** | All 15 files tracked since `95373eb` (ST-EVA 2.4.3). Already in git history. **Excluded from cleanup** — archiving would duplicate tracked content. |
 | 10 | `experiments/002-cold-start/` — **31 tracked + 13 gitignored, corrected from `PRIVATE_ARCHIVE`** | **LEGACY_TRACKED / KEEP_IN_REPO**; `.pyc` **DISPOSABLE** | 31 files tracked since `7d86a39` (ST-EVA 2.6.1b). **Excluded from cleanup.** Only the 13 gitignored `.pyc` are disposable. |
-| 11 | `experiments/.../contract/msft_validation/` (untracked) | **NEEDS_REVIEW** | See §G.1. The 12 documentation files + 8 `out/` files are the finding and should be preserved; the 1011 MB raw set is a separate decision. |
+| 11 | `experiments/.../contract/msft_validation/` (untracked) | **HISTORICAL_SUGGESTION_NEEDS_REVIEW** | See §G.1. The 12 documentation files + 8 `out/` files are the finding and should be preserved; the 1011 MB raw set is a separate decision. |
 | 12 | `experiments/002-cold-start/__pycache__/` (13 `.pyc`) | **DISPOSABLE** | Pure cache. Already gitignored. |
-| 13 | `data/` (empty, tracked) | **KEEP_IN_REPO** | Empty tracked directory. Looks intentional. Not a leftover. |
-| — | **Anything not classified above** | **NEEDS_REVIEW** | — |
+| 13 | `data/` (empty, tracked) | **HISTORICAL_SUGGESTION_KEEP_IN_REPO** | Empty tracked directory. Looks intentional. Not a leftover. |
+| — | **Anything not classified above** | **HISTORICAL_SUGGESTION_NEEDS_REVIEW** | — |
 
 ---
 

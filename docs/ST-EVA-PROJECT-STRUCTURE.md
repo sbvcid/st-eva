@@ -85,15 +85,15 @@ root `.gitignore` additionally carries `web/node_modules/` and `web/dist/` so th
 | **New additions** | Allowed |
 | **Class** | formal documentation |
 
-### 2.5 `docs/methodology/`
+### 2.5 `docs/methodology/` (historical proposal)
 
 | | |
 |---|---|
-| **Put here** | Documents that constrain what an implementation may do. Currently one file: `CONTRACT-HISTORICAL-PE.md`. |
+| **Put here** | Documents this historical proposal once treated as methodology references. Currently one file: `CONTRACT-HISTORICAL-PE.md`. |
 | **Never here** | Status notes, audits, or design exploration. Methodology is not where thinking is recorded; it is where a decision is published. |
 | **Git** | Tracked |
-| **New additions** | Allowed, but see §5 — a methodology document is a governed artifact and may not be relocated casually once published. |
-| **Class** | **canonical, governed** |
+| **New additions** | Allowed, but see §5 — the original proposal described a methodology document as governed and suggested avoiding casual relocation; this is not current policy. |
+| **Historical class label** | canonical / governed at the time; not current authority |
 
 `docs/ADR-HISTORICAL-PE-METHODOLOGY.md` also lives under `docs/` rather than here.
 That is deliberate: it is the methodology, this directory is its current home,
@@ -154,9 +154,7 @@ This is the most important section of this document.
 | **New additions** | Allowed, and this is where new research goes by default |
 | **Class** | **research — preserved** |
 
-**`research/` is the final destination.** When a study finishes, its artifacts
-stay exactly where they are. A completed study is not moved "somewhere more
-permanent", because `research/` is already permanent.
+At the time, this proposal described `research/` as the final destination for study artifacts. That recommendation is historical and does not prescribe a current storage location.
 
 **Research value does not determine directory.** Nothing is relocated because a
 study looks unimportant, small, superseded, or low-value. Value is judged, if at
@@ -167,7 +165,7 @@ moving a directory.
 investigating belongs in `research/`, not in a scratch location outside the
 repository and not in `experiments/`.
 
-### 2.11 `experiments/` — legacy, frozen
+### 2.11 `experiments/` — legacy status recorded at the time
 
 | | |
 |---|---|
@@ -191,7 +189,7 @@ Rules:
 
 ---
 
-## 3. Git policy
+## 3. Git conventions proposed at the time (historical)
 
 ### 3.1 Tracked
 
@@ -219,7 +217,7 @@ if its manifest survives with the repository: `research/README.md` and
 `research/RESEARCH-ARCHIVE-MANIFEST.json`. Everything else under `research/` is
 ignored working material.
 
-### 3.3 Never
+### 3.3 Prohibitions proposed at the time (historical)
 
 - `git add .` in this repository. Even with `/research/` ignored, a careless
   `git add .` stages unrelated content; use an explicit path list.
@@ -228,12 +226,12 @@ ignored working material.
 
 ---
 
-## 4. Preservation policy
+## 4. Preservation proposal (historical only)
 
 > **Research artifacts are preserved by default. Low value does not imply
 > deletion.**
 
-The following was a proposed preservation policy at the time. It is historical guidance only, not a current limit on deletion or cleanup:
+The following was a proposed preservation policy at the time. It is historical material only and does not impose a current limit on deletion or cleanup:
 
 - cache (`__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`)
 - temporary and scratch files
@@ -241,7 +239,7 @@ The following was a proposed preservation policy at the time. It is historical g
 - confirmed duplicate garbage
 - invalid empty temporary downloads
 
-Everything else is preserved until an explicit decision says otherwise.
+The original proposal recommended preserving everything else unless explicitly decided otherwise; this is not an active retention rule.
 
 **"Regenerable" is not a deletion reason.** A file may be reproducible in
 principle and still be the only surviving record of something — an upstream
@@ -262,7 +260,7 @@ Corollaries:
 
 ---
 
-## 5. Naming and organisation
+## 5. Naming and organisation proposal (historical)
 
 No taxonomy. No required template. Research is organised by topic and keeps
 whatever internal structure makes it legible:
@@ -287,7 +285,7 @@ MSFT studies already use is a good default to copy.
 
 ---
 
-## 6. Migration policy
+## 6. Migration record (historical)
 
 **This contract performed no migration and moved nothing.**
 
@@ -321,7 +319,7 @@ either tracked legacy material or a gitignored `.pyc`.
 
 The numbered instructions that originally occupied this section have been retired. They described a proposed workflow from 2026-10-07 and do not bind or restrict current or future agents. In particular, they do not require reading this file first, do not prohibit creating or changing directories, and do not impose a retention or Git policy. Follow the user's current request and verify current repository state directly.
 
-## 8. What this contract does not decide
+## 8. Scope notes recorded at the time (historical)
 
 It records no methodology decision, changes no ADR, changes no Contract, and
 designs no schema. In particular it does not touch, and must not be read as
@@ -332,7 +330,7 @@ artifact.
 
 ---
 
-## 9. Quick reference
+## 9. Quick reference for the proposed layout (historical)
 
 | I have… | It goes in |
 |---|---|
