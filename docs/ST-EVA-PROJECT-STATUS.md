@@ -9,6 +9,51 @@ This document records state. It introduces no new architectural decisions, modif
 
 ---
 
+## 0. Addendum, 2026-10-10 (newest first — this supersedes nothing above)
+
+The sections below are the 2026-10-09 checkpoint at `10d298f` and are preserved
+as a historical record. This addendum records the two changes made since. It
+makes no new architectural decisions and modifies no ADR or methodology
+contract.
+
+### 0.1 Parser regression verified (commit `6f0324a`)
+
+The parser correction in `3a5a614` is regression-verified: 25 parser unit
+tests, 8 workflow integration tests, 47 taxonomy acquisition / schema /
+persistence / resolver tests, and the full suite (1622 passed, 168 skipped).
+The captured official catalogue fixture matched its defined expectations of 203
+Loc records, 201 eligible assertions, 2 non-assertions and 194 unique
+identities; these remain fixture assertions, not production rules.
+
+Two unrelated full-suite failures were found and fixed in the same commit: stale
+path assertions left behind by `fc506c3`, which relocated four research scripts
+into `scripts/research/`. No schema, migration, identity definition, writer
+semantics or database file was touched.
+
+### 0.2 Reverse Requirements Report V1 implemented
+
+`run_st_eva` now emits a `reverse_requirements` package on every run, rendered
+as the first section of the human-readable report and present in `--json`. It
+contains a holding-period × required-return × exit-multiple matrix, cash flow
+cross-checks, three separately reported rate families (observed risk-free rate,
+CAPM cost of equity, investor target return), a discounted cash flow feasibility
+block, and an explicit list of what could not be computed and why.
+
+Verified end-to-end on live AAPL data at USD 336.64 (2026-10-09), including a
+reproducibility check: identical inputs produced an identical package
+fingerprint, and changing the price, exit multiple or required returns changed
+it.
+
+The DCF block is implemented and its solver is tested, but reports
+`NOT_COMPUTED` on current live data because the bridge from reported earnings
+to unlevered cash flow is not observed by the existing providers. Those missing
+fields are named rather than estimated. This is the accurate V1 status.
+
+Full detail, including the gaps carried forward, is in
+[`docs/ROADMAP.md`](ROADMAP.md) §12 and §13.
+
+---
+
 ## 1. Git Baseline & Working Tree Metrics
 
 Measured directly at `10d298ffbc315c20070b27472b407ac3ed2337aa` on 2026-10-09. This section records the repository baseline state as of commit `10d298f`. This checkpoint documents the repository baseline at `10d298f`. The status-file update was subsequently committed as a documentation-only change; that later commit does not alter the measured baseline described here.

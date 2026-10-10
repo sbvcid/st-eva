@@ -599,7 +599,35 @@ only.
 
 *Inventory first generated read-only on 2026-10-07 at `b124123`. Corrected the
 same day: the original reported `experiments/` as entirely untracked, which was
-an inference error — 46 legacy tracked research files exist there. No production
+an inference error – 46 legacy tracked research files exist there. No production
 code, ADR or methodology content was altered. The Contract was promoted to
 `docs/methodology/` with exactly one edit: line 7's self-referential `**File:**`
 header.*
+
+---
+
+## Addendum, 2026-10-10 — one stale claim in §B corrected
+
+The row in §B and the note in §A reading `` `data/` is empty and tracked `` are
+no longer accurate. Measured directly on 2026-10-10:
+
+| Path | Size | Notes |
+|---|---:|---|
+| `data/st-eva.sqlite` (+ `-wal`, `-shm`) | 659 KB | CLI `--archive` default target |
+| `data/archives/AAPL.sqlite` (+ `-wal`, `-shm`) | 1.71 MB | per-ticker archive from the web adapter |
+| `data/archives/MSFT.sqlite` (+ `-wal`, `-shm`) | 1.67 MB | per-ticker archive |
+| `data/archives/TSM.sqlite` (+ `-wal`, `-shm`) | 1.18 MB | per-ticker archive |
+
+These are runtime state, not source. They are excluded by `.gitignore` (added in
+`90fbd41`) and remain untracked, which is correct. They were **read only** for
+this verification; nothing was written, deleted or reset. The `-wal` files being
+zero length and `-shm` present means a connection was opened and not cleanly
+closed at some point, which is normal for these archives and not a defect.
+
+The AAPL archive holds real acquired evidence: 71 `REGULATORY_FILING` rows from
+SEC EDGAR, 20 vendor API rows, price and volume history, the four valuation
+bands, and one persisted Investment Context. This is the practical starting
+point for a single-company acceptance run.
+
+Everything else in this inventory was re-measured on 2026-10-07 and is left as
+recorded; only the `data/` claim was found to be wrong.

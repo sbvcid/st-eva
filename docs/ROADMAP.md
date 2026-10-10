@@ -2,6 +2,16 @@
 
 **Recorded:** 2026-10-10
 
+**Status update, 2026-10-10 — P0 and the Reverse Requirements V1 build**
+
+P0 (parser regression) is complete and verified; see §8. The Reverse
+Requirements Report V1 is implemented, wired into every run and verified
+end-to-end on live AAPL data; see §9. Both sections record what was actually
+run, not what is intended.
+
+Everything below §8 is unchanged and still describes proposals rather than
+completed work.
+
 Ideas and possible work recorded at the time; reconsider them against the current situation before acting on them.
 
 ## 1. Product purpose
@@ -185,3 +195,129 @@ If model analyses are archived, store them as separate, versioned research artef
 A roadmap item is complete when the relevant code/artifact exists and its acceptance evidence has actually been run or inspected. A plan, specification, research POC, model response or documentation review is not a substitute for that evidence.
 
 Every closeout should state the files changed, the Git commit or baseline, tests/checks actually run, results, data operations (if any), and remaining uncertainty. Preserve source data and research artifacts. When the owner changes direction, explain consequences and update this plan; do not let the plan override the owner.
+
+## 12. P0 completion — parser regression verified
+
+**Date:** 2026-10-10. **Commit:** `6f0324a`.
+
+The parser correction itself landed earlier in `3a5a614`. What follows is the
+regression verification of that correction, which was the outstanding part of
+P0.
+
+Checks actually run:
+
+| Check | Command | Result |
+|---|---|---|
+| Parser unit tests | `python -m unittest discover -s tests -p "test_authority_taxonomy_catalog_parser.py"` | 25 passed |
+| Workflow integration | `python -m pytest tests/test_authority_taxonomy_integration.py -q` | 8 passed |
+| Taxonomy acquisition / namespace schema / persistence / evidence resolver | `python -m pytest tests/test_authority_taxonomy_acquisition.py tests/test_authority_taxonomy_namespace_schema.py tests/test_authority_taxonomy_persistence.py tests/test_authority_evidence_resolver.py -q` | 47 passed |
+| Full suite | `python -m pytest tests -q` | 1622 passed, 168 skipped, 2 failed → 0 failed after the fix below |
+
+Note on the integration file: it uses pytest-style `setup_method`, so
+`unittest discover` reports "NO TESTS RAN" for it rather than running it. It
+must be invoked through pytest.
+
+The captured official catalogue fixture matched its defined expectations:
+203 `<Loc>` records, 201 eligible assertions, 2 records ineligible because
+Namespace is absent, and 194 unique identity combinations. These remain
+fixture assertions in the tests and are **not** encoded as production rules.
+
+Two full-suite failures were found and were unrelated to the parser. Both were
+stale path assertions left behind by `fc506c3`, which moved
+`run_corpus_tests.py`, `ingest_universe.py`, `merge_sources.py` and
+`reconcile_bulk.py` from the repository root into `scripts/research/`. They
+were fixed in `6f0324a` by repointing the paths and by teaching the
+dependent-module probe to import flat script directories by leaf name.
+
+No schema, migration, identity definition or writer semantics were changed. No
+SQLite database, WAL, SHM or archive file was written, deleted or reset.
+
+## 13. Reverse Requirements Report V1 — implemented
+
+**Date:** 2026-10-10.
+
+### What now runs on every invocation
+
+`run_st_eva` gained a `reverse_requirements` stage that executes for every run,
+not only on request. It is pure arithmetic over values the acquisition stage
+already observed, so it introduces no second source of truth. The output is in
+every result under `reverse_requirements`, rendered as the first section of the
+human-readable report, and fully present in `--json`.
+
+The headline output is a reverse requirements matrix: for each combination of
+holding period, required price return and exit multiple, it reports the exit
+price the return demands, the exit EPS that multiple corresponds to, the EPS
+growth rate that bridges the starting EPS to it, the gap against consensus
+where the periods line up, and how the requirement moves when the exit multiple
+compresses or expands.
+
+Three properties are enforced in code and covered by tests:
+
+1. **Every reverse figure names its reference multiple and period.** Price
+   divided by a multiple is the EPS that multiple corresponds to. It is not a
+   claim about market expectations.
+2. **A required return is labelled `PRICE_RETURN_ONLY`** unless a dividend is
+   supplied as an input. It is never called a total return.
+3. **Every EPS carries the period it covers.** A next-twelve-months anchor
+   shortens the growth window by its own coverage, so a 3-year horizon from a
+   forward EPS reports a 2-year growth rate. When the window is too short to
+   annualise, the row reports the raw EPS change and no CAGR, flagged
+   `GROWTH_WINDOW_TOO_SHORT_FOR_CAGR`.
+
+### Rate families, kept separate
+
+`risk_free_rate_provider.py` fetches observed US Treasury yields at 13-week,
+5-year, 10-year and 30-year tenors, each with its own observation date taken
+from the series' own timestamps, plus tenor, source and unit. A tenor that
+cannot be fetched is reported as unavailable and is never substituted from
+another tenor.
+
+Three families are emitted separately and never merged: the **risk-free rate**
+(observation), the **CAPM cost of equity** (`Rf + beta × ERP`, a model estimate
+recorded only when all three components arrive with their provenance), and the
+**investor target return** (a scenario input allowed to disagree with the
+model).
+
+### Cash flow cross-checks and DCF status
+
+Observed P/FCF, EV/EBITDA, P/S, FCF yield and EV/EBITDA yield are reported
+separately from the amounts reverse-solved at an explicitly supplied reference
+multiple, because they answer different questions.
+
+The discounted cash flow block is **implemented but reports `NOT_COMPUTED` on
+real current data**, and that is the accurate status rather than a gap in the
+reporting. The solver itself is verified: given a complete FCFF input set it
+returns the constant explicit-period growth rate that reproduces the observed
+value (checked to 1e-6 against a recomputation). What is missing on live AAPL
+data is the bridge from reported earnings to unlevered cash flow —
+`depreciation_amortisation`, `capex`, `working_capital_change`,
+`cost_of_debt`, `market_value_of_debt` and `tax_rate` — plus a declared
+`cash_flow_basis`. These are named rather than estimated.
+
+### End-to-end verification actually performed
+
+Live AAPL run at USD 336.64, data date 2026-10-09, 16 matrix cells over
+horizons 1/2/3/5 years and required returns 8/10/12/15%, exit P/E 32x.
+Observed: trailing EPS 8.72, market cap and EV present, observed P/FCF 35.98,
+EV/EBITDA 29.41, P/S 10.54, FCF yield 2.8%; four Treasury yields from
+2026-10-09; CAPM cost of equity 11.2% from Rf 5.24% + 1.2 × 5.0%.
+
+Two runs of identical inputs produced an identical package fingerprint, and
+changing the exit multiple, the required returns or the price changed it.
+
+### Verified gaps carried forward, not papered over
+
+- The historical P/E band from the vendor carries 8 observations against the
+  existing 20-observation threshold, so it is reported as descriptive and is
+  **not** used as a reference multiple. The live AAPL run passed
+  `--reference-multiple` explicitly. A production historical P/E distribution
+  remains the ADR-HISTORICAL-PE-METHODOLOGY work.
+- The vendor's `trailingEps` declares no period, so the 12-month window is an
+  assumption and is flagged on the anchor.
+- Consensus EPS comparison is refused for horizons other than 1 year, because a
+  next-twelve-months consensus taken at the valuation date describes a
+  different period than a terminal EPS three years out.
+- Dividend data is not currently acquired, so no total-return scenario exists
+  yet; the return basis is labelled accordingly.
+- No schema change, no new provider beyond the Treasury rate feed, and no
+  modification to existing formulas was required or made.
