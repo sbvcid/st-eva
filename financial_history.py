@@ -85,11 +85,23 @@ def classify_window(observation: Any) -> str:
     metric name, because the same metric can appear with both a duration and an
     instant form depending on the concept the issuer reported.
     """
-    start = _parse_date(getattr(observation, "period_start", None))
-    end = _parse_date(getattr(observation, "period_end", None))
-    if start is None or end is None:
+    start_raw = getattr(observation, "period_start", None)
+    end_raw = getattr(observation, "period_end", None)
+    if not end_raw:
+        return "MISSING_DATE"
+    end = _parse_date(end_raw)
+    if end is None:
+        return "MISSING_DATE"
+    if not start_raw:
+        return _WINDOW_INSTANT
+    start = _parse_date(start_raw)
+    if start is None:
+        return "MISSING_DATE"
+    if start == end:
         return _WINDOW_INSTANT
     span = (end - start).days
+    if span < 0:
+        return "INVALID_PERIOD"
     if _ANNUAL_MIN_DAYS <= span <= _ANNUAL_MAX_DAYS:
         return _WINDOW_ANNUAL
     if _QUARTER_MIN_DAYS <= span <= _QUARTER_MAX_DAYS:
@@ -118,10 +130,11 @@ class HistoryPoint:
     span_days: Optional[int] = None
     form: str = ""
     accession: str = ""
-    # Other derivation paths that reached this same value for this same period.
-    # Recorded so collapsing duplicates does not lose the record of how a figure
-    # could be arrived at.
     alternate_derivations: Tuple[str, ...] = ()
+    fiscal_year: Optional[int] = None
+    fiscal_period: Optional[str] = None
+    status: str = "UNVERIFIABLE"
+    status_reasons: Tuple[str, ...] = ()
 
     def contract_view(self) -> Dict[str, Any]:
         return {
@@ -130,6 +143,9 @@ class HistoryPoint:
             "unit": self.unit,
             "currency": self.currency,
             "window": self.window,
+            "period_type": (
+                "INSTANT" if self.window == _WINDOW_INSTANT else "DURATION"
+            ),
             "period_start": self.period_start,
             "period_end": self.period_end,
             "as_of": self.as_of,
@@ -143,6 +159,10 @@ class HistoryPoint:
             "span_days": self.span_days,
             "form": self.form,
             "accession": self.accession,
+            "fiscal_year": self.fiscal_year,
+            "fiscal_period": self.fiscal_period,
+            "status": self.status,
+            "status_reasons": list(self.status_reasons),
             "formula_version": HISTORY_FORMULA_VERSION,
         }
 
@@ -181,6 +201,16 @@ def _provenance(observation: Any, window: str) -> Tuple[str, str, str]:
             if isinstance(first, dict):
                 form = str(first.get("form") or "")
                 accession = str(first.get("accession") or "")
+        if not form:
+            form = str(raw.get("form") or "")
+        if not accession:
+            accession = str(raw.get("accession") or "")
+        sec_fact = raw.get("sec_fact")
+        if isinstance(sec_fact, dict):
+            if not form:
+                form = str(sec_fact.get("form") or "")
+            if not accession:
+                accession = str(sec_fact.get("accession") or "")
         if not derivation:
             basis = getattr(observation, "basis", None)
             if isinstance(basis, dict):
@@ -192,11 +222,38 @@ def _provenance(observation: Any, window: str) -> Tuple[str, str, str]:
     return derivation, form, accession
 
 
+def _fiscal_context(observation: Any) -> Tuple[Optional[int], Optional[str]]:
+    raw = getattr(observation, "raw", None)
+    fy = None
+    fp = None
+    if isinstance(raw, dict):
+        fy = raw.get("fy")
+        fp = raw.get("fp")
+        sec_fact = raw.get("sec_fact")
+        if isinstance(sec_fact, dict):
+            if fy is None:
+                fy = sec_fact.get("fy")
+            if fp is None:
+                fp = sec_fact.get("fp")
+    if fy is not None:
+        try:
+            fy = int(fy)
+        except (ValueError, TypeError):
+            fy = None
+    if fp is not None:
+        fp = str(fp)
+    return fy, fp
+
+
 def _to_point(observation: Any, window: str) -> Optional[HistoryPoint]:
     value = safe_float(getattr(observation, "value", None))
     if value is None:
         return None
     derivation, form, accession = _provenance(observation, window)
+    fy, fp = _fiscal_context(observation)
+    status_val = getattr(observation, "status", None)
+    status_str = status_val.value if hasattr(status_val, "value") else (str(status_val) if status_val is not None else "UNVERIFIABLE")
+    reasons = tuple(str(r) for r in getattr(observation, "status_reasons", ()) or ())
     return HistoryPoint(
         metric=str(getattr(observation, "metric", "")),
         value=value,
@@ -215,6 +272,10 @@ def _to_point(observation: Any, window: str) -> Optional[HistoryPoint]:
         span_days=_span_days(observation),
         form=form,
         accession=accession,
+        fiscal_year=fy,
+        fiscal_period=fp,
+        status=status_str,
+        status_reasons=reasons,
     )
 
 
@@ -355,10 +416,30 @@ def growth_against_prior_year(points: Sequence[HistoryPoint]) -> List[Dict[str, 
     """
     rows: List[Dict[str, Any]] = []
     for index, point in enumerate(points):
+        if point.window == _WINDOW_INSTANT:
+            rows.append(
+                {
+                    "period_end": point.period_end,
+                    "value": point.value,
+                    "prior_period_end": None,
+                    "prior_value": None,
+                    "growth": None,
+                    "comparable": False,
+                    "reason": (
+                        "This is a point-in-time balance observed at an effective date. "
+                        "It has no duration to compound over, so no growth rate is "
+                        "computed for it."
+                    ),
+                }
+            )
+            continue
+
         end = _parse_date(point.period_end)
         prior_candidates = []
         if end is not None:
             for earlier in points[:index]:
+                if earlier.window != point.window or earlier.window == _WINDOW_INSTANT:
+                    continue
                 earlier_end = _parse_date(earlier.period_end)
                 if earlier_end is None:
                     continue
@@ -432,13 +513,20 @@ def margin_for_periods(
     label: str,
 ) -> List[Dict[str, Any]]:
     """
-    A margin series computed only inside a single shared period.
+    A margin series computed only inside one single shared period.
 
-    Both series must cover the same window shape and end on the same date. A
-    period present in only one series is reported as not computable with the
-    reason, because padding one series to match the other would fabricate a
-    margin out of two unrelated periods.
+    Both series must cover the same window shape and end on the same date. That
+    matters twice over:
+
+    * A period present in only one series is reported as not computable with
+      the reason, because padding one series to match the other would
+      fabricate a margin out of two unrelated periods.
+    * A numerator or denominator that is a point-in-time balance is refused
+      outright. Dividing a balance at a date by an amount over a window would
+      produce a number with no unit of its own, and it would still look like a
+      margin on the page.
     """
+    denominator_window = denominator_points[0].window if denominator_points else ""
     by_end: Dict[str, HistoryPoint] = {}
     for point in denominator_points:
         if point.period_end:
@@ -446,6 +534,22 @@ def margin_for_periods(
 
     rows: List[Dict[str, Any]] = []
     for point in numerator_points:
+        instant_reason = _instant_margin_reason(point.window, denominator_window)
+        if instant_reason:
+            rows.append(
+                {
+                    "label": label,
+                    "period_end": point.period_end,
+                    "window": point.window,
+                    "numerator": point.value,
+                    "denominator": None,
+                    "margin": None,
+                    "comparable": False,
+                    "reason": instant_reason,
+                }
+            )
+            continue
+
         denominator = by_end.get(point.period_end or "")
         if denominator is None:
             rows.append(
@@ -461,6 +565,41 @@ def margin_for_periods(
                         "The matching %s period was not acquired for this period end, so no "
                         "margin is computed. Filling it from a neighbouring period would "
                         "combine two different periods." % label
+                    ),
+                }
+            )
+            continue
+
+        denom_instant_reason = _instant_margin_reason(point.window, denominator.window)
+        if denom_instant_reason:
+            rows.append(
+                {
+                    "label": label,
+                    "period_end": point.period_end,
+                    "window": point.window,
+                    "numerator": point.value,
+                    "denominator": denominator.value,
+                    "margin": None,
+                    "comparable": False,
+                    "reason": denom_instant_reason,
+                }
+            )
+            continue
+
+        if point.window != denominator.window:
+            rows.append(
+                {
+                    "label": label,
+                    "period_end": point.period_end,
+                    "window": point.window,
+                    "numerator": point.value,
+                    "denominator": denominator.value,
+                    "margin": None,
+                    "comparable": False,
+                    "reason": (
+                        "The numerator covers a %s window while the denominator covers a %s "
+                        "window. A margin requires matching period windows."
+                        % (point.window.lower(), denominator.window.lower())
                     ),
                 }
             )
@@ -497,6 +636,35 @@ def margin_for_periods(
     return rows
 
 
+def _instant_margin_reason(numerator_window: str, denominator_window: str) -> str:
+    """
+    Why a margin cannot be formed from these two windows, if it cannot.
+
+    A duration over a duration is the ordinary case. A duration over an instant,
+    or an instant over a duration, is not: one side is an amount over a window
+    and the other is a balance at a date, and their quotient has no meaning as
+    a margin. An instant over an instant is refused too, because while the
+    quotient is arithmetically fine it is a ratio of two stocks, not a margin
+    on activity.
+    """
+    instant_sides = [
+        name
+        for name, window in (("numerator", numerator_window), ("denominator", denominator_window))
+        if window == _WINDOW_INSTANT
+    ]
+    if not instant_sides:
+        return ""
+    return (
+        "A margin combines an amount over a period. The %s %s a point-in-time "
+        "balance observed at an effective date, so this ratio would have no "
+        "meaning as a margin and is not computed."
+        % (
+            " and ".join(instant_sides),
+            "is" if len(instant_sides) == 1 else "are",
+        )
+    )
+
+
 def _currency_note(left: Optional[str], right: Optional[str]) -> str:
     if left and right and not currencies_match(left, right):
         return (
@@ -513,9 +681,17 @@ def build_financial_history(
     earnings_metric: str = "net_income",
     eps_metric: str = "eps_diluted",
     windows: Sequence[str] = (_WINDOW_ANNUAL, _WINDOW_QUARTERLY),
+    instant_metrics: Sequence[str] = (),
+    instant_window: str = _WINDOW_INSTANT,
 ) -> Dict[str, Any]:
     """
     The full history block: series, growth rates and margins.
+
+    Duration metrics and point-in-time metrics are kept in separate series.
+    A balance is a value at an effective date, not an amount over a window, so
+    mixing the two would let a margin divide an instant balance by a duration
+    and call the result a margin. Instant metrics therefore get their own
+    series, take no growth rate, and never enter a margin.
 
     Everything that could not be computed is listed in `unavailable` with the
     reason, so the block is readable as a statement about coverage rather than
@@ -531,10 +707,37 @@ def build_financial_history(
             series_block["%s.%s" % (metric, window.lower())] = series
             unavailable.extend(series.unavailable)
 
+    for metric in instant_metrics or ():
+        series = build_series(observations, metric, instant_window)
+        series_block["%s.%s" % (metric, instant_window.lower())] = series
+        unavailable.extend(series.unavailable)
+
     growth_block: Dict[str, Any] = {}
     for key, series in series_block.items():
-        if series.points:
-            growth_block[key] = growth_against_prior_year(series.points)
+        if not series.points:
+            continue
+        if series.window == _WINDOW_INSTANT:
+            # A point-in-time balance has no window to compound over. Comparing
+            # it to a prior instant is a change in a balance, which is a
+            # different question from a growth rate and is not reported as one.
+            growth_block[key] = [
+                {
+                    "period_end": point.period_end,
+                    "value": point.value,
+                    "prior_period_end": None,
+                    "prior_value": None,
+                    "growth": None,
+                    "comparable": False,
+                    "reason": (
+                        "This is a point-in-time balance observed at an effective date. "
+                        "It has no duration to compound over, so no growth rate is "
+                        "computed for it."
+                    ),
+                }
+                for point in series.points
+            ]
+            continue
+        growth_block[key] = growth_against_prior_year(series.points)
 
     margin_block: Dict[str, Any] = {}
     for window in windows:

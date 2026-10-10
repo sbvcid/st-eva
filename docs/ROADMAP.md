@@ -405,3 +405,51 @@ Verified after the change: the browser suite leaves every file under
 - Enterprise value and market capitalization are taken as observed rather than
   rebuilt from price times shares plus net debt, because the provider's debt
   and cash definitions are not reconciled to its share count.
+
+## 14. Phase D — Point-in-Time Financial Data and Multi-Exit-Multiple Dossier
+
+**Date:** 2026-10-10.
+
+### What now runs and is presented
+
+1. **Point-in-Time (`INSTANT`) Observation Support (`financial_history.py`):**
+   - Observations without a duration window or with matching start/end dates are classified as `INSTANT`.
+   - No artificial period start is required for point-in-time balance-sheet facts.
+   - Strict arithmetic boundary: growth rate calculations (`growth_against_prior_year`) and margin calculations (`margin_for_periods`) explicitly reject instant points, and candidate searches exclude instant facts from duration series.
+   - Serialization preserves `period_type` (`INSTANT` vs `DURATION`), fiscal context (`fiscal_year`, `fiscal_period`), validation status, and source identity.
+
+2. **Acquired Balance-Sheet Evidence & Capital Structure (`capital_structure.py`):**
+   - Presents acquired point-in-time balance-sheet metrics: `assets`, `cash`, `long_term_debt`, and `shares_outstanding`.
+   - Each fact reports observed value, currency/unit, effective date, available date, availability basis, source provider, filing form, accession number, and cross-source validation status.
+   - Distinguishes point-in-time cover-page shares outstanding from weighted-average diluted shares used in EPS; neither is silently substituted for the other.
+   - Reconstructed market capitalization: `price × dated shares outstanding`, with explicit date mismatch caveat.
+   - Reconstructed enterprise value: partial bridge (`market_cap + long_term_debt - cash`) marked with status `PARTIAL`, explicitly declaring present components (`long_term_debt`, `cash`) and absent components (`total_debt`, `short_term_borrowings`, `cash_and_equivalents`, `short_term_investments`, `non_controlling_interests`, `preferred_equity`).
+   - Side-by-side reconciliation of provider-observed vs. reconstructed capitalization with differences, relative differences, observation dates, and definition differences.
+
+3. **Multi-Exit-Multiple Reverse Requirements Sensitivity Matrix (`reverse_requirements.py`, `st_eva_runner.py`):**
+   - Matrix supports cross-product evaluation across holding periods, required returns, and multiple user-supplied or band exit multiples (via `--reference-multiples`).
+   - For AAPL with multiples 25.0, 32.0, 40.0: generates 48 independent scenario cells (4 horizons × 4 required returns × 3 exit multiples).
+   - Provenance preserved on every cell: `price`, `as_of`, start EPS anchor, exit multiple with origin/source, return basis (`PRICE_RETURN_ONLY`), target exit price, required terminal EPS, CAGR, growth window, flags, and formula version.
+   - Policy maintained: continues to refuse the 8-observation historical P/E band as a reference distribution under the 20-observation threshold policy.
+   - Implied net margin presents two separately labelled variants: derived share count (`market_cap / price`, original formula) and observed point-in-time shares outstanding.
+   - Zero scenario probabilities, rankings, or authoritative expected-value synthesis added.
+
+4. **Dedicated Dossier & Report Rendering (`research_dossier.py`):**
+   - Section 3 presents Balance Sheet and Capital Structure in both JSON dossier and human-readable text output.
+   - Section 6 renders detailed share-basis breakdowns for implied net margin.
+
+### AAPL Phase D Acceptance Verification
+
+Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09 with `--financial-history --reference-multiples 25 32 40`:
+
+- **Fingerprint Determinism:** Identical fingerprint reproduced across repeated independent runs: `5c9e1a0acf10dde3e658b975a7ed2963a4b5b9afaa3040248bd3b6426b6cd5ef`.
+- **Matrix Dimensions:** 48 cells (horizons: 1.0, 2.0, 3.0, 5.0 years; returns: 8%, 10%, 12%, 15%; exit multiples: 25.0, 32.0, 40.0).
+- **Balance Sheet Observations:** 8 instant points each for assets ($383.27B @ 2026-06-27), cash ($39.54B @ 2026-06-27), long-term debt ($82.35B @ 2026-06-27), and shares outstanding (14.59B @ 2026-07-17).
+- **Observed vs Reconstructed Capitalization:**
+  - Market Cap: observed $4,918.53B vs reconstructed $4,912.98B (diff: -$5.55B, -0.11%).
+  - Enterprise Value: observed $4,940.48B vs reconstructed $4,955.79B (diff: +$15.31B, +0.31%), status `PARTIAL`.
+- **Spot Check Recomputation:**
+  - Horizon 1.0y, return +8%, multiple 25.0: $336.64 \times 1.08 = 363.5712$; terminal EPS $363.5712 / 25.0 = 14.5428$; CAGR from 8.72 is +66.8%. Exactly matches output.
+  - Horizon 5.0y, return +15%, multiple 40.0: $336.64 \times 1.15^5 = 677.1033$; terminal EPS $677.1033 / 40.0 = 16.9276$; CAGR $(16.9276 / 8.72)^{1/5} - 1 = +14.2\%$. Exactly matches output.
+- **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical before and after tests.
+- **Test Suite Results:** Full test suite passed: 1848 passed, 168 skipped, 49 subtests passed (0 failures).

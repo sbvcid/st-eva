@@ -39,6 +39,7 @@ DOSSIER_VERSION = "research-dossier/1.0"
 SECTION_ORDER: Sequence[str] = (
     "market_and_company",
     "financial_history",
+    "balance_sheet_and_capital_structure",
     "valuation_metrics",
     "reverse_requirements",
     "valuation_scenarios",
@@ -50,6 +51,9 @@ SECTION_ORDER: Sequence[str] = (
 SECTION_TITLES: Dict[str, str] = {
     "market_and_company": "市場與公司資料 / Market and company data",
     "financial_history": "歷史財務變化 / Financial history",
+    "balance_sheet_and_capital_structure": (
+        "資產負債表與資本結構 / Balance sheet and capital structure"
+    ),
     "valuation_metrics": "估值指標 / Valuation metrics",
     "reverse_requirements": "目前價格的反推要求 / Reverse requirements at the current price",
     "valuation_scenarios": "多組假設下的估值結果 / Valuation under multiple assumptions",
@@ -143,7 +147,22 @@ def build_dossier(result: Dict[str, Any]) -> Dict[str, Any]:
         "notes": history.get("reading_notes") or [],
     }
 
-    # ---- 3. valuation metrics ----
+    # ---- 3. balance sheet and capital structure ----
+    capital = reverse.get("capital_structure") or {}
+    sections["balance_sheet_and_capital_structure"] = {
+        "title": SECTION_TITLES["balance_sheet_and_capital_structure"],
+        "status": capital.get("status", "NOT_ACQUIRED"),
+        "observations": capital.get("observations") or {},
+        "observed": capital.get("observed") or {},
+        "reconstructed_market_cap": capital.get("reconstructed_market_cap") or {},
+        "reconstructed_enterprise_value": capital.get("reconstructed_enterprise_value") or {},
+        "observed_vs_reconstructed": capital.get("observed_vs_reconstructed") or [],
+        "share_count_note": capital.get("share_count_note"),
+        "unavailable": capital.get("unavailable") or [],
+        "notes": capital.get("notes") or [],
+    }
+
+    # ---- 4. valuation metrics ----
     sections["valuation_metrics"] = {
         "title": SECTION_TITLES["valuation_metrics"],
         "observed_multiples": {
@@ -567,6 +586,124 @@ def _render_history(section: Dict[str, Any]) -> List[str]:
     return lines
 
 
+def _render_capital_structure(section: Dict[str, Any]) -> List[str]:
+    """
+    The balance sheet and the two capitalizations, side by side.
+
+    Observed and reconstructed figures are printed as separate blocks with
+    their own definitions and dates, because collapsing them would hide which
+    one a reader is looking at.
+    """
+    lines: List[str] = []
+    if section.get("status") == "NOT_ACQUIRED":
+        lines.append("本次執行未取得財報資料，因此沒有資產負債表資料。")
+        for entry in section.get("unavailable") or []:
+            lines.append("  - %s: %s" % (entry.get("item"), entry.get("reason")))
+        return lines
+
+    lines.append("[時點觀測值 (INSTANT)]  有效日期為觀測當日，非期間金額")
+    lines.append("  %-18s %-18s %-12s %-12s %-12s %-22s %s" % ("欄位", "值", "單位/幣別", "有效日", "可用日", "可用基準", "來源"))
+    for metric, block in sorted((section.get("observations") or {}).items()):
+        latest = block.get("latest") or {}
+        if not latest.get("present"):
+            lines.append("  %-18s %s" % (metric, "未取得"))
+            continue
+        unit_currency = "%s%s" % (
+            latest.get("unit") or "",
+            "/" + latest["currency"] if latest.get("currency") else "",
+        )
+        provider_status = (
+            "%s [%s]" % (latest.get("provider"), latest.get("validation_status"))
+            if latest.get("validation_status")
+            else latest.get("provider")
+        )
+        lines.append(
+            "  %-18s %-18s %-12s %-12s %-12s %-22s %s"
+            % (
+                metric,
+                _number(latest.get("value")),
+                unit_currency,
+                latest.get("effective_date"),
+                str(latest.get("available_at") or "")[:10],
+                latest.get("available_at_basis") or "-",
+                provider_status,
+            )
+        )
+        if latest.get("comparability_caveat"):
+            lines.append("    * 比較限制: %s" % latest["comparability_caveat"])
+        for caveat in latest.get("caveats") or []:
+            lines.append("    * 注意: %s" % caveat)
+    lines.append("")
+
+    observed = section.get("observed") or {}
+    reconstructed_cap = section.get("reconstructed_market_cap") or {}
+    reconstructed_ev = section.get("reconstructed_enterprise_value") or {}
+
+    lines.append("[觀察值 vs 重建值]")
+    lines.append("  %-18s %-22s %-22s %-14s" % ("項目", "觀察值(來源)", "重建值", "差異"))
+    for row in section.get("observed_vs_reconstructed") or []:
+        label = "市值" if row["metric"] == "market_cap" else "企業價值"
+        observed_value = row.get("observed")
+        reconstructed_value = row.get("reconstructed")
+        difference = row.get("difference")
+        lines.append(
+            "  %-18s %-22s %-22s %-14s"
+            % (
+                label,
+                _number(observed_value) if observed_value is not None else "-",
+                _number(reconstructed_value) if reconstructed_value is not None
+                else "不可計算(%s)" % row.get("reconstructed_status"),
+                ("%+.4f%%" % (row["relative_difference"] * 100.0))
+                if row.get("relative_difference") is not None
+                else "-",
+            )
+        )
+    lines.append("")
+
+    if reconstructed_cap.get("status") == "COMPUTED":
+        lines.append("  重建市值定義: %s" % reconstructed_cap.get("definition"))
+        lines.append(
+            "  輸入: 價格 %s @%s  ×  股數 %s @%s"
+            % (
+                reconstructed_cap["inputs"].get("price"),
+                reconstructed_cap["inputs"].get("price_date"),
+                _number(reconstructed_cap["inputs"].get("shares_outstanding")),
+                reconstructed_cap["inputs"].get("shares_date"),
+            )
+        )
+        if reconstructed_cap.get("date_alignment"):
+            lines.append("  日期對齊: %s" % reconstructed_cap["date_alignment"])
+        for note in reconstructed_cap.get("notes") or []:
+            lines.append("    - %s" % note)
+        lines.append("")
+
+    lines.append("  重建企業價值: %s" % reconstructed_ev.get("status"))
+    if reconstructed_ev.get("value") is not None:
+        lines.append("    定義: %s" % reconstructed_ev.get("definition"))
+        lines.append("    值: %s" % _number(reconstructed_ev.get("value")))
+        lines.append(
+            "    已具備組成: %s" % ", ".join(reconstructed_ev.get("components_present") or [])
+        )
+        lines.append(
+            "    缺少組成: %s" % ", ".join(reconstructed_ev.get("components_absent") or [])
+        )
+    for note in reconstructed_ev.get("notes") or []:
+        lines.append("    - %s" % note)
+    lines.append("")
+
+    if section.get("share_count_note"):
+        lines.append("  股數口徑: %s" % section["share_count_note"])
+        lines.append("")
+
+    for entry in section.get("unavailable") or []:
+        lines.append("  - %s [%s]: %s" % (entry.get("item"), entry.get("reason_kind"), entry.get("reason")))
+    if section.get("unavailable"):
+        lines.append("")
+    for note in section.get("notes") or []:
+        lines.append("  * %s" % note)
+    return lines
+
+
 def _render_metrics(section: Dict[str, Any]) -> List[str]:
     lines: List[str] = []
     multiples = section.get("observed_multiples") or {}
@@ -729,6 +866,26 @@ def _render_scenarios(section: Dict[str, Any]) -> List[str]:
             )
         )
     lines.append("")
+
+    inm = methods.get("implied_net_margin") or {}
+    variants = inm.get("share_basis_variants") or []
+    if len(variants) > 1:
+        lines.append("  隱含淨利率股數基準拆解:")
+        for v in variants:
+            shares_str = _number(v.get("shares"))
+            date_str = f" @{v['shares_date']}" if v.get("shares_date") else ""
+            lines.append(
+                "    * %s: 隱含淨利率 %s (股數 %s%s)"
+                % (
+                    v.get("label"),
+                    _percent(v.get("implied")),
+                    shares_str,
+                    date_str,
+                )
+            )
+            if v.get("note"):
+                lines.append("      - %s" % v["note"])
+        lines.append("")
 
     sources = section.get("exit_multiple_scenarios") or []
     if sources:
@@ -935,6 +1092,7 @@ def _render_limitations(section: Dict[str, Any]) -> List[str]:
 _SECTION_RENDERERS = {
     "market_and_company": _render_market,
     "financial_history": _render_history,
+    "balance_sheet_and_capital_structure": _render_capital_structure,
     "valuation_metrics": _render_metrics,
     "reverse_requirements": _render_reverse,
     "valuation_scenarios": _render_scenarios,

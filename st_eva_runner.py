@@ -1696,6 +1696,7 @@ def run_st_eva(
     event: Optional[str] = None,
     mode: str = "auto",
     reference_multiple: Optional[float] = None,
+    reference_multiples: Optional[Sequence[float]] = None,
     horizon_years: float = 1.0,
     pfcf_multiple: Optional[float] = None,
     ev_ebitda_multiple: Optional[float] = None,
@@ -1772,6 +1773,7 @@ def run_st_eva(
         horizons_years=reverse_horizons,
         required_returns=required_returns,
         reference_multiple=reference_multiple,
+        reference_multiples=reference_multiples,
         pfcf_multiple=pfcf_multiple,
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,
@@ -1917,6 +1919,83 @@ def run_st_eva(
     return result
 
 
+def _build_exit_multiple_scenarios(
+    *,
+    historical_band: Optional[Dict[str, Any]],
+    user_multiples: Sequence[Optional[float]],
+    min_observations: int,
+) -> Tuple[List[Any], List[Dict[str, Any]]]:
+    """
+    The exit multiples the matrix runs over.
+
+    A usable historical band contributes its percentile set; each explicitly
+    supplied multiple contributes its own labelled point. They are kept as one
+    ordered list rather than collapsed, so a reader can see which rows came from
+    a distribution and which from a stated assumption, and a single fixed
+    multiple cannot silently stand in for a sensitivity range.
+    """
+    from reverse_requirements import ReferenceMultiple, exit_multiples_from_band
+
+    scenarios: List[Any] = []
+    unavailable: List[Dict[str, Any]] = []
+
+    band_scenarios, band_unavailable = exit_multiples_from_band(
+        historical_band, min_observations=min_observations
+    )
+    unavailable.extend(band_unavailable)
+    scenarios.extend(band_scenarios)
+
+    seen = {round(m.value, 10) for m in scenarios}
+    for candidate in user_multiples or ():
+        number = safe_float(candidate)
+        if number is None or number <= 0:
+            unavailable.append(
+                {
+                    "item": "exit_multiple.user_supplied",
+                    "reason": (
+                        "The supplied exit multiple %r is not a positive number, so it "
+                        "cannot invert a price into an EPS and was not used." % (candidate,)
+                    ),
+                    "reason_kind": "NOT_POSITIVE",
+                    "blocks": ["exit_multiple"],
+                }
+            )
+            continue
+        if round(number, 10) in seen:
+            continue
+        seen.add(round(number, 10))
+        scenarios.append(ReferenceMultiple(value=number, source="user_supplied"))
+
+    if not scenarios:
+        unavailable.append(
+            {
+                "item": "exit_multiple",
+                "reason": (
+                    "No exit multiple is available. The historical band did not carry "
+                    "enough observations and none was supplied, so the reverse "
+                    "requirements matrix cannot be built."
+                ),
+                "reason_kind": "MISSING",
+                "blocks": ["reverse_requirements_matrix"],
+            }
+        )
+    return scenarios, unavailable
+
+
+def _representative_multiple(scenarios: Sequence[Any]) -> Optional[Any]:
+    """
+    The multiple the single-reference methods use when a range is supplied.
+
+    The median of the scenario set, so the earnings-method figure is not taken
+    from whichever end of the range happens to be listed first. It stays
+    labelled with its own source rather than being presented as neutral.
+    """
+    if not scenarios:
+        return None
+    ordered = sorted(scenarios, key=lambda m: m.value)
+    return ordered[len(ordered) // 2]
+
+
 def _build_valuation_multiples(
     *,
     reference_multiple: Optional[float],
@@ -2003,8 +2082,9 @@ def _build_reverse_requirements(
     *,
     horizons_years: Sequence[float],
     required_returns: Sequence[float],
-    reference_multiple: Optional[float],
-    pfcf_multiple: Optional[float],
+    reference_multiple: Optional[float] = None,
+    reference_multiples: Optional[Sequence[Optional[float]]] = None,
+    pfcf_multiple: Optional[float] = None,
     ev_ebitda_multiple: Optional[float],
     ps_multiple: Optional[float],
     include_risk_free_rates: bool,
@@ -2023,12 +2103,11 @@ def _build_reverse_requirements(
     to the pure module. Every optional input that was not supplied leaves its
     figure absent rather than defaulted.
     """
+    from capital_structure import build_capital_structure
     from financial_history import build_financial_history
     from reverse_requirements import (
-        build_exit_multiples,
         build_reverse_requirements_report,
         build_start_anchor,
-        exit_multiples_from_band,
     )
     from risk_free_rate_provider import (
         fetch_risk_free_rates,
@@ -2051,38 +2130,32 @@ def _build_reverse_requirements(
     )
     unavailable.extend(anchor_unavailable)
 
-    multiples, multiple_unavailable = build_exit_multiples(
-        historical_pe_band=data.historical_pe_band,
-        user_pe_multiple=reference_multiple,
-        min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
-    )
-    unavailable.extend(multiple_unavailable)
+    if not reference_multiples:
+        reference_multiples = [reference_multiple] if reference_multiple is not None else []
+    reference_multiples = [value for value in reference_multiples if value is not None]
+    if reference_multiple is not None and reference_multiple not in reference_multiples:
+        reference_multiples = [reference_multiple] + list(reference_multiples)
 
     # Scenario exit multiples. A usable historical band contributes its
-    # percentile set; a user-supplied multiple contributes its own labelled
-    # point. Both are kept separate so the reader can tell a distribution
+    # percentile set; every explicitly supplied multiple contributes its own
+    # labelled point. Both are kept so a reader can tell a distribution
     # scenario from a stated assumption.
-    scenario_multiples: List[Any] = []
-    band_scenarios, band_unavailable = exit_multiples_from_band(
-        data.historical_pe_band,
+    scenario_multiples, scenario_unavailable = _build_exit_multiple_scenarios(
+        historical_band=data.historical_pe_band,
+        user_multiples=reference_multiples,
         min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
     )
-    for entry in band_unavailable:
-        if entry["item"] not in {item["item"] for item in multiple_unavailable}:
+    for entry in scenario_unavailable:
+        if entry["item"] not in {item["item"] for item in unavailable}:
             unavailable.append(entry)
-    scenario_multiples.extend(band_scenarios)
-    user_multiple = safe_float(reference_multiple)
-    if user_multiple is not None and user_multiple > 0:
-        from reverse_requirements import ReferenceMultiple
 
-        scenario_multiples.append(
-            ReferenceMultiple(value=user_multiple, source="user_supplied")
-        )
-    if not scenario_multiples:
-        scenario_multiples = list(multiples)
+    # The earnings-multiple method takes a single representative reference. It
+    # is the median of whatever the scenario set contains, and it is labelled
+    # as such rather than being one arbitrary member of the range.
+    representative = _representative_multiple(scenario_multiples)
 
     valuation_multiples, method_unavailable = _build_valuation_multiples(
-        reference_multiple=reference_multiple,
+        reference_multiple=(representative.value if representative is not None else None),
         pfcf_multiple=pfcf_multiple,
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,
@@ -2211,6 +2284,24 @@ def _build_reverse_requirements(
         if latest is not None:
             observed_net_margin, observed_net_margin_period = latest
 
+    # The observed share count is read back out of the capital structure so
+    # the implied margin can offer an observed-share variant beside the
+    # original derived one.
+    observed_shares: Optional[float] = None
+    observed_shares_date: Optional[str] = None
+    capital_early = build_capital_structure(
+        history_observations,
+        price=data.price,
+        price_date=data.price_date,
+        currency=data.currency,
+        observed_market_cap=market_cap,
+        observed_enterprise_value=enterprise_value,
+    )
+    shares_latest = ((capital_early.get("observations") or {}).get("shares_outstanding") or {}).get("latest") or {}
+    if shares_latest.get("present"):
+        observed_shares = safe_float(shares_latest.get("value"))
+        observed_shares_date = shares_latest.get("effective_date")
+
     report = build_reverse_requirements_report(
         price=data.price,
         ticker=data.ticker,
@@ -2236,6 +2327,8 @@ def _build_reverse_requirements(
         ps_multiple=ps_multiple,
         observed_net_margin=observed_net_margin,
         observed_net_margin_period=observed_net_margin_period,
+        observed_shares_outstanding=observed_shares,
+        observed_shares_date=observed_shares_date,
         valuation_multiples=valuation_multiples,
         risk_free_rates=risk_free_rates,
         cost_of_equity_inputs=cost_of_equity_inputs,
@@ -2249,7 +2342,10 @@ def _build_reverse_requirements(
     # empty history that reads like a company with no filings.
     history_observations = list(sec_observations or [])
     if history_observations:
-        report["financial_history"] = build_financial_history(history_observations)
+        report["financial_history"] = build_financial_history(
+            history_observations,
+            instant_metrics=("assets", "cash", "long_term_debt", "shares_outstanding"),
+        )
         report["financial_history"]["observation_count"] = len(history_observations)
         report["financial_history"]["source_provider"] = str(
             getattr(history_observations[0], "provider", "")
@@ -2279,6 +2375,45 @@ def _build_reverse_requirements(
     # this path; without this they would be discarded, and the report would
     # continue to describe a single-source run while holding two.
     report["cross_source_validation"] = _serialise_cross_validation(cross_validation)
+
+    # Capital structure is built only where the balance-sheet evidence was
+    # actually acquired. Without it there is nothing to present, and an empty
+    # section would read as a company with no balance sheet. It reads the
+    # cross-source verdicts computed just above.
+    if history_observations:
+        from capital_structure import build_capital_structure
+
+        report["capital_structure"] = build_capital_structure(
+            history_observations,
+            price=data.price,
+            price_date=data.price_date,
+            currency=data.currency,
+            observed_market_cap=market_cap,
+            observed_enterprise_value=enterprise_value,
+            cross_source=report.get("cross_source_validation"),
+        )
+        unavailable.extend(report["capital_structure"]["unavailable"])
+    else:
+        report["capital_structure"] = {
+            "formula_version": "capital-structure/1.0",
+            "status": "NOT_ACQUIRED",
+            "observations": {},
+            "observed": {},
+            "reconstructed_market_cap": {"status": "NOT_COMPUTED", "value": None},
+            "reconstructed_enterprise_value": {"status": "NOT_COMPUTED", "value": None},
+            "observed_vs_reconstructed": [],
+            "unavailable": [
+                {
+                    "item": "capital_structure",
+                    "reason": (
+                        "No filing observations were acquired for this run, so no balance "
+                        "sheet or share count is presented."
+                    ),
+                    "reason_kind": "NOT_ACQUIRED",
+                    "blocks": ["capital_structure"],
+                }
+            ],
+        }
 
     if anchor is None or not scenario_multiples:
         # The matrix could not be built. Say so at the top level rather than
@@ -3052,6 +3187,21 @@ def main() -> None:
         help="Explicit P/E reference used for reverse valuation.",
     )
     parser.add_argument(
+        "--reference-multiples",
+        type=float,
+        nargs="+",
+        default=None,
+        metavar="PE",
+        help=(
+            "Several exit P/E values, each becoming its own axis of the reverse "
+            "requirements matrix, so the result is a sensitivity range rather than "
+            "one fixed multiple. Every value is recorded as a user assumption; none "
+            "is treated as objectively correct. When a usable historical "
+            "distribution exists, its percentiles join the same matrix and are "
+            "labelled with their sample size."
+        ),
+    )
+    parser.add_argument(
         "--horizon-years",
         type=float,
         default=1.0,
@@ -3211,6 +3361,7 @@ def main() -> None:
         event=args.event,
         mode=args.mode,
         reference_multiple=args.reference_multiple,
+        reference_multiples=args.reference_multiples,
         horizon_years=args.horizon_years,
         pfcf_multiple=args.pfcf_multiple,
         ev_ebitda_multiple=args.ev_ebitda_multiple,
@@ -3247,6 +3398,8 @@ def main() -> None:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print_report(result)
+        if args.dossier_report and result.get("dossier_report_text"):
+            print("\n" + result["dossier_report_text"])
 
 
 if __name__ == "__main__":

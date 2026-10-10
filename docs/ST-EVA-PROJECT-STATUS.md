@@ -9,7 +9,27 @@ This document records state. It introduces no new architectural decisions, modif
 
 ---
 
-## 0.2. Addendum, 2026-10-10 — Phase C (newest; supersedes nothing above)
+## 0.3. Addendum, 2026-10-10 — Phase D: Point-in-Time Financial Data and Multi-Exit-Multiple Dossier (newest; supersedes nothing above)
+
+This addendum records Phase D, which closes two concrete research-product gaps: presenting point-in-time (`INSTANT`) balance-sheet evidence and share-count observations with reconstructed capitalization reconciliation, and expanding the reverse requirements matrix to support multi-exit-multiple scenarios across holding periods and return hurdles.
+
+**Added capabilities:**
+- **Point-in-Time (`INSTANT`) Facts (`financial_history.py`):** Explicitly classifies facts without duration as `INSTANT`; preserves effective dates without fabricating start dates. Enforces strict arithmetic boundaries (rejects instant inputs in duration-growth and margins).
+- **Balance Sheet & Capital Structure (`capital_structure.py`):** Dedicated section presenting acquired `assets`, `cash`, `long_term_debt`, and `shares_outstanding` with complete provenance and cross-source validation verdicts. Reconstructs market cap and partial enterprise value (`status: PARTIAL`), accompanied by a side-by-side reconciliation table against provider observations.
+- **Multi-Exit-Multiple Scenario Matrix (`reverse_requirements.py`, `st_eva_runner.py`):** Expands reverse requirements evaluation across multiple explicit exit P/E multiples (via `--reference-multiples`), yielding an independent 48-cell matrix on AAPL (4 horizons × 4 required returns × 3 exit multiples) with full provenance per cell. Dual share basis variants for implied net margin (derived vs observed shares).
+- **Research Dossier Integration (`research_dossier.py`):** Section 3 presents Balance Sheet & Capital Structure in both machine-readable JSON and human-readable text.
+
+**Deliberately unchanged & protected:**
+- ST-EVA remains an evidence and deterministic-calculation engine: no scenario probabilities, no ranking, and no expected-value aggregation.
+- The 8-observation historical P/E band continues to be refused as a distribution under the 20-observation threshold policy.
+- All persistent archives in `data/archives/` and `data/st-eva.sqlite` verified byte-identical.
+- Full test suite: 1848 passed, 168 skipped, 49 subtests passed (0 failures).
+
+Full detail, including AAPL acceptance verification and calculations, is in [`docs/ROADMAP.md`](ROADMAP.md) §14.
+
+---
+
+## 0.2. Addendum, 2026-10-10 — Phase C (supersedes nothing above)
 
 Sections §12 and §13 below describe P0 and the Reverse Requirements V1. This
 addendum records Phase C, which adds multi-scenario exit multiples, financial

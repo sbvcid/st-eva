@@ -227,9 +227,13 @@ class EpsScenario:
     gap_vs_consensus_terminal_eps: Optional[float]
     comparison_notes: Tuple[str, ...]
     flags: Tuple[str, ...] = ()
+    price: Optional[float] = None
+    as_of: Optional[str] = None
 
     def contract_view(self) -> Dict[str, Any]:
         return {
+            "price": self.price,
+            "as_of": self.as_of,
             "horizon_years": self.horizon_years,
             "required_return": self.required_return,
             "required_return_basis": self.required_return_basis,
@@ -427,6 +431,7 @@ def build_scenario(
     consensus_months_covered: Optional[float] = None,
     dividend_per_share: Optional[float] = None,
     currency: Optional[str] = None,
+    as_of: Optional[str] = None,
 ) -> EpsScenario:
     """
     One row of the matrix: what this horizon, return and exit multiple demand.
@@ -526,6 +531,8 @@ def build_scenario(
         gap_vs_consensus_terminal_eps=gap_vs_consensus,
         comparison_notes=tuple(notes),
         flags=tuple(flags),
+        price=float(price) if price is not None else None,
+        as_of=as_of,
     )
 
 
@@ -583,6 +590,7 @@ def build_matrix(
     consensus_months_covered: Optional[float] = None,
     dividend_per_share: Optional[float] = None,
     currency: Optional[str] = None,
+    as_of: Optional[str] = None,
 ) -> List[EpsScenario]:
     """The full cross product of horizons, required returns and exit multiples."""
     scenarios: List[EpsScenario] = []
@@ -602,6 +610,7 @@ def build_matrix(
                         consensus_months_covered=consensus_months_covered,
                         dividend_per_share=dividend_per_share,
                         currency=currency,
+                        as_of=as_of,
                     )
                 )
     return scenarios
@@ -1087,6 +1096,8 @@ def valuation_method_scenarios(
     trailing_eps: Optional[float],
     observed_net_margin: Optional[float] = None,
     observed_net_margin_period: Optional[str] = None,
+    observed_shares_outstanding: Optional[float] = None,
+    observed_shares_date: Optional[str] = None,
     multiples: Dict[str, ReferenceMultiple],
 ) -> Dict[str, Any]:
     """
@@ -1234,20 +1245,69 @@ def valuation_method_scenarios(
         ),
     )
 
-    # A combined earnings-and-revenue answer is only meaningful when both
-    # multiples and the share count are all present and consistent.
-    implied_shares = None
+    # The implied margin is computed twice, on two different share bases.
+    #
+    # The original derivation divides market capitalization by price to recover
+    # a share count, which keeps the answer consistent with the vendor's own
+    # market capitalization. The alternative uses a dated shares-outstanding
+    # observation, which is independent of the vendor figure but refers to a
+    # cover-page instant rather than the weighted-average diluted count EPS
+    # uses. Neither is right in general, so both are reported and labelled.
+    derived_shares = None
     if cap is not None and usable_price is not None:
-        implied_shares = cap / usable_price
-    combined = implied_net_margin_at_multiples(
-        implied_eps_at_multiple(usable_price, pe_multiple.value)
-        if usable_price is not None and pe_multiple is not None
-        else None,
-        required_revenue_at_multiple(cap, revenue_multiple.value)
-        if cap is not None and revenue_multiple is not None
-        else None,
-        implied_shares,
-    )
+        derived_shares = cap / usable_price
+
+    observed_shares_count = _safe_float(observed_shares_outstanding)
+    variants = []
+    if derived_shares is not None:
+        variants.append(
+            {
+                "label": "derived share count (market capitalization / price)",
+                "implied": implied_net_margin_at_multiples(
+                    implied_eps_at_multiple(usable_price, pe_multiple.value)
+                    if usable_price is not None and pe_multiple is not None
+                    else None,
+                    required_revenue_at_multiple(cap, revenue_multiple.value)
+                    if cap is not None and revenue_multiple is not None
+                    else None,
+                    derived_shares,
+                ),
+                "shares": derived_shares,
+                "shares_source": "derived",
+                "shares_date": None,
+                "is_original_formula": True,
+            }
+        )
+    if observed_shares_count is not None and observed_shares_count > 0:
+        variants.append(
+            {
+                "label": "observed shares outstanding (point-in-time)",
+                "implied": implied_net_margin_at_multiples(
+                    implied_eps_at_multiple(usable_price, pe_multiple.value)
+                    if usable_price is not None and pe_multiple is not None
+                    else None,
+                    required_revenue_at_multiple(cap, revenue_multiple.value)
+                    if cap is not None and revenue_multiple is not None
+                    else None,
+                    observed_shares_count,
+                ),
+                "shares": observed_shares_count,
+                "shares_source": "observed",
+                "shares_date": observed_shares_date,
+                "is_original_formula": False,
+                "note": (
+                    "A cover-page shares-outstanding count is not the weighted-average "
+                    "diluted count EPS uses. Using it changes the implied net income, so "
+                    "the result is labelled rather than presented as the same measure."
+                ),
+            }
+        )
+
+    combined = None
+    for variant in variants:
+        if variant["implied"] is not None:
+            combined = variant["implied"]
+            break
     observed_margin: Optional[float] = None
     observed_margin_period: Optional[str] = None
     margin_gap: Optional[float] = None
@@ -1260,6 +1320,8 @@ def valuation_method_scenarios(
     methods["implied_net_margin"] = {
         "implied": combined,
         "unit": "ratio",
+        "share_basis": "derived" if variants and variants[0]["shares_source"] == "derived" else None,
+        "share_basis_variants": variants,
         "reference_multiple": {
             "pe": pe_multiple.contract_view() if pe_multiple else None,
             "revenue": revenue_multiple.contract_view() if revenue_multiple else None,
@@ -1272,9 +1334,14 @@ def valuation_method_scenarios(
         "gap_implied_vs_observed": margin_gap,
         "status": "COMPUTED" if combined is not None else "NOT_COMPUTED",
         "notes": [
-            "Requires a P/E multiple, a P/S multiple and an implied share count at once.",
-            "The share count is derived from market cap divided by price rather than taken "
-            "from the filings, so this margin describes the vendor's share basis.",
+            "Requires a P/E multiple, a P/S multiple and a share count at once.",
+            (
+                "Two share bases are reported. The derived one is the original formula and "
+                "is kept as the headline; the observed one is offered alongside because it "
+                "does not inherit the vendor's market capitalization."
+                if len(variants) > 1
+                else "The share count is derived from market capitalization divided by price."
+            ),
             (
                 "The observed net margin is the margin the filings report for the stated "
                 "period. It is compared here rather than left as a separate series, because "
@@ -1355,6 +1422,8 @@ def build_reverse_requirements_report(
     ps_multiple: Optional[float] = None,
     observed_net_margin: Optional[float] = None,
     observed_net_margin_period: Optional[str] = None,
+    observed_shares_outstanding: Optional[float] = None,
+    observed_shares_date: Optional[str] = None,
     valuation_multiples: Optional[Dict[str, ReferenceMultiple]] = None,
     shares: Optional[float] = None,
     risk_free_rates: Sequence[RiskFreeRate] = (),
@@ -1379,6 +1448,7 @@ def build_reverse_requirements_report(
         consensus_months_covered=consensus_months_covered,
         dividend_per_share=dividend_per_share,
         currency=currency,
+        as_of=as_of,
     )
 
     cash_flow_cross_checks = _cash_flow_cross_checks(
@@ -1413,6 +1483,8 @@ def build_reverse_requirements_report(
         trailing_eps=(start_anchor.value if start_anchor is not None else None),
         observed_net_margin=observed_net_margin,
         observed_net_margin_period=observed_net_margin_period,
+        observed_shares_outstanding=observed_shares_outstanding,
+        observed_shares_date=observed_shares_date,
         multiples=valuation_multiples or {},
     )
     unavailable: List[Dict[str, Any]] = list(unavailable or [])
@@ -1429,6 +1501,8 @@ def build_reverse_requirements_report(
             key: value.contract_view() for key, value in (valuation_multiples or {}).items()
         },
         "shares": shares,
+        "observed_shares_outstanding": observed_shares_outstanding,
+        "observed_shares_date": observed_shares_date,
         "start_anchor": start_anchor.contract_view(),
         "current_pe": current_pe,
         "consensus_eps": consensus_eps,
