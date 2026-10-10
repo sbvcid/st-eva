@@ -640,10 +640,10 @@ Executed on AAPL regression fixture at price 336.64 USD as-of 2026-10-09:
      - Exit Price Relief: $\Delta P_T = P_{T, \text{total}} - P_{T, \text{price}} < 0$.
      - Terminal EPS Relief: $\Delta \text{EPS}_T = \frac{P_{T, \text{total}} - P_{T, \text{price}}}{M} < 0$.
      - Required EPS CAGR Relief: $\Delta \text{CAGR} = \left(\frac{\text{EPS}_{T, \text{total}}}{\text{EPS}_0}\right)^{1/T} - \left(\frac{\text{EPS}_{T, \text{price}}}{\text{EPS}_0}\right)^{1/T} < 0$.
-   - Sample verified AAPL reverse hurdle ($P_0 = \$336.64, r = 10\%, T = 3\text{y}, M = 28.95, D = \$1.06$):
-     - Price Return Only: $P_3 = \$448.07$, Required $\text{EPS}_3 = \$15.48$, Required $\text{CAGR} = 33.07\%$.
-     - Cash Retained: $P_3 = \$444.89$, Required $\text{EPS}_3 = \$15.37$, Required $\text{CAGR} = 32.75\%$ ($\Delta P_3 = -\$3.18, \Delta \text{EPS}_3 = -\$0.11, \Delta \text{CAGR} = -0.32\%$).
-     - DRIP Reinvested: $P_3 = \$444.55$, Required $\text{EPS}_3 = \$15.36$, Required $\text{CAGR} = 32.71\%$ ($\Delta P_3 = -\$3.51, \Delta \text{EPS}_3 = -\$0.12, \Delta \text{CAGR} = -0.36\%$).
+    - Sample verified AAPL reverse hurdle ($P_0 = \$336.64, r = 10\%, T = 3\text{y}, M = 28.95, D = \$1.06$; start EPS = 8.72 TTM 12.0 mo, growth window = 3.0 y verified by identity `CAGR = (terminal_EPS / 8.72)^(1/3) - 1`):
+      - Price Return Only: $P_3 = \$448.07$, Required $\text{EPS}_3 = \$15.48$, Required $\text{CAGR} = 21.08\%$ (verified; earlier 33.07% reflected a mismatched ~2-year growth window, not a different EPS basis).
+      - Cash Retained: $P_3 = \$444.89$, Required $\text{EPS}_3 = \$15.37$, Required $\text{CAGR} = 20.79\%$ ($\Delta P_3 = -\$3.18, \Delta \text{EPS}_3 = -\$0.11, \Delta \text{CAGR} = -0.29\%$).
+      - DRIP Reinvested: $P_3 = \$444.55$, Required $\text{EPS}_3 = \$15.36$, Required $\text{CAGR} = 20.76\%$ ($\Delta P_3 = -\$3.51, \Delta \text{EPS}_3 = -\$0.12, \Delta \text{CAGR} = -0.32\%$).
 
 5. **Research Dossier & Report Integration:**
    - Added Section 6 (`dividends_and_total_return`) to `research_dossier.py` in both machine-readable JSON and human-readable text report.
