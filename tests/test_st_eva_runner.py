@@ -115,6 +115,26 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             result["implied_assumptions"]["forward_eps_at_reference_multiple"]
         )
 
+    def test_undeclared_historical_band_sample_count_is_not_used_as_reference(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        data.historical_pe_band = {
+            "10th": 10.0,
+            "25th": 15.0,
+            "median": 20.0,
+            "75th": 30.0,
+            "90th": 40.0,
+        }
+        result = MarketImpliedAssumptionsEngine.analyze(data)
+        self.assertIsNone(result["reference"]["multiple"])
+        self.assertEqual(result["reference"]["method"], "none")
+        self.assertEqual(
+            result["reference"]["historical_band_status"]["pe"],
+            "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT",
+        )
+        self.assertIsNone(
+            result["observed_valuation"]["approx_historical_pe_percentile"]
+        )
+
     def test_adequate_historical_band_is_used_as_reference(self):
         data = CompanyResolver.resolve("MSFT", mode="regression")
         data.historical_pe_band = {
@@ -234,6 +254,7 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
             "median": 20.0,
             "75th": 30.0,
             "90th": 40.0,
+            "observations": 120,
         }
         result = MarketImpliedAssumptionsEngine.analyze(
             data,
