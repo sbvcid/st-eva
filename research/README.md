@@ -1,77 +1,18 @@
-# ST-EVA Research Storage
+# Research
 
-**This directory is the permanent research storage for ST-EVA.**
-It was established in `docs/archive/ST-EVA-PROJECT-STRUCTURE.md`.
+This directory contains working research material for ST-EVA, such as source captures, experiments, verification artifacts, scripts, and intermediate or final research outputs.
 
-## What belongs here
+The research directory is distinct from production inputs and code. Runtime features and tests must not depend on files that are present only in a developer's ignored local working data. If a specific evidence file is required to reproduce a supported production or test path, its actual versioned location should be determined by that use rather than by an old directory-plan document.
 
-All ST-EVA research data, permanently:
+## Version-control behavior
 
-- proofs of concept and their output
-- raw source material — SEC filings, SGML headers, filing index pages
-- verification artifacts
-- manifests, including `RESEARCH-ARCHIVE-MANIFEST.json`
-- deterministic outputs and negative-path artifacts
-- agent research artifacts and intermediate results
-- historical study data
+The root `.gitignore` currently ignores untracked content under `/research/`. This does not remove files already tracked by Git. Some research artifacts also exist in the tracked `experiments/` tree, and production historical P/E inputs are held under `data/historical_pe/`.
 
-New research is created here directly, at `research/<topic>/`, optionally
-`research/<topic>/<issuer>/` or `research/<topic>/verification/`.
+These are current repository facts, not a rule that research material must always remain outside version control. Decide the appropriate location from the artifact's purpose, size, reproducibility needs, and the user's current request.
 
-## Research is preserved by default
+## Typical contents
 
-> Research artifacts are preserved by default. Low value does not imply deletion.
-
-Nothing is relocated or removed because a study looks unimportant, small,
-superseded, or low-value. Only cache, temporary files, build output, confirmed
-duplicate garbage, and invalid empty temporary downloads may be deleted.
-"Regenerable" is not by itself a reason to delete anything.
-
-**An existing study should not be moved merely because it is complete.**
-Completion is not a reason to relocate. `research/` is already the permanent
-destination, so a finished study stays exactly where it is.
-
-## What does not belong here
-
-Production code, methodology, and runtime data live elsewhere:
-
-| Belongs | Lives in |
-|---|---|
-| Production modules | repo root `*.py` |
-| Web application | `web/` |
-| Tests | `tests/` |
-| Methodology and documentation | `docs/` |
-| Runtime SQLite / canonical application data | `data/` |
-| Archive subsystem and migrations | `archive/` |
-| Cache and build output | deletable |
-
-## Git
-
-`/research/` is listed in `.gitignore`. This tree is **not tracked by git**.
-
-That is intentional. The research material is large and is preserved as working
-material rather than as version-controlled source. Do not add it to git, and do
-not run `git add .` in this repository — `.gitignore` excludes `/research/`, but
-the tracked legacy files under `experiments/` do not depend on that, and a
-careless `git add .` would stage unrelated content.
-
-The 46 legacy tracked research files in `experiments/` are unaffected. They stay
-tracked, unmoved, and undeleted.
-
-## Finding research material
-
-Use the directory structure and the archive manifest:
-
-- `research/experiments/` — the relocated Historical P/E research: the AAPL POC,
-  the Q4 evidence study, the Amendment 1 verification, and the MSFT contract
-  validation, each with its frozen raw inputs, scripts and outputs.
-- `research/RESEARCH-ARCHIVE-MANIFEST.json` — records every relocated file's
-  relative path, byte size, and SHA-256 at both source and destination, with the
-  verification result. It is the authority on what was preserved.
-
-To confirm the archive is intact, compare the files on disk against the manifest
-rather than against a remembered count.
-
----
-
-*Research artifacts are preserved by default. Low value does not imply deletion.*
+- Raw source material and capture records.
+- Research scripts and proof-of-concept implementations.
+- Evidence-verification artifacts and manifests.
+- Intermediate analyses and generated research results.
