@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `9638722` (R2.1 provenance binding corrected); R3 real AAPL live acceptance verified against it
-**Latest verified GitHub Actions:** see §12. Runs `38160351228` and `38160824276` (`3e9ec3d`, `9638722`) passed backend and browser; the last full suite run before R3 was green on `9638722`.
+**Current implementation baseline:** `be29020` (R2.1 provenance binding plus the R3 acceptance harness)
+**Latest verified GitHub Actions:** [Run 38167442978](https://github.com/sbvcid/st-eva/actions/runs/38167442978), triggered by `be29020`; backend and browser jobs passed. Prior runs `38160351228` (`3e9ec3d`, R2.1) and `38160824276` (`9638722`) also passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -269,6 +269,8 @@ Runs after the R2 baseline:
 
 - [Run 38155972302](https://github.com/sbvcid/st-eva/actions/runs/38155972302) (`78f387a`, R2.1 first attempt): backend and browser jobs both failed at "Build frontend" (`TS2339: Property 'related_sec_evidence' does not exist on type 'ScenarioEvidenceDTO'`). This attempt is not acceptance evidence; the R2.1 section below records what was rejected and why.
 - [Run 38160351228](https://github.com/sbvcid/st-eva/actions/runs/38160351228) (`3e9ec3d`, R2.1 correction): backend and browser jobs passed — frontend build, self-contained production inputs, archive isolation tests, web API tests, the full backend suite and browser smoke tests all succeeded.
+- [Run 38160824276](https://github.com/sbvcid/st-eva/actions/runs/38160824276) (`9638722`, status record): backend and browser jobs passed.
+- [Run 38167442978](https://github.com/sbvcid/st-eva/actions/runs/38167442978) (`be29020`, R3 acceptance harness and live-path tests): backend and browser jobs passed. This is a CI regression run over fixtures and the isolated live-path contracts; it is **not** real-data acceptance — the R3 section below records which checks came from a live AAPL acquisition and which from fixtures.
 
 Local verification for the same commit before observing CI: full backend suite 1,958 passed, 168 skipped, 140 subtests passed (341.60s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`.
 
