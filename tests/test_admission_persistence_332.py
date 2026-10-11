@@ -491,6 +491,29 @@ class TestProductionAdmissionWritePath(unittest.TestCase):
     def tearDown(self) -> None:
         self.store.close()
 
+    def test_admission_write_failure_is_reported(self):
+        import io
+        from contextlib import redirect_stdout
+        from unittest.mock import patch
+        from st_eva_runner import run_st_eva
+
+        with patch.object(
+            self.store,
+            "record_admission",
+            side_effect=RuntimeError("admission persistence failed"),
+        ):
+            with redirect_stdout(io.StringIO()):
+                with self.assertRaisesRegex(
+                    RuntimeError, "admission persistence failed"
+                ):
+                    run_st_eva(
+                        ticker="MSFT",
+                        mode="regression",
+                        save_snapshot=False,
+                        context_path="-",
+                        archive=self.store,
+                    )
+
     def test_live_run_writes_admission(self):
         import io, sys
         from st_eva_runner import run_st_eva
