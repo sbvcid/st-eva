@@ -1,0 +1,13 @@
+AAPL Historical P/E POC -- replay / determinism
+
+run 1 content_hash 2c1f946e33af79957d3129e465b3edb5d502fa85847334a14bd071bcf95a0631
+run 2 content_hash 2c1f946e33af79957d3129e465b3edb5d502fa85847334a14bd071bcf95a0631
+identical         True
+raw input sha256  bc259131ac0168a4f641dda7cadd9c7f... (daily_prices)
+
+independent recomputation of TTM P/E: 31 dates
+mismatches: none
+
+note: determinism is over frozen raw bytes. A future SEC restatement or a
+refetched price series is a different input set and is expected to change
+the hash; that is an input change, not a replay failure.

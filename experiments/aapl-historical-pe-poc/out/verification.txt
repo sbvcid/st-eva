@@ -1,0 +1,26 @@
+AAPL Historical P/E POC -- verification
+
+[PASS] 16:00 ET cutoff reproduced from acceptance timestamps
+        43 filings re-derived, mismatches=[]
+[PASS] acceptance timestamps carry an ET offset
+        naive=[]
+[PASS] header acceptance timestamps satisfy EDGAR's 17:30 ET filing-date rule
+        breaches=[]
+[PASS] no filing post-dating its evaluation date contributes
+        violations=[], reported=[]
+[PASS] TTM is a sum of four filed quarter-length diluted EPS facts
+        offenders=[]
+[PASS] annual P/E never substituted for TTM
+        leaks=[]
+[PASS] every UNAVAILABLE TTM carries an ADR reason code
+        bad=[]
+[PASS] FY2018 diluted EPS restated 4:1 for the 2020 split is visible in evidence
+        values=[11.91, 11.91, 2.98]
+[PASS] every P/E recomputes from its own recorded price and EPS
+        failures=[]
+[PASS] every point carries price source, logic version and SEC accessions
+        incomplete=[]
+[PASS] raw input bytes unchanged since capture
+        drifted=[]
+
+result: ALL PASS

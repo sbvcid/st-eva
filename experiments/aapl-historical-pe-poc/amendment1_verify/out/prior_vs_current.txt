@@ -1,0 +1,156 @@
+Amendment 1 verification -- prior vs current
+============================================================================================
+prior POC hash      2c1f946e33af79957d3129e465b3edb5d502fa85847334a14bd071bcf95a0631
+negative path hash  5d33b1ad2d7eac59c10fcff1640608affd1fb3d05b7b101f15dff15883bedda1  (furnished evidence disabled)
+current hash        99bd5c22d60b838c3e442f2e077a70d8102219aa5395b937a8af7257e8af0a49  (furnished evidence admitted)
+
+metric                                   prior POC   furnished OFF    furnished ON
+----------------------------------------------------------------------------------
+evaluation dates                                31              31              31
+TTM AVAILABLE                                   12              12              31
+TTM UNAVAILABLE                                 19              19               0
+REASON_MISSING_Q4_EPS                           19              19               0
+ANNUAL AVAILABLE                                31              31              31
+CURRENT TTM                            UNAVAILABLE     UNAVAILABLE       AVAILABLE
+CURRENT ANNUAL                           AVAILABLE       AVAILABLE       AVAILABLE
+
+Per-date comparison
+--------------------------------------------------------------------------------------------
+date             prior                  prior reason       now      now reason    Q4 src
+----------------------------------------------------------------------------------------
+2019-01-31       13.69                                   13.69                 10-Q/10-K
+2019-05-02       17.59                                   17.59                 10-Q/10-K
+2019-08-01       17.77                                   17.77                 10-Q/10-K
+2019-10-31       20.99                                   20.99                 10-Q/10-K
+2020-01-29       25.62                                   25.62                 10-Q/10-K
+2020-05-01       22.67                                   22.67                 10-Q/10-K
+2020-07-31       32.32                                   32.32                 10-Q/10-K
+2020-10-30       33.29                                   33.29                 10-Q/10-K
+2021-01-28       37.05                                   37.05                 10-Q/10-K
+2021-04-29       29.93                                   29.93                 10-Q/10-K
+2021-07-28       28.37                                   28.37                 10-Q/10-K
+2021-10-29       29.32                                   26.65                8-K 21-000104
+2022-01-28     UNAVAIL         REASON_MISSING_Q4_EPS     28.20                8-K 21-000104
+2022-04-29     UNAVAIL         REASON_MISSING_Q4_EPS     25.59                8-K 21-000104
+2022-07-29     UNAVAIL         REASON_MISSING_Q4_EPS     26.82                8-K 21-000104
+2022-10-28     UNAVAIL         REASON_MISSING_Q4_EPS     25.49                8-K 22-000107
+2023-02-03     UNAVAIL         REASON_MISSING_Q4_EPS     26.23                8-K 22-000107
+2023-05-05     UNAVAIL         REASON_MISSING_Q4_EPS     29.47                8-K 22-000107
+2023-08-04     UNAVAIL         REASON_MISSING_Q4_EPS     30.59                8-K 22-000107
+2023-11-03     UNAVAIL         REASON_MISSING_Q4_EPS     28.86                8-K 23-000104
+2024-02-02     UNAVAIL         REASON_MISSING_Q4_EPS     28.95                8-K 23-000104
+2024-05-03     UNAVAIL         REASON_MISSING_Q4_EPS     28.52                8-K 23-000104
+2024-08-02     UNAVAIL         REASON_MISSING_Q4_EPS     33.46                8-K 23-000104
+2024-11-01     UNAVAIL         REASON_MISSING_Q4_EPS     36.66                8-K 24-000120
+2025-01-31     UNAVAIL         REASON_MISSING_Q4_EPS     37.46                8-K 24-000120
+2025-05-02     UNAVAIL         REASON_MISSING_Q4_EPS     31.99                8-K 24-000120
+2025-08-01     UNAVAIL         REASON_MISSING_Q4_EPS     30.71                8-K 24-000120
+2025-10-31     UNAVAIL         REASON_MISSING_Q4_EPS     36.19                8-K 25-000077
+2026-01-30     UNAVAIL         REASON_MISSING_Q4_EPS     32.80                8-K 25-000077
+2026-05-01     UNAVAIL         REASON_MISSING_Q4_EPS     33.87                8-K 25-000077
+2026-07-31     UNAVAIL         REASON_MISSING_Q4_EPS     35.43                8-K 25-000077
+
+Required dates, verified explicitly
+--------------------------------------------------------------------------------------------
+2021-10-29
+  TTM AVAILABLE = 26.6548
+  price as-traded 149.80
+  2020-12-26 Q1  eps=1.68   filed     10-Q  0000320193-21-000010
+       accepted=2021-01-27T18:03:06-05:00  usable=2021-01-28  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2021-03-27 Q2  eps=1.4    filed     10-Q  0000320193-21-000056
+       accepted=2021-04-28T18:02:54-04:00  usable=2021-04-29  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2021-06-26 Q3  eps=1.3    filed     10-Q  0000320193-21-000065
+       accepted=2021-07-27T18:03:42-04:00  usable=2021-07-28  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2021-09-25 Q4  eps=1.24   furnished 8-K   0000320193-21-000104
+       accepted=2021-10-28T16:30:23-04:00  usable=2021-10-29  unaudited
+       doc=a8-kex991q4202109252021.htm  sha256=a3540c80508d8db7b8c12e9c...
+  = TTM denominator 5.6200
+
+2022-01-28
+  TTM AVAILABLE = 28.2003
+  price as-traded 170.33
+  2021-03-27 Q2  eps=1.4    filed     10-Q  0000320193-21-000056
+       accepted=2021-04-28T18:02:54-04:00  usable=2021-04-29  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2021-06-26 Q3  eps=1.3    filed     10-Q  0000320193-21-000065
+       accepted=2021-07-27T18:03:42-04:00  usable=2021-07-28  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2021-09-25 Q4  eps=1.24   furnished 8-K   0000320193-21-000104
+       accepted=2021-10-28T16:30:23-04:00  usable=2021-10-29  unaudited
+       doc=a8-kex991q4202109252021.htm  sha256=a3540c80508d8db7b8c12e9c...
+  2021-12-25 Q1  eps=2.1    filed     10-Q  0000320193-22-000007
+       accepted=2022-01-27T18:00:58-05:00  usable=2022-01-28  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  = TTM denominator 6.0400
+
+2022-10-28
+  TTM AVAILABLE = 25.4894
+  price as-traded 155.74
+  2021-12-25 Q1  eps=2.1    filed     10-Q  0000320193-22-000007
+       accepted=2022-01-27T18:00:58-05:00  usable=2022-01-28  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2022-03-26 Q2  eps=1.52   filed     10-Q  0000320193-22-000059
+       accepted=2022-04-28T18:03:58-04:00  usable=2022-04-29  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2022-06-25 Q3  eps=1.2    filed     10-Q  0000320193-22-000070
+       accepted=2022-07-28T18:06:56-04:00  usable=2022-07-29  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2022-09-24 Q4  eps=1.29   furnished 8-K   0000320193-22-000107
+       accepted=2022-10-27T16:30:22-04:00  usable=2022-10-28  unaudited
+       doc=a8-kex991q4202209242022.htm  sha256=fe63a66d2fb2c19f157f8e89...
+  = TTM denominator 6.1100
+
+2023-11-03
+  TTM AVAILABLE = 28.8644
+  price as-traded 176.65
+  2022-12-31 Q1  eps=1.88   filed     10-Q  0000320193-23-000006
+       accepted=2023-02-02T18:01:30-05:00  usable=2023-02-03  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2023-04-01 Q2  eps=1.52   filed     10-Q  0000320193-23-000064
+       accepted=2023-05-04T18:03:52-04:00  usable=2023-05-05  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2023-07-01 Q3  eps=1.26   filed     10-Q  0000320193-23-000077
+       accepted=2023-08-03T18:04:43-04:00  usable=2023-08-04  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2023-09-30 Q4  eps=1.46   furnished 8-K   0000320193-23-000104
+       accepted=2023-11-02T16:30:32-04:00  usable=2023-11-03  unaudited
+       doc=a8-kex991q4202309302023.htm  sha256=e4063cd2e2e77a93a5d71011...
+  = TTM denominator 6.1200
+
+2024-11-01
+  TTM AVAILABLE = 36.6628
+  price as-traded 222.91
+  2023-12-30 Q1  eps=2.18   filed     10-Q  0000320193-24-000006
+       accepted=2024-02-01T18:03:38-05:00  usable=2024-02-02  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2024-03-30 Q2  eps=1.53   filed     10-Q  0000320193-24-000069
+       accepted=2024-05-02T18:04:25-04:00  usable=2024-05-03  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2024-06-29 Q3  eps=1.4    filed     10-Q  0000320193-24-000081
+       accepted=2024-08-01T18:03:34-04:00  usable=2024-08-02  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2024-09-28 Q4  eps=0.97   furnished 8-K   0000320193-24-000120
+       accepted=2024-10-31T16:30:25-04:00  usable=2024-11-01  unaudited
+       doc=a8-kex991q4202409282024.htm  sha256=6cf26dae22199a077e8ad584...
+  = TTM denominator 6.0800
+
+2025-10-31
+  TTM AVAILABLE = 36.1941
+  price as-traded 270.37
+  2024-12-28 Q1  eps=2.4    filed     10-Q  0000320193-25-000008
+       accepted=2025-01-31T06:01:27-05:00  usable=2025-01-31  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2025-03-29 Q2  eps=1.65   filed     10-Q  0000320193-25-000057
+       accepted=2025-05-02T06:00:46-04:00  usable=2025-05-02  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2025-06-28 Q3  eps=1.57   filed     10-Q  0000320193-25-000073
+       accepted=2025-08-01T06:00:42-04:00  usable=2025-08-01  unaudited_reviewed
+       doc=None  sha256=d58cd0fce2baed8be20b7b65...
+  2025-09-27 Q4  eps=1.85   furnished 8-K   0000320193-25-000077
+       accepted=2025-10-30T16:30:35-04:00  usable=2025-10-31  unaudited
+       doc=a8-kex991q4202509272025.htm  sha256=bbf56917e9c5bc9bffa4fda9...
+  = TTM denominator 7.4700
+

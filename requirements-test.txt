@@ -1,0 +1,27 @@
+# ST-EVA test-only dependencies.
+#
+# requirements.txt stays the runtime contract for the core CLI. These packages
+# exist only to exercise the FastAPI web layer and the Playwright browser smoke
+# tests, so they are kept out of the core runtime environment on purpose.
+
+# Test runner
+pytest>=8.0
+
+# Web application layer (web/app.py, web/service_adapter.py, web/job_manager.py).
+# fastapi pulls in starlette and pydantic; uvicorn serves the app in the browser
+# smoke tests; httpx backs fastapi.testclient.TestClient in test_web_api.py.
+fastapi>=0.110
+uvicorn>=0.27
+httpx>=0.27
+
+# Real-browser end-to-end tests (tests/test_browser_smoke.py).
+# CI must additionally install the browser binaries:
+#   playwright install --with-deps chromium
+playwright>=1.40
+
+# The browser smoke tests drive real analyses, which fetch live SEC EDGAR and
+# market data against a fixed UI timeout. A slow upstream response is a genuine
+# flake, not a product regression, so CI retries those tests instead of
+# excluding them. pytest-rerunfailures keeps the first-attempt failure visible
+# in the report while tolerating transient network latency.
+pytest-rerunfailures>=14.0

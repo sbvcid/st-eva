@@ -1,0 +1,42 @@
+Amendment 1 verification -- conformance audit
+
+[PASS] no component post-dates its evaluation date, and every usable date follows from its own acceptance timestamp
+        violations=[]
+[PASS] every TTM component carries evidence_class, form, accession, acceptance_datetime, usable_date, audit status, URL and content hash
+        missing=[]
+[PASS] furnished components are never labelled filed, 10-K, 10-Q or audited
+        violations=[]
+[PASS] audit status is three-valued (audited / unaudited_reviewed / unaudited)
+        observed=['audited', 'unaudited', 'unaudited_reviewed']
+[PASS] the filed x3 + furnished x1 combination occurs and is disclosed
+        n=20 dates e.g. ['2021-10-29', '2022-01-28', '2022-04-29', '2022-07-29', '2022-10-28', '2023-02-03']
+[PASS] every available TTM is four consecutive fiscal quarters containing a Q4
+        violations=[]
+[PASS] no TTM was published from fewer than four quarters
+        violations=[]
+[PASS] neither path performs FY minus YTD
+        violations=[]
+[PASS] no quarterly component equals its fiscal-year diluted EPS
+        violations=[]
+[PASS] ANNUAL semantics unchanged: 10-K audited only, never substituted for TTM
+        violations=[]
+[PASS] all reason codes are inside the closed enumeration
+        violations=[]
+[PASS] the six required dates each build a legal TTM from a furnished Q4
+        failures=[]; detail={'2021-10-29': {'status': 'AVAILABLE', 'value': 26.654804813480037, 'reason': None, 'furnished_components': 1, 'furnished_unaudited': True}, '2022-01-28': {'status': 'AVAILABLE', 'value': 28.200331428982565, 'reason': None, 'furnished_components': 1, 'furnished_unaudited': True}, '2022-10-28': {'status': 'AVAILABLE', 'value': 25.489362601172513, 'reason': None, 'furnished_components': 1, 'furnished_unaudited': True}, '2023-11-03': {'status': 'AVAILABLE', 'value': 28.864378087660846, 'reason': None, 'furnished_components': 1, 'furnished_unaudited': True}, '2024-11-01': {'status': 'AVAILABLE', 'value': 36.66282954968904, 'reason': None, 'furnished_components': 1, 'furnished_unaudited': True}, '2025-10-31': {'status': 'AVAILABLE', 'value': 36.19410911876673, 'reason': None, 'furnished_components': 1, 'furnished_unaudited': True}}
+[PASS] no AAPL FY2021-2025 date reports REASON_MISSING_Q4_EPS
+        hits=[]
+[PASS] with furnished evidence disabled, every point matches the prior POC exactly, so the unblocking comes from the evidence path alone
+        drift=[] over 31 dates
+[PASS] disabling furnished evidence restores the pre-Amendment-1 shortfall
+        off: available=12 missing_q4=19; on: available=31
+[PASS] a third independent path reproduces every TTM denominator from raw bytes
+        mismatches=[]
+[PASS] two runs over the same frozen inputs produce an identical content hash
+        run1=99bd5c22d60b838c run2=99bd5c22d60b838c recorded=99bd5c22d60b838c
+[PASS] every frozen raw input still matches its recorded hash
+        drift=[]
+[PASS] no acceptance timestamp in the output came from the submissions API
+        leaks=[]
+
+result: ALL PASS

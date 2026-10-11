@@ -16,11 +16,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install runtime and test dependencies
+      # requirements.txt is the core CLI runtime contract and is installed
+      # unchanged. requirements-test.txt carries the web-layer and browser-test
+      # dependencies so the core environment stays minimal.
+      - name: Install runtime dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install pytest
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-test.txt
 
       - name: Assert production inputs are self-contained
         # The MSFT Historical P/E production path must not depend on the
@@ -33,16 +38,50 @@ jobs:
             test -f "data/historical_pe/MSFT/$f" || { echo "missing data/historical_pe/MSFT/$f"; exit 1; }
           done
 
-      - name: Run Historical P/E tests
-        run: python -m pytest tests/test_historical_pe.py tests/test_msft_historical_pe.py tests/test_msft_production_reproducibility.py -v
-
-      # test_archive_isolation.py, test_browser_smoke.py and test_web_api.py
-      # import the web stack, which needs fastapi/uvicorn/playwright. Those are
-      # not declared in requirements.txt, so they are excluded to keep this
-      # workflow aligned with the project's declared backend dependencies.
       - name: Run backend test suite
+        run: python -m pytest tests/ -q --ignore=tests/test_browser_smoke.py
+
+  browser:
+    # Real-browser end-to-end tests. They need a built frontend and a Chromium
+    # install, and they fetch live market/EDGAR data, so they run as a separate
+    # job with a longer allowance.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install runtime dependencies
         run: |
-          python -m pytest tests/ -q \
-            --ignore=tests/test_archive_isolation.py \
-            --ignore=tests/test_browser_smoke.py \
-            --ignore=tests/test_web_api.py
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-test.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/frontend/package-lock.json
+
+      - name: Build frontend
+        # web/app.py serves web/frontend/dist; the browser tests drive the real UI.
+        working-directory: web/frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Verify frontend build output
+        run: |
+          test -f web/frontend/dist/index.html || { echo "frontend build produced no index.html"; exit 1; }
+
+      # These tests run real analyses against live SEC/market endpoints. Retry
+      # transient upstream slowness; the tests are not excluded from CI.
+      - name: Run browser smoke tests
+        run: python -m pytest tests/test_browser_smoke.py -v --reruns 2 --reruns-delay 15

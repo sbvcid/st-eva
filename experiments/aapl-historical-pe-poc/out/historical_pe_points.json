@@ -1,0 +1,5245 @@
+{
+  "acceptance_timezone_note": "EDGAR SGML header ACCEPTANCE-DATETIME is Eastern Time; the submissions API acceptanceDateTime for the same filing differs by the ET offset (4h or 5h) and was not used for the cutoff test.",
+  "annual_eps_evidence": {
+    "2014-09-27": [
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2014-09-27",
+        "period_of_report": "2016-09-24",
+        "period_start": "2013-09-29",
+        "usable_date": "2018-01-02",
+        "value": 6.45
+      }
+    ],
+    "2015-09-26": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2015-09-26",
+        "period_of_report": "2017-09-30",
+        "period_start": "2014-09-28",
+        "usable_date": "2018-01-02",
+        "value": 9.22
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2015-09-26",
+        "period_of_report": "2016-09-24",
+        "period_start": "2014-09-28",
+        "usable_date": "2018-01-02",
+        "value": 9.22
+      }
+    ],
+    "2016-09-24": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2016-09-24",
+        "period_of_report": "2017-09-30",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-01-02",
+        "value": 8.31
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2016-09-24",
+        "period_of_report": "2016-09-24",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-01-02",
+        "value": 8.31
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2016-09-24",
+        "period_of_report": "2018-09-29",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-11-05",
+        "value": 8.31
+      }
+    ],
+    "2017-09-30": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 370,
+        "form": "10-K",
+        "period_end": "2017-09-30",
+        "period_of_report": "2017-09-30",
+        "period_start": "2016-09-25",
+        "usable_date": "2018-01-02",
+        "value": 9.21
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 370,
+        "form": "10-K",
+        "period_end": "2017-09-30",
+        "period_of_report": "2018-09-29",
+        "period_start": "2016-09-25",
+        "usable_date": "2018-11-05",
+        "value": 9.21
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 370,
+        "form": "10-K",
+        "period_end": "2017-09-30",
+        "period_of_report": "2019-09-28",
+        "period_start": "2016-09-25",
+        "usable_date": "2019-10-31",
+        "value": 9.21
+      }
+    ],
+    "2018-09-29": [
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2018-09-29",
+        "period_of_report": "2018-09-29",
+        "period_start": "2017-10-01",
+        "usable_date": "2018-11-05",
+        "value": 11.91
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2018-09-29",
+        "period_of_report": "2019-09-28",
+        "period_start": "2017-10-01",
+        "usable_date": "2019-10-31",
+        "value": 11.91
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2018-09-29",
+        "period_of_report": "2020-09-26",
+        "period_start": "2017-10-01",
+        "usable_date": "2020-10-30",
+        "value": 2.98
+      }
+    ],
+    "2019-09-28": [
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2019-09-28",
+        "period_of_report": "2019-09-28",
+        "period_start": "2018-09-30",
+        "usable_date": "2019-10-31",
+        "value": 11.89
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2019-09-28",
+        "period_of_report": "2020-09-26",
+        "period_start": "2018-09-30",
+        "usable_date": "2020-10-30",
+        "value": 2.97
+      },
+      {
+        "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+        "accession": "0000320193-21-000105",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2019-09-28",
+        "period_of_report": "2021-09-25",
+        "period_start": "2018-09-30",
+        "usable_date": "2021-10-29",
+        "value": 2.97
+      }
+    ],
+    "2020-09-26": [
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2020-09-26",
+        "period_of_report": "2020-09-26",
+        "period_start": "2019-09-29",
+        "usable_date": "2020-10-30",
+        "value": 3.28
+      },
+      {
+        "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+        "accession": "0000320193-21-000105",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2020-09-26",
+        "period_of_report": "2021-09-25",
+        "period_start": "2019-09-29",
+        "usable_date": "2021-10-29",
+        "value": 3.28
+      },
+      {
+        "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+        "accession": "0000320193-22-000108",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2020-09-26",
+        "period_of_report": "2022-09-24",
+        "period_start": "2019-09-29",
+        "usable_date": "2022-10-28",
+        "value": 3.28
+      }
+    ],
+    "2021-09-25": [
+      {
+        "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+        "accession": "0000320193-21-000105",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2021-09-25",
+        "period_of_report": "2021-09-25",
+        "period_start": "2020-09-27",
+        "usable_date": "2021-10-29",
+        "value": 5.61
+      },
+      {
+        "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+        "accession": "0000320193-22-000108",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2021-09-25",
+        "period_of_report": "2022-09-24",
+        "period_start": "2020-09-27",
+        "usable_date": "2022-10-28",
+        "value": 5.61
+      },
+      {
+        "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+        "accession": "0000320193-23-000106",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2021-09-25",
+        "period_of_report": "2023-09-30",
+        "period_start": "2020-09-27",
+        "usable_date": "2023-11-03",
+        "value": 5.61
+      }
+    ],
+    "2022-09-24": [
+      {
+        "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+        "accession": "0000320193-22-000108",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2022-09-24",
+        "period_of_report": "2022-09-24",
+        "period_start": "2021-09-26",
+        "usable_date": "2022-10-28",
+        "value": 6.11
+      },
+      {
+        "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+        "accession": "0000320193-23-000106",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2022-09-24",
+        "period_of_report": "2023-09-30",
+        "period_start": "2021-09-26",
+        "usable_date": "2023-11-03",
+        "value": 6.11
+      },
+      {
+        "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+        "accession": "0000320193-24-000123",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2022-09-24",
+        "period_of_report": "2024-09-28",
+        "period_start": "2021-09-26",
+        "usable_date": "2024-11-01",
+        "value": 6.11
+      }
+    ],
+    "2023-09-30": [
+      {
+        "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+        "accession": "0000320193-23-000106",
+        "duration_days": 370,
+        "form": "10-K",
+        "period_end": "2023-09-30",
+        "period_of_report": "2023-09-30",
+        "period_start": "2022-09-25",
+        "usable_date": "2023-11-03",
+        "value": 6.13
+      },
+      {
+        "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+        "accession": "0000320193-24-000123",
+        "duration_days": 370,
+        "form": "10-K",
+        "period_end": "2023-09-30",
+        "period_of_report": "2024-09-28",
+        "period_start": "2022-09-25",
+        "usable_date": "2024-11-01",
+        "value": 6.13
+      },
+      {
+        "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+        "accession": "0000320193-25-000079",
+        "duration_days": 370,
+        "form": "10-K",
+        "period_end": "2023-09-30",
+        "period_of_report": "2025-09-27",
+        "period_start": "2022-09-25",
+        "usable_date": "2025-10-31",
+        "value": 6.13
+      }
+    ],
+    "2024-09-28": [
+      {
+        "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+        "accession": "0000320193-24-000123",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2024-09-28",
+        "period_of_report": "2024-09-28",
+        "period_start": "2023-10-01",
+        "usable_date": "2024-11-01",
+        "value": 6.08
+      },
+      {
+        "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+        "accession": "0000320193-25-000079",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2024-09-28",
+        "period_of_report": "2025-09-27",
+        "period_start": "2023-10-01",
+        "usable_date": "2025-10-31",
+        "value": 6.08
+      }
+    ],
+    "2025-09-27": [
+      {
+        "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+        "accession": "0000320193-25-000079",
+        "duration_days": 363,
+        "form": "10-K",
+        "period_end": "2025-09-27",
+        "period_of_report": "2025-09-27",
+        "period_start": "2024-09-29",
+        "usable_date": "2025-10-31",
+        "value": 7.46
+      }
+    ]
+  },
+  "content_hash": "2c1f946e33af79957d3129e465b3edb5d502fa85847334a14bd071bcf95a0631",
+  "current": {
+    "ANNUAL_GAAP_DILUTED_PE": {
+      "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+      "accession": "0000320193-25-000079",
+      "diluted_eps": 7.46,
+      "fiscal_year_end": "2025-09-27",
+      "status": "AVAILABLE",
+      "substituted_for_ttm": false,
+      "value": 44.722520761771115
+    },
+    "TTM_GAAP_DILUTED_PE": {
+      "detail": "No 10-K filed on or before the run instant discloses a Q4 quarter-length diluted EPS fact; the trailing four quarters known at 2026-10-06 are 2025-06-28, 2025-12-27, 2026-03-28, 2026-06-27 and do not form four consecutive quarters of a fiscal year.",
+      "reason": "REASON_MISSING_Q4_EPS",
+      "status": "UNAVAILABLE"
+    },
+    "as_of_trading_date": "2026-10-06",
+    "logic_version": "aapl-historical-pe-poc/0.1.0",
+    "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+    "price_close_as_traded": 333.6300048828125,
+    "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+    "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+    "price_split_restoration": [],
+    "role": "current snapshot observation only; not a historical band input"
+  },
+  "cutoff_convention": "16:00 ET",
+  "filings": [
+    {
+      "acceptance_datetime": "2017-08-02T16:31:28-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-17-000009",
+      "conformed_period_of_report": "20170701",
+      "filed_date": "20170802",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "290d51aad0b04170c2d435a7e1c2f171ce6214626b76c43a3ffe1f35bf8a11a7",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019317000009/0000320193-17-000009-index-headers.html",
+      "period_end": "2017-07-01",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-17-000070",
+      "conformed_period_of_report": "20170930",
+      "filed_date": "20171103",
+      "fiscal_year_end_header": "0930",
+      "form": "10-K",
+      "header_source_sha256": "843ab5a4f5856361c5a555fff558c055a617bf8cb79f9b3b1ec826ea565f7497",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019317000070/0000320193-17-000070-index-headers.html",
+      "period_end": "2017-09-30",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2018-02-02T08:01:26-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-18-000007",
+      "conformed_period_of_report": "20171230",
+      "filed_date": "20180202",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "4bcf96d50e10e5eb4ca406d87d59cb7a3247d4dc109d5cff5d66c4d8185a77b0",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019318000007/0000320193-18-000007-index-headers.html",
+      "period_end": "2017-12-30",
+      "usable_date": "2018-02-02",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2018-05-02T16:32:12-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-18-000070",
+      "conformed_period_of_report": "20180331",
+      "filed_date": "20180502",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "ca66712389a5705b2edcb9a1235fca2c4e3a9a092ecc2f005b8e4d2f1d604dd9",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019318000070/0000320193-18-000070-index-headers.html",
+      "period_end": "2018-03-31",
+      "usable_date": "2018-05-03",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2018-08-01T16:31:48-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-18-000100",
+      "conformed_period_of_report": "20180630",
+      "filed_date": "20180801",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "427e69b8d48cf26cd2a624004fa2d90cbb33ed45d586a1daeb761530481e433b",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019318000100/0000320193-18-000100-index-headers.html",
+      "period_end": "2018-06-30",
+      "usable_date": "2018-08-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-18-000145",
+      "conformed_period_of_report": "20180929",
+      "filed_date": "20181105",
+      "fiscal_year_end_header": "0930",
+      "form": "10-K",
+      "header_source_sha256": "11f1a4761cb5462c5ef02e3c16e4307fbc29908d387e1b77c7405f8e5256a0da",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019318000145/0000320193-18-000145-index-headers.html",
+      "period_end": "2018-09-29",
+      "usable_date": "2018-11-05",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2019-01-30T16:31:37-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-19-000010",
+      "conformed_period_of_report": "20181229",
+      "filed_date": "20190130",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "545eb6050fcc48b7abd95af91108c812138ad09984cfb5b3b62eef12d5a6efe2",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019319000010/0000320193-19-000010-index-headers.html",
+      "period_end": "2018-12-29",
+      "usable_date": "2019-01-31",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2019-05-01T16:32:00-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-19-000066",
+      "conformed_period_of_report": "20190330",
+      "filed_date": "20190501",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "e7bf1defd6ef79b74058e1172416d1c7443065bb6896922277cd14c021199d51",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019319000066/0000320193-19-000066-index-headers.html",
+      "period_end": "2019-03-30",
+      "usable_date": "2019-05-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2019-07-31T16:31:53-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-19-000076",
+      "conformed_period_of_report": "20190629",
+      "filed_date": "20190731",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "ac1346e347da19f0799df067d73bbf257ec6e8f1ad47de13a45e1a22ba0877d5",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019319000076/0000320193-19-000076-index-headers.html",
+      "period_end": "2019-06-29",
+      "usable_date": "2019-08-01",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-19-000119",
+      "conformed_period_of_report": "20190928",
+      "filed_date": "20191031",
+      "fiscal_year_end_header": "0928",
+      "form": "10-K",
+      "header_source_sha256": "354fcced3a4975931c4a39798453511d31819cd72e2b2f60a0abb976e54c3bb7",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019319000119/0000320193-19-000119-index-headers.html",
+      "period_end": "2019-09-28",
+      "usable_date": "2019-10-31",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2020-01-28T18:02:44-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-20-000010",
+      "conformed_period_of_report": "20191228",
+      "filed_date": "20200129",
+      "fiscal_year_end_header": "0926",
+      "form": "10-Q",
+      "header_source_sha256": "5fc5c177af2b3357eade7153e9079feaa61355850697d122b95ff333de5dbe1a",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019320000010/0000320193-20-000010-index-headers.html",
+      "period_end": "2019-12-28",
+      "usable_date": "2020-01-29",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2020-04-30T18:03:10-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-20-000052",
+      "conformed_period_of_report": "20200328",
+      "filed_date": "20200501",
+      "fiscal_year_end_header": "0926",
+      "form": "10-Q",
+      "header_source_sha256": "ece3b3ba284a8b2779cf0e136487626658b83ce3edcd47af398f7f60906827df",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019320000052/0000320193-20-000052-index-headers.html",
+      "period_end": "2020-03-28",
+      "usable_date": "2020-05-01",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2020-07-30T19:29:09-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-20-000062",
+      "conformed_period_of_report": "20200627",
+      "filed_date": "20200731",
+      "fiscal_year_end_header": "0926",
+      "form": "10-Q",
+      "header_source_sha256": "4b8d7af5ab2dfe25b2ecb486db333bd50a1dab7a2572685429e2bd8503f2330c",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019320000062/0000320193-20-000062-index-headers.html",
+      "period_end": "2020-06-27",
+      "usable_date": "2020-07-31",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-20-000096",
+      "conformed_period_of_report": "20200926",
+      "filed_date": "20201030",
+      "fiscal_year_end_header": "0926",
+      "form": "10-K",
+      "header_source_sha256": "6c7781e5ea140e6553d6ffef34fd5e69c3b4b309a1343c079476ba06082a2593",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019320000096/0000320193-20-000096-index-headers.html",
+      "period_end": "2020-09-26",
+      "usable_date": "2020-10-30",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-21-000010",
+      "conformed_period_of_report": "20201226",
+      "filed_date": "20210128",
+      "fiscal_year_end_header": "0925",
+      "form": "10-Q",
+      "header_source_sha256": "1ef430e6c2c973b567c8af38f655caba05e981faf7b574831b0664a8ebb9ffdd",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019321000010/0000320193-21-000010-index-headers.html",
+      "period_end": "2020-12-26",
+      "usable_date": "2021-01-28",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2021-04-28T18:02:54-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-21-000056",
+      "conformed_period_of_report": "20210327",
+      "filed_date": "20210429",
+      "fiscal_year_end_header": "0925",
+      "form": "10-Q",
+      "header_source_sha256": "e9c9719b05706d77d13c10151092eb0aeb8a8455d977df6ae77301dcf4c75acb",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019321000056/0000320193-21-000056-index-headers.html",
+      "period_end": "2021-03-27",
+      "usable_date": "2021-04-29",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2021-07-27T18:03:42-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-21-000065",
+      "conformed_period_of_report": "20210626",
+      "filed_date": "20210728",
+      "fiscal_year_end_header": "0925",
+      "form": "10-Q",
+      "header_source_sha256": "fcfe56ed24c33a017c9552a53a4e8b56646d3d7432e6a373881ad84941dbbb5d",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019321000065/0000320193-21-000065-index-headers.html",
+      "period_end": "2021-06-26",
+      "usable_date": "2021-07-28",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-21-000105",
+      "conformed_period_of_report": "20210925",
+      "filed_date": "20211029",
+      "fiscal_year_end_header": "0925",
+      "form": "10-K",
+      "header_source_sha256": "90214cf24622a275df1af4d51b49d7d6f4daa3488c744cfcb0fa81d7d732ed3b",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019321000105/0000320193-21-000105-index-headers.html",
+      "period_end": "2021-09-25",
+      "usable_date": "2021-10-29",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2022-01-27T18:00:58-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-22-000007",
+      "conformed_period_of_report": "20211225",
+      "filed_date": "20220128",
+      "fiscal_year_end_header": "0924",
+      "form": "10-Q",
+      "header_source_sha256": "0651b8d85f46616b17d0221d0536718497e0db4064c33fe15ac8ff696c606b62",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019322000007/0000320193-22-000007-index-headers.html",
+      "period_end": "2021-12-25",
+      "usable_date": "2022-01-28",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2022-04-28T18:03:58-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-22-000059",
+      "conformed_period_of_report": "20220326",
+      "filed_date": "20220429",
+      "fiscal_year_end_header": "0924",
+      "form": "10-Q",
+      "header_source_sha256": "1f3eb9dc5fc1a57553bea43f75dcf5905fe81f5b992748d036b7d413c27b5bd6",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019322000059/0000320193-22-000059-index-headers.html",
+      "period_end": "2022-03-26",
+      "usable_date": "2022-04-29",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2022-07-28T18:06:56-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-22-000070",
+      "conformed_period_of_report": "20220625",
+      "filed_date": "20220729",
+      "fiscal_year_end_header": "0924",
+      "form": "10-Q",
+      "header_source_sha256": "c9eed3305bf883fe170208a764d2c5c3f35b85bdf44d22245dce18f243d11a90",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019322000070/0000320193-22-000070-index-headers.html",
+      "period_end": "2022-06-25",
+      "usable_date": "2022-07-29",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-22-000108",
+      "conformed_period_of_report": "20220924",
+      "filed_date": "20221028",
+      "fiscal_year_end_header": "0924",
+      "form": "10-K",
+      "header_source_sha256": "15585dc7bcfd2c8c56af822e24b704bd051d07b97d7a549a6b87eb45b89b6e76",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019322000108/0000320193-22-000108-index-headers.html",
+      "period_end": "2022-09-24",
+      "usable_date": "2022-10-28",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2023-02-02T18:01:30-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-23-000006",
+      "conformed_period_of_report": "20221231",
+      "filed_date": "20230203",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "86ded6f24cf3baf724c3e955975f03fb969709f9413d4a73f5c9870ff9f0f317",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019323000006/0000320193-23-000006-index-headers.html",
+      "period_end": "2022-12-31",
+      "usable_date": "2023-02-03",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2023-05-04T18:03:52-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-23-000064",
+      "conformed_period_of_report": "20230401",
+      "filed_date": "20230505",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "94a50beda87cf86288c6cf178811d6bb49617615c261dadd6b14cb3540f9db00",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019323000064/0000320193-23-000064-index-headers.html",
+      "period_end": "2023-04-01",
+      "usable_date": "2023-05-05",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2023-08-03T18:04:43-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-23-000077",
+      "conformed_period_of_report": "20230701",
+      "filed_date": "20230804",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "70683653f21dfe7fa5fd3f126a3127af8012786bb21884b7f19f1af1f5c15aed",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019323000077/0000320193-23-000077-index-headers.html",
+      "period_end": "2023-07-01",
+      "usable_date": "2023-08-04",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-23-000106",
+      "conformed_period_of_report": "20230930",
+      "filed_date": "20231103",
+      "fiscal_year_end_header": "0930",
+      "form": "10-K",
+      "header_source_sha256": "a282e979a6a996b90ff3a71c07fdeeba3bdcd3aadd5f428498a277c1e973d5b5",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/0000320193-23-000106-index-headers.html",
+      "period_end": "2023-09-30",
+      "usable_date": "2023-11-03",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2024-02-01T18:03:38-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-24-000006",
+      "conformed_period_of_report": "20231230",
+      "filed_date": "20240202",
+      "fiscal_year_end_header": "0928",
+      "form": "10-Q",
+      "header_source_sha256": "9d9029566f71b728ed3c7356a50b025b073054fd89b3accec2e7c1f92d02975a",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000006/0000320193-24-000006-index-headers.html",
+      "period_end": "2023-12-30",
+      "usable_date": "2024-02-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2024-05-02T18:04:25-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-24-000069",
+      "conformed_period_of_report": "20240330",
+      "filed_date": "20240503",
+      "fiscal_year_end_header": "0928",
+      "form": "10-Q",
+      "header_source_sha256": "7030f0b618c9210f1143b67ae59f6dbc6304bdbbda445a62b36fb6f756580dd3",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000069/0000320193-24-000069-index-headers.html",
+      "period_end": "2024-03-30",
+      "usable_date": "2024-05-03",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2024-08-01T18:03:34-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-24-000081",
+      "conformed_period_of_report": "20240629",
+      "filed_date": "20240802",
+      "fiscal_year_end_header": "0928",
+      "form": "10-Q",
+      "header_source_sha256": "0d909bc7b34125619bf4f1d1bdb94c20d68c8c7d492f31853328a4d43fcc7c1f",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000081/0000320193-24-000081-index-headers.html",
+      "period_end": "2024-06-29",
+      "usable_date": "2024-08-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-24-000123",
+      "conformed_period_of_report": "20240928",
+      "filed_date": "20241101",
+      "fiscal_year_end_header": "0928",
+      "form": "10-K",
+      "header_source_sha256": "ad2d2cf540109d4e1129bf41d7d1a72b2a6603e7d5c42a54ca22688fed32af78",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/0000320193-24-000123-index-headers.html",
+      "period_end": "2024-09-28",
+      "usable_date": "2024-11-01",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2025-01-31T06:01:27-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-25-000008",
+      "conformed_period_of_report": "20241228",
+      "filed_date": "20250131",
+      "fiscal_year_end_header": "0927",
+      "form": "10-Q",
+      "header_source_sha256": "c3457a7d04259c8d0f643ffa39f3bc50a1015c3e3e9490f6bb68bc1cb4f8c948",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000008/0000320193-25-000008-index-headers.html",
+      "period_end": "2024-12-28",
+      "usable_date": "2025-01-31",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2025-05-02T06:00:46-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-25-000057",
+      "conformed_period_of_report": "20250329",
+      "filed_date": "20250502",
+      "fiscal_year_end_header": "0927",
+      "form": "10-Q",
+      "header_source_sha256": "446e51225a157229b48b5600858368ebe5169d742db87968c87197e23f19f47b",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000057/0000320193-25-000057-index-headers.html",
+      "period_end": "2025-03-29",
+      "usable_date": "2025-05-02",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2025-08-01T06:00:42-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-25-000073",
+      "conformed_period_of_report": "20250628",
+      "filed_date": "20250801",
+      "fiscal_year_end_header": "0927",
+      "form": "10-Q",
+      "header_source_sha256": "d2f9f4d02358694e6313edf511757500fc6a5e6e1fb19c495403e7bb1b738361",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000073/0000320193-25-000073-index-headers.html",
+      "period_end": "2025-06-28",
+      "usable_date": "2025-08-01",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-25-000079",
+      "conformed_period_of_report": "20250927",
+      "filed_date": "20251031",
+      "fiscal_year_end_header": "0927",
+      "form": "10-K",
+      "header_source_sha256": "4b05064b7b261b5e7490d1be91a223c94929d90541d0be0f0482550ca985c064",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/0000320193-25-000079-index-headers.html",
+      "period_end": "2025-09-27",
+      "usable_date": "2025-10-31",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2026-01-30T06:01:32-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-26-000006",
+      "conformed_period_of_report": "20251227",
+      "filed_date": "20260130",
+      "fiscal_year_end_header": "0926",
+      "form": "10-Q",
+      "header_source_sha256": "569ffea7c1dc6b0c73412b5b4f9ff0a008b55ccb281cd6cebbbf7bbae7a4f368",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000006/0000320193-26-000006-index-headers.html",
+      "period_end": "2025-12-27",
+      "usable_date": "2026-01-30",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2026-05-01T06:01:00-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-26-000013",
+      "conformed_period_of_report": "20260328",
+      "filed_date": "20260501",
+      "fiscal_year_end_header": "0926",
+      "form": "10-Q",
+      "header_source_sha256": "1a440fd70bfcad8bb60f14c05abb53e8eb73a47ca6f1527dc8128150afcaadf6",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000013/0000320193-26-000013-index-headers.html",
+      "period_end": "2026-03-28",
+      "usable_date": "2026-05-01",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2026-07-31T06:01:02-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0000320193-26-000020",
+      "conformed_period_of_report": "20260627",
+      "filed_date": "20260731",
+      "fiscal_year_end_header": "0926",
+      "form": "10-Q",
+      "header_source_sha256": "a51cfcf32d0374f833814109d9dddac9a0e90f7c1d1f301eda69a9302e979bad",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/0000320193-26-000020-index-headers.html",
+      "period_end": "2026-06-27",
+      "usable_date": "2026-07-31",
+      "usable_date_rule": "acceptance_before_1600ET_same_day"
+    },
+    {
+      "acceptance_datetime": "2016-01-27T16:32:03-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0001193125-16-439878",
+      "conformed_period_of_report": "20151226",
+      "filed_date": "20160127",
+      "fiscal_year_end_header": "0924",
+      "form": "10-Q",
+      "header_source_sha256": "65876e07fccedb67537bdeb3dba2d69a69bbcc92bc66176226ea8d275e2f05a5",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000119312516439878/0001193125-16-439878-index-headers.html",
+      "period_end": "2015-12-26",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2016-04-27T16:32:53-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0001193125-16-559625",
+      "conformed_period_of_report": "20160326",
+      "filed_date": "20160427",
+      "fiscal_year_end_header": "0924",
+      "form": "10-Q",
+      "header_source_sha256": "a7ad3fae55b8fcb56f2e3aa79c6c1e6bb0c2b697a9b4f6849b83d8415eb4e831",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000119312516559625/0001193125-16-559625-index-headers.html",
+      "period_end": "2016-03-26",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2016-07-27T16:32:36-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0001628280-16-017809",
+      "conformed_period_of_report": "20160625",
+      "filed_date": "20160727",
+      "fiscal_year_end_header": "0924",
+      "form": "10-Q",
+      "header_source_sha256": "bfb17e37b94ba2549780851f3723ed6067c9593309d0ac866b4f4ee5e83eb75f",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000162828016017809/0001628280-16-017809-index-headers.html",
+      "period_end": "2016-06-25",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0001628280-16-020309",
+      "conformed_period_of_report": "20160924",
+      "filed_date": "20161026",
+      "fiscal_year_end_header": "0924",
+      "form": "10-K",
+      "header_source_sha256": "b3f94577d3ec52375c2cf4c7c5343f5f0080fafe67a2ed33a02e72fbd14d1adf",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000162828016020309/0001628280-16-020309-index-headers.html",
+      "period_end": "2016-09-24",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2017-02-01T16:33:29-05:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0001628280-17-000717",
+      "conformed_period_of_report": "20161231",
+      "filed_date": "20170201",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "a7b82bcb108009ffa32d0cf4164ba4954afec4f22782aa47f41d2a9546b14cb6",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000162828017000717/0001628280-17-000717-index-headers.html",
+      "period_end": "2016-12-31",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    },
+    {
+      "acceptance_datetime": "2017-05-03T16:32:23-04:00",
+      "acceptance_source": "EDGAR SGML header ACCEPTANCE-DATETIME (ET)",
+      "accession": "0001628280-17-004790",
+      "conformed_period_of_report": "20170401",
+      "filed_date": "20170503",
+      "fiscal_year_end_header": "0930",
+      "form": "10-Q",
+      "header_source_sha256": "5944a17bb07d8a2ac5545dbff34750c559e7c03faf76a0d1a5a89088848b3e2b",
+      "header_source_url": "https://www.sec.gov/Archives/edgar/data/320193/000162828017004790/0001628280-17-004790-index-headers.html",
+      "period_end": "2017-04-01",
+      "usable_date": "2018-01-02",
+      "usable_date_rule": "acceptance_at_or_after_1600ET_next_trading_day"
+    }
+  ],
+  "logic_version": "aapl-historical-pe-poc/0.1.0",
+  "lookahead_violations": [],
+  "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+  "methodology_status": "APPROVED / FROZEN 2026-10-07",
+  "not_production": true,
+  "observations": [
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+          "accession": "0000320193-18-000145",
+          "diluted_eps": 11.91,
+          "fiscal_year_end": "2018-09-29",
+          "form": "10-K",
+          "usable_date": "2018-11-05"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 13.974811288111356
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.73,
+            "fiscal_year_end": "2018-09-29",
+            "form": "10-K",
+            "period_end": "2018-03-31",
+            "quarter_number": 2,
+            "usable_date": "2018-11-05"
+          },
+          {
+            "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.34,
+            "fiscal_year_end": "2018-09-29",
+            "form": "10-K",
+            "period_end": "2018-06-30",
+            "quarter_number": 3,
+            "usable_date": "2018-11-05"
+          },
+          {
+            "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.91,
+            "fiscal_year_end": "2018-09-29",
+            "form": "10-K",
+            "period_end": "2018-09-29",
+            "quarter_number": 4,
+            "usable_date": "2018-11-05"
+          },
+          {
+            "acceptance_datetime": "2019-01-30T16:31:37-05:00",
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 4.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-Q",
+            "period_end": "2018-12-29",
+            "quarter_number": 1,
+            "usable_date": "2019-01-31"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 12.16,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.07,
+            "period_end": "2017-09-30",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 3.89,
+            "period_end": "2017-12-30",
+            "usable_date": "2019-01-31"
+          },
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.73,
+            "period_end": "2018-03-31",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.34,
+            "period_end": "2018-06-30",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.91,
+            "period_end": "2018-09-29",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 4.18,
+            "period_end": "2018-12-29",
+            "usable_date": "2019-01-31"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 13.68750020077354
+      },
+      "evaluation_date": "2019-01-31",
+      "filings_used": [
+        "0000320193-18-000145",
+        "0000320193-19-000010"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 166.44000244140625,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 166.44000244140625,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 41.61000061035156
+        }
+      ],
+      "price_vendor_adjusted_close": 41.61000061035156
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+          "accession": "0000320193-18-000145",
+          "diluted_eps": 11.91,
+          "fiscal_year_end": "2018-09-29",
+          "form": "10-K",
+          "usable_date": "2018-11-05"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 17.56087270331523
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.34,
+            "fiscal_year_end": "2018-09-29",
+            "form": "10-K",
+            "period_end": "2018-06-30",
+            "quarter_number": 3,
+            "usable_date": "2018-11-05"
+          },
+          {
+            "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.91,
+            "fiscal_year_end": "2018-09-29",
+            "form": "10-K",
+            "period_end": "2018-09-29",
+            "quarter_number": 4,
+            "usable_date": "2018-11-05"
+          },
+          {
+            "acceptance_datetime": "2019-01-30T16:31:37-05:00",
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 4.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-Q",
+            "period_end": "2018-12-29",
+            "quarter_number": 1,
+            "usable_date": "2019-01-31"
+          },
+          {
+            "acceptance_datetime": "2019-05-01T16:32:00-04:00",
+            "accession": "0000320193-19-000066",
+            "diluted_eps": 2.46,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-Q",
+            "period_end": "2019-03-30",
+            "quarter_number": 2,
+            "usable_date": "2019-05-02"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 11.89,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 3.89,
+            "period_end": "2017-12-30",
+            "usable_date": "2019-01-31"
+          },
+          {
+            "accession": "0000320193-19-000066",
+            "diluted_eps": 2.73,
+            "period_end": "2018-03-31",
+            "usable_date": "2019-05-02"
+          },
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.34,
+            "period_end": "2018-06-30",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.91,
+            "period_end": "2018-09-29",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 4.18,
+            "period_end": "2018-12-29",
+            "usable_date": "2019-01-31"
+          },
+          {
+            "accession": "0000320193-19-000066",
+            "diluted_eps": 2.46,
+            "period_end": "2019-03-30",
+            "usable_date": "2019-05-02"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 17.59041159768582
+      },
+      "evaluation_date": "2019-05-02",
+      "filings_used": [
+        "0000320193-18-000145",
+        "0000320193-19-000010",
+        "0000320193-19-000066"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 209.14999389648438,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 209.14999389648438,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 52.287498474121094
+        }
+      ],
+      "price_vendor_adjusted_close": 52.287498474121094
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+          "accession": "0000320193-18-000145",
+          "diluted_eps": 11.91,
+          "fiscal_year_end": "2018-09-29",
+          "form": "10-K",
+          "usable_date": "2018-11-05"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 17.500419200317484
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.91,
+            "fiscal_year_end": "2018-09-29",
+            "form": "10-K",
+            "period_end": "2018-09-29",
+            "quarter_number": 4,
+            "usable_date": "2018-11-05"
+          },
+          {
+            "acceptance_datetime": "2019-01-30T16:31:37-05:00",
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 4.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-Q",
+            "period_end": "2018-12-29",
+            "quarter_number": 1,
+            "usable_date": "2019-01-31"
+          },
+          {
+            "acceptance_datetime": "2019-05-01T16:32:00-04:00",
+            "accession": "0000320193-19-000066",
+            "diluted_eps": 2.46,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-Q",
+            "period_end": "2019-03-30",
+            "quarter_number": 2,
+            "usable_date": "2019-05-02"
+          },
+          {
+            "acceptance_datetime": "2019-07-31T16:31:53-04:00",
+            "accession": "0000320193-19-000076",
+            "diluted_eps": 2.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-Q",
+            "period_end": "2019-06-29",
+            "quarter_number": 3,
+            "usable_date": "2019-08-01"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 11.73,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-19-000066",
+            "diluted_eps": 2.73,
+            "period_end": "2018-03-31",
+            "usable_date": "2019-05-02"
+          },
+          {
+            "accession": "0000320193-19-000076",
+            "diluted_eps": 2.34,
+            "period_end": "2018-06-30",
+            "usable_date": "2019-08-01"
+          },
+          {
+            "accession": "0000320193-18-000145",
+            "diluted_eps": 2.91,
+            "period_end": "2018-09-29",
+            "usable_date": "2018-11-05"
+          },
+          {
+            "accession": "0000320193-19-000010",
+            "diluted_eps": 4.18,
+            "period_end": "2018-12-29",
+            "usable_date": "2019-01-31"
+          },
+          {
+            "accession": "0000320193-19-000066",
+            "diluted_eps": 2.46,
+            "period_end": "2019-03-30",
+            "usable_date": "2019-05-02"
+          },
+          {
+            "accession": "0000320193-19-000076",
+            "diluted_eps": 2.18,
+            "period_end": "2019-06-29",
+            "usable_date": "2019-08-01"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 17.76896783254742
+      },
+      "evaluation_date": "2019-08-01",
+      "filings_used": [
+        "0000320193-18-000145",
+        "0000320193-19-000010",
+        "0000320193-19-000066",
+        "0000320193-19-000076"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 208.42999267578125,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 208.42999267578125,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 52.10749816894531
+        }
+      ],
+      "price_vendor_adjusted_close": 52.10749816894531
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+          "accession": "0000320193-19-000119",
+          "diluted_eps": 11.89,
+          "fiscal_year_end": "2019-09-28",
+          "form": "10-K",
+          "usable_date": "2019-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 20.921782548934896
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 4.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2018-12-29",
+            "quarter_number": 1,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.46,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-03-30",
+            "quarter_number": 2,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-06-29",
+            "quarter_number": 3,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-09-28",
+            "quarter_number": 4,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 11.85,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.34,
+            "period_end": "2018-06-30",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.91,
+            "period_end": "2018-09-29",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 4.18,
+            "period_end": "2018-12-29",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.46,
+            "period_end": "2019-03-30",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.18,
+            "period_end": "2019-06-29",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "period_end": "2019-09-28",
+            "usable_date": "2019-10-31"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 20.992404599732993
+      },
+      "evaluation_date": "2019-10-31",
+      "filings_used": [
+        "0000320193-19-000119"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 248.75999450683594,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 248.75999450683594,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 62.189998626708984
+        }
+      ],
+      "price_vendor_adjusted_close": 62.189998626708984
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+          "accession": "0000320193-19-000119",
+          "diluted_eps": 11.89,
+          "fiscal_year_end": "2019-09-28",
+          "form": "10-K",
+          "usable_date": "2019-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 27.278384889645974
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.46,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-03-30",
+            "quarter_number": 2,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-06-29",
+            "quarter_number": 3,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-09-28",
+            "quarter_number": 4,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2020-01-28T18:02:44-05:00",
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.99,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-Q",
+            "period_end": "2019-12-28",
+            "quarter_number": 1,
+            "usable_date": "2020-01-29"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 12.66,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.91,
+            "period_end": "2018-09-29",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.18,
+            "period_end": "2018-12-29",
+            "usable_date": "2020-01-29"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.46,
+            "period_end": "2019-03-30",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.18,
+            "period_end": "2019-06-29",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "period_end": "2019-09-28",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.99,
+            "period_end": "2019-12-28",
+            "usable_date": "2020-01-29"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 25.619273012471613
+      },
+      "evaluation_date": "2020-01-29",
+      "filings_used": [
+        "0000320193-19-000119",
+        "0000320193-20-000010"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 324.3399963378906,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 324.3399963378906,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 81.08499908447266
+        }
+      ],
+      "price_vendor_adjusted_close": 81.08499908447266
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+          "accession": "0000320193-19-000119",
+          "diluted_eps": 11.89,
+          "fiscal_year_end": "2019-09-28",
+          "form": "10-K",
+          "usable_date": "2019-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 24.312027529370795
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.18,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-06-29",
+            "quarter_number": 3,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-09-28",
+            "quarter_number": 4,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2020-01-28T18:02:44-05:00",
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.99,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-Q",
+            "period_end": "2019-12-28",
+            "quarter_number": 1,
+            "usable_date": "2020-01-29"
+          },
+          {
+            "acceptance_datetime": "2020-04-30T18:03:10-04:00",
+            "accession": "0000320193-20-000052",
+            "diluted_eps": 2.55,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-Q",
+            "period_end": "2020-03-28",
+            "quarter_number": 2,
+            "usable_date": "2020-05-01"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 12.75,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.18,
+            "period_end": "2018-12-29",
+            "usable_date": "2020-01-29"
+          },
+          {
+            "accession": "0000320193-20-000052",
+            "diluted_eps": 2.46,
+            "period_end": "2019-03-30",
+            "usable_date": "2020-05-01"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 2.18,
+            "period_end": "2019-06-29",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "period_end": "2019-09-28",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.99,
+            "period_end": "2019-12-28",
+            "usable_date": "2020-01-29"
+          },
+          {
+            "accession": "0000320193-20-000052",
+            "diluted_eps": 2.55,
+            "period_end": "2020-03-28",
+            "usable_date": "2020-05-01"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 22.67215743719363
+      },
+      "evaluation_date": "2020-05-01",
+      "filings_used": [
+        "0000320193-19-000119",
+        "0000320193-20-000010",
+        "0000320193-20-000052"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 289.07000732421875,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 289.07000732421875,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 72.26750183105469
+        }
+      ],
+      "price_vendor_adjusted_close": 72.26750183105469
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+          "accession": "0000320193-19-000119",
+          "diluted_eps": 11.89,
+          "fiscal_year_end": "2019-09-28",
+          "form": "10-K",
+          "usable_date": "2019-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 35.74768785070832
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "fiscal_year_end": "2019-09-28",
+            "form": "10-K",
+            "period_end": "2019-09-28",
+            "quarter_number": 4,
+            "usable_date": "2019-10-31"
+          },
+          {
+            "acceptance_datetime": "2020-01-28T18:02:44-05:00",
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.99,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-Q",
+            "period_end": "2019-12-28",
+            "quarter_number": 1,
+            "usable_date": "2020-01-29"
+          },
+          {
+            "acceptance_datetime": "2020-04-30T18:03:10-04:00",
+            "accession": "0000320193-20-000052",
+            "diluted_eps": 2.55,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-Q",
+            "period_end": "2020-03-28",
+            "quarter_number": 2,
+            "usable_date": "2020-05-01"
+          },
+          {
+            "acceptance_datetime": "2020-07-30T19:29:09-04:00",
+            "accession": "0000320193-20-000062",
+            "diluted_eps": 2.58,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-Q",
+            "period_end": "2020-06-27",
+            "quarter_number": 3,
+            "usable_date": "2020-07-31"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 13.15,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-20-000052",
+            "diluted_eps": 2.46,
+            "period_end": "2019-03-30",
+            "usable_date": "2020-05-01"
+          },
+          {
+            "accession": "0000320193-20-000062",
+            "diluted_eps": 2.18,
+            "period_end": "2019-06-29",
+            "usable_date": "2020-07-31"
+          },
+          {
+            "accession": "0000320193-19-000119",
+            "diluted_eps": 3.03,
+            "period_end": "2019-09-28",
+            "usable_date": "2019-10-31"
+          },
+          {
+            "accession": "0000320193-20-000010",
+            "diluted_eps": 4.99,
+            "period_end": "2019-12-28",
+            "usable_date": "2020-01-29"
+          },
+          {
+            "accession": "0000320193-20-000052",
+            "diluted_eps": 2.55,
+            "period_end": "2020-03-28",
+            "usable_date": "2020-05-01"
+          },
+          {
+            "accession": "0000320193-20-000062",
+            "diluted_eps": 2.58,
+            "period_end": "2020-06-27",
+            "usable_date": "2020-07-31"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 32.32243410987999
+      },
+      "evaluation_date": "2020-07-31",
+      "filings_used": [
+        "0000320193-19-000119",
+        "0000320193-20-000010",
+        "0000320193-20-000052",
+        "0000320193-20-000062"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 425.0400085449219,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [
+        {
+          "ex_date": "2020-08-31",
+          "restored_as_traded_close": 425.0400085449219,
+          "split_ratio": "4:1",
+          "vendor_adjusted_close": 106.26000213623047
+        }
+      ],
+      "price_vendor_adjusted_close": 106.26000213623047
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+          "accession": "0000320193-20-000096",
+          "diluted_eps": 3.28,
+          "fiscal_year_end": "2020-09-26",
+          "form": "10-K",
+          "usable_date": "2020-10-30"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 33.189024576326695
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 1.25,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2019-12-28",
+            "quarter_number": 1,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.64,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-03-28",
+            "quarter_number": 2,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.65,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-06-27",
+            "quarter_number": 3,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-09-26",
+            "quarter_number": 4,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 3.27,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.55,
+            "period_end": "2019-06-29",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.76,
+            "period_end": "2019-09-28",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 1.25,
+            "period_end": "2019-12-28",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.64,
+            "period_end": "2020-03-28",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.65,
+            "period_end": "2020-06-27",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 33.290520064327694
+      },
+      "evaluation_date": "2020-10-30",
+      "filings_used": [
+        "0000320193-20-000096"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 108.86000061035156,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 108.86000061035156
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+          "accession": "0000320193-20-000096",
+          "diluted_eps": 3.28,
+          "fiscal_year_end": "2020-09-26",
+          "form": "10-K",
+          "usable_date": "2020-10-30"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 41.79573059082031
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.64,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-03-28",
+            "quarter_number": 2,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.65,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-06-27",
+            "quarter_number": 3,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-09-26",
+            "quarter_number": 4,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2020-12-26",
+            "quarter_number": 1,
+            "usable_date": "2021-01-28"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 3.7,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.76,
+            "period_end": "2019-09-28",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.25,
+            "period_end": "2019-12-28",
+            "usable_date": "2021-01-28"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.64,
+            "period_end": "2020-03-28",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.65,
+            "period_end": "2020-06-27",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2021-01-28"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 37.05135036159206
+      },
+      "evaluation_date": "2021-01-28",
+      "filings_used": [
+        "0000320193-20-000096",
+        "0000320193-21-000010"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 137.08999633789062,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 137.08999633789062
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+          "accession": "0000320193-20-000096",
+          "diluted_eps": 3.28,
+          "fiscal_year_end": "2020-09-26",
+          "form": "10-K",
+          "usable_date": "2020-10-30"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 40.69512064863996
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.65,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-06-27",
+            "quarter_number": 3,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-09-26",
+            "quarter_number": 4,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2020-12-26",
+            "quarter_number": 1,
+            "usable_date": "2021-01-28"
+          },
+          {
+            "acceptance_datetime": "2021-04-28T18:02:54-04:00",
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2021-03-27",
+            "quarter_number": 2,
+            "usable_date": "2021-04-29"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 4.46,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.25,
+            "period_end": "2019-12-28",
+            "usable_date": "2021-01-28"
+          },
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 0.64,
+            "period_end": "2020-03-28",
+            "usable_date": "2021-04-29"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.65,
+            "period_end": "2020-06-27",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2021-01-28"
+          },
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2021-04-29"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 29.92825016312535
+      },
+      "evaluation_date": "2021-04-29",
+      "filings_used": [
+        "0000320193-20-000096",
+        "0000320193-21-000010",
+        "0000320193-21-000056"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 133.47999572753906,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 133.47999572753906
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+          "accession": "0000320193-20-000096",
+          "diluted_eps": 3.28,
+          "fiscal_year_end": "2020-09-26",
+          "form": "10-K",
+          "usable_date": "2020-10-30"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 44.20121820961557
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-09-26",
+            "quarter_number": 4,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2020-12-26",
+            "quarter_number": 1,
+            "usable_date": "2021-01-28"
+          },
+          {
+            "acceptance_datetime": "2021-04-28T18:02:54-04:00",
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2021-03-27",
+            "quarter_number": 2,
+            "usable_date": "2021-04-29"
+          },
+          {
+            "acceptance_datetime": "2021-07-27T18:03:42-04:00",
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 1.3,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2021-06-26",
+            "quarter_number": 3,
+            "usable_date": "2021-07-28"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 5.109999999999999,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 0.64,
+            "period_end": "2020-03-28",
+            "usable_date": "2021-04-29"
+          },
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 0.65,
+            "period_end": "2020-06-27",
+            "usable_date": "2021-07-28"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2021-01-28"
+          },
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2021-04-29"
+          },
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2021-07-28"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 28.37181912476303
+      },
+      "evaluation_date": "2021-07-28",
+      "filings_used": [
+        "0000320193-20-000096",
+        "0000320193-21-000010",
+        "0000320193-21-000056",
+        "0000320193-21-000065"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 144.97999572753906,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 144.97999572753906
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+          "accession": "0000320193-21-000105",
+          "diluted_eps": 5.61,
+          "fiscal_year_end": "2021-09-25",
+          "form": "10-K",
+          "usable_date": "2021-10-29"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 26.702317834537933
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [
+          {
+            "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "fiscal_year_end": "2020-09-26",
+            "form": "10-K",
+            "period_end": "2020-09-26",
+            "quarter_number": 4,
+            "usable_date": "2020-10-30"
+          },
+          {
+            "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2020-12-26",
+            "quarter_number": 1,
+            "usable_date": "2021-01-28"
+          },
+          {
+            "acceptance_datetime": "2021-04-28T18:02:54-04:00",
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2021-03-27",
+            "quarter_number": 2,
+            "usable_date": "2021-04-29"
+          },
+          {
+            "acceptance_datetime": "2021-07-27T18:03:42-04:00",
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 1.3,
+            "fiscal_year_end": "2021-09-25",
+            "form": "10-Q",
+            "period_end": "2021-06-26",
+            "quarter_number": 3,
+            "usable_date": "2021-07-28"
+          },
+          {
+            "derivation": "sum of 4 directly filed quarterly diluted EPS",
+            "diluted_eps": 5.109999999999999,
+            "fiscal_year_end": null,
+            "period_end": null,
+            "quarter_number": null
+          }
+        ],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 0.64,
+            "period_end": "2020-03-28",
+            "usable_date": "2021-04-29"
+          },
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 0.65,
+            "period_end": "2020-06-27",
+            "usable_date": "2021-07-28"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-21-000010",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2021-01-28"
+          },
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2021-04-29"
+          },
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2021-07-28"
+          }
+        ],
+        "reason": null,
+        "status": "AVAILABLE",
+        "value": 29.31506909036357
+      },
+      "evaluation_date": "2021-10-29",
+      "filings_used": [
+        "0000320193-20-000096",
+        "0000320193-21-000010",
+        "0000320193-21-000056",
+        "0000320193-21-000065",
+        "0000320193-21-000105"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 149.8000030517578,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 149.8000030517578
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+          "accession": "0000320193-21-000105",
+          "diluted_eps": 5.61,
+          "fiscal_year_end": "2021-09-25",
+          "form": "10-K",
+          "usable_date": "2021-10-29"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 30.361854158833275
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 0.65,
+            "period_end": "2020-06-27",
+            "usable_date": "2021-07-28"
+          },
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-21-000056",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2021-04-29"
+          },
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2021-07-28"
+          },
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2022-01-28"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2022-01-28",
+      "filings_used": [
+        "0000320193-21-000105"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 170.3300018310547,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 170.3300018310547
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+          "accession": "0000320193-21-000105",
+          "diluted_eps": 5.61,
+          "fiscal_year_end": "2021-09-25",
+          "form": "10-K",
+          "usable_date": "2021-10-29"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 28.101603190104164
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-20-000096",
+            "diluted_eps": 0.73,
+            "period_end": "2020-09-26",
+            "usable_date": "2020-10-30"
+          },
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-21-000065",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2021-07-28"
+          },
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2022-04-29"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2022-04-29",
+      "filings_used": [
+        "0000320193-21-000105"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 157.64999389648438,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 157.64999389648438
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2021-10-28T18:04:28-04:00",
+          "accession": "0000320193-21-000105",
+          "diluted_eps": 5.61,
+          "fiscal_year_end": "2021-09-25",
+          "form": "10-K",
+          "usable_date": "2021-10-29"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 28.967913459329043
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2022-07-29"
+          },
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2022-07-29"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2022-07-29",
+      "filings_used": [
+        "0000320193-21-000105"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 162.50999450683594,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 162.50999450683594
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+          "accession": "0000320193-22-000108",
+          "diluted_eps": 6.11,
+          "fiscal_year_end": "2022-09-24",
+          "form": "10-K",
+          "usable_date": "2022-10-28"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 25.489362601172513
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 1.68,
+            "period_end": "2020-12-26",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2022-07-29"
+          },
+          {
+            "accession": "0000320193-22-000007",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2022-01-28"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2022-07-29"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2022-10-28",
+      "filings_used": [
+        "0000320193-22-000108"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 155.74000549316406,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 155.74000549316406
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+          "accession": "0000320193-22-000108",
+          "diluted_eps": 6.11,
+          "fiscal_year_end": "2022-09-24",
+          "form": "10-K",
+          "usable_date": "2022-10-28"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 25.286415711947626
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.4,
+            "period_end": "2021-03-27",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2022-07-29"
+          },
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-22-000059",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2022-04-29"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2022-07-29"
+          },
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2023-02-03"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2023-02-03",
+      "filings_used": [
+        "0000320193-22-000108"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 154.5,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 154.5
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+          "accession": "0000320193-22-000108",
+          "diluted_eps": 6.11,
+          "fiscal_year_end": "2022-09-24",
+          "form": "10-K",
+          "usable_date": "2022-10-28"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 28.407529840297666
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.3,
+            "period_end": "2021-06-26",
+            "usable_date": "2022-07-29"
+          },
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-22-000070",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2022-07-29"
+          },
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2023-05-05"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2023-05-05",
+      "filings_used": [
+        "0000320193-22-000108"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 173.57000732421875,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 173.57000732421875
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2022-10-27T18:01:14-04:00",
+          "accession": "0000320193-22-000108",
+          "diluted_eps": 6.11,
+          "fiscal_year_end": "2022-09-24",
+          "form": "10-K",
+          "usable_date": "2022-10-28"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 29.785598280386914
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2023-08-04"
+          },
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2023-08-04"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2023-08-04",
+      "filings_used": [
+        "0000320193-22-000108"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 181.99000549316406,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 181.99000549316406
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+          "accession": "0000320193-23-000106",
+          "diluted_eps": 6.13,
+          "fiscal_year_end": "2023-09-30",
+          "form": "10-K",
+          "usable_date": "2023-11-03"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 28.81729101084574
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 2.1,
+            "period_end": "2021-12-25",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2023-08-04"
+          },
+          {
+            "accession": "0000320193-23-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2023-02-03"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2023-08-04"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2023-11-03",
+      "filings_used": [
+        "0000320193-23-000106"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 176.64999389648438,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 176.64999389648438
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+          "accession": "0000320193-23-000106",
+          "diluted_eps": 6.13,
+          "fiscal_year_end": "2023-09-30",
+          "form": "10-K",
+          "usable_date": "2023-11-03"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 30.318108662889987
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2022-03-26",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2023-08-04"
+          },
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-23-000064",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2023-05-05"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2023-08-04"
+          },
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2024-02-02"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2024-02-02",
+      "filings_used": [
+        "0000320193-23-000106"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 185.85000610351562,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 185.85000610351562
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+          "accession": "0000320193-23-000106",
+          "diluted_eps": 6.13,
+          "fiscal_year_end": "2023-09-30",
+          "form": "10-K",
+          "usable_date": "2023-11-03"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 29.91517208528752
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.2,
+            "period_end": "2022-06-25",
+            "usable_date": "2023-08-04"
+          },
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-23-000077",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2023-08-04"
+          },
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2024-05-03"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2024-05-03",
+      "filings_used": [
+        "0000320193-23-000106"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 183.3800048828125,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 183.3800048828125
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2023-11-02T18:08:27-04:00",
+          "accession": "0000320193-23-000106",
+          "diluted_eps": 6.13,
+          "fiscal_year_end": "2023-09-30",
+          "form": "10-K",
+          "usable_date": "2023-11-03"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 35.86623174720254
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2024-08-02"
+          },
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2024-08-02"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2024-08-02",
+      "filings_used": [
+        "0000320193-23-000106"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 219.86000061035156,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 219.86000061035156
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+          "accession": "0000320193-24-000123",
+          "diluted_eps": 6.08,
+          "fiscal_year_end": "2024-09-28",
+          "form": "10-K",
+          "usable_date": "2024-11-01"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 36.66282954968904
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 1.88,
+            "period_end": "2022-12-31",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2024-08-02"
+          },
+          {
+            "accession": "0000320193-24-000006",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2024-02-02"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2024-08-02"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2024-11-01",
+      "filings_used": [
+        "0000320193-24-000123"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 222.91000366210938,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 222.91000366210938
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+          "accession": "0000320193-24-000123",
+          "diluted_eps": 6.08,
+          "fiscal_year_end": "2024-09-28",
+          "form": "10-K",
+          "usable_date": "2024-11-01"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 38.81578947368421
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.52,
+            "period_end": "2023-04-01",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2024-08-02"
+          },
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-24-000069",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2024-05-03"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2024-08-02"
+          },
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2025-01-31"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2025-01-31",
+      "filings_used": [
+        "0000320193-24-000123"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 236.0,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 236.0
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+          "accession": "0000320193-24-000123",
+          "diluted_eps": 6.08,
+          "fiscal_year_end": "2024-09-28",
+          "form": "10-K",
+          "usable_date": "2024-11-01"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 33.77467205649928
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.26,
+            "period_end": "2023-07-01",
+            "usable_date": "2024-08-02"
+          },
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-24-000081",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2024-08-02"
+          },
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.65,
+            "period_end": "2025-03-29",
+            "usable_date": "2025-05-02"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2025-05-02",
+      "filings_used": [
+        "0000320193-24-000123"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 205.35000610351562,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 205.35000610351562
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2024-11-01T06:01:36-04:00",
+          "accession": "0000320193-24-000123",
+          "diluted_eps": 6.08,
+          "fiscal_year_end": "2024-09-28",
+          "form": "10-K",
+          "usable_date": "2024-11-01"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 33.286185013620475
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2025-08-01"
+          },
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.65,
+            "period_end": "2025-03-29",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.57,
+            "period_end": "2025-06-28",
+            "usable_date": "2025-08-01"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2025-08-01",
+      "filings_used": [
+        "0000320193-24-000123"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 202.3800048828125,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 202.3800048828125
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+          "accession": "0000320193-25-000079",
+          "diluted_eps": 7.46,
+          "fiscal_year_end": "2025-09-27",
+          "form": "10-K",
+          "usable_date": "2025-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 36.242626691312
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.18,
+            "period_end": "2023-12-30",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2025-08-01"
+          },
+          {
+            "accession": "0000320193-25-000008",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2025-01-31"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.65,
+            "period_end": "2025-03-29",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.57,
+            "period_end": "2025-06-28",
+            "usable_date": "2025-08-01"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2025-10-31",
+      "filings_used": [
+        "0000320193-25-000079"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 270.3699951171875,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 270.3699951171875
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+          "accession": "0000320193-25-000079",
+          "diluted_eps": 7.46,
+          "fiscal_year_end": "2025-09-27",
+          "form": "10-K",
+          "usable_date": "2025-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 34.78284329575444
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.53,
+            "period_end": "2024-03-30",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2025-08-01"
+          },
+          {
+            "accession": "0000320193-26-000006",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2026-01-30"
+          },
+          {
+            "accession": "0000320193-25-000057",
+            "diluted_eps": 1.65,
+            "period_end": "2025-03-29",
+            "usable_date": "2025-05-02"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.57,
+            "period_end": "2025-06-28",
+            "usable_date": "2025-08-01"
+          },
+          {
+            "accession": "0000320193-26-000006",
+            "diluted_eps": 2.84,
+            "period_end": "2025-12-27",
+            "usable_date": "2026-01-30"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2026-01-30",
+      "filings_used": [
+        "0000320193-25-000079"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 259.4800109863281,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 259.4800109863281
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+          "accession": "0000320193-25-000079",
+          "diluted_eps": 7.46,
+          "fiscal_year_end": "2025-09-27",
+          "form": "10-K",
+          "usable_date": "2025-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 37.552280783972854
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.4,
+            "period_end": "2024-06-29",
+            "usable_date": "2025-08-01"
+          },
+          {
+            "accession": "0000320193-26-000006",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2026-01-30"
+          },
+          {
+            "accession": "0000320193-26-000013",
+            "diluted_eps": 1.65,
+            "period_end": "2025-03-29",
+            "usable_date": "2026-05-01"
+          },
+          {
+            "accession": "0000320193-25-000073",
+            "diluted_eps": 1.57,
+            "period_end": "2025-06-28",
+            "usable_date": "2025-08-01"
+          },
+          {
+            "accession": "0000320193-26-000006",
+            "diluted_eps": 2.84,
+            "period_end": "2025-12-27",
+            "usable_date": "2026-01-30"
+          },
+          {
+            "accession": "0000320193-26-000013",
+            "diluted_eps": 2.01,
+            "period_end": "2026-03-28",
+            "usable_date": "2026-05-01"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2026-05-01",
+      "filings_used": [
+        "0000320193-25-000079"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 280.1400146484375,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 280.1400146484375
+    },
+    {
+      "ANNUAL_GAAP_DILUTED_PE": {
+        "component": {
+          "acceptance_datetime": "2025-10-31T06:01:26-04:00",
+          "accession": "0000320193-25-000079",
+          "diluted_eps": 7.46,
+          "fiscal_year_end": "2025-09-27",
+          "form": "10-K",
+          "usable_date": "2025-10-31"
+        },
+        "reason": null,
+        "status": "AVAILABLE",
+        "substituted_for_ttm": false,
+        "value": 41.40884767588597
+      },
+      "TTM_GAAP_DILUTED_PE": {
+        "components": [],
+        "derivation": "sum of 4 directly filed quarterly diluted EPS",
+        "fy_minus_ytd_used": false,
+        "quarters_known_at_t": [
+          {
+            "accession": "0000320193-26-000006",
+            "diluted_eps": 2.4,
+            "period_end": "2024-12-28",
+            "usable_date": "2026-01-30"
+          },
+          {
+            "accession": "0000320193-26-000013",
+            "diluted_eps": 1.65,
+            "period_end": "2025-03-29",
+            "usable_date": "2026-05-01"
+          },
+          {
+            "accession": "0000320193-26-000020",
+            "diluted_eps": 1.57,
+            "period_end": "2025-06-28",
+            "usable_date": "2026-07-31"
+          },
+          {
+            "accession": "0000320193-26-000006",
+            "diluted_eps": 2.84,
+            "period_end": "2025-12-27",
+            "usable_date": "2026-01-30"
+          },
+          {
+            "accession": "0000320193-26-000013",
+            "diluted_eps": 2.01,
+            "period_end": "2026-03-28",
+            "usable_date": "2026-05-01"
+          },
+          {
+            "accession": "0000320193-26-000020",
+            "diluted_eps": 2.02,
+            "period_end": "2026-06-27",
+            "usable_date": "2026-07-31"
+          }
+        ],
+        "reason": "REASON_MISSING_Q4_EPS",
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "evaluation_date": "2026-07-31",
+      "filings_used": [
+        "0000320193-25-000079"
+      ],
+      "is_trading_day": true,
+      "logic_version": "aapl-historical-pe-poc/0.1.0",
+      "methodology": "docs/ADR-HISTORICAL-PE-METHODOLOGY.md",
+      "methodology_status": "APPROVED / FROZEN 2026-10-07",
+      "price_close_as_traded": 308.9100036621094,
+      "price_source": "Yahoo Finance chart API v8 close (split-adjusted by vendor; restored to as-traded basis)",
+      "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1514764800&period2=1800000000&interval=1d&events=div,split",
+      "price_split_restoration": [],
+      "price_vendor_adjusted_close": 308.9100036621094
+    }
+  ],
+  "open_methodology_questions": [
+    "Reference Sufficiency (observation count / time span / fiscal-quarter coverage) - OPEN",
+    "Corporate Action evidence schema - OPEN; POC used as-traded price so no split adjustment schema was needed",
+    "Sampling frequency (daily / weekly / monthly / event-driven) - OPEN; POC used filing-event dates",
+    "Annual P/E fallback policy for FPIs - OPEN"
+  ],
+  "period": {
+    "first_evaluation_date": "2019-01-31",
+    "last_evaluation_date": "2026-07-31",
+    "price_series_first_day": "2018-01-02",
+    "price_series_last_day": "2026-10-06"
+  },
+  "poc": "AAPL Historical P/E proof of concept",
+  "price_meta": {
+    "currency": "USD",
+    "exchange_name": "NMS",
+    "exchange_timezone": "America/New_York",
+    "symbol": "AAPL",
+    "vendor_splits": [
+      {
+        "ex_date": "2020-08-31",
+        "split_ratio": "4:1"
+      }
+    ]
+  },
+  "quarterly_eps_evidence": {
+    "2014-12-27": [
+      {
+        "acceptance_datetime": "2016-01-27T16:32:03-05:00",
+        "accession": "0001193125-16-439878",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2014-12-27",
+        "period_of_report": "2015-12-26",
+        "period_start": "2014-09-28",
+        "usable_date": "2018-01-02",
+        "value": 3.06
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2014-12-27",
+        "period_of_report": "2016-09-24",
+        "period_start": "2014-09-28",
+        "usable_date": "2018-01-02",
+        "value": 3.06
+      }
+    ],
+    "2015-03-28": [
+      {
+        "acceptance_datetime": "2016-04-27T16:32:53-04:00",
+        "accession": "0001193125-16-559625",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2015-03-28",
+        "period_of_report": "2016-03-26",
+        "period_start": "2014-12-28",
+        "usable_date": "2018-01-02",
+        "value": 2.33
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2015-03-28",
+        "period_of_report": "2016-09-24",
+        "period_start": "2014-12-28",
+        "usable_date": "2018-01-02",
+        "value": 2.33
+      }
+    ],
+    "2015-06-27": [
+      {
+        "acceptance_datetime": "2016-07-27T16:32:36-04:00",
+        "accession": "0001628280-16-017809",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2015-06-27",
+        "period_of_report": "2016-06-25",
+        "period_start": "2015-03-29",
+        "usable_date": "2018-01-02",
+        "value": 1.85
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2015-06-27",
+        "period_of_report": "2016-09-24",
+        "period_start": "2015-03-29",
+        "usable_date": "2018-01-02",
+        "value": 1.85
+      }
+    ],
+    "2015-09-26": [
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2015-09-26",
+        "period_of_report": "2016-09-24",
+        "period_start": "2015-06-28",
+        "usable_date": "2018-01-02",
+        "value": 1.96
+      }
+    ],
+    "2015-12-26": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2015-12-26",
+        "period_of_report": "2017-09-30",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-01-02",
+        "value": 3.28
+      },
+      {
+        "acceptance_datetime": "2016-01-27T16:32:03-05:00",
+        "accession": "0001193125-16-439878",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2015-12-26",
+        "period_of_report": "2015-12-26",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-01-02",
+        "value": 3.28
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2015-12-26",
+        "period_of_report": "2016-09-24",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-01-02",
+        "value": 3.28
+      },
+      {
+        "acceptance_datetime": "2017-02-01T16:33:29-05:00",
+        "accession": "0001628280-17-000717",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2015-12-26",
+        "period_of_report": "2016-12-31",
+        "period_start": "2015-09-27",
+        "usable_date": "2018-01-02",
+        "value": 3.28
+      }
+    ],
+    "2016-03-26": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2016-03-26",
+        "period_of_report": "2017-09-30",
+        "period_start": "2015-12-27",
+        "usable_date": "2018-01-02",
+        "value": 1.9
+      },
+      {
+        "acceptance_datetime": "2016-04-27T16:32:53-04:00",
+        "accession": "0001193125-16-559625",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2016-03-26",
+        "period_of_report": "2016-03-26",
+        "period_start": "2015-12-27",
+        "usable_date": "2018-01-02",
+        "value": 1.9
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2016-03-26",
+        "period_of_report": "2016-09-24",
+        "period_start": "2015-12-27",
+        "usable_date": "2018-01-02",
+        "value": 1.9
+      },
+      {
+        "acceptance_datetime": "2017-05-03T16:32:23-04:00",
+        "accession": "0001628280-17-004790",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2016-03-26",
+        "period_of_report": "2017-04-01",
+        "period_start": "2015-12-27",
+        "usable_date": "2018-01-02",
+        "value": 1.9
+      }
+    ],
+    "2016-06-25": [
+      {
+        "acceptance_datetime": "2017-08-02T16:31:28-04:00",
+        "accession": "0000320193-17-000009",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2016-06-25",
+        "period_of_report": "2017-07-01",
+        "period_start": "2016-03-27",
+        "usable_date": "2018-01-02",
+        "value": 1.42
+      },
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2016-06-25",
+        "period_of_report": "2017-09-30",
+        "period_start": "2016-03-27",
+        "usable_date": "2018-01-02",
+        "value": 1.42
+      },
+      {
+        "acceptance_datetime": "2016-07-27T16:32:36-04:00",
+        "accession": "0001628280-16-017809",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2016-06-25",
+        "period_of_report": "2016-06-25",
+        "period_start": "2016-03-27",
+        "usable_date": "2018-01-02",
+        "value": 1.42
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2016-06-25",
+        "period_of_report": "2016-09-24",
+        "period_start": "2016-03-27",
+        "usable_date": "2018-01-02",
+        "value": 1.42
+      }
+    ],
+    "2016-09-24": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2016-09-24",
+        "period_of_report": "2017-09-30",
+        "period_start": "2016-06-26",
+        "usable_date": "2018-01-02",
+        "value": 1.67
+      },
+      {
+        "acceptance_datetime": "2016-10-26T16:42:16-04:00",
+        "accession": "0001628280-16-020309",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2016-09-24",
+        "period_of_report": "2016-09-24",
+        "period_start": "2016-06-26",
+        "usable_date": "2018-01-02",
+        "value": 1.67
+      }
+    ],
+    "2016-12-31": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 97,
+        "form": "10-K",
+        "period_end": "2016-12-31",
+        "period_of_report": "2017-09-30",
+        "period_start": "2016-09-25",
+        "usable_date": "2018-01-02",
+        "value": 3.36
+      },
+      {
+        "acceptance_datetime": "2017-02-01T16:33:29-05:00",
+        "accession": "0001628280-17-000717",
+        "duration_days": 97,
+        "form": "10-Q",
+        "period_end": "2016-12-31",
+        "period_of_report": "2016-12-31",
+        "period_start": "2016-09-25",
+        "usable_date": "2018-01-02",
+        "value": 3.36
+      },
+      {
+        "acceptance_datetime": "2018-02-02T08:01:26-05:00",
+        "accession": "0000320193-18-000007",
+        "duration_days": 97,
+        "form": "10-Q",
+        "period_end": "2016-12-31",
+        "period_of_report": "2017-12-30",
+        "period_start": "2016-09-25",
+        "usable_date": "2018-02-02",
+        "value": 3.36
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 97,
+        "form": "10-K",
+        "period_end": "2016-12-31",
+        "period_of_report": "2018-09-29",
+        "period_start": "2016-09-25",
+        "usable_date": "2018-11-05",
+        "value": 3.36
+      }
+    ],
+    "2017-04-01": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-04-01",
+        "period_of_report": "2017-09-30",
+        "period_start": "2017-01-01",
+        "usable_date": "2018-01-02",
+        "value": 2.1
+      },
+      {
+        "acceptance_datetime": "2017-05-03T16:32:23-04:00",
+        "accession": "0001628280-17-004790",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2017-04-01",
+        "period_of_report": "2017-04-01",
+        "period_start": "2017-01-01",
+        "usable_date": "2018-01-02",
+        "value": 2.1
+      },
+      {
+        "acceptance_datetime": "2018-05-02T16:32:12-04:00",
+        "accession": "0000320193-18-000070",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2017-04-01",
+        "period_of_report": "2018-03-31",
+        "period_start": "2017-01-01",
+        "usable_date": "2018-05-03",
+        "value": 2.1
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-04-01",
+        "period_of_report": "2018-09-29",
+        "period_start": "2017-01-01",
+        "usable_date": "2018-11-05",
+        "value": 2.1
+      }
+    ],
+    "2017-07-01": [
+      {
+        "acceptance_datetime": "2017-08-02T16:31:28-04:00",
+        "accession": "0000320193-17-000009",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2017-07-01",
+        "period_of_report": "2017-07-01",
+        "period_start": "2017-04-02",
+        "usable_date": "2018-01-02",
+        "value": 1.67
+      },
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-07-01",
+        "period_of_report": "2017-09-30",
+        "period_start": "2017-04-02",
+        "usable_date": "2018-01-02",
+        "value": 1.67
+      },
+      {
+        "acceptance_datetime": "2018-08-01T16:31:48-04:00",
+        "accession": "0000320193-18-000100",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2017-07-01",
+        "period_of_report": "2018-06-30",
+        "period_start": "2017-04-02",
+        "usable_date": "2018-08-02",
+        "value": 1.67
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-07-01",
+        "period_of_report": "2018-09-29",
+        "period_start": "2017-04-02",
+        "usable_date": "2018-11-05",
+        "value": 1.67
+      }
+    ],
+    "2017-09-30": [
+      {
+        "acceptance_datetime": "2017-11-03T08:01:37-04:00",
+        "accession": "0000320193-17-000070",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-09-30",
+        "period_of_report": "2017-09-30",
+        "period_start": "2017-07-02",
+        "usable_date": "2018-01-02",
+        "value": 2.07
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-09-30",
+        "period_of_report": "2018-09-29",
+        "period_start": "2017-07-02",
+        "usable_date": "2018-11-05",
+        "value": 2.07
+      }
+    ],
+    "2017-12-30": [
+      {
+        "acceptance_datetime": "2018-02-02T08:01:26-05:00",
+        "accession": "0000320193-18-000007",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2017-12-30",
+        "period_of_report": "2017-12-30",
+        "period_start": "2017-10-01",
+        "usable_date": "2018-02-02",
+        "value": 3.89
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-12-30",
+        "period_of_report": "2018-09-29",
+        "period_start": "2017-10-01",
+        "usable_date": "2018-11-05",
+        "value": 3.89
+      },
+      {
+        "acceptance_datetime": "2019-01-30T16:31:37-05:00",
+        "accession": "0000320193-19-000010",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2017-12-30",
+        "period_of_report": "2018-12-29",
+        "period_start": "2017-10-01",
+        "usable_date": "2019-01-31",
+        "value": 3.89
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2017-12-30",
+        "period_of_report": "2019-09-28",
+        "period_start": "2017-10-01",
+        "usable_date": "2019-10-31",
+        "value": 3.89
+      }
+    ],
+    "2018-03-31": [
+      {
+        "acceptance_datetime": "2018-05-02T16:32:12-04:00",
+        "accession": "0000320193-18-000070",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2018-03-31",
+        "period_of_report": "2018-03-31",
+        "period_start": "2017-12-31",
+        "usable_date": "2018-05-03",
+        "value": 2.73
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-03-31",
+        "period_of_report": "2018-09-29",
+        "period_start": "2017-12-31",
+        "usable_date": "2018-11-05",
+        "value": 2.73
+      },
+      {
+        "acceptance_datetime": "2019-05-01T16:32:00-04:00",
+        "accession": "0000320193-19-000066",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2018-03-31",
+        "period_of_report": "2019-03-30",
+        "period_start": "2017-12-31",
+        "usable_date": "2019-05-02",
+        "value": 2.73
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-03-31",
+        "period_of_report": "2019-09-28",
+        "period_start": "2017-12-31",
+        "usable_date": "2019-10-31",
+        "value": 2.73
+      }
+    ],
+    "2018-06-30": [
+      {
+        "acceptance_datetime": "2018-08-01T16:31:48-04:00",
+        "accession": "0000320193-18-000100",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2018-06-30",
+        "period_of_report": "2018-06-30",
+        "period_start": "2018-04-01",
+        "usable_date": "2018-08-02",
+        "value": 2.34
+      },
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-06-30",
+        "period_of_report": "2018-09-29",
+        "period_start": "2018-04-01",
+        "usable_date": "2018-11-05",
+        "value": 2.34
+      },
+      {
+        "acceptance_datetime": "2019-07-31T16:31:53-04:00",
+        "accession": "0000320193-19-000076",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2018-06-30",
+        "period_of_report": "2019-06-29",
+        "period_start": "2018-04-01",
+        "usable_date": "2019-08-01",
+        "value": 2.34
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-06-30",
+        "period_of_report": "2019-09-28",
+        "period_start": "2018-04-01",
+        "usable_date": "2019-10-31",
+        "value": 2.34
+      }
+    ],
+    "2018-09-29": [
+      {
+        "acceptance_datetime": "2018-11-05T08:01:40-05:00",
+        "accession": "0000320193-18-000145",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-09-29",
+        "period_of_report": "2018-09-29",
+        "period_start": "2018-07-01",
+        "usable_date": "2018-11-05",
+        "value": 2.91
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-09-29",
+        "period_of_report": "2019-09-28",
+        "period_start": "2018-07-01",
+        "usable_date": "2019-10-31",
+        "value": 2.91
+      }
+    ],
+    "2018-12-29": [
+      {
+        "acceptance_datetime": "2019-01-30T16:31:37-05:00",
+        "accession": "0000320193-19-000010",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2018-12-29",
+        "period_of_report": "2018-12-29",
+        "period_start": "2018-09-30",
+        "usable_date": "2019-01-31",
+        "value": 4.18
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-12-29",
+        "period_of_report": "2019-09-28",
+        "period_start": "2018-09-30",
+        "usable_date": "2019-10-31",
+        "value": 4.18
+      },
+      {
+        "acceptance_datetime": "2020-01-28T18:02:44-05:00",
+        "accession": "0000320193-20-000010",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2018-12-29",
+        "period_of_report": "2019-12-28",
+        "period_start": "2018-09-30",
+        "usable_date": "2020-01-29",
+        "value": 4.18
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2018-12-29",
+        "period_of_report": "2020-09-26",
+        "period_start": "2018-09-30",
+        "usable_date": "2020-10-30",
+        "value": 1.05
+      }
+    ],
+    "2019-03-30": [
+      {
+        "acceptance_datetime": "2019-05-01T16:32:00-04:00",
+        "accession": "0000320193-19-000066",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2019-03-30",
+        "period_of_report": "2019-03-30",
+        "period_start": "2018-12-30",
+        "usable_date": "2019-05-02",
+        "value": 2.46
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-03-30",
+        "period_of_report": "2019-09-28",
+        "period_start": "2018-12-30",
+        "usable_date": "2019-10-31",
+        "value": 2.46
+      },
+      {
+        "acceptance_datetime": "2020-04-30T18:03:10-04:00",
+        "accession": "0000320193-20-000052",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2019-03-30",
+        "period_of_report": "2020-03-28",
+        "period_start": "2018-12-30",
+        "usable_date": "2020-05-01",
+        "value": 2.46
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-03-30",
+        "period_of_report": "2020-09-26",
+        "period_start": "2018-12-30",
+        "usable_date": "2020-10-30",
+        "value": 0.61
+      }
+    ],
+    "2019-06-29": [
+      {
+        "acceptance_datetime": "2019-07-31T16:31:53-04:00",
+        "accession": "0000320193-19-000076",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2019-06-29",
+        "period_of_report": "2019-06-29",
+        "period_start": "2019-03-31",
+        "usable_date": "2019-08-01",
+        "value": 2.18
+      },
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-06-29",
+        "period_of_report": "2019-09-28",
+        "period_start": "2019-03-31",
+        "usable_date": "2019-10-31",
+        "value": 2.18
+      },
+      {
+        "acceptance_datetime": "2020-07-30T19:29:09-04:00",
+        "accession": "0000320193-20-000062",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2019-06-29",
+        "period_of_report": "2020-06-27",
+        "period_start": "2019-03-31",
+        "usable_date": "2020-07-31",
+        "value": 2.18
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-06-29",
+        "period_of_report": "2020-09-26",
+        "period_start": "2019-03-31",
+        "usable_date": "2020-10-30",
+        "value": 0.55
+      }
+    ],
+    "2019-09-28": [
+      {
+        "acceptance_datetime": "2019-10-30T18:12:36-04:00",
+        "accession": "0000320193-19-000119",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-09-28",
+        "period_of_report": "2019-09-28",
+        "period_start": "2019-06-30",
+        "usable_date": "2019-10-31",
+        "value": 3.03
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-09-28",
+        "period_of_report": "2020-09-26",
+        "period_start": "2019-06-30",
+        "usable_date": "2020-10-30",
+        "value": 0.76
+      }
+    ],
+    "2019-12-28": [
+      {
+        "acceptance_datetime": "2020-01-28T18:02:44-05:00",
+        "accession": "0000320193-20-000010",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2019-12-28",
+        "period_of_report": "2019-12-28",
+        "period_start": "2019-09-29",
+        "usable_date": "2020-01-29",
+        "value": 4.99
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2019-12-28",
+        "period_of_report": "2020-09-26",
+        "period_start": "2019-09-29",
+        "usable_date": "2020-10-30",
+        "value": 1.25
+      },
+      {
+        "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+        "accession": "0000320193-21-000010",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2019-12-28",
+        "period_of_report": "2020-12-26",
+        "period_start": "2019-09-29",
+        "usable_date": "2021-01-28",
+        "value": 1.25
+      }
+    ],
+    "2020-03-28": [
+      {
+        "acceptance_datetime": "2020-04-30T18:03:10-04:00",
+        "accession": "0000320193-20-000052",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2020-03-28",
+        "period_of_report": "2020-03-28",
+        "period_start": "2019-12-29",
+        "usable_date": "2020-05-01",
+        "value": 2.55
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2020-03-28",
+        "period_of_report": "2020-09-26",
+        "period_start": "2019-12-29",
+        "usable_date": "2020-10-30",
+        "value": 0.64
+      },
+      {
+        "acceptance_datetime": "2021-04-28T18:02:54-04:00",
+        "accession": "0000320193-21-000056",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2020-03-28",
+        "period_of_report": "2021-03-27",
+        "period_start": "2019-12-29",
+        "usable_date": "2021-04-29",
+        "value": 0.64
+      }
+    ],
+    "2020-06-27": [
+      {
+        "acceptance_datetime": "2020-07-30T19:29:09-04:00",
+        "accession": "0000320193-20-000062",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2020-06-27",
+        "period_of_report": "2020-06-27",
+        "period_start": "2020-03-29",
+        "usable_date": "2020-07-31",
+        "value": 2.58
+      },
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2020-06-27",
+        "period_of_report": "2020-09-26",
+        "period_start": "2020-03-29",
+        "usable_date": "2020-10-30",
+        "value": 0.65
+      },
+      {
+        "acceptance_datetime": "2021-07-27T18:03:42-04:00",
+        "accession": "0000320193-21-000065",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2020-06-27",
+        "period_of_report": "2021-06-26",
+        "period_start": "2020-03-29",
+        "usable_date": "2021-07-28",
+        "value": 0.65
+      }
+    ],
+    "2020-09-26": [
+      {
+        "acceptance_datetime": "2020-10-29T18:06:25-04:00",
+        "accession": "0000320193-20-000096",
+        "duration_days": 90,
+        "form": "10-K",
+        "period_end": "2020-09-26",
+        "period_of_report": "2020-09-26",
+        "period_start": "2020-06-28",
+        "usable_date": "2020-10-30",
+        "value": 0.73
+      }
+    ],
+    "2020-12-26": [
+      {
+        "acceptance_datetime": "2021-01-27T18:03:06-05:00",
+        "accession": "0000320193-21-000010",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2020-12-26",
+        "period_of_report": "2020-12-26",
+        "period_start": "2020-09-27",
+        "usable_date": "2021-01-28",
+        "value": 1.68
+      },
+      {
+        "acceptance_datetime": "2022-01-27T18:00:58-05:00",
+        "accession": "0000320193-22-000007",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2020-12-26",
+        "period_of_report": "2021-12-25",
+        "period_start": "2020-09-27",
+        "usable_date": "2022-01-28",
+        "value": 1.68
+      }
+    ],
+    "2021-03-27": [
+      {
+        "acceptance_datetime": "2021-04-28T18:02:54-04:00",
+        "accession": "0000320193-21-000056",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2021-03-27",
+        "period_of_report": "2021-03-27",
+        "period_start": "2020-12-27",
+        "usable_date": "2021-04-29",
+        "value": 1.4
+      },
+      {
+        "acceptance_datetime": "2022-04-28T18:03:58-04:00",
+        "accession": "0000320193-22-000059",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2021-03-27",
+        "period_of_report": "2022-03-26",
+        "period_start": "2020-12-27",
+        "usable_date": "2022-04-29",
+        "value": 1.4
+      }
+    ],
+    "2021-06-26": [
+      {
+        "acceptance_datetime": "2021-07-27T18:03:42-04:00",
+        "accession": "0000320193-21-000065",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2021-06-26",
+        "period_of_report": "2021-06-26",
+        "period_start": "2021-03-28",
+        "usable_date": "2021-07-28",
+        "value": 1.3
+      },
+      {
+        "acceptance_datetime": "2022-07-28T18:06:56-04:00",
+        "accession": "0000320193-22-000070",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2021-06-26",
+        "period_of_report": "2022-06-25",
+        "period_start": "2021-03-28",
+        "usable_date": "2022-07-29",
+        "value": 1.3
+      }
+    ],
+    "2021-12-25": [
+      {
+        "acceptance_datetime": "2022-01-27T18:00:58-05:00",
+        "accession": "0000320193-22-000007",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2021-12-25",
+        "period_of_report": "2021-12-25",
+        "period_start": "2021-09-26",
+        "usable_date": "2022-01-28",
+        "value": 2.1
+      },
+      {
+        "acceptance_datetime": "2023-02-02T18:01:30-05:00",
+        "accession": "0000320193-23-000006",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2021-12-25",
+        "period_of_report": "2022-12-31",
+        "period_start": "2021-09-26",
+        "usable_date": "2023-02-03",
+        "value": 2.1
+      }
+    ],
+    "2022-03-26": [
+      {
+        "acceptance_datetime": "2022-04-28T18:03:58-04:00",
+        "accession": "0000320193-22-000059",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2022-03-26",
+        "period_of_report": "2022-03-26",
+        "period_start": "2021-12-26",
+        "usable_date": "2022-04-29",
+        "value": 1.52
+      },
+      {
+        "acceptance_datetime": "2023-05-04T18:03:52-04:00",
+        "accession": "0000320193-23-000064",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2022-03-26",
+        "period_of_report": "2023-04-01",
+        "period_start": "2021-12-26",
+        "usable_date": "2023-05-05",
+        "value": 1.52
+      }
+    ],
+    "2022-06-25": [
+      {
+        "acceptance_datetime": "2022-07-28T18:06:56-04:00",
+        "accession": "0000320193-22-000070",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2022-06-25",
+        "period_of_report": "2022-06-25",
+        "period_start": "2022-03-27",
+        "usable_date": "2022-07-29",
+        "value": 1.2
+      },
+      {
+        "acceptance_datetime": "2023-08-03T18:04:43-04:00",
+        "accession": "0000320193-23-000077",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2022-06-25",
+        "period_of_report": "2023-07-01",
+        "period_start": "2022-03-27",
+        "usable_date": "2023-08-04",
+        "value": 1.2
+      }
+    ],
+    "2022-12-31": [
+      {
+        "acceptance_datetime": "2023-02-02T18:01:30-05:00",
+        "accession": "0000320193-23-000006",
+        "duration_days": 97,
+        "form": "10-Q",
+        "period_end": "2022-12-31",
+        "period_of_report": "2022-12-31",
+        "period_start": "2022-09-25",
+        "usable_date": "2023-02-03",
+        "value": 1.88
+      },
+      {
+        "acceptance_datetime": "2024-02-01T18:03:38-05:00",
+        "accession": "0000320193-24-000006",
+        "duration_days": 97,
+        "form": "10-Q",
+        "period_end": "2022-12-31",
+        "period_of_report": "2023-12-30",
+        "period_start": "2022-09-25",
+        "usable_date": "2024-02-02",
+        "value": 1.88
+      }
+    ],
+    "2023-04-01": [
+      {
+        "acceptance_datetime": "2023-05-04T18:03:52-04:00",
+        "accession": "0000320193-23-000064",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2023-04-01",
+        "period_of_report": "2023-04-01",
+        "period_start": "2023-01-01",
+        "usable_date": "2023-05-05",
+        "value": 1.52
+      },
+      {
+        "acceptance_datetime": "2024-05-02T18:04:25-04:00",
+        "accession": "0000320193-24-000069",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2023-04-01",
+        "period_of_report": "2024-03-30",
+        "period_start": "2023-01-01",
+        "usable_date": "2024-05-03",
+        "value": 1.52
+      }
+    ],
+    "2023-07-01": [
+      {
+        "acceptance_datetime": "2023-08-03T18:04:43-04:00",
+        "accession": "0000320193-23-000077",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2023-07-01",
+        "period_of_report": "2023-07-01",
+        "period_start": "2023-04-02",
+        "usable_date": "2023-08-04",
+        "value": 1.26
+      },
+      {
+        "acceptance_datetime": "2024-08-01T18:03:34-04:00",
+        "accession": "0000320193-24-000081",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2023-07-01",
+        "period_of_report": "2024-06-29",
+        "period_start": "2023-04-02",
+        "usable_date": "2024-08-02",
+        "value": 1.26
+      }
+    ],
+    "2023-12-30": [
+      {
+        "acceptance_datetime": "2024-02-01T18:03:38-05:00",
+        "accession": "0000320193-24-000006",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2023-12-30",
+        "period_of_report": "2023-12-30",
+        "period_start": "2023-10-01",
+        "usable_date": "2024-02-02",
+        "value": 2.18
+      },
+      {
+        "acceptance_datetime": "2025-01-31T06:01:27-05:00",
+        "accession": "0000320193-25-000008",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2023-12-30",
+        "period_of_report": "2024-12-28",
+        "period_start": "2023-10-01",
+        "usable_date": "2025-01-31",
+        "value": 2.18
+      }
+    ],
+    "2024-03-30": [
+      {
+        "acceptance_datetime": "2024-05-02T18:04:25-04:00",
+        "accession": "0000320193-24-000069",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2024-03-30",
+        "period_of_report": "2024-03-30",
+        "period_start": "2023-12-31",
+        "usable_date": "2024-05-03",
+        "value": 1.53
+      },
+      {
+        "acceptance_datetime": "2025-05-02T06:00:46-04:00",
+        "accession": "0000320193-25-000057",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2024-03-30",
+        "period_of_report": "2025-03-29",
+        "period_start": "2023-12-31",
+        "usable_date": "2025-05-02",
+        "value": 1.53
+      }
+    ],
+    "2024-06-29": [
+      {
+        "acceptance_datetime": "2024-08-01T18:03:34-04:00",
+        "accession": "0000320193-24-000081",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2024-06-29",
+        "period_of_report": "2024-06-29",
+        "period_start": "2024-03-31",
+        "usable_date": "2024-08-02",
+        "value": 1.4
+      },
+      {
+        "acceptance_datetime": "2025-08-01T06:00:42-04:00",
+        "accession": "0000320193-25-000073",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2024-06-29",
+        "period_of_report": "2025-06-28",
+        "period_start": "2024-03-31",
+        "usable_date": "2025-08-01",
+        "value": 1.4
+      }
+    ],
+    "2024-12-28": [
+      {
+        "acceptance_datetime": "2025-01-31T06:01:27-05:00",
+        "accession": "0000320193-25-000008",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2024-12-28",
+        "period_of_report": "2024-12-28",
+        "period_start": "2024-09-29",
+        "usable_date": "2025-01-31",
+        "value": 2.4
+      },
+      {
+        "acceptance_datetime": "2026-01-30T06:01:32-05:00",
+        "accession": "0000320193-26-000006",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2024-12-28",
+        "period_of_report": "2025-12-27",
+        "period_start": "2024-09-29",
+        "usable_date": "2026-01-30",
+        "value": 2.4
+      }
+    ],
+    "2025-03-29": [
+      {
+        "acceptance_datetime": "2025-05-02T06:00:46-04:00",
+        "accession": "0000320193-25-000057",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2025-03-29",
+        "period_of_report": "2025-03-29",
+        "period_start": "2024-12-29",
+        "usable_date": "2025-05-02",
+        "value": 1.65
+      },
+      {
+        "acceptance_datetime": "2026-05-01T06:01:00-04:00",
+        "accession": "0000320193-26-000013",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2025-03-29",
+        "period_of_report": "2026-03-28",
+        "period_start": "2024-12-29",
+        "usable_date": "2026-05-01",
+        "value": 1.65
+      }
+    ],
+    "2025-06-28": [
+      {
+        "acceptance_datetime": "2025-08-01T06:00:42-04:00",
+        "accession": "0000320193-25-000073",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2025-06-28",
+        "period_of_report": "2025-06-28",
+        "period_start": "2025-03-30",
+        "usable_date": "2025-08-01",
+        "value": 1.57
+      },
+      {
+        "acceptance_datetime": "2026-07-31T06:01:02-04:00",
+        "accession": "0000320193-26-000020",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2025-06-28",
+        "period_of_report": "2026-06-27",
+        "period_start": "2025-03-30",
+        "usable_date": "2026-07-31",
+        "value": 1.57
+      }
+    ],
+    "2025-12-27": [
+      {
+        "acceptance_datetime": "2026-01-30T06:01:32-05:00",
+        "accession": "0000320193-26-000006",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2025-12-27",
+        "period_of_report": "2025-12-27",
+        "period_start": "2025-09-28",
+        "usable_date": "2026-01-30",
+        "value": 2.84
+      }
+    ],
+    "2026-03-28": [
+      {
+        "acceptance_datetime": "2026-05-01T06:01:00-04:00",
+        "accession": "0000320193-26-000013",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2026-03-28",
+        "period_of_report": "2026-03-28",
+        "period_start": "2025-12-28",
+        "usable_date": "2026-05-01",
+        "value": 2.01
+      }
+    ],
+    "2026-06-27": [
+      {
+        "acceptance_datetime": "2026-07-31T06:01:02-04:00",
+        "accession": "0000320193-26-000020",
+        "duration_days": 90,
+        "form": "10-Q",
+        "period_end": "2026-06-27",
+        "period_of_report": "2026-06-27",
+        "period_start": "2026-03-29",
+        "usable_date": "2026-07-31",
+        "value": 2.02
+      }
+    ]
+  }
+}
