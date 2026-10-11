@@ -1,32 +1,27 @@
 # Legacy ST-EVA v6.x Artifacts
 
-Everything in this directory was produced by the pre-2.2 "ST-EVA v6.1" short-term
-event-driven framework. It is retained for historical reference only.
+This directory contains outputs from the pre-2.2 ST-EVA v6.1 short-term, event-driven framework. It is retained for historical reference only. These files are not current engine results or a specification of the present product.
 
-## Do not read these as current engine output
+## Historical output differences
 
-The v6.x framework produced output that the current ST-EVA 2.2.3 specification
-explicitly forbids:
+Older records may contain:
 
-| v6.x behavior | Current SPEC §3 status |
+| Legacy field or behavior | How to treat it |
 |---|---|
-| Bull / Base / Bear scenario probabilities | Forbidden — probabilities must not be invented |
-| Scenario target prices | Forbidden — ST-EVA is not a target-price engine |
-| Stance output (偏多 / 中性 / 觀望) | Forbidden — no buy/sell signal |
-| Model-hypothesis EPS growth assumptions | Forbidden — no synthetic EPS |
+| Bull / Base / Bear scenario probabilities | Historical model output, not a current probability estimate |
+| Scenario target prices | Historical target-price output, not a current ST-EVA result |
+| Stance labels such as 偏多 / 中性 / 觀望 | Historical labels, not current buy/sell signals |
+| Model-hypothesis EPS growth assumptions | Historical assumptions, not observed financial data |
 
-Files here therefore contain a schema, a version string, and an analytical
-philosophy that no longer match [SPEC.md](../../SPEC.md). The field names
-(`scenarios`, `market_bet`, `expectation_gap`, `version_metadata.prompt_version`)
-do not appear anywhere in the 2.2.x codebase.
+The table describes the legacy artifacts; it is not a replacement for a current specification. Older notes may refer to a root-level `SPEC.md` or other documents that have since moved or been retired. Do not treat those old references as current authority.
+
+Fields such as `scenarios`, `market_bet`, `expectation_gap`, and `version_metadata.prompt_version` belong to the legacy output format. Read their meaning only in the context of the archived records.
 
 ## Structure
 
-- `*.json` — v6.x research snapshots and outcome records, originally in `history/`
-- `reports/*.md` — v6.x narrative reports, originally in the repository root and `reports/`
+- `*.json` — legacy research snapshots and outcome records.
+- `reports/*.md` — legacy narrative reports.
 
-## Current engine output
+## Current output
 
-Current snapshots are written by `SnapshotManager` to `history/` as
-`<TICKER>_RES-<ID>_market_implied_assumptions.json`. Do not confuse that
-filename with the legacy `*_snapshot.json` / `*_prediction.json` files here.
+Current snapshots are written by `SnapshotManager` under `history/` using the current market-implied-assumptions snapshot format. Do not confuse those snapshots with the legacy `*_snapshot.json` or `*_prediction.json` files retained here.
