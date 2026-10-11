@@ -56,6 +56,25 @@ class TestCanonicalDatasetIsSelfContained(unittest.TestCase):
         ):
             self.assertTrue((CANONICAL_DIR / name).is_file(), f"missing canonical input: {name}")
 
+    def test_production_price_evidence_has_source_and_payload_digest(self):
+        result = load_issuer_historical_pe(ISSUER_CONFIGS["MSFT"], enable_furnished=True)
+
+        self.assertGreater(len(result.observations), 0)
+        for obs in result.observations:
+            source = obs.price_state.get("source")
+            self.assertIsInstance(source, dict)
+            self.assertEqual(
+                source.get("provider"),
+                "Yahoo Finance chart API v8 close",
+            )
+            self.assertEqual(
+                source.get("url"),
+                "https://query1.finance.yahoo.com/v8/finance/chart/MSFT",
+            )
+            digest = source.get("content_sha256")
+            self.assertIsInstance(digest, str)
+            self.assertRegex(digest, r"^[0-9a-f]{64}$")
+
     def test_production_load_succeeds_without_research_dir(self):
         """Load the production path while every research/ access raises.
 
