@@ -281,6 +281,7 @@ class TestBrowserSmoke(unittest.TestCase):
             page.evaluate("() => window.dispatchEvent(new Event('online'))")
 
             # Verify offline banner disappears
+            page.wait_for_selector("text=Offline Mode", state="detached", timeout=5000)
             self.assertEqual(page.locator("text=Offline Mode").count(), 0)
 
             context.close()
