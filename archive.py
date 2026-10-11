@@ -542,8 +542,14 @@ def replay(
                                 + "; ".join(mismatches)
                             )
                             break
-        except Exception:
-            pass
+        except Exception as error:
+            # Never continue replay with the unfiltered candidate set when
+            # evidence admission failed. That could let refused SEC facts enter
+            # the rebuilt context and make an invalid replay look successful.
+            raise ArchiveError(
+                f"Could not recompute evidence admission during replay for "
+                f"{asset} at {as_of}: {error}"
+            ) from error
 
     classes = tuple(
         (
