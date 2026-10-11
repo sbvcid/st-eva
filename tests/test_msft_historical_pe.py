@@ -186,7 +186,13 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         """MSFT returns USABLE_FOR_REFERENCE status through the runner."""
         from st_eva_runner import run_st_eva
         
-        result = run_st_eva("MSFT", horizon=3, mode="regression", include_historical_pe=True)
+        result = run_st_eva(
+            "MSFT",
+            horizon=3,
+            mode="regression",
+            include_historical_pe=True,
+            save_snapshot=False,
+        )
         self.assertIsNotNone(result)
         hist_pe = result.get("production_historical_pe", {})
         dist = hist_pe.get("distribution", {})
