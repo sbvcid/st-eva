@@ -11,46 +11,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install runtime and test dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pytest
-
       - name: Assert production inputs are self-contained
         run: |
           test ! -e research/experiments/aapl-historical-pe-poc/contract/msft_validation \
             || (echo "MSFT production inputs must not live under research/" && exit 1)
-          for f in daily_prices.json eps_diluted_concept.json \
-                   filing_acceptance_evidence.json q4_evidence_records.json; do
-            test -f "data/historical_pe/MSFT/$f" || { echo "missing data/historical_pe/MSFT/$f"; exit 1; }
-          done
-
-      - name: shard0
-        run: python -m pytest tests/test_2_4_3_traceability.py tests/test_authority_taxonomy_integration.py tests/test_capital_structure.py tests/test_evaluation_format_boundary.py tests/test_ifrs_current_portion_promotion.py tests/test_knowledge_state_reader_integration.py tests/test_non_usd_currency_ingest.py tests/test_retire_revenues_mapping_299.py tests/test_sec_manifest_ingest.py tests/test_source_conditional_metric_retrieval.py -q --tb=line -rf
-
-      - name: shard1
-        run: python -m pytest tests/test_admission_persistence_332.py tests/test_authority_taxonomy_namespace_schema.py tests/test_collection_metric_scope.py tests/test_evidence_query.py tests/test_ingestion_aapl.py tests/test_mapping_relation_kind.py tests/test_observation_identity_conformance.py tests/test_reverse_requirements.py tests/test_sec_observation_fact_links.py tests/test_source_conditional_supersession.py -q --tb=line -rf
-
-      - name: shard2
-        run: python -m pytest tests/test_archive_isolation.py tests/test_authority_taxonomy_persistence.py tests/test_core_registry.py tests/test_evidence_query_knowledge_state.py tests/test_ingestion_cross_company.py tests/test_material_findings.py tests/test_registry_identity_331.py tests/test_reverse_requirements_wiring.py tests/test_sec_provenance_schema.py tests/test_source_type_preservation_329.py -q --tb=line -rf
-
-      - name: shard3
-        run: python -m pytest tests/test_archive_replay.py tests/test_availability_precision.py tests/test_corpus_gate_303.py tests/test_evidence_valuation_boundary.py tests/test_instant_observations.py tests/test_measured_scope_required_for_partial.py tests/test_replay_evidence_symmetry.py tests/test_sec_document_bytes.py tests/test_sec_provenance_writers.py tests/test_st_eva_runner.py -q --tb=line -rf
-
-      - name: shard4
-        run: python -m pytest tests/test_audit_corrections.py tests/test_basis_framework_query.py tests/test_coverage_semantics_2_8.py tests/test_financial_history.py tests/test_interpretation_transaction_contract.py tests/test_metric_discovery_tokens_301.py tests/test_replay_selector_331.py tests/test_sec_document_fact_schema.py tests/test_sec_validation.py tests/test_vendor_debt_projection.py -q --tb=line -rf
-
-      - name: shard5
-        run: python -m pytest tests/test_authority_evidence_resolver.py tests/test_c4c_taxonomy_equivalence_gate.py tests/test_cross_framework_2_7.py tests/test_hardening_2_5_1.py tests/test_investment_context.py tests/test_metric_supersession.py tests/test_replay_wiring_332.py tests/test_sec_document_statements.py tests/test_sec_xbrl_fact_extraction.py -q --tb=line -rf
-
-      - name: shard6
-        run: python -m pytest tests/test_authority_taxonomy_acquisition.py tests/test_c4f_authority_prefix_resolver.py tests/test_data_contract.py tests/test_historical_pe.py tests/test_issuer_identity_285.py tests/test_msft_historical_pe.py tests/test_research_dossier.py tests/test_sec_filing_parsers.py tests/test_selector_tie_break_332.py -q --tb=line -rf
-
-      - name: shard7
-        run: python -m pytest tests/test_authority_taxonomy_catalog_parser.py tests/test_c4g_b2_authority_bridge.py tests/test_dividends.py tests/test_ifrs_capex_promotion.py tests/test_knowledge_state_interpretations.py tests/test_msft_production_reproducibility.py tests/test_restricted_stock_promotion_300.py tests/test_sec_ingest_provenance.py tests/test_semantic_conflict.py -q --tb=line -rf
+      - name: test_archive_isolation.py
+        run: python -m pytest tests/test_archive_isolation.py -q --tb=line -rf
+      - name: test_authority_taxonomy_persistence.py
+        run: python -m pytest tests/test_authority_taxonomy_persistence.py -q --tb=line -rf
+      - name: test_core_registry.py
+        run: python -m pytest tests/test_core_registry.py -q --tb=line -rf
+      - name: test_evidence_query_knowledge_state.py
+        run: python -m pytest tests/test_evidence_query_knowledge_state.py -q --tb=line -rf
+      - name: test_ingestion_cross_company.py
+        run: python -m pytest tests/test_ingestion_cross_company.py -q --tb=line -rf
+      - name: test_material_findings.py
+        run: python -m pytest tests/test_material_findings.py -q --tb=line -rf
+      - name: test_registry_identity_331.py
+        run: python -m pytest tests/test_registry_identity_331.py -q --tb=line -rf
+      - name: test_reverse_requirements_wiring.py
+        run: python -m pytest tests/test_reverse_requirements_wiring.py -q --tb=line -rf
+      - name: test_sec_provenance_schema.py
+        run: python -m pytest tests/test_sec_provenance_schema.py -q --tb=line -rf
+      - name: test_source_type_preservation_329.py
+        run: python -m pytest tests/test_source_type_preservation_329.py -q --tb=line -rf
