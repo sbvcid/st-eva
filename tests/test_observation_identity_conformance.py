@@ -1,66 +1,13 @@
-"""
-ST-EVA Historical P/E productionization, gate §J: data-layer conformance.
+"""Characterization tests for observation identity and archived classification metadata.
 
-`docs/archive/ST-EVA-DATA-ADMISSION-RECONCILIATION.md` §J names this test as the one
-minimal next engineering step, and it is deliberately a test rather than a
-migration. The reconciliation read the writer and concluded that
-`observation_content_hash()` does not cover `basis_json` or `raw_json`, so a
-classification parked only in those blobs would be invisible to the fact's own
-identity and would be absorbed on write. That was a reading of the code. This
-file is the measurement of it, on one real fact, through the writer that
-production actually uses.
+The fixture is embedded so the test does not depend on files under the ignored
+local research directory. It measures whether two representations of the same
+SEC fact, differing only in classification metadata, are deduplicated and which
+metadata remains visible to readers.
 
-Nothing here changes behaviour. Every assertion states what the archive does
-today. If a future change to the preimage, the schema or the writer makes one
-of these fail, that is the change announcing itself, and the test has to be
-read again rather than deleted.
-
-## The fact
-
-One real furnished-quarter EPS fact from the existing frozen MSFT input set,
-restated as values rather than read from disk. The whole repository suite has to
-be runnable from what Git holds, and `research/` is ignored, so a test that
-opened the frozen payload would error in a clean checkout.
-
-    issuer          MSFT, CIK 789019
-    concept         us-gaap:EarningsPerShareDiluted, unit USD/shares
-    period          2011-07-01 .. 2011-09-30, 91 days, a quarter
-    value           0.68
-    accession       0001193125-13-455144, form 8-K, filed 2013-11-26
-    frame           CY2011Q3
-
-Provenance: `raw/eps_diluted.json` in
-`research/experiments/aapl-historical-pe-poc/contract/msft_validation/`, the
-companyconcept payload for `EarningsPerShareDiluted`. Of its 340 facts, 25 are
-reported in an 8-K and 16 of those are quarter-length. That is Finding J.3 of
-the reconciliation: MSFT tags quarter-length diluted EPS inside 8-K filings for
-2011-2015, so deciding `evidence_class` by `form` would have called all sixteen
-`filed`. This fact is the first of them.
-
-The acceptance datetime for that accession is not in the frozen
-`submissions.json` -- the 2013 filing predates the recent-filings window and the
-older submission shards were not captured -- so availability resolves to the
-filed-date fallback, `FILED_AS_OF_DATE`, at `PRECISION_DATE`. That is what the
-existing path does with this input and it is asserted rather than worked around.
-
-## What is measured
-
-1. `observation_content_hash()` is unchanged when two observations differ only
-   in `basis_json` and in `raw_json` classification keys, holding `accession`
-   and `concept` constant, because `_accession_of` and `_concept_of` do read
-   `raw`.
-2. `record_observation` returns the first row's id for a second, differently
-   classified insert, and the archive holds one row.
-3. The second reading's classification is therefore lost. `EvidenceQuery`
-   surfaces none of it.
-
-One correction to how point 3 is easy to state. The archive does not strip a
-classification: `basis` is passed through verbatim, so a classification written
-on the *first* insert reaches the reader in full, all five values. What is
-missing is any way to hold two readings of one fact, and any statement of which
-reading won -- the surviving reading is decided by call order. Both halves are
-asserted, so the file cannot be read as claiming the archive has no place for a
-classification at all.
+The assertions describe the current writer and query behavior for this concrete
+case. They do not derive current implementation requirements from a historical
+design document.
 """
 
 import copy
