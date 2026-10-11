@@ -26,6 +26,7 @@ from reverse_requirements import (
     ReverseRequirementError,
     EpsAnchor,
     RiskFreeRate,
+    build_exit_multiples,
     build_matrix,
     build_reverse_requirements_report,
     build_scenario,
@@ -67,6 +68,62 @@ def forward_eps(value: float = 4.0) -> EpsAnchor:
         provider="fixture",
         currency="USD",
     )
+
+
+class TestHistoricalBandReferenceEligibility(unittest.TestCase):
+    def test_missing_sample_count_cannot_qualify_historical_median(self):
+        multiples, unavailable = build_exit_multiples(
+            historical_pe_band={"median": 18.5},
+            user_pe_multiple=None,
+            min_observations=20,
+        )
+        self.assertEqual(multiples, [])
+        self.assertEqual(unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
+
+    def test_invalid_sample_counts_are_unverifiable_not_implicitly_usable(self):
+        for count in ("unknown", True, -1, 20.5):
+            with self.subTest(count=count):
+                multiples, unavailable = build_exit_multiples(
+                    historical_pe_band={"median": 18.5, "observations": count},
+                    user_pe_multiple=None,
+                    min_observations=20,
+                )
+                self.assertEqual(multiples, [])
+                self.assertEqual(
+                    unavailable[0]["reason_kind"],
+                    "OBSERVATION_COUNT_UNVERIFIED",
+                )
+
+    def test_below_threshold_is_descriptive_only(self):
+        multiples, unavailable = build_exit_multiples(
+            historical_pe_band={"median": 18.5, "observations": 19},
+            user_pe_multiple=None,
+            min_observations=20,
+        )
+        self.assertEqual(multiples, [])
+        self.assertEqual(unavailable[0]["reason_kind"], "INSUFFICIENT_OBSERVATIONS")
+
+    def test_verified_threshold_count_can_be_used_as_reference(self):
+        multiples, unavailable = build_exit_multiples(
+            historical_pe_band={"median": 18.5, "observations": 20},
+            user_pe_multiple=None,
+            min_observations=20,
+        )
+        self.assertEqual(len(multiples), 1)
+        self.assertEqual(multiples[0].value, 18.5)
+        self.assertEqual(multiples[0].sample_size, 20)
+        self.assertEqual(unavailable, [])
+
+    def test_explicit_user_multiple_remains_usable_without_historical_count(self):
+        multiples, unavailable = build_exit_multiples(
+            historical_pe_band={"median": 18.5},
+            user_pe_multiple=25.0,
+            min_observations=20,
+        )
+        self.assertEqual(len(multiples), 1)
+        self.assertEqual(multiples[0].value, 25.0)
+        self.assertEqual(multiples[0].source, "user_supplied")
+        self.assertEqual(unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
 
 
 class TestRequiredExitPrice(unittest.TestCase):
