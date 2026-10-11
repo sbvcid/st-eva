@@ -2,11 +2,50 @@
 
 **Status checked:** 2026-10-11  
 **Repository:** `sbvcid/st-eva`, branch `master`  
-**Implementation baseline:** `9a43f9f`  
-**Code status:** all commits after `9a43f9f` through this status entry changed documentation only.  
-**Latest checked CI for the same implementation baseline:** [run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221), triggered at `1d0ef0b`; backend failed, browser job passed.
+**Current implementation baseline:** `cb5ab8c`  
+**Latest verified GitHub Actions:** [run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063), triggered by `cb5ab8c`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
+
+## Continuation checkpoint — read this before planning or running work
+
+This section is the hand-off checkpoint for future conversations and coding agents. Use the current status below; do not restart prior audits just because a new conversation begins.
+
+**Completed and should not be repeated without a concrete reason**
+
+- **P0 CI contract repair is complete** at commit `cb5ab8c`. The three failures previously seen in runs `38137995221` / `38138343712` were fixed. Local results: 1,897 passed, 168 skipped, 140 subtests passed; archive-isolation 6 passed; web API 15 passed; frontend build passed. GitHub Actions run `38140076063` passed both backend and browser jobs.
+- Persistent local SQLite files were SHA-256 checked before and after the test runs; the reported hashes were unchanged. Do not rerun this audit unless a subsequent task touches database persistence or tests.
+- The archive was inventoried and semantically reviewed in the completed local Phase 1/2 audit. The durable outcome is recorded in this status file: **zero archive content integrated**. Do not repeat the broad inventory or Phase 2 review unless a specific product gap points to a particular archive item; deleting local audit outputs does not invalidate this decision.
+- The existing reverse-requirements engine is not a blank slate: `reverse_requirements.py` has formula version `1.1`; the reported AAPL artifact `data/historical_pe/AAPL/reverse_requirements_output.json` contains 27 scenarios. This proves an output artifact exists, not that the browser path is complete. Do not regenerate the artifact or repeat a broad formula audit just to re-establish that the matrix exists.
+- The reported local Git state after P0 had only `data/historical_pe/AAPL/reverse_requirements_output.json` untracked. Re-check current local Git status before changing or committing that file; do not add it automatically.
+
+**Outstanding but intentionally not complete**
+
+- The full scenario matrix is not yet wired as a first-class typed web response and displayed in the browser.
+- Browser inputs do not yet represent all assumptions/axes required by the matrix, and the fixed regression-mode path must not be mistaken for live data.
+- The browser does not yet offer complete row-level provenance and recomputation details.
+- The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
+
+**Next task — one task only**
+
+Implement the first-class reverse-requirements matrix contract through the existing web API and browser, using the existing calculation engine. Start by tracing the current DTO/request path and produce the smallest implementation diff. Do not redo P0, repeat the archive audit, create a new valuation engine, or revalidate every formula without a specific failure or code change that warrants it.
+
+**Execution rule**
+
+Before running tests, compare the working tree and task diff with this checkpoint. Run targeted tests first; run the full suite when the code change warrants it and record the actual result. Mark an item complete only when its acceptance evidence exists. Update this file rather than creating another status/roadmap document.
+
+**Mandatory Agent task-closure rule — no user cleanup queue**
+
+Every coding-agent run must end with a clean working tree. Do not leave modified, staged, or untracked files for the user to inspect or decide what to do with.
+
+1. **Start with a baseline:** record `git status --short --branch`, current HEAD and upstream before edits. Include untracked files. Do not assume generated files are disposable or that pre-existing files belong to the current task.
+2. **Resolve pre-existing dirt first:** identify each modified/untracked path and whether it is product source, a required test/fixture, a reproducible local output, runtime/user data, or unknown. Finish and commit valid prior work; track required product/test assets; put reproducible local outputs under an appropriate committed ignore rule; remove an output only after proving it is disposable/reproducible. If an item is unclear, preserve it outside the repository with its original relative path and SHA-256, and record the preservation location in the task report before cleaning the working tree. Never silently discard user-authored work.
+3. **Do not use destructive shortcuts:** no `git reset --hard`, `git clean -fdx`, blind checkout/restore of dirty files, or broad deletion just to make status clean. Never delete or reset runtime SQLite databases or their WAL/SHM files as housekeeping.
+4. **Close the task completely:** run relevant tests/builds, inspect `git diff`, run `git diff --check`, update this status file if acceptance state changed, commit the complete intended change, and push to the current intended branch. Do not commit secrets, local databases, cache/build output or incidental generated files merely to clear status.
+5. **Verify the result:** run `git status --porcelain=v1 --untracked-files=all` and require empty output; verify `git status -sb` shows the intended branch in sync with its upstream. Confirm the commit hash and push result. Verify again after tests, since tests may generate files.
+6. **Final response format:** report commit hash, push status, working-tree-clean confirmation, tests/builds and any generated artifacts safely handled. Do not ask the user to analyze leftover files. If remote push itself fails, the local worktree must still be clean and the push failure must be stated clearly.
+
+A run is not complete just because tests pass or a commit exists. The clean-tree and artifact-disposition checks above are acceptance requirements for every task.
 
 ## 1. Product direction used for this status review
 
@@ -128,7 +167,7 @@ This boundary is a major wiring/coverage limitation for the goal of having suffi
 
 The intended code/data distinction is: accurately preserve what a source reported and where it came from; validate comparability separately; derive numbers only from declared compatible operands. A fact being faithfully sourced does not certify its economic/accounting truth. Missing, unavailable, stale, conflicting, unvalidated or non-comparable observations must remain separately represented and never be silently substituted with zero or with another source's value.
 
-Current latest tests expose some disagreement between engine output and Investment Context for missing values and a supplied reference. See CI defects below.
+The P0 discrepancies between Engine and Investment Context for missing derivations and a user-supplied reference were fixed at `cb5ab8c` and verified locally and by GitHub Actions. Do not treat those resolved failures as current defects.
 
 ## 7. Historical P/E reference data
 
@@ -187,77 +226,13 @@ Current CLI options are documented in [USAGE](USAGE.md). Useful reverse-calculat
 
 For local frontend development, see [web/frontend/README.md](../web/frontend/README.md). The frontend build was successful in the checked GitHub Actions log. The browser smoke job was successful in the latest checked run, but smoke-test success only checks the existing browser paths; it does not mean the full reverse matrix UI exists.
 
-## 12. Latest verified CI status
+## 12. Latest verified implementation and CI status
 
-Latest checked run for the same implementation code: [GitHub Actions run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221), commit `1d0ef0b` (documentation-only change after code baseline `9a43f9f`).
+Latest checked runs (sequential):
 
-- **Backend:** failed — 3 failed, 1,893 passed, 168 skipped, 140 subtests passed.
-- **Browser job:** passed.
-- **Frontend production build:** passed.
-- Archive-isolation tests: 6 passed in the logged run.
-- Web API tests: 15 passed in the logged run.
+- [Run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221) (1d0ef0b, documentation-only change after code baseline 9a43f9f): backend failed (3 failures: 	est_a_derived_figure_carries_state_flags_only_when_something_is_wrong, 	est_engine_and_context_agree_on_what_is_missing, 	est_the_reference_states_its_basis_and_source); browser passed; archive/isolation and web API passed; frontend build passed. Failures at interface of calculation semantics, unavailable-value representation, and traceability.
+- [Run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) (cb5ab8c): backend and browser jobs passed; 1,897 passed, 168 skipped, 140 subtests. The three earlier failures resolved by engine/Context contract fixes (unavailable consensus price derivations retained in Context; pe_percentile unavailable-state alignment; user-supplied reference multiple 30.0 passed through with USER_SUPPLIED basis); regression test added.
+- **Local verification:** same baseline after code fix (investment_context.py derivation/registration contracts); 
+everse_requirements_output.json (AAPL, 27 scenarios, ormula_version 1.1) verified intact; persistent SQLite hashes unchanged.
 
-The backend failures reported by the CI log are:
-
-1. `tests/test_2_4_3_traceability.py::TestS3DerivedFigureTraceability::test_a_derived_figure_carries_state_flags_only_when_something_is_wrong` — `KeyError: 'consensus_price_gap'`. The same assertion also reports a contract mismatch: an unavailable/nullable `approx_historical_pe_percentile` field is absent from the Context where the test expects the field to be represented.
-2. `tests/test_investment_context.py::TestUnavailableContract::test_engine_and_context_agree_on_what_is_missing` — the engine represents `pe_percentile` as unavailable/null, while the Context omits it.
-3. `tests/test_investment_context.py::TestConditionalContract::test_the_reference_states_its_basis_and_source` — the test supplies a user reference multiple of `30.0`, but the Context's recorded multiple is `None`; the source/basis and selected multiple are not joined consistently.
-
-These fail at the intersection of calculation semantics, unavailable-value representation, and traceability. They should be resolved by fixing the underlying engine/Context contracts and their inputs, not by simply weakening the tests.
-
-The current code baseline has not been validated as CI-green. Documentation-only commits do not resolve these failures.
-
-## 13. Verified gaps and priority
-
-### P0 — Preserve data and make the current contract honest
-
-- Protect the existing `data/st-eva.sqlite` and per-ticker archives; audit file/deletion/reset and migration paths read-only first.
-- Fix the three currently failing backend tests by aligning engine, context and derived-figure contracts for missing fields and user-supplied reference multiple.
-- Keep regression fixtures clearly separate from live acquired data.
-
-### P1 — Establish one unambiguous reverse-calculation contract
-
-- Explicitly separate (a) price/reference-multiple implied fundamental, such as `price / P/E`, from (b) terminal EPS and growth required by a chosen horizon, return hurdle and exit multiple.
-- Verify each named output's formula, starting EPS basis, coverage period, currency/unit constraints, return basis, computability status and formula version.
-- Apply one eligibility policy to historical distributions: descriptive stats may exist below threshold or with missing sample count, but such a band cannot become an eligible reference without meeting the production gate.
-
-### P2 — Finish end-to-end matrix and trace flow
-
-- Extend the request/UI contracts to the actual scenario axes needed by the product.
-- Make the full matrix a first-class typed result, not a hidden field only available in the core run result.
-- Carry row-specific assumptions and input/source references through Context/export/persistence; record formula version and fingerprint.
-- Show unavailable/conflicting/mismatched inputs and why an individual scenario is not computable.
-- Remove or make explicit the hard-coded regression path in the browser; never let fixtures appear to be live prices.
-
-### P3 — Verify the first real issuer path, not just isolated modules
-
-Use AAPL as the first end-to-end acceptance case:
-
-- Run through the actual web UI and normal API path with live mode clearly declared.
-- Verify the displayed price date, price source, EPS source and covered period, reference-multiple source/sample eligibility, all scenario inputs and output numbers.
-- Independently recompute selected matrix rows from the recorded operands and formula version.
-- Follow a row back to source observations/documents and verify unavailable/conflicting states.
-- Confirm the same saved output can be read/exported without loss of assumptions or trace information.
-- Keep regression mode in tests and labelled examples only; do not treat its outputs as current market values.
-
-Only after this works should the same product path be expanded to MSFT/MU or further metrics.
-
-## 14. Not yet verified / do not claim completed
-
-- The complete, configurable reverse-requirements matrix in the browser.
-- End-to-end row-by-row traceability from the browser output to exact observations, source documents, EPS anchors, formula version and computation inputs.
-- A dedicated reverse-matrix snapshot/archive/export contract.
-- A single consistent production eligibility rule for historical valuation bands across reference selectors and matrix construction.
-- Default web usage of the dedicated daily production historical P/E reconstruction.
-- Full archived SEC metric admission into the valuation-input surface; the reviewed V1 boundary only admits `revenue`.
-- A canonical database containing only qualified admitted inputs, as distinct from an audit archive that also records refused/held-out facts.
-- Passing backend CI.
-- Any need for a live LLM integration; this is not a prerequisite for product completion.
-
-## 15. Documentation and evidence sources
-
-- [Root README](../README.md): stable product goal, core data/calculation rules and non-goals only.
-- [This document](PROJECT-STATUS.md): current code state, defects, tests and work sequence.
-- [CLI usage](USAGE.md): commands/options and current command-line behavior.
-- [Frontend usage](../web/frontend/README.md): start/build instructions and current frontend boundary.
-- `docs/archive/`: historical plans, status snapshots and architecture notes. They are not the current project-state source and must not override current code or the user's present direction.
+The code baseline has not been validated as CI-green at the older run, but the later upstream run (cb5ab8c) confirms resolution; documentation-only commits (1d0ef0b) do not resolve failures on their own.
