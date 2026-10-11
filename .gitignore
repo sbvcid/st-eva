@@ -9,11 +9,8 @@ venv/
 .ruff_cache/
 /research/
 
-# Web build output and dependencies. The real directories live at
-# web/frontend/node_modules/ and web/frontend/dist/ and were already covered by
-# web/frontend/.gitignore (lines "node_modules" and "dist"). These two rules
-# additionally cover the layout docs/archive/ST-EVA-PROJECT-STRUCTURE.md §2.2 names, so
-# a web/-level frontend would be ignored too. Belt and braces, not a fix.
+# Alternate web-root build output and dependency paths. The actual frontend also
+# has its own ignore rules under web/frontend/.
 web/node_modules/
 web/dist/
 
@@ -25,4 +22,3 @@ web/dist/
 /data/**/*.sqlite-wal
 /data/**/*.sqlite-shm
 /data/archives/
-
