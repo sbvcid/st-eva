@@ -521,6 +521,15 @@ class TestUnavailableContract(unittest.TestCase):
             "the MSFT fixture is chosen because most of its inputs are absent",
         )
 
+    def test_consensus_price_derivations_agree_on_missing_state(self):
+        """When median PE cross check is unavailable, consensus price ratio/gap are retained with unavailable provenance."""
+        document = build_context_for("MSFT")
+        for key in ("consensus_price_at_median", "consensus_price_ratio", "consensus_price_gap"):
+            self.assertIn(key, document["derived"])
+            figure = document["derived"][key]["figure"]
+            self.assertEqual(figure["provenance_kind"], PROVENANCE_UNAVAILABLE)
+            self.assertNotIn("value", figure)
+
 
 class TestConditionalContract(unittest.TestCase):
     def test_every_implied_figure_is_conditioned(self):
