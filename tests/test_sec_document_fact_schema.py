@@ -1,29 +1,11 @@
-"""
-ST-EVA 0021 - XBRL document-fact provenance schema conformance.
+"""Tests for the current XBRL document-fact provenance schema.
 
-Every assertion here is about what the archive *does now*, and each one is
-anchored to a decision frozen in
-`docs/archive/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Amendment 2 rather than to a
-preference:
+Assertions cover the current tables, identities, constraints, uniqueness, and
+trigger behavior using literal fixtures and in-memory SQLite. No network,
+external workspace files, or runtime database is needed.
 
-    §1.1  two additive relations, their keys, their evidence payload
-    §1.3  the `observation_sources` guard, and the gate that refuses to apply it
-          over data it would contradict
-    §2    "occurrence" is a LOGICAL fact in a document, not a physical byte
-          span -- so `ix:continuation` does not split one fact into two
-    §3    the eight-field preimage, every field kept out of it, and Cases A-F
-    §4    five distinct uniqueness notions, counted at document grain
-    §8    the amendment-2 correction: a document-route observation carries the
-          accession-scoped `sfid_`, never NULL and never a `dfid_`
-
-Nothing here fetches anything, reads `%TEMP%`, or touches the network. The
-archive is in-memory and every value is a literal.
-
-`dfid_` is recomputed *in this file*, not imported, for the same reason
-`test_sec_provenance_schema.py` reimplements every other identity locally: the
-point of a schema test is that the key is reproducible from the stored preimage
-by someone who never saw a writer. 0021 is a schema migration and 3C-B is not
-authorised, so there is no writer to import from.
+The identity is recomputed in this file from its declared fields so the schema
+test checks the persisted preimage rather than trusting a production writer.
 """
 
 from __future__ import annotations
@@ -63,20 +45,20 @@ OCCURRENCES = "filing_document_fact_occurrences"
 LINKS = "observation_filing_document_facts"
 NODE_UNIQUE_INDEX = "fact_occurrences_node_unique"
 
-#: The eight fields Amendment 2 §3 freezes as the identity, and nothing else.
+#: The eight fields the current identity rule freezes as the identity, and nothing else.
 IDENTITY_FIELDS: Tuple[str, ...] = (
     "provider", "asset_id", "accession", "document_id",
     "taxonomy", "tag", "context_ref", "unit_ref",
 )
 
-#: The five columns of the node-uniqueness index. Amendment 2 §1.1/§3 name
+#: The five columns of the node-uniqueness index. the current schema name
 #: them; the test reads them back out of `sqlite_master` rather than restating
 #: them, so a wrong index fails here even when the SQL was written to match.
 NODE_UNIQUE_COLUMNS: Tuple[str, ...] = (
     "document_id", "taxonomy", "tag", "context_ref", "unit_ref",
 )
 
-#: Every column Amendment 2 §1.1 specifies, mapped to whether SQLite reports it
+#: Every column the current schema specifies, mapped to whether SQLite reports it
 #: NOT NULL. Nothing else may appear.
 #:
 #: `document_fact_id` is the one `False`: it is a TEXT PRIMARY KEY and this
@@ -116,7 +98,7 @@ OCCURRENCE_NOT_NULL: Dict[str, bool] = {
     "capture_kind": True,
 }
 
-#: Fields Amendment 2 §3 excludes from the preimage. Excluded from identity is
+#: Fields the current identity rule excludes from the preimage. Excluded from identity is
 #: not excluded from the archive, so each must still be stored.
 EXCLUDED_FROM_IDENTITY: Tuple[str, ...] = (
     "value_text", "filename", "period_start", "period_end",
@@ -133,10 +115,9 @@ CLASSIFIER_COLUMNS: Tuple[str, ...] = (
 
 DEFAULT_SPANS = [{"start": 30537, "end": 30926, "xpath": "//ix:nonFraction[1]"}]
 
-#: The approved schema head, frozen. A regression that drops, reorders or
-#: renames any approved migration must fail here rather than silently follow
-#: the file count. Moving to 0023 is a new phase and must amend this number
-#: deliberately; the test must not adopt a future head on its own.
+#: Expected migration head for the schema covered by this test. When an
+#: intentional migration changes the head, update this baseline as part of
+#: that change and review the related schema assertions.
 EXPECTED_MIGRATION_HEAD = 22
 
 
@@ -500,13 +481,13 @@ class TestMigrationApplies(FactOccurrenceArchive):
         self.assertEqual(0, self.count(
             "sqlite_master", "name = '_migration_0021_gate'"))
 
-    def test_the_columns_are_exactly_the_frozen_set(self):
+    def test_the_columns_are_exactly_the_expected_set(self):
         self.assertEqual(set(OCCURRENCE_NOT_NULL),
                          set(self.columns(OCCURRENCES)))
         self.assertEqual(("observation_id", "document_fact_id"),
                          self.columns(LINKS))
 
-    def test_the_nullability_is_exactly_the_frozen_set(self):
+    def test_the_nullability_is_exactly_the_expected_set(self):
         self.assertEqual(OCCURRENCE_NOT_NULL, self.columns_of(OCCURRENCES))
 
     def test_no_backfill_happened(self):
@@ -536,7 +517,7 @@ class TestMigrationApplies(FactOccurrenceArchive):
 
 
 # ---------------------------------------------------------------------------
-# D + Amendment 2 §3 Cases A-F -- the preimage
+# D + the current identity rule Cases A-F -- the preimage
 # ---------------------------------------------------------------------------
 
 
@@ -638,7 +619,7 @@ class TestIdentityPreimage(FactOccurrenceArchive):
             varied = self.occurrence_row(**overrides)
             self.assertEqual(
                 baseline["document_fact_id"], varied["document_fact_id"],
-                f"{name} is excluded from the preimage (Amendment 2 §3)",
+                f"{name} is excluded from the preimage (the current identity rule)",
             )
 
     def test_every_excluded_field_is_still_stored(self):
@@ -874,7 +855,7 @@ class TestObservationLink(FactOccurrenceArchive):
         self.assertEqual(1, self.count(LINKS))
 
     def test_the_link_is_not_a_candidate_document_relation(self):
-        """Amendment 2 §1.2: it never creates a source-document assertion."""
+        """the current schema rule: it never creates a source-document assertion."""
         self.link(self.observation_id, self.insert_occurrence())
         self.connection.commit()
         self.assertEqual(0, self.count("observation_filing_documents"))
@@ -893,7 +874,7 @@ class TestObservationLink(FactOccurrenceArchive):
 
 
 # ---------------------------------------------------------------------------
-# L -- the frozen relation is untouched
+# L -- the current relation remains untouched
 # ---------------------------------------------------------------------------
 
 
