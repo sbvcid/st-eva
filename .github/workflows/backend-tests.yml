@@ -27,6 +27,21 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install -r requirements-test.txt
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/frontend/package-lock.json
+
+      # tests/test_web_api.py asserts real static and PWA serving
+      # (index.html, manifest.webmanifest, sw.js, icons), so the web layer needs
+      # a real build output, not just the Python dependencies.
+      - name: Build frontend
+        working-directory: web/frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Assert production inputs are self-contained
         # The MSFT Historical P/E production path must not depend on the
         # git-ignored research/ tree. A clean CI checkout never has it.
@@ -38,24 +53,24 @@ jobs:
             test -f "data/historical_pe/MSFT/$f" || { echo "missing data/historical_pe/MSFT/$f"; exit 1; }
           done
 
+      # These two modules drive background-job wiring using short real-time
+      # sleeps, which is tight on a loaded runner. Retried, not excluded.
       - name: Run archive isolation tests
-        # These exercise background-job wiring with short real-time sleeps, which
-        # is tight on a loaded CI runner. Retry rather than exclude.
         run: python -m pytest tests/test_archive_isolation.py -v --tb=line --reruns 2 --reruns-delay 10
 
       - name: Run web API tests
         run: python -m pytest tests/test_web_api.py -v --tb=line --reruns 2 --reruns-delay 10
 
       - name: Run backend test suite
-        run: python -m pytest tests/ -q --tb=line -rf \
+        run: python -m pytest tests/ -q --tb=line \
           --ignore=tests/test_browser_smoke.py \
           --ignore=tests/test_archive_isolation.py \
           --ignore=tests/test_web_api.py
 
   browser:
-    # Real-browser end-to-end tests. They need a built frontend and a Chromium
-    # install, and they fetch live market/EDGAR data, so they run as a separate
-    # job with a longer allowance.
+    # Real-browser end-to-end tests. Separate job so the Node build and Chromium
+    # install are not paid for by the core backend suite, and so the longer
+    # allowance applies only to the tests that fetch live market data.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -92,7 +107,7 @@ jobs:
         run: |
           test -f web/frontend/dist/index.html || { echo "frontend build produced no index.html"; exit 1; }
 
-      # These tests run real analyses against live SEC/market endpoints. Retry
-      # transient upstream slowness; the tests are not excluded from CI.
+      # These tests drive real analyses against live SEC and market endpoints.
+      # Retry transient upstream slowness; the tests are not excluded from CI.
       - name: Run browser smoke tests
         run: python -m pytest tests/test_browser_smoke.py -v --reruns 2 --reruns-delay 15
