@@ -44,7 +44,7 @@ CUTOFF_ET = datetime.time(16, 0)
 
 METHODOLOGY = "historical-pe/1.0"
 METHODOLOGY_AMENDMENT = "Amendment 1 (2026-10-07), Decisions 10-14"
-LOGIC_VERSION = "historical-pe/1.0.1"
+LOGIC_VERSION = "historical-pe/1.0.2"
 FORMULA_VERSION = "historical-pe/1.0"
 
 # Explicit reason-code enumeration included in each result.
@@ -1083,6 +1083,58 @@ def _acceptance_input_digest(acceptance_path: Path) -> str:
     return _sha256_of(acceptance_path)
 
 
+def restore_as_traded_close(
+    close: float,
+    price_date: str,
+    splits: Mapping[str, Mapping[str, Any]],
+) -> Tuple[float, Tuple[Dict[str, Any], ...], Optional[str]]:
+    """Restore a provider's split-adjusted close to the share basis traded on price_date.
+
+    Yahoo's historical close series reflects later split events. A historical
+    date must therefore be multiplied by every split whose ex-date is after
+    that date, not just the earliest split in the response.
+    """
+    events: List[Dict[str, Any]] = []
+    for stamp, entry in splits.items():
+        ex_date = datetime.datetime.fromtimestamp(int(stamp), UTC).date().isoformat()
+        numerator = float(entry["numerator"])
+        denominator = float(entry["denominator"])
+        if not math.isfinite(numerator) or not math.isfinite(denominator) or numerator <= 0 or denominator <= 0:
+            raise ValueError(f"Invalid split ratio for {ex_date}: {numerator}:{denominator}")
+        ratio = numerator / denominator
+        ratio_label = entry.get("splitRatio") or f"{numerator:g}:{denominator:g}"
+        events.append({
+            "ex_date": ex_date,
+            "ratio": ratio,
+            "ratio_label": str(ratio_label),
+        })
+
+    applicable = sorted(
+        (event for event in events if event["ex_date"] > price_date),
+        key=lambda event: event["ex_date"],
+    )
+    factor = math.prod(event["ratio"] for event in applicable)
+    restored_close = close * factor
+    provenance = tuple({
+        "ex_date": event["ex_date"],
+        "split_ratio": event["ratio_label"],
+        "vendor_adjusted_close": close,
+        "restored_as_traded_close": restored_close,
+        "cumulative_restoration_factor": factor,
+    } for event in applicable)
+
+    note = None
+    if applicable:
+        split_dates = ", ".join(
+            f"{event['ex_date']} ({event['ratio_label']})" for event in applicable
+        )
+        note = (
+            f"Yahoo chart close multiplied by cumulative split factor {factor:g} "
+            f"to restore as-traded units using later splits: {split_dates}."
+        )
+    return restored_close, provenance, note
+
+
 def load_issuer_historical_pe(
     issuer_config: IssuerHistoricalPeConfig,
     enable_furnished: bool = True,
@@ -1116,32 +1168,15 @@ def load_issuer_historical_pe(
     }
     trading_days = sorted(bars.keys())
     
-    # Handle stock splits
+    # Restore each historical close from provider-adjusted units to the share
+    # basis actually traded on that date, accounting for every later split.
     splits = price_payload.get("events", {}).get("splits", {})
-    split_ex_date = None
-    split_ratio = 1.0
-    split_entry_data = None
     
-    if splits:
-        split_stamp = min(splits.keys())
-        split_entry = splits[split_stamp]
-        split_ex_date = datetime.datetime.fromtimestamp(int(split_stamp), UTC).date().isoformat()
-        split_ratio = float(split_entry["numerator"]) / float(split_entry["denominator"])
-        split_entry_data = split_entry
-    
-    # Build price evidence with as-traded close restoration
     prices_map: Dict[str, HistoricalPriceEvidence] = {}
     for day, close in bars.items():
-        restored_close = close
-        provenance = []
-        if split_ex_date and split_ex_date > day and split_entry_data:
-            restored_close = close * split_ratio
-            provenance.append({
-                "ex_date": split_ex_date,
-                "split_ratio": split_entry_data.get("splitRatio"),
-                "vendor_adjusted_close": close,
-                "restored_as_traded_close": restored_close,
-            })
+        restored_close, provenance, adjustment_note = restore_as_traded_close(
+            close, day, splits
+        )
         prices_map[day] = HistoricalPriceEvidence(
             price_evidence_id=f"price-{issuer_config.ticker}-{day}",
             issuer_id=issuer_config.issuer_id,
@@ -1150,12 +1185,8 @@ def load_issuer_historical_pe(
             close=round(restored_close, 4),
             currency="USD",
             price_source_url=f"https://query1.finance.yahoo.com/v8/finance/chart/{issuer_config.ticker}",
-            vendor_adjustment_note=(
-                f"Yahoo chart close multiplied by {split_ratio:g} to restore the as-traded basis "
-                f"for the {split_ex_date} split."
-                if provenance else None
-            ),
-            corporate_action_provenance=tuple(provenance),
+            vendor_adjustment_note=adjustment_note,
+            corporate_action_provenance=provenance,
             accounting_basis="as_traded",
             content_sha256=price_payload_hash,
         )
