@@ -34,13 +34,17 @@ class TestReportFormatter(unittest.TestCase):
 
     def test_report_renders_without_arithmetic(self):
         result = run_st_eva(
-            "MSFT", mode="regression", save_snapshot=False
+            "MSFT",
+            mode="regression",
+            reference_multiple=30.0,
+            save_snapshot=False,
         )
         report = render_report(result)
         # The implied EPS from the engine must appear verbatim.
         self.assertIn("14.1833", report)
         self.assertIn("425.50", report)
-        self.assertIn("historical_pe_median", report)
+        self.assertIn("user_supplied_multiple", report)
+        self.assertIn("樣本數未驗證", report)
 
     def test_report_declares_no_reference_when_multiple_missing(self):
         result = run_st_eva(
