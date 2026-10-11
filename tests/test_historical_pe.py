@@ -97,6 +97,63 @@ class TestStockSplitRestoration(unittest.TestCase):
         self.assertIsNone(same_day_note)
 
 
+class TestAAPL2020SplitEpsBasisConsistency(unittest.TestCase):
+    """Regression: AAPL 4:1 split 2020-08-31 — price and quarterly EPS
+    must share the same per-share basis at every evaluation date.
+
+    Verified against actual evidence: original 10-Q (accn 20-000062,
+    usable 2020-07-31) reports Q3 FY2020 EPS 2.58; 10-K restatement
+    (accn 20-000096, usable 2020-10-30) reports restated 0.65.
+    Pipeline selects by R-PIT-SUPERSEDE (latest usable_version per
+    quarter at evaluation_date). No observation exists in the Aug-31
+    … Oct-30 gap, so no pre-split EPS / post-split price pairing
+    can occur with this dataset.
+    """
+
+    def test_pre_split_uses_original_eps_post_split_uses_restatement(self):
+        from historical_pe import load_aapl_historical_pe
+        res = load_aapl_historical_pe(enable_furnished=True)
+        # Build lookup by evaluation_date
+        by_date = {o.evaluation_date: o for o in res.observations}
+        # Before split (2020-07-31): price ~425 (pre-split), EPS 2.58 original
+        pre = by_date.get("2020-07-31")
+        self.assertIsNotNone(pre, "pre-split observation missing")
+        self.assertEqual(pre.status, "AVAILABLE")
+        pre_prices = pre.price_state["close"]
+        self.assertGreater(pre_prices, 400, "pre-split price should be ~425")
+        pre_comps = {c["period_end"]: c for c in pre.eps_state.get("components", [])}
+        q3_pre = pre_comps.get("2020-06-27")
+        self.assertIsNotNone(q3_pre, "Q3 FY2020 component missing prep-split")
+        self.assertEqual(q3_pre["value"], 2.58)
+        self.assertEqual(q3_pre["accession"], "0000320193-20-000062")
+        pre_sum = sum(c["value"] for c in pre.eps_state.get("components", []))
+        self.assertGreater(pre_sum, 10, "pre-split TTM EPS sum ~13")
+        # After split / after 10-K restatement (2020-10-30): price ~109 (post-split), EPS restated 0.65
+        post = by_date.get("2020-10-30")
+        self.assertIsNotNone(post, "post-split observation missing")
+        self.assertEqual(post.status, "AVAILABLE")
+        post_price = post.price_state["close"]
+        self.assertLess(post_price, 120, "post-split price should be ~109")
+        # Pre/post price ratio ~4 (allow width for market movement around split)
+        self.assertGreater(pre_prices / post_price, 3.5)
+        post_comps = {c["period_end"]: c for c in post.eps_state.get("components", [])}
+        q3_post = post_comps.get("2020-06-27")
+        self.assertIsNotNone(q3_post, "Q3 FY2020 component missing post-split")
+        self.assertEqual(q3_post["value"], 0.65)
+        self.assertEqual(q3_post["accession"], "0000320193-20-000096")
+        post_sum = sum(c["value"] for c in post.eps_state.get("components", []))
+        self.assertLess(post_sum, 4, "post-split TTM EPS sum ~3.27")
+        # Restated EPS is ~1/4 of original (2.58 -> 0.65 for same quarter,
+        # rounded: 2.58/4 = 0.645 -> 0.65; allow round-off delta)
+        self.assertAlmostEqual(q3_post["value"] * 4.0, q3_pre["value"], delta=0.03)
+        # No mixed-basis window: every component at each date uses versions
+        # available at that evaluation date (R-PIT-SUPERSEDE).
+        for c in post.eps_state.get("components", []):
+            self.assertLessEqual(c["usable_date"], "2020-10-30")
+        for c in pre.eps_state.get("components", []):
+            self.assertLessEqual(c["usable_date"], "2020-07-31")
+
+
 class TestCutoffAndCalendarRules(unittest.TestCase):
     """Test the 16:00 ET usable-date convention and fiscal calendar resolver."""
 
