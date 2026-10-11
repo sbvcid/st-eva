@@ -1,32 +1,34 @@
-# React + TypeScript + Vite
+# ST-EVA Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This directory contains the React, TypeScript, and Vite browser client. It sends requests to the FastAPI service under `/api`.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Start the backend from the repository root:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+python -m uvicorn web.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+In a second terminal, start the frontend:
+
+```powershell
+cd web/frontend
+npm install
+npm run dev
+```
+
+Vite serves the client on port `5173` and proxies `/api` requests to `http://127.0.0.1:8000`, as configured in `vite.config.ts`.
+
+## Checks
+
+```powershell
+npm run build
+npm run lint
+```
+
+## Current UI boundary
+
+The current page supports ticker submission and presents summary valuation metrics, source/evidence identifiers, admission status, and archive/replay status. It is an incomplete front end for the intended reverse-valuation product: it does not yet expose the full configurable reverse-requirements matrix or the input/formula/source trace for each scenario.
+
+Do not infer from the presence of backend schemas or calculation functions that a capability is available in the browser. The root [README](../../README.md) defines the intended product and first-release acceptance conditions.
