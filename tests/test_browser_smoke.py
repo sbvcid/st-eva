@@ -3,8 +3,12 @@ End-to-End Real Browser Smoke Tests using Playwright.
 Verifies real Chromium execution against live FastAPI static serving and background jobs:
 - Desktop: AAPL analysis end-to-end, TSM contract refusal (1st class UX), invalid ticker
 - Mobile viewports (375px, 390px, 430px): layout sanity, no horizontal overflow, buttons/cards visible
+- Live mode selection: the browser request carries mode=live and the selected
+  assumptions, and the drawer renders that request's result rather than a
+  previous one (stubbed route contract; no market data is baked into it)
 """
 
+import json
 import time
 import threading
 import socket
@@ -318,3 +322,357 @@ class TestBrowserSmoke(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+# R3 regression: live-mode selection and assumption propagation through the
+# real browser. The API is answered by a Playwright route so the test needs no
+# network and no fixed market data; the response is *derived from the request's
+# own assumptions*, which is exactly what must be proven.
+
+
+LIVE_BASE_PRICE = 300.0
+LIVE_BASE_EPS = 7.50
+
+
+def _live_analysis_result(payload: dict) -> dict:
+    """An AnalysisResultDTO whose matrix is derived from the submitted assumptions."""
+    horizon = (payload.get("reverse_horizons") or [3.0])[0]
+    required_return = (payload.get("required_returns") or [0.10])[0]
+    exit_pe = payload.get("reference_multiple") or 20.0
+    exit_price = LIVE_BASE_PRICE * (1.0 + required_return) ** horizon
+    terminal_eps = exit_price / exit_pe
+    total_growth = (terminal_eps - LIVE_BASE_EPS) / LIVE_BASE_EPS
+    cagr = (terminal_eps / LIVE_BASE_EPS) ** (1.0 / horizon) - 1.0
+
+    return {
+        "ticker": payload["ticker"],
+        "company_name": "AAPL (Live Acquired)",
+        "status": "success",
+        "as_of": "2026-10-09",
+        "source_identifiers": [
+            "YahooFinance+YahooFinanceFundamentals",
+            "Yahoo Finance chart API",
+            "API_LIVE",
+        ],
+        "admission_summary": {
+            "total_admitted": 1,
+            "total_refused": 0,
+            "metrics_admitted": ["revenue"],
+            "refusals": [],
+        },
+        "valuation_summary": {
+            "current_price": LIVE_BASE_PRICE,
+            "currency": "USD",
+            "as_of": "2026-10-09",
+            "observed_pe": LIVE_BASE_PRICE / LIVE_BASE_EPS,
+            "limitations": [],
+        },
+        "replay_summary": {"attempted": False},
+        "refusal_reasons": [],
+        "reverse_requirements": {
+            "formula_version": "reverse-requirements/1.1",
+            "fingerprint": "f" * 64,
+            "status": "COMPUTED",
+            "status_reason": None,
+            "matrix_size": 1,
+            "as_of": "2026-10-09",
+            "market_price": {
+                "value": LIVE_BASE_PRICE,
+                "currency": "USD",
+                "source": "Yahoo Finance chart API",
+            },
+            "start_anchor": {
+                "value": LIVE_BASE_EPS,
+                "basis": "TRAILING_TWELVE_MONTHS",
+                "months_covered": 12.0,
+                "provider": "YahooFinance+YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "is_user_assumption": False,
+            },
+            "unavailable": [],
+            "reading_notes": [],
+            "reverse_requirements_matrix": [
+                {
+                    "horizon_years": horizon,
+                    "required_return": required_return,
+                    "required_return_basis": "PRICE_RETURN_ONLY",
+                    "price": LIVE_BASE_PRICE,
+                    "as_of": "2026-10-09",
+                    "start_eps": {
+                        "value": LIVE_BASE_EPS,
+                        "basis": "TRAILING_TWELVE_MONTHS",
+                        "months_covered": 12.0,
+                        "provider": "YahooFinance+YahooFinanceFundamentals",
+                        "currency": "USD",
+                        "period_undeclared_by_source": True,
+                        "source_type": "API_LIVE",
+                        "observation_id": "ev-current-eps-001",
+                        "is_user_assumption": False,
+                        "sec_fact": None,
+                    },
+                    "exit_multiple": {
+                        "value": exit_pe,
+                        "source": "user_supplied",
+                        "is_user_assumption": True,
+                        "eligibility_state": "USER_SPECIFIED",
+                        "usable_for_reference": True,
+                    },
+                    "required_exit_price": exit_price,
+                    "required_terminal_eps": terminal_eps,
+                    "total_terminal_eps_growth": total_growth,
+                    "required_eps_cagr": cagr,
+                    "growth_years": horizon,
+                    "flags": ["REQUIRED_RETURN_EXCLUDES_DIVIDENDS"],
+                    "formula_version": "reverse-requirements/1.1",
+                    "calculation_steps": [
+                        {
+                            "step_number": 1,
+                            "step_id": "required_exit_price",
+                            "name": "Required Exit Price",
+                            "formula_expression": "P_T = P_0 * (1 + r)^T",
+                            "operands": {
+                                "price": LIVE_BASE_PRICE,
+                                "required_return": required_return,
+                                "horizon_years": horizon,
+                            },
+                            "output_value": exit_price,
+                            "output_unit": "USD",
+                            "reproducible": True,
+                            "status": "COMPUTED",
+                        },
+                        {
+                            "step_number": 2,
+                            "step_id": "required_terminal_eps",
+                            "name": "Required Terminal EPS",
+                            "formula_expression": "EPS_T = P_T / Exit_PE",
+                            "operands": {
+                                "required_exit_price": exit_price,
+                                "exit_multiple": exit_pe,
+                            },
+                            "output_value": terminal_eps,
+                            "output_unit": "USD/share",
+                            "reproducible": True,
+                            "status": "COMPUTED",
+                        },
+                    ],
+                    "evidence": {
+                        "price_evidence": {
+                            "value": LIVE_BASE_PRICE,
+                            "currency": "USD",
+                            "provider": "YahooFinance+YahooFinanceFundamentals",
+                            "source_type": "API_LIVE",
+                            "observation_id": "ev-price-001",
+                            "is_user_assumption": False,
+                        },
+                        "eps_evidence": {
+                            "value": LIVE_BASE_EPS,
+                            "basis": "TRAILING_TWELVE_MONTHS",
+                            "months_covered": 12.0,
+                            "provider": "YahooFinance+YahooFinanceFundamentals",
+                            "currency": "USD",
+                            "period_undeclared_by_source": True,
+                            "source_type": "API_LIVE",
+                            "observation_id": "ev-current-eps-001",
+                            "is_user_assumption": False,
+                            "sec_fact": None,
+                        },
+                        "multiple_evidence": {
+                            "value": exit_pe,
+                            "source": "user_supplied",
+                            "is_user_assumption": True,
+                            "eligibility_state": "USER_SPECIFIED",
+                            "usable_for_reference": True,
+                        },
+                        "user_assumptions": [
+                            f"Holding Horizon: {horizon} years",
+                            f"Required Return Hurdle: {required_return:.2%} (PRICE_RETURN_ONLY)",
+                            f"Exit Multiple: {exit_pe}x (user-supplied)",
+                        ],
+                        "sourced_facts": [
+                            f"Market Price: {LIVE_BASE_PRICE} USD "
+                            "(as-of 2026-10-09, provider: YahooFinance+YahooFinanceFundamentals)",
+                            f"Starting EPS: {LIVE_BASE_EPS} USD "
+                            "(TRAILING_TWELVE_MONTHS, provider: YahooFinance+YahooFinanceFundamentals)",
+                        ],
+                        "missing_or_unvalidated": [
+                            "Starting EPS period coverage was not declared by source",
+                            "Direct SEC source of selected EPS not established; related filing shown for cross-check only",
+                        ],
+                        "related_sec_evidence": {
+                            "accession": "0000320193-25-000079",
+                            "form": "10-K",
+                            "filed_date": "2025-10-31",
+                            "concept": "us-gaap:EarningsPerShareDiluted",
+                            "unit": "USD/shares",
+                            "document_url": None,
+                            "note": (
+                                "Related SEC filing (cross-check); not verified as "
+                                "direct source of selected EPS value"
+                            ),
+                        },
+                    },
+                }
+            ],
+        },
+    }
+
+
+class TestLiveModeSelectionBrowser(unittest.TestCase):
+    """The browser sends live mode and the selected assumptions, and renders that result."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._archive_tmp = tempfile.TemporaryDirectory(prefix="steva-live-mode-")
+        cls.archive_dir = cls._archive_tmp.name
+        cls.port = find_free_port()
+        cls.base_url = f"http://127.0.0.1:{cls.port}"
+        app = create_app(archives_dir=cls.archive_dir)
+        config = uvicorn.Config(app, host="127.0.0.1", port=cls.port, log_level="warning")
+        cls.server = uvicorn.Server(config)
+        cls.server_thread = threading.Thread(target=cls.server.run, daemon=True)
+        cls.server_thread.start()
+        for _ in range(50):
+            try:
+                with socket.create_connection(("127.0.0.1", cls.port), timeout=0.1):
+                    break
+            except (ConnectionRefusedError, OSError):
+                time.sleep(0.1)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.should_exit = True
+        cls.server_thread.join(timeout=2.0)
+        cls._archive_tmp.cleanup()
+
+    def test_live_mode_assumption_round_trip(self):
+        submitted = []
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale="en-US", viewport={"width": 1400, "height": 1100})
+            # The PWA service worker is registered separately
+            # (`test_pwa_metadata_and_service_worker`); here it must stay out of
+            # the way because it relays `/api` requests itself, which would hide
+            # the outgoing request from the route interception this test asserts.
+            context.add_init_script(
+                "Object.defineProperty(navigator, 'serviceWorker', { configurable: true, "
+                "get() { return { register: () => Promise.reject(new Error('disabled in test')), "
+                "addEventListener() {}, removeEventListener() {} }; } });"
+            )
+            page = context.new_page()
+
+            def handle_analyze(route):
+                payload = json.loads(route.request.post_data or "{}")
+                submitted.append(payload)
+                route.fulfill(
+                    status=202,
+                    json={
+                        "job_id": f"job-r3-{len(submitted)}",
+                        "ticker": payload["ticker"],
+                        "status": "PENDING",
+                    },
+                )
+
+            def handle_job(route):
+                job_id = route.request.url.rsplit("/", 1)[-1]
+                index = int(job_id.rsplit("-", 1)[-1]) - 1
+                payload = submitted[index]
+                route.fulfill(
+                    status=200,
+                    json={
+                        "job_id": job_id,
+                        "ticker": payload["ticker"],
+                        "status": "COMPLETED",
+                        "stage": "completed",
+                        "created_at": "2026-10-11T00:00:00Z",
+                        "updated_at": "2026-10-11T00:00:00Z",
+                        "error": None,
+                        "result": _live_analysis_result(payload),
+                    },
+                )
+
+            page.route("**/api/analyze", handle_analyze)
+            page.route("**/api/jobs/*", handle_job)
+
+            page.goto(self.base_url)
+            page.wait_for_selector("text=Reverse-engineer market expectations")
+
+            # Select the non-regression acquisition mode and an initial
+            # assumption set, then submit.
+            page.locator("button:has-text('Scenario Assumptions')").click()
+            page.select_option("select >> nth=0", "live")
+            page.locator("input[placeholder='e.g. 20.0']").fill("20")
+            page.locator("input[placeholder*='e.g. 1.0, 2.0, 3.0, 5.0']").fill("3")
+            page.locator("input[placeholder*='e.g. 8, 10, 12, 15']").fill("10")
+
+            page.locator("input[placeholder*='Enter ticker']").fill("AAPL")
+            page.locator("button[type='submit']").click()
+            page.wait_for_selector("text=Analysis Verdict", timeout=30000)
+
+            self.assertEqual(
+                submitted[0],
+                {
+                    "ticker": "AAPL",
+                    "mode": "live",
+                    "reference_multiple": 20.0,
+                    "reverse_horizons": [3.0],
+                    "required_returns": [0.10],
+                },
+            )
+
+            # Live identities, not a fixture: no regression banner, live mode chip.
+            self.assertEqual(page.locator("text=REGRESSION FIXTURE (TEST DATA)").count(), 0)
+            self.assertGreater(page.locator("text=Mode: live").count(), 0)
+
+            # The displayed matrix matches the request's assumptions.
+            page.wait_for_selector("text=Reverse Requirements Matrix")
+            matrix_text = page.locator("body").inner_text()
+            self.assertIn("3.0y", matrix_text)
+            self.assertIn("10.0%", matrix_text)
+            self.assertIn("20.0x", matrix_text)
+            expected_exit_price = LIVE_BASE_PRICE * (1.10 ** 3)
+            expected_terminal_eps = expected_exit_price / 20.0
+            self.assertIn(f"{expected_exit_price:,.2f}", matrix_text)
+            self.assertIn(f"{expected_terminal_eps:,.2f}", matrix_text)
+
+            # The audit drawer renders live provenance without claiming an SEC source.
+            page.locator("button[title='Toggle details']").first.click()
+            drawer_text = page.locator("body").inner_text()
+            self.assertIn("Provider: YahooFinance+YahooFinanceFundamentals", drawer_text)
+            self.assertIn("Provider-Sourced (SEC Link Not Established)", drawer_text)
+            self.assertIn("Direct SEC source: not established", drawer_text)
+            self.assertIn("Related SEC 10-K (cross-check)", drawer_text)
+            self.assertNotIn("Source: SEC 10-K", drawer_text)
+
+            # Change an assumption and resubmit: the request must carry it and the
+            # drawer must render the new result, not the previous one.
+            page.locator("input[placeholder='e.g. 20.0']").fill("32")
+            page.locator("input[placeholder*='e.g. 8, 10, 12, 15']").fill("12")
+            page.locator("button[type='submit']").click()
+            page.wait_for_timeout(2000)
+
+            self.assertEqual(len(submitted), 2)
+            self.assertEqual(
+                submitted[1],
+                {
+                    "ticker": "AAPL",
+                    "mode": "live",
+                    "reference_multiple": 32.0,
+                    "reverse_horizons": [3.0],
+                    "required_returns": [0.12],
+                },
+            )
+            self.assertGreater(page.locator("text=Analysis Verdict").count(), 0)
+
+            new_matrix_text = page.locator("body").inner_text()
+            self.assertIn("12.0%", new_matrix_text)
+            self.assertIn("32.0x", new_matrix_text)
+            self.assertNotIn("20.0x", new_matrix_text)
+            new_exit_price = LIVE_BASE_PRICE * (1.12 ** 3)
+            new_terminal_eps = new_exit_price / 32.0
+            self.assertIn(f"{new_exit_price:,.2f}", new_matrix_text)
+            self.assertIn(f"{new_terminal_eps:,.2f}", new_matrix_text)
+            self.assertNotIn(f"{expected_exit_price:,.2f}", new_matrix_text)
+            self.assertNotIn(f"{expected_terminal_eps:,.2f}", new_matrix_text)
+
+            context.close()
+            browser.close()

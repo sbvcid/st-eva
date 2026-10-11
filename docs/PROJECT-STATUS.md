@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `3e9ec3d` (R2.1 provenance binding corrected by observation identity, not value equality)
-**Latest verified GitHub Actions:** [Run 38160351228](https://github.com/sbvcid/st-eva/actions/runs/38160351228), triggered by `3e9ec3d`; backend and browser jobs passed.
+**Current implementation baseline:** `9638722` (R2.1 provenance binding corrected); R3 real AAPL live acceptance verified against it
+**Latest verified GitHub Actions:** see §12. Runs `38160351228` and `38160824276` (`3e9ec3d`, `9638722`) passed backend and browser; the last full suite run before R3 was green on `9638722`.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -24,7 +24,11 @@ This section is the hand-off checkpoint for future conversations and coding agen
   - Frontend UI in `App.tsx` exposes assumption controls (collapsible configuration panel), forwards user inputs, and displays the full matrix via `<ReverseRequirementsMatrix>` with horizon/return filtering, uncomputable badges/reasons, and drawer notes.
   - Regression mode is no longer secretly forced for MSFT/0700.HK without notice; explicit mode controls are available and when regression fixture data is detected, a prominent "REGRESSION FIXTURE (TEST DATA)" warning banner prevents test fixtures from being mistaken for live quotes.
   - Uncomputable scenarios and matrix states (e.g. non-positive EPS anchor, window < 0.5 yrs) are explicitly represented with structured reason codes/messages, never zero-filled or hidden.
-  - Verified with 20 web API tests, 44 wiring tests, 6 archive isolation tests, 24 Vitest frontend unit tests, 7 browser smoke tests, and the full backend suite (1,897 passed, 168 skipped, 140 subtests).
+  - Verified when R1 landed with 20 web API tests, 44 wiring tests, 6 archive isolation tests, 24 Vitest frontend unit tests, 7 browser smoke tests, and the full backend suite (1,897 passed, 168 skipped, 140 subtests). The R3 section records the counts the same suites report now.
+- **R3 Real AAPL end-to-end acceptance is complete** (2026-10-11, live acquisition, no fixture data):
+  - The full matrix, assumption controls, row-level calculation traces and provenance drawer were exercised through the **real web application path** (FastAPI app + built frontend in headless Chromium), ticker `AAPL`, **explicitly selected mode `live`** (never `auto`, never `regression`), with an isolated temporary archive directory.
+  - Two submissions were made with different assumption sets and both requests, responses and rendered drawers were verified; see the R3 section below for the exact payloads, values and recomputations.
+  - `tests/test_r3_live_aapl_acceptance.py` is the reproducible acceptance harness (gated by `ST_EVA_R3_LIVE=1`; optional evidence record via `ST_EVA_R3_EVIDENCE`), so this acceptance can be re-run rather than only remembered.
 - **R2 Reverse scenario provenance and reproducibility is complete** (formula version `reverse-requirements/1.1`):
   - Row-level evidence contract defined and strongly typed in `web/schemas.py` and `web/frontend/src/types/api.ts` with `SecFactDTO`, `RelatedSecEvidenceDTO`, `MarketPriceEvidenceDTO`, `EpsAnchorEvidenceDTO`, `ExitMultipleEvidenceDTO`, `CalculationStepDTO`, and `ScenarioEvidenceDTO` attached to each `EpsScenarioDTO`.
   - Pure calculation engine in `reverse_requirements.py` generates deterministic 4-step execution traces (`build_scenario_calculation_steps()`): (1) Required Exit Price $P_T = P_0 \cdot (1 + r)^T$, (2) Required Terminal EPS $EPS_T = P_T / PE_{\text{exit}}$, (3) Total EPS Growth $\Delta EPS = (EPS_T - EPS_0) / EPS_0$, (4) Required EPS CAGR $g = (EPS_T / EPS_0)^{1 / t_{\text{growth}}} - 1$ or explicit uncomputable reason, verifying reproducibility within $10^{-4}$ tolerance.
@@ -39,12 +43,13 @@ This section is the hand-off checkpoint for future conversations and coding agen
 
 **Outstanding but intentionally not complete**
 
-- Full interactive point-in-time daily historical P/E distribution recomputation graph inside the browser drawer (currently provides verified sample count, observation range, and eligibility status).
+- On the web path, a submission that supplies **no** exit multiple cannot yet compute a matrix for AAPL from the acquisition alone: the provider historical P/E band holds only 8 usable observations, below the 20 required, so it is reported as `INSUFFICIENT_OBSERVATIONS` and never used as a reference multiple. Supplying the multiple is an explicit user assumption and the report says so; making an eligible historical reference available on the web path is the remaining gap R3 recorded, not a completed feature.
+- Full interactive point-in-time daily historical P/E distribution recomputation graph inside the browser drawer (currently provides verified sample count, observation range, and eligibility status). The production reconstruction itself (`historical_pe.load_issuer_historical_pe`) is not enabled on the web path: in the R3 live response `production_historical_pe` was `{}` and the reported band was the provider band distribution.
 - The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
 
 **Next task — one task only**
 
-Reconcile summary cards with reverse-requirements matrix metrics, unify displayed terminology, and extend export capabilities (e.g. JSON/CSV export of audit trail and scenario matrix).
+Make an eligible historical P/E reference available on the web acquisition path for a real ticker (for example by enabling and verifying the production point-in-time distribution, or by an equivalent verified source), so that an AAPL submission without a user-supplied exit multiple can compute its matrix from observed data instead of returning `NOT_COMPUTED`. The remaining R1 backlog items (summary-card/matrix terminology reconciliation, audit-trail export) stay unchanged.
 
 **Execution rule**
 
@@ -283,3 +288,41 @@ Local verification for the same commit before observing CI: full backend suite 1
 **Acceptance evidence:** `tests/test_r21_provenance_binding.py` (20 tests) proves (1) a vendor forward EPS does not inherit a historical SEC 10-K; (2) a consensus forward EPS does not inherit SEC filing metadata, including when its value equals a historical filing figure; (3) a same-ticker SEC record cannot attach because it is the first available record, even with an exactly equal value; (4) an SEC-derived anchor receives the correct filing reference only when the input-to-fact linkage is established (accession, form, filed date, concept, unit, period), and a vendor or other-concept observation with the same value does not; (5) user-supplied EPS has no SEC source attribution; (6) unresolved provenance is explicit in the API contract and the UI without hiding the EPS value or inventing a source; (7) deterministic calculation traces, `reverse-requirements/1.1` fingerprinting, and DTO error behavior remain intact. The suite was also run against the defective `78f387a` build: 12 of the 20 fail there, including the value-equality binding cases, and pass only against the corrected resolver.
 
 **Local verification:** full backend suite 1,958 passed, 168 skipped, 140 subtests passed (348.69s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; Playwright browser smoke 8 passed; Vitest 27 passed; production frontend build produced `dist/index.html`; `git diff --check` clean. No new acquisition, registry, export, or archive integration; no SQLite database deleted, reset, recreated, or overwritten; formula version unchanged at `reverse-requirements/1.1`.
+
+## R3 — Real AAPL End-to-End Acceptance (accepted 2026-10-11, live acquisition)
+
+**Path exercised:** the real web application — FastAPI app created with `create_app(archives_dir=<temporary directory>)` serving the production frontend build in headless Chromium, with submissions made through the browser's own assumption controls. Ticker `AAPL`, mode **explicitly `live`** (never `auto`, never `regression`). No fixture, mock or regression data was used for the acquisition; the archive directory was temporary and isolated.
+
+**Submission 1:** ``{"ticker": "AAPL", "mode": "live", "reference_multiple": 30, "reverse_horizons": [3], "required_returns": [0.1]}``
+
+**Submission 2 (changed assumptions):** ``{"ticker": "AAPL", "mode": "live", "reference_multiple": 32, "reverse_horizons": [3], "required_returns": [0.12]}``
+
+**What the response and the browser actually showed (live acquisition, data date 2026-10-09):**
+- Ticker `AAPL`, company `AAPL (Live Acquired)`, admission status **ADMITTED** (1 admitted / 0 refused, admitted metric: `revenue`).
+- Market price **336.64 USD**, as-of 2026-10-09; `source_identifiers` = `YahooFinance+YahooFinanceFundamentals`, `Yahoo Finance chart API`, `API_LIVE`.
+- EPS anchor **8.72 USD**, `TRAILING_TWELVE_MONTHS`, provider `YahooFinance+YahooFinanceFundamentals`, `source_type` `API_LIVE`, observation id `ev-current-eps-001`, 12 months coverage, with **"period coverage was not declared by source"** stated rather than assumed silently.
+- Direct SEC attribution: `sec_fact` is **null** (R2.1 rule: the vendor trailing EPS is not linked to a filing fact). `related_sec_evidence` is present and labelled cross-check only: AAPL FY2025 10-K accession **0000320193-25-000079**, filed 2025-10-31, concept `us-gaap:EarningsPerShareDiluted`, note "Related SEC filing (cross-check); not verified as direct source of selected EPS value". The drawer shows `Provider-Sourced (SEC Link Not Established)`, `Direct SEC source: not established`, and `Related SEC 10-K (cross-check)`; no `Source: SEC 10-K` block is rendered, and the API's `missing_or_unvalidated` carries "Direct SEC source of selected EPS not established; related filing shown for cross-check only".
+- Matrix: `reverse-requirements/1.1`, status **COMPUTED**, `matrix_size` 1. Submission 1 row: horizon 3y, required return 10%, exit multiple 30x (`user_supplied` / `USER_SPECIFIED`, flagged as a user assumption) -> required exit price **448.067840** = 336.64 x 1.1^3, required terminal EPS **14.935595** = 448.067840 / 30, total EPS growth **+71.28%**, required EPS CAGR **+19.65%**. Submission 2 row: horizon 3y, 12%, 32x -> **472.954962** = 336.64 x 1.12^3, terminal EPS **14.779843**, growth **+69.49%**, CAGR **+19.23%**. All four steps are `reproducible` and were independently recomputed from the displayed operands: 0 mismatches for both submissions.
+- The drawer corresponded to the submission that produced it: after submission 2 the page showed `32.0x`, `12.0%` and the recomputed values, and the earlier `30.0x` row was gone. Both requests carried `mode: "live"`; no "REGRESSION FIXTURE (TEST DATA)" banner and no `RegressionFixture` identity appeared.
+- Exit multiple availability: with no multiple supplied the same live path returns `status: NOT_COMPUTED`, `matrix_size: 0`, and the explicit reason "The historical P/E band holds 8 observations, below the 20 required to read a percentile from it. The band's median of 35.65 is reported as a descriptive statistic only and is not used as a scenario exit multiple." (`reason_kind: INSUFFICIENT_OBSERVATIONS`). The matrix is therefore computable on the live path only when a multiple is supplied, and every such multiple is recorded as a user assumption.
+- Point-in-time replay for the live run reported **DIVERGED** (the stored and rebuilt context documents differ); the report states it rather than hiding it.
+- Isolation: the archive lived in a temporary directory; SHA-256 of `data/st-eva.sqlite` and every `data/archives/*.sqlite` (10 files including WAL/SHM) was identical before and after every acceptance run. Nothing was deleted, reset, recreated or overwritten.
+
+**Automated coverage added (deterministic, no fixed market values):**
+- `tests/test_r3_live_web_path.py` (3 tests): a live-shaped (`API_LIVE`) acquisition driven through the real service adapter and runner in an isolated archive directory. Asserts assumption propagation into the scenario cross-product and derived outputs, live source identities on price and EPS evidence, the R2.1 no-SEC-attribution rule, band ineligibility and the uncomputable matrix when no multiple is supplied, and archive isolation.
+- `tests/test_browser_smoke.py::TestLiveModeSelectionBrowser` (1 test): the real browser request carries `mode: live` plus the selected assumptions, and the audit drawer renders that request result instead of the previous submission's.
+- `tests/test_r3_live_aapl_acceptance.py`: the reproducible real-data acceptance harness that produced this record. Gated by `ST_EVA_R3_LIVE=1` (it never runs implicitly); set `ST_EVA_R3_EVIDENCE=<path>` to write the machine-readable record. It asserts only recomputable contract properties, never today's price or EPS.
+
+**Verification runs after the R3 change (fixture-based determinism, reported separately from the live acceptance above):**
+- Focused: provenance regression 20 passed, reverse-requirements wiring 49 passed, web API 22 passed, R3 live-path 3 passed, R3 acceptance harness 1 skipped by default (passed when enabled), live browser AAPL acceptance passed twice with evidence recorded.
+- Full backend suite: **1,962 passed, 169 skipped, 140 subtests passed in 341.50s**.
+- Frontend: Vitest 27 passed; production build produced `dist/index.html`.
+- Browser smoke (Playwright, real Chromium): 9 passed in 42.95s.
+- Persistent data: SHA-256 of all 10 SQLite files (including WAL/SHM) unchanged; no generated files left in the repository.
+
+**Remaining limitations recorded by this acceptance, not fixed:**
+1. A live web submission with no exit multiple cannot compute a matrix for AAPL yet (band holds 8 usable observations < 20, so it is reported ineligible and is never used as a reference).
+2. The production point-in-time daily historical P/E reconstruction is **not** enabled on the web path: `production_historical_pe` was `{}` in the live response. The reported 8-observation band is the provider band distribution, and no claim is made that the web path uses the production reconstruction.
+3. Starting EPS period coverage is undeclared by the live source and is reported as such.
+4. Point-in-time replay is DIVERGED for the live run and is reported, not hidden.
+5. Environment note: during this acceptance window the live web path took about 301 s on two early runs while the SEC step was rate limited, and the pre-existing browser smoke test `test_desktop_matrix_audit_drawer_inspection` exceeded its 90 s "Analysis Verdict" timeout on two full-suite attempts. Each passed on retry (6.3 s standalone; 13 s inside the live acceptance harness), and the full suite then passed completely, so this was upstream latency, not a product defect. No timeout values or fixtures were changed to obtain a pass.
