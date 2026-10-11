@@ -659,6 +659,18 @@ class TestReplayDeterminism(unittest.TestCase):
     def tearDown(self) -> None:
         self.store.close()
 
+    def test_admission_recompute_failure_aborts_replay(self):
+        from unittest.mock import patch
+
+        with patch(
+            "registry_identity.registry_state_identity",
+            side_effect=RuntimeError("registry unavailable"),
+        ):
+            with self.assertRaisesRegex(
+                ArchiveError, "Could not recompute evidence admission during replay"
+            ):
+                replay(self.store, "MSFT", self.cutoff, replay_document)
+
     def test_replay_reproduces_the_stored_context(self):
         result = replay(self.store, "MSFT", self.cutoff, replay_document)
         self.assertEqual(result.outcome, REPLAY_MATCH, result.reason)
