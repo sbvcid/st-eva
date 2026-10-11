@@ -5,6 +5,17 @@
 - Protect persistent data. Do not delete, reset, or overwrite runtime databases or user data unless the task requires it and the user has authorized it.
 - Run relevant tests when practical. Report the files changed, checks actually run, and results accurately.
 
+## Task Closure & Repository Hygiene
+
+- Inspect actual local and remote state before acting. Do not assume previously reported HEAD or status is still current.
+- Preserve unrelated pre-existing user changes and persistent data.
+- Finish implementation, validation, and cleanup instead of returning routine unfinished work.
+- Commit logically complete changes and push them to the existing remote branch when appropriate.
+- Verify local/remote synchronization and relevant CI before declaring completion.
+- Remove task-specific diagnostic code and temporary files before completing work.
+- Leave no uncommitted changes introduced by the agent after a completed run.
+- Report a genuine external blocker accurately instead of claiming success.
+
 ## Historical Documentation Archive
 
 `docs/archive/` contains historical records only. Its contents have no current normative or authoritative status.
