@@ -1025,6 +1025,10 @@ def build_exit_multiples(
     band = historical_pe_band or {}
     band_median = _safe_float(band.get("median"))
     declared_count = _declared_sample_count(band.get("observations"))
+    supplied_multiple_value = _safe_float(user_pe_multiple)
+    supplied_multiple_usable = (
+        supplied_multiple_value is not None and supplied_multiple_value > 0
+    )
 
     if band_median is not None and band_median > 0:
         if declared_count is not None and declared_count >= min_observations:
@@ -1057,7 +1061,7 @@ def build_exit_multiples(
                     "item": "exit_multiple.historical",
                     "reason": reason,
                     "reason_kind": reason_kind,
-                    "blocks": ["exit_multiple"],
+                    "blocks": [] if supplied_multiple_usable else ["exit_multiple"],
                 }
             )
 
