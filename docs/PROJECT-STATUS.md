@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** R4 (production historical P/E reference wired into the web path)
-**Latest verified GitHub Actions:** see §12. Runs `38160351228` and `38160824276` (`3e9ec3d`, `9638722`) passed backend and browser; the last full suite run before R3 was green on `9638722`.
+**Current implementation baseline:** `7fe3a5d` (R4: production historical P/E reference wired into the web path)
+**Latest verified GitHub Actions:** [Run 38174224673](https://github.com/sbvcid/st-eva/actions/runs/38174224673), triggered by `7fe3a5d`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
