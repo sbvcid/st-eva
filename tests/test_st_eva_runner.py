@@ -53,6 +53,17 @@ class TestReportFormatter(unittest.TestCase):
         self.assertIn("無參考倍數", report)
         self.assertIn("--reference-multiple", report)
 
+    def test_report_distinguishes_unverified_sample_count(self):
+        result = run_st_eva(
+            "MSFT", mode="regression", save_snapshot=False
+        )
+        result["reference"]["historical_band_status"]["pe"] = (
+            "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT"
+        )
+        report = render_report(result)
+        self.assertIn("樣本數未驗證", report)
+        self.assertIn("樣本數未宣告或無效", report)
+
     def test_report_flags_insufficient_observations(self):
         result = run_st_eva(
             "MSFT", mode="regression", save_snapshot=False
