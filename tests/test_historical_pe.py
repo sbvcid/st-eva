@@ -46,6 +46,7 @@ from historical_pe import (
     load_aapl_historical_pe,
     quarter_number,
     resolve_usable_date,
+    restore_as_traded_close,
 )
 from reverse_requirements import (
     exit_multiples_from_production_distribution,
@@ -53,6 +54,47 @@ from reverse_requirements import (
 )
 from research_dossier import build_dossier, render_dossier
 from st_eva_runner import run_st_eva
+
+
+class TestStockSplitRestoration(unittest.TestCase):
+    """Restore prices to the share basis traded on each date across multiple splits."""
+
+    def test_applies_every_later_split_and_not_prior_or_same_day_splits(self):
+        splits = {
+            str(int(datetime.datetime(2020, 8, 31, tzinfo=datetime.timezone.utc).timestamp())): {
+                "numerator": 4,
+                "denominator": 1,
+                "splitRatio": "4:1",
+            },
+            str(int(datetime.datetime(2022, 6, 1, tzinfo=datetime.timezone.utc).timestamp())): {
+                "numerator": 3,
+                "denominator": 1,
+                "splitRatio": "3:1",
+            },
+        }
+
+        before_both, before_provenance, before_note = restore_as_traded_close(
+            10.0, "2019-12-31", splits
+        )
+        between_splits, middle_provenance, middle_note = restore_as_traded_close(
+            10.0, "2021-01-04", splits
+        )
+        on_second_split, same_day_provenance, same_day_note = restore_as_traded_close(
+            10.0, "2022-06-01", splits
+        )
+
+        self.assertEqual(before_both, 120.0)
+        self.assertEqual(len(before_provenance), 2)
+        self.assertIn("cumulative split factor 12", before_note)
+
+        self.assertEqual(between_splits, 30.0)
+        self.assertEqual(len(middle_provenance), 1)
+        self.assertEqual(middle_provenance[0]["ex_date"], "2022-06-01")
+        self.assertIn("cumulative split factor 3", middle_note)
+
+        self.assertEqual(on_second_split, 10.0)
+        self.assertEqual(same_day_provenance, ())
+        self.assertIsNone(same_day_note)
 
 
 class TestCutoffAndCalendarRules(unittest.TestCase):
