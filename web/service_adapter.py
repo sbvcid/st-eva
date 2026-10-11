@@ -22,6 +22,7 @@ from web.schemas import (
     JobProgressStage,
     RefusalItem,
     ReplaySummary,
+    ReverseRequirementsReportDTO,
     ValuationSummary,
 )
 
@@ -90,7 +91,12 @@ class AnalysisServiceAdapter:
         ticker: str,
         mode: str = "auto",
         reference_multiple: Optional[float] = None,
+        reference_multiples: Optional[List[float]] = None,
         horizon_years: float = 1.0,
+        reverse_horizons: Optional[List[float]] = None,
+        required_returns: Optional[List[float]] = None,
+        prefer_eps_anchor: Optional[str] = None,
+        user_eps: Optional[float] = None,
         progress_callback: Optional[Callable[[JobProgressStage], None]] = None,
     ) -> AnalysisResultDTO:
         """
@@ -118,11 +124,20 @@ class AnalysisServiceAdapter:
             if progress_callback:
                 progress_callback(JobProgressStage.VALUATION)
 
+            horizons_to_use = reverse_horizons
+            if horizons_to_use is None and horizon_years != 1.0:
+                horizons_to_use = [horizon_years]
+
             core_result = run_st_eva(
                 ticker=clean_ticker,
                 mode=mode,
                 reference_multiple=reference_multiple,
+                reference_multiples=reference_multiples,
                 horizon_years=horizon_years,
+                reverse_horizons=horizons_to_use if horizons_to_use else (1.0, 2.0, 3.0, 5.0),
+                required_returns=required_returns if required_returns else (0.08, 0.10, 0.12, 0.15),
+                prefer_eps_anchor=prefer_eps_anchor,
+                user_eps=user_eps,
                 save_snapshot=False,
                 context_path=str(temp_context_file),
                 archive=archive,
@@ -252,6 +267,15 @@ class AnalysisServiceAdapter:
             ]
             source_identifiers = [s for s in source_identifiers if s]
 
+            # Build ReverseRequirementsReportDTO from core_result
+            reverse_reqs_dto: Optional[ReverseRequirementsReportDTO] = None
+            rr_data = core_result.get("reverse_requirements")
+            if rr_data and isinstance(rr_data, dict):
+                try:
+                    reverse_reqs_dto = ReverseRequirementsReportDTO.model_validate(rr_data)
+                except Exception:
+                    pass
+
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),
                 company_name=core_result.get("company_name", ""),
@@ -263,6 +287,7 @@ class AnalysisServiceAdapter:
                 valuation_summary=valuation_summary,
                 replay_summary=replay_summary,
                 refusal_reasons=sorted(list(set(refusal_reasons))),
+                reverse_requirements=reverse_reqs_dto,
                 raw_analysis=core_result,
             )
 

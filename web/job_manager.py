@@ -6,7 +6,7 @@ Executes jobs in background worker threads to avoid blocking FastAPI event loop.
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import threading
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 import uuid
 
 from web.schemas import (
@@ -94,7 +94,12 @@ class JobManager:
         ticker: str,
         mode: str = "auto",
         reference_multiple: Optional[float] = None,
+        reference_multiples: Optional[List[float]] = None,
         horizon_years: float = 1.0,
+        reverse_horizons: Optional[List[float]] = None,
+        required_returns: Optional[List[float]] = None,
+        prefer_eps_anchor: Optional[str] = None,
+        user_eps: Optional[float] = None,
     ) -> JobRecord:
         job_id = f"job-{uuid.uuid4().hex[:12]}"
         record = JobRecord(job_id=job_id, ticker=ticker)
@@ -108,7 +113,12 @@ class JobManager:
             ticker,
             mode,
             reference_multiple,
+            reference_multiples,
             horizon_years,
+            reverse_horizons,
+            required_returns,
+            prefer_eps_anchor,
+            user_eps,
         )
         return record
 
@@ -122,7 +132,12 @@ class JobManager:
         ticker: str,
         mode: str,
         reference_multiple: Optional[float],
+        reference_multiples: Optional[List[float]],
         horizon_years: float,
+        reverse_horizons: Optional[List[float]],
+        required_returns: Optional[List[float]],
+        prefer_eps_anchor: Optional[str],
+        user_eps: Optional[float],
     ) -> None:
         record = self.get_job(job_id)
         if not record:
@@ -134,13 +149,39 @@ class JobManager:
 
         try:
             on_progress(JobProgressStage.RESOLVING)
-            result = self.adapter.run_analysis_pipeline(
-                ticker=ticker,
-                mode=mode,
-                reference_multiple=reference_multiple,
-                horizon_years=horizon_years,
-                progress_callback=on_progress,
-            )
+            func = getattr(self.adapter.run_analysis_pipeline, "side_effect", None) or self.adapter.run_analysis_pipeline
+            call_kwargs = {
+                "ticker": ticker,
+                "mode": mode,
+                "reference_multiple": reference_multiple,
+                "horizon_years": horizon_years,
+                "progress_callback": on_progress,
+            }
+            try:
+                import inspect
+                sig = inspect.signature(func)
+                has_var_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+                param_names = set(sig.parameters.keys())
+                if has_var_kwargs or "reference_multiples" in param_names:
+                    call_kwargs["reference_multiples"] = reference_multiples
+                if has_var_kwargs or "reverse_horizons" in param_names:
+                    call_kwargs["reverse_horizons"] = reverse_horizons
+                if has_var_kwargs or "required_returns" in param_names:
+                    call_kwargs["required_returns"] = required_returns
+                if has_var_kwargs or "prefer_eps_anchor" in param_names:
+                    call_kwargs["prefer_eps_anchor"] = prefer_eps_anchor
+                if has_var_kwargs or "user_eps" in param_names:
+                    call_kwargs["user_eps"] = user_eps
+            except Exception:
+                call_kwargs.update({
+                    "reference_multiples": reference_multiples,
+                    "reverse_horizons": reverse_horizons,
+                    "required_returns": required_returns,
+                    "prefer_eps_anchor": prefer_eps_anchor,
+                    "user_eps": user_eps,
+                })
+
+            result = self.adapter.run_analysis_pipeline(**call_kwargs)
             with self.lock:
                 record.set_result(result)
         except Exception as exc:

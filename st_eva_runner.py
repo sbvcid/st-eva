@@ -1717,6 +1717,8 @@ def run_st_eva(
     render_dossier_report: bool = False,
     include_historical_pe: bool = False,
     enable_furnished_pe: bool = True,
+    prefer_eps_anchor: Optional[str] = None,
+    user_eps: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
@@ -1815,6 +1817,8 @@ def run_st_eva(
         sec_observations=sec_evidence.get("observations") if include_financial_history else None,
         cross_validation=sec_evidence.get("cross_validation") if wants_sec else None,
         production_historical_pe=production_historical_pe,
+        prefer_eps_anchor=prefer_eps_anchor,
+        user_eps=user_eps,
     )
 
     if context_path is not None:
@@ -2175,6 +2179,8 @@ def _build_reverse_requirements(
     sec_observations: Optional[Sequence[Any]] = None,
     cross_validation: Optional[Dict[str, Any]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
+    prefer_eps_anchor: Optional[str] = None,
+    user_eps: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the V1 reverse requirements package from what this run observed.
@@ -2202,13 +2208,39 @@ def _build_reverse_requirements(
     forward_eps = safe_float(data.forward_eps)
     consensus_eps = safe_float(data.consensus_forward_eps)
 
-    anchor, anchor_unavailable = build_start_anchor(
-        trailing_eps=trailing_eps,
-        forward_eps=forward_eps,
-        consensus_eps=consensus_eps,
-        currency=data.currency,
-        provider=data.provider,
-    )
+    user_eps_val = safe_float(user_eps)
+    if user_eps_val is not None:
+        if user_eps_val > 0:
+            from reverse_requirements import EpsAnchor, ANCHOR_USER
+            anchor = EpsAnchor(
+                value=user_eps_val,
+                basis=ANCHOR_USER,
+                months_covered=12.0,
+                period_label="user supplied",
+                provider="user",
+                currency=data.currency,
+                period_undeclared_by_source=False,
+            )
+            anchor_unavailable = []
+        else:
+            anchor = None
+            anchor_unavailable = [
+                {
+                    "item": "start_eps_candidate.user",
+                    "reason": f"The supplied user EPS is {user_eps_val}, which is not positive.",
+                    "reason_kind": "NOT_POSITIVE",
+                    "blocks": ["start_anchor"],
+                }
+            ]
+    else:
+        anchor, anchor_unavailable = build_start_anchor(
+            trailing_eps=trailing_eps,
+            forward_eps=forward_eps,
+            consensus_eps=consensus_eps,
+            currency=data.currency,
+            provider=data.provider,
+            prefer=prefer_eps_anchor or "trailing",
+        )
     unavailable.extend(anchor_unavailable)
 
     if not reference_multiples:
@@ -2410,6 +2442,40 @@ def _build_reverse_requirements(
     )
     div_per_share = safe_float((dividend_pkg.get("summary") or {}).get("trailing_twelve_month_dividends"))
     div_source = str((dividend_pkg.get("summary") or {}).get("trailing_dividends_source") or "")
+
+    if anchor is None:
+        report = {
+            "report": "reverse_requirements_v1",
+            "formula_version": "reverse-requirements/1.1",
+            "fingerprint": None,
+            "asset": {"ticker": data.ticker, "currency": data.currency},
+            "as_of": data.price_date,
+            "market_price": {"value": data.price, "currency": data.currency, "source": data.price_source},
+            "reverse_requirements_matrix": [],
+            "matrix_size": 0,
+            "cash_flow_cross_checks": {},
+            "valuation_methods": {},
+            "rate_families": {},
+            "dcf": {},
+            "production_historical_pe": production_historical_pe,
+            "total_return_scenarios": None,
+            "price_vs_total_return_comparison": [],
+            "dividend_basis": None,
+            "unavailable": list(unavailable),
+            "reading_notes": [
+                "A required return is a price return unless a dividend was supplied as an input.",
+                "A required terminal EPS is the EPS that the chosen exit multiple corresponds to, not a forecast and not a market expectation.",
+                "A CAGR is reported only when the gap between the two EPS anchors is long enough to annualise; otherwise the raw EPS change is reported without a rate.",
+                "Risk-free rates, modelled cost of equity and investor target returns are three separate kinds of number and are never merged into one figure.",
+            ],
+            "dividends": dividend_pkg,
+            "status": "NOT_COMPUTED",
+            "status_reason": (
+                "The reverse requirements matrix needs a positive starting EPS. "
+                "See `unavailable` for what was missing."
+            ),
+        }
+        return report
 
     report = build_reverse_requirements_report(
         price=data.price,

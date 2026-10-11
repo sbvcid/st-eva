@@ -24,6 +24,7 @@ interface ResultCardsProps {
   admission: AdmissionSummary
   replay: ReplaySummary
   refusalReasons: string[]
+  sourceIdentifiers?: string[]
 }
 
 export const ResultCards: React.FC<ResultCardsProps> = ({
@@ -35,13 +36,34 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
   admission,
   replay,
   refusalReasons,
+  sourceIdentifiers = [],
 }) => {
   const { t } = useI18n()
   const isRefused = admission.total_refused > 0 && admission.total_admitted === 0
   const isPartiallyRefused = admission.total_refused > 0 && admission.total_admitted > 0
+  const isRegression = sourceIdentifiers.some(
+    (s) => s.toLowerCase().includes('fixture') || s.toLowerCase().includes('regression')
+  )
 
   return (
     <div className="space-y-4">
+      {/* Regression Fixture Warning Banner */}
+      {isRegression && (
+        <div className="bg-amber-50/90 border border-amber-300 rounded-xl p-4 text-amber-900 shadow-xs">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold text-xs uppercase tracking-wider block text-amber-950">
+                {t.results.regressionNotice}
+              </span>
+              <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                {t.results.regressionNoticeDesc}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Primary Overview Card */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-100">

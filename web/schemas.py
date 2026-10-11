@@ -30,7 +30,12 @@ class AnalyzeRequest(BaseModel):
     ticker: str = Field(..., description="Ticker symbol to analyze, e.g. AAPL, MSFT, 0700.HK")
     mode: str = Field("auto", description="Execution mode: auto, live, or regression")
     reference_multiple: Optional[float] = Field(None, description="Explicit valuation multiple")
+    reference_multiples: Optional[List[float]] = Field(None, description="List of explicit valuation multiples")
     horizon_years: float = Field(1.0, description="Horizon years for EPS CAGR")
+    reverse_horizons: Optional[List[float]] = Field(None, description="Scenario horizon years, e.g. [1.0, 2.0, 3.0, 5.0]")
+    required_returns: Optional[List[float]] = Field(None, description="Scenario required returns, e.g. [0.08, 0.10, 0.12, 0.15]")
+    prefer_eps_anchor: Optional[str] = Field(None, description="Preferred EPS anchor basis: trailing, forward, or consensus")
+    user_eps: Optional[float] = Field(None, description="Explicit user-supplied starting EPS anchor")
 
 
 class AnalyzeResponse(BaseModel):
@@ -87,6 +92,68 @@ class ValuationSummary(BaseModel):
     limitations: List[str] = Field(default_factory=list)
 
 
+class ReferenceMultipleDTO(BaseModel):
+    value: float
+    source: str
+    period_label: str = ""
+    sample_size: Optional[int] = None
+    sample_period: str = ""
+    conditionality: Optional[str] = None
+
+
+class EpsAnchorDTO(BaseModel):
+    value: float
+    basis: str
+    months_covered: float
+    period_label: str = ""
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    provider: str = ""
+    currency: Optional[str] = None
+    period_undeclared_by_source: bool = False
+
+
+class EpsScenarioDTO(BaseModel):
+    price: Optional[float] = None
+    as_of: Optional[str] = None
+    horizon_years: float
+    required_return: float
+    required_return_basis: str
+    exit_multiple: ReferenceMultipleDTO
+    required_exit_price: Optional[float] = None
+    required_exit_price_basis: Optional[str] = None
+    required_terminal_eps: Optional[float] = None
+    start_eps: EpsAnchorDTO
+    growth_years: Optional[float] = None
+    required_eps_cagr: Optional[float] = None
+    total_terminal_eps_growth: Optional[float] = None
+    terminal_eps_vs_start_pct: Optional[float] = None
+    terminal_pe_change_vs_current_pe: Optional[float] = None
+    gap_vs_consensus_terminal_eps: Optional[float] = None
+    comparison_notes: List[str] = Field(default_factory=list)
+    flags: List[str] = Field(default_factory=list)
+    formula_version: str = "reverse-requirements/1.1"
+    dividend_per_share: Optional[float] = None
+    dividend_convention: Optional[str] = None
+    dividend_relief_exit_price: Optional[float] = None
+    dividend_relief_terminal_eps: Optional[float] = None
+    dividend_relief_cagr: Optional[float] = None
+
+
+class ReverseRequirementsReportDTO(BaseModel):
+    formula_version: str = "reverse-requirements/1.1"
+    fingerprint: Optional[str] = None
+    status: str = "COMPUTED"
+    status_reason: Optional[str] = None
+    matrix_size: int = 0
+    reverse_requirements_matrix: List[EpsScenarioDTO] = Field(default_factory=list)
+    reading_notes: List[str] = Field(default_factory=list)
+    unavailable: List[Dict[str, Any]] = Field(default_factory=list)
+    dividend_basis: Optional[Dict[str, Any]] = None
+    total_return_scenarios: Optional[Dict[str, Any]] = None
+    price_vs_total_return_comparison: Optional[List[Dict[str, Any]]] = None
+
+
 class AnalysisResultDTO(BaseModel):
     ticker: str
     company_name: str
@@ -98,6 +165,7 @@ class AnalysisResultDTO(BaseModel):
     valuation_summary: ValuationSummary = Field(default_factory=ValuationSummary)
     replay_summary: ReplaySummary = Field(default_factory=ReplaySummary)
     refusal_reasons: List[str] = Field(default_factory=list)
+    reverse_requirements: Optional[ReverseRequirementsReportDTO] = None
     raw_analysis: Optional[Dict[str, Any]] = None
 
 

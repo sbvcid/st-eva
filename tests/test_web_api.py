@@ -346,6 +346,159 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
+    def test_reverse_requirements_matrix_in_adapter_dto(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            dto = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+            )
+            self.assertIsNotNone(dto.reverse_requirements)
+            rr = dto.reverse_requirements
+            self.assertEqual(rr.formula_version, "reverse-requirements/1.1")
+            self.assertEqual(rr.status, "COMPUTED")
+            self.assertGreater(rr.matrix_size, 0)
+            self.assertEqual(len(rr.reverse_requirements_matrix), rr.matrix_size)
+
+            # Check scenario row attributes
+            first = rr.reverse_requirements_matrix[0]
+            self.assertIsNotNone(first.horizon_years)
+            self.assertIsNotNone(first.required_return)
+            self.assertIsNotNone(first.exit_multiple)
+            self.assertIsNotNone(first.start_eps)
+            self.assertIsNotNone(first.required_exit_price)
+            self.assertIsNotNone(first.required_terminal_eps)
+            self.assertIn("REQUIRED_RETURN_EXCLUDES_DIVIDENDS", first.flags)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_adapter_passes_custom_assumptions_to_engine(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            dto = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+                reference_multiple=27.5,
+                reverse_horizons=[3.0],
+                required_returns=[0.12],
+            )
+            self.assertIsNotNone(dto.reverse_requirements)
+            rr = dto.reverse_requirements
+            # Check that 27.5 exit multiple scenario exists for horizon 3.0 and return 0.12
+            matching = [
+                s for s in rr.reverse_requirements_matrix
+                if s.horizon_years == 3.0 and s.required_return == 0.12 and abs(s.exit_multiple.value - 27.5) < 1e-6
+            ]
+            self.assertTrue(len(matching) >= 1)
+            target = matching[0]
+            self.assertEqual(target.exit_multiple.source, "user_supplied")
+            expected_price = 425.50 * (1.12 ** 3)
+            self.assertAlmostEqual(target.required_exit_price, expected_price, places=2)
+            self.assertIsNotNone(target.required_eps_cagr)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_uncomputable_scenario_preserved_with_reason(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            # MSFT fixture starting anchor is forward EPS covering 12 months.
+            # A 1.0-year horizon leaves 0.0 growth years, which is uncomputable for CAGR.
+            dto = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+                reverse_horizons=[1.0],
+                required_returns=[0.10],
+            )
+            self.assertIsNotNone(dto.reverse_requirements)
+            rr = dto.reverse_requirements
+            scenarios = rr.reverse_requirements_matrix
+            self.assertTrue(len(scenarios) > 0)
+            short_scen = scenarios[0]
+            self.assertIsNone(short_scen.required_eps_cagr)
+            self.assertIn("GROWTH_WINDOW_TOO_SHORT_FOR_CAGR", short_scen.flags)
+            self.assertTrue(any("too short to annualise" in n for n in short_scen.comparison_notes))
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_uncomputable_matrix_when_non_positive_eps(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            # Supply negative user EPS -> uncomputable matrix
+            dto = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+                user_eps=-10.0,
+            )
+            self.assertIsNotNone(dto.reverse_requirements)
+            rr = dto.reverse_requirements
+            self.assertEqual(rr.status, "NOT_COMPUTED")
+            self.assertIsNotNone(rr.status_reason)
+            self.assertEqual(rr.matrix_size, 0)
+            self.assertEqual(len(rr.reverse_requirements_matrix), 0)
+            self.assertTrue(any(u.get("item") == "start_eps_candidate.user" for u in rr.unavailable))
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_api_analyze_with_custom_assumptions_end_to_end(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            job_mgr = JobManager(adapter=adapter, max_workers=2)
+            app = create_app(job_manager=job_mgr)
+            client = TestClient(app)
+
+            resp = client.post(
+                "/api/analyze",
+                json={
+                    "ticker": "MSFT",
+                    "mode": "regression",
+                    "reference_multiple": 25.0,
+                    "reverse_horizons": [3.0],
+                    "required_returns": [0.10],
+                    "prefer_eps_anchor": "forward",
+                },
+            )
+            self.assertEqual(resp.status_code, 202)
+            job_id = resp.json()["job_id"]
+
+            for _ in range(100):
+                job_resp = client.get(f"/api/jobs/{job_id}")
+                if job_resp.json()["status"] == "COMPLETED":
+                    break
+                time.sleep(0.1)
+
+            result = client.get(f"/api/jobs/{job_id}").json()["result"]
+            self.assertIsNotNone(result.get("reverse_requirements"))
+            rr = result["reverse_requirements"]
+            self.assertEqual(rr["formula_version"], "reverse-requirements/1.1")
+            self.assertEqual(rr["status"], "COMPUTED")
+            matrix = rr["reverse_requirements_matrix"]
+            matching = [s for s in matrix if s["horizon_years"] == 3.0 and s["required_return"] == 0.10 and s["exit_multiple"]["value"] == 25.0]
+            self.assertTrue(len(matching) >= 1)
+            self.assertEqual(matching[0]["exit_multiple"]["source"], "user_supplied")
+            job_mgr.shutdown(wait=False)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

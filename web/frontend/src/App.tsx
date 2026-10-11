@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
+  AnalyzeRequest,
   JobDetailResponse,
 } from './types/api'
 import { startAnalysis, getJobStatus } from './services/apiClient'
@@ -7,6 +8,7 @@ import { isStandaloneMode } from './services/pwa'
 import { I18nProvider, useI18n, Language } from './i18n'
 import { ProgressStepper } from './components/ProgressStepper'
 import { ResultCards } from './components/ResultCards'
+import { ReverseRequirementsMatrix } from './components/ReverseRequirementsMatrix'
 import { EvidenceAccordion } from './components/EvidenceAccordion'
 import {
   AlertTriangle,
@@ -16,6 +18,7 @@ import {
   Languages,
   RotateCcw,
   Search,
+  SlidersHorizontal,
   WifiOff,
 } from 'lucide-react'
 
@@ -32,6 +35,15 @@ const MainApp: React.FC = () => {
   )
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [isStandalone, setIsStandalone] = useState<boolean>(false)
+
+  // Scenario assumption controls
+  const [mode, setMode] = useState<string>('auto')
+  const [showAssumptions, setShowAssumptions] = useState<boolean>(false)
+  const [customReferenceMultiple, setCustomReferenceMultiple] = useState<string>('')
+  const [customHorizons, setCustomHorizons] = useState<string>('')
+  const [customReturns, setCustomReturns] = useState<string>('')
+  const [epsAnchorBasis, setEpsAnchorBasis] = useState<string>('trailing')
+  const [customUserEps, setCustomUserEps] = useState<string>('')
 
   useEffect(() => {
     setIsStandalone(isStandaloneMode())
@@ -98,11 +110,49 @@ const MainApp: React.FC = () => {
     })
 
     try {
-      const initResp = await startAnalysis({
+      const payload: AnalyzeRequest = {
         ticker: symbol,
-        mode: symbol === '0700.HK' || symbol === 'MSFT' ? 'regression' : 'auto',
-      })
+        mode: mode,
+      }
 
+      if (customReferenceMultiple.trim()) {
+        const val = parseFloat(customReferenceMultiple.trim())
+        if (!isNaN(val) && val > 0) {
+          payload.reference_multiple = val
+        }
+      }
+
+      if (customHorizons.trim()) {
+        const hList = customHorizons
+          .split(',')
+          .map((x) => parseFloat(x.trim()))
+          .filter((x) => !isNaN(x) && x > 0)
+        if (hList.length > 0) {
+          payload.reverse_horizons = hList
+        }
+      }
+
+      if (customReturns.trim()) {
+        const rList = customReturns
+          .split(',')
+          .map((x) => parseFloat(x.trim()))
+          .filter((x) => !isNaN(x))
+          .map((x) => (x > 1.0 ? x / 100 : x))
+        if (rList.length > 0) {
+          payload.required_returns = rList
+        }
+      }
+
+      if (epsAnchorBasis === 'user' && customUserEps.trim()) {
+        const uVal = parseFloat(customUserEps.trim())
+        if (!isNaN(uVal)) {
+          payload.user_eps = uVal
+        }
+      } else if (epsAnchorBasis !== 'trailing') {
+        payload.prefer_eps_anchor = epsAnchorBasis
+      }
+
+      const initResp = await startAnalysis(payload)
       pollJob(initResp.job_id)
     } catch (err: any) {
       setLoading(false)
@@ -149,6 +199,15 @@ const MainApp: React.FC = () => {
     setErrorMessage(null)
     setLoading(false)
     setTickerInput('')
+  }
+
+  const handleResetAssumptions = () => {
+    setMode('auto')
+    setCustomReferenceMultiple('')
+    setCustomHorizons('')
+    setCustomReturns('')
+    setEpsAnchorBasis('trailing')
+    setCustomUserEps('')
   }
 
   return (
@@ -274,6 +333,142 @@ const MainApp: React.FC = () => {
             </button>
           </form>
 
+          {/* Assumptions Toggle */}
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowAssumptions(!showAssumptions)}
+              className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-semibold cursor-pointer transition-colors"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{showAssumptions ? t.assumptions.hideAssumptions : t.assumptions.showAssumptions}</span>
+            </button>
+
+            {mode !== 'auto' && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-100 text-amber-800">
+                Mode: {mode}
+              </span>
+            )}
+          </div>
+
+          {/* Assumptions Configuration Drawer */}
+          {showAssumptions && (
+            <div className="mt-3 p-3.5 bg-slate-50/80 rounded-lg border border-slate-200/80 space-y-3 text-xs">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                <span className="font-bold text-slate-800">{t.assumptions.title}</span>
+                <button
+                  type="button"
+                  onClick={handleResetAssumptions}
+                  className="text-[11px] text-slate-500 hover:text-slate-700 underline cursor-pointer"
+                >
+                  {t.assumptions.resetDefaults}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Execution Mode */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.modeLabel}
+                  </label>
+                  <select
+                    value={mode}
+                    onChange={(e) => setMode(e.target.value)}
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="auto">{t.assumptions.modeAuto}</option>
+                    <option value="live">{t.assumptions.modeLive}</option>
+                    <option value="regression">{t.assumptions.modeRegression}</option>
+                  </select>
+                </div>
+
+                {/* Reference P/E */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.refMultipleLabel}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={customReferenceMultiple}
+                    onChange={(e) => setCustomReferenceMultiple(e.target.value)}
+                    placeholder="e.g. 20.0"
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Holding Horizons */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.horizonsLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={customHorizons}
+                    onChange={(e) => setCustomHorizons(e.target.value)}
+                    placeholder="e.g. 1.0, 2.0, 3.0, 5.0"
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Required Returns */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.returnsLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={customReturns}
+                    onChange={(e) => setCustomReturns(e.target.value)}
+                    placeholder="e.g. 8, 10, 12, 15"
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* EPS Anchor Basis */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.epsAnchorLabel}
+                  </label>
+                  <select
+                    value={epsAnchorBasis}
+                    onChange={(e) => setEpsAnchorBasis(e.target.value)}
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="trailing">{t.assumptions.epsTrailing}</option>
+                    <option value="forward">{t.assumptions.epsForward}</option>
+                    <option value="consensus">{t.assumptions.epsConsensus}</option>
+                    <option value="user">{t.assumptions.epsUser}</option>
+                  </select>
+                </div>
+
+                {/* User Supplied EPS (if user selected) */}
+                {epsAnchorBasis === 'user' && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      {t.assumptions.userEpsLabel}
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={customUserEps}
+                      onChange={(e) => setCustomUserEps(e.target.value)}
+                      placeholder="e.g. 6.50"
+                      disabled={loading}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Quick Examples */}
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 text-xs">
             <span className="text-slate-400 text-[11px] font-medium">{t.search.quickExamples}</span>
@@ -341,6 +536,12 @@ const MainApp: React.FC = () => {
               admission={currentJob.result.admission_summary}
               replay={currentJob.result.replay_summary}
               refusalReasons={currentJob.result.refusal_reasons}
+              sourceIdentifiers={currentJob.result.source_identifiers}
+            />
+
+            <ReverseRequirementsMatrix
+              report={currentJob.result.reverse_requirements}
+              currency={currentJob.result.valuation_summary?.currency || '$'}
             />
 
             <EvidenceAccordion

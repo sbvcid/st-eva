@@ -234,4 +234,128 @@ describe('ST-EVA Frontend App Component', () => {
       expect(screen.getByText(/Upstream vendor market data unreachable/i)).toBeInTheDocument()
     })
   })
+
+  it('passes user-specified scenario assumptions to startAnalysis', async () => {
+    const mockStart = vi.mocked(apiClient.startAnalysis).mockResolvedValue({
+      job_id: 'job-custom-assumptions',
+      ticker: 'AAPL',
+      status: 'PENDING',
+    })
+
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue({
+      job_id: 'job-custom-assumptions',
+      ticker: 'AAPL',
+      status: 'COMPLETED',
+      stage: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      result: {
+        ticker: 'AAPL',
+        company_name: 'Apple Inc.',
+        status: 'success',
+        as_of: '2026-06-30',
+        source_identifiers: [],
+        admission_summary: { total_admitted: 0, total_refused: 0, metrics_admitted: [], refusals: [] },
+        valuation_summary: { limitations: [] },
+        replay_summary: { attempted: false, matched: false, reconstructed: false, observations_used: 0, observations_considered: 0 },
+        refusal_reasons: [],
+        reverse_requirements: {
+          formula_version: 'reverse-requirements/1.1',
+          status: 'COMPUTED',
+          matrix_size: 1,
+          reverse_requirements_matrix: [
+            {
+              horizon_years: 3.0,
+              required_return: 0.12,
+              required_return_basis: 'PRICE_RETURN_ONLY',
+              exit_multiple: { value: 25.0, source: 'user_supplied' },
+              required_exit_price: 200.0,
+              required_terminal_eps: 8.0,
+              start_eps: { value: 6.0, basis: 'TRAILING_TWELVE_MONTHS', months_covered: 12.0 },
+              growth_years: 3.0,
+              required_eps_cagr: 0.10,
+              total_terminal_eps_growth: 0.33,
+              comparison_notes: [],
+              flags: [],
+              formula_version: 'reverse-requirements/1.1',
+            },
+          ],
+        },
+      },
+    })
+
+    render(<App />)
+
+    // Open assumptions drawer
+    const toggleAssumptions = screen.getByRole('button', { name: /Scenario Assumptions/i })
+    fireEvent.click(toggleAssumptions)
+
+    // Set assumptions
+    const refMultipleInput = screen.getByPlaceholderText('e.g. 20.0')
+    fireEvent.change(refMultipleInput, { target: { value: '25.0' } })
+
+    const horizonsInput = screen.getByPlaceholderText('e.g. 1.0, 2.0, 3.0, 5.0')
+    fireEvent.change(horizonsInput, { target: { value: '3.0' } })
+
+    const returnsInput = screen.getByPlaceholderText('e.g. 8, 10, 12, 15')
+    fireEvent.change(returnsInput, { target: { value: '12' } })
+
+    const input = screen.getByPlaceholderText(/Enter ticker/i)
+    fireEvent.change(input, { target: { value: 'AAPL' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+
+    await waitFor(() => {
+      expect(mockStart).toHaveBeenCalledWith({
+        ticker: 'AAPL',
+        mode: 'auto',
+        reference_multiple: 25.0,
+        reverse_horizons: [3.0],
+        required_returns: [0.12],
+      })
+    })
+
+    // Matrix component is rendered with formula version
+    expect(await screen.findByText('Reverse Requirements Matrix')).toBeInTheDocument()
+    expect(screen.getByText('reverse-requirements/1.1')).toBeInTheDocument()
+  })
+
+  it('renders regression fixture notice when data comes from RegressionFixture', async () => {
+    vi.mocked(apiClient.startAnalysis).mockResolvedValue({
+      job_id: 'job-regression-fixture',
+      ticker: 'MSFT',
+      status: 'PENDING',
+    })
+
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue({
+      job_id: 'job-regression-fixture',
+      ticker: 'MSFT',
+      status: 'COMPLETED',
+      stage: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      result: {
+        ticker: 'MSFT',
+        company_name: 'Microsoft Corporation',
+        status: 'success',
+        as_of: '2026-09-18',
+        source_identifiers: ['RegressionFixture'],
+        admission_summary: { total_admitted: 1, total_refused: 0, metrics_admitted: [], refusals: [] },
+        valuation_summary: { limitations: [] },
+        replay_summary: { attempted: false, matched: false, reconstructed: false, observations_used: 0, observations_considered: 0 },
+        refusal_reasons: [],
+      },
+    })
+
+    render(<App />)
+    const input = screen.getByPlaceholderText(/Enter ticker/i)
+    fireEvent.change(input, { target: { value: 'MSFT' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('REGRESSION FIXTURE (TEST DATA)')).toBeInTheDocument()
+      expect(
+        screen.getByText(/This valuation reflects static test fixture data, not live market observations/i)
+      ).toBeInTheDocument()
+    })
+  })
 })

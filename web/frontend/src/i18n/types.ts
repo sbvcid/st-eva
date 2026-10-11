@@ -64,6 +64,52 @@ export interface Translations {
     obsUsed: (count: number) => string
     obsConsidered: (count: number) => string
     fidelity: (fidelity: string) => string
+    regressionNotice: string
+    regressionNoticeDesc: string
+  }
+  assumptions: {
+    title: string
+    showAssumptions: string
+    hideAssumptions: string
+    modeLabel: string
+    modeAuto: string
+    modeLive: string
+    modeRegression: string
+    refMultipleLabel: string
+    horizonsLabel: string
+    returnsLabel: string
+    epsAnchorLabel: string
+    epsTrailing: string
+    epsForward: string
+    epsConsensus: string
+    epsUser: string
+    userEpsLabel: string
+    resetDefaults: string
+  }
+  matrix: {
+    title: string
+    subtitle: string
+    formulaVersion: string
+    fingerprint: string
+    statusComputed: string
+    statusNotComputed: string
+    scenariosCount: (count: number) => string
+    filterHorizon: string
+    filterReturn: string
+    all: string
+    colHorizon: string
+    colReturn: string
+    colExitMultiple: string
+    colExitPrice: string
+    colTerminalEps: string
+    colStartAnchor: string
+    colGrowthYears: string
+    colCagr: string
+    colTotalGrowth: string
+    notComputable: string
+    readingNotes: string
+    notesToggle: string
+    uncomputableMatrixNotice: string
   }
   evidence: {
     title: string

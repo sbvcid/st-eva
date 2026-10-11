@@ -57,6 +57,68 @@ export interface ValuationSummary {
   limitations: string[]
 }
 
+export interface ReferenceMultipleDTO {
+  value: number
+  source: string
+  period_label?: string
+  sample_size?: number | null
+  sample_period?: string
+  conditionality?: string | null
+}
+
+export interface EpsAnchorDTO {
+  value: number
+  basis: string
+  months_covered: number
+  period_label?: string
+  period_start?: string | null
+  period_end?: string | null
+  provider?: string
+  currency?: string | null
+  period_undeclared_by_source?: boolean
+}
+
+export interface EpsScenarioDTO {
+  price?: number | null
+  as_of?: string | null
+  horizon_years: number
+  required_return: number
+  required_return_basis: string
+  exit_multiple: ReferenceMultipleDTO
+  required_exit_price?: number | null
+  required_exit_price_basis?: string | null
+  required_terminal_eps?: number | null
+  start_eps: EpsAnchorDTO
+  growth_years?: number | null
+  required_eps_cagr?: number | null
+  total_terminal_eps_growth?: number | null
+  terminal_eps_vs_start_pct?: number | null
+  terminal_pe_change_vs_current_pe?: number | null
+  gap_vs_consensus_terminal_eps?: number | null
+  comparison_notes: string[]
+  flags: string[]
+  formula_version: string
+  dividend_per_share?: number | null
+  dividend_convention?: string | null
+  dividend_relief_exit_price?: number | null
+  dividend_relief_terminal_eps?: number | null
+  dividend_relief_cagr?: number | null
+}
+
+export interface ReverseRequirementsReportDTO {
+  formula_version: string
+  fingerprint?: string | null
+  status: 'COMPUTED' | 'NOT_COMPUTED' | string
+  status_reason?: string | null
+  matrix_size: number
+  reverse_requirements_matrix: EpsScenarioDTO[]
+  reading_notes?: string[]
+  unavailable?: Array<Record<string, any>>
+  dividend_basis?: Record<string, any> | null
+  total_return_scenarios?: Record<string, any> | null
+  price_vs_total_return_comparison?: Array<Record<string, any>> | null
+}
+
 export interface AnalysisResultDTO {
   ticker: string
   company_name: string
@@ -68,6 +130,7 @@ export interface AnalysisResultDTO {
   valuation_summary: ValuationSummary
   replay_summary: ReplaySummary
   refusal_reasons: string[]
+  reverse_requirements?: ReverseRequirementsReportDTO | null
   raw_analysis?: Record<string, any> | null
 }
 
@@ -75,7 +138,12 @@ export interface AnalyzeRequest {
   ticker: string
   mode?: string
   reference_multiple?: number | null
+  reference_multiples?: number[] | null
   horizon_years?: number
+  reverse_horizons?: number[] | null
+  required_returns?: number[] | null
+  prefer_eps_anchor?: string | null
+  user_eps?: number | null
 }
 
 export interface AnalyzeResponse {

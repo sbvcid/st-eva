@@ -18,17 +18,22 @@ This section is the hand-off checkpoint for future conversations and coding agen
 - The archive was inventoried and semantically reviewed in the completed local Phase 1/2 audit. The durable outcome is recorded in this status file: **zero archive content integrated**. Do not repeat the broad inventory or Phase 2 review unless a specific product gap points to a particular archive item; deleting local audit outputs does not invalidate this decision.
 - The existing reverse-requirements engine is not a blank slate: `reverse_requirements.py` has formula version `1.1`; the reported AAPL artifact `data/historical_pe/AAPL/reverse_requirements_output.json` contains 27 scenarios. This proves an output artifact exists, not that the browser path is complete. Do not regenerate the artifact or repeat a broad formula audit just to re-establish that the matrix exists.
 - The AAPL reverse requirements output `data/historical_pe/AAPL/reverse_requirements_output.json` is safely ignored via `.gitignore` and backed up outside the repository at `C:\st-eva-audit\archive-output-backup`; do not track or delete it.
+- **R1 Reverse-requirements matrix API & Frontend wiring is complete** (formula version `reverse-requirements/1.1`):
+  - Web API response now provides a strongly-typed `reverse_requirements` report (`ReverseRequirementsReportDTO`), containing `formula_version`, `status`, `start_anchor`, and the full cross-product `scenarios` (`EpsScenarioDTO`).
+  - Assumption inputs (reference multiples, holding horizons, required returns, EPS anchor basis preference, user-specified EPS override, and explicit mode selection) are accepted by `AnalyzeRequest`, passed via `JobManager` and `AnalysisServiceAdapter` to `run_st_eva()`, and reflectively computed by the engine.
+  - Frontend UI in `App.tsx` exposes assumption controls (collapsible configuration panel), forwards user inputs, and displays the full matrix via `<ReverseRequirementsMatrix>` with horizon/return filtering, uncomputable badges/reasons, and drawer notes.
+  - Regression mode is no longer secretly forced for MSFT/0700.HK without notice; explicit mode controls are available and when regression fixture data is detected, a prominent "REGRESSION FIXTURE (TEST DATA)" warning banner prevents test fixtures from being mistaken for live quotes.
+  - Uncomputable scenarios and matrix states (e.g. non-positive EPS anchor, window < 0.5 yrs) are explicitly represented with structured reason codes/messages, never zero-filled or hidden.
+  - Verified with 20 web API tests, 44 wiring tests, 6 archive isolation tests, 24 Vitest frontend unit tests, 7 browser smoke tests, and the full backend suite (1,897 passed, 168 skipped, 140 subtests).
 
 **Outstanding but intentionally not complete**
 
-- The full scenario matrix is not yet wired as a first-class typed web response and displayed in the browser.
-- Browser inputs do not yet represent all assumptions/axes required by the matrix, and the fixed regression-mode path must not be mistaken for live data.
-- The browser does not yet offer complete row-level provenance and recomputation details.
+- The browser does not yet offer complete row-level SEC XBRL fact provenance and historical daily observation lineage recomputation details.
 - The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
 
 **Next task — one task only**
 
-Implement the first-class reverse-requirements matrix contract through the existing web API and browser, using the existing calculation engine. Start by tracing the current DTO/request path and produce the smallest implementation diff. Do not redo P0, repeat the archive audit, create a new valuation engine, or revalidate every formula without a specific failure or code change that warrants it.
+Row-level provenance and audit inspection: connect individual matrix rows and starting EPS/multiple observations to their registered source facts/filings and validation boundary records in the UI.
 
 **Execution rule**
 
@@ -132,17 +137,17 @@ The current browser page has ticker input and quick examples, online/offline mes
 
 The result cards currently show a small set of headline values: market price, implied forward EPS at the selected reference, required EPS CAGR, reference P/E, and supporting observed multiples/limitations. The accordion displays source identifiers, evidence-contract IDs and a discrepancy-status field where present. It does not show the detailed inputs and formulas required to independently recompute a reverse scenario.
 
-Confirmed gaps:
+Confirmed gaps and R1 status:
 
-1. **No full reverse-requirements matrix in the UI.** The browser doesn't render the `reverse_requirements_matrix` from the core report.
-2. **No complete scenario controls.** The browser submission sends ticker and mode only. It doesn't pass `reference_multiple` / `horizon_years`, and the schema itself currently doesn't model all of the full matrix's multiple horizons, required-return choices, exit-multiple choices, or dividend assumptions.
-3. **A misleading regression-mode branch.** The browser selects `regression` for `MSFT` and `0700.HK`, and `auto` for other symbols. That can make fixture results look like ordinary current results unless their mode/data provenance is plainly exposed.
-4. **No scenario-level provenance view.** The current UI does not provide a path from each reverse-matrix row to its full set of actual source observations, periods, units/currencies, starting EPS anchor, formula version and computability reason.
-5. **Summary labels conceal different computations.** `required_eps_cagr` is mapped from the summary engine; it is not the same as every row's `required_eps_cagr` in the full matrix.
-6. **The response contract is summary-oriented.** `ValuationSummary` contains headline fields and `AnalysisResultDTO` provides an optional `raw_analysis` object, but there is no strongly typed first-class scenario matrix that the frontend renders and validates.
+1. **[RESOLVED in R1] Full reverse-requirements matrix in the UI.** The browser now renders the complete typed `reverse_requirements` matrix scenarios table with horizon and return filters, anchor metadata, formula version, and uncomputable badges/reasons.
+2. **[RESOLVED in R1] Complete scenario controls.** The browser now provides assumption controls for reference multiples, horizons, required returns, EPS anchor basis preference, and EPS overrides, forwarded via `AnalyzeRequest` to the runner.
+3. **[RESOLVED in R1] Misleading regression-mode branch resolved.** Automatic hidden switching to regression mode was removed; explicit mode selection is supported, and a prominent test fixture banner is displayed when regression data is shown.
+4. **No scenario-level provenance view.** The current UI does not provide a direct link from each reverse-matrix row to its underlying SEC XBRL fact IDs or historical daily P/E observation lineage.
+5. **Summary labels conceal different computations.** While the full matrix now clearly separates scenario exit price and CAGR requirements from summary cards, unified terminology and deep row reconciliation remain an ongoing refinement.
+6. **[RESOLVED in R1] First-class response contract.** `ReverseRequirementsReportDTO`, `EpsScenarioDTO`, `EpsAnchorDTO`, and `ReferenceMultipleDTO` are strongly typed in `web/schemas.py` and `web/frontend/src/types/api.ts`.
 7. **Progress/status wording leads with process infrastructure.** Acquisition, admission and replay can help explain data states, but the main user result must be the conditional financial requirements implied by the price.
 
-The web path is not yet the complete reverse-valuation product even though the backend performs related calculations.
+The web path now provides the complete first-class reverse-requirements matrix calculation and scenario display, with row-level provenance remaining for subsequent refinement.
 
 ## 6. Input acquisition, definitions and validation
 

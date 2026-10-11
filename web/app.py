@@ -77,7 +77,12 @@ def create_app(
             ticker=valid_ticker,
             mode=request.mode,
             reference_multiple=request.reference_multiple,
+            reference_multiples=request.reference_multiples,
             horizon_years=request.horizon_years,
+            reverse_horizons=request.reverse_horizons,
+            required_returns=request.required_returns,
+            prefer_eps_anchor=request.prefer_eps_anchor,
+            user_eps=request.user_eps,
         )
         return AnalyzeResponse(
             job_id=record.job_id,
