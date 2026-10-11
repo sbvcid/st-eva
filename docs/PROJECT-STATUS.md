@@ -285,15 +285,16 @@ Only after AAPL passes the browser acceptance path should the same interface be 
 
 ## 14. Archive decision and cleanup state
 
-The user-provided Phase 1/2 audit report is at `C:\st-eva-audit\inventory\phase2\integration-decision.md` and its companion CSV files.
+The local Phase 1/2 audit has been completed. Its detailed CSV reports are disposable working artifacts, not product dependencies; the durable decision and follow-up rules are recorded in this status file. Do not regenerate the audit reports merely because their local directory is removed.
 
 - **Integration decision:** no archive content was copied, merged or imported into the current project.
 - The 10 MSFT historical-P/E validation Python files were content-hash matches for files already present in the current research experiment path.
 - The archive experiment group, 116 unmatched Python files and large snapshots were not shown to fill a current product gap; they were not integrated.
-- The reported cleanup classification is approximately 1.3–1.5 GB `NO_LONGER_NEEDED` and 0.8–1.0 GB `REVIEW_REQUIRED`. These are estimates from the external audit report, not deletion results.
-- No archive contents have been deleted by that task. `DELETE_CANDIDATE = 0` in the report means the task did not authorise or establish a deletion list suitable for execution.
+- The reported cleanup classification was approximately 1.3–1.5 GB `NO_LONGER_NEEDED` and 0.8–1.0 GB `REVIEW_REQUIRED`. These were audit estimates, not deletion results.
+- At the time of the integration decision, no archive contents had been deleted. The user has since clarified the retention rule: archive material should be kept only if it fills a demonstrated current-product gap; historical uniqueness alone is not a reason to keep it.
+- The remaining archive contains old DB versions, MU data and experimental snapshots that were not integrated. Deleting them means accepting the loss of their historical/research contents, not removing anything required by the current product according to the audit completed so far.
 
-Do not rerun the full archive inventory or repeat Phase 2. If cleanup is requested, use the existing path-specific `integration-decision.md` §7 and audit manifests to prepare a bounded, explicit removal list. Protect unresolved runtime SQLite databases and WAL/SHM files; do not treat them as ordinary duplicates solely because of filenames, sizes or empty-file hashes. Archive cleanup is separate from R1–R3 and must not delay product implementation.
+Do not rerun the full archive inventory or repeat Phase 2. If the user proceeds with deletion, execute only after closing programs using the archive, verify the exact target paths, and keep `C:\git\st-eva` untouched. Preserve current project runtime databases under `C:\git\st-eva\data`; never delete them as part of archive cleanup. Archive cleanup is separate from R1–R3 and must not delay product implementation.
 
 ## 15. Explicitly not yet accepted as complete
 
