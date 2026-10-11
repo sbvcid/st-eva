@@ -1,59 +1,60 @@
-# ST-EVA
+# ST-EVA — Reverse Valuation
 
-ST-EVA is a financial research engine built around traceable, time-indexed evidence and deterministic calculations.
+ST-EVA is a reverse-valuation tool. Given a company's observed market price and explicit valuation assumptions, it calculates the financial performance implied by those assumptions. **Reverse valuation is the product itself**, not a side feature of a general research platform.
 
-Its central question is: **Given an observed market price and an explicitly stated valuation reference, what financial performance does that price require?**
+The central question is:
 
-ST-EVA describes conditional assumptions implied by a price. It does not predict fair value, generate price targets, assign probabilities, or make buy/sell recommendations.
+> At this price, what would the company have to deliver under a stated holding period, required return, and exit valuation multiple?
 
-## Research workflow
+ST-EVA produces conditional numbers that a person or an external tool may analyse. It does not decide whether the assumptions are reasonable.
 
-```
-Research inputs and as-of date
-        ↓
-Market data and financial-source acquisition
-        ↓
-Observation / Evidence / Validation with provenance and time semantics
-        ↓
-Source comparison and evidence admission
-        ↓
-Deterministic valuation and reverse requirements
-        ↓
-Research Dossier and/or Investment Context
-        ↓
-Optional archive persistence and point-in-time replay
-```
+## Intended user workflow
 
-Each step must preserve the distinction between observed facts, deterministic derivations, and conditional inferences. Missing or unverified inputs remain explicit; retrieval time is not treated as publication time.
+1. Enter a company ticker in the web interface.
+2. Retrieve the available market price and financial inputs, with their dates, periods, units, currencies, sources, and availability limits.
+3. Inspect the observed valuation and set or inspect the reference/exit multiples, holding periods, and required-return assumptions used in the calculation.
+4. View a reverse-requirements matrix. Each scenario should show the required terminal price, the fundamental level implied by its exit multiple, and the growth required from an explicitly identified starting figure when that growth is computable.
+5. Open a scenario's inputs, formulas, source records, and calculation details so the result can be independently checked and recomputed.
 
-## Main capabilities
+The matrix is conditional arithmetic, not a forecast. A different horizon, required return, EPS anchor, or exit multiple can produce a different result. The interface must make those assumptions visible rather than hide them in defaults.
 
-- Observed market and financial metrics with source, period, currency, and availability metadata where the source provides them.
-- Cross-source comparison that reports consistency, discrepancies, and methodological or period mismatches without silently merging competing values.
-- Reverse valuation using explicit P/E, P/FCF, EV/EBITDA, and P/S references, with required growth and other conditional financial requirements where inputs permit.
-- Historical valuation distributions that are not used as a reference unless the observation-count quality gate is met.
-- Research Dossier for people and Investment Context for machine-readable, provenance-carrying analysis.
-- Optional SQLite archive for source capture, observations, contexts, evidence-admission records, and point-in-time replay.
-- Historical P/E reconstruction from qualifying time-indexed evidence for supported issuers.
+## Data and calculation rules
 
-## Important boundaries
+- **Observed facts, source claims, derived values, and conditional results are distinct.** Recording a source accurately does not guarantee that the source itself is true.
+- Every material input and output must retain its relevant source or derivation, as-of date, fiscal/coverage period, unit, currency, and other basis information supplied or required by the calculation.
+- A calculation must use compatible periods, units, currencies, and EPS anchors. Trailing, next-twelve-month, and fiscal-year EPS must not be silently treated as interchangeable.
+- Each reverse scenario must identify its assumptions and formula version. A return without an explicit dividend treatment is a price-return condition, not a total-return claim.
+- Missing, unavailable, conflicting, stale, or incompatible inputs must be labelled as such. They must not be silently replaced with invented values or treated as zero.
+- A historical multiple distribution may be shown descriptively without automatically being eligible as a scenario reference. Reference eligibility must follow an explicit quality rule.
 
-- A price and a multiple do not uniquely determine a future outcome. Every reverse calculation is conditional on its stated reference and inputs.
-- No EPS, consensus estimate, publication timestamp, or other financial input is invented to fill a gap.
-- Cross-source comparison does not itself select a winning source or overwrite either observation.
-- Archive replay reports when available evidence is insufficient; it does not substitute current data and present the result as historical truth.
-- Archived SEC evidence admitted directly into the reverse-valuation input surface is currently limited to the `revenue` metric. This is an implementation boundary, not a statement that other metrics are unavailable to every separate research path.
-- `llm_interpreter.py` currently builds an interpretation prompt/request; it does not call a live model provider. LLM interpretation remains separate from sourced facts and deterministic arithmetic.
+## What ST-EVA does not do
 
-## Quick start
+ST-EVA does not forecast business results, determine fair value, generate price targets, judge whether a price is cheap or expensive, assign probabilities, assess business quality, or make investment recommendations. It does not need to call or embed an LLM. Any later interpretation by a person or external LLM is outside the calculation engine and must not be written back as an observed fact.
 
-Core runtime dependency setup:
+## Current implementation status
+
+The CLI already contains deterministic reverse-requirement calculations and options for evaluating multiple assumptions. **The browser experience is not yet the complete product described above.** The current interface presents a reduced summary, observed multiples, evidence identifiers, and replay/admission information; it does not yet expose the full configurable reverse-requirements matrix or per-scenario formula/source trace. The web request currently does not send the reference-multiple or horizon fields, and the frontend hard-codes regression mode for `MSFT` and `0700.HK`. These are implementation gaps, not completed features.
+
+A complete first release must pass an end-to-end AAPL case in the real web path before broader issuer coverage is treated as evidence of completion. Regression fixtures must always be visibly distinguished from live observations.
+
+## First-release acceptance
+
+- A user can enter a ticker and see the observed price/as-of date, the valuation reference used, and the actual assumptions applied.
+- The web UI lets the user inspect or set the scenario dimensions and displays the complete reverse-requirements matrix for the available inputs.
+- Every matrix row can be traced to its inputs, source/period metadata, formula and version; an independent recomputation from the same inputs produces the same result.
+- EPS basis and growth window, currency/unit compatibility, price-return versus total-return basis, and reference eligibility are explicit.
+- Missing or conflicting data remain visible with reasons; no regression fixture is presented as live data.
+- The AAPL web path is verified first, including calculations, traceability, missing-data behaviour, and regression coverage. Additional issuers and calculation methods follow only after this path passes.
+
+## Run the current CLI
+
+Install the Python dependencies:
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-Run live research with an explicit P/E reference, without writing a snapshot:
+Run live analysis with an explicit P/E reference, without writing a result snapshot:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --reference-multiple 30 --no-snapshot
@@ -65,32 +66,6 @@ Print machine-readable JSON:
 python st_eva_runner.py AAPL --mode live --reference-multiple 30 --json --no-snapshot
 ```
 
-Create a Research Dossier:
+The CLI supports `auto`, `live`, and `regression` modes. Live data requires network access and may be unavailable for some fields. Regression mode uses fixtures and is not live market data.
 
-```powershell
-python st_eva_runner.py AAPL --mode live --dossier dossier.json
-```
-
-Create an Investment Context and persist the run for replay:
-
-```powershell
-python st_eva_runner.py AAPL --mode live --context context.json --archive data/st-eva.sqlite
-```
-
-The CLI accepts `auto`, `live`, and `regression` modes. Live acquisition requires network access; a source may leave values unavailable.
-
-## Project components
-
-| Component | Responsibility |
-|---|---|
-| `st_eva_runner.py` | Acquisition orchestration, deterministic analysis, validation, snapshots, and optional output integration |
-| `data_contract.py` and evidence modules | Observation, evidence identity, provenance, availability, and validation semantics |
-| `fundamental_provider.py`, `sec_provider.py` | Market/fundamental and SEC source acquisition |
-| `cross_validation.py` | Cross-source comparability and result classification |
-| `evidence_valuation_boundary.py` | Admission decisions for archived evidence entering valuation inputs |
-| `historical_pe.py`, `reverse_requirements.py` | Historical P/E reconstruction and conditional reverse calculations |
-| `research_dossier.py`, `investment_context.py` | Human-readable and machine-readable research packages |
-| `archive.py`, `sqlite_archive.py`, `archive/migrations/` | Persistence, source capture, and point-in-time replay |
-| `web/` | Existing browser interface and HTTP API |
-
-For command options and output semantics, see [docs/USAGE.md](docs/USAGE.md).
+For CLI options and output semantics, see [docs/USAGE.md](docs/USAGE.md). The root README defines the product and its acceptance conditions; implementation notes and historical records do not override that definition.
