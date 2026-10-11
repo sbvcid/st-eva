@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `cb5ab8c` (restored after regression in `661e0df`)
-**Latest verified GitHub Actions:** [Run 38143623578](https://github.com/sbvcid/st-eva/actions/runs/38143623578), triggered by `0f9ac03`; backend and browser jobs passed. Prior sync regression in [run 38141809016](https://github.com/sbvcid/st-eva/actions/runs/38141809016) (`661e0df`) resolved.
+**Current implementation baseline:** `1271f94` (R1 reverse requirements matrix API and browser UI complete)
+**Latest verified GitHub Actions:** [Run 38148637724](https://github.com/sbvcid/st-eva/actions/runs/38148637724), triggered by `1271f94`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
