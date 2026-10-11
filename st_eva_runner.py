@@ -237,7 +237,7 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "consensus_forward_eps": 31.50,
         "next_event": "2026-11-14",
         "next_event_status": "Estimated fixture date; not live",
-        "historical_pe_band": {"10th": 12.0, "25th": 15.0, "median": 18.5, "75th": 23.0, "90th": 28.0},
+        "historical_pe_band": {"10th": 12.0, "25th": 15.0, "median": 18.5, "75th": 23.0, "90th": 28.0, "observations": 120},
         "price_history": [405.0, 410.0, 415.0, 420.0, 425.0, 432.2],
         "volume_history": [30000000, 32000000, 31000000, 33000000, 32500000, 32000000],
         "source_type": "REGRESSION_FIXTURE",
@@ -257,7 +257,7 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "consensus_forward_eps": 13.20,
         "next_event": "2026-10-22",
         "next_event_status": "Estimated fixture date; not live",
-        "historical_pe_band": {"10th": 22.0, "25th": 26.0, "median": 30.0, "75th": 34.0, "90th": 38.0},
+        "historical_pe_band": {"10th": 22.0, "25th": 26.0, "median": 30.0, "75th": 34.0, "90th": 38.0, "observations": 120},
         "price_history": [410.0, 412.0, 415.0, 418.0, 422.0, 425.5],
         "volume_history": [20000000, 21000000, 20500000, 22000000, 21500000, 21000000],
         "source_type": "REGRESSION_FIXTURE",
@@ -277,7 +277,7 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "consensus_forward_eps": 0.48,
         "next_event": "2026-11-10",
         "next_event_status": "Estimated fixture date; not live",
-        "historical_pe_band": {"10th": 14.0, "25th": 17.0, "median": 20.0, "75th": 25.0, "90th": 32.0},
+        "historical_pe_band": {"10th": 14.0, "25th": 17.0, "median": 20.0, "75th": 25.0, "90th": 32.0, "observations": 120},
         "price_history": [11.8, 12.0, 12.2, 12.4, 12.6, 12.8],
         "volume_history": [40000000, 42000000, 41000000, 45000000, 43000000, 44000000],
         "source_type": "REGRESSION_FIXTURE",
@@ -1259,18 +1259,15 @@ class DeterministicMetricsEngine:
 def band_is_usable_for_reference(
     band: Optional[Dict[str, Any]],
 ) -> bool:
-    """
-    A band is usable as a valuation reference only when it carries enough
-    observations to support a percentile reading.
-
-    A band that declares no observation count is treated as usable, which
-    preserves existing regression fixtures and explicit user input.
-    """
+    """A band is usable only when its positive median and sample size are verifiable."""
     if not band:
         return False
+    median = safe_float(band.get("median"))
     observations = safe_float(band.get("observations"))
-    if observations is None:
-        return True
+    if median is None or median <= 0:
+        return False
+    if observations is None or observations < 0 or not observations.is_integer():
+        return False
     return observations >= MIN_BAND_OBSERVATIONS_FOR_REFERENCE
 
 
@@ -1285,8 +1282,12 @@ def band_median_for_reference(
 def band_status(
     band: Optional[Dict[str, Any]],
 ) -> str:
-    if not band or not safe_float((band or {}).get("median")):
+    median = safe_float((band or {}).get("median"))
+    if not band or median is None or median <= 0:
         return "UNAVAILABLE"
+    observations = safe_float(band.get("observations"))
+    if observations is None or observations < 0 or not observations.is_integer():
+        return "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT"
     if band_is_usable_for_reference(band):
         return "USABLE_FOR_REFERENCE"
     return "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
