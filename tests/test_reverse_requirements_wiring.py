@@ -399,13 +399,24 @@ class TestScenarioProvenanceAndReproducibility(unittest.TestCase):
         self.assertFalse(anchor_ev["is_user_assumption"])
 
     def test_sec_eps_fact_resolution_for_historical_filings(self):
+        """R2.1: a value equal to a historical filing is not that filing's source.
+
+        The pre-R2.1 resolver returned the most recent annual fact for the ticker
+        on the strength of the value alone, which made a vendor figure display a
+        10-K as its direct source. Resolution now requires the linked observation
+        that supplied the value; see tests/test_r21_provenance_binding.py for the
+        positive linkage cases.
+        """
         from st_eva_runner import _resolve_sec_eps_fact
-        sec_fact = _resolve_sec_eps_fact("MSFT", None, 11.80)
-        self.assertIsNotNone(sec_fact)
-        self.assertEqual(sec_fact["concept"], "us-gaap:EarningsPerShareDiluted")
-        self.assertEqual(sec_fact["form"], "10-K")
-        self.assertEqual(sec_fact["accession"], "0001193125-26-323660")
-        self.assertEqual(sec_fact["unit"], "USD/shares")
+
+        self.assertIsNone(
+            _resolve_sec_eps_fact(11.80),
+            "numerical equality with a historical filing is not provenance",
+        )
+        self.assertIsNone(_resolve_sec_eps_fact(13.20))
+        self.assertIsNone(
+            _resolve_sec_eps_fact(11.80, source_observation=None)
+        )
 
     def test_user_assumptions_labelled_and_never_receive_fabricated_sec_provenance(self):
         result = _run(user_eps=25.0, reference_multiple=27.5)

@@ -85,6 +85,7 @@ from data_contract import (
     validate_observation,
 )
 from fundamental_provider import YahooFundamentalProvider
+from reverse_requirements import ANCHOR_FORWARD, ANCHOR_TTM
 from report_formatter import (
     normalize_ticker,
     print_report,
@@ -2180,132 +2181,215 @@ def _build_valuation_multiples(
     return multiples, unavailable
 
 
-def _resolve_sec_eps_fact(
-    ticker: str,
+SEC_EPS_DILUTED_METRICS = (
+    "eps_diluted",
+    "METRIC_EPS_DILUTED",
+    "EarningsPerShareDiluted",
+)
+SEC_EPS_CONCEPT = "us-gaap:EarningsPerShareDiluted"
+SEC_EPS_UNIT = "USD/shares"
+
+# The absolute agreement allowed when a value is used to confirm a record that
+# identity has already selected. It is a confirmation tolerance, never a match
+# criterion: no amount of numerical agreement on its own binds a source.
+_EPS_VALUE_TOLERANCE = 0.005
+
+# The observation metric whose value the engine read for each anchor basis.
+# A forward anchor may have been built from either the vendor forward figure or
+# the vendor consensus figure, because `build_start_anchor` labels both
+# FORWARD_TWELVE_MONTHS; the value tells them apart downstream.
+_EPS_METRIC_FOR_ANCHOR_BASIS: Dict[str, Tuple[str, ...]] = {
+    ANCHOR_TTM: (METRIC_TRAILING_EPS,),
+    ANCHOR_FORWARD: (METRIC_FORWARD_EPS, METRIC_CONSENSUS_FORWARD_EPS),
+}
+
+
+def _is_sec_filing_observation(observation: Any) -> bool:
+    """
+    Whether an observation's own declared identity says it came from a filing.
+
+    The observation must carry the accession of a filing and declare itself a
+    regulatory-filing source. A vendor observation that happens to hold the same
+    number is not a filing observation, and neither is a static fixture.
+    """
+    raw = getattr(observation, "raw", None)
+    if not isinstance(raw, dict):
+        raw = {}
+    accession = raw.get("accession") or raw.get("accn") or raw.get("accession_number")
+    source_type = str(getattr(observation, "source_type", "") or "")
+    return bool(accession) and source_type == SourceType.REGULATORY_FILING.value
+
+
+def _observation_projecting_view_field(data: Any, metric: str) -> Optional[Observation]:
+    """
+    The observation `_apply_observations_to_view` used to fill one view field.
+
+    It mirrors that projection's own selection (first available observation for
+    the metric, else the first observed one), so "which observation supplied
+    this field" is answered by the same rule that filled it rather than by a
+    second guess.
+    """
+    observations = getattr(data, "observations", None)
+    if observations is None:
+        return None
+    try:
+        matches = observations.for_metric(metric)
+    except Exception:
+        return None
+    if not matches:
+        return None
+    available = [item for item in matches if item.is_available]
+    return (available or matches)[0]
+
+
+def _sec_observation_supplying_anchor(
+    data: Any,
+    anchor: Any,
     sec_observations: Optional[Sequence[Any]] = None,
+) -> Optional[Observation]:
+    """
+    The SEC observation that actually supplied the anchor's value, if any.
+
+    The linkage is established by observation identity, not by value: the
+    observation that projected the engine's own input field must be one of this
+    run's acquired filing observations. When it is, the value really came out of
+    that filing and the filing fact may be named as its source. When the field
+    was projected from a vendor or fixture observation, no filing fact may be
+    named, however close a historical figure's value is to it.
+    """
+    if anchor is None or getattr(anchor, "is_user_assumption", False):
+        return None
+    metrics = _EPS_METRIC_FOR_ANCHOR_BASIS.get(str(getattr(anchor, "basis", "") or ""))
+    if not metrics:
+        return None
+    anchor_value = safe_float(getattr(anchor, "value", None))
+    if anchor_value is None:
+        return None
+
+    acquired: Dict[str, Any] = {}
+    for observation in sec_observations or ():
+        observation_id = getattr(observation, "observation_id", None)
+        if observation_id:
+            acquired[observation_id] = observation
+
+    for metric in metrics:
+        projecting = _observation_projecting_view_field(data, metric)
+        if projecting is None:
+            continue
+        observation = acquired.get(getattr(projecting, "observation_id", None))
+        if observation is None:
+            continue
+        if not _is_sec_filing_observation(observation):
+            continue
+        observed_value = safe_float(getattr(observation, "value", None))
+        if observed_value is None or abs(observed_value - anchor_value) >= _EPS_VALUE_TOLERANCE:
+            continue
+        return observation
+    return None
+
+
+def _resolve_sec_eps_fact(
+    target_value: Optional[float] = None,
+    *,
+    source_observation: Any = None,
+) -> Optional[Dict[str, Any]]:
+    """Return the SEC filing fact that actually supplied a selected EPS value.
+
+    ``source_observation`` is the acquisition observation the value came from,
+    identified by the caller through `_sec_observation_supplying_anchor`. The
+    fact is built from that observation's own identity: concept, accession,
+    form, filed date, period, unit and document reference. ``target_value`` is
+    used only as a confirming compatibility check on the record already
+    identified by identity; it never selects a record. Numerical equality
+    between a vendor figure and a historical filing is not provenance, and the
+    existence of filings for a ticker says nothing about where a value came
+    from. With no linked observation this returns None and the caller must
+    leave the direct SEC source absent rather than invent one.
+    """
+    if source_observation is None:
+        return None
+    return _sec_filing_fact_from_observation(source_observation, target_value)
+
+
+def _sec_filing_fact_from_observation(
+    observation: Any,
     target_value: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Resolve a verified SEC diluted EPS filing fact only when data structures establish the link.
+    """Build the filing fact from the observation that supplied the value."""
+    raw = getattr(observation, "raw", None)
+    if not isinstance(raw, dict):
+        raw = {}
+    metric = str(getattr(observation, "metric", "") or "")
 
-    ``target_value`` is used ONLY as a confirming check (value compatibility) when
-    identity metadata (metric, concept, accessions, period, form/filing, unit) already
-    points to the specific observation. Numerical equality alone is never sufficient.
-    If no observation or filing entry can be tied to the anchor by identity, None is
-    returned; the caller must leave ``sec_fact`` absent rather than invent source.
-    """
-    # Helper: float match with a tight tolerance for reported EPS values
-    def _close(a: Optional[float], b: Optional[float]) -> bool:
-        if a is None or b is None:
-            return False
-        return abs(float(a) - float(b)) < 0.005
+    # The observation must name the diluted EPS concept, either by metric or by
+    # the filing fact it was read out of. A figure the filing did not report as
+    # diluted EPS is a different fact, whatever its value.
+    sec_fact = raw.get("sec_fact")
+    fact_tag = str(sec_fact.get("tag")) if isinstance(sec_fact, dict) else ""
+    fact_taxonomy = str(sec_fact.get("taxonomy") or "us-gaap") if isinstance(sec_fact, dict) else ""
+    declared_concept = f"{fact_taxonomy}:{fact_tag}" if (fact_taxonomy and fact_tag) else ""
+    if metric in SEC_EPS_DILUTED_METRICS:
+        concept = declared_concept or SEC_EPS_CONCEPT
+    elif declared_concept == SEC_EPS_CONCEPT:
+        # An acquisition that maps a filing fact onto the engine's own EPS
+        # metric still names the concept it read, and that naming is what makes
+        # the fact identifiable.
+        concept = SEC_EPS_CONCEPT
+    else:
+        return None
 
-    # 1. Search structured sec_observations — identity must be complete.
-    candidates_obs: List[Dict[str, Any]] = []
-    for obs in sec_observations or ():
-        metric = getattr(obs, "metric", "")
-        if metric not in ("eps_diluted", "METRIC_EPS_DILUTED", "EarningsPerShareDiluted"):
-            continue
-        raw = getattr(obs, "raw", {}) or {}
-        accn = getattr(obs, "accession", None) or raw.get("accession_number") or raw.get("accn")
-        if not accn:
-            continue
-        # Identity metadata must be present (filing form / filed date / period)
-        form = raw.get("form_type") or raw.get("form")
-        filed_date = raw.get("filed_date") or raw.get("filed") or getattr(obs, "as_of", None)
-        if not form and not filed_date:
-            continue
-        # Confirm value compatibility only when identity already selects this record
-        obs_value = getattr(obs, "value", None)
-        if target_value is not None:
-            # If value is reported in raw, prefer raw; else observation attribute
-            raw_val = raw.get("value")
-            try:
-                if raw_val is not None:
-                    obs_value = float(raw_val)
-            except (TypeError, ValueError):
-                pass
-            if obs_value is not None and not _close(obs_value, target_value):
-                continue  # value mismatch; identity alone is not enough to invent link
-        # Record passes identity + value gate
-        candidates_obs.append({
-            "accession": str(accn),
-            "form": str(form or "10-K"),
-            "filed_date": str(filed_date or ""),
-            "concept": "us-gaap:EarningsPerShareDiluted",
-            "unit": "USD/shares",
-            "period_start": str(getattr(obs, "period_start", None) or raw.get("start") or ""),
-            "period_end": str(getattr(obs, "period_end", None) or raw.get("end") or ""),
-            "document_url": f"https://www.sec.gov/Archives/edgar/data/{str(accn).replace('-', '')}/{str(accn)}-index.htm",
-            "obs_value": obs_value,
-        })
-    if candidates_obs:
-        # Prefer the observation whose value is closest to target when target given,
-        # otherwise prefer the one with the most complete identity.
-        if target_value is not None:
-            candidates_obs.sort(key=lambda c: (0 if c["obs_value"] is not None and abs(float(c["obs_value"]) - float(target_value)) < 0.005 else 1, abs(float(c["obs_value"]) - float(target_value)) if c["obs_value"] is not None else float('inf')))
-        else:
-            candidates_obs.sort(key=lambda c: (0 if c.get("period_start") and c.get("period_end") else 1))
-        best = candidates_obs[0]
-        return {k: v for k, v in best.items() if k != "obs_value"}
+    if not _is_sec_filing_observation(observation):
+        return None
 
-    # 2. Search data/historical_pe/{ticker}/eps_diluted_concept.json — only exact entry.
-    concept_file = Path(f"data/historical_pe/{ticker}/eps_diluted_concept.json")
-    if concept_file.exists():
-        try:
-            with open(concept_file, "r", encoding="utf-8") as f:
-                cdata = json.load(f)
-            units = (cdata.get("units") or {}).get("USD/shares") or []
-            # Only consider records with identity fields complete
-            matching_entries: List[Dict[str, Any]] = []
-            for entry in units:
-                val = entry.get("val")
-                accn = entry.get("accn")
-                form = entry.get("form")
-                filed = entry.get("filed")
-                start = entry.get("start")
-                end = entry.get("end")
-                if not accn or not form or not filed:
-                    continue
-                if target_value is not None:
-                    try:
-                        if not _close(float(val), float(target_value)):
-                            continue
-                    except (TypeError, ValueError):
-                        continue
-                matching_entries.append({
-                    "accession": str(accn),
-                    "form": str(form),
-                    "filed_date": str(filed),
-                    "concept": "us-gaap:EarningsPerShareDiluted",
-                    "unit": "USD/shares",
-                    "period_start": str(start or ""),
-                    "period_end": str(end or ""),
-                    "document_url": None,
-                    "_entry": entry,
-                })
-            if matching_entries:
-                cik = cdata.get("cik")
-                # Prefer most recent FY 10-K (last matching entry) — chronological file order assumed
-                fy_10k = [e for e in matching_entries if e["_entry"].get("fp") == "FY" and e["form"] == "10-K"]
-                best = fy_10k[-1] if fy_10k else (matching_entries[-1] if matching_entries else None)
-                accn = best["accession"]
-                url = None
-                if cik and accn:
-                    url = f"https://www.sec.gov/Archives/edgar/data/{str(cik)}/{str(accn).replace('-', '')}/{str(accn)}-index.htm"
-                result = {
-                    "accession": accn,
-                    "form": best["form"],
-                    "filed_date": best["filed_date"],
-                    "concept": best["concept"],
-                    "unit": best["unit"],
-                    "period_start": best["period_start"],
-                    "period_end": best["period_end"],
-                    "document_url": url,
-                }
-                return result
-        except Exception:
-            pass
-    return None
+    accession = raw.get("accession") or raw.get("accn") or raw.get("accession_number")
+    form = raw.get("form") or raw.get("form_type")
+    filed = (
+        raw.get("filed")
+        or raw.get("filed_date")
+        or raw.get("filing_date")
+        or getattr(observation, "as_of", None)
+    )
+    period_start = getattr(observation, "period_start", None) or raw.get("start")
+    period_end = getattr(observation, "period_end", None) or raw.get("end")
+    if not (accession and form and filed and period_end):
+        # Without the filing's own identity there is nothing to point at, and a
+        # half-identified fact is not a source.
+        return None
+
+    # A confirming check only: the identified record must carry the selected
+    # value, otherwise the input-to-fact linkage is not established after all.
+    reported_value = safe_float(getattr(observation, "value", None))
+    if target_value is not None and (
+        reported_value is None
+        or abs(reported_value - float(target_value)) >= _EPS_VALUE_TOLERANCE
+    ):
+        return None
+
+    # The per-share unit is part of the fact's identity: a filing figure stated
+    # in another unit is a different fact.
+    reported_unit = str(raw.get("reported_currency_unit") or "")
+    if reported_unit and reported_unit not in ("USD/shares", "USD-per-shares"):
+        return None
+
+    document_url = None
+    source_document = raw.get("source_document")
+    if isinstance(source_document, str) and source_document:
+        document_url = (
+            f"{source_document}{str(accession)}-index.htm"
+            if source_document.endswith("/")
+            else source_document
+        )
+
+    return {
+        "accession": str(accession),
+        "form": str(form),
+        "filed_date": str(filed),
+        "concept": concept,
+        "unit": reported_unit or SEC_EPS_UNIT,
+        "period_start": str(period_start or ""),
+        "period_end": str(period_end),
+        "document_url": document_url,
+    }
 
 
 def _find_related_sec_evidence(ticker: str) -> Optional[Dict[str, Any]]:
@@ -2433,8 +2517,17 @@ def _build_reverse_requirements(
                 obs_id = "ev-forward-eps-001"
             elif anchor.basis == "CONSENSUS_FORWARD_TWELVE_MONTHS":
                 obs_id = "ev-consensus-eps-001"
-            # Strict source binding: only claim direct SEC source when identity links it.
-            sec_fact = _resolve_sec_eps_fact(data.ticker, sec_observations, anchor.value)
+            # Strict source binding: the filing fact is the source of this value
+            # only when the observation that projected the engine's input field
+            # is one of this run's acquired SEC observations. A vendor forward
+            # or consensus figure, or any value merely equal to a historical
+            # filing figure, gets no SEC source attribution.
+            supplying = _sec_observation_supplying_anchor(
+                data, anchor, sec_observations
+            )
+            sec_fact = _resolve_sec_eps_fact(
+                anchor.value, source_observation=supplying
+            )
             # Related/cross-check evidence stays separate and must never be labeled direct source.
             sec_related = _find_related_sec_evidence(data.ticker)
             import dataclasses

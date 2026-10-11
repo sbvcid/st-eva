@@ -127,6 +127,8 @@ export interface Translations {
     missingOrUnvalidatedHeader: string
     userSpecifiedBadge: string
     sourcedFactBadge: string
+    secLinkedFactBadge: string
+    providerSourcedBadge: string
     descriptiveOnlyBadge: string
     eligibleReferenceBadge: string
     observationContractId: string

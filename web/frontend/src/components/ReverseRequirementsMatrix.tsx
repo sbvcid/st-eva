@@ -469,12 +469,16 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                         className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
                                           sc.evidence.eps_evidence.is_user_assumption
                                             ? 'bg-blue-100 text-blue-800'
-                                            : 'bg-slate-100 text-slate-700'
+                                            : sc.evidence.eps_evidence.sec_fact
+                                            ? 'bg-emerald-100 text-emerald-800'
+                                            : 'bg-amber-100 text-amber-800'
                                         }`}
                                       >
                                         {sc.evidence.eps_evidence.is_user_assumption
                                           ? t.matrix.userSpecifiedBadge
-                                          : t.matrix.sourcedFactBadge}
+                                          : sc.evidence.eps_evidence.sec_fact
+                                          ? t.matrix.secLinkedFactBadge
+                                          : t.matrix.providerSourcedBadge}
                                       </span>
                                     </div>
                                     <div className="font-mono text-sm font-bold text-slate-900">
@@ -491,12 +495,12 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           {sc.evidence.eps_evidence.observation_id}
                                         </div>
                                       )}
-                                      {/* SEC XBRL Fact if attached */}
+                                      {/* Direct SEC source — rendered only when the input-to-fact linkage is proven */}
                                       {sc.evidence.eps_evidence.sec_fact && (
                                         <div className="mt-1 pt-1 border-t border-slate-100 space-y-0.5 text-[10px] font-mono text-slate-600">
                                           <div className="text-emerald-700 font-semibold flex items-center gap-1">
                                             <FileText className="w-3 h-3" />
-                                            <span>SEC {sc.evidence.eps_evidence.sec_fact.form || '10-K'}</span>
+                                            <span>Source: SEC {sc.evidence.eps_evidence.sec_fact.form || '10-K'}</span>
                                           </div>
                                           {sc.evidence.eps_evidence.sec_fact.accession && (
                                             <div>accn: {sc.evidence.eps_evidence.sec_fact.accession}</div>
@@ -505,6 +509,15 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                             <div>filed: {sc.evidence.eps_evidence.sec_fact.filed_date}</div>
                                           )}
                                           <div>{sc.evidence.eps_evidence.sec_fact.concept}</div>
+                                        </div>
+                                      )}
+                                      {/* Direct SEC source not established: state it, keep the value */}
+                                      {!sc.evidence.eps_evidence.sec_fact && !sc.evidence.eps_evidence.is_user_assumption && (
+                                        <div className="mt-1 pt-1 border-t border-amber-200 text-[10px] font-mono text-amber-800">
+                                          <div className="font-semibold">Direct SEC source: not established</div>
+                                          <div className="text-[9px] text-amber-700 italic">
+                                            Value retained from its declared provider; no filing fact is claimed as its source.
+                                          </div>
                                         </div>
                                       )}
                                       {/* Related / cross-check SEC evidence — never claimed as direct source */}

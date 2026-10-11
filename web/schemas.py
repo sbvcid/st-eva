@@ -115,6 +115,24 @@ class SecFactDTO(BaseModel):
     document_url: Optional[str] = None
 
 
+class RelatedSecEvidenceDTO(BaseModel):
+    """Filing evidence related to the selected EPS, never its direct source.
+
+    Presented for cross-check only: no input-to-fact linkage is claimed, and a
+    consumer must not read this as the provenance of the selected value.
+    """
+
+    accession: Optional[str] = None
+    form: Optional[str] = None
+    filed_date: Optional[str] = None
+    concept: Optional[str] = "us-gaap:EarningsPerShareDiluted"
+    unit: Optional[str] = "USD/shares"
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    document_url: Optional[str] = None
+    note: Optional[str] = None
+
+
 class EpsAnchorDTO(BaseModel):
     value: float
     basis: str
@@ -189,6 +207,7 @@ class ScenarioEvidenceDTO(BaseModel):
     user_assumptions: List[str] = Field(default_factory=list)
     sourced_facts: List[str] = Field(default_factory=list)
     missing_or_unvalidated: List[str] = Field(default_factory=list)
+    related_sec_evidence: Optional[RelatedSecEvidenceDTO] = None
 
 
 class EpsScenarioDTO(BaseModel):

@@ -136,6 +136,8 @@ export const zhTW: Translations = {
     missingOrUnvalidatedHeader: '未驗證 / 限制說明',
     userSpecifiedBadge: '使用者自訂假設',
     sourcedFactBadge: '驗證事實數據',
+    secLinkedFactBadge: 'SEC 已連結來源',
+    providerSourcedBadge: '資料商來源（SEC 連結未建立）',
     descriptiveOnlyBadge: '僅供描述 (< 20 樣本)',
     eligibleReferenceBadge: '合格參考分佈',
     observationContractId: '證據契約編號',

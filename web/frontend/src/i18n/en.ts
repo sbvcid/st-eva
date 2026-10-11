@@ -137,6 +137,8 @@ export const en: Translations = {
     missingOrUnvalidatedHeader: 'Unvalidated / Limitations',
     userSpecifiedBadge: 'User Assumption',
     sourcedFactBadge: 'Verified Sourced Fact',
+    secLinkedFactBadge: 'SEC-Linked Source',
+    providerSourcedBadge: 'Provider-Sourced (SEC Link Not Established)',
     descriptiveOnlyBadge: 'Descriptive Only (< 20 obs)',
     eligibleReferenceBadge: 'Eligible Reference Distribution',
     observationContractId: 'Evidence Contract ID',

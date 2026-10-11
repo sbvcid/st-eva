@@ -273,3 +273,148 @@ describe('ReverseRequirementsMatrix Component', () => {
     expect(screen.getByText(/No positive EPS was observed/i)).toBeInTheDocument()
   })
 })
+
+// R2.1: a selected EPS value whose direct SEC source cannot be established must
+// keep the value and its declared provider, state the missing provenance
+// explicitly, and present any related filing only as cross-check evidence.
+const unresolvedProvenanceReport: ReverseRequirementsReportDTO = {
+  formula_version: 'reverse-requirements/1.1',
+  fingerprint: 'mock-fp-unresolved',
+  status: 'COMPUTED',
+  status_reason: null,
+  matrix_size: 1,
+  reverse_requirements_matrix: [
+    {
+      horizon_years: 3.0,
+      required_return: 0.10,
+      required_return_basis: 'PRICE_RETURN_ONLY',
+      exit_multiple: {
+        value: 20.0,
+        source: 'user_supplied',
+      },
+      required_exit_price: 133.1,
+      required_terminal_eps: 6.655,
+      start_eps: {
+        value: 13.2,
+        basis: 'FORWARD_TWELVE_MONTHS',
+        months_covered: 12.0,
+        provider: 'RegressionFixture',
+      },
+      growth_years: 3.0,
+      required_eps_cagr: 0.146,
+      total_terminal_eps_growth: 0.504,
+      comparison_notes: [],
+      flags: [],
+      formula_version: 'reverse-requirements/1.1',
+      calculation_steps: [],
+      evidence: {
+        price_evidence: {
+          value: 100.0,
+          currency: 'USD',
+          as_of: '2026-09-18',
+          provider: 'RegressionFixture',
+          source_type: 'REGRESSION_FIXTURE',
+          observation_id: 'ev-price-001',
+          is_user_assumption: false,
+        },
+        eps_evidence: {
+          value: 13.2,
+          basis: 'FORWARD_TWELVE_MONTHS',
+          months_covered: 12.0,
+          period_label: 'forward',
+          provider: 'RegressionFixture',
+          currency: 'USD',
+          period_undeclared_by_source: false,
+          source_type: 'REGRESSION_FIXTURE',
+          observation_id: 'ev-forward-eps-001',
+          is_user_assumption: false,
+          sec_fact: null,
+        },
+        multiple_evidence: {
+          value: 20.0,
+          source: 'user_supplied',
+          is_user_assumption: true,
+          eligibility_state: 'USER_SPECIFIED',
+          usable_for_reference: false,
+        },
+        user_assumptions: [
+          'Holding Horizon: 3 years',
+          'Required Return Hurdle: 10% (PRICE_RETURN_ONLY)',
+          'Exit Multiple: 20x (user-supplied)',
+        ],
+        sourced_facts: [
+          'Market Price: 100 USD (as-of 2026-09-18, provider: RegressionFixture)',
+          'Starting EPS: 13.2 USD (FORWARD_TWELVE_MONTHS, provider: RegressionFixture)',
+        ],
+        missing_or_unvalidated: [
+          'Direct SEC source of selected EPS not established; related filing shown for cross-check only',
+        ],
+        related_sec_evidence: {
+          accession: '0001193125-26-323660',
+          form: '10-K',
+          filed_date: '2026-07-30',
+          concept: 'us-gaap:EarningsPerShareDiluted',
+          unit: 'USD/shares',
+          period_start: '2025-07-01',
+          period_end: '2026-06-30',
+          note: 'Related SEC filing (cross-check); not verified as direct source of selected EPS value',
+        },
+      },
+    },
+  ],
+  reading_notes: [],
+}
+
+describe('ReverseRequirementsMatrix SEC provenance labels', () => {
+  it('states missing direct SEC provenance without hiding the EPS value', () => {
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={unresolvedProvenanceReport} />
+      </I18nProvider>
+    )
+
+    const toggleBtns = screen.getAllByTitle('Toggle details')
+    fireEvent.click(toggleBtns[0])
+
+    // The value and its declared provider remain visible.
+    expect(screen.getAllByText('Starting EPS Anchor').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('$13.20').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Provider: RegressionFixture').length).toBeGreaterThan(0)
+    expect(screen.getByText('EPS provider: RegressionFixture')).toBeInTheDocument()
+
+
+    // The unresolved provenance is explicit, not silently omitted.
+    expect(screen.getByText('Direct SEC source: not established')).toBeInTheDocument()
+    expect(
+      screen.getByText('Direct SEC source of selected EPS not established; related filing shown for cross-check only'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Provider-Sourced (SEC Link Not Established)')).toBeInTheDocument()
+
+    // No filing is presented as the direct source of this value.
+    expect(screen.queryByText('Source: SEC 10-K')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/SEC 10-K accession 0001193125-26-323660/),
+    ).not.toBeInTheDocument()
+
+    // The related filing is labelled cross-check evidence, never a source.
+    expect(screen.getByText(/Related SEC 10-K \(cross-check\)/)).toBeInTheDocument()
+    expect(
+      screen.getByText('Related SEC filing (cross-check); not verified as direct source of selected EPS value'),
+    ).toBeInTheDocument()
+  })
+
+  it('labels a linked SEC fact as the direct source of the selected EPS', () => {
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={mockReport} />
+      </I18nProvider>
+    )
+
+    const toggleBtns = screen.getAllByTitle('Toggle details')
+    fireEvent.click(toggleBtns[1])
+
+    expect(screen.getByText('Source: SEC 10-K')).toBeInTheDocument()
+    expect(screen.getByText('SEC-Linked Source')).toBeInTheDocument()
+    expect(screen.getByText(/accn: 0001193125-26-323660/)).toBeInTheDocument()
+  })
+})

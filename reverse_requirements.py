@@ -734,11 +734,15 @@ def build_scenario_evidence(
     if start_anchor.period_undeclared_by_source:
         missing_or_unvalidated.append("Starting EPS period coverage was not declared by source")
     # Explicit provenance limitation: direct SEC link must be proven, never inferred from existence.
-    if eps_ev.get("sec_related_evidence") and eps_ev.get("sec_related_evidence").get("accession"):
-        if not (eps_ev.get("sec_fact") and eps_ev["sec_fact"].get("accession")):
-            missing_or_unvalidated.append(
-                "Direct SEC source of selected EPS not established; related filing shown for cross-check only"
-            )
+    # Every sourced (non-user) anchor either names the filing that supplied it or
+    # states that its direct SEC source is not established; the value itself is
+    # kept and its declared provider is what the evidence reports.
+    related = eps_ev.get("sec_related_evidence") or None
+    if not eps_ev["is_user_assumption"] and not (eps_ev.get("sec_fact") and eps_ev["sec_fact"].get("accession")):
+        limitation = "Direct SEC source of selected EPS not established"
+        if related and related.get("accession"):
+            limitation += "; related filing shown for cross-check only"
+        missing_or_unvalidated.append(limitation)
 
     return {
         "price_evidence": price_ev,
@@ -747,7 +751,7 @@ def build_scenario_evidence(
         "user_assumptions": user_assumptions,
         "sourced_facts": sourced_facts,
         "missing_or_unvalidated": missing_or_unvalidated,
-        "related_sec_evidence": eps_ev.get("sec_related_evidence") if eps_ev.get("sec_related_evidence") else None,
+        "related_sec_evidence": related,
     }
 
 

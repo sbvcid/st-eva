@@ -80,6 +80,10 @@ export interface SecFactDTO {
   document_url?: string | null
 }
 
+export interface RelatedSecEvidenceDTO extends SecFactDTO {
+  note?: string | null
+}
+
 export interface EpsAnchorDTO {
   value: number
   basis: string
@@ -154,6 +158,7 @@ export interface ScenarioEvidenceDTO {
   user_assumptions: string[]
   sourced_facts: string[]
   missing_or_unvalidated: string[]
+  related_sec_evidence?: RelatedSecEvidenceDTO | null
 }
 
 export interface EpsScenarioDTO {
