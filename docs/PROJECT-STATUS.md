@@ -1,9 +1,9 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-11  
-**Repository:** `sbvcid/st-eva`, branch `master`  
-**Current implementation baseline:** `cb5ab8c`  
-**Latest verified GitHub Actions:** [run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063), triggered by `cb5ab8c`; backend and browser jobs passed.
+**Status checked:** 2026-10-11
+**Repository:** `sbvcid/st-eva`, branch `master`
+**Current implementation baseline:** `cb5ab8c` (restored after regression in `661e0df`)
+**Latest verified GitHub Actions:** [Run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) passed on `cb5ab8c`. Subsequent sync/merge regression in [run 38141809016](https://github.com/sbvcid/st-eva/actions/runs/38141809016) (`661e0df`) failed backend (4 failures); restored to `cb5ab8c` contract baseline and verified green locally.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -13,11 +13,11 @@ This section is the hand-off checkpoint for future conversations and coding agen
 
 **Completed and should not be repeated without a concrete reason**
 
-- **P0 CI contract repair is complete** at commit `cb5ab8c`. The three failures previously seen in runs `38137995221` / `38138343712` were fixed. Local results: 1,897 passed, 168 skipped, 140 subtests passed; archive-isolation 6 passed; web API 15 passed; frontend build passed. GitHub Actions run `38140076063` passed both backend and browser jobs.
+- **P0 CI contract repair is complete** at commit `cb5ab8c`, and restored after sync regression. The 4 backend failures seen in run `38141809016` (reintroduced in `661e0df`) were fixed by restoring the verified `cb5ab8c` contracts in `investment_context.py` and correcting `.gitignore`. Local test results: full backend suite 1,897 passed, 168 skipped, 140 subtests passed; targeted tests 4 passed; archive-isolation 6 passed; web API 15 passed; frontend build passed.
 - Persistent local SQLite files were SHA-256 checked before and after the test runs; the reported hashes were unchanged. Do not rerun this audit unless a subsequent task touches database persistence or tests.
 - The archive was inventoried and semantically reviewed in the completed local Phase 1/2 audit. The durable outcome is recorded in this status file: **zero archive content integrated**. Do not repeat the broad inventory or Phase 2 review unless a specific product gap points to a particular archive item; deleting local audit outputs does not invalidate this decision.
 - The existing reverse-requirements engine is not a blank slate: `reverse_requirements.py` has formula version `1.1`; the reported AAPL artifact `data/historical_pe/AAPL/reverse_requirements_output.json` contains 27 scenarios. This proves an output artifact exists, not that the browser path is complete. Do not regenerate the artifact or repeat a broad formula audit just to re-establish that the matrix exists.
-- The reported local Git state after P0 had only `data/historical_pe/AAPL/reverse_requirements_output.json` untracked. Re-check current local Git status before changing or committing that file; do not add it automatically.
+- The AAPL reverse requirements output `data/historical_pe/AAPL/reverse_requirements_output.json` is safely ignored via `.gitignore` and backed up outside the repository at `C:\st-eva-audit\archive-output-backup`; do not track or delete it.
 
 **Outstanding but intentionally not complete**
 
@@ -230,9 +230,13 @@ For local frontend development, see [web/frontend/README.md](../web/frontend/REA
 
 Latest checked runs (sequential):
 
-- [Run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221) (1d0ef0b, documentation-only change after code baseline 9a43f9f): backend failed (3 failures: 	est_a_derived_figure_carries_state_flags_only_when_something_is_wrong, 	est_engine_and_context_agree_on_what_is_missing, 	est_the_reference_states_its_basis_and_source); browser passed; archive/isolation and web API passed; frontend build passed. Failures at interface of calculation semantics, unavailable-value representation, and traceability.
-- [Run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) (cb5ab8c): backend and browser jobs passed; 1,897 passed, 168 skipped, 140 subtests. The three earlier failures resolved by engine/Context contract fixes (unavailable consensus price derivations retained in Context; pe_percentile unavailable-state alignment; user-supplied reference multiple 30.0 passed through with USER_SUPPLIED basis); regression test added.
-- **Local verification:** same baseline after code fix (investment_context.py derivation/registration contracts); 
-everse_requirements_output.json (AAPL, 27 scenarios, ormula_version 1.1) verified intact; persistent SQLite hashes unchanged.
-
-The code baseline has not been validated as CI-green at the older run, but the later upstream run (cb5ab8c) confirms resolution; documentation-only commits (1d0ef0b) do not resolve failures on their own.
+- [Run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221) (`1d0ef0b`, documentation-only change after code baseline `9a43f9f`): backend failed (3 failures); browser passed; archive/isolation and web API passed; frontend build passed. Failures at interface of calculation semantics, unavailable-value representation, and traceability.
+- [Run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) (`cb5ab8c`): backend and browser jobs passed; 1,897 passed, 168 skipped, 140 subtests. The three earlier failures resolved by engine/Context contract fixes (unavailable consensus price derivations retained in Context; pe_percentile unavailable-state alignment; user-supplied reference multiple 30.0 passed through with USER_SUPPLIED basis); regression test added.
+- [Run 38141809016](https://github.com/sbvcid/st-eva/actions/runs/38141809016) (`661e0df`): backend failed (4 failures: `TestS3DerivedFigureTraceability::test_a_derived_figure_carries_state_flags_only_when_something_is_wrong`, `TestUnavailableContract::test_consensus_price_derivations_agree_on_missing_state`, `TestUnavailableContract::test_engine_and_context_agree_on_what_is_missing`, `TestConditionalContract::test_the_reference_states_its_basis_and_source`); browser passed. Root cause: merge/sync reintroduced pre-fix `investment_context.py` logic and `.gitignore` formatting anomaly (`\n#`).
+- **Post-38141809016 Fix & Local Verification:**
+  - `_band_status`: Undeclared sample count returns `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT` and is not treated as usable reference.
+  - `consensus_price_ratio` / `consensus_price_gap`: Registered with conditional/unavailable provenance even when median price is absent.
+  - `pe_percentile`: Context consistently registers unavailable state with clear refusal reason when engine deems it unavailable.
+  - Valuation reference: `user_pe` multiple (e.g. `30.0`) is passed cleanly, preserving `USER_SUPPLIED` basis.
+  - `.gitignore`: Formatted cleanly to ignore `data/historical_pe/AAPL/reverse_requirements_output.json` without syntax defects.
+  - **Local verification results:** 4 targeted tests passed in 0.39s; backend suite passed (1,897 passed, 168 skipped, 140 subtests passed in 317.74s); archive-isolation 6 passed; web API 15 passed; frontend build passed (`dist/index.html` produced). Persistent SQLite files and AAPL reverse requirements artifact verified intact.

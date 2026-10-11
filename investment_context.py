@@ -844,11 +844,12 @@ class ContextBuilder:
     # -- references -------------------------------------------------------
 
     def _band_status(self, band: Any) -> str:
-        if not band or not safe_float((band or {}).get("median")):
+        median = safe_float((band or {}).get("median"))
+        if not band or median is None or median <= 0:
             return "UNAVAILABLE"
         declared = safe_float((band or {}).get("observations"))
-        if declared is None:
-            return "USABLE_FOR_REFERENCE"
+        if declared is None or declared < 0 or not declared.is_integer():
+            return "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT"
         if declared >= MIN_BAND_OBSERVATIONS_FOR_REFERENCE:
             return "USABLE_FOR_REFERENCE"
         return "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
@@ -904,8 +905,7 @@ class ContextBuilder:
                     None
                     if status is None
                     else (
-                        "the band declares no observation count and is treated "
-                        "as usable"
+                        "the band declares no observation count and cannot be verified as a reference"
                         if declared is None
                         else f"{int(declared)} observations"
                         + (
@@ -967,7 +967,9 @@ class ContextBuilder:
         silent financial assumption this document exists to make visible.
         """
         analysis_reference = self.analysis.get("reference") or {}
+        user_pe = self.user_references["valuation_reference"]
         selected_pe = safe_float(analysis_reference.get("multiple"))
+        multiple = user_pe if user_pe is not None else selected_pe
         band_pe = getattr(self.data, "historical_pe_band", None)
         # A historical median must always name the band it came from, whether
         # or not the band's samples were preserved. Naming the source and
@@ -975,7 +977,7 @@ class ContextBuilder:
         source_ref = self._band_ref("pe_band") if band_pe else None
 
         basis = "NONE"
-        if self.user_references["valuation_reference"] is not None:
+        if user_pe is not None:
             basis = "USER_SUPPLIED"
         elif selected_pe is not None:
             basis = "HISTORICAL_MEDIAN"
@@ -989,7 +991,7 @@ class ContextBuilder:
         refs = {
             "valuation_reference": self._register_reference(
                 name="valuation_reference",
-                multiple=selected_pe,
+                multiple=multiple,
                 source_metric="pe",
                 source_ref=source_ref,
                 basis=basis,
@@ -1503,38 +1505,39 @@ class ContextBuilder:
                 currency=self.data.currency or None,
                 provenance_kind=PROVENANCE_CONDITIONAL,
             )
-            if cross_check.get("price_at_historical_median_pe") is not None:
-                self._add_derivation(
-                    name="consensus_price_ratio",
-                    op="ratio",
-                    operands=[derived_ref("consensus_price_at_median"), price],
-                    engine_value=(
-                        cross_check.get(
-                            "price_at_historical_median_pe"
-                        )
-                        / self.data.price
-                    ),
-                    unit=Unit.RATIO.value,
-                    expression=(
-                        f"{derived_ref('consensus_price_at_median')} / {price}"
-                    ),
-                    conditional_on=conditional,
-                    provenance_kind=PROVENANCE_CONDITIONAL,
-                )
-                self._add_derivation(
-                    name="consensus_price_gap",
-                    op="subtract",
-                    operands=[derived_ref("consensus_price_ratio"), one],
-                    engine_value=cross_check.get(
-                        "price_gap_vs_historical_median_on_consensus_eps"
-                    ),
-                    unit=Unit.RATIO.value,
-                    expression=(
-                        f"{derived_ref('consensus_price_ratio')} - {one}"
-                    ),
-                    conditional_on=conditional,
-                    provenance_kind=PROVENANCE_CONDITIONAL,
-                )
+            median_price = cross_check.get("price_at_historical_median_pe")
+            price_val = safe_float(self.data.price)
+            ratio_val = (
+                median_price / price_val
+                if median_price is not None and price_val and price_val > 0
+                else None
+            )
+            self._add_derivation(
+                name="consensus_price_ratio",
+                op="ratio",
+                operands=[derived_ref("consensus_price_at_median"), price],
+                engine_value=ratio_val,
+                unit=Unit.RATIO.value,
+                expression=(
+                    f"{derived_ref('consensus_price_at_median')} / {price}"
+                ),
+                conditional_on=conditional,
+                provenance_kind=PROVENANCE_CONDITIONAL,
+            )
+            self._add_derivation(
+                name="consensus_price_gap",
+                op="subtract",
+                operands=[derived_ref("consensus_price_ratio"), one],
+                engine_value=cross_check.get(
+                    "price_gap_vs_historical_median_on_consensus_eps"
+                ),
+                unit=Unit.RATIO.value,
+                expression=(
+                    f"{derived_ref('consensus_price_ratio')} - {one}"
+                ),
+                conditional_on=conditional,
+                provenance_kind=PROVENANCE_CONDITIONAL,
+            )
 
         implied_eps_ref = derived_ref("implied_forward_eps")
         if implied_eps_ref in self.figures and current_eps:
@@ -1763,19 +1766,19 @@ class ContextBuilder:
                 )
             )
             if status != "USABLE_FOR_REFERENCE" or value is None:
-                if value is None and status != "USABLE_FOR_REFERENCE":
-                    self._add_derivation(
-                        name=name,
-                        op="percentile_position",
-                        operands=[numerator_ref, band_ref],
-                        engine_value=None,
-                        unit=Unit.RATIO.value,
-                        expression=(
-                            f"percentile_position({numerator_ref}, {band_ref})"
-                        ),
-                        conditional_on=percentile_conditional,
-                        provenance_kind=percentile_kind,
-                    )
+                self._add_derivation(
+                    name=name,
+                    op="percentile_position",
+                    operands=[numerator_ref, band_ref],
+                    engine_value=None,
+                    unit=Unit.RATIO.value,
+                    expression=(
+                        f"percentile_position({numerator_ref}, {band_ref})"
+                    ),
+                    conditional_on=percentile_conditional,
+                    provenance_kind=percentile_kind,
+                )
+                if status != "USABLE_FOR_REFERENCE":
                     entry = next(
                         item
                         for item in self.unavailable

@@ -22,5 +22,6 @@ web/dist/
 /data/**/*.sqlite-wal
 /data/**/*.sqlite-shm
 /data/archives/
-\n# # Generated reverse-valuation output (backed up outside repo; do not commit)
+
+# Generated reverse-valuation output (backed up outside repo; do not commit)
 data/historical_pe/AAPL/reverse_requirements_output.json
