@@ -25,15 +25,29 @@ This section is the hand-off checkpoint for future conversations and coding agen
   - Regression mode is no longer secretly forced for MSFT/0700.HK without notice; explicit mode controls are available and when regression fixture data is detected, a prominent "REGRESSION FIXTURE (TEST DATA)" warning banner prevents test fixtures from being mistaken for live quotes.
   - Uncomputable scenarios and matrix states (e.g. non-positive EPS anchor, window < 0.5 yrs) are explicitly represented with structured reason codes/messages, never zero-filled or hidden.
   - Verified with 20 web API tests, 44 wiring tests, 6 archive isolation tests, 24 Vitest frontend unit tests, 7 browser smoke tests, and the full backend suite (1,897 passed, 168 skipped, 140 subtests).
+- **R2 Reverse scenario provenance and reproducibility is complete** (formula version `reverse-requirements/1.1`):
+  - Row-level evidence contract defined and strongly typed in `web/schemas.py` and `web/frontend/src/types/api.ts` with `SecFactDTO`, `MarketPriceEvidenceDTO`, `EpsAnchorEvidenceDTO`, `ExitMultipleEvidenceDTO`, `CalculationStepDTO`, and `ScenarioEvidenceDTO` attached to each `EpsScenarioDTO`.
+  - Pure calculation engine in `reverse_requirements.py` generates deterministic 4-step execution traces (`build_scenario_calculation_steps()`): (1) Required Exit Price $P_T = P_0 \cdot (1 + r)^T$, (2) Required Terminal EPS $EPS_T = P_T / PE_{\text{exit}}$, (3) Total EPS Growth $\Delta EPS = (EPS_T - EPS_0) / EPS_0$, (4) Required EPS CAGR $g = (EPS_T / EPS_0)^{1 / t_{\text{growth}}} - 1$ or explicit uncomputable reason, verifying reproducibility within $10^{-4}$ tolerance.
+  - Strict segregation between sourced facts and user assumptions:
+    - User assumptions (`--user-eps`, user-specified exit multiples) are tagged `is_user_assumption=True`, `source_type="USER_SUPPLIED"` / `eligibility_state="USER_SPECIFIED"`, with no fabricated SEC provenance.
+    - Sourced facts include market price evidence (`ev-price-001`), starting EPS anchor evidence (`ev-current-eps-001` or `ev-forward-eps-001`) with verified SEC diluted EPS XBRL fact metadata (accession, form 10-K/10-Q, filed date, concept `us-gaap:EarningsPerShareDiluted`, unit `USD/shares`), and exit multiple historical sample count / eligibility state.
+    - Historical multiple sample count limitations (<20 qualifying observations) are explicitly marked `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT` and `usable_for_reference=False`.
+  - Service adapter hardened in `web/service_adapter.py`: DTO validation failures raise explicit exceptions rather than silently swallowing the error and omitting the matrix while reporting success.
+  - Frontend UI in `<ReverseRequirementsMatrix>` provides an expandable audit trail drawer with:
+    - "Mathematically Verified" reproducibility badge
+    - 4-step deterministic calculation trace cards with formulas, operands, and results
+    - Source evidence cards with observation IDs, provider, and SEC filing metadata
+    - Distinct tags distinguishing User Assumptions from Verified Sourced Facts and Limitations.
+  - Local verification results: full backend suite passed (1,938 passed, 168 skipped in 398.59s); wiring suite 49 passed; web API 22 passed; Playwright browser smoke 8 passed; Vitest frontend unit tests 25 passed; production frontend build passed (`dist/index.html` produced). Persistent SQLite files and AAPL reverse requirements artifact verified intact.
 
 **Outstanding but intentionally not complete**
 
-- The browser does not yet offer complete row-level SEC XBRL fact provenance and historical daily observation lineage recomputation details.
+- Full interactive point-in-time daily historical P/E distribution recomputation graph inside the browser drawer (currently provides verified sample count, observation range, and eligibility status).
 - The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
 
 **Next task — one task only**
 
-Row-level provenance and audit inspection: connect individual matrix rows and starting EPS/multiple observations to their registered source facts/filings and validation boundary records in the UI.
+Reconcile summary cards with reverse-requirements matrix metrics, unify displayed terminology, and extend export capabilities (e.g. JSON/CSV export of audit trail and scenario matrix).
 
 **Execution rule**
 
@@ -137,17 +151,21 @@ The current browser page has ticker input and quick examples, online/offline mes
 
 The result cards currently show a small set of headline values: market price, implied forward EPS at the selected reference, required EPS CAGR, reference P/E, and supporting observed multiples/limitations. The accordion displays source identifiers, evidence-contract IDs and a discrepancy-status field where present. It does not show the detailed inputs and formulas required to independently recompute a reverse scenario.
 
-Confirmed gaps and R1 status:
+Confirmed gaps and R1/R2 status:
 
 1. **[RESOLVED in R1] Full reverse-requirements matrix in the UI.** The browser now renders the complete typed `reverse_requirements` matrix scenarios table with horizon and return filters, anchor metadata, formula version, and uncomputable badges/reasons.
 2. **[RESOLVED in R1] Complete scenario controls.** The browser now provides assumption controls for reference multiples, horizons, required returns, EPS anchor basis preference, and EPS overrides, forwarded via `AnalyzeRequest` to the runner.
 3. **[RESOLVED in R1] Misleading regression-mode branch resolved.** Automatic hidden switching to regression mode was removed; explicit mode selection is supported, and a prominent test fixture banner is displayed when regression data is shown.
-4. **No scenario-level provenance view.** The current UI does not provide a direct link from each reverse-matrix row to its underlying SEC XBRL fact IDs or historical daily P/E observation lineage.
+4. **[RESOLVED in R2] Scenario-level provenance & calculation audit drawer.** Each matrix scenario row expands to display an audit trail drawer containing:
+   - Reproducibility verification status (within $10^{-4}$ tolerance).
+   - 4-step deterministic formula traces ($P_T$, $EPS_T$, $\Delta EPS$, $g$) with exact operands, formulas, and results.
+   - Sourced facts (market price observation ID, starting EPS anchor with verified SEC XBRL accession/filing date/concept metadata, exit multiple sample count and eligibility status).
+   - Clear distinction between user assumptions, verified sourced facts, and data limitations/refusals.
 5. **Summary labels conceal different computations.** While the full matrix now clearly separates scenario exit price and CAGR requirements from summary cards, unified terminology and deep row reconciliation remain an ongoing refinement.
-6. **[RESOLVED in R1] First-class response contract.** `ReverseRequirementsReportDTO`, `EpsScenarioDTO`, `EpsAnchorDTO`, and `ReferenceMultipleDTO` are strongly typed in `web/schemas.py` and `web/frontend/src/types/api.ts`.
+6. **[RESOLVED in R1 & R2] First-class response contract.** `ReverseRequirementsReportDTO`, `EpsScenarioDTO`, `EpsAnchorDTO`, `ReferenceMultipleDTO`, `CalculationStepDTO`, and `ScenarioEvidenceDTO` are strongly typed in `web/schemas.py` and `web/frontend/src/types/api.ts`. Service adapter hardened to raise explicit exceptions on DTO validation failures.
 7. **Progress/status wording leads with process infrastructure.** Acquisition, admission and replay can help explain data states, but the main user result must be the conditional financial requirements implied by the price.
 
-The web path now provides the complete first-class reverse-requirements matrix calculation and scenario display, with row-level provenance remaining for subsequent refinement.
+The web path now provides the complete first-class reverse-requirements matrix calculation, scenario display, and row-level mathematical and source provenance audit drawer.
 
 ## 6. Input acquisition, definitions and validation
 
@@ -189,14 +207,12 @@ Two implementation gaps remain relevant to the actual product:
 
 `investment_context.py` packages observations, provenance references, validation states, formula/operation references, unavailable states and derived figures into a machine-readable contract. `operation_registry.py` holds registered deterministic operations. This is useful supporting infrastructure because it can let a consumer inspect/recompute data without the consumer having to import the runner.
 
-However, current integration does not complete the reverse-matrix trace:
+Integration status after R1 & R2:
 
 - `run_st_eva()` places the full matrix in `result["reverse_requirements"]`.
-- The reviewed `_build_context_if_requested()` call passes the analysis/evidence/metrics path into the Context builder without passing the full reverse-requirements matrix and all of its row-specific assumptions as the matrix's own trace surface.
-- The ordinary `SnapshotManager.save()` payload includes analysis/metrics/evidence/contract and optional context, but does not save the full reverse-requirements matrix as a dedicated snapshot field.
-- The web adapter uses `save_snapshot=False` and instead requests a temporary Context JSON plus its per-ticker SQLite archive. The resulting web response maps the headline summary and does not render a row-by-row matrix.
-
-Therefore a reproducible generic Context is not yet the same thing as an end-to-end, inspectable reverse-scenario record. The matrix must become a first-class output with its exact inputs/refs/formula version and must be preserved consistently across JSON display/export and any saved snapshot that claims to represent that reverse valuation.
+- `AnalysisResultDTO` maps the complete `ReverseRequirementsReportDTO`, including starting EPS anchor metadata, scenario cross-product, deterministic calculation steps, and source/audit evidence.
+- The web browser renders the full matrix and provides an expandable audit trail drawer for each scenario row showing mathematical verification ($10^{-4}$ tolerance), 4-step calculation traces, and sourced vs user-assumed input evidence.
+- Full snapshot/Context serialization of row-by-row scenario traces into historical archives remains an available persistence enhancement for future export/replay flows.
 
 ## 9. SQLite archives, replay and data protection
 

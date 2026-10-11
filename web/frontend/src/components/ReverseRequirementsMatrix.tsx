@@ -4,13 +4,19 @@ import {
   ReverseRequirementsReportDTO,
 } from '../types/api'
 import {
+  AlertCircle,
   AlertTriangle,
   Calculator,
+  CheckCircle,
   ChevronDown,
   ChevronRight,
+  Database,
+  ExternalLink,
+  FileText,
   Filter,
   Info,
   Layers,
+  ShieldCheck,
   Table as TableIcon,
 } from 'lucide-react'
 import { useI18n } from '../i18n'
@@ -321,30 +327,280 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
 
                         {/* Expand Row Button */}
                         <td className="py-2 px-3 text-right">
-                          {hasNotes && (
-                            <button
-                              type="button"
-                              onClick={() => toggleRow(idx)}
-                              className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition-colors"
-                              title="Toggle details"
-                            >
-                              {isExpanded ? (
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              ) : (
-                                <ChevronRight className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => toggleRow(idx)}
+                            className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition-colors"
+                            title="Toggle details"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </td>
                       </tr>
 
                       {/* Expandable Scenario Detail Drawer */}
                       {isExpanded && (
                         <tr className="bg-slate-50/70 border-b border-slate-100">
-                          <td colSpan={9} className="py-3 px-4 text-xs font-sans space-y-2">
+                          <td colSpan={9} className="py-4 px-5 text-xs font-sans space-y-4">
+                            {/* Drawer Header */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
+                              <div className="flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                                <span className="font-semibold text-slate-900 text-xs">
+                                  {t.matrix.auditTitle}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px] font-mono">
+                                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                  {t.matrix.mathematicallyVerified}
+                                </span>
+                                <span className="text-slate-400">
+                                  {sc.formula_version || 'reverse-requirements/1.1'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Deterministic Calculation Steps */}
+                            {sc.calculation_steps && sc.calculation_steps.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+                                  <Calculator className="w-3.5 h-3.5 text-blue-600" />
+                                  <span>{t.matrix.calculationSteps}</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-[11px]">
+                                  {sc.calculation_steps.map((step) => (
+                                    <div
+                                      key={step.step_number}
+                                      className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1.5"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-bold text-slate-800 font-sans text-xs">
+                                          {step.step_number}. {step.name}
+                                        </span>
+                                        <span
+                                          className={`px-1.5 py-0.2 rounded text-[10px] ${
+                                            step.status === 'COMPUTED'
+                                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                          }`}
+                                        >
+                                          {step.status === 'COMPUTED' ? t.matrix.mathematicallyVerified : t.matrix.notComputableReason}
+                                        </span>
+                                      </div>
+                                      <div className="text-blue-900 bg-blue-50/50 px-2 py-1 rounded text-[10px] break-all border border-blue-100">
+                                        {step.formula_expression}
+                                      </div>
+                                      <div className="text-[10px] text-slate-600 flex flex-wrap gap-x-2 gap-y-0.5">
+                                        <span className="text-slate-400 font-sans">{t.matrix.operandsLabel}:</span>
+                                        {Object.entries(step.operands || {}).map(([opKey, opVal]) => (
+                                          <span key={opKey}>
+                                            {opKey}={typeof opVal === 'number' ? opVal.toFixed(opVal < 1 ? 4 : 2) : String(opVal)}
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-slate-500 font-sans">{t.matrix.resultLabel}:</span>
+                                        <span className="font-bold text-slate-900">
+                                          {step.output_value !== null && step.output_value !== undefined
+                                            ? (step.output_unit === 'percent_per_annum' || step.output_unit === 'ratio'
+                                                ? `${(step.output_value * 100).toFixed(2)}%`
+                                                : `${currency}${step.output_value.toFixed(2)}`)
+                                            : '—'}
+                                        </span>
+                                      </div>
+                                      {step.status_reason && (
+                                        <div className="text-[10px] text-amber-700 font-sans italic">
+                                          {step.status_reason}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Source Evidence & Sourced Facts */}
+                            {sc.evidence && (
+                              <div className="space-y-2 pt-1">
+                                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+                                  <Database className="w-3.5 h-3.5 text-indigo-600" />
+                                  <span>{t.matrix.sourceEvidence}</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 font-sans text-xs">
+                                  {/* Market Price Evidence */}
+                                  <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-slate-800 text-[11px]">
+                                        {t.matrix.marketPriceFact}
+                                      </span>
+                                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-mono">
+                                        {t.matrix.sourcedFactBadge}
+                                      </span>
+                                    </div>
+                                    <div className="font-mono text-sm font-bold text-slate-900">
+                                      {currency}{sc.evidence.price_evidence.value.toFixed(2)}
+                                      <span className="text-xs text-slate-500 font-normal ml-1">
+                                        {sc.evidence.price_evidence.currency || 'USD'}
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 space-y-0.5">
+                                      <div>Provider: {sc.evidence.price_evidence.provider || 'market'}</div>
+                                      <div>As-of: {sc.evidence.price_evidence.as_of || sc.as_of || 'N/A'}</div>
+                                      {sc.evidence.price_evidence.observation_id && (
+                                        <div className="font-mono text-[10px] text-indigo-700">
+                                          {sc.evidence.price_evidence.observation_id}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Start EPS Anchor Evidence */}
+                                  <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-slate-800 text-[11px]">
+                                        {t.matrix.startEpsFact}
+                                      </span>
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                                          sc.evidence.eps_evidence.is_user_assumption
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-slate-100 text-slate-700'
+                                        }`}
+                                      >
+                                        {sc.evidence.eps_evidence.is_user_assumption
+                                          ? t.matrix.userSpecifiedBadge
+                                          : t.matrix.sourcedFactBadge}
+                                      </span>
+                                    </div>
+                                    <div className="font-mono text-sm font-bold text-slate-900">
+                                      {currency}{sc.evidence.eps_evidence.value.toFixed(2)}
+                                      <span className="text-xs text-slate-500 font-normal ml-1">
+                                        {sc.evidence.eps_evidence.basis}
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 space-y-0.5">
+                                      <div>Coverage: {sc.evidence.eps_evidence.months_covered} months</div>
+                                      <div>Provider: {sc.evidence.eps_evidence.provider || 'reported'}</div>
+                                      {sc.evidence.eps_evidence.observation_id && (
+                                        <div className="font-mono text-[10px] text-indigo-700">
+                                          {sc.evidence.eps_evidence.observation_id}
+                                        </div>
+                                      )}
+                                      {/* SEC XBRL Fact if attached */}
+                                      {sc.evidence.eps_evidence.sec_fact && (
+                                        <div className="mt-1 pt-1 border-t border-slate-100 space-y-0.5 text-[10px] font-mono text-slate-600">
+                                          <div className="text-emerald-700 font-semibold flex items-center gap-1">
+                                            <FileText className="w-3 h-3" />
+                                            <span>SEC {sc.evidence.eps_evidence.sec_fact.form || '10-K'}</span>
+                                          </div>
+                                          {sc.evidence.eps_evidence.sec_fact.accession && (
+                                            <div>accn: {sc.evidence.eps_evidence.sec_fact.accession}</div>
+                                          )}
+                                          {sc.evidence.eps_evidence.sec_fact.filed_date && (
+                                            <div>filed: {sc.evidence.eps_evidence.sec_fact.filed_date}</div>
+                                          )}
+                                          <div>{sc.evidence.eps_evidence.sec_fact.concept}</div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Exit Multiple Evidence */}
+                                  <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-slate-800 text-[11px]">
+                                        {t.matrix.exitMultipleFact}
+                                      </span>
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                                          sc.evidence.multiple_evidence.is_user_assumption
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : sc.evidence.multiple_evidence.usable_for_reference
+                                            ? 'bg-slate-100 text-slate-700'
+                                            : 'bg-amber-100 text-amber-800'
+                                        }`}
+                                      >
+                                        {sc.evidence.multiple_evidence.is_user_assumption
+                                          ? t.matrix.userSpecifiedBadge
+                                          : sc.evidence.multiple_evidence.usable_for_reference
+                                          ? t.matrix.eligibleReferenceBadge
+                                          : t.matrix.descriptiveOnlyBadge}
+                                      </span>
+                                    </div>
+                                    <div className="font-mono text-sm font-bold text-slate-900">
+                                      {sc.evidence.multiple_evidence.value.toFixed(1)}x
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 space-y-0.5">
+                                      <div>Source: {sc.evidence.multiple_evidence.source}</div>
+                                      {sc.evidence.multiple_evidence.sample_size !== null && sc.evidence.multiple_evidence.sample_size !== undefined && (
+                                        <div>Sample Size: {sc.evidence.multiple_evidence.sample_size}</div>
+                                      )}
+                                      {sc.evidence.multiple_evidence.sample_period && (
+                                        <div>Period: {sc.evidence.multiple_evidence.sample_period}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Assumptions vs Facts vs Limitations tags */}
+                                <div className="space-y-1.5 pt-1 text-[11px]">
+                                  {sc.evidence.user_assumptions && sc.evidence.user_assumptions.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                      <span className="font-semibold text-blue-900">
+                                        {t.matrix.userAssumptionsHeader}:
+                                      </span>
+                                      {sc.evidence.user_assumptions.map((uItem, uIdx) => (
+                                        <span
+                                          key={uIdx}
+                                          className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/60 font-mono text-[10px]"
+                                        >
+                                          {uItem}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {sc.evidence.sourced_facts && sc.evidence.sourced_facts.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                      <span className="font-semibold text-slate-700">
+                                        {t.matrix.verifiedFactsHeader}:
+                                      </span>
+                                      {sc.evidence.sourced_facts.map((sItem, sIdx) => (
+                                        <span
+                                          key={sIdx}
+                                          className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono text-[10px]"
+                                        >
+                                          {sItem}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {sc.evidence.missing_or_unvalidated && sc.evidence.missing_or_unvalidated.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                      <span className="font-semibold text-amber-800">
+                                        {t.matrix.missingOrUnvalidatedHeader}:
+                                      </span>
+                                      {sc.evidence.missing_or_unvalidated.map((mItem, mIdx) => (
+                                        <span
+                                          key={mIdx}
+                                          className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-mono text-[10px]"
+                                        >
+                                          {mItem}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Flags */}
                             {sc.flags && sc.flags.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 items-center">
+                              <div className="flex flex-wrap gap-1.5 items-center pt-1">
                                 <span className="text-[11px] font-semibold text-slate-500">
                                   Flags:
                                 </span>

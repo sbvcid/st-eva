@@ -110,6 +110,30 @@ export interface Translations {
     readingNotes: string
     notesToggle: string
     uncomputableMatrixNotice: string
+    auditTitle: string
+    calculationSteps: string
+    mathematicallyVerified: string
+    notComputableReason: string
+    operandsLabel: string
+    formulaLabel: string
+    resultLabel: string
+    sourceEvidence: string
+    marketPriceFact: string
+    startEpsFact: string
+    exitMultipleFact: string
+    secFilingProvenance: string
+    userAssumptionsHeader: string
+    verifiedFactsHeader: string
+    missingOrUnvalidatedHeader: string
+    userSpecifiedBadge: string
+    sourcedFactBadge: string
+    descriptiveOnlyBadge: string
+    eligibleReferenceBadge: string
+    observationContractId: string
+    accessionLabel: string
+    filingFormLabel: string
+    conceptLabel: string
+    toggleRowAudit: string
   }
   evidence: {
     title: string

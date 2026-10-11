@@ -120,6 +120,10 @@ class EpsAnchor:
     # growth rate derived from it rests on an assumption rather than on
     # something the source reported, so the flag travels with it.
     period_undeclared_by_source: bool = False
+    source_type: str = ""
+    observation_id: Optional[str] = None
+    is_user_assumption: bool = False
+    sec_fact: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if not math_is_finite(self.value):
@@ -140,6 +144,10 @@ class EpsAnchor:
             "provider": self.provider,
             "currency": self.currency,
             "period_undeclared_by_source": self.period_undeclared_by_source,
+            "source_type": self.source_type,
+            "observation_id": self.observation_id,
+            "is_user_assumption": self.is_user_assumption,
+            "sec_fact": self.sec_fact,
         }
 
 
@@ -162,6 +170,9 @@ class ReferenceMultiple:
     period_label: str = ""
     sample_size: Optional[int] = None
     sample_period: str = ""
+    is_user_assumption: bool = False
+    eligibility_state: str = "USABLE_FOR_REFERENCE"
+    usable_for_reference: bool = True
 
     def __post_init__(self) -> None:
         value = _safe_float(self.value)
@@ -184,6 +195,9 @@ class ReferenceMultiple:
                 "The implied figure is the fundamental this multiple corresponds to. "
                 "It is not a statement of what the market expects."
             ),
+            "is_user_assumption": self.is_user_assumption,
+            "eligibility_state": self.eligibility_state,
+            "usable_for_reference": self.usable_for_reference,
         }
 
 
@@ -247,6 +261,8 @@ class EpsScenario:
     dividend_relief_exit_price: Optional[float] = None
     dividend_relief_terminal_eps: Optional[float] = None
     dividend_relief_cagr: Optional[float] = None
+    calculation_steps: Tuple[Dict[str, Any], ...] = ()
+    evidence: Optional[Dict[str, Any]] = None
 
     def contract_view(self) -> Dict[str, Any]:
         view = {
@@ -271,6 +287,8 @@ class EpsScenario:
             "comparison_notes": list(self.comparison_notes),
             "flags": list(self.flags),
             "formula_version": FORMULA_VERSION,
+            "calculation_steps": [dict(s) for s in self.calculation_steps] if self.calculation_steps else [],
+            "evidence": dict(self.evidence) if self.evidence is not None else None,
         }
         if self.dividend_per_share is not None:
             view["dividend_per_share"] = self.dividend_per_share
@@ -484,6 +502,244 @@ def implied_net_margin_at_multiples(
     return eps / (revenue / shares)
 
 
+def build_scenario_calculation_steps(
+    *,
+    price: float,
+    required_return: float,
+    horizon_years: float,
+    required_exit_price: Optional[float],
+    exit_multiple_value: float,
+    required_terminal_eps: Optional[float],
+    start_eps_value: float,
+    growth_years: Optional[float],
+    required_eps_cagr: Optional[float],
+    total_terminal_eps_growth: Optional[float],
+    dividend_per_share: Optional[float] = None,
+    dividend_convention: Optional[str] = None,
+    currency: str = "USD",
+) -> List[Dict[str, Any]]:
+    steps: List[Dict[str, Any]] = []
+
+    # Step 1: Required Exit Price
+    operands_1: Dict[str, Any] = {
+        "price": price,
+        "required_return": required_return,
+        "horizon_years": horizon_years,
+    }
+    formula_1 = "P_T = P_0 * (1 + r)^T"
+    if dividend_per_share is not None and dividend_per_share > 0:
+        operands_1["dividend_per_share"] = dividend_per_share
+        operands_1["dividend_convention"] = dividend_convention or "CASH_RETAINED"
+        formula_1 = "P_T = P_0 * (1 + r)^T - total_dividends"
+
+    reproducible_1 = True
+    if required_exit_price is not None:
+        try:
+            expected_price = price * ((1.0 + required_return) ** horizon_years)
+            if dividend_per_share is not None and dividend_per_share > 0:
+                expected_price = required_total_return_exit_price(
+                    price, required_return, horizon_years, dividend_per_share, convention=dividend_convention or "CASH_RETAINED"
+                )
+            reproducible_1 = abs(expected_price - required_exit_price) < 1e-4
+        except Exception:
+            reproducible_1 = False
+
+    steps.append({
+        "step_number": 1,
+        "step_id": "required_exit_price",
+        "name": "Required Exit Price",
+        "formula_expression": formula_1,
+        "operands": operands_1,
+        "output_value": required_exit_price,
+        "output_unit": currency,
+        "reproducible": reproducible_1,
+        "status": "COMPUTED" if required_exit_price is not None else "NOT_COMPUTED",
+        "status_reason": None if required_exit_price is not None else "Price or return is invalid.",
+    })
+
+    # Step 2: Required Terminal EPS
+    reproducible_2 = True
+    if required_terminal_eps is not None and required_exit_price is not None and exit_multiple_value > 0:
+        expected_eps = required_exit_price / exit_multiple_value
+        reproducible_2 = abs(expected_eps - required_terminal_eps) < 1e-4
+
+    steps.append({
+        "step_number": 2,
+        "step_id": "required_terminal_eps",
+        "name": "Required Terminal EPS",
+        "formula_expression": "EPS_T = P_T / Exit_PE",
+        "operands": {
+            "required_exit_price": required_exit_price,
+            "exit_multiple": exit_multiple_value,
+        },
+        "output_value": required_terminal_eps,
+        "output_unit": f"{currency}/share",
+        "reproducible": reproducible_2,
+        "status": "COMPUTED" if required_terminal_eps is not None else "NOT_COMPUTED",
+        "status_reason": None if required_terminal_eps is not None else "Exit multiple is not positive.",
+    })
+
+    # Step 3: Total Terminal EPS Growth
+    reproducible_3 = False
+    status_3 = "NOT_COMPUTED"
+    reason_3 = None
+    if start_eps_value > 0 and required_terminal_eps is not None:
+        expected_growth = (required_terminal_eps - start_eps_value) / start_eps_value
+        if total_terminal_eps_growth is not None:
+            reproducible_3 = abs(expected_growth - total_terminal_eps_growth) < 1e-4
+            status_3 = "COMPUTED"
+    else:
+        reason_3 = f"Starting EPS ({start_eps_value}) is non-positive; total growth cannot be computed."
+
+    steps.append({
+        "step_number": 3,
+        "step_id": "total_terminal_eps_growth",
+        "name": "Total Terminal EPS Growth",
+        "formula_expression": "Delta_EPS = (EPS_T - EPS_0) / EPS_0",
+        "operands": {
+            "required_terminal_eps": required_terminal_eps,
+            "start_eps": start_eps_value,
+        },
+        "output_value": total_terminal_eps_growth,
+        "output_unit": "ratio",
+        "reproducible": reproducible_3,
+        "status": status_3,
+        "status_reason": reason_3,
+    })
+
+    # Step 4: Required EPS CAGR
+    reproducible_4 = False
+    status_4 = "NOT_COMPUTED"
+    reason_4 = None
+    if growth_years is not None and growth_years < MIN_GROWTH_YEARS:
+        reason_4 = f"Growth window ({growth_years:g} years) is too short to annualise (minimum {MIN_GROWTH_YEARS:g} years)."
+    elif start_eps_value <= 0:
+        reason_4 = f"Starting EPS ({start_eps_value}) is non-positive; compound annual growth rate cannot be computed."
+    elif required_terminal_eps is not None and required_terminal_eps <= 0:
+        reason_4 = f"Required terminal EPS ({required_terminal_eps}) is non-positive; CAGR cannot be computed."
+    elif required_eps_cagr is not None and growth_years is not None and growth_years > 0:
+        try:
+            expected_cagr = (required_terminal_eps / start_eps_value) ** (1.0 / growth_years) - 1.0
+            reproducible_4 = abs(expected_cagr - required_eps_cagr) < 1e-4
+            status_4 = "COMPUTED"
+        except Exception:
+            reproducible_4 = False
+
+    steps.append({
+        "step_number": 4,
+        "step_id": "required_eps_cagr",
+        "name": "Required EPS CAGR",
+        "formula_expression": "CAGR = (EPS_T / EPS_0)^(1 / t_growth) - 1",
+        "operands": {
+            "required_terminal_eps": required_terminal_eps,
+            "start_eps": start_eps_value,
+            "growth_years": growth_years,
+        },
+        "output_value": required_eps_cagr,
+        "output_unit": "percent_per_annum",
+        "reproducible": reproducible_4,
+        "status": status_4,
+        "status_reason": reason_4,
+    })
+
+    return steps
+
+
+def build_scenario_evidence(
+    *,
+    price: float,
+    currency: Optional[str],
+    as_of: Optional[str],
+    price_evidence: Optional[Dict[str, Any]],
+    start_anchor: EpsAnchor,
+    exit_multiple: ReferenceMultiple,
+    horizon_years: float,
+    required_return: float,
+    required_return_basis: str,
+) -> Dict[str, Any]:
+    pe_info = price_evidence or {}
+    price_ev = {
+        "value": price,
+        "currency": currency,
+        "as_of": as_of or pe_info.get("as_of"),
+        "provider": pe_info.get("provider", "market"),
+        "source_type": pe_info.get("source_type", "OBSERVED"),
+        "observation_id": pe_info.get("observation_id", "ev-price-001"),
+        "is_user_assumption": bool(pe_info.get("is_user_assumption", False)),
+    }
+
+    eps_ev = {
+        "value": start_anchor.value,
+        "basis": start_anchor.basis,
+        "months_covered": start_anchor.months_covered,
+        "period_label": start_anchor.period_label,
+        "period_start": start_anchor.period_start,
+        "period_end": start_anchor.period_end,
+        "provider": start_anchor.provider,
+        "currency": start_anchor.currency or currency,
+        "period_undeclared_by_source": start_anchor.period_undeclared_by_source,
+        "source_type": getattr(start_anchor, "source_type", "") or ("USER_SUPPLIED" if getattr(start_anchor, "is_user_assumption", False) else "OBSERVED"),
+        "observation_id": getattr(start_anchor, "observation_id", None) or ("ev-current-eps-001" if not getattr(start_anchor, "is_user_assumption", False) else None),
+        "is_user_assumption": getattr(start_anchor, "is_user_assumption", False),
+        "sec_fact": getattr(start_anchor, "sec_fact", None),
+    }
+
+    mult_ev = {
+        "value": exit_multiple.value,
+        "source": exit_multiple.source,
+        "period_label": exit_multiple.period_label,
+        "sample_size": exit_multiple.sample_size,
+        "sample_period": exit_multiple.sample_period,
+        "conditionality": (
+            "The implied figure is the fundamental this multiple corresponds to. "
+            "It is not a statement of what the market expects."
+        ),
+        "is_user_assumption": getattr(exit_multiple, "is_user_assumption", exit_multiple.source == "user_supplied"),
+        "eligibility_state": getattr(exit_multiple, "eligibility_state", "USER_SPECIFIED" if exit_multiple.source == "user_supplied" else "USABLE_FOR_REFERENCE"),
+        "usable_for_reference": getattr(exit_multiple, "usable_for_reference", True),
+    }
+
+    user_assumptions: List[str] = [
+        f"Holding Horizon: {horizon_years:g} years",
+        f"Required Return Hurdle: {required_return * 100:g}% ({required_return_basis})",
+    ]
+    if mult_ev["is_user_assumption"]:
+        user_assumptions.append(f"Exit Multiple: {exit_multiple.value:g}x (user-supplied)")
+    if eps_ev["is_user_assumption"]:
+        user_assumptions.append(f"Starting EPS: {start_anchor.value:g} (user-supplied)")
+
+    sourced_facts: List[str] = [
+        f"Market Price: {price:g} {currency or 'USD'} (as-of {as_of or 'latest'}, provider: {price_ev['provider']})"
+    ]
+    if not eps_ev["is_user_assumption"]:
+        sec_note = ""
+        if eps_ev["sec_fact"] and eps_ev["sec_fact"].get("accession"):
+            sec_note = f"; SEC {eps_ev['sec_fact'].get('form', '10-K')} accession {eps_ev['sec_fact']['accession']}"
+        sourced_facts.append(
+            f"Starting EPS: {start_anchor.value:g} {start_anchor.currency or currency or 'USD'} ({start_anchor.basis}, provider: {start_anchor.provider}{sec_note})"
+        )
+    if not mult_ev["is_user_assumption"]:
+        sample_note = f", sample size: {exit_multiple.sample_size}" if exit_multiple.sample_size else ""
+        sourced_facts.append(
+            f"Reference Exit Multiple: {exit_multiple.value:g}x ({exit_multiple.source}{sample_note})"
+        )
+
+    missing_or_unvalidated: List[str] = []
+    if mult_ev["eligibility_state"] in ("DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT", "INSUFFICIENT_OBSERVATIONS_DESCRIPTIVE_ONLY"):
+        missing_or_unvalidated.append(f"Exit multiple qualification: {mult_ev['eligibility_state']}")
+    if start_anchor.period_undeclared_by_source:
+        missing_or_unvalidated.append("Starting EPS period coverage was not declared by source")
+
+    return {
+        "price_evidence": price_ev,
+        "eps_evidence": eps_ev,
+        "multiple_evidence": mult_ev,
+        "user_assumptions": user_assumptions,
+        "sourced_facts": sourced_facts,
+        "missing_or_unvalidated": missing_or_unvalidated,
+    }
+
+
 def build_scenario(
     price: float,
     horizon_years: float,
@@ -498,6 +754,7 @@ def build_scenario(
     currency: Optional[str] = None,
     as_of: Optional[str] = None,
     dividend_convention: str = DIVIDEND_CONVENTION_PRICE_ONLY,
+    price_evidence: Optional[Dict[str, Any]] = None,
 ) -> EpsScenario:
     """
     One row of the matrix: what this horizon, return and exit multiple demand.
@@ -608,6 +865,33 @@ def build_scenario(
             f"price is denominated in {currency}; this row is not comparable."
         )
 
+    calc_steps = build_scenario_calculation_steps(
+        price=price,
+        required_return=required_return,
+        horizon_years=horizon_years,
+        required_exit_price=target_price,
+        exit_multiple_value=exit_multiple.value,
+        required_terminal_eps=terminal_eps,
+        start_eps_value=start_anchor.value,
+        growth_years=window,
+        required_eps_cagr=cagr,
+        total_terminal_eps_growth=total_growth,
+        dividend_per_share=div_val,
+        dividend_convention=conv,
+        currency=currency or start_anchor.currency or "USD",
+    )
+    evidence_block = build_scenario_evidence(
+        price=price,
+        currency=currency or start_anchor.currency or "USD",
+        as_of=as_of,
+        price_evidence=price_evidence,
+        start_anchor=start_anchor,
+        exit_multiple=exit_multiple,
+        horizon_years=horizon_years,
+        required_return=required_return,
+        required_return_basis=return_basis,
+    )
+
     return EpsScenario(
         horizon_years=float(horizon_years),
         required_return=float(required_return),
@@ -631,6 +915,8 @@ def build_scenario(
         dividend_relief_exit_price=relief_exit_price,
         dividend_relief_terminal_eps=relief_terminal_eps,
         dividend_relief_cagr=relief_cagr,
+        calculation_steps=tuple(calc_steps),
+        evidence=evidence_block,
     )
 
 
@@ -690,6 +976,7 @@ def build_matrix(
     currency: Optional[str] = None,
     as_of: Optional[str] = None,
     dividend_convention: str = DIVIDEND_CONVENTION_PRICE_ONLY,
+    price_evidence: Optional[Dict[str, Any]] = None,
 ) -> List[EpsScenario]:
     """The full cross product of horizons, required returns and exit multiples."""
     scenarios: List[EpsScenario] = []
@@ -711,6 +998,7 @@ def build_matrix(
                         currency=currency,
                         as_of=as_of,
                         dividend_convention=dividend_convention,
+                        price_evidence=price_evidence,
                     )
                 )
     return scenarios
@@ -1038,6 +1326,9 @@ def build_exit_multiples(
                     source="historical_pe_band_median",
                     sample_size=declared_count,
                     period_label=str(band.get("period_label") or ""),
+                    is_user_assumption=False,
+                    eligibility_state="ELIGIBLE_HISTORICAL_BAND",
+                    usable_for_reference=True,
                 )
             )
         else:
@@ -1080,10 +1371,21 @@ def build_exit_multiples(
                         source="user_supplied",
                         sample_size=multiples[0].sample_size,
                         period_label=multiples[0].period_label,
+                        is_user_assumption=True,
+                        eligibility_state="USER_SPECIFIED",
+                        usable_for_reference=True,
                     )
                 ]
             else:
-                multiples = [ReferenceMultiple(value=multiple_value, source="user_supplied")]
+                multiples = [
+                    ReferenceMultiple(
+                        value=multiple_value,
+                        source="user_supplied",
+                        is_user_assumption=True,
+                        eligibility_state="USER_SPECIFIED",
+                        usable_for_reference=True,
+                    )
+                ]
         else:
             unavailable.append(
                 {
@@ -1146,10 +1448,16 @@ def exit_multiples_from_band(
         # rule that keeps explicit user input and fixtures working.
         usable = True
         count_text = "not declared"
+        band_eligibility = "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT"
     else:
         count = int(declared)
         usable = count >= min_observations
         count_text = str(count)
+        band_eligibility = (
+            "ELIGIBLE_HISTORICAL_BAND"
+            if usable
+            else "INSUFFICIENT_OBSERVATIONS_DESCRIPTIVE_ONLY"
+        )
 
     if not usable:
         unavailable.append(
@@ -1185,6 +1493,9 @@ def exit_multiples_from_band(
                 sample_period=(
                     "band percentiles from %s observations" % count_text
                 ),
+                is_user_assumption=False,
+                eligibility_state=band_eligibility,
+                usable_for_reference=(declared is not None and int(declared) >= min_observations),
             )
         )
     return multiples, unavailable
@@ -1260,6 +1571,9 @@ def exit_multiples_from_production_distribution(
                     "production historical P/E %s from %d observations (%s)"
                     % (key, sample_count, period_label)
                 ),
+                is_user_assumption=False,
+                eligibility_state="ELIGIBLE_PRODUCTION_DISTRIBUTION",
+                usable_for_reference=True,
             )
         )
     return multiples, unavailable
@@ -1613,11 +1927,23 @@ def build_reverse_requirements_report(
     dcf_inputs: Optional[Dict[str, Any]] = None,
     unavailable: Optional[Iterable[Dict[str, Any]]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
+    price_evidence: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the whole V1 package: the matrix, the cash flow cross-checks, the
     separated rate families, and an explicit statement of what is missing.
     """
+    if price_evidence is None:
+        price_evidence = {
+            "value": price,
+            "currency": currency,
+            "as_of": as_of,
+            "provider": price_source,
+            "source_type": "OBSERVED",
+            "observation_id": "ev-price-001",
+            "is_user_assumption": False,
+        }
+
     # Baseline price-return matrix is strictly preserved as price return only.
     scenarios = build_matrix(
         price=price,
@@ -1633,6 +1959,7 @@ def build_reverse_requirements_report(
         currency=currency,
         as_of=as_of,
         dividend_convention=DIVIDEND_CONVENTION_PRICE_ONLY,
+        price_evidence=price_evidence,
     )
 
     unavailable: List[Dict[str, Any]] = list(unavailable or [])
@@ -1657,6 +1984,7 @@ def build_reverse_requirements_report(
             currency=currency,
             as_of=as_of,
             dividend_convention=DIVIDEND_CONVENTION_CASH_RETAINED,
+            price_evidence=price_evidence,
         )
         reinvested_scenarios = build_matrix(
             price=price,
@@ -1672,6 +2000,7 @@ def build_reverse_requirements_report(
             currency=currency,
             as_of=as_of,
             dividend_convention=DIVIDEND_CONVENTION_REINVESTED,
+            price_evidence=price_evidence,
         )
 
         for p_scen, c_scen, r_scen in zip(scenarios, cash_scenarios, reinvested_scenarios):

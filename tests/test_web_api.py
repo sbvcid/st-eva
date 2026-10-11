@@ -499,6 +499,87 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
+    def test_api_returns_scenario_provenance_and_calculation_steps(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            dto = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+                reference_multiple=25.0,
+                reverse_horizons=[3.0],
+                required_returns=[0.10],
+            )
+            self.assertIsNotNone(dto.reverse_requirements)
+            rr = dto.reverse_requirements
+            scenarios = rr.reverse_requirements_matrix
+            self.assertTrue(len(scenarios) > 0)
+            scen = scenarios[0]
+
+            # Calculation steps verification
+            self.assertEqual(len(scen.calculation_steps), 4)
+            for step in scen.calculation_steps:
+                self.assertTrue(step.reproducible)
+                self.assertIsNotNone(step.formula_expression)
+                self.assertIsInstance(step.operands, dict)
+
+            # Sourced evidence verification
+            self.assertIsNotNone(scen.evidence)
+            self.assertEqual(scen.evidence.price_evidence.value, 425.50)
+            self.assertEqual(scen.evidence.price_evidence.observation_id, "ev-price-001")
+            self.assertIsNotNone(scen.evidence.eps_evidence)
+            self.assertIsNotNone(scen.evidence.multiple_evidence)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_dto_validation_failure_raises_explicit_error_and_fails_job(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            job_mgr = JobManager(adapter=adapter, max_workers=2)
+            app = create_app(job_manager=job_mgr)
+            client = TestClient(app)
+
+            # Return malformed reverse_requirements dict that violates DTO schema
+            with patch("web.service_adapter.run_st_eva") as mock_runner:
+                mock_runner.return_value = {
+                    "ticker": "MSFT",
+                    "mode": "regression",
+                    "as_of": "2026-09-18",
+                    "company_name": "Microsoft Corporation",
+                    "summary": {"valuation": {"market_price": 425.50}},
+                    "metrics": {},
+                    "admissions": {},
+                    "valuation": {"current_price": 425.50},
+                    "reverse_requirements": {
+                        "formula_version": "reverse-requirements/1.1",
+                        "matrix_size": "INVALID_NOT_AN_INT",
+                    },
+                }
+
+                resp = client.post("/api/analyze", json={"ticker": "MSFT", "mode": "regression"})
+                self.assertEqual(resp.status_code, 202)
+                job_id = resp.json()["job_id"]
+
+                for _ in range(50):
+                    job_resp = client.get(f"/api/jobs/{job_id}")
+                    if job_resp.json()["status"] in ["FAILED", "COMPLETED"]:
+                        break
+                    time.sleep(0.05)
+
+                final_resp = client.get(f"/api/jobs/{job_id}").json()
+                self.assertEqual(final_resp["status"], "FAILED")
+                self.assertIn("Reverse requirements contract validation failed", final_resp.get("error", ""))
+            job_mgr.shutdown(wait=False)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

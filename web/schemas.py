@@ -99,6 +99,20 @@ class ReferenceMultipleDTO(BaseModel):
     sample_size: Optional[int] = None
     sample_period: str = ""
     conditionality: Optional[str] = None
+    is_user_assumption: bool = False
+    eligibility_state: Optional[str] = None
+    usable_for_reference: Optional[bool] = None
+
+
+class SecFactDTO(BaseModel):
+    accession: Optional[str] = None
+    form: Optional[str] = None
+    filed_date: Optional[str] = None
+    concept: Optional[str] = "us-gaap:EarningsPerShareDiluted"
+    unit: Optional[str] = "USD/shares"
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    document_url: Optional[str] = None
 
 
 class EpsAnchorDTO(BaseModel):
@@ -111,6 +125,70 @@ class EpsAnchorDTO(BaseModel):
     provider: str = ""
     currency: Optional[str] = None
     period_undeclared_by_source: bool = False
+    source_type: Optional[str] = ""
+    observation_id: Optional[str] = None
+    is_user_assumption: bool = False
+    sec_fact: Optional[SecFactDTO] = None
+
+
+class MarketPriceEvidenceDTO(BaseModel):
+    value: float
+    currency: Optional[str] = None
+    as_of: Optional[str] = None
+    provider: str = ""
+    source_type: str = ""
+    observation_id: Optional[str] = None
+    is_user_assumption: bool = False
+
+
+class EpsAnchorEvidenceDTO(BaseModel):
+    value: float
+    basis: str
+    months_covered: float
+    period_label: str = ""
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    provider: str = ""
+    currency: Optional[str] = None
+    period_undeclared_by_source: bool = False
+    source_type: Optional[str] = ""
+    observation_id: Optional[str] = None
+    is_user_assumption: bool = False
+    sec_fact: Optional[SecFactDTO] = None
+
+
+class ExitMultipleEvidenceDTO(BaseModel):
+    value: float
+    source: str
+    period_label: str = ""
+    sample_size: Optional[int] = None
+    sample_period: str = ""
+    conditionality: Optional[str] = None
+    is_user_assumption: bool = False
+    eligibility_state: str = "USABLE_FOR_REFERENCE"
+    usable_for_reference: bool = True
+
+
+class CalculationStepDTO(BaseModel):
+    step_number: int
+    step_id: str
+    name: str
+    formula_expression: str
+    operands: Dict[str, Any] = Field(default_factory=dict)
+    output_value: Optional[float] = None
+    output_unit: str = ""
+    reproducible: bool = True
+    status: str = "COMPUTED"
+    status_reason: Optional[str] = None
+
+
+class ScenarioEvidenceDTO(BaseModel):
+    price_evidence: MarketPriceEvidenceDTO
+    eps_evidence: EpsAnchorEvidenceDTO
+    multiple_evidence: ExitMultipleEvidenceDTO
+    user_assumptions: List[str] = Field(default_factory=list)
+    sourced_facts: List[str] = Field(default_factory=list)
+    missing_or_unvalidated: List[str] = Field(default_factory=list)
 
 
 class EpsScenarioDTO(BaseModel):
@@ -138,6 +216,8 @@ class EpsScenarioDTO(BaseModel):
     dividend_relief_exit_price: Optional[float] = None
     dividend_relief_terminal_eps: Optional[float] = None
     dividend_relief_cagr: Optional[float] = None
+    evidence: Optional[ScenarioEvidenceDTO] = None
+    calculation_steps: List[CalculationStepDTO] = Field(default_factory=list)
 
 
 class ReverseRequirementsReportDTO(BaseModel):

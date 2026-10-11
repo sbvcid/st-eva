@@ -287,6 +287,34 @@ class TestBrowserSmoke(unittest.TestCase):
             context.close()
             browser.close()
 
+    def test_desktop_matrix_audit_drawer_inspection(self):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale="en-US", viewport={"width": 1280, "height": 800})
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            # Click MSFT quick example (uses regression fixture)
+            msft_btn = page.locator("button:has-text('MSFT')")
+            msft_btn.click()
+
+            page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+            page.wait_for_selector("text=Reverse Requirements Matrix", timeout=10000)
+
+            # Locate row detail toggle button and expand
+            toggle_btns = page.locator("button[title='Toggle details']")
+            self.assertGreater(toggle_btns.count(), 0)
+            toggle_btns.first.click()
+
+            # Verify audit trail and reproducibility elements in real browser response
+            page.wait_for_selector("text=Deterministic Calculation Steps", timeout=5000)
+            page.wait_for_selector("text=Mathematically Verified", timeout=5000)
+            page.wait_for_selector("text=Source Evidence & Provenance", timeout=5000)
+            page.wait_for_selector("text=ev-price-001", timeout=5000)
+
+            context.close()
+            browser.close()
+
 
 if __name__ == "__main__":
     unittest.main()

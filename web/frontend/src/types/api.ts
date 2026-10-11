@@ -64,6 +64,20 @@ export interface ReferenceMultipleDTO {
   sample_size?: number | null
   sample_period?: string
   conditionality?: string | null
+  is_user_assumption?: boolean
+  eligibility_state?: string | null
+  usable_for_reference?: boolean | null
+}
+
+export interface SecFactDTO {
+  accession?: string | null
+  form?: string | null
+  filed_date?: string | null
+  concept?: string | null
+  unit?: string | null
+  period_start?: string | null
+  period_end?: string | null
+  document_url?: string | null
 }
 
 export interface EpsAnchorDTO {
@@ -76,6 +90,70 @@ export interface EpsAnchorDTO {
   provider?: string
   currency?: string | null
   period_undeclared_by_source?: boolean
+  source_type?: string | null
+  observation_id?: string | null
+  is_user_assumption?: boolean
+  sec_fact?: SecFactDTO | null
+}
+
+export interface MarketPriceEvidenceDTO {
+  value: number
+  currency?: string | null
+  as_of?: string | null
+  provider: string
+  source_type: string
+  observation_id?: string | null
+  is_user_assumption: boolean
+}
+
+export interface EpsAnchorEvidenceDTO {
+  value: number
+  basis: string
+  months_covered: number
+  period_label?: string
+  period_start?: string | null
+  period_end?: string | null
+  provider?: string
+  currency?: string | null
+  period_undeclared_by_source?: boolean
+  source_type?: string | null
+  observation_id?: string | null
+  is_user_assumption?: boolean
+  sec_fact?: SecFactDTO | null
+}
+
+export interface ExitMultipleEvidenceDTO {
+  value: number
+  source: string
+  period_label?: string
+  sample_size?: number | null
+  sample_period?: string
+  conditionality?: string | null
+  is_user_assumption: boolean
+  eligibility_state: string
+  usable_for_reference: boolean
+}
+
+export interface CalculationStepDTO {
+  step_number: number
+  step_id: string
+  name: string
+  formula_expression: string
+  operands: Record<string, any>
+  output_value?: number | null
+  output_unit?: string
+  reproducible: boolean
+  status: string
+  status_reason?: string | null
+}
+
+export interface ScenarioEvidenceDTO {
+  price_evidence: MarketPriceEvidenceDTO
+  eps_evidence: EpsAnchorEvidenceDTO
+  multiple_evidence: ExitMultipleEvidenceDTO
+  user_assumptions: string[]
+  sourced_facts: string[]
+  missing_or_unvalidated: string[]
 }
 
 export interface EpsScenarioDTO {
@@ -103,6 +181,8 @@ export interface EpsScenarioDTO {
   dividend_relief_exit_price?: number | null
   dividend_relief_terminal_eps?: number | null
   dividend_relief_cagr?: number | null
+  evidence?: ScenarioEvidenceDTO | null
+  calculation_steps?: CalculationStepDTO[]
 }
 
 export interface ReverseRequirementsReportDTO {

@@ -350,5 +350,109 @@ class TestRiskFreeRateHelpers(unittest.TestCase):
         self.assertIn("30_YEAR", labels)
 
 
+class TestScenarioProvenanceAndReproducibility(unittest.TestCase):
+    def test_calculation_steps_reproduce_outputs_within_tolerance(self):
+        result = _run(
+            reverse_horizons=(2.0, 3.0),
+            required_returns=(0.10, 0.12),
+            reference_multiple=25.0,
+        )
+        matrix = result["reverse_requirements"]["reverse_requirements_matrix"]
+        self.assertGreater(len(matrix), 0)
+        for scen in matrix:
+            steps = scen.get("calculation_steps", [])
+            self.assertEqual(len(steps), 4)
+            for step in steps:
+                self.assertTrue(step["reproducible"])
+
+            # Step 1: Exit Price
+            self.assertAlmostEqual(steps[0]["output_value"], scen["required_exit_price"], places=4)
+            # Step 2: Terminal EPS
+            self.assertAlmostEqual(steps[1]["output_value"], scen["required_terminal_eps"], places=4)
+            # Step 3: Terminal EPS Growth
+            self.assertAlmostEqual(steps[2]["output_value"], scen["total_terminal_eps_growth"], places=4)
+            # Step 4: CAGR (if computable)
+            if scen["required_eps_cagr"] is not None:
+                self.assertAlmostEqual(steps[3]["output_value"], scen["required_eps_cagr"], places=4)
+
+    def test_source_evidence_resolves_to_actual_input_records(self):
+        result = _run()
+        matrix = result["reverse_requirements"]["reverse_requirements_matrix"]
+        self.assertGreater(len(matrix), 0)
+        scen = matrix[0]
+        evidence = scen.get("evidence")
+        self.assertIsNotNone(evidence)
+
+        # Market price evidence
+        price_ev = evidence["price_evidence"]
+        self.assertEqual(price_ev["value"], 425.50)
+        self.assertEqual(price_ev["currency"], "USD")
+        self.assertEqual(price_ev["as_of"], "2026-09-18")
+        self.assertEqual(price_ev["observation_id"], "ev-price-001")
+        self.assertEqual(price_ev["source_type"], "REGRESSION_FIXTURE")
+
+        # Anchor evidence resolves to forward EPS observation in MSFT fixture
+        anchor_ev = evidence["eps_evidence"]
+        self.assertEqual(anchor_ev["observation_id"], "ev-forward-eps-001")
+        self.assertEqual(anchor_ev["value"], 13.20)
+        self.assertEqual(anchor_ev["basis"], "FORWARD_TWELVE_MONTHS")
+        self.assertFalse(anchor_ev["is_user_assumption"])
+
+    def test_sec_eps_fact_resolution_for_historical_filings(self):
+        from st_eva_runner import _resolve_sec_eps_fact
+        sec_fact = _resolve_sec_eps_fact("MSFT", None, 11.80)
+        self.assertIsNotNone(sec_fact)
+        self.assertEqual(sec_fact["concept"], "us-gaap:EarningsPerShareDiluted")
+        self.assertEqual(sec_fact["form"], "10-K")
+        self.assertEqual(sec_fact["accession"], "0001193125-26-323660")
+        self.assertEqual(sec_fact["unit"], "USD/shares")
+
+    def test_user_assumptions_labelled_and_never_receive_fabricated_sec_provenance(self):
+        result = _run(user_eps=25.0, reference_multiple=27.5)
+        matrix = result["reverse_requirements"]["reverse_requirements_matrix"]
+        self.assertGreater(len(matrix), 0)
+        user_scens = [s for s in matrix if s["exit_multiple"]["value"] == 27.5]
+        self.assertGreater(len(user_scens), 0)
+        scen = user_scens[0]
+        evidence = scen.get("evidence")
+        self.assertIsNotNone(evidence)
+
+        # EPS anchor is user assumption
+        anchor_ev = evidence["eps_evidence"]
+        self.assertTrue(anchor_ev["is_user_assumption"])
+        self.assertEqual(anchor_ev["source_type"], "USER_SUPPLIED")
+        self.assertIsNone(anchor_ev["sec_fact"], "User-supplied EPS must never receive fabricated SEC provenance")
+
+        # Exit multiple is user assumption
+        exit_ev = evidence["multiple_evidence"]
+        self.assertTrue(exit_ev["is_user_assumption"])
+        self.assertEqual(exit_ev["eligibility_state"], "USER_SPECIFIED")
+
+        # Evidence lists user assumptions explicitly
+        user_assumptions = evidence["user_assumptions"]
+        self.assertTrue(any("Starting EPS" in k for k in user_assumptions))
+        self.assertTrue(any("Exit Multiple" in k for k in user_assumptions))
+
+    def test_historical_multiple_sample_size_eligibility_states(self):
+        # Adequate sample size (>= 20)
+        multiples_ok, _ = build_exit_multiples(
+            historical_pe_band={"median": 28.0, "observations": 35},
+            user_pe_multiple=None,
+            min_observations=20,
+        )
+        self.assertEqual(len(multiples_ok), 1)
+        self.assertEqual(multiples_ok[0].eligibility_state, "ELIGIBLE_HISTORICAL_BAND")
+        self.assertTrue(multiples_ok[0].usable_for_reference)
+
+        # Inadequate sample size (< 20)
+        from reverse_requirements import exit_multiples_from_band
+        multiples_thin, unavail = exit_multiples_from_band(
+            {"median": 28.0, "observations": 8},
+            min_observations=20,
+        )
+        self.assertEqual(multiples_thin, [])
+        self.assertEqual(unavail[0]["reason_kind"], "INSUFFICIENT_OBSERVATIONS")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

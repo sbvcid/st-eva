@@ -2025,7 +2025,15 @@ def _build_exit_multiple_scenarios(
         if round(number, 10) in seen:
             continue
         seen.add(round(number, 10))
-        scenarios.append(ReferenceMultiple(value=number, source="user_supplied"))
+        scenarios.append(
+            ReferenceMultiple(
+                value=number,
+                source="user_supplied",
+                is_user_assumption=True,
+                eligibility_state="USER_SPECIFIED",
+                usable_for_reference=True,
+            )
+        )
 
     if not scenarios:
         unavailable.append(
@@ -2106,7 +2114,13 @@ def _build_valuation_multiples(
 
     user_pe = safe_float(reference_multiple)
     if user_pe is not None and user_pe > 0:
-        multiples["pe"] = ReferenceMultiple(value=user_pe, source="user_supplied")
+        multiples["pe"] = ReferenceMultiple(
+            value=user_pe,
+            source="user_supplied",
+            is_user_assumption=True,
+            eligibility_state="USER_SPECIFIED",
+            usable_for_reference=True,
+        )
     elif prod_scenarios:
         # Use median from production historical distribution
         median = next(
@@ -2142,7 +2156,13 @@ def _build_valuation_multiples(
     ):
         number = safe_float(value)
         if number is not None and number > 0:
-            multiples[key] = ReferenceMultiple(value=number, source="user_supplied")
+            multiples[key] = ReferenceMultiple(
+                value=number,
+                source="user_supplied",
+                is_user_assumption=True,
+                eligibility_state="USER_SPECIFIED",
+                usable_for_reference=True,
+            )
         else:
             unavailable.append(
                 {
@@ -2158,6 +2178,61 @@ def _build_valuation_multiples(
             )
 
     return multiples, unavailable
+
+
+def _resolve_sec_eps_fact(
+    ticker: str,
+    sec_observations: Optional[Sequence[Any]] = None,
+    target_value: Optional[float] = None,
+) -> Optional[Dict[str, Any]]:
+    """Resolve verified SEC diluted EPS filing metadata if available."""
+    # 1. Search in sec_observations if available
+    for obs in sec_observations or ():
+        metric = getattr(obs, "metric", "")
+        if metric in ("eps_diluted", "METRIC_EPS_DILUTED", "EarningsPerShareDiluted"):
+            raw = getattr(obs, "raw", {}) or {}
+            accn = getattr(obs, "accession", None) or raw.get("accession_number") or raw.get("accn")
+            if accn:
+                return {
+                    "accession": str(accn),
+                    "form": str(raw.get("form_type") or raw.get("form") or "10-K"),
+                    "filed_date": str(raw.get("filed_date") or raw.get("filed") or getattr(obs, "as_of", "")),
+                    "concept": "us-gaap:EarningsPerShareDiluted",
+                    "unit": "USD/shares",
+                    "period_start": str(getattr(obs, "period_start", None) or raw.get("start") or ""),
+                    "period_end": str(getattr(obs, "period_end", None) or raw.get("end") or ""),
+                    "document_url": f"https://www.sec.gov/Archives/edgar/data/{accn.replace('-', '')}/{accn}-index.htm",
+                }
+
+    # 2. Search in data/historical_pe/{ticker}/eps_diluted_concept.json if present
+    concept_file = Path(f"data/historical_pe/{ticker}/eps_diluted_concept.json")
+    if concept_file.exists():
+        try:
+            with open(concept_file, "r", encoding="utf-8") as f:
+                cdata = json.load(f)
+            units = (cdata.get("units") or {}).get("USD/shares") or []
+            annual_10k = [x for x in units if x.get("form") == "10-K" and x.get("fp") == "FY"]
+            cand = annual_10k[-1] if annual_10k else (units[-1] if units else None)
+            if cand:
+                accn = cand.get("accn")
+                cik = cdata.get("cik")
+                url = None
+                if cik and accn:
+                    url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}/{accn}-index.htm"
+                return {
+                    "accession": str(accn) if accn else None,
+                    "form": str(cand.get("form", "10-K")),
+                    "filed_date": str(cand.get("filed") or ""),
+                    "concept": "us-gaap:EarningsPerShareDiluted",
+                    "unit": "USD/shares",
+                    "period_start": str(cand.get("start") or ""),
+                    "period_end": str(cand.get("end") or ""),
+                    "document_url": url,
+                }
+        except Exception:
+            pass
+
+    return None
 
 
 def _build_reverse_requirements(
@@ -2220,6 +2295,10 @@ def _build_reverse_requirements(
                 provider="user",
                 currency=data.currency,
                 period_undeclared_by_source=False,
+                source_type="USER_SUPPLIED",
+                observation_id=None,
+                is_user_assumption=True,
+                sec_fact=None,
             )
             anchor_unavailable = []
         else:
@@ -2241,6 +2320,21 @@ def _build_reverse_requirements(
             provider=data.provider,
             prefer=prefer_eps_anchor or "trailing",
         )
+        if anchor is not None:
+            obs_id = "ev-current-eps-001"
+            if anchor.basis == "FORWARD_TWELVE_MONTHS":
+                obs_id = "ev-forward-eps-001"
+            elif anchor.basis == "CONSENSUS_FORWARD_TWELVE_MONTHS":
+                obs_id = "ev-consensus-eps-001"
+            sec_fact = _resolve_sec_eps_fact(data.ticker, sec_observations, anchor.value)
+            import dataclasses
+            anchor = dataclasses.replace(
+                anchor,
+                source_type=str(data.source_type or "OBSERVED"),
+                observation_id=obs_id,
+                is_user_assumption=False,
+                sec_fact=sec_fact,
+            )
     unavailable.extend(anchor_unavailable)
 
     if not reference_multiples:
@@ -2477,6 +2571,17 @@ def _build_reverse_requirements(
         }
         return report
 
+    price_obs = data.observations.get("ev-price-001") if hasattr(data, "observations") else None
+    price_evidence = {
+        "value": data.price,
+        "currency": data.currency,
+        "as_of": data.price_date,
+        "provider": data.provider or data.price_source or "market",
+        "source_type": str(data.source_type or "OBSERVED"),
+        "observation_id": "ev-price-001" if price_obs is not None else "ev-price-001",
+        "is_user_assumption": False,
+    }
+
     report = build_reverse_requirements_report(
         price=data.price,
         ticker=data.ticker,
@@ -2512,6 +2617,7 @@ def _build_reverse_requirements(
         dcf_inputs=dcf_inputs,
         unavailable=unavailable,
         production_historical_pe=production_historical_pe,
+        price_evidence=price_evidence,
     )
 
     report["dividends"] = dividend_pkg

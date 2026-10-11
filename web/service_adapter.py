@@ -273,8 +273,10 @@ class AnalysisServiceAdapter:
             if rr_data and isinstance(rr_data, dict):
                 try:
                     reverse_reqs_dto = ReverseRequirementsReportDTO.model_validate(rr_data)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    raise ValueError(
+                        f"Reverse requirements contract validation failed: {exc}"
+                    ) from exc
 
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),
