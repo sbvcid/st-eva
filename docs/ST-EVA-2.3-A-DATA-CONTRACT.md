@@ -9,7 +9,7 @@ Target: 2.3-A
 Baseline: 2.2.3
 Repository: sbvcid/st-eva
 Implements phase 1 (and the phase-2 adapter migration) of
-[docs/ST-EVA-2.3-PLAN.md](ST-EVA-2.3-PLAN.md)
+[docs/archive/ST-EVA-2.3-PLAN.md](archive/ST-EVA-2.3-PLAN.md) (historical)
 
 ## 1. Purpose
 

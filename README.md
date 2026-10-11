@@ -116,7 +116,8 @@ A band below that threshold is still reported under `observed_valuation`, but it
 
 A numerically precise band built from too few points is not trustworthy, and the
 engine will not treat it as though it were. The NU case exposed this issue; see
-[docs/ST-EVA-2.3-PLAN.md](docs/ST-EVA-2.3-PLAN.md) for the original investigation.
+the historical investigation in
+[docs/archive/ST-EVA-2.3-PLAN.md](docs/archive/ST-EVA-2.3-PLAN.md).
 
 Bands that declare no `observations` count at all are treated as usable, which
 preserves static regression fixtures.
@@ -188,7 +189,8 @@ history/                current engine snapshots
 history/contexts/       machine-readable company context snapshots
 history/legacy-v6/      pre-2.2 artifacts, retained but not current output
 scripts/research/       research and corpus-operation scripts
-docs/                   research notes and design references, including ROADMAP.md
+docs/                   current specifications, contracts and architecture
+docs/archive/           historical records; no current normative status
 ```
 
 ## Architecture
@@ -359,8 +361,8 @@ data" is an interpretation.
 trailing_eps   NOT_REPORTED_BY_SOURCE   blocks=[der:current_pe, der:required_eps_cagr]
 ```
 
-Reference:
-[docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md](docs/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md).
+Reference (historical): the archived
+[docs/archive/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md](docs/archive/ST-EVA-2.3-C-INVESTMENT-CONTEXT.md).
 
 ## Point-in-time archive and replay (2.4)
 
@@ -408,8 +410,8 @@ Three properties, enforced rather than documented:
   a `NullArchive` for the normal CLI path. No engine import, no storage engine
   in the Core, so SQLite can be replaced without touching the contract.
 
-Reference:
-[docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md](docs/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md).
+Reference (historical): the archived
+[docs/archive/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md](docs/archive/ST-EVA-2.4-POINT-IN-TIME-ARCHIVE-REPLAY.md).
 
 ## Source capture (2.4.1)
 

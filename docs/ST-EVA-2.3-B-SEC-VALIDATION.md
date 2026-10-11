@@ -9,7 +9,7 @@ Target: 2.3-B
 Baseline: 2.3-A
 Repository: sbvcid/st-eva
 Implements: the second-source half of
-[docs/ST-EVA-2.3-PLAN.md](ST-EVA-2.3-PLAN.md) phase 2,
+[docs/archive/ST-EVA-2.3-PLAN.md](archive/ST-EVA-2.3-PLAN.md) (historical) phase 2,
 against the contract in
 [docs/ST-EVA-2.3-A-DATA-CONTRACT.md](ST-EVA-2.3-A-DATA-CONTRACT.md)
 
