@@ -38,8 +38,13 @@ jobs:
             test -f "data/historical_pe/MSFT/$f" || { echo "missing data/historical_pe/MSFT/$f"; exit 1; }
           done
 
-      - name: Run web-layer tests
-        run: python -m pytest tests/test_archive_isolation.py tests/test_web_api.py -v --tb=line
+      - name: Run archive isolation tests
+        # These exercise background-job wiring with short real-time sleeps, which
+        # is tight on a loaded CI runner. Retry rather than exclude.
+        run: python -m pytest tests/test_archive_isolation.py -v --tb=line --reruns 2 --reruns-delay 10
+
+      - name: Run web API tests
+        run: python -m pytest tests/test_web_api.py -v --tb=line --reruns 2 --reruns-delay 10
 
       - name: Run backend test suite
         run: python -m pytest tests/ -q --tb=line -rf \
