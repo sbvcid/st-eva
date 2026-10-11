@@ -124,6 +124,7 @@ class TestHistoricalBandReferenceEligibility(unittest.TestCase):
         self.assertEqual(multiples[0].value, 25.0)
         self.assertEqual(multiples[0].source, "user_supplied")
         self.assertEqual(unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
+        self.assertEqual(unavailable[0]["blocks"], [])
 
 
 class TestRequiredExitPrice(unittest.TestCase):
