@@ -3,7 +3,7 @@
 **Status checked:** 2026-10-11  
 **Repository:** `sbvcid/st-eva`, branch `master`  
 **Implementation baseline:** `9a43f9f`  
-**Documentation-only commits after that baseline:** through `b057b94` at the time of this review.  
+**Code status:** all commits after `9a43f9f` through this status entry changed documentation only.  
 **Latest checked CI for the same implementation baseline:** [run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221), triggered at `1d0ef0b`; backend failed, browser job passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
