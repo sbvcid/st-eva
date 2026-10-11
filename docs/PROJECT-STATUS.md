@@ -15,7 +15,7 @@ This section is the hand-off checkpoint for future conversations and coding agen
 
 - **P0 CI contract repair is complete** at commit `cb5ab8c`. The three failures previously seen in runs `38137995221` / `38138343712` were fixed. Local results: 1,897 passed, 168 skipped, 140 subtests passed; archive-isolation 6 passed; web API 15 passed; frontend build passed. GitHub Actions run `38140076063` passed both backend and browser jobs.
 - Persistent local SQLite files were SHA-256 checked before and after the test runs; the reported hashes were unchanged. Do not rerun this audit unless a subsequent task touches database persistence or tests.
-- The archive was inventoried and semantically reviewed through `C:\\st-eva-audit\\inventory\\phase2\\integration-decision.md`. The decision was **zero archive content integrated**. Do not repeat the broad inventory or phase-2 review unless a specific product gap points to a particular archive item.
+- The archive was inventoried and semantically reviewed through `C:\st-eva-audit\inventory\phase2\integration-decision.md`. The decision was **zero archive content integrated**. Do not repeat the broad inventory or phase-2 review unless a specific product gap points to a particular archive item.
 - The existing reverse-requirements engine is not a blank slate: `reverse_requirements.py` has formula version `1.1`; the reported AAPL artifact `data/historical_pe/AAPL/reverse_requirements_output.json` contains 27 scenarios. This proves an output artifact exists, not that the browser path is complete. Do not regenerate the artifact or repeat a broad formula audit just to re-establish that the matrix exists.
 - The reported local Git state after P0 had only `data/historical_pe/AAPL/reverse_requirements_output.json` untracked. Re-check current local Git status before changing or committing that file; do not add it automatically.
 
@@ -285,7 +285,7 @@ Only after AAPL passes the browser acceptance path should the same interface be 
 
 ## 14. Archive decision and cleanup state
 
-The user-provided Phase 1/2 audit report is at `C:\\st-eva-audit\\inventory\\phase2\\integration-decision.md` and its companion CSV files.
+The user-provided Phase 1/2 audit report is at `C:\st-eva-audit\inventory\phase2\integration-decision.md` and its companion CSV files.
 
 - **Integration decision:** no archive content was copied, merged or imported into the current project.
 - The 10 MSFT historical-P/E validation Python files were content-hash matches for files already present in the current research experiment path.
