@@ -3,7 +3,7 @@
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** `cb5ab8c` (restored after regression in `661e0df`)
-**Latest verified GitHub Actions:** [Run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) passed on `cb5ab8c`. Subsequent sync/merge regression in [run 38141809016](https://github.com/sbvcid/st-eva/actions/runs/38141809016) (`661e0df`) failed backend (4 failures); restored to `cb5ab8c` contract baseline and verified green locally.
+**Latest verified GitHub Actions:** [Run 38143623578](https://github.com/sbvcid/st-eva/actions/runs/38143623578), triggered by `0f9ac03`; backend and browser jobs passed. Prior sync regression in [run 38141809016](https://github.com/sbvcid/st-eva/actions/runs/38141809016) (`661e0df`) resolved.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -233,7 +233,8 @@ Latest checked runs (sequential):
 - [Run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221) (`1d0ef0b`, documentation-only change after code baseline `9a43f9f`): backend failed (3 failures); browser passed; archive/isolation and web API passed; frontend build passed. Failures at interface of calculation semantics, unavailable-value representation, and traceability.
 - [Run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) (`cb5ab8c`): backend and browser jobs passed; 1,897 passed, 168 skipped, 140 subtests. The three earlier failures resolved by engine/Context contract fixes (unavailable consensus price derivations retained in Context; pe_percentile unavailable-state alignment; user-supplied reference multiple 30.0 passed through with USER_SUPPLIED basis); regression test added.
 - [Run 38141809016](https://github.com/sbvcid/st-eva/actions/runs/38141809016) (`661e0df`): backend failed (4 failures: `TestS3DerivedFigureTraceability::test_a_derived_figure_carries_state_flags_only_when_something_is_wrong`, `TestUnavailableContract::test_consensus_price_derivations_agree_on_missing_state`, `TestUnavailableContract::test_engine_and_context_agree_on_what_is_missing`, `TestConditionalContract::test_the_reference_states_its_basis_and_source`); browser passed. Root cause: merge/sync reintroduced pre-fix `investment_context.py` logic and `.gitignore` formatting anomaly (`\n#`).
-- **Post-38141809016 Fix & Local Verification:**
+- [Run 38143623578](https://github.com/sbvcid/st-eva/actions/runs/38143623578) (`0f9ac03`): backend and browser jobs passed. Verified CI green across full test suites, archive isolation, web API, frontend build, and browser smoke.
+- **Post-38141809016 Fix & Verification:**
   - `_band_status`: Undeclared sample count returns `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT` and is not treated as usable reference.
   - `consensus_price_ratio` / `consensus_price_gap`: Registered with conditional/unavailable provenance even when median price is absent.
   - `pe_percentile`: Context consistently registers unavailable state with clear refusal reason when engine deems it unavailable.
