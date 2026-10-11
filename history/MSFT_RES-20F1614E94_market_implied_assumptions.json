@@ -21,7 +21,7 @@
     "reference": {
       "method": "none",
       "multiple": null,
-      "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
+      "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path. The current EPS figure (17.96 USD, YahooFundamentals trailing diluted) carries Medium traceability and is not independently verified against SEC filing diluted EPS; historical band comparison requires source-identity adjustment.",
       "historical_band_status": {
         "pe": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
         "ps": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
@@ -158,7 +158,7 @@
       "as_of": "2026-09-28",
       "unit": "USD",
       "currency": "USD",
-      "definition": "Current/trailing EPS. Never synthesized.",
+      "definition": "Current/trailing diluted EPS. Never synthesized.",
       "source_type": "API_LIVE",
       "quality": "Medium",
       "traceability": "Medium"
@@ -365,7 +365,16 @@
   "limitations": [
     "This is reverse valuation, not a price target.",
     "Implied earnings/growth are conditional on the selected multiple.",
-    "Missing financial data is not estimated."
+    "Missing financial data is not estimated.",
+    {
+      "description": "Current EPS 17.96 USD is YahooFundamentals aggregated trailing diluted EPS (as_of 2026-09-28, quality=Medium, traceability=Medium, source_type=API_LIVE). It is not independently cross-verified against SEC filing diluted EPS (e.g., filing-side 16.79 USD for window 2025-04-01..2026-03-31 per experiment evidence obs:cmp-eps_diluted-sec-ttm-to-2026-03-31). Historical PE band uses SEC GAAP diluted EPS; the derived current_pe 28.353 is therefore not directly comparable to historical median (37.088) without source-identity adjustment.",
+      "reason_kind": "SOURCE_IDENTITY_LIMITATION",
+      "affects": [
+        "current_pe",
+        "observed_valuation.current_pe",
+        "implied_assumptions"
+      ]
+    }
   ],
   "data_contract": {
     "contract_version": "2.3-A",
