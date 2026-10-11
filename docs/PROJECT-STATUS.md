@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** R2.1 provenance binding corrected (first R2.1 attempt `78f387a` was rejected: CI run `38155972302` failed both jobs at the frontend build, and its resolver still bound SEC sources by numerical equality)
-**Latest verified GitHub Actions:** see §12. The R2 baseline run `38153760953` (`58fe371`, backend and browser passed) remains the last fully green run recorded before the R2.1 correction.
+**Current implementation baseline:** `3e9ec3d` (R2.1 provenance binding corrected by observation identity, not value equality)
+**Latest verified GitHub Actions:** [Run 38160351228](https://github.com/sbvcid/st-eva/actions/runs/38160351228), triggered by `3e9ec3d`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -263,10 +263,11 @@ Latest checked runs (sequential):
 Runs after the R2 baseline:
 
 - [Run 38155972302](https://github.com/sbvcid/st-eva/actions/runs/38155972302) (`78f387a`, R2.1 first attempt): backend and browser jobs both failed at "Build frontend" (`TS2339: Property 'related_sec_evidence' does not exist on type 'ScenarioEvidenceDTO'`). This attempt is not acceptance evidence; the R2.1 section below records what was rejected and why.
+- [Run 38160351228](https://github.com/sbvcid/st-eva/actions/runs/38160351228) (`3e9ec3d`, R2.1 correction): backend and browser jobs passed — frontend build, self-contained production inputs, archive isolation tests, web API tests, the full backend suite and browser smoke tests all succeeded.
 
-- **R2.1 correction, local verification before observing CI:** full backend suite 1,958 passed, 168 skipped, 140 subtests passed; provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`. The GitHub Actions run for the corrected commit is recorded in the header once observed.
+Local verification for the same commit before observing CI: full backend suite 1,958 passed, 168 skipped, 140 subtests passed (341.60s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`.
 
-## R2.1 — EPS Source Binding Correction (corrected 2026-10-11)
+## R2.1 — EPS Source Binding Correction (accepted 2026-10-11, verified by run 38160351228)
 
 **Defect reviewed:** `_resolve_sec_eps_fact` accepted a `target_value` but did not use it to establish a relationship between the selected anchor and the returned SEC record. It returned the first historical SEC EPS observation with an accession, or a recent annual filing entry, and its caller attached the result to any non-user EPS anchor — including vendor forward and consensus EPS. A value's source therefore described a document about the same metric/company rather than where the value came from.
 
