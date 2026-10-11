@@ -26,6 +26,7 @@ BOX_WIDTH = 74
 BAND_STATUS_LABELS = {
     "USABLE_FOR_REFERENCE": "可用",
     "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS": "觀測不足",
+    "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT": "樣本數未驗證",
     "UNAVAILABLE": "無資料",
 }
 
@@ -464,15 +465,26 @@ def render_report(
             f"採用門檻: 歷史區間需 >= {int(minimum)} 個觀測值方可作為參考"
         )
 
+    band_states = reference.get("historical_band_status") or {}
     insufficient = [
-        name for name, state in (reference.get("historical_band_status") or {}).items()
+        name for name, state in band_states.items()
         if state == "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+    ]
+    unverified = [
+        name for name, state in band_states.items()
+        if state == "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT"
     ]
     if insufficient:
         lines.append("")
         lines.append("注意: 以下歷史區間因觀測數不足未被採用為參考")
         for name in insufficient:
             lines.append(f"      - {name}")
+    if unverified:
+        lines.append("")
+        lines.append("注意: 以下歷史區間的樣本數未宣告或無效，無法驗證是否達到採用門檻")
+        for name in unverified:
+            lines.append(f"      - {name}")
+    if insufficient or unverified:
         lines.append("      若需隱含數值，請以 --reference-multiple 明確指定。")
     lines.append("")
 
