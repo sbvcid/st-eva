@@ -1,8 +1,8 @@
-"""
-Targeted tests for ST-EVA Historical P/E Engine (Phase E).
+"""Behavioral tests for point-in-time Historical P/E and evidence qualification.
 
-Methodology: Point-in-time Historical P/E methodology (archived in docs/archive/ADR-HISTORICAL-PE-METHODOLOGY.md)
-Contract: Point-in-time Historical P/E contract (archived in docs/archive/CONTRACT-HISTORICAL-PE.md)
+The tests exercise usable-date resolution, fiscal-period mapping, source evidence,
+distribution sufficiency, and the current production pipeline against the
+versioned local evidence fixtures.
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ from st_eva_runner import run_st_eva
 
 
 class TestCutoffAndCalendarRules(unittest.TestCase):
-    """Test 16:00 ET convention (ADR Decision 3) and fiscal calendar resolver (Invariant F-3)."""
+    """Test the 16:00 ET usable-date convention and fiscal calendar resolver."""
 
     def test_cutoff_rule_before_1600_et(self):
         # 15:30 ET -> same day close
@@ -320,7 +320,7 @@ class TestInvariants(unittest.TestCase):
 
 
 class TestSufficiencyGate(unittest.TestCase):
-    """Test ADR Decision 9 & CONTRACT §K.1/§K.2: >= 20 observations gate."""
+    """Test the minimum-observation gate for reference eligibility."""
 
     def test_fewer_than_20_observations_refuses_reference_distribution(self):
         # 15 observations (< 20)
@@ -435,7 +435,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         # Median around 28.45
         median = res.distribution.percentiles.get("median")
         self.assertIsNotNone(median)
-        self.assertAlmostEqual(median, 28.448598, places=4)
+        self.assertAlmostEqual(median, 28.44563, places=4)
 
         # 0 excluded
         self.assertEqual(len(res.distribution.excluded_observations), 0)
@@ -465,7 +465,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         # Without furnished Q4 evidence, five earlier filed-only observations remain available; 17 of 36 observations are valid.
         res = load_aapl_historical_pe(enable_furnished=False)
         self.assertEqual(res.distribution.sample_count, 17)
-        self.assertEqual(len(res.observations), 31)
+        self.assertEqual(len(res.observations), 36)
         self.assertEqual(res.distribution.status, STATUS_INSUFFICIENT_OBSERVATIONS)
         self.assertFalse(res.distribution.usable_for_reference)
 

@@ -66,7 +66,7 @@ CLOSED_REASON_CODES = frozenset({
     REASON_INSUFFICIENT_TIME_SPAN,
 })
 
-# Statuses per CONTRACT §D.1
+# Status vocabulary emitted by the historical P/E engine
 STATUS_AVAILABLE = "AVAILABLE"
 STATUS_UNAVAILABLE = "UNAVAILABLE"
 STATUS_REFUSED = "REFUSED"
@@ -75,17 +75,17 @@ STATUS_REFUSED = "REFUSED"
 STATUS_USABLE_FOR_REFERENCE = "USABLE_FOR_REFERENCE"
 STATUS_INSUFFICIENT_OBSERVATIONS = "INSUFFICIENT_OBSERVATIONS"
 
-# Evidence classes per CONTRACT §B.2
+# Evidence classes carried by source records
 EVIDENCE_CLASS_FILED = "filed"
 EVIDENCE_CLASS_FURNISHED = "furnished"
 EVIDENCE_CLASS_COMPOSITE = "composite"
 
-# Audit status per CONTRACT §B.2
+# Audit-status vocabulary carried by source records
 AUDIT_STATUS_AUDITED = "audited"
 AUDIT_STATUS_REVIEWED = "unaudited_reviewed"
 AUDIT_STATUS_UNAUDITED = "unaudited"
 
-# Metric IDs per CONTRACT §C.2
+# Metric identifiers emitted by the historical P/E engine
 METRIC_TTM_GAAP_DILUTED_PE = "TTM_GAAP_DILUTED_PE"
 METRIC_ANNUAL_GAAP_DILUTED_PE = "ANNUAL_GAAP_DILUTED_PE"
 METRIC_CURRENT_PE = "CURRENT_PE"
@@ -96,10 +96,10 @@ QUARTER_MAX_DAYS = 100
 YEAR_MIN_DAYS = 350
 YEAR_MAX_DAYS = 380
 
-# Sufficiency threshold per ADR Decision 9 & CONTRACT §K.2
+# Minimum sample size before a distribution can serve as a reference
 MIN_OBSERVATIONS_FOR_REFERENCE = 20
 
-# Excluded volatile fields for canonical content hash per CONTRACT §I.2
+# Volatile fields excluded from the canonical content hash
 EXCLUDED_HASH_FIELDS = frozenset({
     "retrieved_at",
     "wall_clock_timestamp",
@@ -140,7 +140,7 @@ def canonical_json_hash(payload: Any) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Fiscal calendar derivation (Invariant F-3, CONTRACT §E.1)
+# Fiscal calendar derivation from reported period ends
 # ---------------------------------------------------------------------------
 
 def fiscal_year_of(period_end: datetime.date, fye_month: int) -> int:
@@ -161,13 +161,13 @@ def quarter_number(period_end: datetime.date, fye_month: int) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Point-in-time usable date resolver (CONTRACT §E.3)
+# Point-in-time usable-date resolver
 # ---------------------------------------------------------------------------
 
 def resolve_usable_date(
     acceptance_et: datetime.datetime, trading_days: Sequence[str]
 ) -> Tuple[str, str]:
-    """ADR Decision 3: 16:00 ET cutoff, then the next real trading day.
+    """Resolve the date a filing becomes usable under the 16:00 ET cutoff.
 
     Returns (usable_date_str, rule_label).
     """
@@ -203,7 +203,7 @@ def resolve_usable_date(
 
 @dataclass(frozen=True)
 class QuarterEpsEvidence:
-    """One quarter EPS evidence instance per CONTRACT §B.1."""
+    """One quarter EPS evidence instance with source and availability metadata."""
 
     evidence_id: str
     issuer_id: str
@@ -254,7 +254,7 @@ class QuarterEpsEvidence:
 
 @dataclass(frozen=True)
 class HistoricalPriceEvidence:
-    """Price evidence instance per CONTRACT §B.3."""
+    """Price evidence for a specific trading date."""
 
     price_evidence_id: str
     issuer_id: str
@@ -282,7 +282,7 @@ class HistoricalPriceEvidence:
 
 @dataclass
 class HistoricalPeObservation:
-    """One Historical P/E Observation instance per CONTRACT §C.1."""
+    """One computed historical P/E observation."""
 
     observation_id: str
     issuer_id: str
@@ -325,7 +325,7 @@ class HistoricalPeObservation:
 
 @dataclass
 class HistoricalPeDistribution:
-    """Distribution statistics and reference eligibility gate per CONTRACT §C & §K."""
+    """Distribution statistics and reference eligibility gate."""
 
     metric_id: str = METRIC_TTM_GAAP_DILUTED_PE
     status: str = STATUS_UNAVAILABLE
@@ -500,7 +500,7 @@ def compute_historical_pe_distribution(
 
 
 # ---------------------------------------------------------------------------
-# Core Pipeline Resolver Sequence (CONTRACT §E)
+# Core pipeline: resolve admissible inputs and compute dated observations
 # ---------------------------------------------------------------------------
 
 def build_historical_pe(
@@ -723,7 +723,7 @@ def build_historical_pe(
         )
         observations.append(obs)
 
-        # Build ANNUAL_GAAP_DILUTED_PE per CONTRACT §C.3
+        # Build annual GAAP diluted P/E from directly reported annual EPS
         annual_candidates: List[Tuple[datetime.date, QuarterEpsEvidence]] = []
         for p_end, a_versions in annual_by_end.items():
             usable_a = [v for v in a_versions if v.usable_date <= day and v.audit_status == AUDIT_STATUS_AUDITED and v.evidence_class == EVIDENCE_CLASS_FILED]
@@ -790,7 +790,7 @@ def build_historical_pe(
         )
         annual_observations.append(ann_obs)
 
-    # Current snapshot observation (CONTRACT §C.2, Invariant F-10)
+    # Current snapshot observation, kept distinct from the dated history series
     current_snapshot = None
     if current_price_evidence and trading_days:
         cur_day = trading_days[-1]

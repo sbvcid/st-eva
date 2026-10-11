@@ -119,9 +119,9 @@ class ValidationStatus(str, Enum):
     """
     Evidence states, not ratings.
 
-    VERIFIED / CONSISTENT / DISCREPANT / METHODOLOGY_MISMATCH are declared so the
-    vocabulary is complete and stable across versions. 2.3-A never produces
-    them: doing so would require a second source, which is 2.3-B.
+    VERIFIED / CONSISTENT / DISCREPANT / METHODOLOGY_MISMATCH describe cross-source
+    comparison outcomes. A single-source observation cannot establish agreement
+    or disagreement between two sources.
     """
 
     UNAVAILABLE = "UNAVAILABLE"
@@ -471,7 +471,7 @@ CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_ENTERPRISE_VALUE,
     METRIC_MARKET_CAP,
     METRIC_PRICE_VOLUME_METRICS,
-    # 2.3-B cross-source metrics. Same concepts, judged by a second provider.
+    # Metrics used for cross-source comparison, measured independently.
     METRIC_NET_INCOME,
     METRIC_EPS_DILUTED,
     METRIC_ASSETS,
@@ -608,7 +608,7 @@ METRIC_UNITS: Dict[str, str] = {
     METRIC_DIVIDEND_GROWTH_YOY: UNIT_RATIO,
 }
 
-# Definitions of the 2.3-B cross-source metrics. Each states what the concept is
+# Definitions of cross-source metrics. Each states what the concept is
 # and, where it matters, that the two sources do not necessarily measure the
 # same thing under the same name.
 METRIC_CROSS_SOURCE_DEFINITIONS: Dict[str, str] = {
@@ -703,7 +703,7 @@ def observation_id_for(metric: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Cross-source metrics (2.3-B)
+# Cross-source comparison metrics
 #
 # The seven metrics that a second source may independently corroborate. Each
 # names a concept, not a value: the period, the unit, and the measurement basis
@@ -720,7 +720,7 @@ COMPARABLE_METRICS: Tuple[str, ...] = (
     METRIC_SHARES_OUTSTANDING,
 )
 
-# The seven metrics are 2.3-B additions. They get source-qualified IDs under a
+# Cross-source metrics use source-qualified IDs under a
 # distinct `cmp-` prefix so they can never collide with the 2.2.3 material
 # evidence IDs, and so `evidence_ids` and the CLI JSON cannot change because a
 # second source was added.
@@ -737,9 +737,8 @@ def comparable_observation_id(
     """
     A source-qualified ID for a cross-source observation.
 
-    2.3-A mapped one canonical ID per metric, which assumed a single source.
-    2.3-B widens that to one ID per (metric, source, period) so that two
-    sources reporting the same metric coexist instead of colliding.
+    The identifier includes metric, source, and period so that two sources
+    reporting the same metric coexist instead of colliding.
     """
     parts = ["cmp", metric, source]
     if period:
@@ -751,9 +750,9 @@ def comparable_observation_id(
 
 def is_comparable_observation(observation: Observation) -> bool:
     """
-    True for an observation that belongs to the 2.3-B cross-source set.
+    True for an observation that belongs to the cross-source comparison set.
 
-    The distinction is the ID prefix. The 2.2.3 material evidence shares metric
+    The distinction is the ID prefix. The primary engine evidence shares metric
     names with the cross-source set, so filtering on the metric alone would pull
     the engine's own inputs into a comparison that is not about them.
     """
@@ -1071,7 +1070,7 @@ class EvidenceStore:
 
     A duplicate evidence_id is a defect and is refused. A duplicate metric from
     two providers is not a defect and is not collapsed: two sources reporting
-    the same metric is exactly the evidence 2.3-B needs, so it is preserved.
+    the same metric is relevant to cross-source comparison, so it is preserved.
     """
 
     def __init__(self) -> None:

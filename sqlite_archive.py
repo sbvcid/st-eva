@@ -1230,11 +1230,10 @@ class SQLiteArchive(ArchiveStore):
         """
         Record one declared fiscal year end.
 
-        There is no `fiscal_year` argument and no such column: Contract section
-        K.4 leaves per-fiscal-year resolution open, and taking a fiscal year here
-        would freeze an undecided semantic into the schema. `declaring_accession`
-        and `observed_filing_date` keep the context a later resolution would need,
-        so deciding it later needs no migration.
+        This table records the source's raw fiscal-year-end declaration, not a
+        resolved year-to-declaration mapping. The raw value, declaring accession,
+        and observed filing date preserve the source context without guessing
+        which declaration applies to a particular fiscal year.
         """
         _require(
             "declaration_source", declaration_source,

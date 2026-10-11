@@ -1538,8 +1538,9 @@ class Ingestor:
         value is a date anchor, not a month: one filer declared `0929` in a 2013
         filing and `0926` in a 2026 one, so reducing either to a month integer
         would lose the drift. Which declaration applies to which fiscal year is
-        Contract section K.4 and it stays open, which is why this records a
-        declaration and nothing else.
+        The ingestor preserves each raw declaration instead of inferring which
+        value applies to a fiscal year. The date-level declaration and accession
+        keep that source context available for a later resolution.
         """
         raw = submission.get("fiscalYearEnd")
         if not raw or not re.fullmatch(r"\d{4}", str(raw)):
@@ -1586,7 +1587,7 @@ class Ingestor:
             form=form, filing_date=filed,
         )
 
-    # -- provenance: filing manifests (0020, Phase 2B) -----------------
+    # -- Provenance: filing manifests ----------------------------------
     #
     # Two acquisitions, kept apart on purpose.
     #
@@ -1846,7 +1847,7 @@ class Ingestor:
                 "FIRST_HAND", declaring_accession=accession,
             )
 
-    # -- provenance: document bytes (0020, Phase 3A) --------------------
+    # -- Provenance: captured document bytes ---------------------------
     #
     # The chain, in the only order that is honest:
     #
@@ -2031,7 +2032,7 @@ class Ingestor:
             self.DOCUMENT_ACQUISITION_CLASS, fetched.fetched_at, capture_kind,
         )
 
-    # -- provenance: document statements (0020, Phase 3B) -------------
+    # -- Provenance: statements extracted from captured documents ------
     #
     # The whole chain, and the order it can only be built in:
     #

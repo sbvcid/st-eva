@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-ST-EVA 2.3-B - SEC EDGAR provider.
+SEC EDGAR evidence provider.
 
 Acquires XBRL facts from the SEC's own data APIs and emits them as
 provider-agnostic observations. It never computes a valuation ratio, never
@@ -303,8 +303,7 @@ def content_hash_of(payload: bytes) -> str:
 #
 # The registration identity for the Archives host is declared here rather than
 # written here. Registration is `store.record_source(...)` and belongs to the
-# ingestor, which is Phase 2; a provider that persisted rows would be doing
-# something this module is not allowed to do.
+# ingestor; persistence belongs to the ingestion layer, not the provider.
 #
 # `SEC_ARCHIVES_PROVIDER` repeats `sec_ingest.SEC_SOURCE` because `sec_ingest`
 # imports this module and an import back would be a cycle. The repetition is

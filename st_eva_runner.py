@@ -1,29 +1,25 @@
 from __future__ import annotations
 
 """
-ST-EVA 2.3-A - Market-Implied Assumptions Engine
+ST-EVA research runner.
 
 Purpose:
     Answer "What assumptions are embedded in the current price?"
 
-The engine is deliberately descriptive and conditional. It reverse-engineers
-earnings assumptions only after an explicit valuation reference is selected.
+The runner acquires market and financial evidence, validates observations,
+performs deterministic valuation and reverse calculations, and optionally
+builds a Research Dossier, Investment Context, or archive record.
 
-Data flow (2.3-A):
+Data flow:
 
     Provider -> Observation -> Evidence -> Validation -> Derived
 
 The engine consumes `ValuationInputs`, a provider-agnostic projection of the
 observations. It never reads a provider's own field names.
 
-Rules:
-    - No synthetic EPS or consensus estimates.
-    - No arbitrary Bull/Base/Bear probabilities.
-    - No arbitrary price multipliers.
-    - Missing data stays unavailable.
-    - Arithmetic is deterministic Python.
-    - Every source input receives an Evidence ID.
-    - Validation labels a value; it never rewrites one.
+Observed inputs remain distinct from deterministic calculations and
+conditional inferences. Missing values are not fabricated, and validation
+labels a value without rewriting the source observation.
 """
 
 import argparse
@@ -3019,7 +3015,7 @@ def market_data_from_observations(
     # The view is built from the *material* observations only. A second source
     # reports the same metric names, and letting one of those win here would
     # silently replace the engine's input with another provider's figure —
-    # exactly the dependency 2.3-B exists to prevent.
+    # which would silently replace an engine input with another provider's value.
     material = [
         item for item in observations if not is_comparable_observation(item)
     ] or list(observations)
@@ -3071,10 +3067,9 @@ def market_data_from_observations(
         retrieved_at=price_observation.retrieved_at,
     )
     projected = _apply_observations_to_view(market_data, material, as_of=as_of)
-    # The observation set carries the comparable observations too, so the 2.3-C
-    # builder can register them and resolve the cross-source references, exactly
-    # as a live run does. The view *fields* stay material-derived, so a second
-    # source can never replace the engine's input.
+    # The observation set carries comparable observations too, allowing the
+    # context to preserve both sources. View fields stay material-derived, so
+    # another source can never replace the engine's input.
     projected.observations = ObservationSet(
         ticker=ticker, observations=list(observations)
     )
@@ -3091,7 +3086,7 @@ def build_context_from_observations(
     asset_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
-    Run the ordinary 2.3-C pipeline over an archived observation set.
+    Build an Investment Context over an archived observation set.
 
     Replay calls this, so a replayed document is produced by exactly the code a
     live run uses. Nothing about the pipeline knows it is replaying; that is the
@@ -3432,7 +3427,7 @@ def main() -> None:
         default=None,
         metavar="PATH",
         help=(
-            "Opt-in: also write a 2.3-C Investment Context. Use '-' for "
+            "Opt-in: also write an Investment Context. Use '-' for "
             "stdout. Without this flag the output is unchanged."
         ),
     )
