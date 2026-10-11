@@ -2883,14 +2883,6 @@ def _archive_run(
             )
             recorded += 1
 
-    if context is not None:
-        fidelity = (
-            "OBSERVATIONAL"
-            if _uses_first_seen_observations(archive, context)
-            else "SOURCE_DECLARED"
-        )
-        archive.record_context(asset, context, replay_fidelity=fidelity)
-
     # 3.34: Persist admission decisions by identity if archive supports admissions table.
     # Persistence errors must be visible: returning a completed run without its
     # admission records would make the archive look more complete than it is.
@@ -2928,6 +2920,17 @@ def _archive_run(
                 "checked_at": entry.validation.checked_at,
             }
         )
+
+    # Persist the context only after every supporting record succeeded.
+    # Otherwise a failed admission/validation write could leave a replayable
+    # snapshot that appears complete despite a missing part of its audit trail.
+    if context is not None:
+        fidelity = (
+            "OBSERVATIONAL"
+            if _uses_first_seen_observations(archive, context)
+            else "SOURCE_DECLARED"
+        )
+        archive.record_context(asset, context, replay_fidelity=fidelity)
 
     stats = ArchiveStats(
         observations_recorded=recorded,

@@ -514,6 +514,15 @@ class TestProductionAdmissionWritePath(unittest.TestCase):
                         archive=self.store,
                     )
 
+        # Evidence rows may already have been appended, but a context snapshot
+        # must not make a failed, incomplete archival attempt look complete.
+        self.assertEqual(
+            self.store.connection.execute(
+                "SELECT COUNT(*) FROM context_snapshots"
+            ).fetchone()[0],
+            0,
+        )
+
     def test_live_run_writes_admission(self):
         import io, sys
         from st_eva_runner import run_st_eva
