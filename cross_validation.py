@@ -6,7 +6,7 @@ from the adapters so that "can these two numbers be compared at all" is decided
 by declared rules before any value is read, and so the rules can be tested
 without touching a live API.
 
-The governing principle, from docs/ST-EVA-2.3-B-SEC-VALIDATION.md:
+The governing principle, from docs/archive/ST-EVA-2.3-B-SEC-VALIDATION.md:
 
     Validation is a third thing. It is not a modification of an Observation.
 

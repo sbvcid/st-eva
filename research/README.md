@@ -1,7 +1,7 @@
 # ST-EVA Research Storage
 
 **This directory is the permanent research storage for ST-EVA.**
-It is defined by `docs/ST-EVA-PROJECT-STRUCTURE.md`.
+It was established in `docs/archive/ST-EVA-PROJECT-STRUCTURE.md`.
 
 ## What belongs here
 
@@ -40,7 +40,7 @@ Production code, methodology, and runtime data live elsewhere:
 | Production modules | repo root `*.py` |
 | Web application | `web/` |
 | Tests | `tests/` |
-| Methodology and contracts | `docs/`, `docs/methodology/` |
+| Methodology and documentation | `docs/` |
 | Runtime SQLite / canonical application data | `data/` |
 | Archive subsystem and migrations | `archive/` |
 | Cache and build output | deletable |

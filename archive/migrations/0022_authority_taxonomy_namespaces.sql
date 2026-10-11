@@ -1,6 +1,6 @@
 -- ST-EVA 0022 - Taxonomy authority provenance schema (Amendment 6 frozen).
 -- Forward-only. Additive DDL only. Zero data. Zero backfill.
--- Frozen design: docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md Amendment 6.
+-- Design reference: docs/archive/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md Amendment 6.
 -- Relation represents SOURCE_BACKED_AUTHORITY_ASSERTION only.
 -- Not canonical current state; not filing-use; not Observation identity.
 

@@ -3,7 +3,7 @@ ST-EVA 0021 - XBRL document-fact provenance schema conformance.
 
 Every assertion here is about what the archive *does now*, and each one is
 anchored to a decision frozen in
-`docs/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Amendment 2 rather than to a
+`docs/archive/ADR-XBRL-SOURCE-DOCUMENT-PROVENANCE.md` Amendment 2 rather than to a
 preference:
 
     §1.1  two additive relations, their keys, their evidence payload

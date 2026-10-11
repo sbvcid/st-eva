@@ -1,8 +1,8 @@
 """
 ST-EVA Historical P/E Engine — Production Pipeline.
 
-Baseline: docs/ADR-HISTORICAL-PE-METHODOLOGY.md (Amendment 1, Decisions 10-14)
-Contract: docs/methodology/CONTRACT-HISTORICAL-PE.md
+Baseline: Point-in-time Historical P/E methodology (archived in docs/archive/ADR-HISTORICAL-PE-METHODOLOGY.md)
+Contract: Point-in-time Historical P/E contract (archived in docs/archive/CONTRACT-HISTORICAL-PE.md)
 
 This module implements the point-in-time (PIT) Historical P/E pipeline. It pairs
 historical prices with contemporaneous EPS evidence without lookahead bias, enforces
@@ -45,7 +45,7 @@ ET = ZoneInfo("America/New_York")
 UTC = datetime.timezone.utc
 CUTOFF_ET = datetime.time(16, 0)
 
-METHODOLOGY = "docs/ADR-HISTORICAL-PE-METHODOLOGY.md"
+METHODOLOGY = "historical-pe/1.0"
 METHODOLOGY_AMENDMENT = "Amendment 1 (2026-10-07), Decisions 10-14"
 LOGIC_VERSION = "historical-pe/1.0.0"
 FORMULA_VERSION = "historical-pe/1.0"

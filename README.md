@@ -233,7 +233,7 @@ Immutable-at-application-level Snapshot
         +--> data_contract block (2.3-A, additive)
 
 Data-contract details are also recorded in
-[docs/ST-EVA-2.3-A-DATA-CONTRACT.md](docs/ST-EVA-2.3-A-DATA-CONTRACT.md).
+[docs/archive/ST-EVA-2.3-A-DATA-CONTRACT.md](docs/archive/ST-EVA-2.3-A-DATA-CONTRACT.md).
 The engine reads `ValuationInputs`, which carries no provider field names, so
 the calculation core does not depend on Yahoo's structure. A Yahoo field name
 such as `trailingEps` survives only as the `methodology` of an observation.
@@ -316,7 +316,7 @@ between two figures that answer different questions is worse than no
 comparison, because it teaches a reader to ignore the real findings.
 
 Reference:
-[docs/ST-EVA-2.3-B-SEC-VALIDATION.md](docs/ST-EVA-2.3-B-SEC-VALIDATION.md).
+[docs/archive/ST-EVA-2.3-B-SEC-VALIDATION.md](docs/archive/ST-EVA-2.3-B-SEC-VALIDATION.md).
 
 ## Investment Context (2.3-C)
 

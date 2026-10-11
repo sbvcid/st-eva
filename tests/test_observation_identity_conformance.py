@@ -1,7 +1,7 @@
 """
 ST-EVA Historical P/E productionization, gate §J: data-layer conformance.
 
-`docs/ST-EVA-DATA-ADMISSION-RECONCILIATION.md` §J names this test as the one
+`docs/archive/ST-EVA-DATA-ADMISSION-RECONCILIATION.md` §J names this test as the one
 minimal next engineering step, and it is deliberately a test rather than a
 migration. The reconciliation read the writer and concluded that
 `observation_content_hash()` does not cover `basis_json` or `raw_json`, so a

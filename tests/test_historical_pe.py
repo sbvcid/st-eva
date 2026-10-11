@@ -1,8 +1,8 @@
 """
 Targeted tests for ST-EVA Historical P/E Engine (Phase E).
 
-Methodology: docs/ADR-HISTORICAL-PE-METHODOLOGY.md (Amendment 1, Decisions 10-14)
-Contract: docs/methodology/CONTRACT-HISTORICAL-PE.md
+Methodology: Point-in-time Historical P/E methodology (archived in docs/archive/ADR-HISTORICAL-PE-METHODOLOGY.md)
+Contract: Point-in-time Historical P/E contract (archived in docs/archive/CONTRACT-HISTORICAL-PE.md)
 """
 
 from __future__ import annotations

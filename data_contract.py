@@ -5,7 +5,7 @@ ST-EVA 2.3-A - provider-agnostic data contract.
 
 This module is the only place where a sourced number is allowed to exist before
 the deterministic engine sees it. It defines the layer chain required by
-docs/ST-EVA-2.3-A-DATA-CONTRACT.md:
+docs/archive/ST-EVA-2.3-A-DATA-CONTRACT.md:
 
     Provider -> Observation -> Evidence -> Validation -> Derived
 
