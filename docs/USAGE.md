@@ -1,6 +1,6 @@
-# ST-EVA Usage
+# ST-EVA CLI Usage
 
-ST-EVA starts with a market price and an explicit valuation reference, then reports the financial assumptions implied under that condition. Observed data, deterministic calculations, and conditional inferences are kept distinct.
+This guide documents the current command-line interface. ST-EVA's product goal and first-release acceptance conditions are defined in the root [README](../README.md). The browser UI is not yet equivalent to the CLI's reverse-requirements capabilities; see the README's implementation-status section.
 
 ## Setup
 
@@ -10,92 +10,88 @@ Python 3.9 or newer is required.
 python -m pip install -r requirements.txt
 ```
 
-Live acquisition requires network access. Missing values and source availability gaps are reported rather than filled with guesses.
+Live acquisition requires network access. An individual field may remain unavailable even when a run succeeds.
 
-## Basic commands
+## Basic runs
 
-Run live acquisition:
+Live data, no persistent result snapshot:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --no-snapshot
 ```
 
-Use an explicit P/E reference to produce the corresponding reverse requirements:
+Supply a P/E reference and calculate the corresponding reverse requirements:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --reference-multiple 30 --no-snapshot
 ```
 
-Use a fixture for a deterministic regression run:
-
-```powershell
-python st_eva_runner.py MSFT --mode regression --no-snapshot
-```
-
-Output JSON instead of the readable report:
+Emit JSON:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --reference-multiple 30 --json --no-snapshot
 ```
 
-Modes are `auto`, `live`, and `regression`. In `auto` mode, a supported fixture is used when available; otherwise the ticker falls through to live acquisition.
+Run a deterministic fixture for regression checks:
 
-## Valuation inputs
+```powershell
+python st_eva_runner.py MSFT --mode regression --no-snapshot
+```
 
-The default P/E reference selection is a user-supplied multiple, then a usable historical P/E median, then no reference. A historical band must meet the minimum-observation quality gate before it can be used as a reference; a thinner band may still be shown as descriptive evidence.
+Modes are `auto`, `live`, and `regression`. A regression run uses static fixture data and must never be interpreted as a live quote or current financial observation. In `auto` mode, a supported fixture may be selected; otherwise the ticker falls through to live acquisition. Prefer `--mode live` when checking the actual acquisition path.
+
+## Reverse-valuation assumptions
 
 Common options:
 
 | Option | Purpose |
 |---|---|
-| `--reference-multiple N` | Set one explicit P/E reference |
-| `--reference-multiples N...` | Evaluate multiple P/E assumptions |
-| `--pfcf-multiple N` | Set a P/FCF reference |
-| `--ev-ebitda-multiple N` | Set an EV/EBITDA reference |
-| `--ps-multiple N` | Set a P/S reference |
-| `--horizon-years N` | Set the span for the required EPS CAGR calculation |
+| `--reference-multiple N` | Supply one explicit P/E reference |
+| `--reference-multiples N...` | Evaluate multiple P/E reference/exit-multiple assumptions |
+| `--pfcf-multiple N` | Supply a P/FCF reference |
+| `--ev-ebitda-multiple N` | Supply an EV/EBITDA reference |
+| `--ps-multiple N` | Supply a P/S reference |
 | `--reverse-horizons N...` | Set holding periods for the reverse-requirements matrix |
-| `--required-returns N...` | Set required-return assumptions as decimals |
+| `--required-returns N...` | Set required-return assumptions as decimals, such as `0.08 0.10` |
+| `--horizon-years N` | Set the horizon used by the summary engine's EPS-CAGR calculation |
 | `--risk-free-rates` | Acquire observed US Treasury yields |
-| `--beta N`, `--equity-risk-premium N` | Supply assumptions for the CAPM feasibility calculation |
-| `--no-dcf` | Skip the DCF feasibility check |
+| `--beta N`, `--equity-risk-premium N` | Supply inputs to the CAPM/cost-of-equity calculation |
+| `--no-dcf` | Skip the DCF feasibility calculation |
 
-All user-supplied multiples, horizons, and rates are assumptions, not observed facts. The output records the reference used for each conditional calculation.
+The summary engine's `required_eps_cagr` and a row in the full reverse-requirements matrix are not interchangeable merely because both contain a CAGR. When comparing outputs, inspect the selected EPS anchor, horizon, required-return basis, exit multiple, and formula metadata for the specific calculation.
 
-## Research outputs
+All user-supplied multiples, horizons, and rates are assumptions, not observed facts. A reference multiple is a conditional input, not proof that the market expects the resulting earnings figure. A return hurdle without an explicit dividend treatment is a price-return condition, not a total-return condition.
 
-### Research Dossier
+A historical valuation band may be shown as descriptive evidence even when it fails the minimum-observation gate for use as a scenario reference. Descriptive availability and reference eligibility are separate questions.
 
-Create a structured research report from the same analysis result:
+## Optional output and history tools
+
+These are supporting interfaces for inspection or reproducibility; they do not replace the reverse-valuation result.
+
+Create a Research Dossier:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --dossier dossier.json --no-snapshot
 ```
 
-Use `--dossier` without a path to write the dossier to standard output, or `--dossier-report` to render a readable version alongside the regular report.
-
-### Investment Context
-
-Create a traceable, machine-readable document:
+Create a machine-readable Investment Context:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --context context.json --no-snapshot
 ```
 
-The context records figure references, source observations, validation states, and registered operations so a consumer can inspect how the values were derived. Use `--context -` to write it to standard output.
+The context can include figure references, source observations, validation states, and registered operations. Use `--context -` to write it to standard output. By default it requests Yahoo and SEC evidence; `--context-sources yahoo` or `--context-sources sec` selects a source.
 
-By default, the context requests both Yahoo and SEC evidence. Use `--context-sources yahoo` or `--context-sources sec` to select sources.
-
-### Financial history and historical P/E
+Issuer-specific historical data paths:
 
 ```powershell
 python st_eva_runner.py AAPL --mode live --financial-history --no-snapshot
 python st_eva_runner.py MSFT --mode live --historical-pe --no-snapshot
 ```
 
-Financial-history and historical-P/E paths may access external sources. Historical P/E is available only for issuers with configured and qualifying evidence.
+These paths require their configured and qualifying evidence. Their existence does not imply that all metrics or issuers are covered by the same source path.
 
-### Archive and point-in-time replay
+## Archive and replay
 
 Archive persistence is opt-in and requires an Investment Context:
 
@@ -103,40 +99,31 @@ Archive persistence is opt-in and requires an Investment Context:
 python st_eva_runner.py AAPL --mode live --context context.json --archive data/st-eva.sqlite
 ```
 
-The archive records source documents where captured, observations, the context, and supported admission/validation records. Replay distinguishes a matching reconstruction from a divergence, a missing snapshot, or insufficient historical evidence. An insufficient replay is reported as such; it must not silently replace historical inputs with current values.
+The archive can preserve captured source documents, observations, contexts, and supported admission/validation records. Replay distinguishes a matching reconstruction from divergence, a missing snapshot, or insufficient historical evidence. It must not silently substitute current inputs for unavailable historical facts.
 
-Some sources do not declare when a value became publicly available. Those observations are labelled accordingly, and a replay using archive-first-seen observations cannot claim source-declared point-in-time fidelity.
+**Treat existing SQLite files as persistent data. Do not delete or reset `data/st-eva.sqlite`, files under `data/archives/`, or another configured runtime archive as a cleanup step.** Use an isolated temporary path for tests and experiments that must not affect existing records.
 
-## Reading the result
+Some sources do not declare when a value became publicly available. Those observations are labelled accordingly; replay based on archive-first-seen time must not be described as source-declared point-in-time fidelity.
 
-The report distinguishes:
+## Interpreting output
 
-- **Observed:** values obtained from a source, with provenance where available.
-- **Derived:** deterministic calculations from identified inputs.
-- **Conditional inference:** quantities implied only under an explicitly stated reference or assumption.
-- **Unavailable:** a required input that could not be established.
+- **Observed:** a source-reported value, with source and timing metadata where available.
+- **Derived:** deterministic arithmetic from identified inputs.
+- **Conditional result:** a value implied only under named assumptions.
+- **Unavailable or refused:** an input or derivation that could not be established under the applicable rules.
 
-A missing value is not automatically a failed run. Read the associated status, reason, time period, units and provenance before using it.
+A missing value is not automatically a failed run. Inspect the reason, period, unit, currency, and provenance. Cross-source validation reports comparability and discrepancies; it does not average competing observations, silently select a winner, or overwrite either source's value.
 
-Cross-source validation produces a separate comparison result. It does not average source values, silently choose a winner, or overwrite either observation. A period mismatch or methodology mismatch means the figures cannot be treated as directly comparable, even if the numeric values happen to match.
+## Known implementation boundaries
 
-## Snapshots
+- Archived SEC evidence entering the reverse-valuation input surface is currently admitted only for `revenue`. This boundary does not mean other metrics are absent from every separate live or historical-data path.
+- `llm_interpreter.py` builds a prompt/request but does not call a live LLM provider. An LLM is not required for ST-EVA's deterministic calculations.
 
-Unless `--no-snapshot` is supplied, a regular run writes a result snapshot under `history/`. Use `--no-snapshot` for exploratory runs that should not create a persistent result file.
-
-## Development checks
-
-Install the test dependencies and run the current test suite with:
+## Tests
 
 ```powershell
 python -m pip install -r requirements-test.txt
 python -m pytest tests/ -q
 ```
 
-`python st_eva_runner.py --test` runs the small built-in regression checks; it is not a replacement for the repository test suite.
-
-## Current implementation boundary
-
-Archived SEC evidence entering the reverse-valuation input surface is currently admitted only for `revenue`. Other archived metrics can be recorded and evaluated by the evidence layer, but are refused at this specific crossing. This does not mean that all other metrics are absent from the separate live valuation path or from Historical P/E processing.
-
-`llm_interpreter.py` builds a prompt/request for external interpretation; it does not call a live LLM provider. The deterministic calculation remains in ST-EVA, and model interpretation is not a source of financial facts.
+`python st_eva_runner.py --test` runs the small built-in checks; it is not a replacement for the repository test suite.
