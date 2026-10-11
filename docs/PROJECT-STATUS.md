@@ -189,21 +189,23 @@ For local frontend development, see [web/frontend/README.md](../web/frontend/REA
 
 ## 12. Latest verified CI status
 
-Resolved and locally verified baseline for P0 backend CI contract fixes:
+Latest checked run for the same implementation code: [GitHub Actions run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221), commit `1d0ef0b` (documentation-only change after code baseline `9a43f9f`).
 
-- **Backend suite:** passed — 1,897 passed, 168 skipped, 140 subtests passed in 340.10s.
-- **Archive-isolation tests:** 6 passed.
-- **Web API tests:** 15 passed.
-- **Frontend production build:** passed (`tsc -b && vite build` produced `dist/index.html`).
-- **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified SHA-256 byte-identical before and after all test runs.
+- **Backend:** failed — 3 failed, 1,893 passed, 168 skipped, 140 subtests passed.
+- **Browser job:** passed.
+- **Frontend production build:** passed.
+- Archive-isolation tests: 6 passed in the logged run.
+- Web API tests: 15 passed in the logged run.
 
-The three backend failures reported by GitHub Actions runs `38137995221` / `38138343712` were resolved:
+The backend failures reported by the CI log are:
 
-1. `tests/test_2_4_3_traceability.py::TestS3DerivedFigureTraceability::test_a_derived_figure_carries_state_flags_only_when_something_is_wrong` — Fixed: `consensus_price_gap` and `consensus_price_ratio` are always registered as derivations and marked unavailable when median PE cross check is absent; `approx_historical_pe_percentile` unavailable state is aligned between engine and context.
-2. `tests/test_investment_context.py::TestUnavailableContract::test_engine_and_context_agree_on_what_is_missing` — Fixed: `pe_percentile` is consistently registered as unavailable when engine evaluates `approx_historical_pe_percentile` as null, with explicit refusal reason and series status; `_band_status` in Context aligned with Engine rules for unverified sample counts.
-3. `tests/test_investment_context.py::TestConditionalContract::test_the_reference_states_its_basis_and_source` — Fixed: `user_pe` reference multiple (e.g. `30.0`) is correctly passed through to valuation reference registration, preserving `USER_SUPPLIED` basis, `user_overridden=True`, and the numeric multiple value.
+1. `tests/test_2_4_3_traceability.py::TestS3DerivedFigureTraceability::test_a_derived_figure_carries_state_flags_only_when_something_is_wrong` — `KeyError: 'consensus_price_gap'`. The same assertion also reports a contract mismatch: an unavailable/nullable `approx_historical_pe_percentile` field is absent from the Context where the test expects the field to be represented.
+2. `tests/test_investment_context.py::TestUnavailableContract::test_engine_and_context_agree_on_what_is_missing` — the engine represents `pe_percentile` as unavailable/null, while the Context omits it.
+3. `tests/test_investment_context.py::TestConditionalContract::test_the_reference_states_its_basis_and_source` — the test supplies a user reference multiple of `30.0`, but the Context's recorded multiple is `None`; the source/basis and selected multiple are not joined consistently.
 
-All three original tests passed, and targeted regression test `test_consensus_price_derivations_agree_on_missing_state` was added.
+These fail at the intersection of calculation semantics, unavailable-value representation, and traceability. They should be resolved by fixing the underlying engine/Context contracts and their inputs, not by simply weakening the tests.
+
+The current code baseline has not been validated as CI-green. Documentation-only commits do not resolve these failures.
 
 ## 13. Verified gaps and priority
 
