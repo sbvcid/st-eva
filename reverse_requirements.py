@@ -124,6 +124,7 @@ class EpsAnchor:
     observation_id: Optional[str] = None
     is_user_assumption: bool = False
     sec_fact: Optional[Dict[str, Any]] = None
+    sec_related_evidence: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if not math_is_finite(self.value):
@@ -148,6 +149,7 @@ class EpsAnchor:
             "observation_id": self.observation_id,
             "is_user_assumption": self.is_user_assumption,
             "sec_fact": self.sec_fact,
+            "sec_related_evidence": self.sec_related_evidence,
         }
 
 
@@ -682,6 +684,7 @@ def build_scenario_evidence(
         "observation_id": getattr(start_anchor, "observation_id", None) or ("ev-current-eps-001" if not getattr(start_anchor, "is_user_assumption", False) else None),
         "is_user_assumption": getattr(start_anchor, "is_user_assumption", False),
         "sec_fact": getattr(start_anchor, "sec_fact", None),
+        "sec_related_evidence": getattr(start_anchor, "sec_related_evidence", None),
     }
 
     mult_ev = {
@@ -714,6 +717,7 @@ def build_scenario_evidence(
     if not eps_ev["is_user_assumption"]:
         sec_note = ""
         if eps_ev["sec_fact"] and eps_ev["sec_fact"].get("accession"):
+            # Direct provenance is claimed only when the data structures establish it.
             sec_note = f"; SEC {eps_ev['sec_fact'].get('form', '10-K')} accession {eps_ev['sec_fact']['accession']}"
         sourced_facts.append(
             f"Starting EPS: {start_anchor.value:g} {start_anchor.currency or currency or 'USD'} ({start_anchor.basis}, provider: {start_anchor.provider}{sec_note})"
@@ -729,6 +733,12 @@ def build_scenario_evidence(
         missing_or_unvalidated.append(f"Exit multiple qualification: {mult_ev['eligibility_state']}")
     if start_anchor.period_undeclared_by_source:
         missing_or_unvalidated.append("Starting EPS period coverage was not declared by source")
+    # Explicit provenance limitation: direct SEC link must be proven, never inferred from existence.
+    if eps_ev.get("sec_related_evidence") and eps_ev.get("sec_related_evidence").get("accession"):
+        if not (eps_ev.get("sec_fact") and eps_ev["sec_fact"].get("accession")):
+            missing_or_unvalidated.append(
+                "Direct SEC source of selected EPS not established; related filing shown for cross-check only"
+            )
 
     return {
         "price_evidence": price_ev,
@@ -737,6 +747,7 @@ def build_scenario_evidence(
         "user_assumptions": user_assumptions,
         "sourced_facts": sourced_facts,
         "missing_or_unvalidated": missing_or_unvalidated,
+        "related_sec_evidence": eps_ev.get("sec_related_evidence") if eps_ev.get("sec_related_evidence") else None,
     }
 
 

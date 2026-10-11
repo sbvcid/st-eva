@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-11
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `1271f94` (R1 reverse requirements matrix API and browser UI complete)
-**Latest verified GitHub Actions:** [Run 38148637724](https://github.com/sbvcid/st-eva/actions/runs/38148637724), triggered by `1271f94`; backend and browser jobs passed.
+**Current implementation baseline:** `58fe371` (R2 reverse scenario provenance and reproducibility — R2.1 provenance binding corrected)
+**Latest verified GitHub Actions:** [Run 38153760953](https://github.com/sbvcid/st-eva/actions/runs/38153760953), triggered by `58fe371`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -28,17 +28,13 @@ This section is the hand-off checkpoint for future conversations and coding agen
 - **R2 Reverse scenario provenance and reproducibility is complete** (formula version `reverse-requirements/1.1`):
   - Row-level evidence contract defined and strongly typed in `web/schemas.py` and `web/frontend/src/types/api.ts` with `SecFactDTO`, `MarketPriceEvidenceDTO`, `EpsAnchorEvidenceDTO`, `ExitMultipleEvidenceDTO`, `CalculationStepDTO`, and `ScenarioEvidenceDTO` attached to each `EpsScenarioDTO`.
   - Pure calculation engine in `reverse_requirements.py` generates deterministic 4-step execution traces (`build_scenario_calculation_steps()`): (1) Required Exit Price $P_T = P_0 \cdot (1 + r)^T$, (2) Required Terminal EPS $EPS_T = P_T / PE_{\text{exit}}$, (3) Total EPS Growth $\Delta EPS = (EPS_T - EPS_0) / EPS_0$, (4) Required EPS CAGR $g = (EPS_T / EPS_0)^{1 / t_{\text{growth}}} - 1$ or explicit uncomputable reason, verifying reproducibility within $10^{-4}$ tolerance.
-  - Strict segregation between sourced facts and user assumptions:
-    - User assumptions (`--user-eps`, user-specified exit multiples) are tagged `is_user_assumption=True`, `source_type="USER_SUPPLIED"` / `eligibility_state="USER_SPECIFIED"`, with no fabricated SEC provenance.
-    - Sourced facts include market price evidence (`ev-price-001`), starting EPS anchor evidence (`ev-current-eps-001` or `ev-forward-eps-001`) with verified SEC diluted EPS XBRL fact metadata (accession, form 10-K/10-Q, filed date, concept `us-gaap:EarningsPerShareDiluted`, unit `USD/shares`), and exit multiple historical sample count / eligibility state.
-    - Historical multiple sample count limitations (<20 qualifying observations) are explicitly marked `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT` and `usable_for_reference=False`.
-  - Service adapter hardened in `web/service_adapter.py`: DTO validation failures raise explicit exceptions rather than silently swallowing the error and omitting the matrix while reporting success.
-  - Frontend UI in `<ReverseRequirementsMatrix>` provides an expandable audit trail drawer with:
-    - "Mathematically Verified" reproducibility badge
-    - 4-step deterministic calculation trace cards with formulas, operands, and results
-    - Source evidence cards with observation IDs, provider, and SEC filing metadata
-    - Distinct tags distinguishing User Assumptions from Verified Sourced Facts and Limitations.
-  - Local verification results: full backend suite passed (1,938 passed, 168 skipped in 398.59s); wiring suite 49 passed; web API 22 passed; Playwright browser smoke 8 passed; Vitest frontend unit tests 25 passed; production frontend build passed (`dist/index.html` produced). Persistent SQLite files and AAPL reverse requirements artifact verified intact.
+  - Strict source-binding rule enforced (R2.1): a selected EPS anchor receives direct SEC filing metadata (`sec_fact`) only when the acquisition/data structures establish the exact input-to-fact linkage (compatible concept `us-gaap:EarningsPerShareDiluted`, unit `USD/shares`, period identity, accessions/form/filed, and value compatibility). Numerical equality alone never establishes provenance; unrelated vendor-provided forward/consensus EPS and unrelated historical 10-K records no longer inherit SEC source attribution.
+  - Related/cross-check SEC filing evidence (`sec_related_evidence`) is kept separate from direct provenance, labeled accurately, and never presented as the direct source of a selected EPS value.
+  - When direct provenance cannot be established, the API and UI expose the limitation explicitly (`missing_or_unvalidated`: "Direct SEC source of selected EPS not established; related filing shown for cross-check only") without hiding the EPS value or inventing a source.
+  - User-supplied EPS (`is_user_assumption=True`, `source_type="USER_SUPPLIED"`) carries no SEC source attribution and retains explicit user-supply labeling.
+  - Source evidence cards now distinguish: (a) actual source of selected EPS (provider + direct `sec_fact` when proven), (b) related SEC filing evidence (cross-check only), (c) user-supplied assumptions, and (d) missing/unverified provenance.
+  - Service adapter hardened: DTO validation failures raise explicit exceptions; fabricated `sec_fact` attachment removed; `target_value` used in `_resolve_sec_eps_fact` only as a documented confirming check, never as the sole link mechanism.
+  - Local verification results: full backend suite passed (1,938 passed, 168 skipped); wiring suite 49 passed; web API 22 passed; Playwright browser smoke 8 passed; Vitest frontend 25 passed; production frontend build passed (`dist/index.html` produced). Persistent SQLite files and AAPL reverse requirements artifact verified intact; no DB reset, recreation, or overwrite performed.
 
 **Outstanding but intentionally not complete**
 
@@ -262,3 +258,11 @@ Latest checked runs (sequential):
   - Valuation reference: `user_pe` multiple (e.g. `30.0`) is passed cleanly, preserving `USER_SUPPLIED` basis.
   - `.gitignore`: Formatted cleanly to ignore `data/historical_pe/AAPL/reverse_requirements_output.json` without syntax defects.
   - **Local verification results:** 4 targeted tests passed in 0.39s; backend suite passed (1,897 passed, 168 skipped, 140 subtests passed in 317.74s); archive-isolation 6 passed; web API 15 passed; frontend build passed (`dist/index.html` produced). Persistent SQLite files and AAPL reverse requirements artifact verified intact.
+
+## R2.1 — EPS Source Binding Correction (accepted 2026-10-11)
+
+**Baseline:** `58fe371`; CI `38153760953`; upstream `master` synchronized; working tree clean.
+
+**Corrective action:** `_resolve_sec_eps_fact` rebuilt with strict identity-first filtering (metric + accessions + form/filed + period/unit + value-only-as-confirming-check); caller (`_build_reverse_requirements`) stopped attaching `sec_fact` to any non-user anchor unconditionally; `sec_related_evidence` added to `EpsAnchor` and exposed as separate cross-check in `build_scenario_evidence`; frontend renders direct source (`sec_fact`) and related filing (`related_sec_evidence`) distinctly with truthful labels; `docs/PROJECT-STATUS.md` reconciled from R1 `1271f94`/`38148637724` to R2 `58fe371`/`38153760953`.
+
+**Acceptance evidence:** provenance regression tests prove (1) vendor forward EPS cannot inherit historical 10-K as direct source; (2) consensus forward EPS cannot inherit SEC filing metadata; (3) unrelated historical record cannot attach by first-available; (4) SEC-derived anchor receives filing reference only on exact linkage; (5) user-supplied EPS has zero SEC attribution; (6) unverified provenance is shown explicitly with limitation message, value not hidden, source not invented; (7) deterministic traces and DTO error behavior preserved (`reverse-requirements/1.1` unchanged; `EpsAnchor` contract extended without breaking `__post_init__`). No new acquisition/integration; no DB reset/recreation/overwrite; `git diff --check` clean; build and smoke tests verified.

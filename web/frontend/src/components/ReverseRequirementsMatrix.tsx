@@ -507,6 +507,20 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           <div>{sc.evidence.eps_evidence.sec_fact.concept}</div>
                                         </div>
                                       )}
+                                      {/* Related / cross-check SEC evidence — never claimed as direct source */}
+                                      {sc.evidence.related_sec_evidence && sc.evidence.related_sec_evidence.accession && (
+                                        <div className="mt-1 pt-1 border-t border-amber-200 space-y-0.5 text-[10px] font-mono text-amber-800">
+                                          <div className="font-semibold flex items-center gap-1">
+                                            <FileText className="w-3 h-3 text-amber-600" />
+                                            <span>Related SEC {sc.evidence.related_sec_evidence.form || '10-K'} (cross-check)</span>
+                                          </div>
+                                          <div>accn: {sc.evidence.related_sec_evidence.accession}</div>
+                                          {sc.evidence.related_sec_evidence.filed_date && (
+                                            <div>filed: {sc.evidence.related_sec_evidence.filed_date}</div>
+                                          )}
+                                          <div className="text-[9px] text-amber-700 italic">{sc.evidence.related_sec_evidence.note || "Not verified as direct source of selected EPS value"}</div>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
 

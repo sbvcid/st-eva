@@ -2185,53 +2185,159 @@ def _resolve_sec_eps_fact(
     sec_observations: Optional[Sequence[Any]] = None,
     target_value: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Resolve verified SEC diluted EPS filing metadata if available."""
-    # 1. Search in sec_observations if available
+    """Resolve a verified SEC diluted EPS filing fact only when data structures establish the link.
+
+    ``target_value`` is used ONLY as a confirming check (value compatibility) when
+    identity metadata (metric, concept, accessions, period, form/filing, unit) already
+    points to the specific observation. Numerical equality alone is never sufficient.
+    If no observation or filing entry can be tied to the anchor by identity, None is
+    returned; the caller must leave ``sec_fact`` absent rather than invent source.
+    """
+    # Helper: float match with a tight tolerance for reported EPS values
+    def _close(a: Optional[float], b: Optional[float]) -> bool:
+        if a is None or b is None:
+            return False
+        return abs(float(a) - float(b)) < 0.005
+
+    # 1. Search structured sec_observations — identity must be complete.
+    candidates_obs: List[Dict[str, Any]] = []
     for obs in sec_observations or ():
         metric = getattr(obs, "metric", "")
-        if metric in ("eps_diluted", "METRIC_EPS_DILUTED", "EarningsPerShareDiluted"):
-            raw = getattr(obs, "raw", {}) or {}
-            accn = getattr(obs, "accession", None) or raw.get("accession_number") or raw.get("accn")
-            if accn:
-                return {
-                    "accession": str(accn),
-                    "form": str(raw.get("form_type") or raw.get("form") or "10-K"),
-                    "filed_date": str(raw.get("filed_date") or raw.get("filed") or getattr(obs, "as_of", "")),
-                    "concept": "us-gaap:EarningsPerShareDiluted",
-                    "unit": "USD/shares",
-                    "period_start": str(getattr(obs, "period_start", None) or raw.get("start") or ""),
-                    "period_end": str(getattr(obs, "period_end", None) or raw.get("end") or ""),
-                    "document_url": f"https://www.sec.gov/Archives/edgar/data/{accn.replace('-', '')}/{accn}-index.htm",
-                }
+        if metric not in ("eps_diluted", "METRIC_EPS_DILUTED", "EarningsPerShareDiluted"):
+            continue
+        raw = getattr(obs, "raw", {}) or {}
+        accn = getattr(obs, "accession", None) or raw.get("accession_number") or raw.get("accn")
+        if not accn:
+            continue
+        # Identity metadata must be present (filing form / filed date / period)
+        form = raw.get("form_type") or raw.get("form")
+        filed_date = raw.get("filed_date") or raw.get("filed") or getattr(obs, "as_of", None)
+        if not form and not filed_date:
+            continue
+        # Confirm value compatibility only when identity already selects this record
+        obs_value = getattr(obs, "value", None)
+        if target_value is not None:
+            # If value is reported in raw, prefer raw; else observation attribute
+            raw_val = raw.get("value")
+            try:
+                if raw_val is not None:
+                    obs_value = float(raw_val)
+            except (TypeError, ValueError):
+                pass
+            if obs_value is not None and not _close(obs_value, target_value):
+                continue  # value mismatch; identity alone is not enough to invent link
+        # Record passes identity + value gate
+        candidates_obs.append({
+            "accession": str(accn),
+            "form": str(form or "10-K"),
+            "filed_date": str(filed_date or ""),
+            "concept": "us-gaap:EarningsPerShareDiluted",
+            "unit": "USD/shares",
+            "period_start": str(getattr(obs, "period_start", None) or raw.get("start") or ""),
+            "period_end": str(getattr(obs, "period_end", None) or raw.get("end") or ""),
+            "document_url": f"https://www.sec.gov/Archives/edgar/data/{str(accn).replace('-', '')}/{str(accn)}-index.htm",
+            "obs_value": obs_value,
+        })
+    if candidates_obs:
+        # Prefer the observation whose value is closest to target when target given,
+        # otherwise prefer the one with the most complete identity.
+        if target_value is not None:
+            candidates_obs.sort(key=lambda c: (0 if c["obs_value"] is not None and abs(float(c["obs_value"]) - float(target_value)) < 0.005 else 1, abs(float(c["obs_value"]) - float(target_value)) if c["obs_value"] is not None else float('inf')))
+        else:
+            candidates_obs.sort(key=lambda c: (0 if c.get("period_start") and c.get("period_end") else 1))
+        best = candidates_obs[0]
+        return {k: v for k, v in best.items() if k != "obs_value"}
 
-    # 2. Search in data/historical_pe/{ticker}/eps_diluted_concept.json if present
+    # 2. Search data/historical_pe/{ticker}/eps_diluted_concept.json — only exact entry.
     concept_file = Path(f"data/historical_pe/{ticker}/eps_diluted_concept.json")
     if concept_file.exists():
         try:
             with open(concept_file, "r", encoding="utf-8") as f:
                 cdata = json.load(f)
             units = (cdata.get("units") or {}).get("USD/shares") or []
-            annual_10k = [x for x in units if x.get("form") == "10-K" and x.get("fp") == "FY"]
-            cand = annual_10k[-1] if annual_10k else (units[-1] if units else None)
-            if cand:
-                accn = cand.get("accn")
-                cik = cdata.get("cik")
-                url = None
-                if cik and accn:
-                    url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}/{accn}-index.htm"
-                return {
-                    "accession": str(accn) if accn else None,
-                    "form": str(cand.get("form", "10-K")),
-                    "filed_date": str(cand.get("filed") or ""),
+            # Only consider records with identity fields complete
+            matching_entries: List[Dict[str, Any]] = []
+            for entry in units:
+                val = entry.get("val")
+                accn = entry.get("accn")
+                form = entry.get("form")
+                filed = entry.get("filed")
+                start = entry.get("start")
+                end = entry.get("end")
+                if not accn or not form or not filed:
+                    continue
+                if target_value is not None:
+                    try:
+                        if not _close(float(val), float(target_value)):
+                            continue
+                    except (TypeError, ValueError):
+                        continue
+                matching_entries.append({
+                    "accession": str(accn),
+                    "form": str(form),
+                    "filed_date": str(filed),
                     "concept": "us-gaap:EarningsPerShareDiluted",
                     "unit": "USD/shares",
-                    "period_start": str(cand.get("start") or ""),
-                    "period_end": str(cand.get("end") or ""),
+                    "period_start": str(start or ""),
+                    "period_end": str(end or ""),
+                    "document_url": None,
+                    "_entry": entry,
+                })
+            if matching_entries:
+                cik = cdata.get("cik")
+                # Prefer most recent FY 10-K (last matching entry) — chronological file order assumed
+                fy_10k = [e for e in matching_entries if e["_entry"].get("fp") == "FY" and e["form"] == "10-K"]
+                best = fy_10k[-1] if fy_10k else (matching_entries[-1] if matching_entries else None)
+                accn = best["accession"]
+                url = None
+                if cik and accn:
+                    url = f"https://www.sec.gov/Archives/edgar/data/{str(cik)}/{str(accn).replace('-', '')}/{str(accn)}-index.htm"
+                result = {
+                    "accession": accn,
+                    "form": best["form"],
+                    "filed_date": best["filed_date"],
+                    "concept": best["concept"],
+                    "unit": best["unit"],
+                    "period_start": best["period_start"],
+                    "period_end": best["period_end"],
                     "document_url": url,
                 }
+                return result
         except Exception:
             pass
+    return None
 
+
+def _find_related_sec_evidence(ticker: str) -> Optional[Dict[str, Any]]:
+    """Locate related SEC filing evidence for cross-check (not direct provenance)."""
+    concept_file = Path(f"data/historical_pe/{ticker}/eps_diluted_concept.json")
+    if not concept_file.exists():
+        return None
+    try:
+        with open(concept_file, "r", encoding="utf-8") as f:
+            cdata = json.load(f)
+        units = (cdata.get("units") or {}).get("USD/shares") or []
+        annual_10k = [x for x in units if x.get("form") == "10-K" and x.get("fp") == "FY"]
+        cand = annual_10k[-1] if annual_10k else (units[-1] if units else None)
+        if cand:
+            accn = cand.get("accn")
+            cik = cdata.get("cik")
+            url = None
+            if cik and accn:
+                url = f"https://www.sec.gov/Archives/edgar/data/{str(cik)}/{str(accn).replace('-', '')}/{str(accn)}-index.htm"
+            return {
+                "accession": str(accn) if accn else None,
+                "form": str(cand.get("form", "10-K")),
+                "filed_date": str(cand.get("filed") or ""),
+                "concept": "us-gaap:EarningsPerShareDiluted",
+                "unit": "USD/shares",
+                "period_start": str(cand.get("start") or ""),
+                "period_end": str(cand.get("end") or ""),
+                "document_url": url,
+                "note": "Related SEC filing (cross-check); not verified as direct source of selected EPS value",
+            }
+    except Exception:
+        pass
     return None
 
 
@@ -2299,6 +2405,7 @@ def _build_reverse_requirements(
                 observation_id=None,
                 is_user_assumption=True,
                 sec_fact=None,
+                sec_related_evidence=None,
             )
             anchor_unavailable = []
         else:
@@ -2326,7 +2433,10 @@ def _build_reverse_requirements(
                 obs_id = "ev-forward-eps-001"
             elif anchor.basis == "CONSENSUS_FORWARD_TWELVE_MONTHS":
                 obs_id = "ev-consensus-eps-001"
+            # Strict source binding: only claim direct SEC source when identity links it.
             sec_fact = _resolve_sec_eps_fact(data.ticker, sec_observations, anchor.value)
+            # Related/cross-check evidence stays separate and must never be labeled direct source.
+            sec_related = _find_related_sec_evidence(data.ticker)
             import dataclasses
             anchor = dataclasses.replace(
                 anchor,
@@ -2334,6 +2444,7 @@ def _build_reverse_requirements(
                 observation_id=obs_id,
                 is_user_assumption=False,
                 sec_fact=sec_fact,
+                sec_related_evidence=sec_related,
             )
     unavailable.extend(anchor_unavailable)
 
