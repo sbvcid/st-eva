@@ -922,7 +922,7 @@ ISSUER_CONFIGS = {
         ticker="MSFT",
         issuer_id="CIK0000789019",
         fye_month=6,
-        data_dir=Path("research/experiments/aapl-historical-pe-poc/contract/msft_validation"),
+        data_dir=Path("data/historical_pe/MSFT"),
         canonical_path=None,
     ),
 }
@@ -1041,6 +1041,30 @@ def _resolve_issuer_paths(
             raise FileNotFoundError(f"Missing required file: {path}")
     
     return prices_path, concept_path, acceptance_path, q4_records_path
+
+
+def _sha256_of(path: Path) -> str:
+    """Content digest of an input file, for input_set_id provenance."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _acceptance_input_digest(acceptance_path: Path) -> str:
+    """Digest the filing acceptance input actually used.
+
+    The canonical layout reads a single pre-computed JSON file, but the legacy POC
+    layout derives acceptance from a directory of SGML headers plus submissions.json.
+    Hash the exact inputs consumed so input_set_id tracks whichever was used.
+    """
+    if acceptance_path.name == "headers" and acceptance_path.is_dir():
+        raw_dir = acceptance_path.parent
+        parts = []
+        for header_file in sorted(acceptance_path.glob("*.txt")):
+            parts.append(f"{header_file.name}:{_sha256_of(header_file)}")
+        submissions = raw_dir / "submissions.json"
+        if submissions.exists():
+            parts.append(f"submissions.json:{_sha256_of(submissions)}")
+        return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
+    return _sha256_of(acceptance_path)
 
 
 def load_issuer_historical_pe(
@@ -1253,15 +1277,19 @@ def load_issuer_historical_pe(
     if enable_furnished and q4_records_path and q4_records_path.exists():
         q4_records_hash = hashlib.sha256(q4_records_path.read_bytes()).hexdigest()
     
+    # Digest every result-affecting input so input_set_id changes deterministically
+    # when any of them changes, not just when the furnished Q4 file changes.
+    # Paths alone are insufficient: the canonical layout keeps a stable directory,
+    # so an edited price or acceptance file would otherwise be indistinguishable.
     input_manifest = {
-        "prices": str(prices_path),
-        "concepts": str(concept_path),
-        "acceptances": str(acceptance_path),
+        "prices": _sha256_of(prices_path),
+        "concepts": _sha256_of(concept_path),
+        "acceptances": _acceptance_input_digest(acceptance_path),
         "enable_furnished": enable_furnished,
     }
     if q4_records_hash:
         input_manifest["q4_records"] = q4_records_hash
-    
+
     input_set_id = canonical_json_hash(input_manifest)
     
     # Use evaluation dates within the specified date window

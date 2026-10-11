@@ -130,12 +130,15 @@
   "metadata": {
     "issuer": "MSFT",
     "cik": "0000789019",
-    "source": "MSFT POC Historical P/E validation output",
+    "source": "MSFT contract validation (promoted to canonical production layout)",
     "source_file": "research/experiments/aapl-historical-pe-poc/contract/msft_validation/out/msft_pe_points.json",
+    "canonical_role": "production",
     "generated_date": "2026-10-11T01:28:14.297050",
+    "promoted_on": "2026-10-11",
     "total_q4_records": 6,
     "evidence_class": "furnished",
     "form_type": "8-K",
-    "sec_item": "Item 2.02"
+    "sec_item": "Item 2.02",
+    "schema_notes": "Records carry 'document_identifier'; the production loader reads this field into evidence source_document. Do not rename to 'source_document'."
   }
 }

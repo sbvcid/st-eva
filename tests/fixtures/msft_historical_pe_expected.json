@@ -1,0 +1,915 @@
+{
+  "derived_from": {
+    "artifact": "MSFT contract-validation POC output",
+    "content_sha256": "c4ee93099d5a22cab5e4223f439dc9a32abe8a53842dbd9108c9f597797de1a6",
+    "logic_version": "msft-historical-pe-contract-validation/0.1.0",
+    "note": "Expected values below are transcribed from the verified POC oracle, not from a production run, so this file is an independent expectation. The POC itself is git-ignored and is NOT required at test runtime.",
+    "path": "research/experiments/aapl-historical-pe-poc/contract/msft_validation/out/msft_pe_points.json"
+  },
+  "expected": {
+    "available_count": 24,
+    "distribution": {
+      "max": 39.11290322580645,
+      "mean": 32.1270508003501,
+      "min": 24.272618974958146,
+      "std": 4.2780443993767445
+    },
+    "evaluation_date_count": 27,
+    "status": "USABLE_FOR_REFERENCE"
+  },
+  "fixture_version": 1,
+  "issuer": "MSFT",
+  "issuer_id": "CIK0000789019",
+  "observations": [
+    {
+      "components": [],
+      "evaluation_date": "2020-10-28",
+      "pe": null,
+      "price_close_as_traded": 202.67999267578125,
+      "status": "UNAVAILABLE"
+    },
+    {
+      "components": [],
+      "evaluation_date": "2021-01-27",
+      "pe": null,
+      "price_close_as_traded": 232.89999389648438,
+      "status": "UNAVAILABLE"
+    },
+    {
+      "components": [],
+      "evaluation_date": "2021-04-28",
+      "pe": null,
+      "price_close_as_traded": 254.55999755859375,
+      "status": "UNAVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-20-047996",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-002316",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-020891",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-21-225746",
+          "content_sha256": "1ad316a154b301846de3b6786a05e92577be747734e32614e83d48ac82848519",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d200100dex991.htm"
+        }
+      ],
+      "evaluation_date": "2021-07-28",
+      "pe": 35.55527965474573,
+      "price_close_as_traded": 286.2200012207031,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-20-047996",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-002316",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-020891",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-21-225746",
+          "content_sha256": "1ad316a154b301846de3b6786a05e92577be747734e32614e83d48ac82848519",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d200100dex991.htm"
+        }
+      ],
+      "evaluation_date": "2021-07-30",
+      "pe": 35.392547038771355,
+      "price_close_as_traded": 284.9100036621094,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-21-002316",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-020891",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-051992",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-21-225746",
+          "content_sha256": "1ad316a154b301846de3b6786a05e92577be747734e32614e83d48ac82848519",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d200100dex991.htm"
+        }
+      ],
+      "evaluation_date": "2021-10-27",
+      "pe": 36.14877107692779,
+      "price_close_as_traded": 323.1700134277344,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-21-020891",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-21-051992",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-002324",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-21-225746",
+          "content_sha256": "1ad316a154b301846de3b6786a05e92577be747734e32614e83d48ac82848519",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d200100dex991.htm"
+        }
+      ],
+      "evaluation_date": "2022-01-26",
+      "pe": 31.598508142180844,
+      "price_close_as_traded": 296.7099914550781,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-21-051992",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-002324",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-015675",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-21-225746",
+          "content_sha256": "1ad316a154b301846de3b6786a05e92577be747734e32614e83d48ac82848519",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d200100dex991.htm"
+        }
+      ],
+      "evaluation_date": "2022-04-27",
+      "pe": 29.56367444892517,
+      "price_close_as_traded": 283.2200012207031,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-21-051992",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-002324",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-015675",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-22-202034",
+          "content_sha256": "b79fa7e377bb062c72e79958410dac07469b30ae4c18825063924080f5d44a3b",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d372382dex991.htm"
+        }
+      ],
+      "evaluation_date": "2022-07-27",
+      "pe": 27.87759234796421,
+      "price_close_as_traded": 268.739990234375,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-21-051992",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-002324",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-015675",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-22-202034",
+          "content_sha256": "b79fa7e377bb062c72e79958410dac07469b30ae4c18825063924080f5d44a3b",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d372382dex991.htm"
+        }
+      ],
+      "evaluation_date": "2022-07-29",
+      "pe": 29.122405625972508,
+      "price_close_as_traded": 280.739990234375,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-22-002324",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-015675",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-035087",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-22-202034",
+          "content_sha256": "b79fa7e377bb062c72e79958410dac07469b30ae4c18825063924080f5d44a3b",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d372382dex991.htm"
+        }
+      ],
+      "evaluation_date": "2022-10-26",
+      "pe": 24.926724927178743,
+      "price_close_as_traded": 231.32000732421875,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001564590-22-015675",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-035087",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-23-000733",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-22-202034",
+          "content_sha256": "b79fa7e377bb062c72e79958410dac07469b30ae4c18825063924080f5d44a3b",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d372382dex991.htm"
+        }
+      ],
+      "evaluation_date": "2023-01-25",
+      "pe": 26.734444512261284,
+      "price_close_as_traded": 240.61000061035156,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-014423",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-035087",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-23-000733",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-22-202034",
+          "content_sha256": "b79fa7e377bb062c72e79958410dac07469b30ae4c18825063924080f5d44a3b",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "d372382dex991.htm"
+        }
+      ],
+      "evaluation_date": "2023-04-26",
+      "pe": 32.00108289460319,
+      "price_close_as_traded": 295.3699951171875,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-014423",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-035087",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-23-000733",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-034400",
+          "content_sha256": "e30c57e72da9e183523c7fc85bf857bd66451b9694aa3c466c1cdc6e45475161",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2023-07-26",
+      "pe": 34.85758400553889,
+      "price_close_as_traded": 337.7699890136719,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-014423",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-22-035087",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-23-000733",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-034400",
+          "content_sha256": "e30c57e72da9e183523c7fc85bf857bd66451b9694aa3c466c1cdc6e45475161",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2023-07-28",
+      "pe": 34.919504140060624,
+      "price_close_as_traded": 338.3699951171875,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-014423",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-054855",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001564590-23-000733",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-034400",
+          "content_sha256": "e30c57e72da9e183523c7fc85bf857bd66451b9694aa3c466c1cdc6e45475161",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2023-10-25",
+      "pe": 32.97870410723469,
+      "price_close_as_traded": 340.6700134277344,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-014423",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-054855",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-008814",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-034400",
+          "content_sha256": "e30c57e72da9e183523c7fc85bf857bd66451b9694aa3c466c1cdc6e45475161",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2024-01-31",
+      "pe": 35.947557556262716,
+      "price_close_as_traded": 397.5799865722656,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-054855",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-008814",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-048288",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-23-034400",
+          "content_sha256": "e30c57e72da9e183523c7fc85bf857bd66451b9694aa3c466c1cdc6e45475161",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2024-04-26",
+      "pe": 35.17922141335227,
+      "price_close_as_traded": 406.32000732421875,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-23-054855",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-008814",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-048288",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-087835",
+          "content_sha256": "7a0d215317e682755c02ed4065829e9a76e5a76e18393243f2821d1cffcfbf97",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2024-07-31",
+      "pe": 35.423370542211316,
+      "price_close_as_traded": 418.3500061035156,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-24-008814",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-048288",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-118967",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-087835",
+          "content_sha256": "7a0d215317e682755c02ed4065829e9a76e5a76e18393243f2821d1cffcfbf97",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2024-10-31",
+      "pe": 33.52722822636267,
+      "price_close_as_traded": 406.3500061035156,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-24-048288",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-118967",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-010491",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-087835",
+          "content_sha256": "7a0d215317e682755c02ed4065829e9a76e5a76e18393243f2821d1cffcfbf97",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2025-01-30",
+      "pe": 33.41304269197867,
+      "price_close_as_traded": 414.989990234375,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-24-118967",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-010491",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-061046",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-24-087835",
+          "content_sha256": "7a0d215317e682755c02ed4065829e9a76e5a76e18393243f2821d1cffcfbf97",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2025-05-01",
+      "pe": 32.87480632894006,
+      "price_close_as_traded": 425.3999938964844,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-24-118967",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-010491",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-061046",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-100226",
+          "content_sha256": "d46771624a36171f5fbab011f343b28d86db83233ca64fcdf3386b49022a352f",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2025-07-31",
+      "pe": 39.11290322580645,
+      "price_close_as_traded": 533.5,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-25-010491",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-061046",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-25-256321",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-100226",
+          "content_sha256": "d46771624a36171f5fbab011f343b28d86db83233ca64fcdf3386b49022a352f",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2025-10-30",
+      "pe": 37.394026299119844,
+      "price_close_as_traded": 525.760009765625,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0000950170-25-061046",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-25-256321",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-26-027207",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-100226",
+          "content_sha256": "d46771624a36171f5fbab011f343b28d86db83233ca64fcdf3386b49022a352f",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2026-01-29",
+      "pe": 27.110694183864915,
+      "price_close_as_traded": 433.5,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001193125-25-256321",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-26-027207",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-26-191507",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0000950170-25-100226",
+          "content_sha256": "d46771624a36171f5fbab011f343b28d86db83233ca64fcdf3386b49022a352f",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2026-04-30",
+      "pe": 24.272618974958146,
+      "price_close_as_traded": 407.7799987792969,
+      "status": "AVAILABLE"
+    },
+    {
+      "components": [
+        {
+          "accession": "0001193125-25-256321",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-26-027207",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-26-191507",
+          "content_sha256": "25e40e12d3e814b0ecf6f651ad3f4a51f83e035b2acd3bf91285187e7d3195a7",
+          "evidence_class": "filed",
+          "form": "10-Q",
+          "source_document": null
+        },
+        {
+          "accession": "0001193125-26-323632",
+          "content_sha256": "2e1deed6276a86443e75653c6e224010a4354a0de39ab18f95e6c4d5cb89e924",
+          "evidence_class": "furnished",
+          "form": "8-K",
+          "source_document": "msft-ex99_1.htm"
+        }
+      ],
+      "evaluation_date": "2026-07-30",
+      "pe": 25.116926843180156,
+      "price_close_as_traded": 451.1000061035156,
+      "status": "AVAILABLE"
+    }
+  ],
+  "tolerance": {
+    "distribution_abs": 0.0001,
+    "note": "Production rounds prices to 4dp, so P/E differs from POC by ~1e-6.",
+    "pe_abs": 0.0001
+  }
+}
