@@ -1,6 +1,6 @@
 # ST-EVA CLI Usage
 
-This guide documents the current command-line interface. ST-EVA's product goal and first-release acceptance conditions are defined in the root [README](../README.md). The browser UI is not yet equivalent to the CLI's reverse-requirements capabilities; see the README's implementation-status section.
+This guide documents the current command-line interface. ST-EVA's product goal and first-release acceptance conditions are defined in the root [README](../README.md). The browser UI is not yet equivalent to the CLI's reverse-requirements capabilities; see [Current Project Status](PROJECT-STATUS.md).
 
 ## Setup
 
