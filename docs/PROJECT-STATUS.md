@@ -2,11 +2,37 @@
 
 **Status checked:** 2026-10-11  
 **Repository:** `sbvcid/st-eva`, branch `master`  
-**Implementation baseline:** `9a43f9f`  
-**Code status:** all commits after `9a43f9f` through this status entry changed documentation only.  
-**Latest checked CI for the same implementation baseline:** [run 38137995221](https://github.com/sbvcid/st-eva/actions/runs/38137995221), triggered at `1d0ef0b`; backend failed, browser job passed.
+**Current implementation baseline:** `cb5ab8c`  
+**Latest verified GitHub Actions:** [run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063), triggered by `cb5ab8c`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
+
+## Continuation checkpoint — read this before planning or running work
+
+This section is the hand-off checkpoint for future conversations and coding agents. Use the current status below; do not restart prior audits just because a new conversation begins.
+
+**Completed and should not be repeated without a concrete reason**
+
+- **P0 CI contract repair is complete** at commit `cb5ab8c`. The three failures previously seen in runs `38137995221` / `38138343712` were fixed. Local results: 1,897 passed, 168 skipped, 140 subtests passed; archive-isolation 6 passed; web API 15 passed; frontend build passed. GitHub Actions run `38140076063` passed both backend and browser jobs.
+- Persistent local SQLite files were SHA-256 checked before and after the test runs; the reported hashes were unchanged. Do not rerun this audit unless a subsequent task touches database persistence or tests.
+- The archive was inventoried and semantically reviewed through `C:\\st-eva-audit\\inventory\\phase2\\integration-decision.md`. The decision was **zero archive content integrated**. Do not repeat the broad inventory or phase-2 review unless a specific product gap points to a particular archive item.
+- The existing reverse-requirements engine is not a blank slate: `reverse_requirements.py` has formula version `1.1`; the reported AAPL artifact `data/historical_pe/AAPL/reverse_requirements_output.json` contains 27 scenarios. This proves an output artifact exists, not that the browser path is complete. Do not regenerate the artifact or repeat a broad formula audit just to re-establish that the matrix exists.
+- The reported local Git state after P0 had only `data/historical_pe/AAPL/reverse_requirements_output.json` untracked. Re-check current local Git status before changing or committing that file; do not add it automatically.
+
+**Outstanding but intentionally not complete**
+
+- The full scenario matrix is not yet wired as a first-class typed web response and displayed in the browser.
+- Browser inputs do not yet represent all assumptions/axes required by the matrix, and the fixed regression-mode path must not be mistaken for live data.
+- The browser does not yet offer complete row-level provenance and recomputation details.
+- The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
+
+**Next task — one task only**
+
+Implement the first-class reverse-requirements matrix contract through the existing web API and browser, using the existing calculation engine. Start by tracing the current DTO/request path and produce the smallest implementation diff. Do not redo P0, repeat the archive audit, create a new valuation engine, or revalidate every formula without a specific failure or code change that warrants it.
+
+**Execution rule**
+
+Before running tests, compare the working tree and task diff with this checkpoint. Run targeted tests first; run the full suite when the code change warrants it and record the actual result. Mark an item complete only when its acceptance evidence exists. Update this file rather than creating another status/roadmap document.
 
 ## 1. Product direction used for this status review
 
@@ -128,7 +154,7 @@ This boundary is a major wiring/coverage limitation for the goal of having suffi
 
 The intended code/data distinction is: accurately preserve what a source reported and where it came from; validate comparability separately; derive numbers only from declared compatible operands. A fact being faithfully sourced does not certify its economic/accounting truth. Missing, unavailable, stale, conflicting, unvalidated or non-comparable observations must remain separately represented and never be silently substituted with zero or with another source's value.
 
-Current latest tests expose some disagreement between engine output and Investment Context for missing values and a supplied reference. See CI defects below.
+The P0 discrepancies between Engine and Investment Context for missing derivations and a user-supplied reference were fixed at `cb5ab8c` and verified locally and by GitHub Actions. Do not treat those resolved failures as current defects.
 
 ## 7. Historical P/E reference data
 
@@ -187,75 +213,106 @@ Current CLI options are documented in [USAGE](USAGE.md). Useful reverse-calculat
 
 For local frontend development, see [web/frontend/README.md](../web/frontend/README.md). The frontend build was successful in the checked GitHub Actions log. The browser smoke job was successful in the latest checked run, but smoke-test success only checks the existing browser paths; it does not mean the full reverse matrix UI exists.
 
-## 12. Latest verified CI status
+## 12. Latest verified implementation and CI status
 
-Resolved and locally verified baseline for P0 backend CI contract fixes:
+Current implementation baseline: `cb5ab8c`.
 
-- **Backend suite:** passed — 1,897 passed, 168 skipped, 140 subtests passed in 340.10s.
+- **GitHub Actions:** [run 38140076063](https://github.com/sbvcid/st-eva/actions/runs/38140076063) — backend and browser jobs passed.
+- **Local backend suite:** 1,897 passed, 168 skipped, 140 subtests passed.
 - **Archive-isolation tests:** 6 passed.
 - **Web API tests:** 15 passed.
-- **Frontend production build:** passed (`tsc -b && vite build` produced `dist/index.html`).
-- **Data Protection:** Persistent user archives in `data/archives/` and `data/st-eva.sqlite` verified SHA-256 byte-identical before and after all test runs.
+- **Frontend production build:** passed (`tsc -b && vite build`).
+- **Persistent SQLite protection:** local report records SHA-256 hashes for `data/st-eva.sqlite`, the AAPL/MSFT/TSM per-ticker databases and the relevant WAL/SHM files before and after tests; all reported hashes were unchanged.
 
-The three backend failures reported by GitHub Actions runs `38137995221` / `38138343712` were resolved:
+The three earlier CI failures were resolved in `cb5ab8c`:
 
-1. `tests/test_2_4_3_traceability.py::TestS3DerivedFigureTraceability::test_a_derived_figure_carries_state_flags_only_when_something_is_wrong` — Fixed: `consensus_price_gap` and `consensus_price_ratio` are always registered as derivations and marked unavailable when median PE cross check is absent; `approx_historical_pe_percentile` unavailable state is aligned between engine and context.
-2. `tests/test_investment_context.py::TestUnavailableContract::test_engine_and_context_agree_on_what_is_missing` — Fixed: `pe_percentile` is consistently registered as unavailable when engine evaluates `approx_historical_pe_percentile` as null, with explicit refusal reason and series status; `_band_status` in Context aligned with Engine rules for unverified sample counts.
-3. `tests/test_investment_context.py::TestConditionalContract::test_the_reference_states_its_basis_and_source` — Fixed: `user_pe` reference multiple (e.g. `30.0`) is correctly passed through to valuation reference registration, preserving `USER_SUPPLIED` basis, `user_overridden=True`, and the numeric multiple value.
+1. `test_a_derived_figure_carries_state_flags_only_when_something_is_wrong`: unavailable consensus price derivations are retained in Context instead of omitted.
+2. `test_engine_and_context_agree_on_what_is_missing`: `pe_percentile` unavailable state and historical-band sample-count rules align between Engine and Context.
+3. `test_the_reference_states_its_basis_and_source`: a user-supplied reference multiple such as `30.0` is passed through with `USER_SUPPLIED` basis.
 
-All three original tests passed, and targeted regression test `test_consensus_price_derivations_agree_on_missing_state` was added.
+A regression test was added for unavailable consensus price derivations. These defects are closed; do not spend another task reproducing them unless a later code change reopens them.
 
-## 13. Verified gaps and priority
+## 13. Roadmap and acceptance checklist
 
-### P0 — Preserve data and make the current contract honest
+Work is sequenced by the user-visible reverse-valuation path. A capability is not complete merely because a module or JSON output exists.
 
-- Protect the existing `data/st-eva.sqlite` and per-ticker archives; audit file/deletion/reset and migration paths read-only first.
-- Fix the three currently failing backend tests by aligning engine, context and derived-figure contracts for missing fields and user-supplied reference multiple.
-- Keep regression fixtures clearly separate from live acquired data.
+### R0 — CI baseline and data protection — COMPLETE
 
-### P1 — Establish one unambiguous reverse-calculation contract
+- [x] Fix the three backend contract failures.
+- [x] Add a regression test for unavailable consensus price derivations.
+- [x] Run local backend suite, archive-isolation tests, web API tests and frontend build.
+- [x] Verify GitHub Actions backend and browser jobs pass on `cb5ab8c`.
+- [x] Verify persistent SQLite hashes unchanged before/after reported tests.
 
-- Explicitly separate (a) price/reference-multiple implied fundamental, such as `price / P/E`, from (b) terminal EPS and growth required by a chosen horizon, return hurdle and exit multiple.
-- Verify each named output's formula, starting EPS basis, coverage period, currency/unit constraints, return basis, computability status and formula version.
-- Apply one eligibility policy to historical distributions: descriptive stats may exist below threshold or with missing sample count, but such a band cannot become an eligible reference without meeting the production gate.
+Do not redo R0 without a new failure or a code change affecting the protected paths.
 
-### P2 — Finish end-to-end matrix and trace flow
+### R1 — First-class reverse-requirements matrix in web/API — NEXT
 
-- Extend the request/UI contracts to the actual scenario axes needed by the product.
-- Make the full matrix a first-class typed result, not a hidden field only available in the core run result.
-- Carry row-specific assumptions and input/source references through Context/export/persistence; record formula version and fingerprint.
-- Show unavailable/conflicting/mismatched inputs and why an individual scenario is not computable.
-- Remove or make explicit the hard-coded regression path in the browser; never let fixtures appear to be live prices.
+Use the existing `reverse_requirements.py` engine and its `reverse-requirements/1.1` formula contract. Do not create a second engine or start with a broad formula re-audit.
 
-### P3 — Verify the first real issuer path, not just isolated modules
+- [ ] Trace the current runner output through `AnalysisServiceAdapter`, API schema/DTO, and frontend result rendering.
+- [ ] Make the complete matrix a typed first-class API result, preserving the existing engine's scenario rows and formula version.
+- [ ] Provide the necessary user controls for reference multiple, holding period, required-return assumptions, exit multiple, EPS anchor/coverage and return/dividend basis, limited to axes actually supported by the engine.
+- [ ] Remove or visibly label the hard-coded browser regression path so fixture outputs cannot appear to be current live prices.
+- [ ] Render every scenario's assumptions and calculated outputs, including an explicit unavailable/not-computable state and reason.
+- [ ] Add integration tests proving API inputs reach the engine and the returned matrix is not silently reduced to summary metrics.
+- [ ] Verify representative rows against the existing engine output or an independent recomputation. Do not repeat all prior formula tests unless implementation changes reveal a defect.
 
-Use AAPL as the first end-to-end acceptance case:
+**R1 acceptance:** Enter AAPL in the real browser path; the browser sends explicit assumptions to the normal API path; the response and UI show the actual matrix from the existing engine, with formula version and correct statuses. Regression fixtures are never represented as live market data.
 
-- Run through the actual web UI and normal API path with live mode clearly declared.
-- Verify the displayed price date, price source, EPS source and covered period, reference-multiple source/sample eligibility, all scenario inputs and output numbers.
-- Independently recompute selected matrix rows from the recorded operands and formula version.
-- Follow a row back to source observations/documents and verify unavailable/conflicting states.
-- Confirm the same saved output can be read/exported without loss of assumptions or trace information.
-- Keep regression mode in tests and labelled examples only; do not treat its outputs as current market values.
+### R2 — Row-level traceability and reproducible output — AFTER R1
 
-Only after this works should the same product path be expanded to MSFT/MU or further metrics.
+- [ ] For each row, expose the exact values and references used: observed price/as-of, EPS value and period, valuation/exit multiple and its basis, holding period, required return, return basis, units/currency and formula version.
+- [ ] Make unavailable, conflicting, stale and incompatible inputs visible with reasons; never substitute zero or silently switch sources.
+- [ ] Provide a way to inspect or export the selected row's inputs and calculation contract so its numbers can be independently recomputed.
+- [ ] If persistence/snapshots claim to preserve reverse-valuation results, preserve the matrix and row assumptions explicitly rather than only a summary.
 
-## 14. Not yet verified / do not claim completed
+**R2 acceptance:** A reviewer can select a displayed row, retrieve its exact inputs and formula version, and independently reproduce its numeric outputs or confirm why it is not computable.
 
-- The complete, configurable reverse-requirements matrix in the browser.
-- End-to-end row-by-row traceability from the browser output to exact observations, source documents, EPS anchors, formula version and computation inputs.
-- A dedicated reverse-matrix snapshot/archive/export contract.
-- A single consistent production eligibility rule for historical valuation bands across reference selectors and matrix construction.
-- Default web usage of the dedicated daily production historical P/E reconstruction.
-- Full archived SEC metric admission into the valuation-input surface; the reviewed V1 boundary only admits `revenue`.
-- A canonical database containing only qualified admitted inputs, as distinct from an audit archive that also records refused/held-out facts.
-- Passing backend CI.
-- Any need for a live LLM integration; this is not a prerequisite for product completion.
+### R3 — AAPL live end-to-end acceptance — AFTER R1/R2
 
-## 15. Documentation and evidence sources
+- [ ] Run AAPL through the ordinary web/API flow with its mode and source times visible.
+- [ ] Check the current price/as-of and source; EPS value, currency and coverage period; and reference-multiple basis and eligibility.
+- [ ] Verify the displayed matrix reflects those actual inputs rather than an unrelated fixture or stale artifact.
+- [ ] Independently recompute representative rows and follow their source references.
+- [ ] Confirm UI and export/persistence preserve the same assumptions, formula version and status.
+
+The existing `data/historical_pe/AAPL/reverse_requirements_output.json` was reported to contain 27 scenarios under formula version `1.1`, sourced via Yahoo v8 with an as-of date of 2026-10-06. Treat this as an existing local artifact to inspect if needed, not proof of live browser completion or current market freshness. Its reported untracked status must be checked locally before deciding whether to keep it, ignore it, or add it to version control.
+
+### R4 — Additional tickers and methods — DEFERRED
+
+Only after AAPL passes the browser acceptance path should the same interface be extended to MSFT/MU/TSM or additional multiple/DCF/dividend methods. Do not expand the product surface ahead of the primary workflow.
+
+## 14. Archive decision and cleanup state
+
+The user-provided Phase 1/2 audit report is at `C:\\st-eva-audit\\inventory\\phase2\\integration-decision.md` and its companion CSV files.
+
+- **Integration decision:** no archive content was copied, merged or imported into the current project.
+- The 10 MSFT historical-P/E validation Python files were content-hash matches for files already present in the current research experiment path.
+- The archive experiment group, 116 unmatched Python files and large snapshots were not shown to fill a current product gap; they were not integrated.
+- The reported cleanup classification is approximately 1.3–1.5 GB `NO_LONGER_NEEDED` and 0.8–1.0 GB `REVIEW_REQUIRED`. These are estimates from the external audit report, not deletion results.
+- No archive contents have been deleted by that task. `DELETE_CANDIDATE = 0` in the report means the task did not authorise or establish a deletion list suitable for execution.
+
+Do not rerun the full archive inventory or repeat Phase 2. If cleanup is requested, use the existing path-specific `integration-decision.md` §7 and audit manifests to prepare a bounded, explicit removal list. Protect unresolved runtime SQLite databases and WAL/SHM files; do not treat them as ordinary duplicates solely because of filenames, sizes or empty-file hashes. Archive cleanup is separate from R1–R3 and must not delay product implementation.
+
+## 15. Explicitly not yet accepted as complete
+
+- [ ] Full configurable reverse-requirements matrix wired from browser inputs through the API to the existing engine and back to the UI.
+- [ ] Row-level lineage showing actual inputs, source references, period, units/currency, formula version and computability reason.
+- [ ] Reproducible selected-row inspection/export and any corresponding persisted matrix snapshot.
+- [ ] Live AAPL web end-to-end acceptance; the existence of a 27-row JSON artifact alone does not meet this criterion.
+- [ ] Removal or clear labelling of regression fixtures in the ordinary browser path.
+- [ ] One consistent production eligibility rule for historical valuation bands across selectors and matrix construction.
+- [ ] Default web use of the dedicated daily point-in-time historical P/E reconstruction.
+- [ ] Confirmation that the current local canonical valuation-input boundary contains only qualified/admitted inputs, distinct from an audit archive that may store refused observations.
+- [ ] Execution of the separately planned archive cleanup; no removal should be claimed until the exact paths are deleted and the resulting state verified.
+
+Not prerequisites: live LLM integration, keeping every historical experiment, or copying archive-only files into the current repository without a demonstrated product gap.
+
+## 16. Documentation and evidence sources
 
 - [Root README](../README.md): stable product goal, core data/calculation rules and non-goals only.
-- [This document](PROJECT-STATUS.md): current code state, defects, tests and work sequence.
+- [This document](PROJECT-STATUS.md): authoritative current code state, completed evidence, open acceptance checks and next task. Update this file when state changes; do not add another parallel roadmap/status file.
 - [CLI usage](USAGE.md): commands/options and current command-line behavior.
 - [Frontend usage](../web/frontend/README.md): start/build instructions and current frontend boundary.
 - `docs/archive/`: historical plans, status snapshots and architecture notes. They are not the current project-state source and must not override current code or the user's present direction.
