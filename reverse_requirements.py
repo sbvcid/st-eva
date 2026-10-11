@@ -45,7 +45,7 @@ from data_contract import currencies_match
 
 # Bumped whenever a formula below changes its meaning. Consumers compare this
 # string to decide whether two results are the same calculation or two.
-FORMULA_VERSION = "reverse-requirements/1.0"
+FORMULA_VERSION = "reverse-requirements/1.1"
 
 # The growth window must cover at least this many years for an annualised CAGR
 # to mean anything. A shorter window is reported, not extrapolated.
@@ -85,6 +85,14 @@ def _safe_float(value: Any) -> Optional[float]:
     if result != result or result in (float("inf"), float("-inf")):
         return None
     return result
+
+
+def _declared_sample_count(value: Any) -> Optional[int]:
+    """Return a valid non-negative integer sample count, or None if unverifiable."""
+    numeric = _safe_float(value)
+    if numeric is None or numeric < 0 or not numeric.is_integer():
+        return None
+    return int(numeric)
 
 
 @dataclass(frozen=True)
@@ -1016,37 +1024,39 @@ def build_exit_multiples(
 
     band = historical_pe_band or {}
     band_median = _safe_float(band.get("median"))
-    band_observations = band.get("observations")
+    declared_count = _declared_sample_count(band.get("observations"))
 
     if band_median is not None and band_median > 0:
-        usable = False
-        if band_observations is None:
-            usable = True
-            basis = "historical band median (observation count not declared)"
-        else:
-            count = int(band_observations)
-            usable = count >= min_observations
-            basis = f"historical band median from {count} observations"
-        if usable:
+        if declared_count is not None and declared_count >= min_observations:
             multiples.append(
                 ReferenceMultiple(
                     value=band_median,
                     source="historical_pe_band_median",
-                    sample_size=band_observations,
+                    sample_size=declared_count,
                     period_label=str(band.get("period_label") or ""),
                 )
             )
         else:
+            if declared_count is None:
+                reason = (
+                    "The historical P/E band does not declare a valid non-negative integer "
+                    f"observation count, so it cannot be verified against the {min_observations} "
+                    f"observation minimum. Its median ({band_median:g}) is descriptive only "
+                    "and is not used as a reference multiple."
+                )
+                reason_kind = "OBSERVATION_COUNT_UNVERIFIED"
+            else:
+                reason = (
+                    f"The historical P/E band holds {declared_count} observations, below the "
+                    f"{min_observations} required to use it as a reference. Its median "
+                    f"({band_median:g}) is descriptive only and is not used as a reference multiple."
+                )
+                reason_kind = "INSUFFICIENT_OBSERVATIONS"
             unavailable.append(
                 {
                     "item": "exit_multiple.historical",
-                    "reason": (
-                        f"The historical P/E band holds {band_observations} observations, "
-                        f"below the {min_observations} required to read a percentile from it. "
-                        f"It is reported as a median of {band_median:g} but is not used as a "
-                        "reference multiple."
-                    ),
-                    "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+                    "reason": reason,
+                    "reason_kind": reason_kind,
                     "blocks": ["exit_multiple"],
                 }
             )
