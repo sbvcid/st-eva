@@ -322,7 +322,7 @@ class TestMsftInputSetIdDeterminism(unittest.TestCase):
 
 
 class TestAaplRegressionBaseline(unittest.TestCase):
-    """The MSFT change must not disturb the AAPL baseline."""
+    """The AAPL baseline covers every supported filing date with available price evidence."""
 
     @classmethod
     def setUpClass(cls):
@@ -330,9 +330,9 @@ class TestAaplRegressionBaseline(unittest.TestCase):
 
         cls.result = load_aapl_historical_pe(enable_furnished=True)
 
-    def test_aapl_retains_31_observations(self):
-        self.assertEqual(self.result.distribution.sample_count, 31)
-        self.assertEqual(len(self.result.observations), 31)
+    def test_aapl_uses_all_36_available_pit_observations(self):
+        self.assertEqual(self.result.distribution.sample_count, 36)
+        self.assertEqual(len(self.result.observations), 36)
         self.assertEqual(self.result.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertTrue(self.result.distribution.usable_for_reference)
 

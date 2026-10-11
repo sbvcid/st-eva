@@ -425,17 +425,17 @@ class TestSufficiencyGate(unittest.TestCase):
 class TestAaplEndToEndAndNegativePath(unittest.TestCase):
     """AAPL real dataset end-to-end and negative-path verification."""
 
-    def test_aapl_with_furnished_enabled_produces_31_valid_observations(self):
+    def test_aapl_with_furnished_enabled_produces_36_valid_observations(self):
         res = load_aapl_historical_pe(enable_furnished=True)
-        self.assertEqual(res.distribution.sample_count, 31)
-        self.assertEqual(len(res.observations), 31)
+        self.assertEqual(res.distribution.sample_count, 36)
+        self.assertEqual(len(res.observations), 36)
         self.assertEqual(res.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertTrue(res.distribution.usable_for_reference)
 
-        # Median around 28.95
+        # Median around 28.45
         median = res.distribution.percentiles.get("median")
         self.assertIsNotNone(median)
-        self.assertAlmostEqual(median, 28.948598, places=4)
+        self.assertAlmostEqual(median, 28.448598, places=4)
 
         # 0 excluded
         self.assertEqual(len(res.distribution.excluded_observations), 0)
@@ -447,7 +447,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         self.assertTrue(dist.usable_for_reference)
 
         eligible_values = [o.value for o in res.observations if o.value is not None and o.status == STATUS_AVAILABLE]
-        self.assertEqual(len(eligible_values), 31)
+        self.assertEqual(len(eligible_values), 36)
 
         expected_min = min(eligible_values)
         expected_max = max(eligible_values)
@@ -462,14 +462,14 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
 
 
     def test_aapl_with_furnished_disabled_negative_path(self):
-        # Negative path per CONTRACT §I.3: Disabling furnished path reproduces 12 valid, 19 missing Q4
+        # Without furnished Q4 evidence, five earlier filed-only observations remain available; 17 of 36 observations are valid.
         res = load_aapl_historical_pe(enable_furnished=False)
-        self.assertEqual(res.distribution.sample_count, 12)
+        self.assertEqual(res.distribution.sample_count, 17)
         self.assertEqual(len(res.observations), 31)
         self.assertEqual(res.distribution.status, STATUS_INSUFFICIENT_OBSERVATIONS)
         self.assertFalse(res.distribution.usable_for_reference)
 
-        # Exactly 19 excluded, all with REASON_MISSING_Q4_EPS
+        # Exactly 19 excluded observations lack qualifying Q4 EPS, all with REASON_MISSING_Q4_EPS.
         excluded = res.distribution.excluded_observations
         self.assertEqual(len(excluded), 19)
         for item in excluded:
@@ -503,7 +503,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         rendered_text = render_dossier(dossier)
         self.assertIn("PRODUCTION PIT HISTORICAL P/E", rendered_text)
         self.assertIn("USABLE_FOR_REFERENCE", rendered_text)
-        self.assertIn("28.95", rendered_text)
+        self.assertIn("28.45", rendered_text)
 
 
 if __name__ == "__main__":
