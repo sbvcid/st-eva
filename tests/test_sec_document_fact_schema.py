@@ -45,14 +45,14 @@ OCCURRENCES = "filing_document_fact_occurrences"
 LINKS = "observation_filing_document_facts"
 NODE_UNIQUE_INDEX = "fact_occurrences_node_unique"
 
-#: The eight fields the current identity rule freezes as the identity, and nothing else.
+#: The eight fields that define document-fact identity, and nothing else.
 IDENTITY_FIELDS: Tuple[str, ...] = (
     "provider", "asset_id", "accession", "document_id",
     "taxonomy", "tag", "context_ref", "unit_ref",
 )
 
-#: The five columns of the node-uniqueness index. the current schema name
-#: them; the test reads them back out of `sqlite_master` rather than restating
+#: The five columns of the node-uniqueness index. The test reads them back out
+#: of `sqlite_master` rather than restating
 #: them, so a wrong index fails here even when the SQL was written to match.
 NODE_UNIQUE_COLUMNS: Tuple[str, ...] = (
     "document_id", "taxonomy", "tag", "context_ref", "unit_ref",
@@ -98,7 +98,7 @@ OCCURRENCE_NOT_NULL: Dict[str, bool] = {
     "capture_kind": True,
 }
 
-#: Fields the current identity rule excludes from the preimage. Excluded from identity is
+#: Fields excluded from the identity preimage. Excluded from identity is
 #: not excluded from the archive, so each must still be stored.
 EXCLUDED_FROM_IDENTITY: Tuple[str, ...] = (
     "value_text", "filename", "period_start", "period_end",
@@ -517,7 +517,7 @@ class TestMigrationApplies(FactOccurrenceArchive):
 
 
 # ---------------------------------------------------------------------------
-# D + the current identity rule Cases A-F -- the preimage
+# Document-fact identity preimage cases A-F
 # ---------------------------------------------------------------------------
 
 
@@ -619,7 +619,7 @@ class TestIdentityPreimage(FactOccurrenceArchive):
             varied = self.occurrence_row(**overrides)
             self.assertEqual(
                 baseline["document_fact_id"], varied["document_fact_id"],
-                f"{name} is excluded from the preimage (the current identity rule)",
+                f"{name} is excluded from the identity preimage",
             )
 
     def test_every_excluded_field_is_still_stored(self):
@@ -855,7 +855,7 @@ class TestObservationLink(FactOccurrenceArchive):
         self.assertEqual(1, self.count(LINKS))
 
     def test_the_link_is_not_a_candidate_document_relation(self):
-        """the current schema rule: it never creates a source-document assertion."""
+        """The link does not create a source-document assertion."""
         self.link(self.observation_id, self.insert_occurrence())
         self.connection.commit()
         self.assertEqual(0, self.count("observation_filing_documents"))
