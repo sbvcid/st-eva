@@ -321,6 +321,34 @@ class TestMsftInputSetIdDeterminism(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+    def test_input_set_id_changes_when_fiscal_calendar_changes(self):
+        from historical_pe import IssuerHistoricalPeConfig
+
+        base = load_issuer_historical_pe(ISSUER_CONFIGS["MSFT"], enable_furnished=True)
+        config = ISSUER_CONFIGS["MSFT"]
+        changed_config = IssuerHistoricalPeConfig(
+            ticker=config.ticker,
+            issuer_id=config.issuer_id,
+            fye_month=5,
+            data_dir=CANONICAL_DIR,
+            canonical_path=None,
+        )
+        changed = load_issuer_historical_pe(changed_config, enable_furnished=True)
+
+        self.assertNotEqual(base.input_set_id, changed.input_set_id)
+        self.assertNotEqual(base.content_hash, changed.content_hash)
+
+    def test_input_set_id_changes_when_reference_threshold_changes(self):
+        config = ISSUER_CONFIGS["MSFT"]
+        base = load_issuer_historical_pe(config, enable_furnished=True, min_observations=20)
+        changed = load_issuer_historical_pe(config, enable_furnished=True, min_observations=25)
+
+        self.assertNotEqual(base.input_set_id, changed.input_set_id)
+        self.assertNotEqual(base.content_hash, changed.content_hash)
+        self.assertEqual(base.distribution.status, STATUS_USABLE_FOR_REFERENCE)
+        self.assertNotEqual(changed.distribution.status, STATUS_USABLE_FOR_REFERENCE)
+
+
 class TestAaplRegressionBaseline(unittest.TestCase):
     """The AAPL baseline covers every supported filing date with available price evidence."""
 
