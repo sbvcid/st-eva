@@ -480,13 +480,20 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
             self.assertEqual(resp.status_code, 202)
             job_id = resp.json()["job_id"]
 
-            for _ in range(100):
+            # The real pipeline includes the production historical P/E build, so
+            # wait for a terminal state instead of a fixed number of polls.
+            deadline = time.time() + 120.0
+            body = {}
+            while time.time() < deadline:
                 job_resp = client.get(f"/api/jobs/{job_id}")
-                if job_resp.json()["status"] == "COMPLETED":
+                body = job_resp.json()
+                if body["status"] in ("COMPLETED", "FAILED"):
                     break
                 time.sleep(0.1)
 
-            result = client.get(f"/api/jobs/{job_id}").json()["result"]
+            self.assertEqual(body.get("status"), "COMPLETED", body.get("error"))
+            result = body.get("result")
+            self.assertIsNotNone(result)
             self.assertIsNotNone(result.get("reverse_requirements"))
             rr = result["reverse_requirements"]
             self.assertEqual(rr["formula_version"], "reverse-requirements/1.1")

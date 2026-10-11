@@ -239,6 +239,41 @@ class EpsScenarioDTO(BaseModel):
     calculation_steps: List[CalculationStepDTO] = Field(default_factory=list)
 
 
+class ProductionHistoricalPeSummaryDTO(BaseModel):
+    """State of the production point-in-time historical P/E reference distribution.
+
+    Reported separately from the vendor P/E band: a distribution qualifies for
+    reference scenarios only through this dataset's own eligibility gate, and an
+    ineligible or missing distribution is stated as such rather than being
+    replaced by a band or a user multiple.
+    """
+
+    issuer_id: Optional[str] = None
+    instrument_id: Optional[str] = None
+    metric_id: Optional[str] = None
+    status: Optional[str] = None
+    usable_for_reference: Optional[bool] = None
+    sample_count: Optional[int] = None
+    total_evaluations: Optional[int] = None
+    min_observations_required: Optional[int] = None
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    mean: Optional[float] = None
+    std: Optional[float] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    percentiles: Optional[Dict[str, float]] = None
+    current_pe: Optional[float] = None
+    current_pe_as_of: Optional[str] = None
+    sampling_cadence: Optional[str] = None
+    evaluation_schedule_description: Optional[str] = None
+    excluded_observation_count: Optional[int] = None
+    input_set_id: Optional[str] = None
+    content_hash: Optional[str] = None
+    reason_code: Optional[str] = None
+    reason_detail: Optional[str] = None
+
+
 class ReverseRequirementsReportDTO(BaseModel):
     formula_version: str = "reverse-requirements/1.1"
     fingerprint: Optional[str] = None
@@ -251,6 +286,10 @@ class ReverseRequirementsReportDTO(BaseModel):
     dividend_basis: Optional[Dict[str, Any]] = None
     total_return_scenarios: Optional[Dict[str, Any]] = None
     price_vs_total_return_comparison: Optional[List[Dict[str, Any]]] = None
+    # The compact statement of the production distribution that the report
+    # carries. The full dataset is not part of the API contract; its eligibility
+    # state, identity and provenance are.
+    production_historical_pe_summary: Optional[ProductionHistoricalPeSummaryDTO] = None
 
 
 class AnalysisResultDTO(BaseModel):
@@ -265,6 +304,7 @@ class AnalysisResultDTO(BaseModel):
     replay_summary: ReplaySummary = Field(default_factory=ReplaySummary)
     refusal_reasons: List[str] = Field(default_factory=list)
     reverse_requirements: Optional[ReverseRequirementsReportDTO] = None
+    production_historical_pe: Optional[ProductionHistoricalPeSummaryDTO] = None
     raw_analysis: Optional[Dict[str, Any]] = None
 
 

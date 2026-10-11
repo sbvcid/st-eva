@@ -151,6 +151,33 @@ export interface CalculationStepDTO {
   status_reason?: string | null
 }
 
+export interface ProductionHistoricalPeDTO {
+  issuer_id?: string | null
+  instrument_id?: string | null
+  metric_id?: string | null
+  status?: string | null
+  usable_for_reference?: boolean | null
+  sample_count?: number | null
+  total_evaluations?: number | null
+  min_observations_required?: number | null
+  period_start?: string | null
+  period_end?: string | null
+  mean?: number | null
+  std?: number | null
+  min?: number | null
+  max?: number | null
+  percentiles?: Record<string, number> | null
+  current_pe?: number | null
+  current_pe_as_of?: string | null
+  sampling_cadence?: string | null
+  evaluation_schedule_description?: string | null
+  excluded_observation_count?: number | null
+  input_set_id?: string | null
+  content_hash?: string | null
+  reason_code?: string | null
+  reason_detail?: string | null
+}
+
 export interface ScenarioEvidenceDTO {
   price_evidence: MarketPriceEvidenceDTO
   eps_evidence: EpsAnchorEvidenceDTO
@@ -202,6 +229,7 @@ export interface ReverseRequirementsReportDTO {
   dividend_basis?: Record<string, any> | null
   total_return_scenarios?: Record<string, any> | null
   price_vs_total_return_comparison?: Array<Record<string, any>> | null
+  production_historical_pe_summary?: ProductionHistoricalPeDTO | null
 }
 
 export interface AnalysisResultDTO {
@@ -216,6 +244,7 @@ export interface AnalysisResultDTO {
   replay_summary: ReplaySummary
   refusal_reasons: string[]
   reverse_requirements?: ReverseRequirementsReportDTO | null
+  production_historical_pe?: ProductionHistoricalPeDTO | null
   raw_analysis?: Record<string, any> | null
 }
 

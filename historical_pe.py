@@ -382,6 +382,58 @@ class HistoricalPeResult:
         }
 
 
+def production_distribution_summary(
+    payload: Optional[Dict[str, Any]]
+) -> Optional[Dict[str, Any]]:
+    """
+    The compact state of a production historical P/E payload.
+
+    The full payload carries one record per evaluation date with its quarter
+    evidence, which is far more than a report or API response needs to state a
+    reference distribution's identity and eligibility. This returns only that
+    statement: the metric, the source identity, the sample and qualifying
+    counts, the sample period, the as-of rule the evaluation dates follow, the
+    percentiles, the current P/E snapshot, the input-set identity, and the
+    reason when the distribution is unavailable or under-qualified. It changes
+    nothing about eligibility: the same gate that decides the scenarios decides
+    what this summary reports.
+    """
+    if not payload:
+        return None
+
+    distribution = payload.get("distribution") or {}
+    snapshot = payload.get("current_snapshot") or {}
+    percentiles = distribution.get("percentiles") or {}
+    excluded = distribution.get("excluded_observations") or []
+
+    return {
+        "issuer_id": payload.get("issuer_id"),
+        "instrument_id": payload.get("instrument_id"),
+        "metric_id": distribution.get("metric_id"),
+        "status": distribution.get("status"),
+        "usable_for_reference": bool(distribution.get("usable_for_reference")),
+        "sample_count": distribution.get("sample_count"),
+        "total_evaluations": distribution.get("total_evaluations"),
+        "min_observations_required": distribution.get("min_observations_required"),
+        "period_start": distribution.get("period_start"),
+        "period_end": distribution.get("period_end"),
+        "mean": distribution.get("mean"),
+        "std": distribution.get("std"),
+        "min": distribution.get("min"),
+        "max": distribution.get("max"),
+        "percentiles": {key: value for key, value in percentiles.items() if value is not None},
+        "current_pe": snapshot.get("value"),
+        "current_pe_as_of": snapshot.get("evaluation_date"),
+        "sampling_cadence": distribution.get("sampling_cadence"),
+        "evaluation_schedule_description": distribution.get("evaluation_schedule_description"),
+        "excluded_observation_count": len(excluded),
+        "input_set_id": payload.get("input_set_id"),
+        "content_hash": payload.get("content_hash"),
+        "reason_code": distribution.get("reason_code"),
+        "reason_detail": distribution.get("reason_detail"),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Distribution Statistics Helper
 # ---------------------------------------------------------------------------

@@ -26,6 +26,47 @@ interface ReverseRequirementsMatrixProps {
   currency?: string | null
 }
 
+/**
+ * The source of an exit multiple, stated as what it is.
+ *
+ * A production historical P/E percentile is an observed reference drawn from a
+ * point-in-time distribution; a band percentile is the vendor's P/E band; a
+ * user value is the operator's own assumption. Raw source identifiers are not
+ * shown to a reader as if they were labels.
+ */
+const multipleSourceLabel = (t: any, multiple: any): string => {
+  if (!multiple) return ''
+  switch (multiple.source) {
+    case 'production_historical_pe_percentile':
+      return `${t.matrix.sourceLabel}: ${t.matrix.productionDistributionName} (${multiple.period_label || t.matrix.percentileLabel})`
+    case 'historical_pe_band_percentile':
+      return `${t.matrix.sourceLabel}: ${t.matrix.vendorPeBandName} (${multiple.period_label || t.matrix.percentileLabel})`
+    case 'user_supplied':
+      return `${t.matrix.sourceLabel}: ${t.matrix.userSpecifiedBadge}`
+    default:
+      return `${t.matrix.sourceLabel}: ${multiple.source}`
+  }
+}
+
+/**
+ * The eligibility state of an exit multiple, in the report's own terms.
+ */
+const eligibilityLabel = (t: any, state?: string | null): string => {
+  switch (state) {
+    case 'ELIGIBLE_PRODUCTION_DISTRIBUTION':
+      return t.matrix.eligibilityProductionDistribution
+    case 'ELIGIBLE_HISTORICAL_BAND':
+      return t.matrix.eligibilityHistoricalBand
+    case 'USER_SPECIFIED':
+      return t.matrix.eligibilityUserSpecified
+    case 'DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT':
+    case 'DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS':
+      return `${t.matrix.descriptiveOnlyBadge} (${state})`
+    default:
+      return state || ''
+  }
+}
+
 export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps> = ({
   report,
   currency = '$',
@@ -563,15 +604,116 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                       {sc.evidence.multiple_evidence.value.toFixed(1)}x
                                     </div>
                                     <div className="text-[11px] text-slate-500 space-y-0.5">
-                                      <div>Source: {sc.evidence.multiple_evidence.source}</div>
+                                      <div>{multipleSourceLabel(t, sc.evidence.multiple_evidence)}</div>
+                                      {sc.evidence.multiple_evidence.eligibility_state && (
+                                        <div>
+                                          {t.matrix.eligibilityLabel}: {eligibilityLabel(t, sc.evidence.multiple_evidence.eligibility_state)}
+                                        </div>
+                                      )}
                                       {sc.evidence.multiple_evidence.sample_size !== null && sc.evidence.multiple_evidence.sample_size !== undefined && (
-                                        <div>Sample Size: {sc.evidence.multiple_evidence.sample_size}</div>
+                                        <div>{t.matrix.sampleSizeLabel}: {sc.evidence.multiple_evidence.sample_size}</div>
                                       )}
                                       {sc.evidence.multiple_evidence.sample_period && (
-                                        <div>Period: {sc.evidence.multiple_evidence.sample_period}</div>
+                                        <div>{t.matrix.periodLabel}: {sc.evidence.multiple_evidence.sample_period}</div>
                                       )}
                                     </div>
                                   </div>
+
+                                  {/* Production historical P/E reference distribution.
+                                      Reported for what it is: the observed, point-in-time
+                                      distribution this matrix draws its reference rows
+                                      from, kept distinct from the vendor P/E band and
+                                      from user-supplied multiples. An ineligible or
+                                      unavailable distribution is stated, never filled
+                                      from the band. */}
+                                  {report.production_historical_pe_summary && (
+                                    <div
+                                      data-testid="production-historical-pe"
+                                      className={`p-3 rounded-lg border shadow-2xs space-y-1 text-[11px] ${
+                                        report.production_historical_pe_summary.usable_for_reference
+                                          ? 'bg-emerald-50 border-emerald-200'
+                                          : 'bg-amber-50 border-amber-200'
+                                      }`}
+                                    >
+                                      <div className="font-semibold text-slate-800 flex items-center gap-1">
+                                        <Layers className="w-3 h-3" />
+                                        <span>
+                                          {report.production_historical_pe_summary.usable_for_reference
+                                            ? `${t.matrix.productionDistributionEligibleHeader}: ${t.matrix.productionDistributionName}`
+                                            : `${t.matrix.productionDistributionHeader}: ${t.matrix.productionDistributionName}`}
+                                        </span>
+                                      </div>
+                                      <div className="font-mono text-[10px] text-slate-600 space-y-0.5">
+                                        <div>
+                                          {t.matrix.statusLabel}: {report.production_historical_pe_summary.status || 'UNAVAILABLE'}
+                                        </div>
+                                        {report.production_historical_pe_summary.usable_for_reference ? (
+                                          <>
+                                            <div>
+                                              {t.matrix.qualifyingObservationsLabel}:{' '}
+                                              {report.production_historical_pe_summary.sample_count}
+                                              {report.production_historical_pe_summary.total_evaluations !==
+                                                null &&
+                                                report.production_historical_pe_summary.total_evaluations !== undefined &&
+                                                ` / ${report.production_historical_pe_summary.total_evaluations}`}
+                                            </div>
+                                            <div>
+                                              {t.matrix.minObservationsLabel}:{' '}
+                                              {report.production_historical_pe_summary.min_observations_required}
+                                            </div>
+                                            <div>
+                                              {t.matrix.samplePeriodLabel}:{' '}
+                                              {report.production_historical_pe_summary.period_start} to{' '}
+                                              {report.production_historical_pe_summary.period_end}
+                                            </div>
+                                            {report.production_historical_pe_summary.percentiles && (
+                                              <div>
+                                                {t.matrix.percentileLabel}:{' '}
+                                                {Object.entries(report.production_historical_pe_summary.percentiles)
+                                                  .map(([key, value]) => `${key} ${Number(value).toFixed(2)}x`)
+                                                  .join(' · ')}
+                                              </div>
+                                            )}
+                                            {report.production_historical_pe_summary.current_pe !== null &&
+                                              report.production_historical_pe_summary.current_pe !== undefined && (
+                                                <div>
+                                                  {t.matrix.currentPeLabel}:{' '}
+                                                  {Number(report.production_historical_pe_summary.current_pe).toFixed(2)}x (
+                                                  {report.production_historical_pe_summary.current_pe_as_of})
+                                                </div>
+                                              )}
+                                            <div>
+                                              {t.matrix.asOfRuleLabel}:{' '}
+                                              {report.production_historical_pe_summary.evaluation_schedule_description}
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            {report.production_historical_pe_summary.sample_count !== null &&
+                                              report.production_historical_pe_summary.sample_count !== undefined && (
+                                                <div>
+                                                  {t.matrix.observationsLabel}:{' '}
+                                                  {report.production_historical_pe_summary.sample_count} (
+                                                  {t.matrix.minObservationsLabel}:{' '}
+                                                  {report.production_historical_pe_summary.min_observations_required})
+                                                </div>
+                                              )}
+                                            {report.production_historical_pe_summary.reason_detail && (
+                                              <div className="text-amber-800 italic">
+                                                {report.production_historical_pe_summary.reason_detail}
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
+                                        {report.production_historical_pe_summary.input_set_id && (
+                                          <div className="text-[9px] text-slate-500">
+                                            {t.matrix.datasetIdentityLabel}:{' '}
+                                            {report.production_historical_pe_summary.input_set_id.slice(0, 16)}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Assumptions vs Facts vs Limitations tags */}

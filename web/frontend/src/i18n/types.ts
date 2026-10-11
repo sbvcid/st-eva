@@ -125,11 +125,31 @@ export interface Translations {
     userAssumptionsHeader: string
     verifiedFactsHeader: string
     missingOrUnvalidatedHeader: string
-    userSpecifiedBadge: string
-    sourcedFactBadge: string
-    secLinkedFactBadge: string
-    providerSourcedBadge: string
-    descriptiveOnlyBadge: string
+  userSpecifiedBadge: string
+  sourcedFactBadge: string
+  secLinkedFactBadge: string
+  providerSourcedBadge: string
+  descriptiveOnlyBadge: string
+  sourceLabel: string
+  sampleSizeLabel: string
+  periodLabel: string
+  eligibilityLabel: string
+  eligibilityProductionDistribution: string
+  eligibilityHistoricalBand: string
+  eligibilityUserSpecified: string
+  productionDistributionName: string
+  vendorPeBandName: string
+  productionDistributionHeader: string
+  productionDistributionEligibleHeader: string
+  statusLabel: string
+  qualifyingObservationsLabel: string
+  observationsLabel: string
+  minObservationsLabel: string
+  samplePeriodLabel: string
+  percentileLabel: string
+  currentPeLabel: string
+  asOfRuleLabel: string
+  datasetIdentityLabel: string
     eligibleReferenceBadge: string
     observationContractId: string
     accessionLabel: string

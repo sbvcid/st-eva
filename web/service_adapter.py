@@ -51,6 +51,50 @@ def default_replay_doc_builder(
 DEFAULT_ARCHIVES_DIR = "data/archives"
 
 
+def _web_visible_analysis(core_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    The analysis payload as the API reports it, without verbatim duplication.
+
+    The reverse requirements report already travels as its own contract field,
+    and the production historical P/E dataset already travels as its compact
+    summary, so repeating them inside `raw_analysis` doubles a multi-megabyte
+    response for data no web consumer reads. What remains is what the interface
+    actually uses (`evidence_ids`, `market_snapshot`, `data_quality`) plus the
+    rest of the analysis verbatim.
+
+    This is a presentation copy only. The runner result, the archive and the
+    context document keep every byte, so nothing here changes what is stored or
+    what the CLI and dossier report.
+    """
+    visible = dict(core_result)
+
+    # The report is delivered in full through `reverse_requirements`.
+    report = visible.get("reverse_requirements")
+    if isinstance(report, dict):
+        visible["reverse_requirements"] = {
+            key: value
+            for key, value in report.items()
+            if key in {"formula_version", "fingerprint", "status", "status_reason", "matrix_size"}
+        }
+
+    # The production dataset's per-observation detail is not part of the API
+    # contract; its eligibility state, identity and provenance are, and they are
+    # in `production_historical_pe` and the report's own summary field.
+    production = visible.get("production_historical_pe")
+    if isinstance(production, dict):
+        slim = dict(production)
+        slim.pop("observations", None)
+        slim.pop("annual_observations", None)
+        distribution = slim.get("distribution")
+        if isinstance(distribution, dict):
+            slim["distribution"] = {
+                key: value for key, value in distribution.items() if key != "observations"
+            }
+        visible["production_historical_pe"] = slim
+
+    return visible
+
+
 class AnalysisServiceAdapter:
     """
     Adapter interfacing with ST-EVA production runner and SQLiteArchive.
@@ -141,6 +185,15 @@ class AnalysisServiceAdapter:
                 save_snapshot=False,
                 context_path=str(temp_context_file),
                 archive=archive,
+                # The production point-in-time historical P/E distribution is
+                # the observed reference this web path needs: without it a
+                # live submission has no eligible exit multiple and returns an
+                # uncomputable matrix. The runner keeps the vendor band, an
+                # ineligible distribution and an unsupported ticker as three
+                # separate explicit states, and adds no network acquisition of
+                # its own: the dataset it reads is the frozen SEC filing and
+                # pricing evidence under data/historical_pe/{TICKER}.
+                include_historical_pe=True,
             )
 
             if core_result is None:
@@ -270,6 +323,7 @@ class AnalysisServiceAdapter:
             # Build ReverseRequirementsReportDTO from core_result
             reverse_reqs_dto: Optional[ReverseRequirementsReportDTO] = None
             rr_data = core_result.get("reverse_requirements")
+            production_pe_summary: Optional[Dict[str, Any]] = None
             if rr_data and isinstance(rr_data, dict):
                 try:
                     reverse_reqs_dto = ReverseRequirementsReportDTO.model_validate(rr_data)
@@ -277,6 +331,27 @@ class AnalysisServiceAdapter:
                     raise ValueError(
                         f"Reverse requirements contract validation failed: {exc}"
                     ) from exc
+                # The compact production distribution statement, kept separate
+                # from the vendor P/E band and from user assumptions.
+                summary = rr_data.get("production_historical_pe_summary")
+                if isinstance(summary, dict):
+                    production_pe_summary = summary
+
+            if production_pe_summary is None:
+                # An unavailable or unsupported distribution is still a state the
+                # API reports, not a silently absent block.
+                raw_prod = core_result.get("production_historical_pe")
+                if isinstance(raw_prod, dict):
+                    prod_dist = raw_prod.get("distribution")
+                    if isinstance(prod_dist, dict):
+                        production_pe_summary = {
+                            "status": prod_dist.get("status"),
+                            "usable_for_reference": bool(prod_dist.get("usable_for_reference")),
+                            "sample_count": prod_dist.get("sample_count"),
+                            "min_observations_required": prod_dist.get("min_observations_required"),
+                            "reason_code": prod_dist.get("reason_code"),
+                            "reason_detail": prod_dist.get("reason_detail"),
+                        }
 
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),
@@ -290,7 +365,8 @@ class AnalysisServiceAdapter:
                 replay_summary=replay_summary,
                 refusal_reasons=sorted(list(set(refusal_reasons))),
                 reverse_requirements=reverse_reqs_dto,
-                raw_analysis=core_result,
+                production_historical_pe=production_pe_summary,
+                raw_analysis=_web_visible_analysis(core_result),
             )
 
             if progress_callback:

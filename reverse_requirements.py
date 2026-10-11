@@ -1948,6 +1948,8 @@ def build_reverse_requirements_report(
     Assemble the whole V1 package: the matrix, the cash flow cross-checks, the
     separated rate families, and an explicit statement of what is missing.
     """
+    from historical_pe import production_distribution_summary
+
     if price_evidence is None:
         price_evidence = {
             "value": price,
@@ -2149,6 +2151,12 @@ def build_reverse_requirements_report(
         "rate_families": rate_families,
         "dcf": dcf_block,
         "production_historical_pe": production_historical_pe,
+        # The compact statement of the production distribution's identity and
+        # eligibility. Readers that only need to judge the reference use this;
+        # the full payload stays available above for the underlying evidence.
+        "production_historical_pe_summary": production_distribution_summary(
+            production_historical_pe
+        ),
         "total_return_scenarios": total_return_scenarios,
         "price_vs_total_return_comparison": comparison_rows,
         "dividend_basis": dividend_basis_block,

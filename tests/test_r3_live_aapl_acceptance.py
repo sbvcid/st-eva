@@ -1,6 +1,6 @@
 """Real AAPL live acceptance browser path.
 
-This is the *real-data* acceptance harness behind the R3 acceptance record in
+This is the *real-data* acceptance harness behind the R3/R4 acceptance record in
 `docs/PROJECT-STATUS.md`. It drives the built frontend in headless Chromium
 against the FastAPI app with an isolated temporary archive directory, submits
 AAPL with an explicit non-regression mode and a real assumption set, and checks
@@ -8,6 +8,8 @@ the returned contract:
 
 * the outgoing request carries the selected mode and assumptions,
 * the response reports live acquisition identities (not a regression fixture),
+* the production point-in-time historical P/E distribution that the no-multiple
+  path depends on is reported with its own identity and eligibility,
 * every computable row recomputes exactly from its own displayed operands,
 * direct SEC EPS attribution appears only with a proven input-to-fact linkage
   and is otherwise stated as not established,
@@ -15,12 +17,14 @@ the returned contract:
 * user assumptions stay separated from sourced facts,
 * a changed assumption produces a changed matrix, and the audit drawer shows
   that submission's result rather than the previous one,
+* a user-supplied multiple keeps its own label next to production distribution rows,
 * no persistent database is touched: the archive lives in a temporary directory.
 
 It is never run implicitly: set ``ST_EVA_R3_LIVE=1`` to execute it against
 whatever the live providers return today. No market value is asserted, so the
 test stays valid as prices change; a blocked or failing acquisition surfaces as
-a failed assertion rather than a silent pass.
+a failed assertion rather than a silent pass. Set ``ST_EVA_R3_EVIDENCE=<path>``
+to write the machine-readable record of the run.
 """
 
 import json
@@ -120,6 +124,16 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
         page.locator("input[placeholder*='e.g. 8, 10, 12, 15']").fill(returns)
         page.locator("button[type='submit']").click()
 
+    def _clear_assumptions(self, page) -> None:
+        """Leave the reference multiple empty so the path must find its own reference.
+
+        The assumption drawer is already open, so only the fields are cleared;
+        re-clicking the toggle would close it again.
+        """
+        page.locator("input[placeholder='e.g. 20.0']").fill("")
+        page.locator("input[placeholder*='e.g. 1.0, 2.0, 3.0, 5.0']").fill("")
+        page.locator("input[placeholder*='e.g. 8, 10, 12, 15']").fill("")
+
     def test_real_aapl_live_acceptance(self):
         submitted = []
         self._seen = set()
@@ -140,21 +154,21 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
             page.goto(self.base_url)
             page.wait_for_selector("text=Reverse-engineer market expectations", timeout=60000)
 
-            # Submission 1: AAPL, live mode, 3y / 10% / 30x.
-            self._submit(page, "30", "10")
+            # Submission 1: AAPL, live mode, no exit multiple supplied. The
+            # reference must come from the production point-in-time historical
+            # P/E distribution, not from a fixture and not from a user value.
+            page.locator("input[placeholder*='Enter ticker']").fill("AAPL")
+            page.locator("button:has-text('Scenario Assumptions')").click()
+            page.select_option("select >> nth=0", "live")
+            self._clear_assumptions(page)
+            page.locator("button[type='submit']").click()
             deadline = time.time() + 180
             while time.time() < deadline and not submitted:
                 time.sleep(1)
             self.assertTrue(submitted, "no analysis request reached the API")
             self.assertEqual(
                 submitted[-1],
-                {
-                    "ticker": "AAPL",
-                    "mode": "live",
-                    "reference_multiple": 30.0,
-                    "reverse_horizons": [3.0],
-                    "required_returns": [0.10],
-                },
+                {"ticker": "AAPL", "mode": "live"},
             )
 
             page.wait_for_selector("text=Analysis Verdict", timeout=480000)
@@ -195,15 +209,72 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
             rows = rr.get("reverse_requirements_matrix") or []
             self.assertEqual(len(rows), rr.get("matrix_size"))
 
+            # The production historical P/E distribution that this no-multiple
+            # path depends on must state its own identity and eligibility, and
+            # must be the source of the reference rows when it passes.
+            production = result.get("production_historical_pe")
+            self.assertIsNotNone(
+                production,
+                "the response must report the production distribution state",
+            )
+            if production.get("usable_for_reference"):
+                self.assertEqual(production.get("status"), "USABLE_FOR_REFERENCE")
+                self.assertIsNotNone(production.get("sample_count"))
+                self.assertGreaterEqual(
+                    production["sample_count"],
+                    production.get("min_observations_required") or 0,
+                )
+                self.assertTrue(production.get("period_start"))
+                self.assertTrue(production.get("period_end"))
+                self.assertTrue(production.get("evaluation_schedule_description"))
+                self.assertTrue(production.get("input_set_id"))
+                # The percentiles the scenarios came from.
+                self.assertTrue(production.get("percentiles"))
+
+                self.assertEqual(rr.get("status"), "COMPUTED")
+                self.assertTrue(rows, "an eligible distribution must produce scenarios")
+                sources = {row["exit_multiple"]["source"] for row in rows}
+                self.assertEqual(
+                    sources,
+                    {"production_historical_pe_percentile"},
+                    f"no user multiple was supplied, got {sorted(sources)}",
+                )
+                for row in rows:
+                    multiple = row["exit_multiple"]
+                    self.assertFalse(multiple["is_user_assumption"])
+                    self.assertEqual(
+                        multiple["eligibility_state"], "ELIGIBLE_PRODUCTION_DISTRIBUTION"
+                    )
+                    self.assertTrue(multiple["usable_for_reference"])
+                    self.assertEqual(multiple["sample_size"], production["sample_count"])
+                    self.assertIn("production historical P/E", multiple["sample_period"])
+                # Every scenario multiple comes from the distribution's percentiles.
+                percentile_values = {
+                    round(float(value), 6)
+                    for value in (production["percentiles"] or {}).values()
+                }
+                for row in rows:
+                    self.assertIn(
+                        round(row["exit_multiple"]["value"], 6), percentile_values
+                    )
+                # The undersized vendor band must not have been substituted.
+                band_items = [
+                    item
+                    for item in rr.get("unavailable") or []
+                    if isinstance(item, dict)
+                    and item.get("item") == "exit_multiple.band_scenarios"
+                ]
+                self.assertTrue(
+                    band_items, "the vendor band's exclusion must still be reported"
+                )
+                self.assertEqual(
+                    band_items[0].get("reason_kind"), "INSUFFICIENT_OBSERVATIONS"
+                )
+
             if rr.get("status") == "COMPUTED":
                 # One row per requested assumption, and nothing invented.
-                self.assertEqual(len(rows), 1)
+                self.assertGreaterEqual(len(rows), 1)
                 row = rows[0]
-                self.assertAlmostEqual(row["horizon_years"], 3.0, places=9)
-                self.assertAlmostEqual(row["required_return"], 0.10, places=9)
-                self.assertAlmostEqual(row["exit_multiple"]["value"], 30.0, places=9)
-                self.assertEqual(row["exit_multiple"]["source"], "user_supplied")
-                self.assertTrue(row["exit_multiple"]["is_user_assumption"])
 
                 # Independent recomputation from the row's own operands.
                 price = row["price"]
@@ -252,17 +323,25 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
                     any(item.startswith("Starting EPS:") for item in evidence["sourced_facts"]),
                     evidence["sourced_facts"],
                 )
-                self.assertTrue(
-                    any("user-supplied" in item for item in evidence["user_assumptions"]),
-                    evidence["user_assumptions"],
-                )
 
-                # The drawer renders this request's evidence.
+                # The drawer renders this request's evidence, including the
+                # production distribution block.
                 page.locator("button[title='Toggle details']").first.click()
                 drawer_text = page.locator("body").inner_text()
                 self.assertIn("Provider-Sourced (SEC Link Not Established)", drawer_text)
                 self.assertIn("Direct SEC source: not established", drawer_text)
                 self.assertNotIn("Source: SEC 10-K", drawer_text)
+                block = page.locator("[data-testid='production-historical-pe']")
+                self.assertEqual(block.count(), 1)
+                block_text = block.first.inner_text()
+                if production.get("usable_for_reference"):
+                    self.assertIn("USABLE_FOR_REFERENCE", block_text)
+                    self.assertIn(
+                        f"{production['sample_count']}", block_text
+                    )
+                    self.assertIn(production["period_start"], block_text)
+                    self.assertIn(production["period_end"], block_text)
+                    self.assertIn("SEC filing and earnings release usable dates", block_text)
 
             # A band that cannot qualify must say so instead of being used as a
             # reference exit multiple.
@@ -271,8 +350,9 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
                     self.assertEqual(item.get("reason_kind"), "INSUFFICIENT_OBSERVATIONS")
                     self.assertIn("observations", item.get("reason", ""))
 
-            # Submission 2: changed assumptions.
-            page.locator("input[placeholder='e.g. 20.0']").fill("32")
+            # Submission 2: add a user-specified multiple next to the
+            # production distribution rows.
+            page.locator("input[placeholder='e.g. 20.0']").fill("99")
             page.locator("input[placeholder*='e.g. 8, 10, 12, 15']").fill("12")
             page.locator("button[type='submit']").click()
             deadline = time.time() + 180
@@ -284,24 +364,35 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
                 {
                     "ticker": "AAPL",
                     "mode": "live",
-                    "reference_multiple": 32.0,
-                    "reverse_horizons": [3.0],
+                    "reference_multiple": 99.0,
                     "required_returns": [0.12],
                 },
             )
 
             second = self._completed_job()
             self.assertEqual(second["status"], "COMPLETED")
-            second_rr = second.get("result", {}).get("reverse_requirements") or {}
+            second_result = second.get("result") or {}
+            second_rr = second_result.get("reverse_requirements") or {}
             page.wait_for_selector("text=Analysis Verdict", timeout=480000)
             if second_rr.get("status") == "COMPUTED":
                 second_rows = second_rr.get("reverse_requirements_matrix") or []
                 self.assertTrue(second_rows)
-                self.assertAlmostEqual(second_rows[0]["exit_multiple"]["value"], 32.0, places=9)
-                self.assertAlmostEqual(second_rows[0]["required_return"], 0.12, places=9)
+                sources = {row["exit_multiple"]["source"] for row in second_rows}
+                self.assertIn("user_supplied", sources)
+                self.assertIn("production_historical_pe_percentile", sources)
+                user_rows = [
+                    row for row in second_rows if row["exit_multiple"]["source"] == "user_supplied"
+                ]
+                self.assertTrue(user_rows)
+                for row in user_rows:
+                    self.assertTrue(row["exit_multiple"]["is_user_assumption"])
+                    self.assertEqual(
+                        row["exit_multiple"]["eligibility_state"], "USER_SPECIFIED"
+                    )
+                    self.assertAlmostEqual(row["exit_multiple"]["value"], 99.0, places=9)
+                    self.assertAlmostEqual(row["required_return"], 0.12, places=9)
                 second_text = page.locator("body").inner_text()
-                self.assertIn("32.0x", second_text)
-                self.assertNotIn("30.0x", second_text)
+                self.assertIn("99.0x", second_text)
 
             acceptance_record["submitted"] = list(submitted)
             acceptance_record["second_result"] = second.get("result")
