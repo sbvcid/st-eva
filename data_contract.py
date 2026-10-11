@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 """
-ST-EVA 2.3-A - provider-agnostic data contract.
+ST-EVA provider-agnostic data contract.
 
-This module is the only place where a sourced number is allowed to exist before
-the deterministic engine sees it. It defines the layer chain required by
-docs/archive/ST-EVA-2.3-A-DATA-CONTRACT.md:
+This module defines the shared data layer used between acquisition and
+deterministic calculation:
 
     Provider -> Observation -> Evidence -> Validation -> Derived
 
@@ -36,11 +35,9 @@ UNAVAILABLE = "UNAVAILABLE"
 
 # Kept here so the contract, the adapters, and the engine cannot drift apart on
 # the observation count below which a band stops being a usable reference.
-# This is the 2.2.3 value, unchanged.
 MIN_BAND_OBSERVATIONS_FOR_REFERENCE = 20
 
-# Freshness window used by the STALE status. A stale label is computed on
-# observations in 2.3-A; it does not yet alter any CLI output.
+# Freshness window used when assigning the STALE observation status.
 DEFAULT_STALE_AFTER_DAYS = 7
 
 
