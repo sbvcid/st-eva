@@ -44,7 +44,7 @@ CUTOFF_ET = datetime.time(16, 0)
 
 METHODOLOGY = "historical-pe/1.0"
 METHODOLOGY_AMENDMENT = "Amendment 1 (2026-10-07), Decisions 10-14"
-LOGIC_VERSION = "historical-pe/1.0.0"
+LOGIC_VERSION = "historical-pe/1.0.1"
 FORMULA_VERSION = "historical-pe/1.0"
 
 # Explicit reason-code enumeration included in each result.
@@ -679,6 +679,12 @@ def build_historical_pe(
             "price_evidence_id": price_ev.price_evidence_id if price_ev else None,
             "corporate_action_provenance": list(price_ev.corporate_action_provenance) if price_ev else [],
             "basis_alignment": "aligned" if price_ev and price_ev.accounting_basis == "as_traded" else "unaligned",
+            "source": {
+                "provider": price_ev.price_source if price_ev else None,
+                "url": price_ev.price_source_url if price_ev else None,
+                "content_sha256": price_ev.content_sha256 if price_ev else None,
+                "vendor_adjustment_note": price_ev.vendor_adjustment_note if price_ev else None,
+            },
         }
 
         pe_state = {
@@ -855,7 +861,20 @@ def build_historical_pe(
             unit="multiple",
             currency=None,
             eps_state={"components": cur_components, "missing_quarters": cur_missing},
-            price_state={"price_date": cur_day, "close": cur_p_val},
+            price_state={
+                "price_date": cur_day,
+                "close": cur_p_val,
+                "currency": current_price_evidence.currency,
+                "accounting_basis": current_price_evidence.accounting_basis,
+                "price_evidence_id": current_price_evidence.price_evidence_id,
+                "corporate_action_provenance": list(current_price_evidence.corporate_action_provenance),
+                "source": {
+                    "provider": current_price_evidence.price_source,
+                    "url": current_price_evidence.price_source_url,
+                    "content_sha256": current_price_evidence.content_sha256,
+                    "vendor_adjustment_note": current_price_evidence.vendor_adjustment_note,
+                },
+            },
             pe_state={"status": cur_ttm_status},
             source_lineage={"evidence_ids": [c["evidence_id"] for c in cur_components]},
             methodology=METHODOLOGY,
@@ -1084,8 +1103,11 @@ def load_issuer_historical_pe(
     """
     prices_path, concept_path, acceptance_path, q4_records_path = _resolve_issuer_paths(issuer_config)
     
-    # Load and process prices
-    price_payload = json.loads(prices_path.read_text(encoding="utf-8"))["chart"]["result"][0]
+    # Load and process prices. The digest identifies the exact tracked chart payload
+    # from which each dated price observation is derived.
+    price_payload_bytes = prices_path.read_bytes()
+    price_payload_hash = hashlib.sha256(price_payload_bytes).hexdigest()
+    price_payload = json.loads(price_payload_bytes.decode("utf-8"))["chart"]["result"][0]
     quote = price_payload["indicators"]["quote"][0]
     bars = {
         datetime.datetime.fromtimestamp(stamp, UTC).date().isoformat(): float(quote["close"][idx])
@@ -1127,8 +1149,15 @@ def load_issuer_historical_pe(
             price_date=day,
             close=round(restored_close, 4),
             currency="USD",
-            accounting_basis="as_traded",
+            price_source_url=f"https://query1.finance.yahoo.com/v8/finance/chart/{issuer_config.ticker}",
+            vendor_adjustment_note=(
+                f"Yahoo chart close multiplied by {split_ratio:g} to restore the as-traded basis "
+                f"for the {split_ex_date} split."
+                if provenance else None
+            ),
             corporate_action_provenance=tuple(provenance),
+            accounting_basis="as_traded",
+            content_sha256=price_payload_hash,
         )
     
     # Filing acceptance evidence
