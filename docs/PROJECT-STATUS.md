@@ -2,7 +2,7 @@
 
 **Status checked:** 2026-10-11  
 **Repository:** `sbvcid/st-eva`, branch `master`  
-**Code baseline reviewed:** `9a43f9f`; the commits after it through `cdd5c82` changed documentation only.
+**Code baseline reviewed:** `9a43f9f`; the commits after it through `36f2363` changed documentation only.
 
 This is the current, changeable implementation/status record. The root [README](../README.md) defines the enduring product purpose and rules. Historical status snapshots under `docs/archive/` are not current status.
 
@@ -26,7 +26,7 @@ Deliver a usable reverse-valuation web workflow: a user enters a company, inspec
 5. **The matrix does not yet have complete end-to-end trace integration.** `run_st_eva()` places the matrix in `reverse_requirements`, but `_build_context_if_requested()` does not pass that matrix into the Investment Context builder. `SnapshotManager.save()` does not persist the matrix as a dedicated snapshot field. The displayed scenario therefore still needs an end-to-end path back to the actual inputs, formulas, versions and source lineage.
 6. **Historical reference-multiple eligibility needs one live policy.** Descriptive availability of a historical band and eligibility to use it as a scenario reference must be separate. Do not let permissive test fixtures silently weaken the production quality gate.
 
-## Latest CI result
+## Most recent completed CI result
 
 [GitHub Actions run 38137689648](https://github.com/sbvcid/st-eva/actions/runs/38137689648), for `cdd5c82`, completed on 2026-10-11 and **failed** in the backend test suite. The browser job passed.
 
