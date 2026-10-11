@@ -1279,10 +1279,16 @@ def load_issuer_historical_pe(
     # Paths alone are insufficient: the canonical layout keeps a stable directory,
     # so an edited price or acceptance file would otherwise be indistinguishable.
     input_manifest = {
+        "issuer_config": {
+            "ticker": issuer_config.ticker,
+            "issuer_id": issuer_config.issuer_id,
+            "fye_month": issuer_config.fye_month,
+        },
         "prices": _sha256_of(prices_path),
         "concepts": _sha256_of(concept_path),
         "acceptances": _acceptance_input_digest(acceptance_path),
         "enable_furnished": enable_furnished,
+        "min_observations": min_observations,
     }
     if q4_records_hash:
         input_manifest["q4_records"] = q4_records_hash
