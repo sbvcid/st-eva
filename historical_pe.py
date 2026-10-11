@@ -1,9 +1,6 @@
 """
 ST-EVA Historical P/E Engine — Production Pipeline.
 
-Baseline: Point-in-time Historical P/E methodology (archived in docs/archive/ADR-HISTORICAL-PE-METHODOLOGY.md)
-Contract: Point-in-time Historical P/E contract (archived in docs/archive/CONTRACT-HISTORICAL-PE.md)
-
 This module implements the point-in-time (PIT) Historical P/E pipeline. It pairs
 historical prices with contemporaneous EPS evidence without lookahead bias, enforces
 strict fiscal calendar windows (four consecutive fiscal quarters with a Q4, directly
@@ -22,7 +19,7 @@ Invariants enforced:
   F-8:  Restatements are point-in-time (R-PIT-SUPERSEDE).
   F-9:  GAAP is never mixed with non-GAAP.
   F-10: CURRENT_PE is excluded from every window and distribution.
-  F-11: Reason codes are strictly in the closed ADR enumeration.
+  F-11: Reason codes use the explicit enumeration declared by this module.
   F-12: XBRL_FACT_UNAVAILABLE is never an eligibility state.
   F-13: Determinism (identical input_set_id + logic_version -> identical content_hash).
   F-14: Source identity is complete (accession, form, url, content hash).
@@ -50,7 +47,7 @@ METHODOLOGY_AMENDMENT = "Amendment 1 (2026-10-07), Decisions 10-14"
 LOGIC_VERSION = "historical-pe/1.0.0"
 FORMULA_VERSION = "historical-pe/1.0"
 
-# Closed reason code enumeration per ADR and CONTRACT §D.2
+# Explicit reason-code enumeration included in each result.
 REASON_MISSING_PRICE = "REASON_MISSING_PRICE"
 REASON_MISSING_Q4_EPS = "REASON_MISSING_Q4_EPS"
 REASON_INSUFFICIENT_QUARTERS = "REASON_INSUFFICIENT_QUARTERS"
@@ -1292,21 +1289,14 @@ def load_issuer_historical_pe(
 
     input_set_id = canonical_json_hash(input_manifest)
     
-    # Use evaluation dates within the specified date window
-    # For AAPL (and by default for all issuers): use dates from earliest to latest filing
-    # But preserve CONTRACT §E.4 limits for AAPL historical baseline
-    all_eval_dates = sorted({
+    # Use every evaluation date supported by the loaded evidence. Do not
+    # retain a fixed end date from the completed AAPL proof-of-concept dataset:
+    # new qualifying evidence should extend the production series naturally.
+    evaluation_dates = sorted({
         filing["usable_date"] for filing in filings_index.values()
     } | {
         ev.usable_date for ev in quarter_evidence
     })
-    
-    if issuer_config.ticker == "AAPL":
-        # AAPL POC/Contract baseline: limit to 2019-01-30 to 2026-10-06 per CONTRACT §E.4
-        poc_eval_dates = [d for d in all_eval_dates if "2019-01-30" <= d <= "2026-10-06"]
-    else:
-        # Other issuers: use all available dates
-        poc_eval_dates = all_eval_dates
     
     current_price = prices_map.get(trading_days[-1])
     
@@ -1318,7 +1308,7 @@ def load_issuer_historical_pe(
         prices=prices_map,
         fye_month=issuer_config.fye_month,
         trading_days=trading_days,
-        evaluation_dates=poc_eval_dates,
+        evaluation_dates=evaluation_dates,
         current_price_evidence=current_price,
         min_observations=min_observations,
         input_set_id=input_set_id,
