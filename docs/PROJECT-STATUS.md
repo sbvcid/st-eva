@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `90eb731` (R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** [Run 38264080875](https://github.com/sbvcid/st-eva/actions/runs/38264080875), triggered by `90eb731`; `backend` and `browser` jobs both passed.
+**Current implementation baseline:** `bb5e5e8` (R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38303209687](https://github.com/sbvcid/st-eva/actions/runs/38303209687), triggered by `bb5e5e8`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -570,6 +570,11 @@ on ``resolver_policy_identity``. ``archive.replay``, ``observations_for``
 eligibility, snapshot selection and the volatile-field ``context_id`` contract
 are untouched.
 
+**Superseded by R7-3.** That line-ending caveat is now resolved: the policy
+identity digests each covered file's text rather than its bytes, so the LF
+tree and the CRLF worktree of the same commit produce one identity and that
+MATCH no longer needs neutralising. See the R7-3 record below.
+
 **Boundary.** ``reverse-requirements/1.1`` keeps its identifier and every
 published equation; the scenario cross-product, the price-only baseline matrix,
 the production historical P/E pipeline and its thresholds, archive/replay
@@ -579,6 +584,86 @@ items (P0 exit-multiple table label for
 computed matrices, dividend/total-return UI, start-EPS period-label UI, and
 summary ``Reference P/E`` reconciliation with the production distribution)
 remain outstanding.
+
+
+## Resolver Policy Identity Across Line Endings (R7-3, 2026-10-12, verified by run 38303209687)
+
+**Defect.** ``registry_identity._file_sha256`` hashed each covered policy file
+with ``read_bytes``, so a checkout's newline convention decided the resolver
+policy identity. ``core.autocrlf`` is true in this repository and there is no
+``.gitattributes``, so one commit checks out CRLF on one machine and LF on
+another. Measured on ``615d3cd``: three of the six ``_POLICY_FILES``
+(``core_registry.py``, ``evidence_valuation_boundary.py``, ``evidence_query.py``)
+were LF in the operator's tree and CRLF in a fresh worktree of the same commit,
+**byte-identical after newline normalisation**, which made the two trees yield
+``pol:684c9c3c...`` and ``pol:4fdbd1eb...`` and report DIVERGED on
+``resolver_policy_identity`` for code that had not changed. The same
+discrepancy was reported as a caveat in the R7-1 record above.
+
+**Change.** ``registry_identity.py`` only.
+``_file_sha256`` now reads each file as UTF-8 text before hashing, so CRLF, LF
+and a lone CR all arrive as LF. This is the canonicalisation the archive layer
+has always applied to migration files -- ``sqlite_archive.py:450-451`` reads
+them with ``read_text`` before hashing, so a newline-only edit does not abort
+startup -- and reusing it keeps the recorded migration checksums and this
+digest comparable. It also closes a latent inconsistency: with no connection
+the applied-migration identity digested raw bytes while the connection path
+read checksums computed from normalised text, so the two branches disagreed on
+an LF/CRLF mismatch.
+
+The policy manifest, its order, every other identity input, the policy loading,
+evaluation, resolver behaviour, replay selection rules, the
+``FileNotFoundError`` for a missing covered file and the replay comparison
+itself are unchanged. Nothing is forced to MATCH and no mismatch is ignored.
+
+**Verification.**
+- **Reproduction before the fix**: operator tree vs fresh worktree of one commit
+  gave two different identities; after the fix both give
+  ``pol:b93bca7cafbe035e98ebdb3d943df99bacfb4bace2e6cca97c4ea5f721db06ac``.
+- **Regression tests** in ``tests/test_registry_identity_331.py``: LF / CRLF and
+  lone-CR mirrors share one identity; determinism; a changed constant still
+  moves the identity; a comment-only addition still moves the digest (the
+  deliberate cheap direction); the applied-migration identity is
+  newline-insensitive on both branches. A new
+  ``TestReplayAcrossEquivalentCheckouts`` class runs a real temporary archive:
+  an LF mirror and a CRLF mirror agree on the identity, replay across them
+  reports **MATCH** with ``resolver_policy_identity`` absent from the reason, and
+  a real change to ``core_registry.py`` still reports **DIVERGED** with
+  ``resolver_policy_identity`` named.
+- **The tests catch the defect**: with ``read_bytes`` temporarily restored, 4 of
+  them fail, including the replay MATCH case. The fix was re-applied afterwards
+  and the suite re-run.
+- Also green: ``tests/test_replay_evidence_symmetry.py``,
+  ``tests/test_replay_wiring_332.py``, ``tests/test_admission_persistence_332.py``,
+  ``tests/test_r6_replay_divergence.py``,
+  ``tests/test_r6_1_replay_snapshot_identity.py``, ``tests/test_archive_isolation.py``,
+  ``tests/test_core_registry.py``, ``tests/test_evidence_query.py``,
+  ``tests/test_evidence_valuation_boundary.py``, ``tests/test_web_api.py``.
+- Full backend suite **2,050 passed, 169 skipped, 154 subtests passed**; the
+  browser suite **10 passed** on re-run and separately with the CI's
+  ``--reruns 2`` flags. ``tests/test_registry_identity_331.py`` **33 passed** when
+  the historical-state corpus is regenerated (only ``head`` remains
+  MATERIALIZABLE, as before).
+- **GitHub Actions:** run 38303209687 for ``bb5e5e8``, ``backend`` and
+  ``browser`` jobs both passed.
+
+**Consequence of changing a digest function.** The identity value itself moves
+for identical policy content, which is unavoidable for any change to a digest
+function and is the same class of event as a change to the covered files.
+Existing archives already diverge: their stored identities
+(``pol:9e7a883b...``, ``pol:d9c955b7...``) match neither the old nor the new
+function's output at HEAD content, and an A/B replay of ``data/archives/MSFT.sqlite``
+under temporary copies diverges identically before and after this change. So no
+new divergence is introduced; the removed one was the LF/CRLF case.
+
+**Boundary.** ``reverse-requirements/1.1``, source provenance, consensus-period
+comparability, historical P/E eligibility, unrelated scenario fingerprints,
+archive storage format, archived evidence, ``context_id``, snapshot selection and
+the replay semantics beyond this identity are unchanged. No persistent SQLite,
+WAL/SHM, historical P/E dataset or existing output was modified; every replay
+read a temporary copy. The outstanding R7-0 UI items (computed-matrix
+``unavailable`` list, dividend/total-return display, start-EPS period-label UI,
+summary ``Reference P/E`` reconciliation) are untouched.
 
 
 ## Matrix Exit-Multiple Source Labels (R7-2, 2026-10-12, verified by run 38264080875)
@@ -636,4 +721,4 @@ persistent file was touched.
 computed-matrix ``unavailable`` list, dividend/total-return display, start-EPS
 period-label UI, and summary ``Reference P/E`` reconciliation with the
 production distribution. The ``resolver_policy_identity`` LF/CRLF replay caveat
-is also untouched and remains a separate investigation.
+was reopened and closed as R7-3 below and is no longer outstanding.
