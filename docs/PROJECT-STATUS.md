@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `061230f` (R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot)
-**Latest verified GitHub Actions:** [Run 38214673925](https://github.com/sbvcid/st-eva/actions/runs/38214673925), triggered by `3c3592f`; backend and browser jobs passed.
+**Current implementation baseline:** `84cc74d` (R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38220867917](https://github.com/sbvcid/st-eva/actions/runs/38220867917), triggered by `84cc74d`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -284,6 +284,7 @@ Runs after the R2 baseline:
 - [Run 38195124312](https://github.com/sbvcid/st-eva/actions/runs/38195124312) (`6ab74e8`, R5 summary reconciliation and JSON/CSV audit export): backend and browser jobs passed — frontend build, archive-isolation, web API, the full backend suite and browser smoke (including the new real-browser export-download smoke) all succeeded.
 - [Run 38198626332](https://github.com/sbvcid/st-eva/actions/runs/38198626332) (`c84bc6f`, R6 point-in-time replay diagnoses the live AAPL DIVERGENCE and replays at the archival watermark): backend and browser jobs passed — the full backend suite (including the new R6 replay-diagnosis tests) and browser smoke (the replay-affecting MSFT path) all succeeded.
 - [Run 38202918791](https://github.com/sbvcid/st-eva/actions/runs/38202918791) (`061230f`, R6.1 replay reconciles each run against its own context snapshot): backend and browser jobs passed — the full backend suite (including the new R6.1 snapshot-identity tests and the restored CLI-output legacy-compatibility test) and browser smoke all succeeded.
+- [Run 38220867917](https://github.com/sbvcid/st-eva/actions/runs/38220867917) (`84cc74d`, first-use execution mode defaults to live with the assumptions panel expanded): backend and browser jobs passed — the full backend suite, frontend build and browser smoke (including the suite adjusted to pin `regression` for fixture-dependent checks) all succeeded.
 
 Local verification for the same commit before observing CI: full backend suite 1,958 passed, 168 skipped, 140 subtests passed (341.60s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`.
 
@@ -464,7 +465,7 @@ The rebuild's own ``context_id`` was correct in every case; only the snapshot *s
 
 **Evidence provenance.** The API-level and browser-level checks above were executed and observed by the acceptancer in this session against live AAPL and a temporary archive; the recomputation numbers (zero relative error) and the file/console counts (56/56, 17/17) are this session's own measurements. Pre-existing automated suites (R2.1/R4/R5/R6/R6.1) and build remain intact per the latest CI run.
 
-## First-Use Execution Mode and Assumptions Discoverability (accepted 2026-10-12)
+## First-Use Execution Mode and Assumptions Discoverability (accepted 2026-10-12, verified by run 38220867917)
 
 **Problem.** A normal MSFT analysis could run with the hidden default `mode=auto` and return static `RegressionFixture` data (MSFT is an aliased fixture ticker, and `auto` prefers the fixture) without the user noticing the collapsed mode selector.
 
