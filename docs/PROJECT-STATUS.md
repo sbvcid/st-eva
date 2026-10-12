@@ -3,7 +3,7 @@
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** `061230f` (R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot)
-**Latest verified GitHub Actions:** [Run 38202918791](https://github.com/sbvcid/st-eva/actions/runs/38202918791), triggered by `061230f`; backend and browser jobs passed.
+**Latest verified GitHub Actions:** [Run 38214673925](https://github.com/sbvcid/st-eva/actions/runs/38214673925), triggered by `3c3592f`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
