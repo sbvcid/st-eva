@@ -36,6 +36,18 @@ two commits later, so a function-level record mislabels it twice. Whole-file
 digests are monotonic in the cheap direction -- every change is noticed -- and
 that is the property a replay check needs. A false positive costs a re-run; a
 false negative produces a wrong number.
+
+**The policy identity is over text, not bytes.**
+`core.autocrlf` is true here and there is no `.gitattributes`, so the same commit
+checks out CRLF on one machine and LF on another, and three of the six covered
+files differ on exactly that between an operator's tree and a fresh worktree. A
+byte digest calls those two identical trees different policies, so replay
+reports DIVERGED on `resolver_policy_identity` for code that has not changed.
+The digest is taken over each file's decoded text, which is the canonicalisation
+the archive layer has always applied to migration files
+(`sqlite_archive.py:450-451`). Nothing else about a file stops mattering: the
+whole of it is still read, so a real change still moves the digest. Only the
+newline convention is neutralised.
 """
 
 from __future__ import annotations
@@ -339,7 +351,28 @@ _POLICY_FILES: Tuple[str, ...] = (
 
 
 def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """
+    A covered file's SHA-256, taken over its text rather than its bytes.
+
+    `read_text` is the point of the function, not an incidental way to load the
+    file. Text mode applies universal newlines, so CRLF, LF and a lone CR all
+    arrive as LF. `core.autocrlf` is true in this repository and there is no
+    `.gitattributes`, so one commit checks out CRLF on one machine and LF on
+    another; a digest over raw bytes therefore calls two identical trees
+    different policies, and a replay asks an operator to re-run a calculation
+    whose code has not changed. That is a false positive, and the expensive
+    direction of error is the other one.
+
+    This is the same canonicalisation the archive layer has always applied to
+    migration files (`sqlite_archive.py:450-451` reads them with `read_text`
+    before hashing, so a newline-only edit does not abort startup), which keeps
+    the recorded migration checksums and this digest comparable.
+
+    Newline style is the only thing that stops mattering. The file is still
+    read whole, so one added line, one renamed identifier or one changed
+    constant each still move the digest.
+    """
+    return hashlib.sha256(path.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
 
 
 def _applied_migrations(connection: Optional[sqlite3.Connection]) -> List[Any]:

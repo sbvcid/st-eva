@@ -22,14 +22,25 @@ import unittest
 from pathlib import Path
 
 import registry_identity
+from archive import REPLAY_DIVERGED, REPLAY_MATCH, replay
 from core_registry import CoreRegistry
 from registry_identity import (
     _POLICY_FILES,
+    POLICY_PREFIX,
     registry_state_identity,
     resolver_policy_identity,
 )
 from registry_seed import seed
 from sqlite_archive import SQLiteArchive
+from st_eva_runner import build_context_from_observations
+
+from test_replay_evidence_symmetry import (  # noqa: E402  frozen fixtures, reused
+    CMP_ID,
+    price,
+    replay_doc,
+    sec_net_income,
+)
+from evidence_valuation_boundary import V1_CROSSING_METRICS, admit
 
 
 class RegistryIdentityFixture(unittest.TestCase):
@@ -406,6 +417,329 @@ class TestResolverPolicyIdentity(unittest.TestCase):
         """
         self.assertNotIn("sqlite_archive.py", _POLICY_FILES)
         self.assertNotIn("st_eva_runner.py", _POLICY_FILES)
+
+    def test_equivalent_content_in_either_line_ending_shares_one_identity(self):
+        """
+        A newline convention is a property of the checkout, never of the policy.
+
+        `core.autocrlf` is true in this repository and there is no
+        `.gitattributes`, so the same commit checks out CRLF on one machine and
+        LF on another. Three of the six covered files differ on exactly that
+        between an operator's tree and a fresh worktree of one commit, so a
+        byte digest called two identical policies different and replay asked
+        for a re-run of code that had not changed.
+
+        LF, CRLF and a lone CR all carry the same text, so all three must give
+        one identity here.
+        """
+        saved = {name: (self.root / name).read_bytes() for name in _POLICY_FILES}
+        try:
+            identities = {}
+            for label, transform in (
+                ("LF", lambda text: text),
+                ("CRLF", lambda text: text.replace("\n", "\r\n")),
+                ("CR", lambda text: text.replace("\n", "\r")),
+            ):
+                for name, payload in saved.items():
+                    text = payload.decode("utf-8").replace("\r\n", "\n")
+                    (self.root / name).write_bytes(
+                        transform(text).encode("utf-8")
+                    )
+                identities[label] = resolver_policy_identity()
+
+            self.assertEqual(
+                identities["LF"], identities["CRLF"],
+                "CRLF and LF carry the same policy text",
+            )
+            self.assertEqual(
+                identities["LF"], identities["CR"],
+                "a lone carriage return is the same line ending",
+            )
+        finally:
+            for name, payload in saved.items():
+                (self.root / name).write_bytes(payload)
+
+    def test_the_identity_is_deterministic(self):
+        first = resolver_policy_identity()
+        for _ in range(3):
+            self.assertEqual(resolver_policy_identity(), first)
+        self.assertTrue(
+            first.startswith(POLICY_PREFIX),
+            f"the policy digest must carry its own prefix, got {first!r}",
+        )
+
+    def test_a_meaningful_policy_change_still_moves_the_identity(self):
+        """
+        Neutralising newlines must not blind the digest.
+
+        A change to a constant the resolver reads is a policy change and must
+        still move the identity. This is the property that stops the
+        normalisation above from being a suppression.
+        """
+        baseline = resolver_policy_identity()
+        target = self.root / "evidence_valuation_boundary.py"
+        original = target.read_text(encoding="utf-8")
+        try:
+            target.write_text(
+                original.replace(
+                    'UNAVAILABLE = "UNAVAILABLE"',
+                    'UNAVAILABLE = "UNAVAILABLE_ALSO"',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            self.assertIn('UNAVAILABLE = "UNAVAILABLE_ALSO"', target.read_text(encoding="utf-8"))
+            self.assertNotEqual(resolver_policy_identity(), baseline)
+        finally:
+            target.write_text(original, encoding="utf-8")
+
+    def test_a_change_that_is_only_a_comment_still_moves_the_digest(self):
+        """
+        The whole-file property, stated once more from the newline side.
+
+        The digest is deliberately monotonic in the cheap direction: every
+        change is noticed, including one that cannot alter behaviour, because
+        the expensive direction of error is the other one. Appending a line
+        therefore moves the digest even though the resolver reads nothing from
+        it -- newline style is the single exception, and it is tested above.
+        """
+        baseline = resolver_policy_identity()
+        target = self.root / "core_registry.py"
+        original = target.read_text(encoding="utf-8")
+        try:
+            target.write_text(
+                original + "\n# a comment the resolver never reads\n",
+                encoding="utf-8",
+            )
+            self.assertNotEqual(resolver_policy_identity(), baseline)
+        finally:
+            target.write_text(original, encoding="utf-8")
+
+    def test_the_migration_identity_is_line_ending_insensitive_too(self):
+        """
+        `_file_sha256` also feeds the applied-migration identity.
+
+        With no connection the on-disk migration files are digested, and with a
+        connection the checksums `sqlite_archive` recorded when it applied them
+        are read back. Both are text digests now, so an LF checkout and a CRLF
+        checkout agree on both branches instead of one agreeing and the other
+        not, which is what a byte digest on one side and a text digest on the
+        other produces.
+
+        The migration files are mirrored into this test's own scratch
+        directory, because the class fixture copies the covered modules only.
+        """
+        source = registry_identity.MIGRATIONS_DIR
+        saved = {
+            path.name: path.read_bytes()
+            for path in sorted(source.glob("*.sql"))
+        }
+        self.assertTrue(saved, "the repository must carry migration files")
+
+        scratch = self.root / "migrations"
+        scratch.mkdir(exist_ok=True)
+        saved_root = registry_identity.REPO_ROOT
+        saved_migrations = registry_identity.MIGRATIONS_DIR
+        try:
+            identities = {}
+            for label, transform in (
+                ("LF", lambda text: text),
+                ("CRLF", lambda text: text.replace("\n", "\r\n")),
+            ):
+                for name, payload in saved.items():
+                    text = payload.decode("utf-8").replace("\r\n", "\n")
+                    (scratch / name).write_bytes(
+                        transform(text).encode("utf-8")
+                    )
+                registry_identity.MIGRATIONS_DIR = scratch
+                identities[label] = registry_identity._applied_migrations(None)
+
+            self.assertEqual(
+                identities["LF"], identities["CRLF"],
+                "migration checksums must not depend on the checkout",
+            )
+            self.assertEqual(
+                len(identities["LF"]), len(saved),
+                "every migration file must still be covered",
+            )
+        finally:
+            registry_identity.REPO_ROOT = saved_root
+            registry_identity.MIGRATIONS_DIR = saved_migrations
+
+
+class TestReplayAcrossEquivalentCheckouts(unittest.TestCase):
+    """
+    Replay between two checkouts of one commit that differ only in newlines.
+
+    Not hypothetical. `core.autocrlf` is true here with no `.gitattributes`, so
+    an operator's tree and a fresh worktree of the same commit disagree on the
+    newline convention of three of the six covered policy files. While the
+    policy identity hashed bytes, that was enough to make replay report
+    DIVERGED on `resolver_policy_identity` for code that had not changed.
+
+    Two properties, and the second is the one that keeps this from being a
+    suppression:
+
+      * an LF mirror and a CRLF mirror of the same policy text give one
+        identity, and a replay across them can MATCH
+      * a real change to a covered file still diverges, named explicitly
+
+    The archives are temporary and the repository is never rewritten: the
+    policy trees are mirrored into a scratch directory rather than edited in
+    place.
+    """
+
+    ASSET = "MU"
+    AS_OF = "2026-06-30"
+
+    def setUp(self) -> None:
+        self._dir = tempfile.TemporaryDirectory()
+        base = Path(self._dir.name)
+        self.store = SQLiteArchive(path=str(base / "replay.sqlite"))
+        seed(CoreRegistry(self.store.connection))
+        self.store.record_asset(
+            self.ASSET, name="Micron", exchange="NASDAQ", currency="USD"
+        )
+
+        # Two mirrors of the covered policy files, identical in content and
+        # opposite in newline convention, plus a third carrying a real change.
+        # The migrations are mirrored too, so the applied-migration identity is
+        # exercised the same way whichever branch reads it.
+        self.trees = {}
+        source_migrations = registry_identity.MIGRATIONS_DIR
+        for label, transform in (
+            ("lf", lambda text: text),
+            ("crlf", lambda text: text.replace("\n", "\r\n")),
+        ):
+            root = base / label
+            (root / "archive" / "migrations").mkdir(parents=True)
+            for name in _POLICY_FILES:
+                text = (
+                    Path(registry_identity.REPO_ROOT) / name
+                ).read_text(encoding="utf-8").replace("\r\n", "\n")
+                (root / name).write_bytes(transform(text).encode("utf-8"))
+            for path in sorted(source_migrations.glob("*.sql")):
+                text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+                (root / "archive" / "migrations" / path.name).write_bytes(
+                    transform(text).encode("utf-8")
+                )
+            self.trees[label] = root
+        self.trees["changed"] = self._with_real_change(self.trees["lf"])
+
+        # The recorded context and admission come from one tree, exactly as a
+        # live run would store them.
+        self._record_observations()
+        self.stored, self.admissions = self._archive_live_run()
+
+        self._original_root = registry_identity.REPO_ROOT
+        self._original_migrations = registry_identity.MIGRATIONS_DIR
+
+    def _with_real_change(self, source: Path) -> Path:
+        target = Path(source.parent) / "changed"
+        (target / "archive" / "migrations").mkdir(parents=True)
+        for path in sorted((source / "archive" / "migrations").glob("*.sql")):
+            shutil.copyfile(path, target / "archive" / "migrations" / path.name)
+        for name in _POLICY_FILES:
+            text = (source / name).read_text(encoding="utf-8")
+            if name == "core_registry.py":
+                text += "\n# a policy change that did not exist when this ran\n"
+            (target / name).write_text(text, encoding="utf-8")
+        return target
+
+    def tearDown(self) -> None:
+        registry_identity.REPO_ROOT = self._original_root
+        registry_identity.MIGRATIONS_DIR = self._original_migrations
+        self.store.close()
+        self._dir.cleanup()
+
+    def _record_observations(self) -> None:
+        for observation, eligible in (
+            (price(), True),
+            # A comparable cross-check row, which is evidence and needs no
+            # admission, keeps the stored context from depending on admission.
+            (sec_net_income(CMP_ID), False),
+        ):
+            self.store.record_observation(
+                self.ASSET,
+                observation,
+                availability_class="SOURCE_DECLARED",
+                first_archived_at="2026-06-30T21:00:00.000Z",
+                replay_eligible_from=(
+                    "2026-06-30T20:00:00.000Z" if eligible
+                    else "2025-10-03T21:02:11.000Z"
+                ),
+            )
+
+    def _archive_live_run(self):
+        """What a live run stores: a context over every observation, plus admission."""
+        rows = self.store.observations_for(self.ASSET, self.AS_OF)
+        stored = build_context_from_observations(
+            rows, ticker=self.ASSET, as_of=self.AS_OF,
+            generated_at="2026-06-30T21:30:00+00:00",
+            asset_metadata=self.store.asset_metadata(self.ASSET),
+        )
+        self.store.record_context(self.ASSET, stored, replay_fidelity="SOURCE_DECLARED")
+        _, admissions = admit(
+            self.store, self.ASSET, self.AS_OF, price(),
+            metrics=V1_CROSSING_METRICS,
+        )
+        reg = registry_state_identity(self.store.connection)
+        for adm in admissions:
+            self.store.record_admission(
+                self.ASSET, self.AS_OF, adm, reg,
+                resolver_policy_identity(self.store.connection), price(),
+            )
+        return stored, admissions
+
+    def _under(self, label: str):
+        registry_identity.REPO_ROOT = self.trees[label]
+        registry_identity.MIGRATIONS_DIR = self.trees[label] / "archive" / "migrations"
+        return self.trees[label]
+
+    def test_equivalent_checkouts_agree_on_the_identity_itself(self):
+        lf = self._under("lf")
+        first = resolver_policy_identity(self.store.connection)
+        self._under("crlf")
+        second = resolver_policy_identity(self.store.connection)
+        self._under("lf")
+
+        self.assertEqual(first, second)
+        # The mirrors really do differ in bytes, so this is not a vacuous pass.
+        self.assertNotEqual(
+            (lf / "core_registry.py").read_bytes(),
+            (self.trees["crlf"] / "core_registry.py").read_bytes(),
+        )
+
+    def test_replay_across_equivalent_checkouts_can_match(self):
+        """
+        A stored run replayed from the other newline convention is faithful.
+
+        The recorded admission was written from the LF mirror; the replay below
+        recomputes it against the CRLF mirror. Nothing about the evidence, the
+        registry, the context or the code differs, so replay must MATCH rather
+        than DIVERGE on `resolver_policy_identity`.
+        """
+        self._under("crlf")
+        result = replay(self.store, self.ASSET, self.AS_OF, replay_doc)
+
+        self.assertEqual(REPLAY_MATCH, result.outcome, result.reason)
+        self.assertNotIn("resolver_policy_identity", result.reason or "")
+
+    def test_a_real_policy_change_still_diverges_and_is_named(self):
+        """
+        The normalisation does not swallow a genuine policy difference.
+
+        A change to a covered file must still DIVERGE, and the divergence must
+        name `resolver_policy_identity` rather than being absorbed into a
+        faithful MATCH. Admission behaviour is untouched by this change, so the
+        mismatch is the identity alone and not a side effect.
+        """
+        self._under("changed")
+        result = replay(self.store, self.ASSET, self.AS_OF, replay_doc)
+
+        self.assertEqual(REPLAY_DIVERGED, result.outcome, result.reason)
+        self.assertIn("resolver_policy_identity", result.reason or "")
+
 
 
 class TestHistoricalStateCorpus(unittest.TestCase):
