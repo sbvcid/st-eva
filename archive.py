@@ -306,6 +306,16 @@ class ArchiveStore:
     def eligibility_for(self, asset: str) -> Dict[str, str]:
         raise NotImplementedError
 
+    def archival_watermark(self, asset: str) -> Optional[str]:
+        """
+        The latest instant any observation for `asset` became replay-eligible.
+
+        Defaults to None; a store that knows its own knowledge boundary
+        overrides it. None means the caller has no watermark and should fall
+        back to the cutoff it was asked about.
+        """
+        return None
+
     def asset_metadata(self, asset: str) -> Dict[str, Any]:
         """
         What the archive knows about the instrument.

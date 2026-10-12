@@ -208,10 +208,24 @@ class AnalysisServiceAdapter:
 
             if as_of_date:
                 try:
+                    # Replay must rebuild from the SAME eligible observation set
+                    # that produced the stored context. Live vendor fundamentals
+                    # are archive-first-seen when they are archived, which is
+                    # after the data date, so replaying at the data date excludes
+                    # them and reports a spurious DIVERGED even for a faithful
+                    # rebuild. The knowledge instant the archive actually holds
+                    # is its archival watermark; replaying there compares the
+                    # stored document against a genuine rebuild of the same
+                    # eligible observations. A real change in a material input
+                    # (a different value, or a reference assumption the archive
+                    # does not store) still reports DIVERGED, and a strict
+                    # earlier point-in-time replay is unaffected.
+                    watermark = archive.archival_watermark(clean_ticker)
+                    replay_cutoff = watermark or as_of_date
                     replay_res = replay(
                         archive,
                         clean_ticker,
-                        as_of_date,
+                        replay_cutoff,
                         default_replay_doc_builder,
                     )
                     replay_summary = ReplaySummary(

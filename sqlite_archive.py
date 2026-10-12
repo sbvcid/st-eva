@@ -1867,6 +1867,31 @@ class SQLiteArchive(ArchiveStore):
             for row in rows
         }
 
+    def archival_watermark(self, asset: str) -> Optional[str]:
+        """
+        The latest instant any observation for `asset` became replay-eligible.
+
+        This is the archive's own current knowledge boundary for the asset: the
+        moment the last thing it holds became knowable. It is the archive's
+        knowledge, kept separate from a source's `available_at`.
+
+        A replay at or after this watermark asks the reproduction question --
+        "can the archive still rebuild the context it stored?" -- using the same
+        eligible observation set that produced the stored document. A replay
+        strictly before it asks an earlier point-in-time question and legitimately
+        sees less evidence, which is a different question from the one a
+        determinism check asks. Returns None when the asset has no
+        replay-eligible observation.
+        """
+        row = self.connection.execute(
+            "SELECT MAX(o.replay_eligible_from) AS watermark FROM observations o"
+            " JOIN assets a ON a.asset_id = o.asset_id WHERE a.ticker = ?",
+            (asset.upper(),),
+        ).fetchone()
+        if row is None or not row["watermark"]:
+            return None
+        return row["watermark"]
+
     def availability_classes(self, asset: str) -> Dict[str, str]:
         rows = self.connection.execute(
             "SELECT o.contract_id AS observation_id, o.availability_class"
