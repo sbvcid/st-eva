@@ -329,6 +329,17 @@ class ArchiveStore:
     def context_at(self, asset: str, as_of: str) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
+    def context_by_id(self, asset: str, context_id: str) -> Optional[Dict[str, Any]]:
+        """
+        The one archived context whose identity is exactly `context_id`.
+
+        Returns None by default; a store that keeps snapshots overrides it. A
+        None from a concrete store means the named snapshot is not present for
+        the asset, which is reported rather than silently answered with a
+        different snapshot that happens to share the `as_of`.
+        """
+        return None
+
     def record_admission(
         self,
         asset: str,
@@ -406,6 +417,7 @@ def replay(
     asset: str,
     as_of: str,
     build_document: Callable[..., Dict[str, Any]],
+    context_id: Optional[str] = None,
 ) -> ReplayResult:
     """
     Rebuild what was knowable at `as_of`, using the ordinary pipeline.
@@ -413,6 +425,13 @@ def replay(
     `build_document(observations, as_of, generated_at, asset_metadata)` is
     injected by the Core so that replay runs the same code a live run does.
     This module never imports the engine.
+
+    `context_id`, when supplied, names the exact snapshot this replay is meant
+    to reconcile. An asset can carry several snapshots that share an `as_of`
+    (two runs, two different supplied reference multiples say), and picking a
+    snapshot by `as_of` alone would compare the rebuild against an unrelated,
+    arbitrarily chosen one. Naming the intended snapshot answers "does this run
+    reproduce itself" rather than "does it happen to match some other run".
 
     The result distinguishes four outcomes, and an insufficient answer is a
     success:
@@ -585,9 +604,15 @@ def replay(
     # The rebuilt document's own `as_of` is the moment it is about, which is not
     # the same axis as the replay cutoff. The cutoff is a knowledge boundary;
     # `as_of` is a data moment. The snapshot to compare against is the one for
-    # the moment the rebuild turned out to describe.
-    lookup = rebuilt.get("as_of") or as_of
-    stored = store.context_at(asset, lookup)
+    # the moment the rebuild turned out to describe -- or, when the caller named
+    # it, the exact snapshot it intends to reconcile, so an asset with several
+    # snapshots sharing an `as_of` is never reconciled against the wrong one.
+    stored: Optional[Dict[str, Any]]
+    if context_id is not None:
+        selector = getattr(store, "context_by_id", None)
+        stored = selector(asset, context_id) if callable(selector) else None
+    else:
+        stored = store.context_at(asset, rebuilt.get("as_of") or as_of)
     if stored is None:
         return ReplayResult(
             asset=asset,

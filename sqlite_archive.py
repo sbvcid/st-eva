@@ -2090,6 +2090,30 @@ class SQLiteArchive(ArchiveStore):
             return None
         return json.loads(row["document_json"])
 
+    def context_by_id(
+        self, asset: str, context_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        The one archived context whose identity is exactly `context_id`.
+
+        Where two runs archive contexts that share an `as_of` -- two supplied
+        reference multiples, or a reference-supplied run after a reference-free
+        one -- `context_at` returns the earliest, which is not necessarily the
+        one a replay is reconciling. Looking up by identity selects the exact
+        snapshot the caller named, so a replay reconciles a run against itself
+        rather than against an unrelated snapshot that happens to describe the
+        same data moment. Returns None when that identity is not this asset's.
+        """
+        row = self.connection.execute(
+            "SELECT c.document_json FROM context_snapshots c"
+            " JOIN assets a ON a.asset_id = c.asset_id"
+            " WHERE a.ticker = ? AND c.context_id = ?",
+            (asset.upper(), context_id),
+        ).fetchone()
+        if row is None:
+            return None
+        return json.loads(row["document_json"])
+
     def context_hashes(self, asset: str) -> List[Dict[str, Any]]:
         return [
             dict(row)

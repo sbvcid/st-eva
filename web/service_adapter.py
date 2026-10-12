@@ -222,11 +222,30 @@ class AnalysisServiceAdapter:
                     # earlier point-in-time replay is unaffected.
                     watermark = archive.archival_watermark(clean_ticker)
                     replay_cutoff = watermark or as_of_date
+                    # Reconcile the archive against the context THIS run just
+                    # archived, not an unrelated snapshot that happens to share
+                    # the as_of. An asset can carry several contexts for one
+                    # data moment (two supplied reference multiples say), and a
+                    # selection by as_of alone would compare the rebuild against
+                    # whichever was archived first -- a false match against an
+                    # older, differently-conditioned context. The context id is
+                    # read from the artifact this run wrote, so the engine's
+                    # result dict is not widened to carry it (its CLI output is
+                    # a tested invariant).
+                    target_context_id = None
+                    try:
+                        if temp_context_file.exists():
+                            target_context_id = json.loads(
+                                temp_context_file.read_text(encoding="utf-8")
+                            ).get("context_id")
+                    except Exception:
+                        target_context_id = None
                     replay_res = replay(
                         archive,
                         clean_ticker,
                         replay_cutoff,
                         default_replay_doc_builder,
+                        context_id=target_context_id,
                     )
                     replay_summary = ReplaySummary(
                         attempted=True,
