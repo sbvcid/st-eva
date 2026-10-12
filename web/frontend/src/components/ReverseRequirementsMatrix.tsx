@@ -37,9 +37,28 @@ export const MATRIX_SECTION_ID = 'reverse-requirements-matrix'
  * point-in-time distribution; a band percentile is the vendor's P/E band; a
  * user value is the operator's own assumption. Raw source identifiers are not
  * shown to a reader as if they were labels.
+ *
+ * `compact` returns the same source name without the leading "Source:" prefix
+ * or the period suffix, for the narrow matrix column. Both variants read the
+ * one source mapping, so a row and its audit drawer cannot disagree about
+ * where a multiple came from.
  */
-const multipleSourceLabel = (t: any, multiple: any): string => {
+const multipleSourceLabel = (t: any, multiple: any, compact = false): string => {
   if (!multiple) return ''
+  if (compact) {
+    switch (multiple.source) {
+      case 'production_historical_pe_percentile':
+        return t.matrix.productionDistributionName
+      case 'historical_pe_band_percentile':
+        return t.matrix.vendorPeBandName
+      case 'user_supplied':
+        return t.matrix.userSpecifiedBadge
+      default:
+        // An unrecognised or absent source keeps its raw identifier rather
+        // than being relabelled as a band, which would misrepresent it.
+        return String(multiple.source ?? '')
+    }
+  }
   switch (multiple.source) {
     case 'production_historical_pe_percentile':
       return `${t.matrix.sourceLabel}: ${t.matrix.productionDistributionName} (${multiple.period_label || t.matrix.percentileLabel})`
@@ -321,9 +340,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                             {sc.exit_multiple.value.toFixed(1)}x
                           </span>
                           <span className="text-[10px] text-slate-400 block font-sans">
-                            {sc.exit_multiple.source === 'user_supplied'
-                              ? 'User'
-                              : 'Band'}
+                            {multipleSourceLabel(t, sc.exit_multiple, true)}
                           </span>
                         </td>
 

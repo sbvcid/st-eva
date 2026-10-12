@@ -250,6 +250,146 @@ describe('ReverseRequirementsMatrix Component', () => {
     expect(screen.getByText('ev-price-001')).toBeInTheDocument()
   })
 
+  describe('exit-multiple source label in the matrix table', () => {
+    // One row carrying the chosen exit multiple, so the label under the value
+    // can be asserted without the other fixture rows contributing their own.
+    // The same reference is placed in the row's audit evidence, because the
+    // runner fills both from one ReferenceMultiple.
+    const withMultiple = (
+      exit_multiple: Record<string, any>,
+    ): ReverseRequirementsReportDTO => ({
+      ...mockReport,
+      matrix_size: 1,
+      reverse_requirements_matrix: [
+        {
+          ...mockReport.reverse_requirements_matrix[1],
+          exit_multiple,
+          evidence: {
+            ...mockReport.reverse_requirements_matrix[1].evidence,
+            multiple_evidence: exit_multiple,
+          },
+        },
+      ],
+    })
+
+    const tableLabel = (report: ReverseRequirementsReportDTO): string => {
+      const { container } = render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+      // The value is followed by its source sub-label in the same cell.
+      const cell = Array.from(container.querySelectorAll('td')).find((node) =>
+        node.textContent?.includes('x')
+      )
+      return cell?.querySelector('span.text-\\[10px\\]')?.textContent ?? ''
+    }
+
+    it('names the production historical P/E distribution, not "Band"', () => {
+      const report = withMultiple({
+        value: 33.2,
+        source: 'production_historical_pe_percentile',
+        period_label: '10th (2021-07-28 to 2026-07-30)',
+        sample_size: 24,
+        is_user_assumption: false,
+        eligibility_state: 'ELIGIBLE_PRODUCTION_DISTRIBUTION',
+        usable_for_reference: true,
+      })
+
+      expect(tableLabel(report)).toBe('Production point-in-time historical P/E')
+      expect(screen.queryByText('Band')).not.toBeInTheDocument()
+    })
+
+    it('names a user multiple as the operator assumption, not "Band"', () => {
+      const report = withMultiple({
+        value: 30.0,
+        source: 'user_supplied',
+        is_user_assumption: true,
+        eligibility_state: 'USER_SPECIFIED',
+        usable_for_reference: false,
+      })
+
+      expect(tableLabel(report)).toBe('User Assumption')
+      expect(screen.queryByText('Band')).not.toBeInTheDocument()
+    })
+
+    it('retains an accurate label for a vendor historical P/E band', () => {
+      const report = withMultiple({
+        value: 25.0,
+        source: 'historical_pe_band_percentile',
+        is_user_assumption: false,
+        eligibility_state: 'ELIGIBLE_HISTORICAL_BAND',
+        usable_for_reference: true,
+      })
+
+      expect(tableLabel(report)).toBe('Vendor historical P/E band')
+    })
+
+    it('does not relabel an unrecognised source as a valid band', () => {
+      const report = withMultiple({
+        value: 28.0,
+        source: 'some_other_reference',
+        is_user_assumption: false,
+        eligibility_state: 'DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT',
+        usable_for_reference: false,
+      })
+
+      // The raw identifier stays visible rather than being dressed up as a
+      // band, so a reader is never told a source is a band when it is not.
+      expect(tableLabel(report)).toBe('some_other_reference')
+      expect(screen.queryByText('Band')).not.toBeInTheDocument()
+    })
+
+    it('localises the production distribution label', () => {
+      render(
+        <I18nProvider initialLang="zh-TW">
+          <ReverseRequirementsMatrix
+            report={withMultiple({
+              value: 33.2,
+              source: 'production_historical_pe_percentile',
+              period_label: 'p50',
+              is_user_assumption: false,
+              eligibility_state: 'ELIGIBLE_PRODUCTION_DISTRIBUTION',
+              usable_for_reference: true,
+            })}
+          />
+        </I18nProvider>
+      )
+
+      expect(
+        screen.getByText('產出時點正確之歷史本益比'),
+      ).toBeInTheDocument()
+      expect(screen.queryByText('Band')).not.toBeInTheDocument()
+    })
+
+    it('keeps the drawer form on the same source vocabulary', () => {
+      // The row and its audit trail must agree about the source; the drawer
+      // keeps the prefixed, period-bearing form it already had.
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix
+            report={withMultiple({
+              value: 33.2,
+              source: 'production_historical_pe_percentile',
+              period_label: '10th (2021-07-28 to 2026-07-30)',
+              sample_size: 24,
+              is_user_assumption: false,
+              eligibility_state: 'ELIGIBLE_PRODUCTION_DISTRIBUTION',
+              usable_for_reference: true,
+            })}
+          />
+        </I18nProvider>
+      )
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      expect(
+        screen.getByText(
+          'Source: Production point-in-time historical P/E (10th (2021-07-28 to 2026-07-30))',
+        ),
+      ).toBeInTheDocument()
+    })
+  })
+
   describe('consensus reference panel', () => {
     const withConsensus = (
       scenario: Partial<ReverseRequirementsReportDTO['reverse_requirements_matrix'][number]>,
