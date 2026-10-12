@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `363afd9` (R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** [Run 38246189499](https://github.com/sbvcid/st-eva/actions/runs/38246189499), triggered by `363afd9`; `backend` and `browser` jobs both passed.
+**Current implementation baseline:** `90eb731` (R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38264080875](https://github.com/sbvcid/st-eva/actions/runs/38264080875), triggered by `90eb731`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -579,3 +579,61 @@ items (P0 exit-multiple table label for
 computed matrices, dividend/total-return UI, start-EPS period-label UI, and
 summary ``Reference P/E`` reconciliation with the production distribution)
 remain outstanding.
+
+
+## Matrix Exit-Multiple Source Labels (R7-2, 2026-10-12, verified by run 38264080875)
+
+**Defect.** The reverse-requirements matrix table cell rendered `User` for
+`user_supplied` and `Band` for every other source. Live AAPL/MSFT scenarios use
+`production_historical_pe_percentile` with `ELIGIBLE_PRODUCTION_DISTRIBUTION`, so
+every row on the default path attributed its reference to a vendor band that was
+not used. The audit drawer already named the source correctly through
+``multipleSourceLabel``; the table did not read it.
+
+**Change.** ``ReverseRequirementsMatrix.tsx`` only. The table cell now calls
+``multipleSourceLabel(t, sc.exit_multiple, true)``, a compact form of the helper
+that already exists and names the source, so the row and its drawer read the one
+source mapping:
+
+- ``production_historical_pe_percentile`` -> ``productionDistributionName``
+  ("Production point-in-time historical P/E")
+- ``historical_pe_band_percentile`` -> ``vendorPeBandName`` ("Vendor historical P/E band")
+- ``user_supplied`` -> ``userSpecifiedBadge`` ("User Assumption")
+- any other or absent source -> the raw source identifier, which keeps an
+  unrecognised or unverifiable source from being presented as a valid band
+
+The drawer's prefixed, period-bearing form is unchanged. No new label was
+introduced: both variants read the existing ``en``/``zhTW`` ``matrix`` keys, and
+nothing is hardcoded in the component. No calculation, formula,
+``reverse-requirements/1.1``, eligibility threshold, API schema, provenance
+contract, fingerprint, acquisition source, historical P/E dataset, archive or
+persistent file was touched.
+
+**Verification.**
+- ``web/frontend/src/test/ReverseRequirementsMatrix.test.tsx``: a new
+  ``exit-multiple source label in the matrix table`` suite asserts the label
+  for production distribution (including one row using
+  ``production_historical_pe_percentile``), user-supplied values, vendor bands,
+  an unrecognised source, the ``zh-TW`` rendering, and that the drawer's
+  prefixed form is unchanged. Each production and user case also asserts the
+  literal ``Band`` is absent.
+- Frontend Vitest **68 passed (8 files)**; production build green;
+  ``npx tsc -b`` clean; ``oxlint`` reports only pre-existing warnings, none on
+  the changed lines.
+- ``tests/test_browser_smoke.py``: **10 passed** (real Chromium, temporary
+  archive directory).
+- **Real-provider evidence.** A one-off headless-Chromium run of the built SPA
+  against a live ``MSFT`` analysis (``create_app(archives_dir=<temp>)``) rendered
+  all 80 matrix rows with the sub-label ``Production point-in-time historical
+  P/E``; the string ``Band`` did not appear anywhere in the page body. This is
+  what closes the gap the R7-0 audit found, where the component existed but the
+  live path was not proven. The probe was not committed; the permanent
+  regression coverage is the Vitest suite above.
+- **GitHub Actions:** run 38264080875 for ``90eb731``, ``backend`` and
+  ``browser`` jobs both passed.
+
+**Outstanding from R7-0 (unchanged, deliberately not combined here).** the
+computed-matrix ``unavailable`` list, dividend/total-return display, start-EPS
+period-label UI, and summary ``Reference P/E`` reconciliation with the
+production distribution. The ``resolver_policy_identity`` LF/CRLF replay caveat
+is also untouched and remains a separate investigation.
