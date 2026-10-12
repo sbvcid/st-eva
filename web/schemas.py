@@ -96,7 +96,35 @@ class ValuationSummary(BaseModel):
     observed_pfcf: Optional[float] = None
     observed_ev_ebitda: Optional[float] = None
     consensus_forward_eps: Optional[float] = None
+    consensus_forward_eps_period: Optional[str] = None
+    consensus_forward_eps_period_end: Optional[str] = None
     limitations: List[str] = Field(default_factory=list)
+
+
+class ConsensusReferenceDTO(BaseModel):
+    """The consensus EPS the matrix's gap column is differenced against.
+
+    Carries the source's own facts: the vendor period label verbatim, the
+    fiscal-period end date the same source declared, and the rule a consumer
+    needs to check a gap against. `period_end` is None whenever the source
+    declared none -- it is never derived from `source_period_label`, so a
+    `+1y` label cannot be read as a date.
+
+    No verdict lives here. Whether a given row's terminal EPS covers the same
+    period depends on that row's horizon, so the verdict is on each scenario as
+    a flag and a reason.
+    """
+
+    eps: Optional[float] = None
+    provider: str = ""
+    basis: str = ""
+    months_covered: Optional[float] = None
+    source_period_label: Optional[str] = None
+    period_end: Optional[str] = None
+    period_end_declared_by_source: bool = False
+    target_period_end: Optional[str] = None
+    comparison_tolerance_days: Optional[int] = None
+    comparable_horizon_years: Optional[float] = None
 
 
 class ReferenceMultipleDTO(BaseModel):
@@ -297,6 +325,10 @@ class ReverseRequirementsReportDTO(BaseModel):
     # carries. The full dataset is not part of the API contract; its eligibility
     # state, identity and provenance are.
     production_historical_pe_summary: Optional[ProductionHistoricalPeSummaryDTO] = None
+    # The consensus the gap column is differenced against, with the period the
+    # source declared for it. An eligible gap can be checked against these
+    # facts, and a missing gap is explained by them rather than read as a zero.
+    consensus_reference: ConsensusReferenceDTO = ConsensusReferenceDTO()
 
 
 class AnalysisResultDTO(BaseModel):

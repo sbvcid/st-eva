@@ -408,17 +408,22 @@ class TestBuildScenario(unittest.TestCase):
             exit_multiple=self.multiple, start_anchor=ttm_eps(),
             consensus_eps=4.5, consensus_basis=ANCHOR_FORWARD,
             consensus_months_covered=12.0,
+            consensus_period_end="2027-09-30", as_of="2026-10-09",
         )
         self.assertIn("CONSENSUS_PERIOD_NOT_COMPARABLE", scenario.flags)
         self.assertIsNone(scenario.gap_vs_consensus_terminal_eps)
         self.assertTrue(any("different periods" in n for n in scenario.comparison_notes))
 
     def test_consensus_comparison_accepted_on_matching_period(self):
+        # Eligible on the declared period end, not on the label: the terminal
+        # window ends 2027-10-09 and the source declared 2027-09-30, 9 days
+        # inside the tolerance.
         scenario = build_scenario(
             price=100.0, horizon_years=1.0, required_return=0.10,
             exit_multiple=self.multiple, start_anchor=ttm_eps(),
             consensus_eps=4.5, consensus_basis=ANCHOR_FORWARD,
             consensus_months_covered=12.0,
+            consensus_period_end="2027-09-30", as_of="2026-10-09",
         )
         self.assertNotIn("CONSENSUS_PERIOD_NOT_COMPARABLE", scenario.flags)
         self.assertIsNotNone(scenario.gap_vs_consensus_terminal_eps)

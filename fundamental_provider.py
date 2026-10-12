@@ -20,6 +20,7 @@ import time
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
+from datetime import date
 from http.cookiejar import CookieJar
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -96,6 +97,28 @@ def raw_value(value: Any) -> Optional[float]:
     return float(value) if is_number(value) else None
 
 
+def declared_date(value: Any) -> Optional[str]:
+    """
+    Read a source-declared calendar date as an ISO date string.
+
+    None when the source states nothing, states it in a shape this cannot read,
+    or states it as anything other than a single calendar date. A date the
+    source did not declare stays undeclared; it is never inferred from a
+    period label such as ``+1y``.
+    """
+    if isinstance(value, dict):
+        value = value.get("raw") or value.get("fmt")
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text[:10]).isoformat()
+    except ValueError:
+        return None
+
+
 def distribution_from_series(series: List[Tuple[str, float]]) -> Dict[str, Any]:
     """
     Band statistics for a dated sample.
@@ -121,6 +144,7 @@ class FundamentalData:
     forward_eps_as_of: Optional[str] = None
     consensus_forward_eps: Any = UNAVAILABLE
     consensus_forward_eps_period: Optional[str] = None
+    consensus_forward_eps_period_end: Optional[str] = None
     historical_pe_band: Optional[Dict[str, Any]] = None
     current_fcf: Any = UNAVAILABLE
     current_fcf_currency: Optional[str] = None
@@ -385,9 +409,24 @@ class YahooFundamentalProvider:
     @staticmethod
     def _extract_consensus_forward_eps(
         earnings_trend: Dict[str, Any],
-    ) -> Optional[Tuple[float, str]]:
+    ) -> Optional[Tuple[float, str, Optional[str]]]:
+        """
+        The consensus forward EPS, the source's own period label, and the
+        fiscal-period end date the source declared for it.
+
+        The third element is Yahoo's `earningsTrend.trend[].endDate`, which is
+        the only period boundary the source actually states. Returning it is
+        what keeps the label from standing in for a period: a `+1y` row is a
+        next-fiscal-year estimate, and a consumer that needs to know which year
+        has to read the declared end date rather than infer one from the label.
+
+        It is a plain ISO calendar date, or None when the row declares none or
+        declares something unreadable. Nothing is derived from the label here.
+
+        Returns None only when no row carries an estimate.
+        """
         rows = earnings_trend.get("trend") or []
-        candidates: List[tuple[int, float, str]] = []
+        candidates: List[tuple[int, float, str, Optional[str]]] = []
 
         # Prefer the next fiscal-year estimate (+1y), then current year (0y),
         # and never substitute a historical actual.
@@ -400,12 +439,13 @@ class YahooFundamentalProvider:
             priority = {"+1y": 0, "0y": 1, "+1q": 2, "0q": 3}.get(
                 period, 99
             )
-            candidates.append((priority, avg, period))
+            declared_end = declared_date(row.get("endDate"))
+            candidates.append((priority, avg, period, declared_end))
 
         if not candidates:
             return None
         candidates.sort(key=lambda item: item[0])
-        return candidates[0][1], candidates[0][2]
+        return candidates[0][1], candidates[0][2], candidates[0][3]
 
     # -- acquisition -------------------------------------------------------
 
@@ -470,6 +510,12 @@ class YahooFundamentalProvider:
             consensus_info = self._extract_consensus_forward_eps(trend)
             consensus_eps = consensus_info[0] if consensus_info else None
             consensus_period = consensus_info[1] if consensus_info else None
+            # The fiscal-period end the source declared for that estimate.
+            # None when the row carries no readable endDate, which is left
+            # undeclared rather than derived from the "+1y" label.
+            consensus_period_end = (
+                consensus_info[2] if consensus_info else None
+            )
             consensus_raw = trend
 
             # Find EPS as-of date
@@ -555,6 +601,7 @@ class YahooFundamentalProvider:
                 clean=clean,
                 value=consensus_eps,
                 period=consensus_period,
+                period_end=consensus_period_end,
                 trend=consensus_raw,
                 retrieved_at=retrieved_at,
                 source_url=quote_summary_url,
@@ -740,6 +787,10 @@ class YahooFundamentalProvider:
                 consensus_eps if consensus_eps is not None else UNAVAILABLE,
             ),
             ("consensus_forward_eps_period", consensus_period),
+            (
+                "consensus_forward_eps_period_end",
+                consensus_period_end,
+            ),
             (
                 "historical_pe_band",
                 distribution_from_series(band_series.get(METRIC_PE_BAND) or []),
@@ -1244,14 +1295,33 @@ class YahooFundamentalProvider:
         retrieved_at: str,
         source_url: Optional[str],
         instrument_currency: Optional[str],
+        period_end: Optional[str] = None,
     ) -> Observation:
         """
         The consensus estimate observation.
 
-        The estimate period is Yahoo's own label ("+1y", "0y", ...) and is kept
-        verbatim. It is not a fiscal period, so it is not turned into
-        period_start/period_end that the source never stated.
+        Two things travel with the estimate and neither is invented:
+
+        `period` is Yahoo's own label ("+1y", "0y", ...) and is kept verbatim.
+        `period_end` is the fiscal-period end the same trend row declared. It is
+        the only period boundary the source states, so it is carried as-is and
+        left None when the row declares none.
+
+        `period_start` is deliberately absent: the source states no start date,
+        so a twelve-month window is not fabricated here.
         """
+        raw: Optional[Dict[str, Any]]
+        if value is None:
+            raw = None
+        else:
+            raw = {
+                "module": "earningsTrend",
+                "field": "trend[].earningsEstimate.avg",
+                "period": period,
+                # Declared by the source, or absent. Never derived from
+                # `period`, so a "+1y" row cannot imply a date.
+                "period_end": period_end,
+            }
         return build_observation(
             metric=METRIC_CONSENSUS_FORWARD_EPS,
             value=value,
@@ -1269,11 +1339,8 @@ class YahooFundamentalProvider:
                 instrument_currency
             ),
             as_of=None,
+            period_end=period_end,
             available_at_basis=AvailabilityBasis.UNDECLARED.value,
             source_url=source_url,
-            raw=None if value is None else {
-                "module": "earningsTrend",
-                "field": "trend[].earningsEstimate.avg",
-                "period": period,
-            },
+            raw=raw,
         )

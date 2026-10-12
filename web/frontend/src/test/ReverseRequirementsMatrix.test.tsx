@@ -250,6 +250,147 @@ describe('ReverseRequirementsMatrix Component', () => {
     expect(screen.getByText('ev-price-001')).toBeInTheDocument()
   })
 
+  describe('consensus reference panel', () => {
+    const withConsensus = (
+      scenario: Partial<ReverseRequirementsReportDTO['reverse_requirements_matrix'][number]>,
+      consensus_reference: ReverseRequirementsReportDTO['consensus_reference'],
+    ): ReverseRequirementsReportDTO => ({
+      ...mockReport,
+      reverse_requirements_matrix: [{ ...mockReport.reverse_requirements_matrix[1], ...scenario }],
+      consensus_reference,
+    })
+
+    it('shows the consensus value, its source label and the declared period end', () => {
+      const report = withConsensus(
+        { gap_vs_consensus_terminal_eps: -0.2648 },
+        {
+          eps: 9.58043,
+          provider: 'YahooFinanceFundamentals',
+          source_period_label: '+1y',
+          period_end: '2027-09-30',
+          period_end_declared_by_source: true,
+          target_period_end: '2027-10-09',
+          comparison_tolerance_days: 92,
+        },
+      )
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      const panel = screen.getByTestId('consensus-reference')
+      expect(panel).toBeInTheDocument()
+      expect(panel.textContent).toContain('9.5804')
+      expect(panel.textContent).toContain('YahooFinanceFundamentals')
+      // The label stays the source's own; it is never rewritten into a date.
+      expect(panel.textContent).toContain('+1y')
+      expect(panel.textContent).toContain('2027-09-30')
+      expect(panel.textContent).toContain('2027-10-09')
+      expect(panel.textContent).toContain('-26.48%')
+    })
+
+    it('explains a missing gap with the reason that names both period ends', () => {
+      const report = withConsensus(
+        {
+          gap_vs_consensus_terminal_eps: null,
+          flags: ['CONSENSUS_PERIOD_NOT_COMPARABLE'],
+          comparison_notes: [
+            'The consensus period ends on 2028-06-30 while the terminal EPS window ends on 2027-10-09, a difference of 265 days. These are different periods and are not compared here.',
+          ],
+        },
+        {
+          eps: 23.67732,
+          source_period_label: '+1y',
+          period_end: '2028-06-30',
+          period_end_declared_by_source: true,
+          target_period_end: '2027-10-09',
+          comparison_tolerance_days: 92,
+        },
+      )
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      const panel = screen.getByTestId('consensus-reference')
+      expect(panel.textContent).toContain('2028-06-30')
+      expect(panel.textContent).toContain('2027-10-09')
+      expect(panel.textContent).toContain('265 days')
+      expect(panel.textContent).not.toContain('0.00%')
+    })
+
+    it('states an undeclared period end instead of deriving one from the label', () => {
+      const report = withConsensus(
+        {
+          gap_vs_consensus_terminal_eps: null,
+          flags: ['CONSENSUS_PERIOD_NOT_COMPARABLE'],
+          comparison_notes: [
+            'The consensus EPS declares no readable period end, so no calendar year can be identified to line it up against the terminal EPS.',
+          ],
+        },
+        {
+          eps: 23.67732,
+          source_period_label: '+1y',
+          period_end: null,
+          period_end_declared_by_source: false,
+          target_period_end: '2027-10-09',
+          comparison_tolerance_days: 92,
+        },
+      )
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      const panel = screen.getByTestId('consensus-reference')
+      expect(panel.textContent).toContain('undeclared')
+      expect(panel.textContent).toContain('+1y')
+    })
+
+    it('reports a run with no consensus at all as unavailable', () => {
+      const report = withConsensus(
+        { gap_vs_consensus_terminal_eps: null, flags: ['NO_CONSENSUS_FOR_COMPARISON'] },
+        { eps: null, source_period_label: null, period_end: null },
+      )
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      const panel = screen.getByTestId('consensus-reference')
+      expect(panel.textContent).toContain('No consensus EPS was supplied')
+      expect(panel.textContent).toContain('undeclared')
+    })
+
+    it('omits the panel entirely when the report carries no consensus block', () => {
+      const report: ReverseRequirementsReportDTO = {
+        ...mockReport,
+        reverse_requirements_matrix: [mockReport.reverse_requirements_matrix[1]],
+      }
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      expect(screen.queryByTestId('consensus-reference')).not.toBeInTheDocument()
+    })
+  })
+
   it('renders uncomputable matrix state when status is NOT_COMPUTED', () => {
     const uncomputableReport: ReverseRequirementsReportDTO = {
       formula_version: 'reverse-requirements/1.1',

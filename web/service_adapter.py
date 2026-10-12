@@ -327,6 +327,7 @@ class AnalysisServiceAdapter:
             obs_val = core_result.get("observed_valuation", {})
             implied = core_result.get("market_implied_assumptions", {})
             ref_info = core_result.get("reference", {})
+            data_quality = core_result.get("data_quality", {})
 
             valuation_summary = ValuationSummary(
                 analysis_type=core_result.get("analysis_type"),
@@ -344,6 +345,10 @@ class AnalysisServiceAdapter:
                 observed_pfcf=obs_val.get("current_pfcf"),
                 observed_ev_ebitda=obs_val.get("current_ev_ebitda"),
                 consensus_forward_eps=core_result.get("consensus_cross_check", {}).get("consensus_forward_eps"),
+                consensus_forward_eps_period=data_quality.get("consensus_forward_eps_period"),
+                consensus_forward_eps_period_end=data_quality.get(
+                    "consensus_forward_eps_period_end"
+                ),
                 limitations=core_result.get("limitations", []),
             )
 

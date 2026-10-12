@@ -98,6 +98,7 @@ const userScenario: EpsScenarioDTO = {
   required_eps_cagr: 0.1965,
   total_terminal_eps_growth: 0.7128,
   comparison_notes: [],
+  gap_vs_consensus_terminal_eps: null,
   flags: ['REQUIRED_RETURN_EXCLUDES_DIVIDENDS'],
   formula_version: 'reverse-requirements/1.1',
   calculation_steps: [
@@ -342,6 +343,18 @@ const computedReport: ReverseRequirementsReportDTO = {
     current_pe_as_of: '2026-10-06',
     input_set_id: '01f618068fabc',
   },
+  consensus_reference: {
+    eps: 9.58043,
+    provider: 'YahooFinanceFundamentals',
+    basis: 'FORWARD_TWELVE_MONTHS',
+    months_covered: 12.0,
+    source_period_label: '+1y',
+    period_end: '2027-09-30',
+    period_end_declared_by_source: true,
+    target_period_end: '2027-10-09',
+    comparison_tolerance_days: 92,
+    comparable_horizon_years: 1.0,
+  },
 }
 
 const buildResult = (
@@ -581,6 +594,67 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     const rows = csvToObjects(csv)
     expect(rows).toHaveLength(3)
     expect(rows.every((row) => row.report_matrix_size === '3')).toBe(true)
+  })
+
+  it('carries the consensus period facts the gap column depends on', () => {
+    const result = buildResult(computedReport)
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+
+    // The declared date travels with the label it belongs to, and the target
+    // window end rides with it so a reader can check the two dates.
+    for (const row of rows) {
+      expect(row.report_consensus_eps).toBe('9.58043')
+      expect(row.report_consensus_source_period_label).toBe('+1y')
+      expect(row.report_consensus_period_end).toBe('2027-09-30')
+      expect(row.report_consensus_period_end_declared_by_source).toBe('true')
+      expect(row.report_consensus_target_period_end).toBe('2027-10-09')
+      expect(row.report_consensus_comparison_tolerance_days).toBe('92')
+    }
+  })
+
+  it('keeps a missing consensus gap an empty field rather than a zero', () => {
+    const undeclared: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      reverse_requirements_matrix: [
+        {
+          ...computedReport.reverse_requirements_matrix[0],
+          gap_vs_consensus_terminal_eps: null,
+          flags: [
+            'REQUIRED_RETURN_EXCLUDES_DIVIDENDS',
+            'CONSENSUS_PERIOD_NOT_COMPARABLE',
+          ],
+          comparison_notes: [
+            'The consensus EPS declares no readable period end, so no calendar year can be identified to line it up against the terminal EPS.',
+          ],
+        },
+        ...computedReport.reverse_requirements_matrix.slice(1),
+      ],
+      consensus_reference: {
+        eps: 23.67732,
+        source_period_label: '+1y',
+        period_end: null,
+        period_end_declared_by_source: false,
+        target_period_end: '2027-10-09',
+        comparison_tolerance_days: 92,
+      },
+    }
+    const rows = csvToObjects(
+      buildReverseRequirementsCsv(buildResult(undeclared), GENERATED_AT),
+    )
+    const row = rows[0]
+
+    expect(row.report_consensus_period_end).toBe('')
+    expect(row.report_consensus_period_end_declared_by_source).toBe('false')
+    // "+1y" is the source's label and is never rewritten into a date.
+    expect(row.report_consensus_source_period_label).toBe('+1y')
+    const scenario = JSON.parse(row.scenario_json)
+    expect(scenario.gap_vs_consensus_terminal_eps).toBeNull()
+    // A label without a declared period end is reported as not comparable,
+    // and the reason says so rather than implying a zero gap.
+    expect(scenario.flags).toContain('CONSENSUS_PERIOD_NOT_COMPARABLE')
+    expect(scenario.comparison_notes.join(' ')).toMatch(
+      /declares no readable period end/,
+    )
   })
 })
 

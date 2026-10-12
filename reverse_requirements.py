@@ -38,9 +38,10 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
+from datetime import timedelta
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from data_contract import currencies_match
+from data_contract import currencies_match, parse_iso_date
 
 
 # Bumped whenever a formula below changes its meaning. Consumers compare this
@@ -66,6 +67,22 @@ ANCHOR_TTM = "TRAILING_TWELVE_MONTHS"
 ANCHOR_FORWARD = "FORWARD_TWELVE_MONTHS"
 ANCHOR_FISCAL_YEAR = "FISCAL_YEAR"
 ANCHOR_USER = "USER_SUPPLIED"
+
+# The consensus EPS the matrix's gap column is differenced against.
+
+# The consensus a vendor reports is a next-fiscal-year estimate, so its own
+# declared period end can fall a long way from the end of the year the matrix
+# prices. Two windows that are not the same year are not differenced, so the
+# rule below is the tolerance within which they are treated as the same
+# exposure. One quarter is chosen because a fiscal year is only ever offset
+# from the valuation date by up to three reporting quarters plus a reporting
+# lag; beyond that the two figures describe different periods.
+CONSENSUS_PERIOD_TOLERANCE_DAYS = 92
+
+# The only horizon whose terminal EPS window can line up with a forward
+# consensus. A longer horizon prices a year the estimate never covered, so
+# the date comparison is never reached there and the gap stays unreported.
+CONSENSUS_COMPARABLE_HORIZON_YEARS = 1.0
 
 _MONTHS_PER_YEAR = 12.0
 
@@ -765,6 +782,7 @@ def build_scenario(
     consensus_eps: Optional[float] = None,
     consensus_basis: str = "",
     consensus_months_covered: Optional[float] = None,
+    consensus_period_end: Optional[str] = None,
     dividend_per_share: Optional[float] = None,
     currency: Optional[str] = None,
     as_of: Optional[str] = None,
@@ -866,6 +884,8 @@ def build_scenario(
             horizon_years=horizon_years,
             consensus_basis=consensus_basis,
             consensus_months_covered=consensus_months_covered,
+            consensus_period_end=consensus_period_end,
+            as_of=as_of,
         )
         if comparable:
             gap_vs_consensus = terminal_eps / consensus_value - 1.0
@@ -935,40 +955,98 @@ def build_scenario(
     )
 
 
+def terminal_period_end(
+    as_of: Optional[str],
+    horizon_years: float,
+) -> Optional[str]:
+    """
+    The calendar date the terminal EPS window ends on.
+
+    `as_of` is the valuation date the price was observed at, and the terminal
+    EPS covers the `horizon_years` that follow it. One calendar year is added
+    by date, not by a fixed day count, so a leap day does not move the window.
+
+    None when either input cannot be read, because a window that cannot be
+    dated is not a window to compare anything against.
+    """
+    start = parse_iso_date(as_of)
+    years = _safe_float(horizon_years)
+    if start is None or years is None or years <= 0:
+        return None
+    whole = int(years)
+    try:
+        added = start.replace(year=start.year + whole)
+    except ValueError:
+        # 29 February: the only date a whole-year addition can land on
+        # nothing, and the convention is the last day of February.
+        added = start.replace(
+            year=start.year + whole, month=2, day=28
+        )
+    if whole < years:
+        added = added + timedelta(days=round((years - whole) * 365))
+    return added.isoformat()
+
+
 def _consensus_is_comparable(
     horizon_years: float,
     consensus_basis: str,
     consensus_months_covered: Optional[float],
+    consensus_period_end: Optional[str] = None,
+    as_of: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """
-    Whether a consensus EPS speaks about the same 12 months as the terminal EPS.
+    Whether a consensus EPS speaks about the same period as the terminal EPS.
 
-    The terminal EPS covers the year ending at the horizon. A next-twelve-months
-    consensus taken at the valuation date covers the first year of the horizon,
-    so the two coincide only when the horizon is one year. Any other comparison
-    would be a difference between two different years presented as a gap.
+    The terminal EPS covers the year ending at the horizon, so a
+    next-twelve-months consensus taken at the valuation date covers the first
+    year of the horizon and the two coincide only when the horizon is one
+    year. Any other comparison would be a difference between two different
+    years presented as a gap.
+
+    When the horizon is a year, the decision is made on the period the source
+    declared rather than on its label. A vendor's ``+1y`` row is a
+    next-fiscal-year estimate whose end date the source states; that declared
+    end is compared against the end of the terminal window, and only a
+    difference within `CONSENSUS_PERIOD_TOLERANCE_DAYS` counts as the same
+    period. A missing or unreadable declared end is not a date to be inferred
+    from the label, so it leaves the comparison unavailable.
     """
     if not consensus_basis:
         return False, (
             "The consensus figure declares no basis, so it cannot be shown to cover "
             "the same period as the terminal EPS."
         )
-    if consensus_basis == ANCHOR_FORWARD:
+    if consensus_basis in (ANCHOR_FORWARD, ANCHOR_TTM):
         years = _safe_float(horizon_years) or 0.0
-        if abs(years - 1.0) > 1e-9:
+        if abs(years - CONSENSUS_COMPARABLE_HORIZON_YEARS) > 1e-9:
+            subject = (
+                "next-twelve-months figure taken at the valuation date"
+                if consensus_basis == ANCHOR_FORWARD
+                else "trailing figure covering the year before the valuation date"
+            )
             return False, (
-                f"The consensus is a next-twelve-months figure taken at the valuation date, "
-                f"which covers year 1, while the terminal EPS covers the year ending at "
+                f"The consensus is a {subject}, which covers year 1, "
+                f"while the terminal EPS covers the year ending at "
                 f"{years:g} years. These are different periods and are not compared here."
             )
-        return True, ""
-    if consensus_basis == ANCHOR_TTM:
-        years = _safe_float(horizon_years) or 0.0
-        if abs(years - 1.0) > 1e-9:
+        declared = parse_iso_date(consensus_period_end)
+        if declared is None:
             return False, (
-                f"The consensus is a trailing figure covering the year before the valuation "
-                f"date, while the terminal EPS covers the year ending at {years:g} years. "
-                "These are different periods and are not compared here."
+                "The consensus EPS declares no readable period end, so no calendar year "
+                "can be identified to line it up against the terminal EPS."
+            )
+        target = parse_iso_date(terminal_period_end(as_of, years))
+        if target is None:
+            return False, (
+                "The terminal EPS window end cannot be dated from this run's price date, "
+                "so the consensus period cannot be lined up against it."
+            )
+        offset = (declared - target).days
+        if abs(offset) > CONSENSUS_PERIOD_TOLERANCE_DAYS:
+            return False, (
+                f"The consensus period ends on {declared.isoformat()} while the terminal "
+                f"EPS window ends on {target.isoformat()}, a difference of "
+                f"{abs(offset)} days. These are different periods and are not compared here."
             )
         return True, ""
     return False, (
@@ -987,6 +1065,7 @@ def build_matrix(
     consensus_eps: Optional[float] = None,
     consensus_basis: str = "",
     consensus_months_covered: Optional[float] = None,
+    consensus_period_end: Optional[str] = None,
     dividend_per_share: Optional[float] = None,
     currency: Optional[str] = None,
     as_of: Optional[str] = None,
@@ -1009,6 +1088,7 @@ def build_matrix(
                         consensus_eps=consensus_eps,
                         consensus_basis=consensus_basis,
                         consensus_months_covered=consensus_months_covered,
+                        consensus_period_end=consensus_period_end,
                         dividend_per_share=dividend_per_share,
                         currency=currency,
                         as_of=as_of,
@@ -1903,6 +1983,47 @@ def compute_fingerprint(payload: Dict[str, Any]) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def build_consensus_reference(
+    *,
+    consensus_eps: Optional[float],
+    consensus_basis: str = "",
+    consensus_months_covered: Optional[float] = None,
+    consensus_provider: str = "",
+    consensus_period_label: Optional[str] = None,
+    consensus_period_end: Optional[str] = None,
+    consensus_target_period_end: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    The consensus EPS the matrix's gap column is differenced against.
+
+    This block states the source's facts and the rule that consumes them. It
+    deliberately does not state a verdict: whether a *particular* row's terminal
+    EPS covers the same period depends on that row's horizon, so the verdict
+    travels on each scenario as a flag and a reason. Restating one here would
+    be a second, possibly different, answer.
+
+    `consensus_period_label` is the vendor's own label, kept verbatim.
+    `consensus_period_end` is the calendar date the same source declared for
+    that estimate, or None when it declared none. Nothing in this block derives
+    one from the other.
+    """
+    declared = parse_iso_date(consensus_period_end)
+    return {
+        "eps": _safe_float(consensus_eps),
+        "provider": consensus_provider,
+        "basis": consensus_basis,
+        "months_covered": _safe_float(consensus_months_covered),
+        "source_period_label": consensus_period_label,
+        "period_end": declared.isoformat() if declared is not None else None,
+        "period_end_declared_by_source": declared is not None,
+        # The end of the window the one-year terminal EPS covers, so a reader
+        # can compare the two dates without recomputing either.
+        "target_period_end": consensus_target_period_end,
+        "comparison_tolerance_days": CONSENSUS_PERIOD_TOLERANCE_DAYS,
+        "comparable_horizon_years": CONSENSUS_COMPARABLE_HORIZON_YEARS,
+    }
+
+
 def build_reverse_requirements_report(
     *,
     price: float,
@@ -1919,6 +2040,9 @@ def build_reverse_requirements_report(
     consensus_eps: Optional[float] = None,
     consensus_basis: str = "",
     consensus_months_covered: Optional[float] = None,
+    consensus_period_label: Optional[str] = None,
+    consensus_period_end: Optional[str] = None,
+    consensus_target_period_end: Optional[str] = None,
     consensus_provider: str = "",
     dividend_per_share: Optional[float] = None,
     dividend_source: str = "",
@@ -1972,6 +2096,7 @@ def build_reverse_requirements_report(
         consensus_eps=consensus_eps,
         consensus_basis=consensus_basis,
         consensus_months_covered=consensus_months_covered,
+        consensus_period_end=consensus_period_end,
         dividend_per_share=None,
         currency=currency,
         as_of=as_of,
@@ -1980,6 +2105,16 @@ def build_reverse_requirements_report(
     )
 
     unavailable: List[Dict[str, Any]] = list(unavailable or [])
+
+    consensus_reference = build_consensus_reference(
+        consensus_eps=consensus_eps,
+        consensus_basis=consensus_basis,
+        consensus_months_covered=consensus_months_covered,
+        consensus_provider=consensus_provider,
+        consensus_period_label=consensus_period_label,
+        consensus_period_end=consensus_period_end,
+        consensus_target_period_end=consensus_target_period_end,
+    )
 
     div_val = _safe_float(dividend_per_share)
     total_return_scenarios = None
@@ -1997,6 +2132,7 @@ def build_reverse_requirements_report(
             consensus_eps=consensus_eps,
             consensus_basis=consensus_basis,
             consensus_months_covered=consensus_months_covered,
+            consensus_period_end=consensus_period_end,
             dividend_per_share=div_val,
             currency=currency,
             as_of=as_of,
@@ -2125,6 +2261,12 @@ def build_reverse_requirements_report(
         "current_pe": current_pe,
         "consensus_eps": consensus_eps,
         "consensus_basis": consensus_basis,
+        # The declared period end is in the payload because it decides whether
+        # a consensus gap is reported at all. Two runs whose consensus values
+        # match but whose declared periods differ produce different gap columns
+        # and therefore are not the same calculation.
+        "consensus_period_end": consensus_reference["period_end"],
+        "consensus_period_label": consensus_period_label,
         "dividend_per_share": dividend_per_share,
         "market_cap": market_cap,
         "enterprise_value": enterprise_value,
@@ -2157,6 +2299,10 @@ def build_reverse_requirements_report(
         "production_historical_pe_summary": production_distribution_summary(
             production_historical_pe
         ),
+        # The consensus the gap column is differenced against, with the period
+        # the source declared for it, so an eligible gap can be checked and a
+        # missing one explained rather than read as a zero.
+        "consensus_reference": consensus_reference,
         "total_return_scenarios": total_return_scenarios,
         "price_vs_total_return_comparison": comparison_rows,
         "dividend_basis": dividend_basis_block,
@@ -2169,6 +2315,9 @@ def build_reverse_requirements_report(
             "to annualise; otherwise the raw EPS change is reported without a rate.",
             "Risk-free rates, modelled cost of equity and investor target returns are three "
             "separate kinds of number and are never merged into one figure.",
+            "A consensus gap is differenced only when the period the source declared for the "
+            "consensus lines up with the terminal EPS window. Otherwise the gap is left "
+            "unreported and the reason names both period ends; a missing gap is not a zero.",
         ],
     }
 

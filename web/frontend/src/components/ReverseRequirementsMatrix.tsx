@@ -16,6 +16,7 @@ import {
   Filter,
   Info,
   Layers,
+  Percent,
   ShieldCheck,
   Table as TableIcon,
 } from 'lucide-react'
@@ -279,6 +280,23 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                   const hasNotes =
                     (sc.comparison_notes && sc.comparison_notes.length > 0) ||
                     (sc.flags && sc.flags.length > 0)
+                  // The consensus gap is reported only when the period the
+                  // source declared lines up with this row's terminal window.
+                  // When it does not, the reason that names both period ends
+                  // is shown; a missing gap is never rendered as a zero.
+                  const consensusGap =
+                    sc.gap_vs_consensus_terminal_eps !== null &&
+                    sc.gap_vs_consensus_terminal_eps !== undefined
+                      ? sc.gap_vs_consensus_terminal_eps
+                      : null
+                  const consensusGapReason =
+                    consensusGap === null && report?.consensus_reference
+                      ? (sc.comparison_notes || []).find((note) =>
+                          /consensus period ends|declares no readable period end|consensus is a/i.test(
+                            note,
+                          ),
+                        ) ?? null
+                      : null
 
                   return (
                     <React.Fragment key={idx}>
@@ -717,6 +735,84 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                             {report.production_historical_pe_summary.input_set_id.slice(0, 16)}
                                           </div>
                                         )}
+                                       </div>
+                                     </div>
+                                   )}
+
+                                  {/* Consensus reference. The period facts
+                                      the gap column is differenced against, so
+                                      an eligible gap can be checked and a
+                                      missing one explained. */}
+                                  {report.consensus_reference && (
+                                    <div
+                                      data-testid="consensus-reference"
+                                      className="p-3 rounded-lg border bg-slate-50 border-slate-200 shadow-2xs space-y-1 text-[11px]"
+                                    >
+                                      <div className="font-semibold text-slate-800 flex items-center gap-1">
+                                        <Percent className="w-3 h-3" />
+                                        <span>{t.matrix.consensusReferenceHeader}</span>
+                                      </div>
+                                      <div className="font-mono text-[10px] text-slate-600 space-y-0.5">
+                                        {report.consensus_reference.eps !== null &&
+                                        report.consensus_reference.eps !== undefined ? (
+                                          <div>
+                                            {t.matrix.consensusEpsLabel}:{' '}
+                                            {Number(report.consensus_reference.eps).toFixed(4)}
+                                            {report.consensus_reference.provider
+                                              ? ` (${report.consensus_reference.provider})`
+                                              : ''}
+                                          </div>
+                                        ) : (
+                                          <div>{t.matrix.consensusEpsUnavailableLabel}</div>
+                                        )}
+                                        <div>
+                                          {t.matrix.consensusSourcePeriodLabel}:{' '}
+                                          {report.consensus_reference.source_period_label ||
+                                            t.matrix.undeclaredValueLabel}
+                                        </div>
+                                        <div>
+                                          {t.matrix.consensusPeriodEndLabel}:{' '}
+                                          <span
+                                            className={
+                                              report.consensus_reference
+                                                .period_end_declared_by_source
+                                                ? ''
+                                                : 'text-amber-700'
+                                            }
+                                          >
+                                            {report.consensus_reference.period_end ||
+                                              t.matrix.undeclaredValueLabel}
+                                          </span>
+                                        </div>
+                                        {report.consensus_reference.target_period_end && (
+                                          <div>
+                                            {t.matrix.consensusTargetPeriodEndLabel}:{' '}
+                                            {report.consensus_reference.target_period_end}
+                                          </div>
+                                        )}
+                                        {report.consensus_reference
+                                          .comparison_tolerance_days !== null &&
+                                          report.consensus_reference
+                                            .comparison_tolerance_days !== undefined && (
+                                            <div>
+                                              {t.matrix.consensusToleranceLabel}:{' '}
+                                              {report.consensus_reference.comparison_tolerance_days}{' '}
+                                              {t.matrix.daysUnitLabel}
+                                            </div>
+                                          )}
+                                        <div className="pt-0.5">
+                                          {consensusGap !== null ? (
+                                            <span className="text-emerald-800">
+                                              {t.matrix.consensusGapLabel}:{' '}
+                                              {(consensusGap * 100).toFixed(2)}%
+                                            </span>
+                                          ) : (
+                                            <span className="text-amber-800">
+                                              {consensusGapReason ||
+                                                t.matrix.consensusGapUnavailableLabel}
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   )}

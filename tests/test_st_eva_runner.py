@@ -245,7 +245,48 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         }
         self.assertEqual(
             YahooFundamentalProvider._extract_consensus_forward_eps(trend),
-            (4.0, "+1y"),
+            (4.0, "+1y", None),
+        )
+
+    def test_consensus_extraction_preserves_the_declared_period_end(self):
+        # The third element is the fiscal-period end the same source row
+        # declared. It is the only period boundary the source states, so it is
+        # carried verbatim and never derived from the "+1y" label.
+        trend = {
+            "trend": [
+                {"period": "0q", "earningsEstimate": {"avg": 1.0}},
+                {
+                    "period": "+1y",
+                    "earningsEstimate": {"avg": 23.67732},
+                    "endDate": "2028-06-30",
+                },
+            ]
+        }
+        self.assertEqual(
+            YahooFundamentalProvider._extract_consensus_forward_eps(trend),
+            (23.67732, "+1y", "2028-06-30"),
+        )
+
+    def test_consensus_extraction_keeps_the_winning_row_s_declared_end(self):
+        # The declared end travels with the row that wins the existing
+        # priority, not with the row that happens to declare a date.
+        trend = {
+            "trend": [
+                {
+                    "period": "0y",
+                    "earningsEstimate": {"avg": 2.0},
+                    "endDate": "2027-06-30",
+                },
+                {
+                    "period": "+1y",
+                    "earningsEstimate": {"avg": 4.0},
+                    "endDate": "2028-06-30",
+                },
+            ]
+        }
+        self.assertEqual(
+            YahooFundamentalProvider._extract_consensus_forward_eps(trend),
+            (4.0, "+1y", "2028-06-30"),
         )
 
     def test_consensus_extraction_never_uses_actual_eps(self):
@@ -257,8 +298,29 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
         }
         self.assertEqual(
             YahooFundamentalProvider._extract_consensus_forward_eps(trend),
-            (4.0, "+1y"),
+            (4.0, "+1y", None),
         )
+
+    def test_consensus_extraction_leaves_an_unreadable_end_undeclared(self):
+        # A date the source cannot state as a calendar date is not a date to
+        # repair from the label; the end simply stays undeclared.
+        for bad in ("not-a-date", "   ", None, 20280630):
+            with self.subTest(endDate=bad):
+                trend = {
+                    "trend": [
+                        {
+                            "period": "+1y",
+                            "earningsEstimate": {"avg": 4.0},
+                            "endDate": bad,
+                        }
+                    ]
+                }
+                self.assertEqual(
+                    YahooFundamentalProvider._extract_consensus_forward_eps(
+                        trend
+                    ),
+                    (4.0, "+1y", None),
+                )
 
 
     def test_historical_pe_percentile_uses_full_band(self):

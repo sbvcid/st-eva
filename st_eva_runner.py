@@ -154,6 +154,9 @@ class MarketData:
     forward_eps: Any = UNAVAILABLE
     consensus_forward_eps: Any = UNAVAILABLE
     consensus_forward_eps_period: Optional[str] = None
+    # The fiscal-period end the source declared for that consensus estimate.
+    # None when the source declared none; never inferred from the label.
+    consensus_forward_eps_period_end: Optional[str] = None
     errors: List[str] = field(default_factory=list)
     next_event: Any = UNAVAILABLE
     next_event_status: str = "Unconfirmed"
@@ -540,9 +543,19 @@ def _observation_raw(
     """
     if source is not None and source.raw is not None:
         return source.raw
-    if metric == METRIC_CONSENSUS_FORWARD_EPS and data.consensus_forward_eps_period:
-        # The estimate period is the source's own label, not a fiscal period.
-        return {"period": data.consensus_forward_eps_period}
+    if metric == METRIC_CONSENSUS_FORWARD_EPS and (
+        data.consensus_forward_eps_period
+        or data.consensus_forward_eps_period_end
+    ):
+        # The estimate period is the source's own label, not a fiscal period,
+        # and the period end is the date the same source declared. Neither is
+        # derived from the other.
+        payload: Dict[str, Any] = {
+            "period": data.consensus_forward_eps_period
+        }
+        if data.consensus_forward_eps_period_end:
+            payload["period_end"] = data.consensus_forward_eps_period_end
+        return payload
     if is_band:
         band = getattr(data, VIEW_FIELD_FOR_METRIC[metric], None)
         return {
@@ -1089,6 +1102,16 @@ def _apply_observations_to_view(
         period = consensus.raw.get("period")
         data.consensus_forward_eps_period = (
             str(period) if period is not None else None
+        )
+        # The declared fiscal-period end is read from the archived raw payload
+        # and falls back to the observation's own period_end, so a replayed
+        # view rebuilds the same declared date the live run recorded rather
+        # than dropping it.
+        declared_end = (
+            consensus.raw.get("period_end") or consensus.period_end
+        )
+        data.consensus_forward_eps_period_end = (
+            str(declared_end) if declared_end else None
         )
 
     data.observations = observation_set
@@ -1914,6 +1937,9 @@ def run_st_eva(
             "discrepancy_status": data.discrepancy_status,
             "acquisition_errors": data.errors,
             "consensus_forward_eps_period": data.consensus_forward_eps_period,
+            "consensus_forward_eps_period_end": (
+                data.consensus_forward_eps_period_end
+            ),
         },
         "observed_valuation": analysis["observed_valuation"],
         "market_implied_assumptions": analysis["implied_assumptions"],
@@ -2458,8 +2484,10 @@ def _build_reverse_requirements(
     from capital_structure import build_capital_structure
     from financial_history import build_financial_history
     from reverse_requirements import (
+        build_consensus_reference,
         build_reverse_requirements_report,
         build_start_anchor,
+        terminal_period_end,
     )
     from risk_free_rate_provider import (
         fetch_risk_free_rates,
@@ -2652,10 +2680,41 @@ def _build_reverse_requirements(
     current_pe = safe_float(analysis["observed_valuation"].get("current_pe"))
     consensus_basis = ""
     consensus_months: Optional[float] = None
+    consensus_period_end = data.consensus_forward_eps_period_end
+    consensus_target_period_end: Optional[str] = None
+    consensus_observations = (
+        data.observations.for_metric(METRIC_CONSENSUS_FORWARD_EPS)
+        if hasattr(data, "observations")
+        else []
+    )
+    consensus_provider = (
+        str(consensus_observations[0].provider) if consensus_observations else ""
+    )
     if consensus_eps is not None:
         if data.consensus_forward_eps_period:
+            # The vendor stated a period label. That label is not a period, so
+            # the coverage this claim rests on is the fiscal-period end the
+            # same row declared; when it declared one, that is what lines the
+            # consensus up against a terminal EPS.
             consensus_basis = "FORWARD_TWELVE_MONTHS"
             consensus_months = 12.0
+            if consensus_period_end:
+                consensus_target_period_end = terminal_period_end(
+                    data.price_date, 1.0
+                )
+            else:
+                unavailable.append(
+                    {
+                        "item": "consensus_forward_eps_period_end",
+                        "reason": (
+                            "The consensus EPS carries a period label but no declared "
+                            "period end, so no calendar year can be identified to line it "
+                            "up against a terminal EPS."
+                        ),
+                        "reason_kind": "UNDECLARED",
+                        "blocks": ["consensus_comparison"],
+                    }
+                )
         else:
             # The vendor returned a figure without stating which period it
             # covers. Comparing it against a terminal EPS would silently assume
@@ -2756,6 +2815,15 @@ def _build_reverse_requirements(
             "rate_families": {},
             "dcf": {},
             "production_historical_pe": production_historical_pe,
+            "consensus_reference": build_consensus_reference(
+                consensus_eps=consensus_eps,
+                consensus_basis=consensus_basis,
+                consensus_months_covered=consensus_months,
+                consensus_provider=consensus_provider,
+                consensus_period_label=data.consensus_forward_eps_period,
+                consensus_period_end=consensus_period_end,
+                consensus_target_period_end=consensus_target_period_end,
+            ),
             "total_return_scenarios": None,
             "price_vs_total_return_comparison": [],
             "dividend_basis": None,
@@ -2800,6 +2868,10 @@ def _build_reverse_requirements(
         consensus_eps=consensus_eps,
         consensus_basis=consensus_basis,
         consensus_months_covered=consensus_months,
+        consensus_period_label=data.consensus_forward_eps_period,
+        consensus_period_end=consensus_period_end,
+        consensus_target_period_end=consensus_target_period_end,
+        consensus_provider=consensus_provider,
         dividend_per_share=div_per_share,
         dividend_source=div_source,
         market_cap=market_cap,

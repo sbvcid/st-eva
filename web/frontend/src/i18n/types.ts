@@ -168,6 +168,17 @@ export interface Translations {
     filingFormLabel: string
     conceptLabel: string
     toggleRowAudit: string
+    consensusReferenceHeader: string
+    consensusEpsLabel: string
+    consensusEpsUnavailableLabel: string
+    consensusSourcePeriodLabel: string
+    consensusPeriodEndLabel: string
+    consensusTargetPeriodEndLabel: string
+    consensusToleranceLabel: string
+    daysUnitLabel: string
+    undeclaredValueLabel: string
+    consensusGapLabel: string
+    consensusGapUnavailableLabel: string
   }
   export: {
     sectionTitle: string

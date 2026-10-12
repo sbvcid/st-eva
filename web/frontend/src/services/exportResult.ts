@@ -93,6 +93,16 @@ export const REVERSE_REQUIREMENTS_CSV_COLUMNS = [
   'report_status_reason',
   'report_matrix_size',
   'report_formula_version',
+  // Consensus reference. The gap is not a first-class scenario column, so the
+  // period facts it depends on are stated at report level and repeated on
+  // every scenario row, while the verdict stays with the row's flags and
+  // notes. A missing gap is never written as a zero.
+  'report_consensus_eps',
+  'report_consensus_source_period_label',
+  'report_consensus_period_end',
+  'report_consensus_period_end_declared_by_source',
+  'report_consensus_target_period_end',
+  'report_consensus_comparison_tolerance_days',
   'report_production_pe_status',
   'report_production_pe_usable_for_reference',
   'report_unavailable_json',
@@ -177,6 +187,7 @@ function reportLevelFields(
   report: ReverseRequirementsReportDTO | null | undefined,
 ): CsvRow {
   const summary = report?.production_historical_pe_summary ?? null
+  const consensus = report?.consensus_reference ?? null
   return {
     ticker: result.ticker,
     company_name: result.company_name,
@@ -187,6 +198,14 @@ function reportLevelFields(
     report_status_reason: report?.status_reason ?? null,
     report_matrix_size: report?.matrix_size ?? 0,
     report_formula_version: report?.formula_version ?? null,
+    report_consensus_eps: consensus?.eps ?? null,
+    report_consensus_source_period_label: consensus?.source_period_label ?? null,
+    report_consensus_period_end: consensus?.period_end ?? null,
+    report_consensus_period_end_declared_by_source:
+      consensus?.period_end_declared_by_source ?? null,
+    report_consensus_target_period_end: consensus?.target_period_end ?? null,
+    report_consensus_comparison_tolerance_days:
+      consensus?.comparison_tolerance_days ?? null,
     report_production_pe_status: summary?.status ?? null,
     report_production_pe_usable_for_reference:
       summary?.usable_for_reference ?? null,

@@ -182,6 +182,18 @@ export const en: Translations = {
     filingFormLabel: 'Form',
     conceptLabel: 'XBRL Concept',
     toggleRowAudit: 'Inspect Row Audit Trail',
+    consensusReferenceHeader: 'Consensus EPS reference',
+    consensusEpsLabel: 'Consensus EPS',
+    consensusEpsUnavailableLabel: 'No consensus EPS was supplied for this run',
+    consensusSourcePeriodLabel: 'Source period label',
+    consensusPeriodEndLabel: 'Declared consensus period end',
+    consensusTargetPeriodEndLabel: 'Terminal EPS window ends',
+    consensusToleranceLabel: 'Comparison tolerance',
+    daysUnitLabel: 'days',
+    undeclaredValueLabel: 'undeclared',
+    consensusGapLabel: 'Gap vs consensus',
+    consensusGapUnavailableLabel:
+      'No gap is reported for this row: see the row flags and comparison notes above.',
   },
   export: {
     sectionTitle: 'Export',

@@ -61,6 +61,13 @@ export interface ValuationSummary {
   observed_pfcf?: number | null
   observed_ev_ebitda?: number | null
   consensus_forward_eps?: number | null
+  /** The vendor's own consensus period label, kept verbatim (e.g. "+1y"). */
+  consensus_forward_eps_period?: string | null
+  /**
+   * The fiscal-period end the source declared for that consensus estimate.
+   * Null whenever the source declared none; never inferred from the label.
+   */
+  consensus_forward_eps_period_end?: string | null
   limitations: string[]
 }
 
@@ -224,6 +231,30 @@ export interface EpsScenarioDTO {
   calculation_steps?: CalculationStepDTO[]
 }
 
+/**
+ * The consensus EPS the matrix gap column is differenced against.
+ *
+ * `source_period_label` is the vendor's own label ("+1y"), kept verbatim.
+ * `period_end` is the calendar date the same source declared for that
+ * estimate, and is null whenever the source declared none. It is never
+ * derived from the label, so a "+1y" row cannot be read as a date.
+ *
+ * No verdict lives here: whether a row's terminal EPS covers the same period
+ * depends on that row's horizon, so the verdict is on each scenario.
+ */
+export interface ConsensusReferenceDTO {
+  eps?: number | null
+  provider?: string
+  basis?: string
+  months_covered?: number | null
+  source_period_label?: string | null
+  period_end?: string | null
+  period_end_declared_by_source?: boolean
+  target_period_end?: string | null
+  comparison_tolerance_days?: number | null
+  comparable_horizon_years?: number | null
+}
+
 export interface ReverseRequirementsReportDTO {
   formula_version: string
   fingerprint?: string | null
@@ -237,6 +268,7 @@ export interface ReverseRequirementsReportDTO {
   total_return_scenarios?: Record<string, any> | null
   price_vs_total_return_comparison?: Array<Record<string, any>> | null
   production_historical_pe_summary?: ProductionHistoricalPeDTO | null
+  consensus_reference?: ConsensusReferenceDTO
 }
 
 export interface AnalysisResultDTO {
