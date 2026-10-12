@@ -52,9 +52,13 @@ This section is the hand-off checkpoint for future conversations and coding agen
 - No second historical P/E engine and no broad caching or ingestion framework was added, and no new network acquisition was introduced to reach any source.
 - The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
 
-**Next task — one task only**
+**Next task status**
 
-The R1 summary/export backlog is complete under R5, so no new product round is queued. The only outstanding work is the bounded, non-blocking archive cleanup: about 1.3–1.5 GB classified `NO_LONGER_NEEDED` and about 0.8–1.0 GB `REVIEW_REQUIRED` in the Phase 1/2 audit. That classification is planning only; cleanup is a separate bounded task, must preserve anything unclear outside the repository with its SHA-256, and must not block product development. Preserving the existing SQLite files, the AAPL reverse-requirements artifact and the production P/E datasets is mandatory.
+The AAPL first-version product acceptance is complete (accepted 2026-10-12; see the acceptance section below), and **there is currently no scheduled product implementation task.** Do not start speculative framework, ingestion, caching, LLM or engine work, and do not initiate another replay/archive engineering round without a demonstrated product defect — the R1–R6.1 items are complete and the standing CI is the guard.
+
+Archive cleanup remains **deferred, non-blocking maintenance, not a prerequisite for product development.** It is planning only (about 1.3–1.5 GB classified `NO_LONGER_NEEDED` and about 0.8–1.0 GB `REVIEW_REQUIRED` from the Phase 1/2 audit); it is a separate bounded task that must preserve anything unclear outside the repository with its SHA-256 and must not block product work. Preserving the existing SQLite files, the AAPL reverse-requirements artifact and the production P/E datasets is mandatory regardless.
+
+The generic replay `DIVERGED` explanation wording is a **minor usability observation, not a current blocker.** Revisit it only if user testing demonstrates actual confusion.
 
 **Execution rule**
 
