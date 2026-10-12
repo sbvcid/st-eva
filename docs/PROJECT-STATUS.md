@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `7fe3a5d` (R4: production historical P/E reference wired into the web path)
-**Latest verified GitHub Actions:** [Run 38174224673](https://github.com/sbvcid/st-eva/actions/runs/38174224673), triggered by `7fe3a5d`; backend and browser jobs passed.
+**Current implementation baseline:** `6ab74e8` (R5: summary-card semantics reconciled with the matrix and reverse-requirements JSON/CSV export added)
+**Latest verified GitHub Actions:** [Run 38195124312](https://github.com/sbvcid/st-eva/actions/runs/38195124312), triggered by `6ab74e8`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -273,6 +273,7 @@ Runs after the R2 baseline:
 - [Run 38160351228](https://github.com/sbvcid/st-eva/actions/runs/38160351228) (`3e9ec3d`, R2.1 correction): backend and browser jobs passed — frontend build, self-contained production inputs, archive isolation tests, web API tests, the full backend suite and browser smoke tests all succeeded.
 - [Run 38160824276](https://github.com/sbvcid/st-eva/actions/runs/38160824276) (`9638722`, status record): backend and browser jobs passed.
 - [Run 38167442978](https://github.com/sbvcid/st-eva/actions/runs/38167442978) (`be29020`, R3 acceptance harness and live-path tests): backend and browser jobs passed. This is a CI regression run over fixtures and the isolated live-path contracts; it is **not** real-data acceptance — the R3 section below records which checks came from a live AAPL acquisition and which from fixtures.
+- [Run 38195124312](https://github.com/sbvcid/st-eva/actions/runs/38195124312) (`6ab74e8`, R5 summary reconciliation and JSON/CSV audit export): backend and browser jobs passed — frontend build, archive-isolation, web API, the full backend suite and browser smoke (including the new real-browser export-download smoke) all succeeded.
 
 Local verification for the same commit before observing CI: full backend suite 1,958 passed, 168 skipped, 140 subtests passed (341.60s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`.
 
@@ -362,7 +363,7 @@ Local verification for the same commit before observing CI: full backend suite 1
 
 **Remaining limitations recorded, not fixed:** the production distribution exists only for ``AAPL`` and ``MSFT``; other tickers get the explicit ``UNAVAILABLE`` state. The distribution is evaluated on periodic filing/earnings-release usable dates, not a daily history, and the web path does not compute the ``--historical-pe`` production reconstruction as part of the P/E band used elsewhere. The AAPL production dataset covers 2018-01-02 to 2026-07-31 and is not extended by the web path.
 
-## R5 — Result Semantics, Summary Reconciliation and Audit Export (accepted 2026-10-12)
+## R5 — Result Semantics, Summary Reconciliation and Audit Export (accepted 2026-10-12, verified by run 38195124312)
 
 **Objective (unchanged product center):** make the summary-card values and the reverse-matrix values semantically unambiguous, and export the actual reverse-requirements report plus the row-level audit trail as JSON and CSV. No ratings, price targets, forecasts, recommendations, LLM integration or second calculation engine were added; the reverse-valuation engine stays the only calculator and ``reverse-requirements/1.1`` stays the formula version.
 
