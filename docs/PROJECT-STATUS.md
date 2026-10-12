@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `c84bc6f` (R5: summary-card semantics reconciled + JSON/CSV audit export; R6: point-in-time replay replays at the archival watermark)
-**Latest verified GitHub Actions:** [Run 38198626332](https://github.com/sbvcid/st-eva/actions/runs/38198626332), triggered by `c84bc6f`; backend and browser jobs passed.
+**Current implementation baseline:** `061230f` (R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot)
+**Latest verified GitHub Actions:** [Run 38202918791](https://github.com/sbvcid/st-eva/actions/runs/38202918791), triggered by `061230f`; backend and browser jobs passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -277,6 +277,7 @@ Runs after the R2 baseline:
 - [Run 38167442978](https://github.com/sbvcid/st-eva/actions/runs/38167442978) (`be29020`, R3 acceptance harness and live-path tests): backend and browser jobs passed. This is a CI regression run over fixtures and the isolated live-path contracts; it is **not** real-data acceptance — the R3 section below records which checks came from a live AAPL acquisition and which from fixtures.
 - [Run 38195124312](https://github.com/sbvcid/st-eva/actions/runs/38195124312) (`6ab74e8`, R5 summary reconciliation and JSON/CSV audit export): backend and browser jobs passed — frontend build, archive-isolation, web API, the full backend suite and browser smoke (including the new real-browser export-download smoke) all succeeded.
 - [Run 38198626332](https://github.com/sbvcid/st-eva/actions/runs/38198626332) (`c84bc6f`, R6 point-in-time replay diagnoses the live AAPL DIVERGENCE and replays at the archival watermark): backend and browser jobs passed — the full backend suite (including the new R6 replay-diagnosis tests) and browser smoke (the replay-affecting MSFT path) all succeeded.
+- [Run 38202918791](https://github.com/sbvcid/st-eva/actions/runs/38202918791) (`061230f`, R6.1 replay reconciles each run against its own context snapshot): backend and browser jobs passed — the full backend suite (including the new R6.1 snapshot-identity tests and the restored CLI-output legacy-compatibility test) and browser smoke all succeeded.
 
 Local verification for the same commit before observing CI: full backend suite 1,958 passed, 168 skipped, 140 subtests passed (341.60s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`.
 
@@ -421,7 +422,7 @@ Local verification for the same commit before observing CI: full backend suite 1
 
 **Boundary.** Only the web replay cutoff was corrected. ``archive.replay`` itself, ``observations_for`` eligibility, source availability declarations, the volatile-field hash contract and the reverse-valuation formula are unchanged. The reference-assumption divergence is a documented, honest outcome and is left visible rather than forced to MATCH.
 
-## R6.1 — Replay Snapshot Identity Verification (accepted 2026-10-12)
+## R6.1 — Replay Snapshot Identity Verification (accepted 2026-10-12, verified by run 38202918791)
 
 **Question.** When one asset carries more than one archived context for the same ``as_of``, does replay reconcile a run against *that run's* context, or against an unrelated one that merely shares the data moment?
 
