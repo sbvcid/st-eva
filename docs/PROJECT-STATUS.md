@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-12
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `84cc74d` (R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** [Run 38220867917](https://github.com/sbvcid/st-eva/actions/runs/38220867917), triggered by `84cc74d`; backend and browser jobs passed.
+**Current implementation baseline:** `363afd9` (R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38246189499](https://github.com/sbvcid/st-eva/actions/runs/38246189499), triggered by `363afd9`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -212,7 +212,7 @@ The repository's configured historical P/E issuer inputs currently include AAPL 
 
 Two implementation gaps remain relevant to the actual product:
 
-- The production historical P/E path is opt-in in the CLI (`--historical-pe`); the web adapter does not pass this option to the runner. The default browser path therefore must not be assumed to be using the dedicated daily point-in-time reconstruction.
+- CLI: the production historical P/E path is opt-in via ``--historical-pe``. **The web path now passes it**: ``web/service_adapter.py`` calls ``run_st_eva(..., include_historical_pe=True)``, so the default browser analysis *does* use the dedicated daily point-in-time reconstruction. (An earlier version of this section said the web adapter did not pass the option; that statement is superseded. See the R4 historical-P/E record above for the wiring and its tests.)
 - The code review found inconsistent eligibility handling between reference selection helpers: the historical-median helper checks usable sample count, while the matrix's historical-band conversion can accept a band whose observation count is undeclared. A test fixture currently permits that missing-count case. Production eligibility should have one consistent rule; descriptive historical data and usable scenario references are distinct statuses.
 
 ## 8. Investment Context, lineage and snapshot persistence
@@ -477,3 +477,105 @@ The rebuild's own ``context_id`` was correct in every case; only the snapshot *s
 - Browser smoke (``tests/test_browser_smoke.py``): the fixture-dependent MSFT checks now select ``regression`` explicitly (deterministic and offline, since live is the default), and the live-mode round-trip test asserts the new badge text.
 
 **Not changed.** Valuation formulas, ``reverse-requirements/1.1``, backend request defaults (the API/CLI ``--mode`` default stays ``auto``), CLI output, source-attribution contracts, export schemas and persistent data. Explicit ``live`` mode already had no fixture fallback in the backend (``CompanyResolver.resolve`` uses fixtures only when ``mode != "live"`` and ``YahooFinanceProvider`` failure returns ``None``, which the adapter surfaces as a visible error), so no backend change was needed; the regression-fixture warning banner and provenance distinctions are preserved. ``start-st-eva.bat`` (a local launcher, committed earlier) is unaffected.
+
+## Consensus EPS Period Provenance and Comparability (R7-1, 2026-10-12, verified by run 38246189499)
+
+**Defect.** Yahoo declares a fiscal-period ``endDate`` for the consensus EPS it
+returns (``earningsTrend.trend[].endDate``). The acquisition path discarded it and
+the runner inferred twelve-month coverage from the vendor's ``+1y`` label, so
+``_consensus_is_comparable`` accepted a next-*fiscal-year* estimate against the
+terminal EPS of a different year. Verified live at ``83b75d5``: the MSFT
+consensus ``+1y`` row ends ``2028-06-30`` while the one-year terminal window from
+price date ``2026-10-09`` ends ``2027-10-09`` (**265 days** apart), yet every
+one-year row reported a numeric ``gap_vs_consensus_terminal_eps``. The AAPL row
+ends ``2027-09-30`` (9 days) and was, and remains, eligible.
+
+**Change.**
+- ``fundamental_provider.py``: ``_extract_consensus_forward_eps`` now returns a
+  third element, the declared ``endDate`` of the row that wins the existing
+  ``+1y`` then ``0y`` priority, normalised to an ISO calendar date by the new
+  ``declared_date``. Row selection is unchanged. ``_consensus_observation``
+  writes the date into the observation's ``period_end`` and
+  ``raw["period_end"]`` and keeps the vendor label verbatim in
+  ``raw["period"]``; no ``period_start`` is fabricated. ``FundamentalData``
+  gained ``consensus_forward_eps_period_end``.
+- ``st_eva_runner.py``: ``MarketData`` carries ``consensus_forward_eps_period_end``;
+  ``_apply_observations_to_view`` restores it from the archived raw payload
+  (falling back to the observation's own ``period_end``) so a replay rebuild
+  recovers the same declared date; ``run_st_eva`` publishes it in
+  ``data_quality``; ``_build_reverse_requirements`` derives the
+  ``consensus_period_end``/``consensus_target_period_end`` pair and records an
+  explicit ``UNDECLARED`` unavailable item when the source declares no end.
+- ``reverse_requirements.py``: new ``terminal_period_end(as_of, years)``
+  (calendar-year addition) and ``_consensus_is_comparable`` now decides on the
+  *declared* date against the one-year terminal window end, within a named
+  ``CONSENSUS_PERIOD_TOLERANCE_DAYS = 92``; ``build_scenario``/``build_matrix``/
+  ``build_reverse_requirements_report`` thread it. Longer-horizon rejection,
+  missing/non-positive consensus refusal and every published equation are
+  untouched. New ``build_consensus_reference`` block states the source facts and
+  the rule (no verdict, which stays per-row). ``consensus_period_end`` and
+  ``consensus_period_label`` were added to ``fingerprint_payload``.
+- Traceability: ``ConsensusReferenceDTO`` in ``web/schemas.py`` plus
+  ``ValuationSummary.consensus_forward_eps_period_end``; a consensus panel in
+  the matrix audit drawer shows the value, provider, vendor label, declared
+  period end, target window end, tolerance, and the gap when comparable or a
+  specific not-comparable reason naming **both** period ends;
+  ``exportResult.ts`` gained six ``report_consensus_*`` CSV columns (an absent
+  end stays an empty field, never a zero); i18n keys added to ``en``/``zhTW``/
+  ``types``.
+
+**Verification.**
+- Targeted: ``tests/test_consensus_period_binding.py`` (46 tests plus 10
+  subtests, new): extraction, observation, view/archive round-trip,
+  ``terminal_period_end`` leap-day and unreadable handling, the MSFT-like
+  265-day rejection with both dates in the reason, AAPL-like eligibility,
+  **92 days eligible / 93 days rejected**, undeclared and unreadable
+  ``endDate`` never synthesised, longer horizons intact, formula invariance
+  (the only field that moves between an eligible and a rejected run is the gap,
+  on one-year rows only), the five percentile choices and start-EPS provenance
+  unchanged, fingerprint determinism and the expected fingerprint change.
+- Also green: ``tests/test_reverse_requirements.py``,
+  ``tests/test_st_eva_runner.py``, ``tests/test_msft_historical_pe.py``,
+  ``tests/test_r4_web_historical_pe.py``,
+  ``tests/test_reverse_requirements_wiring.py``,
+  ``tests/test_r21_provenance_binding.py``, ``tests/test_research_dossier.py``,
+  ``tests/test_audit_corrections.py``, ``tests/test_web_api.py``,
+  ``tests/test_historical_pe.py`` and ``tests/test_browser_smoke.py`` (10,
+  including the live-mode round trip on temporary archives).
+- Full backend suite **2,043 passed, 169 skipped, 154 subtests passed**;
+  frontend Vitest **62 passed**; production build green; ``oxlint`` reports only
+  pre-existing warnings.
+- **Real-provider evidence** (``create_app(archives_dir=<temp>)`` with
+  ``mode=live`` against real Yahoo/SEC, run before and after the change): MSFT
+  gap rows went from 20 to 0 and AAPL stayed at 20; all 80 rows per ticker are
+  identical on every published field (price, required exit price, required
+  terminal EPS, total growth, CAGR, growth window, exit-multiple source and
+  eligibility, production distribution 24 and 36 observations), so only the
+  consensus gap moved. Both tickers' fingerprints changed, which is expected
+  because the declared period now takes part in the comparison.
+
+**Replay identity (verified, not forced).** Adding
+``consensus_forward_eps_period_end`` changed the **engine** result's
+``data_quality`` but not the investment-context document, whose ``data_quality``
+block is built separately in ``investment_context.py``. A pre-change MSFT
+archive (built at ``83b75d5`` in a temporary worktree) was replayed under the
+new code and reports **MATCH**. One caveat found while doing this, and
+explicitly *not* caused by this task: this checkout stores three
+``_POLICY_FILES`` (``core_registry.py``, ``evidence_valuation_boundary.py``,
+``evidence_query.py``) with LF line endings while a fresh worktree checkout of
+the same commit stores CRLF, so ``registry_identity.resolver_policy_identity``
+differs between them on line endings alone. The MATCH above was observed with
+that unrelated difference neutralised; with it active, replay reports DIVERGED
+on ``resolver_policy_identity``. ``archive.replay``, ``observations_for``
+eligibility, snapshot selection and the volatile-field ``context_id`` contract
+are untouched.
+
+**Boundary.** ``reverse-requirements/1.1`` keeps its identifier and every
+published equation; the scenario cross-product, the price-only baseline matrix,
+the production historical P/E pipeline and its thresholds, archive/replay
+semantics, SEC binding and the export envelope are unchanged. The out-of-scope
+items (P0 exit-multiple table label for
+``production_historical_pe_percentile``, full ``unavailable`` rendering for
+computed matrices, dividend/total-return UI, start-EPS period-label UI, and
+summary ``Reference P/E`` reconciliation with the production distribution)
+remain outstanding.
