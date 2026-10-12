@@ -39,9 +39,17 @@ export interface Translations {
     verdictTitle: string
     analyzeAnother: string
     marketPrice: string
+    headlineMetricsTitle: string
+    headlineMetricsNote: string
     impliedFwdEps: string
+    impliedFwdEpsBasis: string
     reqEpsCagr: string
+    reqEpsCagrBasis: (years: number) => string
     referencePe: string
+    referencePeBasisUser: string
+    referencePeBasisBand: string
+    referencePeBasisNone: string
+    seeMatrixLink: string
     admissionStatus: string
     admitted: string
     refused: string
@@ -156,6 +164,13 @@ export interface Translations {
     filingFormLabel: string
     conceptLabel: string
     toggleRowAudit: string
+  }
+  export: {
+    sectionTitle: string
+    json: string
+    csv: string
+    jsonHint: string
+    csvHint: string
   }
   evidence: {
     title: string

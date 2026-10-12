@@ -319,6 +319,54 @@ class TestBrowserSmoke(unittest.TestCase):
             context.close()
             browser.close()
 
+    def test_export_controls_trigger_real_downloads(self):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                locale="en-US",
+                viewport={"width": 1280, "height": 800},
+                accept_downloads=True,
+            )
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            # MSFT quick example resolves to the offline regression fixture.
+            msft_btn = page.locator("button:has-text('MSFT')")
+            msft_btn.click()
+            page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+            page.wait_for_selector("text=Reverse Requirements Matrix", timeout=10000)
+
+            # Export controls are present in the real browser response.
+            self.assertGreater(page.get_by_test_id("export-json").count(), 0)
+            self.assertGreater(page.get_by_test_id("export-csv").count(), 0)
+
+            # JSON download is re-parseable and reflects the displayed result,
+            # without the raw_analysis payload.
+            with page.expect_download() as json_dl:
+                page.get_by_test_id("export-json").click()
+            json_path = json_dl.value.path()
+            with open(json_path, "r", encoding="utf-8") as handle:
+                envelope = json.load(handle)
+            self.assertEqual(envelope["result"]["ticker"], "MSFT")
+            self.assertNotIn("raw_analysis", envelope["result"])
+            self.assertIn(
+                "reverse_requirements_matrix",
+                envelope["result"]["reverse_requirements"],
+            )
+
+            # CSV download carries the documented full-matrix header.
+            with page.expect_download() as csv_dl:
+                page.get_by_test_id("export-csv").click()
+            csv_path = csv_dl.value.path()
+            with open(csv_path, "r", encoding="utf-8") as handle:
+                csv_text = handle.read()
+            header = csv_text.splitlines()[0]
+            self.assertIn("record_type", header)
+            self.assertIn("required_eps_cagr", header)
+
+            context.close()
+            browser.close()
+
 
 if __name__ == "__main__":
     unittest.main()

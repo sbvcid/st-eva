@@ -42,9 +42,20 @@ export const zhTW: Translations = {
     verdictTitle: '分析結果裁決',
     analyzeAnother: '分析其他標的',
     marketPrice: '市場價格',
-    impliedFwdEps: '隱含遠期 EPS',
-    reqEpsCagr: '所需 EPS 複合成長率',
+    headlineMetricsTitle: '市場隱含參考指標',
+    headlineMetricsNote:
+      '由今日價格於所選本益比下推導之單點參考值。此與下方反推需求矩陣中「含有要求報酬率、逐情境」的計算屬不同算法，兩者不可互換。',
+    impliedFwdEps: '價格隱含 EPS',
+    impliedFwdEpsBasis:
+      '市場價格 ÷ 所選本益比。代表今日價格在該本益比下所對應的 EPS，並非未來一年（NTM）預估值。',
+    reqEpsCagr: '隱含 EPS 差距（複合成長率）',
+    reqEpsCagrBasis: (years: number) =>
+      `以固定本益比對照近四季 EPS，按 ${years} 年折算之年化差距——不含要求報酬率、退出倍數或股利。逐情境之要求報酬率數字請參見反推需求矩陣。`,
     referencePe: '參考本益比',
+    referencePeBasisUser: '您自訂的參考本益比',
+    referencePeBasisBand: '資料商歷史本益比帶之中位數（≥ 20 個觀察值）',
+    referencePeBasisNone: '無可用之參考本益比',
+    seeMatrixLink: '逐情境數字請參見反向估值需求矩陣。',
     admissionStatus: '準入審查狀態：',
     admitted: '已準入',
     refused: '拒絕準入',
@@ -165,6 +176,13 @@ export const zhTW: Translations = {
     filingFormLabel: '申報表單',
     conceptLabel: 'XBRL 會計概念',
     toggleRowAudit: '檢視情境審計明細',
+  },
+  export: {
+    sectionTitle: '匯出',
+    json: '匯出報告（JSON）',
+    csv: '匯出 CSV（完整矩陣）',
+    jsonHint: '版本化、機器可讀之報告，含全部情境與審計軌跡。',
+    csvHint: '完整矩陣中每個情境一列，並包含審計軌跡。',
   },
   evidence: {
     title: '事實證據與監管溯源',

@@ -359,3 +359,152 @@ describe('ST-EVA Frontend App Component', () => {
     })
   })
 })
+
+// R5: the results interface exposes JSON/CSV exports of the analysis currently
+// displayed, built from the exact typed response (never recomputed), and a
+// second submission must export its own result rather than stale data.
+describe('ST-EVA result exports', () => {
+  const captureBlobUrl = () => {
+    const captured: { blob: Blob | null } = { blob: null }
+    URL.createObjectURL = vi.fn((b: Blob) => {
+      captured.blob = b
+      return 'blob:mock'
+    }) as unknown as typeof URL.createObjectURL
+    URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL
+    return captured
+  }
+
+  const readBlobText = async (blob: Blob): Promise<string> => {
+    if (typeof (blob as { text?: () => Promise<string> }).text === 'function') {
+      return blob.text()
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = () => reject(reader.error)
+      reader.readAsText(blob)
+    })
+  }
+
+  const buildJob = (
+    jobId: string,
+    ticker: string,
+    scenarios: unknown[],
+    matrixSize: number,
+  ): JobDetailResponse => ({
+    job_id: jobId,
+    ticker,
+    status: 'COMPLETED',
+    stage: 'completed',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    result: {
+      ticker,
+      company_name: 'Test Corp',
+      status: 'success',
+      as_of: '2026-10-09',
+      research_id: 'RES-R5',
+      source_identifiers: ['YahooFinance', 'API_LIVE'],
+      admission_summary: { total_admitted: 1, total_refused: 0, metrics_admitted: ['revenue'], refusals: [] },
+      valuation_summary: { limitations: [], current_price: 100.0, currency: 'USD', selected_pe: 20.0, selected_pe_basis: 'user_supplied_multiple', summary_horizon_years: 1.0 },
+      replay_summary: { attempted: false, matched: false, reconstructed: false, observations_used: 0, observations_considered: 0 },
+      refusal_reasons: [],
+      reverse_requirements: {
+        formula_version: 'reverse-requirements/1.1',
+        status: 'COMPUTED',
+        status_reason: null,
+        matrix_size: matrixSize,
+        reverse_requirements_matrix: scenarios,
+        reading_notes: [],
+      },
+      raw_analysis: { leaked_marker: 'RAW' },
+    } as unknown as JobDetailResponse['result'],
+  })
+
+  const scenario = (exitValue: number, cagr: number) => ({
+    horizon_years: 3.0,
+    required_return: 0.1,
+    required_return_basis: 'PRICE_RETURN_ONLY',
+    exit_multiple: { value: exitValue, source: 'user_supplied', is_user_assumption: true, eligibility_state: 'USER_SPECIFIED', usable_for_reference: false },
+    required_exit_price: 100.0 * 1.1 ** 3,
+    required_terminal_eps: (100.0 * 1.1 ** 3) / exitValue,
+    start_eps: { value: 4.0, basis: 'TRAILING_TWELVE_MONTHS', months_covered: 12.0, source_type: 'API_LIVE', is_user_assumption: false },
+    growth_years: 3.0,
+    required_eps_cagr: cagr,
+    total_terminal_eps_growth: cagr * 3,
+    comparison_notes: [],
+    flags: [],
+    formula_version: 'reverse-requirements/1.1',
+  })
+
+  it('renders export controls after a completed analysis', async () => {
+    vi.mocked(apiClient.startAnalysis).mockResolvedValue({ job_id: 'job-exp', ticker: 'AAPL', status: 'PENDING' })
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue(buildJob('job-exp', 'AAPL', [scenario(20, 0.13)], 1))
+
+    render(<App />)
+    fireEvent.change(screen.getByPlaceholderText(/Enter ticker/i), { target: { value: 'AAPL' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+
+    expect(await screen.findByTestId('export-json')).toBeInTheDocument()
+    expect(screen.getByTestId('export-csv')).toBeInTheDocument()
+  })
+
+  it('exports the currently displayed result as re-parseable JSON without raw_analysis', async () => {
+    vi.mocked(apiClient.startAnalysis).mockResolvedValue({ job_id: 'job-json', ticker: 'AAPL', status: 'PENDING' })
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue(buildJob('job-json', 'AAPL', [scenario(20, 0.13)], 1))
+    const capture = captureBlobUrl()
+
+    render(<App />)
+    fireEvent.change(screen.getByPlaceholderText(/Enter ticker/i), { target: { value: 'AAPL' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+    await screen.findByTestId('export-json')
+
+    fireEvent.click(screen.getByTestId('export-json'))
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
+
+    const envelope = JSON.parse(await readBlobText(capture.blob as Blob))
+    expect(envelope.export.ticker).toBe('AAPL')
+    expect(envelope.export.mode).toBe('auto')
+    expect('raw_analysis' in envelope.result).toBe(false)
+    expect(JSON.stringify(envelope)).not.toContain('leaked_marker')
+    expect(envelope.result.reverse_requirements.reverse_requirements_matrix).toHaveLength(1)
+  })
+
+  it('a second submission exports its own CSV, not stale data from the first', async () => {
+    let call = 0
+    vi.mocked(apiClient.startAnalysis).mockImplementation(async (req) => ({
+      job_id: `job-${req.ticker}`,
+      ticker: req.ticker,
+      status: 'PENDING',
+    }))
+    vi.mocked(apiClient.getJobStatus).mockImplementation(async () => {
+      call += 1
+      return call === 1
+        ? buildJob('job-AAPL', 'AAPL', [scenario(20, 0.13), scenario(22, 0.11)], 2)
+        : buildJob('job-MSFT', 'MSFT', [scenario(32, 0.19)], 1)
+    })
+    const capture = captureBlobUrl()
+
+    render(<App />)
+    // Submission 1: AAPL with two scenarios.
+    fireEvent.change(screen.getByPlaceholderText(/Enter ticker/i), { target: { value: 'AAPL' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Analyze$/i }))
+    await screen.findByTestId('export-csv')
+
+    // Submission 2: MSFT with a single, different scenario.
+    fireEvent.change(screen.getByPlaceholderText(/Enter ticker/i), { target: { value: 'MSFT' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Analyze$/i }))
+    await screen.findByText('Test Corp')
+
+    fireEvent.click(screen.getByTestId('export-csv'))
+    const csv = await readBlobText(capture.blob as Blob)
+    const lines = csv.split('\r\n')
+
+    expect(lines[0]).toContain('record_type')
+    // Header + exactly one scenario row for the second (current) submission.
+    expect(lines).toHaveLength(2)
+    expect(lines[1]).toContain('MSFT')
+    expect(lines[1]).toContain('32')
+    expect(lines[1]).toContain('0.19')
+  })
+})

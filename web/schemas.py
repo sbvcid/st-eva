@@ -84,6 +84,13 @@ class ValuationSummary(BaseModel):
     eps_gap_vs_consensus: Optional[float] = None
     required_eps_cagr: Optional[float] = None
     selected_pe: Optional[float] = None
+    # Basis of the summary headline metrics, so a reader cannot mistake them for
+    # a reverse-requirements matrix row. The summary CAGR is a single-point,
+    # flat-multiple inversion (today's price vs the price-implied EPS at the
+    # selected multiple, annualised over one horizon); it encodes no required
+    # return, no exit multiple and no dividends, unlike a matrix scenario.
+    selected_pe_basis: Optional[str] = None
+    summary_horizon_years: Optional[float] = None
     observed_pe: Optional[float] = None
     observed_ps: Optional[float] = None
     observed_pfcf: Optional[float] = None

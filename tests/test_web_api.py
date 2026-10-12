@@ -406,6 +406,52 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
+    def test_summary_headline_basis_is_reported(self):
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+
+            # A user-supplied reference P/E is reported with that exact basis,
+            # and the headline implied EPS reconciles to price / selected P/E.
+            dto_user = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+                reference_multiple=27.5,
+            )
+            vs = dto_user.valuation_summary
+            self.assertEqual(vs.selected_pe_basis, "user_supplied_multiple")
+            self.assertAlmostEqual(vs.selected_pe, 27.5, places=6)
+            self.assertAlmostEqual(vs.summary_horizon_years, 1.0, places=6)
+            self.assertIsNotNone(vs.current_price)
+            self.assertAlmostEqual(
+                vs.forward_eps_at_reference_multiple,
+                vs.current_price / 27.5,
+                places=6,
+            )
+
+            # The summary horizon is reported so the headline CAGR's basis is
+            # unambiguous, and can differ from the matrix horizons.
+            dto_h = adapter.run_analysis_pipeline(
+                ticker="MSFT",
+                mode="regression",
+                reference_multiple=27.5,
+                horizon_years=3.0,
+            )
+            self.assertAlmostEqual(
+                dto_h.valuation_summary.summary_horizon_years, 3.0, places=6
+            )
+            # Whatever method selects the summary P/E, it is one the UI can
+            # label, and it is never the production point-in-time distribution.
+            self.assertIn(
+                dto_h.valuation_summary.selected_pe_basis,
+                {"user_supplied_multiple", "historical_pe_median", "none"},
+            )
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
     def test_uncomputable_scenario_preserved_with_reason(self):
         import tempfile
         import shutil

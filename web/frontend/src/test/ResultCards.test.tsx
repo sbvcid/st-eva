@@ -1,0 +1,126 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { ResultCards } from '../components/ResultCards'
+import { MATRIX_SECTION_ID } from '../components/ReverseRequirementsMatrix'
+import {
+  AdmissionSummary,
+  ReplaySummary,
+  ValuationSummary,
+} from '../types/api'
+import { I18nProvider } from '../i18n'
+
+const admission: AdmissionSummary = {
+  total_admitted: 1,
+  total_refused: 0,
+  metrics_admitted: ['revenue'],
+  refusals: [],
+}
+const replay: ReplaySummary = {
+  attempted: true,
+  outcome: 'MATCH',
+  matched: true,
+  reconstructed: true,
+  observations_used: 12,
+  observations_considered: 12,
+}
+
+const renderCards = (valuation: Partial<ValuationSummary>) =>
+  render(
+    <I18nProvider initialLang="en">
+      <ResultCards
+        ticker="AAPL"
+        companyName="Apple Inc."
+        asOf="2026-10-09"
+        researchId="RES-R5"
+        valuation={{ limitations: [], ...valuation } as ValuationSummary}
+        admission={admission}
+        replay={replay}
+        refusalReasons={[]}
+        sourceIdentifiers={[]}
+      />
+    </I18nProvider>,
+  )
+
+describe('ResultCards headline-metric reconciliation', () => {
+  it('labels headline metrics with their single-point, flat-multiple basis', () => {
+    renderCards({
+      current_price: 336.64,
+      currency: 'USD',
+      forward_eps_at_reference_multiple: 11.22,
+      required_eps_cagr: 0.2858,
+      selected_pe: 30.0,
+      selected_pe_basis: 'user_supplied_multiple',
+      summary_horizon_years: 1.0,
+    })
+
+    // Section heading + distinct-from-matrix note are present.
+    expect(screen.getByText('Market-Implied Headline Metrics')).toBeInTheDocument()
+
+    // The summary CAGR is relabelled so it cannot be mistaken for the matrix
+    // column, which stays "Req. EPS CAGR".
+    expect(screen.getByText('Implied EPS Gap (CAGR)')).toBeInTheDocument()
+    expect(screen.queryByText('Req. EPS CAGR')).not.toBeInTheDocument()
+    expect(screen.getByText('Price-Implied EPS')).toBeInTheDocument()
+
+    // Explicit basis legend.
+    const legend = screen.getByTestId('summary-basis-legend')
+    expect(legend).toBeInTheDocument()
+    expect(legend.textContent).toMatch(/not a forward\/NTM forecast/i)
+    expect(legend.textContent).toMatch(/no required-return hurdle/i)
+    expect(legend.textContent).toMatch(/annualised over 1y/i)
+    expect(legend.textContent).toMatch(/Your supplied reference multiple/i)
+
+    // Explanatory link toward the matrix.
+    expect(
+      screen.getByText(/See the reverse-requirements matrix for per-scenario figures/i),
+    ).toBeInTheDocument()
+  })
+
+  it('states the vendor band-median basis when the reference P/E is not user-supplied', () => {
+    renderCards({
+      current_price: 425.5,
+      currency: 'USD',
+      selected_pe: 18.5,
+      selected_pe_basis: 'historical_pe_median',
+      summary_horizon_years: 1.0,
+    })
+    const legend = screen.getByTestId('summary-basis-legend')
+    expect(legend.textContent).toMatch(/Vendor historical P\/E band median/i)
+  })
+
+  it('states no usable reference multiple when none was selected', () => {
+    renderCards({ selected_pe: null, selected_pe_basis: 'none' })
+    const legend = screen.getByTestId('summary-basis-legend')
+    expect(legend.textContent).toMatch(/No usable reference multiple/i)
+  })
+
+  it('scrolls to the matrix section when the explanatory link is clicked', () => {
+    const scrollIntoView = vi.fn()
+    // jsdom does not implement scrollIntoView.
+    ;(window as unknown as { HTMLElement: { prototype: { scrollIntoView: unknown } } }).HTMLElement.prototype.scrollIntoView =
+      scrollIntoView
+
+    render(
+      <I18nProvider initialLang="en">
+        <>
+          <ResultCards
+            ticker="AAPL"
+            companyName="Apple Inc."
+            asOf="2026-10-09"
+            valuation={{ limitations: [], current_price: 336.64, selected_pe: 30.0, selected_pe_basis: 'user_supplied_multiple' } as ValuationSummary}
+            admission={admission}
+            replay={replay}
+            refusalReasons={[]}
+            sourceIdentifiers={[]}
+          />
+          <div id={MATRIX_SECTION_ID} />
+        </>
+      </I18nProvider>,
+    )
+
+    fireEvent.click(
+      screen.getByText(/See the reverse-requirements matrix for per-scenario figures/i),
+    )
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+})

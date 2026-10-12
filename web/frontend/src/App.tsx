@@ -4,6 +4,10 @@ import {
   JobDetailResponse,
 } from './types/api'
 import { startAnalysis, getJobStatus } from './services/apiClient'
+import {
+  downloadReverseRequirementsJson,
+  downloadReverseRequirementsCsv,
+} from './services/exportResult'
 import { isStandaloneMode } from './services/pwa'
 import { I18nProvider, useI18n, Language } from './i18n'
 import { ProgressStepper } from './components/ProgressStepper'
@@ -29,6 +33,12 @@ const MainApp: React.FC = () => {
   const [tickerInput, setTickerInput] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
   const [currentJob, setCurrentJob] = useState<JobDetailResponse | null>(null)
+  // The request that produced the result currently displayed. Captured so an
+  // export echoes this exact submission (assumptions + mode); it is never used
+  // to recompute figures. Replaced on every new submission, so a second
+  // analysis never exports a previous submission's request.
+  const [lastSubmittedRequest, setLastSubmittedRequest] =
+    useState<AnalyzeRequest | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -152,6 +162,8 @@ const MainApp: React.FC = () => {
         payload.prefer_eps_anchor = epsAnchorBasis
       }
 
+      setLastSubmittedRequest(payload)
+
       const initResp = await startAnalysis(payload)
       pollJob(initResp.job_id)
     } catch (err: any) {
@@ -196,6 +208,7 @@ const MainApp: React.FC = () => {
 
   const handleReset = () => {
     setCurrentJob(null)
+    setLastSubmittedRequest(null)
     setErrorMessage(null)
     setLoading(false)
     setTickerInput('')
@@ -515,16 +528,47 @@ const MainApp: React.FC = () => {
         {/* Result Rendering */}
         {currentJob?.result && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between pb-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 {t.results.verdictTitle}
               </span>
-              <button
-                onClick={handleReset}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" /> {t.results.analyzeAnother}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="export-json"
+                  title={t.export.jsonHint}
+                  onClick={() => {
+                    if (currentJob?.result) {
+                      downloadReverseRequirementsJson(
+                        currentJob.result,
+                        lastSubmittedRequest,
+                      )
+                    }
+                  }}
+                  className="text-xs text-slate-600 hover:text-blue-700 font-medium flex items-center gap-1.5 cursor-pointer border border-slate-200 rounded-md px-2.5 py-1.5 bg-white hover:bg-blue-50 transition-colors shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5" /> {t.export.json}
+                </button>
+                <button
+                  type="button"
+                  data-testid="export-csv"
+                  title={t.export.csvHint}
+                  onClick={() => {
+                    if (currentJob?.result) {
+                      downloadReverseRequirementsCsv(currentJob.result)
+                    }
+                  }}
+                  className="text-xs text-slate-600 hover:text-blue-700 font-medium flex items-center gap-1.5 cursor-pointer border border-slate-200 rounded-md px-2.5 py-1.5 bg-white hover:bg-blue-50 transition-colors shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5" /> {t.export.csv}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> {t.results.analyzeAnother}
+                </button>
+              </div>
             </div>
 
             <ResultCards

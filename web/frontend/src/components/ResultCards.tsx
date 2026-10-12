@@ -6,6 +6,7 @@ import {
 } from '../types/api'
 import {
   AlertCircle,
+  ArrowRight,
   Building2,
   Calendar,
   CheckCircle2,
@@ -14,6 +15,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useI18n } from '../i18n'
+import { MATRIX_SECTION_ID } from './ReverseRequirementsMatrix'
 
 interface ResultCardsProps {
   ticker: string
@@ -44,6 +46,20 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
   const isRegression = sourceIdentifiers.some(
     (s) => s.toLowerCase().includes('fixture') || s.toLowerCase().includes('regression')
   )
+
+  // The headline metrics are single-point, flat-multiple references implied by
+  // today's price; they are NOT reverse-requirements matrix scenarios. State
+  // each one's exact calculation/assumption basis so it cannot be mistaken for
+  // a return-hurdled matrix row.
+  const summaryHorizonYears = valuation.summary_horizon_years ?? 1
+  const referencePeBasis =
+    valuation.selected_pe_basis === 'user_supplied_multiple'
+      ? t.results.referencePeBasisUser
+      : valuation.selected_pe_basis === 'historical_pe_median'
+      ? t.results.referencePeBasisBand
+      : valuation.selected_pe != null
+      ? null
+      : t.results.referencePeBasisNone
 
   return (
     <div className="space-y-4">
@@ -90,51 +106,93 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
           </div>
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              {t.results.marketPrice}
+        <div className="pt-4">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            {t.results.headlineMetricsTitle}
+          </span>
+          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+            {t.results.headlineMetricsNote}
+          </p>
+
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3">
+            <div>
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                {t.results.marketPrice}
+              </div>
+              <div className="text-lg font-bold text-slate-900 mt-0.5">
+                {valuation.current_price !== null && valuation.current_price !== undefined
+                  ? `${valuation.currency || '$'} ${valuation.current_price.toFixed(2)}`
+                  : '—'}
+              </div>
             </div>
-            <div className="text-lg font-bold text-slate-900 mt-0.5">
-              {valuation.current_price !== null && valuation.current_price !== undefined
-                ? `${valuation.currency || '$'} ${valuation.current_price.toFixed(2)}`
-                : '—'}
+
+            <div>
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                {t.results.impliedFwdEps}
+              </div>
+              <div className="text-lg font-bold text-slate-900 mt-0.5">
+                {valuation.forward_eps_at_reference_multiple !== null &&
+                valuation.forward_eps_at_reference_multiple !== undefined
+                  ? `${valuation.forward_eps_at_reference_multiple.toFixed(2)}`
+                  : '—'}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                {t.results.reqEpsCagr}
+              </div>
+              <div className="text-lg font-bold text-slate-900 mt-0.5">
+                {valuation.required_eps_cagr !== null && valuation.required_eps_cagr !== undefined
+                  ? `${(valuation.required_eps_cagr * 100).toFixed(1)}%`
+                  : '—'}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                {t.results.referencePe}
+              </div>
+              <div className="text-lg font-bold text-slate-900 mt-0.5">
+                {valuation.selected_pe !== null && valuation.selected_pe !== undefined
+                  ? `${valuation.selected_pe.toFixed(1)}x`
+                  : '—'}
+              </div>
             </div>
           </div>
 
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              {t.results.impliedFwdEps}
-            </div>
-            <div className="text-lg font-bold text-slate-900 mt-0.5">
-              {valuation.forward_eps_at_reference_multiple !== null &&
-              valuation.forward_eps_at_reference_multiple !== undefined
-                ? `${valuation.forward_eps_at_reference_multiple.toFixed(2)}`
-                : '—'}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              {t.results.reqEpsCagr}
-            </div>
-            <div className="text-lg font-bold text-slate-900 mt-0.5">
-              {valuation.required_eps_cagr !== null && valuation.required_eps_cagr !== undefined
-                ? `${(valuation.required_eps_cagr * 100).toFixed(1)}%`
-                : '—'}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              {t.results.referencePe}
-            </div>
-            <div className="text-lg font-bold text-slate-900 mt-0.5">
-              {valuation.selected_pe !== null && valuation.selected_pe !== undefined
-                ? `${valuation.selected_pe.toFixed(1)}x`
-                : '—'}
-            </div>
+          {/* Basis legend: the exact calculation/assumption basis of each
+              headline metric, kept explicit so it is never read as a matrix row. */}
+          <div
+            data-testid="summary-basis-legend"
+            className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-[11px] text-slate-500 leading-relaxed"
+          >
+            <p>
+              <span className="font-semibold text-slate-600">{t.results.impliedFwdEps}:</span>{' '}
+              {t.results.impliedFwdEpsBasis}
+            </p>
+            <p>
+              <span className="font-semibold text-slate-600">{t.results.reqEpsCagr}:</span>{' '}
+              {t.results.reqEpsCagrBasis(summaryHorizonYears)}
+            </p>
+            {referencePeBasis && (
+              <p>
+                <span className="font-semibold text-slate-600">{t.results.referencePe}:</span>{' '}
+                {referencePeBasis}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById(MATRIX_SECTION_ID)
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium pt-0.5 cursor-pointer"
+            >
+              <ArrowRight className="w-3 h-3" />
+              <span>{t.results.seeMatrixLink}</span>
+            </button>
           </div>
         </div>
       </div>

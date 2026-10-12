@@ -49,6 +49,13 @@ export interface ValuationSummary {
   eps_gap_vs_consensus?: number | null
   required_eps_cagr?: number | null
   selected_pe?: number | null
+  // Basis of the summary headline metrics, so they are not mistaken for a
+  // reverse-requirements matrix row. `selected_pe_basis` is the summary
+  // engine's own reference method: 'user_supplied_multiple',
+  // 'historical_pe_median', or 'none'. `summary_horizon_years` is the horizon
+  // the summary CAGR is annualised over (default 1.0 on the web path).
+  selected_pe_basis?: string | null
+  summary_horizon_years?: number | null
   observed_pe?: number | null
   observed_ps?: number | null
   observed_pfcf?: number | null

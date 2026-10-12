@@ -26,6 +26,9 @@ interface ReverseRequirementsMatrixProps {
   currency?: string | null
 }
 
+/** Stable anchor id so the summary cards can deep-link to the matrix. */
+export const MATRIX_SECTION_ID = 'reverse-requirements-matrix'
+
 /**
  * The source of an exit multiple, stated as what it is.
  *
@@ -114,7 +117,10 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+    <div
+      id={MATRIX_SECTION_ID}
+      className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>

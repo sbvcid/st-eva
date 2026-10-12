@@ -304,6 +304,8 @@ class AnalysisServiceAdapter:
                 eps_gap_vs_consensus=implied.get("eps_gap_vs_consensus"),
                 required_eps_cagr=implied.get("required_eps_cagr_from_current_eps"),
                 selected_pe=ref_info.get("multiple"),
+                selected_pe_basis=ref_info.get("method"),
+                summary_horizon_years=horizon_years,
                 observed_pe=obs_val.get("current_pe"),
                 observed_ps=obs_val.get("current_ps"),
                 observed_pfcf=obs_val.get("current_pfcf"),

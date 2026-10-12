@@ -42,9 +42,20 @@ export const en: Translations = {
     verdictTitle: 'Analysis Verdict',
     analyzeAnother: 'Analyze another',
     marketPrice: 'Market Price',
-    impliedFwdEps: 'Implied Fwd EPS',
-    reqEpsCagr: 'Req. EPS CAGR',
+    headlineMetricsTitle: 'Market-Implied Headline Metrics',
+    headlineMetricsNote:
+      'Single-point references implied by today’s price at a selected multiple. A distinct calculation from the return-hurdled, per-scenario matrix below — not interchangeable with a matrix CAGR.',
+    impliedFwdEps: 'Price-Implied EPS',
+    impliedFwdEpsBasis:
+      'Market price ÷ selected P/E. The EPS today’s price corresponds to at that multiple — not a forward/NTM forecast.',
+    reqEpsCagr: 'Implied EPS Gap (CAGR)',
+    reqEpsCagrBasis: (years: number) =>
+      `Flat multiple vs trailing EPS, annualised over ${years}y — no required-return hurdle, exit multiple or dividends. See the matrix for return-hurdled scenarios.`,
     referencePe: 'Reference P/E',
+    referencePeBasisUser: 'Your supplied reference multiple',
+    referencePeBasisBand: 'Vendor historical P/E band median (≥ 20 observations)',
+    referencePeBasisNone: 'No usable reference multiple',
+    seeMatrixLink: 'See the reverse-requirements matrix for per-scenario figures.',
     admissionStatus: 'Admission Status:',
     admitted: 'ADMITTED',
     refused: 'REFUSED',
@@ -166,6 +177,13 @@ export const en: Translations = {
     filingFormLabel: 'Form',
     conceptLabel: 'XBRL Concept',
     toggleRowAudit: 'Inspect Row Audit Trail',
+  },
+  export: {
+    sectionTitle: 'Export',
+    json: 'Export report (JSON)',
+    csv: 'Export CSV (full matrix)',
+    jsonHint: 'Versioned, machine-readable report with all scenarios and audit trail.',
+    csvHint: 'One row per scenario across the full matrix, including the audit trail.',
   },
   evidence: {
     title: 'Evidence & Regulatory Provenance',
