@@ -68,7 +68,7 @@ describe('ST-EVA Frontend App Component', () => {
     await waitFor(() => {
       expect(mockStart).toHaveBeenCalledWith({
         ticker: 'AAPL',
-        mode: 'auto',
+        mode: 'live',
       })
     })
 
@@ -286,9 +286,8 @@ describe('ST-EVA Frontend App Component', () => {
 
     render(<App />)
 
-    // Open assumptions drawer
-    const toggleAssumptions = screen.getByRole('button', { name: /Scenario Assumptions/i })
-    fireEvent.click(toggleAssumptions)
+    // The assumptions drawer is expanded by default, so its fields are reachable
+    // without opening anything.
 
     // Set assumptions
     const refMultipleInput = screen.getByPlaceholderText('e.g. 20.0')
@@ -302,12 +301,12 @@ describe('ST-EVA Frontend App Component', () => {
 
     const input = screen.getByPlaceholderText(/Enter ticker/i)
     fireEvent.change(input, { target: { value: 'AAPL' } })
-    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Analyze$/i }))
 
     await waitFor(() => {
       expect(mockStart).toHaveBeenCalledWith({
         ticker: 'AAPL',
-        mode: 'auto',
+        mode: 'live',
         reference_multiple: 25.0,
         reverse_horizons: [3.0],
         required_returns: [0.12],
@@ -464,7 +463,7 @@ describe('ST-EVA result exports', () => {
 
     const envelope = JSON.parse(await readBlobText(capture.blob as Blob))
     expect(envelope.export.ticker).toBe('AAPL')
-    expect(envelope.export.mode).toBe('auto')
+    expect(envelope.export.mode).toBe('live')
     expect('raw_analysis' in envelope.result).toBe(false)
     expect(JSON.stringify(envelope)).not.toContain('leaked_marker')
     expect(envelope.result.reverse_requirements.reverse_requirements_matrix).toHaveLength(1)

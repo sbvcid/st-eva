@@ -196,7 +196,10 @@ class TestBrowserSmoke(unittest.TestCase):
                     f"Horizontal overflow detected on viewport {vp['name']}: scrollWidth={scroll_width}, clientWidth={client_width}",
                 )
 
-                # Test typing and clicking MSFT regression fixture
+                # Test typing and clicking MSFT, pinned to the offline
+                # regression fixture so this layout check stays deterministic
+                # (live is now the default mode).
+                page.select_option("select >> nth=0", "regression")
                 msft_btn = page.locator("button:has-text('MSFT')")
                 msft_btn.click()
 
@@ -298,7 +301,10 @@ class TestBrowserSmoke(unittest.TestCase):
             page = context.new_page()
             page.goto(self.base_url)
 
-            # Click MSFT quick example (uses regression fixture)
+            # Click MSFT quick example, pinned to the offline regression fixture
+            # so the audit evidence ids stay deterministic (live is the default
+            # mode now, so it must be selected explicitly).
+            page.select_option("select >> nth=0", "regression")
             msft_btn = page.locator("button:has-text('MSFT')")
             msft_btn.click()
 
@@ -330,7 +336,9 @@ class TestBrowserSmoke(unittest.TestCase):
             page = context.new_page()
             page.goto(self.base_url)
 
-            # MSFT quick example resolves to the offline regression fixture.
+            # MSFT quick example, pinned to the offline regression fixture so the
+            # export check stays deterministic (live is the default mode now).
+            page.select_option("select >> nth=0", "regression")
             msft_btn = page.locator("button:has-text('MSFT')")
             msft_btn.click()
             page.wait_for_selector("text=Analysis Verdict", timeout=90000)
@@ -644,9 +652,9 @@ class TestLiveModeSelectionBrowser(unittest.TestCase):
             page.goto(self.base_url)
             page.wait_for_selector("text=Reverse-engineer market expectations")
 
-            # Select the non-regression acquisition mode and an initial
-            # assumption set, then submit.
-            page.locator("button:has-text('Scenario Assumptions')").click()
+            # The settings drawer is expanded by default, so the mode and
+            # assumptions are already reachable; select the mode explicitly and
+            # set an initial assumption set, then submit.
             page.select_option("select >> nth=0", "live")
             page.locator("input[placeholder='e.g. 20.0']").fill("20")
             page.locator("input[placeholder*='e.g. 1.0, 2.0, 3.0, 5.0']").fill("3")
@@ -667,9 +675,12 @@ class TestLiveModeSelectionBrowser(unittest.TestCase):
                 },
             )
 
-            # Live identities, not a fixture: no regression banner, live mode chip.
+            # Live identities, not a fixture: no regression banner, and the
+            # always-visible badge names the live data source.
             self.assertEqual(page.locator("text=REGRESSION FIXTURE (TEST DATA)").count(), 0)
-            self.assertGreater(page.locator("text=Mode: live").count(), 0)
+            self.assertGreater(
+                page.locator("text=Data source: live (Yahoo / SEC)").count(), 0
+            )
 
             # The displayed matrix matches the request's assumptions.
             page.wait_for_selector("text=Reverse Requirements Matrix")

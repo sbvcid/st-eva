@@ -95,6 +95,11 @@ export const en: Translations = {
     modeAuto: 'Auto (Live with Fixture Fallback)',
     modeLive: 'Live Only',
     modeRegression: 'Regression Fixture (Offline Test)',
+    modeHint:
+      'Live: real Yahoo/SEC market data, with no fallback to fixtures — if acquisition fails, the error is reported instead. Auto: live first, then a static test fixture for TENCENT/MSFT/NU. Regression: offline static fixtures for testing only.',
+    modeBadgeLive: 'Data source: live (Yahoo / SEC)',
+    modeBadgeAuto: 'Data source: auto (live, fixture fallback)',
+    modeBadgeRegression: 'Data source: regression fixture (test data)',
     refMultipleLabel: 'Reference P/E (Exit Multiple)',
     horizonsLabel: 'Holding Horizons (Years, comma-separated)',
     returnsLabel: 'Required Returns (%, comma-separated e.g. 8, 10, 12, 15)',

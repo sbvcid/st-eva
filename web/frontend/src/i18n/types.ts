@@ -83,6 +83,10 @@ export interface Translations {
     modeAuto: string
     modeLive: string
     modeRegression: string
+    modeHint: string
+    modeBadgeLive: string
+    modeBadgeAuto: string
+    modeBadgeRegression: string
     refMultipleLabel: string
     horizonsLabel: string
     returnsLabel: string

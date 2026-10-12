@@ -95,6 +95,11 @@ export const zhTW: Translations = {
     modeAuto: '自動模式（即時優先，測試標的備援）',
     modeLive: '僅即時行情',
     modeRegression: '回歸測試數據（離線測試）',
+    modeHint:
+      '即時：使用真實 Yahoo/SEC 市場資料，不會退回測試數據；若擷取失敗會直接顯示錯誤。自動：優先即時，失敗時對 TENCENT/MSFT/NU 改用靜態測試數據。迴歸測試：僅供測試使用的離線靜態數據。',
+    modeBadgeLive: '資料來源：即時（Yahoo / SEC）',
+    modeBadgeAuto: '資料來源：自動（即時優先，失敗備援）',
+    modeBadgeRegression: '資料來源：迴歸測試數據（測試資料）',
     refMultipleLabel: '參考本益比（退出倍數）',
     horizonsLabel: '持有期間（年，以逗號分隔，例如 1, 2, 3, 5）',
     returnsLabel: '要求報酬率（%，以逗號分隔，例如 8, 10, 12, 15）',

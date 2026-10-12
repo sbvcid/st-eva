@@ -47,8 +47,13 @@ const MainApp: React.FC = () => {
   const [isStandalone, setIsStandalone] = useState<boolean>(false)
 
   // Scenario assumption controls
-  const [mode, setMode] = useState<string>('auto')
-  const [showAssumptions, setShowAssumptions] = useState<boolean>(false)
+  // Live-first by default: a normal analysis must observe real market data, not
+  // silently resolve to a static regression fixture. `auto` and `regression`
+  // remain explicit, user-selectable choices.
+  const [mode, setMode] = useState<string>('live')
+  // The settings drawer starts expanded so the execution mode and its effect on
+  // data sourcing are visible on first use instead of hidden behind a toggle.
+  const [showAssumptions, setShowAssumptions] = useState<boolean>(true)
   const [customReferenceMultiple, setCustomReferenceMultiple] = useState<string>('')
   const [customHorizons, setCustomHorizons] = useState<string>('')
   const [customReturns, setCustomReturns] = useState<string>('')
@@ -215,7 +220,7 @@ const MainApp: React.FC = () => {
   }
 
   const handleResetAssumptions = () => {
-    setMode('auto')
+    setMode('live')
     setCustomReferenceMultiple('')
     setCustomHorizons('')
     setCustomReturns('')
@@ -357,11 +362,25 @@ const MainApp: React.FC = () => {
               <span>{showAssumptions ? t.assumptions.hideAssumptions : t.assumptions.showAssumptions}</span>
             </button>
 
-            {mode !== 'auto' && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-100 text-amber-800">
-                Mode: {mode}
-              </span>
-            )}
+            {/* Always-visible reminder of where the numbers come from, so the
+                selected mode's effect on data sourcing cannot be missed even
+                after the drawer is collapsed. */}
+            <span
+              data-testid="mode-badge"
+              className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                mode === 'regression'
+                  ? 'bg-amber-100 text-amber-800'
+                  : mode === 'auto'
+                  ? 'bg-slate-100 text-slate-700'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {mode === 'regression'
+                ? t.assumptions.modeBadgeRegression
+                : mode === 'auto'
+                ? t.assumptions.modeBadgeAuto
+                : t.assumptions.modeBadgeLive}
+            </span>
           </div>
 
           {/* Assumptions Configuration Drawer */}
@@ -394,6 +413,9 @@ const MainApp: React.FC = () => {
                     <option value="live">{t.assumptions.modeLive}</option>
                     <option value="regression">{t.assumptions.modeRegression}</option>
                   </select>
+                  <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
+                    {t.assumptions.modeHint}
+                  </p>
                 </div>
 
                 {/* Reference P/E */}
