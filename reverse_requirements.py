@@ -2192,6 +2192,8 @@ def build_reverse_requirements_report(
         dividend_basis_block = {
             "dividend_per_share": div_val,
             "dividend_source": dividend_source or "Observed market chart events / SEC filings",
+            "dividend_currency": currency,
+            "dividend_period": "TTM",
             "conventions": [
                 {
                     "convention": DIVIDEND_CONVENTION_CASH_RETAINED,
@@ -2308,7 +2310,8 @@ def build_reverse_requirements_report(
         "dividend_basis": dividend_basis_block,
         "unavailable": list(unavailable or []),
         "reading_notes": [
-            "A required return is a price return unless a dividend was supplied as an input.",
+            "The baseline reverse-requirements matrix is strictly price-return-only; required returns exclude dividends.",
+            "When a dividend per share is supplied, two additional scenario sets are computed: cash dividends retained and dividends reinvested at the target return.",
             "A required terminal EPS is the EPS that the chosen exit multiple corresponds to, "
             "not a forecast and not a market expectation.",
             "A CAGR is reported only when the gap between the two EPS anchors is long enough "

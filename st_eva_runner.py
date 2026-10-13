@@ -2910,7 +2910,8 @@ def _build_reverse_requirements(
             "dividend_basis": None,
             "unavailable": list(unavailable),
             "reading_notes": [
-                "A required return is a price return unless a dividend was supplied as an input.",
+                "The baseline reverse-requirements matrix is strictly price-return-only; required returns exclude dividends.",
+                "When a dividend per share is supplied, two additional scenario sets are computed: cash dividends retained and dividends reinvested at the target return.",
                 "A required terminal EPS is the EPS that the chosen exit multiple corresponds to, not a forecast and not a market expectation.",
                 "A CAGR is reported only when the gap between the two EPS anchors is long enough to annualise; otherwise the raw EPS change is reported without a rate.",
                 "Risk-free rates, modelled cost of equity and investor target returns are three separate kinds of number and are never merged into one figure.",

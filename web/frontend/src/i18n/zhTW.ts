@@ -213,6 +213,7 @@ export const zhTW: Translations = {
     dividendUnavailable: '股利資料不可用',
     dividendPerShare: '每股股利',
     dividendSource: '股利來源',
+    dividendPeriodLabel: '股利期間 (過去 12 個月)',
     dividendConventions: '股利慣例',
     conventionCashRetained: '現金股利保留',
     conventionReinvested: '股利以目標報酬率再投資',

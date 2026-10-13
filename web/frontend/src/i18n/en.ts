@@ -215,6 +215,7 @@ export const en: Translations = {
     dividendUnavailable: 'Dividend data unavailable',
     dividendPerShare: 'Dividend per share',
     dividendSource: 'Dividend source',
+    dividendPeriodLabel: 'Dividend period (past 12 months)',
     dividendConventions: 'Dividend conventions',
     conventionCashRetained: 'Cash dividends retained',
     conventionReinvested: 'Dividends reinvested at target return',

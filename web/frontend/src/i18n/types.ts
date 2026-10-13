@@ -198,6 +198,7 @@ export interface Translations {
     dividendUnavailable: string
     dividendPerShare: string
     dividendSource: string
+    dividendPeriodLabel: string
     dividendConventions: string
     conventionCashRetained: string
     conventionReinvested: string

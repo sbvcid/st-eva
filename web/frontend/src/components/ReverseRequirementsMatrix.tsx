@@ -1049,9 +1049,12 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                 </span>
                 <span className="font-mono text-sm font-bold text-slate-900">
                   {report.dividend_basis.dividend_per_share !== undefined && report.dividend_basis.dividend_per_share !== null
-                    ? `$${Number(report.dividend_basis.dividend_per_share).toFixed(2)}`
+                    ? `${report.dividend_basis.dividend_currency || currency}${Number(report.dividend_basis.dividend_per_share).toFixed(2)}`
                     : t.matrix.dividendUnavailable}
                 </span>
+              </div>
+              <div className="text-[11px] text-slate-500">
+                {t.matrix.dividendPeriodLabel}: {report.dividend_basis.dividend_period || 'TTM'}
               </div>
               {report.dividend_basis.dividend_source && (
                 <div className="text-[11px] text-slate-500">
