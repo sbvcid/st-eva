@@ -1158,6 +1158,8 @@ describe('Dividend & Total-Return Comparison display', () => {
   it('shows dividend basis info when dividend_basis is present', () => {
     const dividendBasis = {
       dividend_per_share: 1.06,
+      dividend_currency: 'USD',
+      dividend_period: 'TTM',
       dividend_source: 'Yahoo Finance Chart Events',
       conventions: [
         {
@@ -1175,8 +1177,8 @@ describe('Dividend & Total-Return Comparison display', () => {
     const report = withDividendReport(dividendBasis, null)
     renderMatrix(report)
 
-    expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
-    expect(screen.getByText('$1.06')).toBeInTheDocument()
+expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
+    expect(screen.getByText(/1\.06/)).toBeInTheDocument()
     expect(screen.getByText('Dividend period (past 12 months): TTM')).toBeInTheDocument()
     expect(screen.getByText('Dividend source: Yahoo Finance Chart Events')).toBeInTheDocument()
     expect(screen.getByText('Dividend conventions')).toBeInTheDocument()
@@ -1249,6 +1251,8 @@ describe('Dividend & Total-Return Comparison display', () => {
   it('renders Traditional Chinese correctly for dividend basis', () => {
     const dividendBasis = {
       dividend_per_share: 1.06,
+      dividend_currency: 'USD',
+      dividend_period: 'TTM',
       dividend_source: 'Yahoo Finance Chart Events',
       conventions: [
         {
@@ -1266,8 +1270,8 @@ describe('Dividend & Total-Return Comparison display', () => {
     const report = withDividendReport(dividendBasis, null)
     renderMatrix(report, 'zh-TW')
 
-    expect(screen.getByText('每股股利:')).toBeInTheDocument()
-    expect(screen.getByText('$1.06')).toBeInTheDocument()
+expect(screen.getByText('每股股利:')).toBeInTheDocument()
+    expect(screen.getByText(/1\.06/)).toBeInTheDocument()
     expect(screen.getByText('股利期間 \(過去 12 個月\): TTM')).toBeInTheDocument()
     expect(screen.getByText('股利來源: Yahoo Finance Chart Events')).toBeInTheDocument()
     expect(screen.getByText('股利慣例')).toBeInTheDocument()
@@ -1320,6 +1324,83 @@ describe('Dividend & Total-Return Comparison display', () => {
     expect(screen.getByText('純股價報酬')).toBeInTheDocument()
     expect(screen.getByText('現金股利保留')).toBeInTheDocument()
     expect(screen.getByText('股利再投資')).toBeInTheDocument()
+  })
+
+  it('shows dividend with non-USD currency (EUR) using dividend_currency', () => {
+    const dividendBasis = {
+      dividend_per_share: 1.06,
+      dividend_currency: 'EUR',
+      dividend_period: 'TTM',
+      dividend_source: 'Yahoo Finance Chart Events',
+      conventions: [
+        {
+          convention: 'CASH_DIVIDENDS_RETAINED',
+          formula: 'P_T = P_0 * (1 + r)^T - T * D',
+          description: 'Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.',
+        },
+        {
+          convention: 'DIVIDENDS_REINVESTED_AT_TARGET_RETURN',
+          formula: 'P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r',
+          description: 'Dividends reinvested annually at the target required return rate r; future value of dividend annuity is subtracted from required exit share price.',
+        },
+      ],
+    }
+    const report = withDividendReport(dividendBasis, null)
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={report} currency="$" />
+      </I18nProvider>
+    )
+
+    expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
+    expect(screen.getByText('EUR1.06')).toBeInTheDocument()
+    expect(screen.getByText('Dividend period (past 12 months): TTM')).toBeInTheDocument()
+  })
+
+  it('falls back to currency prop when dividend_currency is missing', () => {
+    const dividendBasis = {
+      dividend_per_share: 1.06,
+      dividend_period: 'TTM',
+      dividend_source: 'Yahoo Finance Chart Events',
+      conventions: [
+        {
+          convention: 'CASH_DIVIDENDS_RETAINED',
+          formula: 'P_T = P_0 * (1 + r)^T - T * D',
+          description: 'Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.',
+        },
+      ],
+    }
+    const report = withDividendReport(dividendBasis, null)
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={report} currency="£" />
+      </I18nProvider>
+    )
+
+    expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
+    expect(screen.getByText('£1.06')).toBeInTheDocument()
+    expect(screen.getByText('Dividend period (past 12 months): TTM')).toBeInTheDocument()
+  })
+
+  it('does not show dividend period label when dividend_period is missing', () => {
+    const dividendBasis = {
+      dividend_per_share: 1.06,
+      dividend_currency: 'USD',
+      dividend_source: 'Yahoo Finance Chart Events',
+      conventions: [
+        {
+          convention: 'CASH_DIVIDENDS_RETAINED',
+          formula: 'P_T = P_0 * (1 + r)^T - T * D',
+          description: 'Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.',
+        },
+      ],
+    }
+    const report = withDividendReport(dividendBasis, null)
+    renderMatrix(report)
+
+    expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
+    expect(screen.getByText(/1\.06/)).toBeInTheDocument()
+    expect(screen.queryByText('Dividend period (past 12 months):')).not.toBeInTheDocument()
   })
 
   it('does not show dividend section for NOT_COMPUTED matrix', () => {
