@@ -1033,6 +1033,209 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
         </div>
       )}
 
+      {/* Dividend & Total-Return Comparison Section */}
+      {!isNotComputed && report.dividend_basis && (
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-3">
+            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{t.matrix.dividendSectionTitle}</span>
+          </div>
+          <div className="space-y-3">
+            {/* Dividend Basis Info */}
+            <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-800 text-[11px]">
+                  {t.matrix.dividendPerShare}:
+                </span>
+                <span className="font-mono text-sm font-bold text-slate-900">
+                  {report.dividend_basis.dividend_per_share !== undefined && report.dividend_basis.dividend_per_share !== null
+                    ? `$${Number(report.dividend_basis.dividend_per_share).toFixed(2)}`
+                    : t.matrix.dividendUnavailable}
+                </span>
+              </div>
+              {report.dividend_basis.dividend_source && (
+                <div className="text-[11px] text-slate-500">
+                  {t.matrix.dividendSource}: {report.dividend_basis.dividend_source}
+                </div>
+              )}
+              {report.dividend_basis.conventions && report.dividend_basis.conventions.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-slate-700 text-[11px]">{t.matrix.dividendConventions}</div>
+                  {report.dividend_basis.conventions.map((conv: any, idx: number) => (
+                    <div key={idx} className="p-2 bg-slate-50 rounded text-[10px] font-sans text-slate-700 space-y-0.5">
+                      <div className="font-semibold text-indigo-800">
+                        {conv.convention === 'CASH_DIVIDENDS_RETAINED'
+                          ? t.matrix.conventionCashRetained
+                          : conv.convention === 'DIVIDENDS_REINVESTED_AT_TARGET_RETURN'
+                          ? t.matrix.conventionReinvested
+                          : conv.convention}
+                      </div>
+                      <div className="font-mono text-[10px] text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded">
+                        {conv.formula}
+                      </div>
+                      <div className="text-[9px] text-slate-500">{conv.description}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Comparison Table */}
+            {report.price_vs_total_return_comparison &&
+              report.price_vs_total_return_comparison.length > 0 && (
+              <div className="space-y-2">
+                <div className="font-semibold text-slate-700 text-[11px]">
+                  {t.matrix.comparisonTableTitle}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        <th className="py-1.5 px-2">{t.matrix.comparisonHorizon}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonReturn}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonExitMultiple}</th>
+                        <th className="py-1.5 px-2" colSpan={3}>{t.matrix.comparisonPriceOnly}</th>
+                        <th className="py-1.5 px-2" colSpan={4}>{t.matrix.comparisonCashRetained}</th>
+                        <th className="py-1.5 px-2" colSpan={4}>{t.matrix.comparisonReinvested}</th>
+                      </tr>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        <th className="py-1.5 px-2"></th>
+                        <th className="py-1.5 px-2"></th>
+                        <th className="py-1.5 px-2"></th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonExitPrice}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonTerminalEps}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonEpsCagr}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonExitPrice}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonTerminalEps}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonEpsCagr}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonDeltaExitPrice}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonDeltaTerminalEps}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonDeltaCagr}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonExitPrice}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonTerminalEps}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonEpsCagr}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonDeltaExitPrice}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonDeltaTerminalEps}</th>
+                        <th className="py-1.5 px-2">{t.matrix.comparisonDeltaCagr}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                      {report.price_vs_total_return_comparison.map((row: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-slate-50/50">
+                          <td className="py-1.5 px-2 font-semibold text-slate-900">
+                            {row.horizon_years?.toFixed(1)}y
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-700">
+                            {(row.required_return * 100).toFixed(1)}%
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-700">
+                            {row.exit_multiple?.toFixed(1)}x
+                          </td>
+                          {/* Price Only */}
+                          <td className="py-1.5 px-2 text-slate-900">
+                            {row.price_only?.required_exit_price !== null && row.price_only?.required_exit_price !== undefined
+                              ? `${currency}${Number(row.price_only.required_exit_price).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-900">
+                            {row.price_only?.required_terminal_eps !== null && row.price_only?.required_terminal_eps !== undefined
+                              ? `${currency}${Number(row.price_only.required_terminal_eps).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-700">
+                            {row.price_only?.required_eps_cagr !== null && row.price_only?.required_eps_cagr !== undefined
+                              ? `${(row.price_only.required_eps_cagr * 100).toFixed(1)}%`
+                              : '—'}
+                          </td>
+                          {/* Cash Retained */}
+                          <td className="py-1.5 px-2 text-slate-900">
+                            {row.cash_dividends_retained?.required_exit_price !== null && row.cash_dividends_retained?.required_exit_price !== undefined
+                              ? `${currency}${Number(row.cash_dividends_retained.required_exit_price).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-900">
+                            {row.cash_dividends_retained?.required_terminal_eps !== null && row.cash_dividends_retained?.required_terminal_eps !== undefined
+                              ? `${currency}${Number(row.cash_dividends_retained.required_terminal_eps).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-700">
+                            {row.cash_dividends_retained?.required_eps_cagr !== null && row.cash_dividends_retained?.required_eps_cagr !== undefined
+                              ? `${(row.cash_dividends_retained.required_eps_cagr * 100).toFixed(1)}%`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-blue-700">
+                            {row.cash_dividends_retained?.delta_exit_price !== null && row.cash_dividends_retained?.delta_exit_price !== undefined
+                              ? `${currency}${Number(row.cash_dividends_retained.delta_exit_price).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-blue-700">
+                            {row.cash_dividends_retained?.delta_terminal_eps !== null && row.cash_dividends_retained?.delta_terminal_eps !== undefined
+                              ? `${currency}${Number(row.cash_dividends_retained.delta_terminal_eps).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-blue-700">
+                            {row.cash_dividends_retained?.delta_eps_cagr !== null && row.cash_dividends_retained?.delta_eps_cagr !== undefined
+                              ? `${(row.cash_dividends_retained.delta_eps_cagr * 100).toFixed(1)}%`
+                              : '—'}
+                          </td>
+                          {/* Reinvested */}
+                          <td className="py-1.5 px-2 text-slate-900">
+                            {row.dividends_reinvested_at_target_return?.required_exit_price !== null && row.dividends_reinvested_at_target_return?.required_exit_price !== undefined
+                              ? `${currency}${Number(row.dividends_reinvested_at_target_return.required_exit_price).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-900">
+                            {row.dividends_reinvested_at_target_return?.required_terminal_eps !== null && row.dividends_reinvested_at_target_return?.required_terminal_eps !== undefined
+                              ? `${currency}${Number(row.dividends_reinvested_at_target_return.required_terminal_eps).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-slate-700">
+                            {row.dividends_reinvested_at_target_return?.required_eps_cagr !== null && row.dividends_reinvested_at_target_return?.required_eps_cagr !== undefined
+                              ? `${(row.dividends_reinvested_at_target_return.required_eps_cagr * 100).toFixed(1)}%`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-emerald-700">
+                            {row.dividends_reinvested_at_target_return?.delta_exit_price !== null && row.dividends_reinvested_at_target_return?.delta_exit_price !== undefined
+                              ? `${currency}${Number(row.dividends_reinvested_at_target_return.delta_exit_price).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-emerald-700">
+                            {row.dividends_reinvested_at_target_return?.delta_terminal_eps !== null && row.dividends_reinvested_at_target_return?.delta_terminal_eps !== undefined
+                              ? `${currency}${Number(row.dividends_reinvested_at_target_return.delta_terminal_eps).toFixed(2)}`
+                              : '—'}
+                          </td>
+                          <td className="py-1.5 px-2 text-emerald-700">
+                            {row.dividends_reinvested_at_target_return?.delta_eps_cagr !== null && row.dividends_reinvested_at_target_return?.delta_eps_cagr !== undefined
+                              ? `${(row.dividends_reinvested_at_target_return.delta_eps_cagr * 100).toFixed(1)}%`
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Dividend not available message */}
+      {!isNotComputed && !report.dividend_basis && (
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-2">
+              <Layers className="w-3.5 h-3.5 text-indigo-600" />
+              <span>{t.matrix.dividendSectionTitle}</span>
+            </div>
+            <p className="text-slate-600 text-sm">{t.matrix.dividendNotAvailable}</p>
+            <p className="text-slate-500 text-xs mt-1">
+              {t.matrix.priceOnlyBasis}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Reading / Methodology Notes (Collapsible) */}
       {report.reading_notes && report.reading_notes.length > 0 && (
         <div className="pt-2 border-t border-slate-100">

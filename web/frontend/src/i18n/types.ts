@@ -192,6 +192,34 @@ export interface Translations {
     startEpsCoverageAssumed: string
     startEpsCoverageDeclared: string
     startEpsPeriodUnavailable: string
+    // Dividend / Total Return
+    dividendSectionTitle: string
+    dividendNotAvailable: string
+    dividendUnavailable: string
+    dividendPerShare: string
+    dividendSource: string
+    dividendConventions: string
+    conventionCashRetained: string
+    conventionReinvested: string
+    priceOnlyBasis: string
+    comparisonTableTitle: string
+    comparisonHorizon: string
+    comparisonReturn: string
+    comparisonExitMultiple: string
+    comparisonPriceOnly: string
+    comparisonCashRetained: string
+    comparisonReinvested: string
+    comparisonExitPrice: string
+    comparisonTerminalEps: string
+    comparisonEpsCagr: string
+    comparisonDeltaExitPrice: string
+    comparisonDeltaTerminalEps: string
+    comparisonDeltaCagr: string
+    baselineLabel: string
+    cashRetainedLabel: string
+    reinvestedLabel: string
+    formulaCashRetained: string
+    formulaReinvested: string
   }
   export: {
     sectionTitle: string

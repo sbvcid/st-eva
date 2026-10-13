@@ -1120,3 +1120,213 @@ describe('Starting EPS period basis disclosure', () => {
     expect(screen.queryByText('期間基準由 ST-EVA 假設（來源未宣告）')).not.toBeInTheDocument()
   })
 })
+
+describe('Dividend & Total-Return Comparison display', () => {
+  const withDividendReport = (
+    dividendBasis: any = null,
+    priceVsTotalReturnComparison: any = null,
+  ): ReverseRequirementsReportDTO => ({
+    ...mockReport,
+    matrix_size: 1,
+    dividend_basis: dividendBasis,
+    price_vs_total_return_comparison: priceVsTotalReturnComparison,
+    reverse_requirements_matrix: [
+      {
+        ...mockReport.reverse_requirements_matrix[1],
+        required_return_basis: 'PRICE_RETURN_ONLY',
+      },
+    ],
+  })
+
+  const renderMatrix = (report: ReverseRequirementsReportDTO, lang = 'en') => {
+    render(
+      <I18nProvider initialLang={lang as 'en' | 'zh-TW'}>
+        <ReverseRequirementsMatrix report={report} />
+      </I18nProvider>
+    )
+  }
+
+  it('shows dividend not available message when no dividend_basis', () => {
+    const report = withDividendReport(null, null)
+    renderMatrix(report)
+
+    expect(screen.getByText('Dividend & Total-Return Comparison')).toBeInTheDocument()
+    expect(screen.getByText('No dividend input was supplied for this run. The baseline matrix is price-return-only.')).toBeInTheDocument()
+    expect(screen.getByText('Price return only (baseline)')).toBeInTheDocument()
+  })
+
+  it('shows dividend basis info when dividend_basis is present', () => {
+    const dividendBasis = {
+      dividend_per_share: 1.06,
+      dividend_source: 'Yahoo Finance Chart Events',
+      conventions: [
+        {
+          convention: 'CASH_DIVIDENDS_RETAINED',
+          formula: 'P_T = P_0 * (1 + r)^T - T * D',
+          description: 'Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.',
+        },
+        {
+          convention: 'DIVIDENDS_REINVESTED_AT_TARGET_RETURN',
+          formula: 'P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r',
+          description: 'Dividends reinvested annually at the target required return rate r; future value of dividend annuity is subtracted from required exit share price.',
+        },
+      ],
+    }
+    const report = withDividendReport(dividendBasis, null)
+    renderMatrix(report)
+
+    expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
+    expect(screen.getByText('$1.06')).toBeInTheDocument()
+    expect(screen.getByText('Dividend source: Yahoo Finance Chart Events')).toBeInTheDocument()
+    expect(screen.getByText('Dividend conventions')).toBeInTheDocument()
+    expect(screen.getByText('Cash dividends retained')).toBeInTheDocument()
+    expect(screen.getByText('Dividends reinvested at target return')).toBeInTheDocument()
+    expect(screen.getByText('P_T = P_0 * (1 + r)^T - T * D')).toBeInTheDocument()
+    expect(screen.getByText('P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r')).toBeInTheDocument()
+  })
+
+  it('shows comparison table when price_vs_total_return_comparison is present', () => {
+    const comparison = [
+      {
+        horizon_years: 3.0,
+        required_return: 0.10,
+        exit_multiple: 28.95,
+        price_only: {
+          required_exit_price: 448.07,
+          required_terminal_eps: 15.48,
+          required_eps_cagr: 0.2108,
+        },
+        cash_dividends_retained: {
+          required_exit_price: 444.89,
+          required_terminal_eps: 15.37,
+          required_eps_cagr: 0.2079,
+          delta_exit_price: -3.18,
+          delta_terminal_eps: -0.11,
+          delta_eps_cagr: -0.0029,
+        },
+        dividends_reinvested_at_target_return: {
+          required_exit_price: 444.56,
+          required_terminal_eps: 15.36,
+          required_eps_cagr: 0.2076,
+          delta_exit_price: -3.51,
+          delta_terminal_eps: -0.12,
+          delta_eps_cagr: -0.0032,
+        },
+      },
+    ]
+    const report = withDividendReport({ dividend_per_share: 1.06 }, comparison)
+    renderMatrix(report)
+
+    expect(screen.getByText('Price-Return vs Total-Return Comparison')).toBeInTheDocument()
+    expect(screen.getAllByText('3.0y').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('10.0%').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('28.9x')).toBeInTheDocument()
+    expect(screen.getByText('$448.07')).toBeInTheDocument()
+    expect(screen.getByText('$15.48')).toBeInTheDocument()
+    expect(screen.getByText('21.1%')).toBeInTheDocument()
+    expect(screen.getByText('$444.89')).toBeInTheDocument()
+    expect(screen.getByText('$444.56')).toBeInTheDocument()
+    // Delta values (currency symbol comes first)
+    expect(screen.getByText('$-3.18')).toBeInTheDocument()
+    expect(screen.getByText('$-0.11')).toBeInTheDocument()
+    expect(screen.getAllByText('-0.3%').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders Traditional Chinese correctly for dividend not available', () => {
+    const report = withDividendReport(null, null)
+    renderMatrix(report, 'zh-TW')
+
+    expect(screen.getByText('股利與總報酬比較')).toBeInTheDocument()
+    expect(screen.getByText('本次執行未提供股利輸入。基準矩陣僅為股價報酬。')).toBeInTheDocument()
+    expect(screen.getByText('僅股價報酬 (基準)')).toBeInTheDocument()
+  })
+
+  it('renders Traditional Chinese correctly for dividend basis', () => {
+    const dividendBasis = {
+      dividend_per_share: 1.06,
+      dividend_source: 'Yahoo Finance Chart Events',
+      conventions: [
+        {
+          convention: 'CASH_DIVIDENDS_RETAINED',
+          formula: 'P_T = P_0 * (1 + r)^T - T * D',
+          description: 'Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.',
+        },
+        {
+          convention: 'DIVIDENDS_REINVESTED_AT_TARGET_RETURN',
+          formula: 'P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r',
+          description: 'Dividends reinvested annually at the target required return rate r; future value of dividend annuity is subtracted from required exit share price.',
+        },
+      ],
+    }
+    const report = withDividendReport(dividendBasis, null)
+    renderMatrix(report, 'zh-TW')
+
+    expect(screen.getByText('每股股利:')).toBeInTheDocument()
+    expect(screen.getByText('$1.06')).toBeInTheDocument()
+    expect(screen.getByText('股利來源: Yahoo Finance Chart Events')).toBeInTheDocument()
+    expect(screen.getByText('股利慣例')).toBeInTheDocument()
+    expect(screen.getByText('現金股利保留')).toBeInTheDocument()
+    expect(screen.getByText('股利以目標報酬率再投資')).toBeInTheDocument()
+    expect(screen.getByText('P_T = P_0 * (1 + r)^T - T * D')).toBeInTheDocument()
+    expect(screen.getByText('P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r')).toBeInTheDocument()
+  })
+
+  it('renders Traditional Chinese correctly for comparison table', () => {
+    const comparison = [
+      {
+        horizon_years: 3.0,
+        required_return: 0.10,
+        exit_multiple: 28.95,
+        price_only: {
+          required_exit_price: 448.07,
+          required_terminal_eps: 15.48,
+          required_eps_cagr: 0.2108,
+        },
+        cash_dividends_retained: {
+          required_exit_price: 444.89,
+          required_terminal_eps: 15.37,
+          required_eps_cagr: 0.2079,
+          delta_exit_price: -3.18,
+          delta_terminal_eps: -0.11,
+          delta_eps_cagr: -0.0029,
+        },
+        dividends_reinvested_at_target_return: {
+          required_exit_price: 444.56,
+          required_terminal_eps: 15.36,
+          required_eps_cagr: 0.2076,
+          delta_exit_price: -3.51,
+          delta_terminal_eps: -0.12,
+          delta_eps_cagr: -0.0032,
+        },
+      },
+    ]
+    const report = withDividendReport({ dividend_per_share: 1.06 }, comparison)
+    renderMatrix(report, 'zh-TW')
+
+    expect(screen.getByText('股價報酬 vs 總報酬 比較表')).toBeInTheDocument()
+    expect(screen.getAllByText('3.0y').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('10.0%').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('28.9x')).toBeInTheDocument()
+    expect(screen.getByText('純股價報酬')).toBeInTheDocument()
+    expect(screen.getByText('現金股利保留')).toBeInTheDocument()
+    expect(screen.getByText('股利再投資')).toBeInTheDocument()
+  })
+
+  it('does not show dividend section for NOT_COMPUTED matrix', () => {
+    const notComputedReport: ReverseRequirementsReportDTO = {
+      ...mockReport,
+      status: 'NOT_COMPUTED',
+      status_reason: 'Missing positive starting EPS anchor.',
+      matrix_size: 0,
+      reverse_requirements_matrix: [],
+      dividend_basis: { dividend_per_share: 1.06 },
+      price_vs_total_return_comparison: [],
+    }
+
+    renderMatrix(notComputedReport)
+
+    // Dividend section should not render for NOT_COMPUTED
+    expect(screen.queryByText('Dividend & Total-Return Comparison')).not.toBeInTheDocument()
+    expect(screen.getByText('NOT COMPUTED')).toBeInTheDocument()
+  })
+})
