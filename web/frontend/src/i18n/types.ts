@@ -122,6 +122,10 @@ export interface Translations {
     readingNotes: string
     notesToggle: string
     uncomputableMatrixNotice: string
+    unavailableInputsLabel: string
+    unavailableItemFallback: string
+    computedLimitationsNotice: string
+    computedLimitationsSubtitle: string
     auditTitle: string
     calculationSteps: string
     mathematicallyVerified: string

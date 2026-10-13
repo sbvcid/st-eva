@@ -136,6 +136,11 @@ export const en: Translations = {
     notesToggle: 'Notes & Formula Semantics',
     uncomputableMatrixNotice:
       'The reverse requirements matrix could not be computed for this security.',
+    unavailableInputsLabel: 'Unavailable supporting inputs',
+    unavailableItemFallback: 'Unnamed item',
+    computedLimitationsNotice: 'Supporting data and method limitations',
+    computedLimitationsSubtitle:
+      'These inputs were unavailable, so they were not used. The scenarios below are unaffected by their absence: each still stands on the inputs it names, and an unavailable reference is a named absence rather than a zero.',
     auditTitle: 'Scenario Audit Trail & Reproducibility Trace',
     calculationSteps: 'Deterministic Calculation Steps',
     mathematicallyVerified: 'Mathematically Verified',

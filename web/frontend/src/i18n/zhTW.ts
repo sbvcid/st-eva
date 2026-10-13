@@ -135,6 +135,11 @@ export const zhTW: Translations = {
     readingNotes: '計算規則與方法說明',
     notesToggle: '計算說明與公式定義',
     uncomputableMatrixNotice: '此證券標的無法推導反向需求矩陣。',
+    unavailableInputsLabel: '不可用之輔助輸入',
+    unavailableItemFallback: '未命名項目',
+    computedLimitationsNotice: '輔助資料與方法限制',
+    computedLimitationsSubtitle:
+      '以下輸入不可用，因此未納入計算。下列情境不受其缺席影響：各情境仍基於其自身標示的輸入，不可用之參考為明確的缺失，而非零值。',
     auditTitle: '情境審計軌跡與可重現性推導',
     calculationSteps: '確定性計算步驟',
     mathematicallyVerified: '數學驗證通過',

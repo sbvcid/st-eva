@@ -531,6 +531,194 @@ describe('ReverseRequirementsMatrix Component', () => {
     })
   })
 
+  describe('supporting-data limitations section', () => {
+    // Entries shaped as the API supplies them: item, reason, reason_kind, blocks.
+    const LIVE_MSFT_UNAVAILABLE = [
+      {
+        item: 'exit_multiple.band_scenarios',
+        reason:
+          'The historical P/E band carries 7 observations, fewer than the 20 required to serve as a reference, so no band scenarios were built. The production historical P/E distribution is used instead.',
+        reason_kind: 'INSUFFICIENT_OBSERVATIONS',
+        blocks: ['exit_multiples'],
+      },
+      {
+        item: 'valuation_method.ev_ebitda_multiple',
+        reason:
+          'No EV/EBITDA reference multiple was supplied, so this method produces no implied figure. It is not filled from another method\u2019s multiple.',
+        reason_kind: 'NO_REFERENCE_MULTIPLE',
+        blocks: ['valuation_methods.ev_ebitda_multiple'],
+      },
+      {
+        item: 'sec_declared_dividends',
+        reason:
+          'The SEC XBRL companyconcept endpoint returned 404 for the common stock dividends tag, so no direct filing dividends were used and the total-return variant is not computed.',
+        reason_kind: 'MISSING_SEC_DIVIDEND_DATA',
+        blocks: ['dividend_history'],
+      },
+    ]
+
+    const withUnavailable = (
+      unavailable: Array<Record<string, any>>,
+      status: 'COMPUTED' | 'NOT_COMPUTED' = 'COMPUTED',
+    ): ReverseRequirementsReportDTO => ({
+      ...mockReport,
+      status,
+      status_reason: status === 'NOT_COMPUTED' ? 'No exit multiple is available.' : null,
+      matrix_size: 80,
+      reverse_requirements_matrix: Array.from({ length: 3 }, (_, i) => ({
+        ...mockReport.reverse_requirements_matrix[1],
+      })),
+      unavailable,
+    })
+
+    it('shows limitations for a computed matrix, with the supplied reasons', () => {
+      const report = withUnavailable(LIVE_MSFT_UNAVAILABLE)
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      const section = screen.getByTestId('limitations-section')
+      expect(section).toBeInTheDocument()
+      expect(section.textContent).toContain('Supporting data and method limitations')
+      // The status stays COMPUTED: a limitation is not a failure.
+      expect(screen.getByText('COMPUTED')).toBeInTheDocument()
+      expect(section.textContent).not.toContain('NOT COMPUTED')
+
+      for (const entry of LIVE_MSFT_UNAVAILABLE) {
+        expect(section.textContent).toContain(entry.item)
+        expect(section.textContent).toContain(entry.reason)
+      }
+    })
+
+    it('does not claim an unavailable reference is a zero or the whole matrix unusable', () => {
+      const report = withUnavailable(LIVE_MSFT_UNAVAILABLE.slice(0, 1))
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      const section = screen.getByTestId('limitations-section')
+      expect(section.textContent).toContain('named absence rather than a zero')
+      // The computed scenarios are still rendered.
+      expect(screen.getAllByTitle('Toggle details')).toHaveLength(3)
+    })
+
+    it('renders the not-computed list once, inside its own banner', () => {
+      const report = withUnavailable(LIVE_MSFT_UNAVAILABLE, 'NOT_COMPUTED')
+
+      const { container } = render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      // The status explanation is present...
+      expect(screen.getByText('No exit multiple is available.')).toBeInTheDocument()
+      expect(screen.getByTestId('unavailable-list')).toBeInTheDocument()
+      // ...and the list is not duplicated into a second standalone section.
+      expect(screen.queryByTestId('limitations-section')).not.toBeInTheDocument()
+      expect(container.querySelectorAll('[data-testid="unavailable-list"]')).toHaveLength(1)
+
+      for (const entry of LIVE_MSFT_UNAVAILABLE) {
+        expect(screen.getByTestId('unavailable-list').textContent).toContain(entry.reason)
+      }
+    })
+
+    it('renders no section when the computed list is empty', () => {
+      const report = withUnavailable([])
+
+      const { container } = render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      expect(screen.queryByTestId('limitations-section')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('unavailable-list')).not.toBeInTheDocument()
+      // Nothing empty is left behind in the DOM.
+      expect(container.textContent).not.toContain('Supporting data and method limitations')
+    })
+
+    it('renders no section when the list is absent entirely', () => {
+      const report: ReverseRequirementsReportDTO = {
+        ...mockReport,
+        matrix_size: 3,
+        reverse_requirements_matrix: [mockReport.reverse_requirements_matrix[1]],
+      }
+      delete report.unavailable
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      expect(screen.queryByTestId('limitations-section')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('unavailable-list')).not.toBeInTheDocument()
+    })
+
+    it('localises the section label in Traditional Chinese', () => {
+      const report = withUnavailable(LIVE_MSFT_UNAVAILABLE)
+
+      render(
+        <I18nProvider initialLang="zh-TW">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      const section = screen.getByTestId('limitations-section')
+      expect(section.textContent).toContain('輔助資料與方法限制')
+      expect(section.textContent).toContain('不可用之輔助輸入')
+      expect(section.textContent).toContain('明確的缺失')
+      expect(screen.queryByText('Supporting data and method limitations')).not.toBeInTheDocument()
+    })
+
+    it('falls back to a named placeholder when an entry carries no item', () => {
+      const report = withUnavailable([
+        { reason: 'A reason without an item name.', reason_kind: 'MISSING' },
+      ])
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      expect(screen.getByTestId('limitations-section').textContent).toContain('Unnamed item')
+      expect(screen.getByTestId('limitations-section').textContent).toContain(
+        'A reason without an item name.',
+      )
+    })
+
+    it('leaves the matrix rows, filters and audit drawer untouched', () => {
+      const report = withUnavailable(LIVE_MSFT_UNAVAILABLE)
+
+      render(
+        <I18nProvider initialLang="en">
+          <ReverseRequirementsMatrix report={report} />
+        </I18nProvider>
+      )
+
+      // Filters still render (both horizon and return offer "All"), and the
+      // horizon filter still ranges over the rows.
+      expect(screen.getAllByText('All').length).toBeGreaterThan(0)
+      expect(screen.getByRole('button', { name: '3y' })).toBeInTheDocument()
+      // Every computed row is still rendered with its figures.
+      expect(screen.getAllByText('25.0x').length).toBeGreaterThan(0)
+      fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+      // Calculation trace, source label and consensus panel are unchanged.
+      expect(screen.getByText('Deterministic Calculation Steps')).toBeInTheDocument()
+      expect(screen.getByText('P_T = P_0 * (1 + r)^T')).toBeInTheDocument()
+      expect(screen.getByText('Source: Vendor historical P/E band (median)')).toBeInTheDocument()
+    })
+  })
+
   it('renders uncomputable matrix state when status is NOT_COMPUTED', () => {
     const uncomputableReport: ReverseRequirementsReportDTO = {
       formula_version: 'reverse-requirements/1.1',

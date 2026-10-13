@@ -31,6 +31,46 @@ interface ReverseRequirementsMatrixProps {
 export const MATRIX_SECTION_ID = 'reverse-requirements-matrix'
 
 /**
+ * The supporting inputs this run could not use.
+ *
+ * Rendered from `report.unavailable` and nowhere else, so the API, the export
+ * and the UI can never disagree about what was missing. Each entry is shown
+ * with the item the report names and the reason the report gave, so an
+ * unavailable reference stays a named absence rather than becoming an implied
+ * zero.
+ */
+const UnavailableList: React.FC<{
+  entries: Array<Record<string, any>>
+  tone: 'computed' | 'notComputed'
+}> = ({ entries, tone }) => {
+  const { t } = useI18n()
+  return (
+    <div
+      data-testid="unavailable-list"
+      className={`mt-2 space-y-1 p-2.5 rounded-lg border font-mono text-[11px] ${
+        tone === 'notComputed'
+          ? 'bg-amber-100/60 border-amber-200/60'
+          : 'bg-slate-50 border-slate-200'
+      }`}
+    >
+      <span
+        className={`font-bold block ${
+          tone === 'notComputed' ? 'text-amber-950' : 'text-slate-700'
+        }`}
+      >
+        {t.matrix.unavailableInputsLabel}
+      </span>
+      {entries.map((u, i) => (
+        <div key={i} className={tone === 'notComputed' ? '' : 'text-slate-700'}>
+          • <span className="font-semibold">{u.item || t.matrix.unavailableItemFallback}:</span>{' '}
+          {u.reason || JSON.stringify(u)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
  * The source of an exit multiple, stated as what it is.
  *
  * A production historical P/E percentile is an observed reference drawn from a
@@ -102,6 +142,12 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
 
   const scenarios = report?.reverse_requirements_matrix || []
   const isNotComputed = report?.status === 'NOT_COMPUTED' || scenarios.length === 0
+  // Supporting inputs the run could not use. `report.unavailable` is the only
+  // source, so this is the same list the API and the CSV carry. An empty or
+  // absent list must not leave an empty section behind, hence the length test
+  // rather than a truthiness test on the array itself.
+  const unavailable = report?.unavailable || []
+  const hasUnavailable = unavailable.length > 0
 
   // Distinct horizons and returns for filter buttons
   const availableHorizons = useMemo(() => {
@@ -187,17 +233,31 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                 {report.status_reason ||
                   'The calculation engine cannot construct the matrix due to missing positive EPS anchor or exit multiples.'}
               </p>
-              {report.unavailable && report.unavailable.length > 0 && (
-                <div className="mt-2 space-y-1 bg-amber-100/60 p-2.5 rounded-lg border border-amber-200/60 font-mono text-[11px]">
-                  <span className="font-bold text-amber-950 block">Unavailable inputs:</span>
-                  {report.unavailable.map((u, i) => (
-                    <div key={i}>
-                      • <span className="font-semibold">{u.item || 'Item'}:</span>{' '}
-                      {u.reason || JSON.stringify(u)}
-                    </div>
-                  ))}
-                </div>
-              )}
+            </div>
+          </div>
+          {/* Rendered once, here: the matrix itself did not compute. */}
+          {hasUnavailable && (
+            <UnavailableList entries={unavailable} tone="notComputed" />
+          )}
+        </div>
+      )}
+
+      {/* Supporting-data limitations, for a matrix that did compute */}
+      {!isNotComputed && hasUnavailable && (
+        <div
+          data-testid="limitations-section"
+          className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl text-slate-700 text-xs"
+        >
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <span className="font-semibold block mb-1">
+                {t.matrix.computedLimitationsNotice}
+              </span>
+              <p className="text-slate-600">
+                {t.matrix.computedLimitationsSubtitle}
+              </p>
+              <UnavailableList entries={unavailable} tone="computed" />
             </div>
           </div>
         </div>

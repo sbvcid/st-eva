@@ -376,6 +376,103 @@ class TestBrowserSmoke(unittest.TestCase):
             browser.close()
 
 
+    def test_desktop_matrix_shows_limitations_for_a_computed_matrix(self):
+        """
+        A computed matrix still carries the supporting inputs it could not use.
+
+        The offline regression fixture is deterministic and yields a COMPUTED
+        matrix whose report also lists unavailable inputs, so the real SPA path
+        is exercised without depending on live acquisition.
+
+        Two things are asserted, and the second is the one that stops a
+        limitation from being read as a failure: the section is rendered, and
+        the matrix is still COMPUTED with its scenarios intact.
+        """
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale="en-US", viewport={"width": 1280, "height": 800})
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            # Pinned to the offline regression fixture; live is the default now.
+            page.select_option("select >> nth=0", "regression")
+            page.locator("button:has-text('MSFT')").click()
+
+            page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+            page.wait_for_selector("text=Reverse Requirements Matrix", timeout=10000)
+
+            # The matrix computed, so the limitations are not a failure banner.
+            page.wait_for_selector("text=COMPUTED", timeout=10000)
+
+            section = page.get_by_test_id("limitations-section")
+            section.wait_for(state="visible", timeout=10000)
+            text = section.inner_text()
+            self.assertIn("Unavailable supporting inputs", text)
+
+            # The exact reasons the API supplied are what a reader sees, and the
+            # list is rendered once rather than duplicated.
+            self.assertIn(
+                "No P/FCF reference multiple was supplied", text
+            )
+            self.assertIn(
+                "No SEC regulatory filing observations of declared dividends",
+                text,
+            )
+            self.assertEqual(section.count(), 1)
+
+            # The scenarios are still rendered and still audit-able, so an
+            # unavailable reference has not empties the matrix.
+            toggles = page.locator("button[title='Toggle details']")
+            self.assertGreater(toggles.count(), 0)
+            toggles.first.click()
+            page.wait_for_selector("text=Deterministic Calculation Steps", timeout=5000)
+
+            context.close()
+            browser.close()
+
+    def test_desktop_matrix_renders_not_computed_limitations_once(self):
+        """
+        The NOT_COMPUTED path keeps its own status explanation and its list.
+
+        TSM is a legitimate contract refusal, so its matrix is NOT_COMPUTED and
+        deterministic without any stubbing. The unavailable list must render
+        exactly once, inside the banner, and must not be repeated as a second
+        standalone section.
+        """
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale="en-US", viewport={"width": 1280, "height": 800})
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            page.wait_for_selector("text=Reverse-engineer market expectations", timeout=10000)
+            tsm_btn = page.locator("button:has-text('TSM')")
+            tsm_btn.click()
+            page.wait_for_selector("text=Admission Status: REFUSED", timeout=60000)
+
+            # The banner carries the status explanation rather than a limitations
+            # heading, and the list appears once inside it. TSM's refusal path
+            # deterministically reports unavailable entries, so this is
+            # unconditional rather than guarded.
+            banner = page.get_by_text(
+                "The reverse requirements matrix could not be computed"
+            )
+            banner.wait_for(state="visible", timeout=15000)
+
+            lists = page.get_by_test_id("unavailable-list")
+            self.assertEqual(
+                lists.count(), 1,
+                "the NOT_COMPUTED list must render exactly once, not duplicated",
+            )
+            # The computed-state section must not also be present.
+            self.assertEqual(
+                page.get_by_test_id("limitations-section").count(), 0
+            )
+
+            context.close()
+            browser.close()
+
+
 if __name__ == "__main__":
     unittest.main()
 
