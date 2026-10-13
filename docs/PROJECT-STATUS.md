@@ -2,7 +2,7 @@
 
 **Status checked:** 2026-10-13
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `1499fd4` (R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Current implementation baseline:** `c112e18` (R7-6: make the starting EPS period basis explicit in the matrix audit drawer and CSV export; R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
 **Latest verified GitHub Actions:** [Run 38338994649](https://github.com/sbvcid/st-eva/actions/runs/38338994649), triggered by `1499fd4`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -914,7 +914,69 @@ persistent file was touched.
   ``browser`` jobs both passed.
 
 **Outstanding from R7-0 (unchanged, deliberately not combined here).** the
-computed-matrix ``unavailable`` list, dividend/total-return display, start-EPS
-period-label UI, and summary ``Reference P/E`` reconciliation with the
-production distribution. The ``resolver_policy_identity`` LF/CRLF replay caveat
-was reopened and closed as R7-3 below and is no longer outstanding.
+computed-matrix ``unavailable`` list, dividend/total-return display, and summary
+``Reference P/E`` reconciliation with the production distribution. The
+``resolver_policy_identity`` LF/CRLF replay caveat was reopened and closed as
+R7-3 below and is no longer outstanding.
+
+
+## Starting EPS Period Basis Explicit in UI and CSV (R7-6, 2026-10-13, commit c112e18)
+
+**Objective.** R7-0 confirmed that a live Yahoo `trailingEps` value is received as a
+numeric value without a source-declared period end or explicit period coverage.
+ST-EVA currently represents the selected starting EPS as trailing twelve months when
+using the trailing anchor, and the API already carries `period_undeclared_by_source`
+and `period_label`. However, the matrix audit drawer displayed `Coverage: 12 months`,
+which could be mistaken for source-declared evidence. The task was to improve
+disclosure and traceability of existing metadata without changing the EPS value or
+inferring new dates.
+
+**Changes.**
+
+- **UI disclosure** (`ReverseRequirementsMatrix.tsx`): In the Starting EPS Anchor
+  section of the matrix audit drawer:
+  - Display `period_label` when present.
+  - When `period_undeclared_by_source === true`, explicitly state "Period basis
+    assumed by ST-EVA (not declared by provider)" (localized).
+  - Distinguish "Assumed coverage (not declared by provider)" from "Provider-declared
+    coverage"; the 12-month figure is never presented as independently declared by
+    the provider.
+  - Show `period_start` and `period_end` when available; when unavailable, display
+    "undeclared" (localized). Dates are never inferred from `TRAILING_TWELVE_MONTHS`
+    or the numeric coverage.
+  - When the source declares a period and `period_undeclared_by_source` is false,
+    show the declared metadata faithfully without the assumed-period warning.
+  - User-supplied EPS remains clearly identified as a user assumption (`is_user_assumption`
+    badge) with its period metadata shown in the same framework.
+
+- **CSV traceability** (`exportResult.ts`): Four new columns added to the existing
+  scenario-row CSV:
+  - `start_eps_period_label`
+  - `start_eps_period_undeclared` (boolean)
+  - `start_eps_period_start`
+  - `start_eps_period_end`
+  Populated from `scenario.start_eps` evidence; missing values remain empty fields
+  per existing conventions (no zeros, no fabricated dates, no inferred declarations).
+
+- **i18n** (`en.ts`, `zhTW.ts`, `types.ts`): Added English and Traditional Chinese
+  strings for all new disclosure labels and warnings.
+
+- **Tests**:
+  - Frontend (`ReverseRequirementsMatrix.test.tsx`): 7 new focused tests covering
+    assumed-period disclosure, no-implied-declaration, declared-period metadata,
+    user-supplied EPS identification, no date fabrication, and both language renderings.
+  - CSV export (`ExportResult.test.ts`): 4 new tests verifying the four new columns
+    export correctly for vendor trailing, SEC-linked, vendor forward, user-supplied,
+    declared-period, and undeclared-period scenarios.
+  - All frontend Vitest **89 passed (8 files)**; TypeScript build clean; production
+    build green.
+  - Backend reverse-requirements, provenance, and instant-observation suites **120
+    passed**.
+
+**Boundary.** No change to the selected starting EPS value or selection priority,
+source acquisition, `reverse-requirements/1.1` formulas, growth window or scenario
+generation, consensus-period comparability, historical P/E data or eligibility,
+investment-context basis, archive/replay/registry semantics, or dividend/total-return
+UI. The formula and selected EPS value remain unchanged.
+
+**GitHub Actions:** To be verified on next CI run; all local test suites and builds pass.
