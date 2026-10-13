@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+﻿import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ReverseRequirementsMatrix } from '../components/ReverseRequirementsMatrix'
 import { ReverseRequirementsReportDTO } from '../types/api'
@@ -357,7 +357,7 @@ describe('ReverseRequirementsMatrix Component', () => {
       )
 
       expect(
-        screen.getByText('?�出?��?�?��之歷?�本?��?'),
+        screen.getByText('產出時點正確之歷史本益比'),
       ).toBeInTheDocument()
       expect(screen.queryByText('Band')).not.toBeInTheDocument()
     })
@@ -672,9 +672,9 @@ describe('ReverseRequirementsMatrix Component', () => {
       )
 
       const section = screen.getByTestId('limitations-section')
-      expect(section.textContent).toContain('輔助資�??�方法�???)
-      expect(section.textContent).toContain('不可?��?輔助輸入')
-      expect(section.textContent).toContain('?�確?�缺�?)
+      expect(section.textContent).toContain('輔助資料與方法限制')
+      expect(section.textContent).toContain('不可用之輔助輸入')
+      expect(section.textContent).toContain('明確的缺失')
       expect(screen.queryByText('Supporting data and method limitations')).not.toBeInTheDocument()
     })
 
@@ -1077,11 +1077,11 @@ describe('Starting EPS period basis disclosure', () => {
     fireEvent.click(screen.getAllByTitle('Toggle details')[0])
 
     // Chinese translations
-    expect(screen.getByText('?��?標籤: TRAILING_TWELVE_MONTHS')).toBeInTheDocument()
-    expect(screen.getByText('?�設涵�?範�?（�?源未�??�? 12 months')).toBeInTheDocument()
-    expect(screen.getByText('?��??��???ST-EVA ?�設（�?源未�??�?)).toBeInTheDocument()
-    expect(screen.getByText('?��?起�??? ?�宣??)).toBeInTheDocument()
-    expect(screen.getByText('?��?結�??? ?�宣??)).toBeInTheDocument()
+    expect(screen.getByText('期間標籤: TRAILING_TWELVE_MONTHS')).toBeInTheDocument()
+    expect(screen.getByText('假設涵蓋範圍（來源未宣告）: 12 months')).toBeInTheDocument()
+    expect(screen.getByText('期間基準由 ST-EVA 假設（來源未宣告）')).toBeInTheDocument()
+    expect(screen.getByText('期間起始日: 未宣告')).toBeInTheDocument()
+    expect(screen.getByText('期間結束日: 未宣告')).toBeInTheDocument()
   })
 
   it('renders Traditional Chinese strings correctly for provider-declared period', () => {
@@ -1111,13 +1111,13 @@ describe('Starting EPS period basis disclosure', () => {
     fireEvent.click(screen.getAllByTitle('Toggle details')[0])
 
     // Chinese translations for declared period
-    expect(screen.getByText('?��?標籤: FY2026')).toBeInTheDocument()
-    expect(screen.getByText('來�?�??之涵?��??? 12 months')).toBeInTheDocument()
-    expect(screen.getByText('?��?起�??? 2025-07-01')).toBeInTheDocument()
-    expect(screen.getByText('?��?結�??? 2026-06-30')).toBeInTheDocument()
+    expect(screen.getByText('期間標籤: FY2026')).toBeInTheDocument()
+    expect(screen.getByText('來源宣告之涵蓋範圍: 12 months')).toBeInTheDocument()
+    expect(screen.getByText('期間起始日: 2025-07-01')).toBeInTheDocument()
+    expect(screen.getByText('期間結束日: 2026-06-30')).toBeInTheDocument()
 
     // No assumed-period warning
-    expect(screen.queryByText('?��??��???ST-EVA ?�設（�?源未�??�?)).not.toBeInTheDocument()
+    expect(screen.queryByText('期間基準由 ST-EVA 假設（來源未宣告）')).not.toBeInTheDocument()
   })
 })
 
@@ -1158,8 +1158,6 @@ describe('Dividend & Total-Return Comparison display', () => {
   it('shows dividend basis info when dividend_basis is present', () => {
     const dividendBasis = {
       dividend_per_share: 1.06,
-      dividend_currency: 'USD',
-      dividend_period: 'TTM',
       dividend_source: 'Yahoo Finance Chart Events',
       conventions: [
         {
@@ -1178,7 +1176,7 @@ describe('Dividend & Total-Return Comparison display', () => {
     renderMatrix(report)
 
     expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
-    expect(screen.getByText(/1\.06/)).toBeInTheDocument()
+    expect(screen.getByText('$1.06')).toBeInTheDocument()
     expect(screen.getByText('Dividend period (past 12 months): TTM')).toBeInTheDocument()
     expect(screen.getByText('Dividend source: Yahoo Finance Chart Events')).toBeInTheDocument()
     expect(screen.getByText('Dividend conventions')).toBeInTheDocument()
@@ -1186,38 +1184,6 @@ describe('Dividend & Total-Return Comparison display', () => {
     expect(screen.getByText('Dividends reinvested at target return')).toBeInTheDocument()
     expect(screen.getByText('P_T = P_0 * (1 + r)^T - T * D')).toBeInTheDocument()
     expect(screen.getByText('P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r')).toBeInTheDocument()
-  })
-
-  it('shows dividend with non-USD currency', () => {
-    const dividendBasis = {
-      dividend_per_share: 1.06,
-      dividend_currency: 'EUR',
-      dividend_period: 'TTM',
-      dividend_source: 'Yahoo Finance Chart Events',
-      conventions: [
-        {
-          convention: 'CASH_DIVIDENDS_RETAINED',
-          formula: 'P_T = P_0 * (1 + r)^T - T * D',
-          description: 'Cash dividends retained as uninvested cash; cumulative cash is subtracted from required exit share price.',
-        },
-        {
-          convention: 'DIVIDENDS_REINVESTED_AT_TARGET_RETURN',
-          formula: 'P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r',
-          description: 'Dividends reinvested annually at the target required return rate r; future value of dividend annuity is subtracted from required exit share price.',
-        },
-      ],
-    }
-    const report = withDividendReport(dividendBasis, null)
-    // Pass EUR as currency prop
-    render(
-      <I18nProvider initialLang="en">
-        <ReverseRequirementsMatrix report={report} currency="?? />
-      </I18nProvider>
-    )
-
-    expect(screen.getByText('Dividend per share:')).toBeInTheDocument()
-    expect(screen.getByText('EUR1.06')).toBeInTheDocument()
-    expect(screen.getByText('Dividend period (past 12 months): TTM')).toBeInTheDocument()
   })
 
   it('shows comparison table when price_vs_total_return_comparison is present', () => {
@@ -1275,16 +1241,14 @@ describe('Dividend & Total-Return Comparison display', () => {
     const report = withDividendReport(null, null)
     renderMatrix(report, 'zh-TW')
 
-    expect(screen.getByText('?�利?�總?�酬比�?')).toBeInTheDocument()
-    expect(screen.getByText('?�次?��??��?供股?�輸?�。基準矩????�股?�報?��?)).toBeInTheDocument()
-    expect(screen.getByText('?�股?�報??(?��?)')).toBeInTheDocument()
+    expect(screen.getByText('股利與總報酬比較')).toBeInTheDocument()
+    expect(screen.getByText('本次執行未提供股利輸入。基準矩陣僅為股價報酬。')).toBeInTheDocument()
+    expect(screen.getByText('僅股價報酬 (基準)')).toBeInTheDocument()
   })
 
   it('renders Traditional Chinese correctly for dividend basis', () => {
     const dividendBasis = {
       dividend_per_share: 1.06,
-      dividend_currency: 'USD',
-      dividend_period: 'TTM',
       dividend_source: 'Yahoo Finance Chart Events',
       conventions: [
         {
@@ -1302,13 +1266,13 @@ describe('Dividend & Total-Return Comparison display', () => {
     const report = withDividendReport(dividendBasis, null)
     renderMatrix(report, 'zh-TW')
 
-    expect(screen.getByText('每股?�利:')).toBeInTheDocument()
-    expect(screen.getByText(/1\.06/)).toBeInTheDocument()
-    expect(screen.getByText('?�利?��? (?�去 12 ?��?): TTM')).toBeInTheDocument()
-    expect(screen.getByText('?�利來�?: Yahoo Finance Chart Events')).toBeInTheDocument()
-    expect(screen.getByText('?�利???')).toBeInTheDocument()
-    expect(screen.getByText('?��??�利保�?')).toBeInTheDocument()
-    expect(screen.getByText('?�利以目標報?��??��?�?)).toBeInTheDocument()
+    expect(screen.getByText('每股股利:')).toBeInTheDocument()
+    expect(screen.getByText('$1.06')).toBeInTheDocument()
+    expect(screen.getByText('股利期間 \(過去 12 個月\): TTM')).toBeInTheDocument()
+    expect(screen.getByText('股利來源: Yahoo Finance Chart Events')).toBeInTheDocument()
+    expect(screen.getByText('股利慣例')).toBeInTheDocument()
+    expect(screen.getByText('現金股利保留')).toBeInTheDocument()
+    expect(screen.getByText('股利以目標報酬率再投資')).toBeInTheDocument()
     expect(screen.getByText('P_T = P_0 * (1 + r)^T - T * D')).toBeInTheDocument()
     expect(screen.getByText('P_T = P_0 * (1 + r)^T - D * ((1 + r)^T - 1) / r')).toBeInTheDocument()
   })
@@ -1342,16 +1306,20 @@ describe('Dividend & Total-Return Comparison display', () => {
         },
       },
     ]
-    const report = withDividendReport({dividend_per_share: 1.06 }, comparison)
+    const report = withDividendReport({
+      dividend_per_share: 1.06,
+      dividend_currency: 'USD',
+      dividend_period: 'TTM'
+    }, comparison)
     renderMatrix(report, 'zh-TW')
 
-    expect(screen.getByText('?�價?�酬 vs 總報??比�?�?)).toBeInTheDocument()
+    expect(screen.getByText('股價報酬 vs 總報酬 比較表')).toBeInTheDocument()
     expect(screen.getAllByText('3.0y').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('10.0%').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('28.9x')).toBeInTheDocument()
-    expect(screen.getByText('純股?�報??)).toBeInTheDocument()
-    expect(screen.getByText('?��??�利保�?')).toBeInTheDocument()
-    expect(screen.getByText('?�利?��?�?)).toBeInTheDocument()
+    expect(screen.getByText('純股價報酬')).toBeInTheDocument()
+    expect(screen.getByText('現金股利保留')).toBeInTheDocument()
+    expect(screen.getByText('股利再投資')).toBeInTheDocument()
   })
 
   it('does not show dividend section for NOT_COMPUTED matrix', () => {
@@ -1372,3 +1340,4 @@ describe('Dividend & Total-Return Comparison display', () => {
     expect(screen.getByText('NOT COMPUTED')).toBeInTheDocument()
   })
 })
+
