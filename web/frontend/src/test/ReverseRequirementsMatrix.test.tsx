@@ -887,3 +887,236 @@ describe('ReverseRequirementsMatrix SEC provenance labels', () => {
     expect(screen.getByText(/accn: 0001193125-26-323660/)).toBeInTheDocument()
   })
 })
+
+describe('Starting EPS period basis disclosure', () => {
+  const withEpsEvidence = (
+    epsEvidence: Partial<ReverseRequirementsReportDTO['reverse_requirements_matrix'][number]['evidence']>,
+  ): ReverseRequirementsReportDTO => ({
+    ...mockReport,
+    matrix_size: 1,
+    reverse_requirements_matrix: [
+      {
+        ...mockReport.reverse_requirements_matrix[1],
+        evidence: {
+          ...mockReport.reverse_requirements_matrix[1].evidence,
+          eps_evidence: {
+            ...mockReport.reverse_requirements_matrix[1].evidence!.eps_evidence,
+            ...epsEvidence,
+          },
+        },
+      },
+    ],
+  })
+
+  const openDrawer = (report: ReverseRequirementsReportDTO) => {
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={report} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+  }
+
+  it('shows assumed-period disclosure when period_undeclared_by_source is true', () => {
+    const report = withEpsEvidence({
+      period_undeclared_by_source: true,
+      period_label: 'TRAILING_TWELVE_MONTHS',
+      months_covered: 12.0,
+      period_start: null,
+      period_end: null,
+      provider: 'YahooFinance',
+      sec_fact: null,
+    })
+
+    openDrawer(report)
+
+    // Shows the period label
+    expect(screen.getByText('Period label: TRAILING_TWELVE_MONTHS')).toBeInTheDocument()
+
+    // Shows assumed coverage, not provider-declared
+    expect(screen.getByText('Assumed coverage (not declared by provider): 12 months')).toBeInTheDocument()
+
+    // Shows the explicit assumed-period warning
+    expect(screen.getByText('Period basis assumed by ST-EVA (not declared by provider)')).toBeInTheDocument()
+
+    // Missing dates shown as undeclared
+    expect(screen.getByText('Period start: undeclared')).toBeInTheDocument()
+    expect(screen.getByText('Period end: undeclared')).toBeInTheDocument()
+  })
+
+  it('does not imply provider explicitly declared twelve-month period when undeclared', () => {
+    const report = withEpsEvidence({
+      period_undeclared_by_source: true,
+      period_label: 'TTM',
+      months_covered: 12.0,
+      provider: 'YahooFinance',
+      sec_fact: null,
+    })
+
+    openDrawer(report)
+
+    // Should NOT say "Provider-declared coverage"
+    expect(screen.queryByText('Provider-declared coverage')).not.toBeInTheDocument()
+
+    // Should say "Assumed coverage"
+    expect(screen.getByText('Assumed coverage (not declared by provider): 12 months')).toBeInTheDocument()
+
+    // Should show the explicit warning
+    expect(screen.getByText('Period basis assumed by ST-EVA (not declared by provider)')).toBeInTheDocument()
+  })
+
+  it('shows provider-declared period metadata without assumed-period warning when period_undeclared_by_source is false', () => {
+    const report = withEpsEvidence({
+      period_undeclared_by_source: false,
+      period_label: 'FY2026',
+      months_covered: 12.0,
+      period_start: '2025-07-01',
+      period_end: '2026-06-30',
+      provider: 'sec',
+      source_type: 'REGULATORY_FILING',
+      sec_fact: {
+        accession: '0001193125-26-323660',
+        form: '10-K',
+        filed_date: '2026-07-30',
+        concept: 'us-gaap:EarningsPerShareDiluted',
+        unit: 'USD/shares',
+        period_start: '2025-07-01',
+        period_end: '2026-06-30',
+      },
+    })
+
+    openDrawer(report)
+
+    // Shows the period label
+    expect(screen.getByText('Period label: FY2026')).toBeInTheDocument()
+
+    // Shows provider-declared coverage
+    expect(screen.getByText('Provider-declared coverage: 12 months')).toBeInTheDocument()
+
+    // Shows actual period dates
+    expect(screen.getByText('Period start: 2025-07-01')).toBeInTheDocument()
+    expect(screen.getByText('Period end: 2026-06-30')).toBeInTheDocument()
+
+    // Does NOT show assumed-period warning
+    expect(screen.queryByText('Period basis assumed by ST-EVA (not declared by provider)')).not.toBeInTheDocument()
+  })
+
+  it('identifies user-supplied EPS as user assumption with period metadata', () => {
+    const report = withEpsEvidence({
+      is_user_assumption: true,
+      period_undeclared_by_source: true,
+      period_label: 'User Assumption',
+      months_covered: 12.0,
+      period_start: null,
+      period_end: null,
+      provider: 'User',
+      sec_fact: null,
+    })
+
+    openDrawer(report)
+
+    // Badge shows user assumption
+    expect(screen.getByText('User Assumption')).toBeInTheDocument()
+
+    // Period info still shown
+    expect(screen.getByText('Period label: User Assumption')).toBeInTheDocument()
+    expect(screen.getByText('Assumed coverage (not declared by provider): 12 months')).toBeInTheDocument()
+
+    // Missing dates shown as undeclared
+    expect(screen.getByText('Period start: undeclared')).toBeInTheDocument()
+    expect(screen.getByText('Period end: undeclared')).toBeInTheDocument()
+  })
+
+  it('does not fabricate missing period dates', () => {
+    const report = withEpsEvidence({
+      period_undeclared_by_source: true,
+      period_label: 'TRAILING_TWELVE_MONTHS',
+      months_covered: 12.0,
+      period_start: null,
+      period_end: null,
+      provider: 'YahooFinance',
+      sec_fact: null,
+    })
+
+    openDrawer(report)
+
+    // Should show undeclared, not fabricated dates
+    expect(screen.getByText('Period start: undeclared')).toBeInTheDocument()
+    expect(screen.getByText('Period end: undeclared')).toBeInTheDocument()
+
+    // Should not contain any fabricated date like 2024-01-01 or similar in the Start EPS section
+    const startEpsSection = screen.getByText('Starting EPS Anchor').closest('div')!
+    expect(startEpsSection.querySelectorAll('div, span')).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ textContent: expect.stringMatching(/202\d-\d\d-\d\d/) }),
+      ])
+    )
+    // Simpler check: the specific period start/end lines should not have dates
+    const periodStartLine = screen.getByText('Period start: undeclared')
+    const periodEndLine = screen.getByText('Period end: undeclared')
+    expect(periodStartLine.textContent).not.toMatch(/202\d-\d\d-\d\d/)
+    expect(periodEndLine.textContent).not.toMatch(/202\d-\d\d-\d\d/)
+  })
+
+  it('renders Traditional Chinese strings correctly for assumed period', () => {
+    const report = withEpsEvidence({
+      period_undeclared_by_source: true,
+      period_label: 'TRAILING_TWELVE_MONTHS',
+      months_covered: 12.0,
+      period_start: null,
+      period_end: null,
+      provider: 'YahooFinance',
+      sec_fact: null,
+    })
+
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ReverseRequirementsMatrix report={report} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+    // Chinese translations
+    expect(screen.getByText('期間標籤: TRAILING_TWELVE_MONTHS')).toBeInTheDocument()
+    expect(screen.getByText('假設涵蓋範圍（來源未宣告）: 12 months')).toBeInTheDocument()
+    expect(screen.getByText('期間基準由 ST-EVA 假設（來源未宣告）')).toBeInTheDocument()
+    expect(screen.getByText('期間起始日: 未宣告')).toBeInTheDocument()
+    expect(screen.getByText('期間結束日: 未宣告')).toBeInTheDocument()
+  })
+
+  it('renders Traditional Chinese strings correctly for provider-declared period', () => {
+    const report = withEpsEvidence({
+      period_undeclared_by_source: false,
+      period_label: 'FY2026',
+      months_covered: 12.0,
+      period_start: '2025-07-01',
+      period_end: '2026-06-30',
+      provider: 'sec',
+      sec_fact: {
+        accession: '0001193125-26-323660',
+        form: '10-K',
+        filed_date: '2026-07-30',
+        concept: 'us-gaap:EarningsPerShareDiluted',
+        unit: 'USD/shares',
+        period_start: '2025-07-01',
+        period_end: '2026-06-30',
+      },
+    })
+
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ReverseRequirementsMatrix report={report} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+
+    // Chinese translations for declared period
+    expect(screen.getByText('期間標籤: FY2026')).toBeInTheDocument()
+    expect(screen.getByText('來源宣告之涵蓋範圍: 12 months')).toBeInTheDocument()
+    expect(screen.getByText('期間起始日: 2025-07-01')).toBeInTheDocument()
+    expect(screen.getByText('期間結束日: 2026-06-30')).toBeInTheDocument()
+
+    // No assumed-period warning
+    expect(screen.queryByText('期間基準由 ST-EVA 假設（來源未宣告）')).not.toBeInTheDocument()
+  })
+})

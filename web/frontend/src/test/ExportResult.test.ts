@@ -93,6 +93,10 @@ const userScenario: EpsScenarioDTO = {
     provider: 'YahooFinance',
     source_type: 'API_LIVE',
     is_user_assumption: false,
+    period_label: '',
+    period_undeclared_by_source: false,
+    period_start: null,
+    period_end: null,
   },
   growth_years: 3.0,
   required_eps_cagr: 0.1965,
@@ -188,6 +192,10 @@ const secLinkedScenario: EpsScenarioDTO = {
     provider: 'sec',
     source_type: 'REGULATORY_FILING',
     is_user_assumption: false,
+    period_label: '',
+    period_undeclared_by_source: false,
+    period_start: null,
+    period_end: null,
     sec_fact: {
       accession: '0001193125-26-323660',
       form: '10-K',
@@ -265,6 +273,10 @@ const descriptiveUncomputableScenario: EpsScenarioDTO = {
     provider: 'YahooFinance',
     source_type: 'API_LIVE',
     is_user_assumption: false,
+    period_label: '',
+    period_undeclared_by_source: false,
+    period_start: null,
+    period_end: null,
   },
   growth_years: null,
   required_eps_cagr: null,
@@ -610,6 +622,160 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
       expect(row.report_consensus_target_period_end).toBe('2027-10-09')
       expect(row.report_consensus_comparison_tolerance_days).toBe('92')
     }
+  })
+
+  it('exports start EPS period metadata from evidence', () => {
+    const result = buildResult(computedReport)
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const [userRow, secRow, vendorRow] = rows
+
+    // User-supplied multiple row: vendor trailing EPS with undeclared period
+    expect(userRow.start_eps_value).toBe('8.72')
+    expect(userRow.start_eps_basis).toBe('TRAILING_TWELVE_MONTHS')
+    expect(userRow.start_eps_source_type).toBe('API_LIVE')
+    expect(userRow.start_eps_is_user_assumption).toBe('false')
+    expect(userRow.start_eps_months_covered).toBe('12')
+    expect(userRow.start_eps_period_label).toBe('')
+    expect(userRow.start_eps_period_undeclared).toBe('false')
+    expect(userRow.start_eps_period_start).toBe('')
+    expect(userRow.start_eps_period_end).toBe('')
+
+    // SEC-linked row: provider-declared period with dates
+    expect(secRow.start_eps_value).toBe('8.72')
+    expect(secRow.start_eps_basis).toBe('TRAILING_TWELVE_MONTHS')
+    expect(secRow.start_eps_source_type).toBe('REGULATORY_FILING')
+    expect(secRow.start_eps_is_user_assumption).toBe('false')
+    expect(secRow.start_eps_months_covered).toBe('12')
+    expect(secRow.start_eps_period_label).toBe('')
+    expect(secRow.start_eps_period_undeclared).toBe('false')
+    expect(secRow.start_eps_period_start).toBe('')
+    expect(secRow.start_eps_period_end).toBe('')
+
+    // Vendor forward row: undeclared period
+    expect(vendorRow.start_eps_value).toBe('13.2')
+    expect(vendorRow.start_eps_basis).toBe('FORWARD_TWELVE_MONTHS')
+    expect(vendorRow.start_eps_source_type).toBe('API_LIVE')
+    expect(vendorRow.start_eps_is_user_assumption).toBe('false')
+    expect(vendorRow.start_eps_months_covered).toBe('12')
+    expect(vendorRow.start_eps_period_label).toBe('')
+    expect(vendorRow.start_eps_period_undeclared).toBe('false')
+    expect(vendorRow.start_eps_period_start).toBe('')
+    expect(vendorRow.start_eps_period_end).toBe('')
+  })
+
+  it('exports start EPS period metadata with declared period label and dates when present', () => {
+    const withDeclaredPeriod: EpsScenarioDTO = {
+      ...userScenario,
+      start_eps: {
+        ...userScenario.start_eps,
+        period_label: 'FY2026',
+        period_start: '2025-07-01',
+        period_end: '2026-06-30',
+        period_undeclared_by_source: false,
+      },
+      evidence: {
+        ...userScenario.evidence,
+        eps_evidence: {
+          ...userScenario.evidence.eps_evidence,
+          period_label: 'FY2026',
+          period_start: '2025-07-01',
+          period_end: '2026-06-30',
+          period_undeclared_by_source: false,
+        },
+      },
+    }
+    const report: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      matrix_size: 1,
+      reverse_requirements_matrix: [withDeclaredPeriod],
+    }
+    const result = buildResult(report)
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const row = rows[0]
+
+    expect(row.start_eps_period_label).toBe('FY2026')
+    expect(row.start_eps_period_undeclared).toBe('false')
+    expect(row.start_eps_period_start).toBe('2025-07-01')
+    expect(row.start_eps_period_end).toBe('2026-06-30')
+  })
+
+  it('exports start EPS period metadata with undeclared period flag when true', () => {
+    const withUndeclaredPeriod: EpsScenarioDTO = {
+      ...userScenario,
+      start_eps: {
+        ...userScenario.start_eps,
+        period_label: 'TRAILING_TWELVE_MONTHS',
+        period_undeclared_by_source: true,
+        period_start: null,
+        period_end: null,
+      },
+      evidence: {
+        ...userScenario.evidence,
+        eps_evidence: {
+          ...userScenario.evidence.eps_evidence,
+          period_label: 'TRAILING_TWELVE_MONTHS',
+          period_undeclared_by_source: true,
+          period_start: null,
+          period_end: null,
+        },
+      },
+    }
+    const report: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      matrix_size: 1,
+      reverse_requirements_matrix: [withUndeclaredPeriod],
+    }
+    const result = buildResult(report)
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const row = rows[0]
+
+    expect(row.start_eps_period_label).toBe('TRAILING_TWELVE_MONTHS')
+    expect(row.start_eps_period_undeclared).toBe('true')
+    expect(row.start_eps_period_start).toBe('')
+    expect(row.start_eps_period_end).toBe('')
+  })
+
+  it('exports user-supplied EPS period metadata correctly identified', () => {
+    const withUserEps: EpsScenarioDTO = {
+      ...userScenario,
+      start_eps: {
+        ...userScenario.start_eps,
+        is_user_assumption: true,
+        source_type: 'USER',
+        period_label: 'User Assumption',
+        period_undeclared_by_source: true,
+        period_start: null,
+        period_end: null,
+      },
+      evidence: {
+        ...userScenario.evidence,
+        eps_evidence: {
+          ...userScenario.evidence.eps_evidence,
+          is_user_assumption: true,
+          provider: 'User',
+          period_label: 'User Assumption',
+          period_undeclared_by_source: true,
+          period_start: null,
+          period_end: null,
+        },
+      },
+    }
+    const report: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      matrix_size: 1,
+      reverse_requirements_matrix: [withUserEps],
+    }
+    const result = buildResult(report)
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const row = rows[0]
+
+    expect(row.start_eps_value).toBe('8.72')
+    expect(row.start_eps_is_user_assumption).toBe('true')
+    expect(row.start_eps_source_type).toBe('USER')
+    expect(row.start_eps_period_label).toBe('User Assumption')
+    expect(row.start_eps_period_undeclared).toBe('true')
+    expect(row.start_eps_period_start).toBe('')
+    expect(row.start_eps_period_end).toBe('')
   })
 
   it('keeps a missing consensus gap an empty field rather than a zero', () => {

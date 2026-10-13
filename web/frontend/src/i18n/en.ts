@@ -201,6 +201,14 @@ export const en: Translations = {
     consensusGapLabel: 'Gap vs consensus',
     consensusGapUnavailableLabel:
       'No gap is reported for this row: see the row flags and comparison notes above.',
+    startEpsPeriodLabel: 'Period label',
+    startEpsPeriodStart: 'Period start',
+    startEpsPeriodEnd: 'Period end',
+    startEpsPeriodUndeclared: 'Period basis assumed by ST-EVA (not declared by provider)',
+    startEpsPeriodDeclared: 'Provider-declared period',
+    startEpsCoverageAssumed: 'Assumed coverage (not declared by provider)',
+    startEpsCoverageDeclared: 'Provider-declared coverage',
+    startEpsPeriodUnavailable: 'undeclared',
   },
   export: {
     sectionTitle: 'Export',

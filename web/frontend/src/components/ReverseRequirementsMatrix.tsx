@@ -630,7 +630,42 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                       </span>
                                     </div>
                                     <div className="text-[11px] text-slate-500 space-y-0.5">
-                                      <div>Coverage: {sc.evidence.eps_evidence.months_covered} months</div>
+                                      {sc.evidence.eps_evidence.period_label && (
+                                        <div>
+                                          {t.matrix.startEpsPeriodLabel}: {sc.evidence.eps_evidence.period_label}
+                                        </div>
+                                      )}
+                                      <div>
+                                        {sc.evidence.eps_evidence.period_undeclared_by_source
+                                          ? t.matrix.startEpsCoverageAssumed
+                                          : t.matrix.startEpsCoverageDeclared}
+                                        : {sc.evidence.eps_evidence.months_covered} months
+                                      </div>
+                                      {sc.evidence.eps_evidence.period_start && (
+                                        <div>
+                                          {t.matrix.startEpsPeriodStart}: {sc.evidence.eps_evidence.period_start}
+                                        </div>
+                                      )}
+                                      {sc.evidence.eps_evidence.period_end && (
+                                        <div>
+                                          {t.matrix.startEpsPeriodEnd}: {sc.evidence.eps_evidence.period_end}
+                                        </div>
+                                      )}
+                                      {!sc.evidence.eps_evidence.period_start && (
+                                        <div>
+                                          {t.matrix.startEpsPeriodStart}: {t.matrix.startEpsPeriodUnavailable}
+                                        </div>
+                                      )}
+                                      {!sc.evidence.eps_evidence.period_end && (
+                                        <div>
+                                          {t.matrix.startEpsPeriodEnd}: {t.matrix.startEpsPeriodUnavailable}
+                                        </div>
+                                      )}
+                                      {sc.evidence.eps_evidence.period_undeclared_by_source && (
+                                        <div className="text-amber-700 font-semibold">
+                                          {t.matrix.startEpsPeriodUndeclared}
+                                        </div>
+                                      )}
                                       <div>Provider: {sc.evidence.eps_evidence.provider || 'reported'}</div>
                                       {sc.evidence.eps_evidence.observation_id && (
                                         <div className="font-mono text-[10px] text-indigo-700">

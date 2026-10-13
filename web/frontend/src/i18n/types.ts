@@ -184,6 +184,14 @@ export interface Translations {
     undeclaredValueLabel: string
     consensusGapLabel: string
     consensusGapUnavailableLabel: string
+    startEpsPeriodLabel: string
+    startEpsPeriodStart: string
+    startEpsPeriodEnd: string
+    startEpsPeriodUndeclared: string
+    startEpsPeriodDeclared: string
+    startEpsCoverageAssumed: string
+    startEpsCoverageDeclared: string
+    startEpsPeriodUnavailable: string
   }
   export: {
     sectionTitle: string
