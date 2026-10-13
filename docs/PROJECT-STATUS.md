@@ -1,9 +1,9 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-12
+**Status checked:** 2026-10-13
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `bb5e5e8` (R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** [Run 38303209687](https://github.com/sbvcid/st-eva/actions/runs/38303209687), triggered by `bb5e5e8`; `backend` and `browser` jobs both passed.
+**Current implementation baseline:** `e2c8e16` (R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38328880219](https://github.com/sbvcid/st-eva/actions/runs/38328880219), triggered by `e2c8e16`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -584,6 +584,87 @@ items (P0 exit-multiple table label for
 computed matrices, dividend/total-return UI, start-EPS period-label UI, and
 summary ``Reference P/E`` reconciliation with the production distribution)
 remain outstanding.
+
+
+## Supporting-Data Limitations for a Computed Matrix (R7-4, 2026-10-13)
+
+**Defect.** `reverse_requirements_report` records the supporting inputs it could
+not use in `report.unavailable` -- an ineligible vendor P/E band, unavailable
+valuation-method references, missing SEC dividend data, an unmodelled cost of
+equity -- and the API and the CSV both carry that list. The matrix component
+rendered it **only inside the `isNotComputed` banner**, so a live MSFT run can
+show 80 computable scenarios beside an amber "Not Computed"-free matrix and
+never mention that the vendor band was rejected for insufficient observations
+or that no SEC dividends were acquired. The record reached the export and
+nowhere else a reader looks.
+
+**Change.** `ReverseRequirementsMatrix.tsx` plus the minimum i18n. The
+`report.unavailable` rendering was extracted into one `UnavailableList`
+component and is now shown in two places, never both:
+
+- **COMPUTED** -- a new clearly-labelled *Supporting data and method
+  limitations* section above the filters, toned slate rather than amber so it
+  reads as a limitation and not a failure. Its subtitle states that the
+  unavailable inputs were not used, that the scenarios are unaffected by their
+  absence, and that an unavailable reference is a named absence rather than a
+  zero.
+- **NOT_COMPUTED** -- unchanged in substance: the existing banner, its status
+  explanation, and the list rendered once inside it. The standalone section is
+  suppressed in that state, so nothing is duplicated.
+
+Each entry is shown with the `item` the report names and the exact `reason` the
+report gave, falling back to a localised "Unnamed item" placeholder when the
+item is missing and to a JSON dump only when there is no reason at all. An empty
+or absent list renders nothing, because the guard is a length test rather than a
+truthiness test. The list has one source, `report.unavailable`, so the UI, the
+API and the CSV cannot disagree.
+
+`docs/PROJECT-STATUS.md`, the four new i18n keys (`unavailableInputsLabel`,
+`unavailableItemFallback`, `computedLimitationsNotice`,
+`computedLimitationsSubtitle`) in `en`, `zh-TW` and the shared type, and two new
+`data-testid` hooks are the whole surface. No DTO change was needed: the
+existing `unavailable` shape (`item`, `reason`, `reason_kind`, `blocks`) was
+already sufficient.
+
+**Verification.**
+- `web/frontend/src/test/ReverseRequirementsMatrix.test.tsx`: a new
+  `supporting-data limitations section` suite covers a COMPUTED report showing
+  every supplied item and reason, the "named absence rather than a zero" wording
+  alongside still-rendered scenarios, NOT_COMPUTED rendering the list exactly
+  once inside its banner with no duplicated standalone section, an empty list
+  rendering nothing, an absent list rendering nothing, the `zh-TW` rendering,
+  the `Unnamed item` fallback, and unchanged rows, filters, calculation traces,
+  exit-multiple source labels and the consensus panel.
+- The tests catch the defect: with the computed branch disabled, 4 of them fail.
+- **Real-provider evidence** through the actual SPA path. `tests/test_browser_smoke.py`
+  gains two tests against real headless Chromium: one runs the offline MSFT
+  regression fixture, whose report is deterministically COMPUTED with 160
+  scenarios **and 7 unavailable entries**, and asserts the section, the exact
+  `No P/FCF reference multiple was supplied` and `No SEC regulatory filing
+  observations of declared dividends` reasons, that the section appears exactly
+  once, and that the audit drawer still opens; the other runs the deterministic
+  TSM refusal, whose report is NOT_COMPUTED with 9 entries, and asserts the list
+  renders exactly once inside the banner with no standalone section.
+- Frontend Vitest **76 passed (8 files)**; production build green;
+  `npx tsc -b` clean; `oxlint` reports only pre-existing warnings (the former
+  unused-import warning for `AlertCircle` is resolved by its use here).
+- Browser smoke **12 passed, 1 rerun** with the CI's `--reruns 2 --reruns-delay 15`
+  flags. The rerun is the live-acquisition flake CI already tolerates.
+- **GitHub Actions:** run 38328880219 for e2c8e16, `backend` and
+  `browser` jobs both passed.
+
+**Boundary.** No `reverse-requirements/1.1` formula or scenario generation,
+acquisition source, evidence eligibility, validation rule, the contents of
+`report.unavailable`, consensus-period comparability or its fingerprint,
+historical P/E data or eligibility threshold, registry/policy identity, archive
+or replay semantics, snapshot selection, API or export schema, persistent
+SQLite/WAL/SHM dataset or previous output was changed. Nothing was combined with
+the dividend/total-return UI, start-EPS period labels, summary `Reference P/E`
+reconciliation, additional valuation models, LLM integration or archive cleanup.
+
+**Outstanding from R7-0 (unchanged).** dividend/total-return display, start-EPS
+period-label UI, and summary `Reference P/E`` reconciliation with the production
+distribution.
 
 
 ## Resolver Policy Identity Across Line Endings (R7-3, 2026-10-12, verified by run 38303209687)
