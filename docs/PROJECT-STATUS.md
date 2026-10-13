@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-13
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `e2c8e16` (R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** [Run 38328880219](https://github.com/sbvcid/st-eva/actions/runs/38328880219), triggered by `e2c8e16`; `backend` and `browser` jobs both passed.
+**Current implementation baseline:** `1499fd4` (R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38338994649](https://github.com/sbvcid/st-eva/actions/runs/38338994649), triggered by `1499fd4`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -382,7 +382,7 @@ Local verification for the same commit before observing CI: full backend suite 1
 - The headline tiles now sit under an explicit **Market-Implied Headline Metrics** heading with a note that they are single-point references "not interchangeable with a matrix CAGR", a per-metric **basis legend**, and an explanatory link that scrolls to the matrix (``#reverse-requirements-matrix``, anchor id set on ``ReverseRequirementsMatrix.tsx``).
 - **Price-Implied EPS** (was "Implied Fwd EPS"): "market price ÷ selected P/E — the EPS today's price corresponds to at that multiple, not a forward/NTM forecast". This is the summary engine's ``forward_eps_at_reference_multiple = price / selected_pe`` (a single point with no horizon or return).
 - **Implied EPS Gap (CAGR)** (was "Req. EPS CAGR", now deliberately distinct from the matrix column label, which stays "Req. EPS CAGR"): a flat-multiple vs trailing-EPS gap, annualised over the reported ``summary_horizon_years`` (default 1.0 on the web path), with no required-return hurdle, exit multiple or dividends. The differing anchor, horizon and multiple are stated so a summary CAGR can no longer be read as a matrix row.
-- **Reference P/E**: states its basis from a new ``selected_pe_basis`` — your supplied multiple (``user_supplied_multiple``) or the vendor historical P/E-band median (``historical_pe_median``, requires ≥ 20 declared observations) — never the production point-in-time distribution the matrix's eligible exit multiples use.
+- **Reference P/E**: states its basis from a new ``selected_pe_basis`` — your supplied multiple (``user_supplied_multiple``), the production point-in-time historical P/E distribution median (``production_historical_pe_median``), or the vendor historical P/E-band median (``historical_pe_median``, requires ≥ 20 declared observations). *(Amended by R7-5: this line originally ended with "never the production point-in-time distribution the matrix's eligible exit multiples use", which was the requirement gap R7-5 corrected.)*
 
 **Backend basis metadata (no calculation change):** ``web/schemas.py::ValuationSummary`` gains ``selected_pe_basis`` (from ``reference.method``) and ``summary_horizon_years``; ``web/service_adapter.py`` maps both from the existing summary-engine output (``horizon_years`` forwarded to it). Financial values and ``reverse-requirements/1.1`` are unchanged.
 
@@ -453,7 +453,7 @@ The rebuild's own ``context_id`` was correct in every case; only the snapshot *s
 
 **Independently verified (done here, not just reported).** Representative matrix rows were recomputed from their own stated operands (price, required return, horizon, exit multiple, EPS anchor): required exit price ``= price·(1+r)^T``, required terminal EPS ``= exit price ÷ multiple``, total EPS growth ``= terminal EPS ÷ anchor EPS − 1``, and required EPS CAGR ``= (terminal EPS ÷ anchor EPS)^(1/growth window) − 1`` all matched the API to **zero relative error** across every computable row, and the growth window derived from the anchor basis matched the reported value. These are checks the acceptancer performed directly with the real responses.
 
-**Confirmed at the API level (``/api/analyze`` → poll ``/api/jobs/{id}``, 56/56 checks).** Tick/currency identity; matrix ``COMPUTED`` with ``matrix_size == row count``; uncomputed rows carry explicit nulls + flags (no fabricated zeroes, no substitution); exit-multiple references stay distinct (``production_historical_pe_percentile``/``ELIGIBLE_PRODUCTION_DISTRIBUTION`` vs ``user_supplied``/``USER_SPECIFIED``); the production distribution is usable (36 observations ≥ 20); summary basis is honest (ref-free run reports ``selected_pe_basis`` from the summary engine — ``none`` when no user multiple and no eligible vendor-band median, which coexists correctly with the production-distribution matrix exit multiples — while user-multiple runs report ``user_supplied_multiple``); R2.1 holds (a direct SEC fact is fully identified and only where the source relationship is established; related filings stay cross-check and are never the direct source of the same value); replay is ``MATCH`` for the reference-free context and ``DIVERGED`` for the user-multiple context; and case 3 reflects its own request (``selected_pe`` = 26, not stale).
+**Confirmed at the API level (``/api/analyze`` → poll ``/api/jobs/{id}``, 56/56 checks).** Tick/currency identity; matrix ``COMPUTED`` with ``matrix_size == row count``; uncomputed rows carry explicit nulls + flags (no fabricated zeroes, no substitution); exit-multiple references stay distinct (``production_historical_pe_percentile``/``ELIGIBLE_PRODUCTION_DISTRIBUTION`` vs ``user_supplied``/``USER_SPECIFIED``); the production distribution is usable (36 observations ≥ 20); summary basis is honest (the ref-free run reports ``selected_pe_basis`` from the summary engine, while user-multiple runs report ``user_supplied_multiple``) *(Amended by R7-5: the clause describing a ``none`` summary alongside production-distribution matrix exit multiples as a correct coexistence was the requirement-gap finding R7-5 corrected.)*; R2.1 holds (a direct SEC fact is fully identified and only where the source relationship is established; related filings stay cross-check and are never the direct source of the same value); replay is ``MATCH`` for the reference-free context and ``DIVERGED`` for the user-multiple context; and case 3 reflects its own request (``selected_pe`` = 26, not stale).
 
 **Confirmed at the browser level (real Chromium driving the built SPA against the temp-archive server, 17/17 checks).** The rendered market price and matrix match the API response the UI is showing (captured from the live ``/api/jobs`` response); the dedicated **“Point-in-Time Replay Verification”** banner renders the actual outcome (green ``MATCH`` for the ref-free run, amber ``DIVERGED`` for the user-multiple next request) as a verification note separate from the green Admitted verdict and the computed matrix, so a replay divergence cannot be read as a failed valuation; the JSON download is a versioned envelope that omits ``raw_analysis`` and preserves all matrix rows, nested evidence/calculation traces and the replay summary; the CSV download contains the **full** matrix (80 rows for the default scenario set, verified with Python's ``csv`` module — 53 well-formed columns per row), with stable documented columns and R2.1 direct-vs-cross-check columns, and a row's required EPS CAGR matches the DTO; the second submission's exports reflect the second request, not stale data.
 
@@ -584,6 +584,121 @@ items (P0 exit-multiple table label for
 computed matrices, dividend/total-return UI, start-EPS period-label UI, and
 summary ``Reference P/E`` reconciliation with the production distribution)
 remain outstanding.
+
+
+## Summary Reference P/E Reconciles with the Production Distribution (R7-5, 2026-10-13, verified by run 38338994649)
+
+**Defect.** The summary's reference multiple was selected by
+``MarketImpliedAssumptionsEngine`` from only two sources: an explicitly supplied
+multiple, or the vendor historical P/E band median via
+``band_median_for_reference``. The production point-in-time historical P/E
+distribution — the reference the matrix's eligible exit multiples are drawn from
+— reached the engine never, because ``MarketImpliedAssumptionsEngine.analyze``
+was called at ``st_eva_runner.py:1762`` while the distribution was loaded at
+:1797, and ``ValuationInputs`` has no field to carry it.
+
+The consequence was a contradicting pair of records in one response: a live MSFT
+run reported ``reverse_requirements.status = COMPUTED`` with 80
+``production_historical_pe_percentile`` / ``ELIGIBLE_PRODUCTION_DISTRIBUTION``
+scenarios and ``production_historical_pe_summary.usable_for_reference = true``
+with 24 observations, while ``valuation_summary.selected_pe_basis`` reported
+``none`` and ``selected_pe`` was ``None``. R5 had documented that as a correct
+coexistence, and R7-0 reclassified it as a quality gap.
+
+**Change.**
+- ``st_eva_runner.py``: new ``production_pe_for_reference`` reads the
+  distribution's **own** ``usable_for_reference`` flag and its **own**
+  ``percentiles["median"]``. It deliberately does not re-derive eligibility from
+  the vendor band's ``observations >= 20`` rule, and does not recompute the
+  median from the band or today's price, so the summary cannot report a
+  reference the matrix was refused under. ``analyze`` accepts
+  ``production_historical_pe`` and applies an explicit precedence: (1) a
+  user-supplied multiple with its ``user_supplied_multiple`` provenance,
+  (2) the eligible production distribution's median, reported as
+  ``production_historical_pe_median``, (3) the eligible vendor band median,
+  (4) nothing. The distribution load was hoisted above the engine call; it is
+  pure (it reads the committed dataset and writes nothing), so no other ordering
+  changed. The ``reference`` block gains
+  ``production_historical_pe_status`` so a reader can tell an eligible reference
+  from a descriptive one; the sample count and observation period stay in the
+  report's existing production-distribution summary rather than being
+  duplicated.
+- ``investment_context.py``: the Investment Context's ``valuation_reference``
+  derived its ``basis`` from which number happened to be present, which would
+  have recorded a production median as a vendor-band median and pointed
+  ``source_ref`` at the band — the false provenance claim that module's own
+  docstring warns about. The basis is now read from the engine's
+  ``reference.method`` and a new ``PRODUCTION_PE_MEDIAN`` basis states its own
+  eligibility rule, keeps ``source_ref`` null, and produces a matching
+  limitation line. The pre-existing ``HISTORICAL_MEDIAN``, ``USER_SUPPLIED`` and
+  ``NONE`` outputs are unchanged.
+- ``report_formatter.py``: ``METHOD_LABELS`` gains the new basis.
+- ``web/frontend``: ``selected_pe_basis`` documents the new value;
+  ``ResultCards.tsx`` adds a branch so the ``Reference P/E`` basis legend names
+  the production historical P/E distribution median and points at the existing
+  production-distribution section for the qualified sample size and observation
+  period, rather than duplicating them; ``referencePeBasisProduction`` added to
+  ``en``, ``zh-TW`` and the shared type.
+
+**Verification.**
+- **Real-provider evidence.** ``create_app(archives_dir=<temp>)`` +
+  ``mode=live``, real Yahoo/SEC. Before: MSFT and AAPL both reported
+  ``selected_pe_basis = none``, ``selected_pe = None``. After: MSFT reports
+  ``selected_pe = 33.195873`` with ``production_historical_pe_median`` and a
+  24-observation distribution spanning 2021-07-28 to 2026-07-30; AAPL reports
+  ``28.44563`` with ``production_historical_pe_median`` and 36 observations
+  spanning 2018-01-02 to 2026-07-31. In both cases
+  ``selected_pe`` equals the distribution's own median, which is also the centre
+  of the matrix's exit multiples, and
+  ``forward_eps_at_reference_multiple == current_price / selected_pe``. A live
+  run with ``reference_multiple = 30.0`` still reports
+  ``user_supplied_multiple`` and 30.0.
+- **The matrix is unchanged, verified rather than asserted.** A temporary
+  worktree at ``6283026`` ran the same regression-mode submissions through the
+  same API and every scenario row, the exit multiples with their eligibility
+  states, the unavailable list, the matrix status and the formula version were
+  compared: **byte-identical** for MSFT (COMPUTED, 160 rows) and AAPL (COMPUTED,
+  80 rows). The values are pinned permanently in
+  ``tests/test_summary_reference_precedence.py::TestTheMatrixIsUnchanged``.
+- **Regression tests.** New ``tests/test_summary_reference_precedence.py`` (21
+  tests, 9 subtests): the eligibility gate and median both read from the
+  distribution; an eligible distribution yields its own median; a user-supplied
+  multiple keeps precedence; an eligible vendor band remains the fallback; the
+  production median wins over an eligible band; an ineligible distribution falls
+  back to the band; no eligible reference stays unavailable with no fabricated
+  growth or consensus gap; a thin vendor band is not a reference; a
+  descriptive-only distribution never qualifies; the engine's no-distribution
+  default path is unchanged and the legacy-view and contract paths agree; the
+  published exit-price, terminal-EPS and total-growth equations still hold; the
+  matrix equals the pre-change baseline; the summary and the matrix agree on the
+  median.
+  ``tests/test_investment_context.py`` gains
+  ``test_a_production_median_is_not_recorded_as_a_band_median``.
+  ``web/frontend/src/test/ResultCards.test.tsx`` gains the production basis in
+  English and Traditional Chinese, including that the sample size and period are
+  pointed at rather than duplicated.
+- Frontend Vitest **78 passed (8 files)**; production build green;
+  ``npx tsc -b`` clean; ``oxlint`` reports only pre-existing warnings.
+- Browser smoke **12 passed, 2 reruns**. The full backend suite is **2,074
+  passed, 169 skipped, 163 subtests**. Under the same machine load the *parent
+  commit* fails 12 browser tests with 24 reruns, so browser-smoke timing here is
+  load-sensitive and pre-existing, not caused by this change; the affected test
+  passes alone in 17s.
+- **GitHub Actions:** run 38338994649 for 1499fd4,
+  ``backend`` and ``browser`` jobs both passed.
+
+**Boundary.** ``reverse-requirements/1.1`` keeps its identifier and its
+published equations; the scenario cross product, the matrix, the production
+historical P/E pipeline and its eligibility threshold, acquisition sources,
+evidence eligibility, validation rules, the contents of ``report.unavailable``,
+consensus-period comparability and its fingerprint, registry/policy identity,
+archive and replay semantics, snapshot selection, API/export schema and
+persistent datasets are unchanged. Nothing was combined with the
+dividend/total-return UI, start-EPS period labels, additional valuation models,
+LLM integration or caching.
+
+**Outstanding from R7-0 (unchanged).** dividend/total-return display and
+start-EPS period-label UI.
 
 
 ## Supporting-Data Limitations for a Computed Matrix (R7-4, 2026-10-13)
