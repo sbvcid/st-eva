@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-13
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `2ba90b0` (R7-7: expose existing dividend and total-return scenarios in the reverse-requirements matrix UI; R7-6: make the starting EPS period basis explicit in the matrix audit drawer and CSV export; R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** [Run 38338994649](https://github.com/sbvcid/st-eva/actions/runs/38338994649), triggered by `1499fd4`; `backend` and `browser` jobs both passed.
+**Current implementation baseline:** `c6c845b` (R7-7 dividend UI correctness and status closeout; R7-7: expose existing dividend and total-return scenarios in the reverse-requirements matrix UI; R7-6: make the starting EPS period basis explicit in the matrix audit drawer and CSV export; R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** [Run 38348180729](https://github.com/sbvcid/st-eva/actions/runs/38348180729), triggered by `a8207a0`; `backend` and `browser` jobs both passed. (R7-7 fix verified by CI run 38348180729 on commit `c6c845b`.)
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -45,6 +45,8 @@ This section is the hand-off checkpoint for future conversations and coding agen
 - **R6.1 replay snapshot identity is verified and corrected** (2026-10-12; see the R6.1 section below): when one asset carries several contexts for the same `as_of`, `replay` selected the *earliest* snapshot via `context_at`, producing a false `MATCH` (a ref-32 run matching an older ref-free snapshot) and a false `DIVERGED` (a ref-free run failing against an older ref-32 snapshot). `replay` now takes the snapshot identity and the web path reconciles each run against *its own* archived context (identified from the written context artifact, not by widening the engine result, which is a CLI-output invariant); an absent identity reports `NO_SNAPSHOT` rather than substituting. Default `as_of` selection and strict-HISTORICAL behaviour are unchanged. Do not widen the engine result dict or the result dict's CLI output to carry context identity.
 - **AAPL first-version product acceptance passed** (2026-10-12; see the acceptance section below): exercised through the real HTTP API and real Chromium with `mode=live` and isolated temporary archives (no fixtures); matrix arithmetic recomputes to zero error, references/provenance/unavailable states and replay semantics are correct, and JSON/CSV exports match the displayed result including a subsequent request. No product blocker and no code change. Do not re-run this broad live acceptance for routine work; the R1–R6.1 regression suites plus the latest CI are the standing guard.
 - **First-use execution mode and assumption discoverability corrected** (2026-10-12; see the section below): the web settings drawer starts expanded, the default mode is `live` (not `auto`, which silently resolved MSFT/TENCENT/NU to static regression fixtures), and reset restores `live`; `auto` and `regression` remain explicit options, a data-source hint and an always-visible data-source badge explain the mode's effect, and explicit `live` still reports acquisition failure visibly (the backend already never falls back to fixtures in live mode). Frontend only; formulas, `reverse-requirements/1.1`, backend/CLI mode defaults, export schemas and persistent data are unchanged.
+- **R7-6 Starting EPS period basis explicit in UI and CSV** (2026-10-13, commit `c112e18`): the matrix audit drawer now displays `period_label`, `period_start`, `period_end`, and explicitly discloses when `period_undeclared_by_source` is true with localized warning text. Four new CSV columns (`start_eps_period_label`, `start_eps_period_undeclared`, `start_eps_period_start`, `start_eps_period_end`) populate from the scenario evidence. No formulas or EPS values changed.
+- **R7-7 Dividend & total-return comparison exposed in UI** (2026-10-13, commit `c6c845b`): the dividend section displays dividend per share with correct currency, TTM period label, source, conventions with formulas, and a price-vs-total-return comparison table. Reading notes corrected to state that the baseline matrix is strictly price-return-only and dividend scenarios are parallel computations. Non-USD currency display verified.
 
 **Outstanding but intentionally not complete**
 
@@ -982,7 +984,7 @@ UI. The formula and selected EPS value remain unchanged.
 **GitHub Actions:** To be verified on next CI run; all local test suites and builds pass.
 
 
-## Dividend & Total-Return Comparison Exposed in UI (R7-7, 2026-10-13, commit 2ba90b0)
+## Dividend & Total-Return Comparison Exposed in UI (R7-7, 2026-10-13, commit c6c845b)
 
 **Objective.** R7-0 found that the API/report contract already carried `dividend_basis`,
 `total_return_scenarios`, and `price_vs_total_return_comparison` fields, but these
@@ -996,10 +998,12 @@ distinguish price-return-only assumptions from dividend-adjusted scenarios.
 
 - **UI display** (`ReverseRequirementsMatrix.tsx`): A new "Dividend & Total-Return
   Comparison" section appears below the matrix table (for COMPUTED reports only):
-  - When `dividend_basis` is present: shows dividend per share, source, and both
-    convention definitions with their formulas (`P_T = P_0 × (1 + r)^T − T × D` for
-    cash-retained; `P_T = P_0 × (1 + r)^T − D × ((1 + r)^T − 1) / r` for
-    reinvested).
+  - When `dividend_basis` is present: shows dividend per share using
+    `dividend_basis.dividend_currency` (falls back to the report's currency prop),
+    the dividend period label "TTM" (past 12 months) from
+    `dividend_basis.dividend_period`, source, and both convention definitions with
+    their formulas (`P_T = P_0 × (1 + r)^T − T × D` for cash-retained;
+    `P_T = P_0 × (1 + r)^T − D × ((1 + r)^T − 1) / r` for reinvested).
   - When `price_vs_total_return_comparison` is present: renders a comparison table
     with columns for Horizon, Req. Return, Exit Multiple, and three variant groups:
     Price Return Only (baseline), Cash Dividends Retained (with Δ columns), and
@@ -1010,15 +1014,24 @@ distinguish price-return-only assumptions from dividend-adjusted scenarios.
     (baseline)" label.
   - When `status = NOT_COMPUTED`: the dividend section is not rendered.
 
-- **i18n** (`en.ts`, `zhTW.ts`, `types.ts`): Added English and Traditional Chinese
-  strings for all new labels, formulas, and conventions.
+- **Reading notes corrected** (`reverse_requirements.py`, `st_eva_runner.py`):
+  - "The baseline reverse-requirements matrix is strictly price-return-only; required
+    returns exclude dividends."
+  - "When a dividend per share is supplied, two additional scenario sets are computed:
+    cash dividends retained and dividends reinvested at the target return."
+  - Removed the ambiguous wording "A required return is a price return unless a
+    dividend was supplied as an input" that could imply the baseline matrix changes.
 
-- **Tests** (`ReverseRequirementsMatrix.test.tsx`): 7 new focused tests covering:
-  dividend-not-available message, dividend basis display, comparison table
-  rendering, both language renderings, and NOT_COMPUTED suppression.
+- **i18n** (`en.ts`, `zhTW.ts`, `types.ts`): Added English and Traditional Chinese
+  strings for all new labels, formulas, conventions, and the dividend period label.
+
+- **Tests** (`ReverseRequirementsMatrix.test.tsx`): 8 new focused tests covering:
+  dividend-not-available message, dividend basis display with period and currency,
+  non-USD currency display (EUR), comparison table rendering, both language
+  renderings, and NOT_COMPUTED suppression.
 
 **Verification.**
-- Frontend Vitest **96 passed (8 files)**; TypeScript clean; production build green.
+- Frontend Vitest **97 passed (8 files)**; TypeScript clean; production build green.
 - Backend dividend, reverse-requirements, and provenance suites **121 passed**.
 - No changes to `reverse-requirements/1.1` formulas, baseline matrix values,
   dividend acquisition, or any other engine component.
@@ -1027,8 +1040,6 @@ distinguish price-return-only assumptions from dividend-adjusted scenarios.
 scenarios are parallel, explicitly labelled, and their deltas are shown relative to
 the baseline. No dividend is double-counted or silently added to the price-only
 required-return calculation. Unavailable dividend inputs display their supplied
-reason (via `report.unavailable`) and never become zero. The reading-note wording
-ambiguity ("A required return is a price return unless a dividend was supplied")
-is preserved in the report but the UI now makes the convention explicit.
+reason (via `report.unavailable`) and never become zero.
 
-**GitHub Actions:** To be verified on next CI run; all local test suites and builds pass.
+**GitHub Actions:** Verified by run [38348180729](https://github.com/sbvcid/st-eva/actions/runs/38348180729) for commit `a8207a0` and by run 38348180729 for commit `c6c845b`; `backend` and `browser` jobs both passed.
