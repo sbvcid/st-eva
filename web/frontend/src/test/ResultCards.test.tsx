@@ -88,6 +88,63 @@ describe('ResultCards headline-metric reconciliation', () => {
     expect(legend.textContent).toMatch(/Vendor historical P\/E band median/i)
   })
 
+  it('names the production historical P/E distribution median as the basis', () => {
+    // The summary and the matrix must not disagree about whether a qualified
+    // reference exists, so the production median is named rather than being
+    // reported as "no usable reference".
+    renderCards({
+      current_price: 336.64,
+      currency: 'USD',
+      forward_eps_at_reference_multiple: 11.986726959466182,
+      required_eps_cagr: 0.2858,
+      selected_pe: 28.44563,
+      selected_pe_basis: 'production_historical_pe_median',
+      summary_horizon_years: 1.0,
+    })
+
+    const legend = screen.getByTestId('summary-basis-legend')
+    expect(legend.textContent).toMatch(
+      /production historical P\/E distribution/i,
+    )
+    // The basis points at where the qualified sample size and observation
+    // period stay inspectable, rather than duplicating them here.
+    expect(legend.textContent).toMatch(/production-distribution section/i)
+    expect(legend.textContent).not.toMatch(/Vendor historical P\/E band median/i)
+    expect(legend.textContent).not.toMatch(/No usable reference multiple/i)
+    // The card shows the value and its basis together.
+    expect(screen.getByText('28.4x')).toBeInTheDocument()
+  })
+
+  it('localises the production-distribution basis in Traditional Chinese', () => {
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ResultCards
+          ticker="AAPL"
+          companyName="Apple Inc."
+          asOf="2026-10-09"
+          researchId="RES-R5"
+          valuation={
+            {
+              limitations: [],
+              current_price: 336.64,
+              currency: 'USD',
+              selected_pe: 28.44563,
+              selected_pe_basis: 'production_historical_pe_median',
+            } as ValuationSummary
+          }
+          admission={admission}
+          replay={replay}
+          refusalReasons={[]}
+          sourceIdentifiers={[]}
+        />
+      </I18nProvider>,
+    )
+    const legend = screen.getByTestId('summary-basis-legend')
+    expect(legend.textContent).toContain('產出時點正確歷史本益比分佈之中位數')
+    expect(legend.textContent).not.toContain('資料商歷史本益比帶')
+    expect(legend.textContent).not.toContain('無可用之參考本益比')
+  })
+
   it('states no usable reference multiple when none was selected', () => {
     renderCards({ selected_pe: null, selected_pe_basis: 'none' })
     const legend = screen.getByTestId('summary-basis-legend')

@@ -52,8 +52,13 @@ export interface ValuationSummary {
   // Basis of the summary headline metrics, so they are not mistaken for a
   // reverse-requirements matrix row. `selected_pe_basis` is the summary
   // engine's own reference method: 'user_supplied_multiple',
-  // 'historical_pe_median', or 'none'. `summary_horizon_years` is the horizon
-  // the summary CAGR is annualised over (default 1.0 on the web path).
+  // 'production_historical_pe_median', 'historical_pe_median', or 'none'.
+  // 'production_historical_pe_median' is the median of the eligible
+  // point-in-time historical P/E distribution -- the same reference the
+  // matrix's eligible exit multiples are drawn from, so a computed matrix
+  // and this summary cannot disagree about whether a reference exists.
+  // `summary_horizon_years` is the horizon the summary CAGR is annualised
+  // over (default 1.0 on the web path).
   selected_pe_basis?: string | null
   summary_horizon_years?: number | null
   observed_pe?: number | null

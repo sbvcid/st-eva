@@ -47,6 +47,7 @@ export interface Translations {
     reqEpsCagrBasis: (years: number) => string
     referencePe: string
     referencePeBasisUser: string
+    referencePeBasisProduction: string
     referencePeBasisBand: string
     referencePeBasisNone: string
     seeMatrixLink: string

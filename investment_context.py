@@ -861,6 +861,7 @@ class ContextBuilder:
         source_metric: Optional[str],
         source_ref: Optional[str],
         basis: str,
+        eligibility: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Register a valuation reference, and say plainly where it came from.
@@ -869,12 +870,34 @@ class ContextBuilder:
         is conditional on had no provenance at all. `basis` is never inferred
         from the number, and the band the statistic came from is named even when
         that band was too thin to be a reference.
+
+        `basis` comes from the summary engine's own reference method, not from
+        whether a number happens to be present. Deriving it here instead would
+        let a reference that actually came from the production historical P/E
+        distribution be recorded as a vendor-band median, which is a false
+        provenance claim about where the number came from -- the exact thing the
+        `source_ref` logic below exists to prevent.
+
+        `eligibility` states the rule the basis's own reference was admitted
+        under. It is optional because the secondary references (P/FCF,
+        EV/EBITDA, P/S) still carry the vendor band's rule; the production
+        historical P/E distribution states its own.
         """
         ref = reference_ref(name)
         band = getattr(self.data, f"historical_{source_metric}_band", None) if source_metric else None
         status = self._band_status(band) if source_metric else None
         declared = safe_float((band or {}).get("observations")) if band else None
         eligible = status == "USABLE_FOR_REFERENCE"
+        if eligibility is not None:
+            eligible = bool(eligibility.get("eligible_as_reference"))
+
+        provenance = (
+            PROVENANCE_OBSERVED
+            if basis in ("HISTORICAL_MEDIAN", "PRODUCTION_PE_MEDIAN")
+            else PROVENANCE_UNAVAILABLE
+            if multiple is None
+            else PROVENANCE_CONDITIONAL
+        )
 
         self._register(
             ref,
@@ -884,13 +907,7 @@ class ContextBuilder:
                 "multiple": multiple,
                 "basis": basis,
                 "operand_field": "multiple",
-                "provenance_kind": (
-                    PROVENANCE_OBSERVED
-                    if basis == "HISTORICAL_MEDIAN"
-                    else PROVENANCE_UNAVAILABLE
-                    if multiple is None
-                    else PROVENANCE_CONDITIONAL
-                ),
+                "provenance_kind": provenance,
                 "source_ref": source_ref,
                 "source_statistic": "median" if source_metric else None,
                 "source_observation_count": (
@@ -898,20 +915,28 @@ class ContextBuilder:
                 ),
                 "eligible_as_reference": eligible,
                 "eligibility_rule": (
-                    "a band needs at least "
-                    f"{MIN_BAND_OBSERVATIONS_FOR_REFERENCE} usable observations"
+                    eligibility["eligibility_rule"]
+                    if eligibility is not None
+                    else (
+                        "a band needs at least "
+                        f"{MIN_BAND_OBSERVATIONS_FOR_REFERENCE} usable observations"
+                    )
                 ),
                 "eligibility_reason": (
-                    None
-                    if status is None
+                    eligibility["eligibility_reason"]
+                    if eligibility is not None
                     else (
-                        "the band declares no observation count and cannot be verified as a reference"
-                        if declared is None
-                        else f"{int(declared)} observations"
-                        + (
-                            " is below the required count"
-                            if not eligible
-                            else " meets the requirement"
+                        None
+                        if status is None
+                        else (
+                            "the band declares no observation count and cannot be verified as a reference"
+                            if declared is None
+                            else f"{int(declared)} observations"
+                            + (
+                                " is below the required count"
+                                if not eligible
+                                else " meets the requirement"
+                            )
                         )
                     )
                 ),
@@ -919,6 +944,8 @@ class ContextBuilder:
                 "selection_method": (
                     "user_supplied_multiple"
                     if basis == "USER_SUPPLIED"
+                    else "production_historical_pe_median"
+                    if basis == "PRODUCTION_PE_MEDIAN"
                     else "historical_pe_median"
                     if basis == "HISTORICAL_MEDIAN"
                     else "none"
@@ -932,13 +959,7 @@ class ContextBuilder:
             Figure(
                 ref=ref,
                 unit=Unit.MULTIPLE.value,
-                provenance_kind=(
-                    PROVENANCE_OBSERVED
-                    if basis == "HISTORICAL_MEDIAN"
-                    else PROVENANCE_UNAVAILABLE
-                    if multiple is None
-                    else PROVENANCE_CONDITIONAL
-                ),
+                provenance_kind=provenance,
                 value=multiple,
                 available=multiple is not None,
             )
@@ -976,17 +997,49 @@ class ContextBuilder:
         # declaring the statistics non-recomputable are two different facts.
         source_ref = self._band_ref("pe_band") if band_pe else None
 
+        # The basis is read from the summary engine's own reference method
+        # rather than inferred from which number is present, so a reference that
+        # came from the production historical P/E distribution is never recorded
+        # as a vendor-band median. The production distribution's own eligibility
+        # rule is stated with it, instead of the band's observation rule that
+        # does not apply to it.
+        method = analysis_reference.get("method")
+        production_status = analysis_reference.get(
+            "production_historical_pe_status"
+        )
+
         basis = "NONE"
         if user_pe is not None:
             basis = "USER_SUPPLIED"
+        elif method == "production_historical_pe_median":
+            basis = "PRODUCTION_PE_MEDIAN"
         elif selected_pe is not None:
             basis = "HISTORICAL_MEDIAN"
 
-        # Only a historical median is sourced from the band. A user-supplied
-        # multiple came from a person, and pointing at the band would be a false
-        # claim about where the number came from.
+        # Only a vendor-band median is sourced from the band. A user-supplied
+        # multiple came from a person and the production median came from the
+        # point-in-time reconstruction; pointing either at the band would be a
+        # false claim about where the number came from.
         if basis != "HISTORICAL_MEDIAN":
             source_ref = None
+
+        eligibility = (
+            {
+                "eligible_as_reference": True,
+                "eligibility_rule": (
+                    "the production historical P/E distribution must report "
+                    "usable_for_reference"
+                ),
+                "eligibility_reason": (
+                    f"the production historical P/E distribution is "
+                    f"{production_status}, so its median is a qualified reference"
+                    if production_status
+                    else "the production historical P/E distribution is a qualified reference"
+                ),
+            }
+            if basis == "PRODUCTION_PE_MEDIAN"
+            else None
+        )
 
         refs = {
             "valuation_reference": self._register_reference(
@@ -995,6 +1048,7 @@ class ContextBuilder:
                 source_metric="pe",
                 source_ref=source_ref,
                 basis=basis,
+                eligibility=eligibility,
             )
         }
 
@@ -2153,6 +2207,13 @@ class ContextBuilder:
                     f"{entry.payload.get('source_observation_count')} "
                     "observations, below the required count; it is "
                     "descriptive only."
+                )
+            elif basis == "PRODUCTION_PE_MEDIAN":
+                limitations.append(
+                    f"{name} is the median of the production historical P/E "
+                    "distribution for this asset, not a vendor band statistic "
+                    "and not an independent forecast; every figure conditional "
+                    "on it inherits that reference period."
                 )
             elif basis == "NONE":
                 limitations.append(

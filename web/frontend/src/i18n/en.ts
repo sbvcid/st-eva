@@ -53,6 +53,8 @@ export const en: Translations = {
       `Flat multiple vs trailing EPS, annualised over ${years}y — no required-return hurdle, exit multiple or dividends. See the matrix for return-hurdled scenarios.`,
     referencePe: 'Reference P/E',
     referencePeBasisUser: 'Your supplied reference multiple',
+    referencePeBasisProduction:
+      'Median of the production historical P/E distribution (the same reference the matrix exit multiples use; its qualified sample size and observation period are in the production-distribution section below)',
     referencePeBasisBand: 'Vendor historical P/E band median (≥ 20 observations)',
     referencePeBasisNone: 'No usable reference multiple',
     seeMatrixLink: 'See the reverse-requirements matrix for per-scenario figures.',

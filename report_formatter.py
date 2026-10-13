@@ -32,6 +32,7 @@ BAND_STATUS_LABELS = {
 
 METHOD_LABELS = {
     "user_supplied_multiple": "使用者指定倍數",
+    "production_historical_pe_median": "產出時點正確歷史本益比之中位數",
     "historical_pe_median": "歷史 P/E 中位數",
     "none": "無參考倍數",
 }

@@ -55,6 +55,8 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
   const referencePeBasis =
     valuation.selected_pe_basis === 'user_supplied_multiple'
       ? t.results.referencePeBasisUser
+      : valuation.selected_pe_basis === 'production_historical_pe_median'
+      ? t.results.referencePeBasisProduction
       : valuation.selected_pe_basis === 'historical_pe_median'
       ? t.results.referencePeBasisBand
       : valuation.selected_pe != null

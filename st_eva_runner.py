@@ -1303,6 +1303,38 @@ def band_median_for_reference(
     return safe_float((band or {}).get("median"))
 
 
+def production_pe_for_reference(
+    production_historical_pe: Optional[Dict[str, Any]],
+) -> Tuple[Optional[float], str]:
+    """
+    The production historical P/E distribution as a summary reference.
+
+    Returns the distribution's median and its status, or (None, status) when
+    the distribution cannot serve as a reference.
+
+    Two things are deliberate here. The gate is the distribution's own
+    `usable_for_reference` flag rather than the vendor band's
+    `observations >= 20` rule, because the distribution is gated once, where it
+    is built, and applying a second and differently-shaped gate here could admit
+    a reference the matrix's exit multiples were refused under. And the median
+    is read from the distribution's own percentiles rather than recomputed from
+    the vendor band or from today's price, so the summary reports the figure
+    the reconstruction actually produced.
+
+    A distribution that is merely descriptive stays (None, status): it keeps
+    its descriptive status everywhere else and never becomes a qualifying
+    reference here.
+    """
+    distribution = (production_historical_pe or {}).get("distribution") or {}
+    status = str(distribution.get("status") or "UNAVAILABLE")
+    if distribution.get("usable_for_reference") is not True:
+        return None, status
+    median = safe_float((distribution.get("percentiles") or {}).get("median"))
+    if median is None or median <= 0:
+        return None, status
+    return median, status
+
+
 def band_status(
     band: Optional[Dict[str, Any]],
 ) -> str:
@@ -1369,6 +1401,7 @@ class MarketImpliedAssumptionsEngine:
         pfcf_multiple: Optional[float] = None,
         ev_ebitda_multiple: Optional[float] = None,
         ps_multiple: Optional[float] = None,
+        production_historical_pe: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Reverse-engineer the assumptions implied by the observed price.
@@ -1377,6 +1410,13 @@ class MarketImpliedAssumptionsEngine:
         contract projection, or a 2.2.3 `MarketData` view, which is converted.
         The arithmetic below is identical in both cases: the engine cannot tell
         which provider the numbers came from, because it never sees one.
+
+        `production_historical_pe` is the point-in-time historical P/E
+        distribution for this asset, as the dedicated reconstruction builds it.
+        The engine reads the distribution's own eligibility and its own median,
+        and never re-derives either from the vendor band, so the reference the
+        summary reports and the reference the matrix's exit multiples were
+        admitted under cannot drift apart.
         """
         inputs = (
             data
@@ -1412,7 +1452,37 @@ class MarketImpliedAssumptionsEngine:
             if value is not None and value <= 0:
                 raise ValueError("Reference multiples must be positive.")
 
-        selected_pe = reference_multiple if reference_multiple is not None else historical_median
+        # The summary's reference multiple, in precedence order:
+        #
+        #   1. an explicitly supplied multiple, which is the operator's own
+        #      assumption and is never displaced by anything the data says;
+        #   2. the production historical P/E distribution's median, when that
+        #      distribution is eligible as a reference;
+        #   3. the vendor historical P/E band's median, under the existing
+        #      >= 20 declared observations rule;
+        #   4. nothing, reported as unavailable.
+        #
+        # The matrix and the summary are different calculations and stay that
+        # way, but they cannot disagree about whether a qualified reference
+        # exists: when the production distribution is eligible, its median is
+        # the reference here and the median of its percentiles is the centre of
+        # the matrix's eligible exit multiples.
+        production_pe_median, production_pe_status = production_pe_for_reference(
+            production_historical_pe
+        )
+
+        if reference_multiple is not None:
+            selected_pe = reference_multiple
+            selected_pe_method = "user_supplied_multiple"
+        elif production_pe_median is not None:
+            selected_pe = production_pe_median
+            selected_pe_method = "production_historical_pe_median"
+        elif historical_median is not None:
+            selected_pe = historical_median
+            selected_pe_method = "historical_pe_median"
+        else:
+            selected_pe = None
+            selected_pe_method = "none"
         selected_pfcf = pfcf_multiple if pfcf_multiple is not None else historical_pfcf_median
         selected_ev_ebitda = ev_ebitda_multiple if ev_ebitda_multiple is not None else historical_ev_ebitda_median
         selected_ps = ps_multiple if ps_multiple is not None else historical_ps_median
@@ -1462,9 +1532,15 @@ class MarketImpliedAssumptionsEngine:
 
         return {
             "reference": {
-                "method": "user_supplied_multiple" if reference_multiple is not None else ("historical_pe_median" if historical_median is not None else "none"),
+                "method": selected_pe_method,
                 "multiple": selected_pe,
                 "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
+                # The production distribution's own eligibility status, so a
+                # reader can tell an eligible reference from a descriptive one
+                # without re-deriving it. The sample count and observation
+                # period stay in the report's production-distribution summary
+                # rather than being duplicated here.
+                "production_historical_pe_status": production_pe_status,
                 "historical_band_status": {
                     "pe": band_status(pe_band),
                     "ps": band_status(ps_band),
@@ -1759,41 +1835,10 @@ def run_st_eva(
 
     evidence = build_evidence(data, metrics)
 
-    analysis = MarketImpliedAssumptionsEngine.analyze(
-        data=data,
-        reference_multiple=reference_multiple,
-        horizon_years=horizon_years,
-        pfcf_multiple=pfcf_multiple,
-        ev_ebitda_multiple=ev_ebitda_multiple,
-        ps_multiple=ps_multiple,
-    )
-
-    analysis_errors = Validator.validate_analysis(analysis)
-    if analysis_errors:
-        raise ValueError("; ".join(analysis_errors))
-
-    evidence_errors = Validator.validate_evidence(
-        evidence,
-        evidence.ids(),
-    )
-    if evidence_errors:
-        raise ValueError("; ".join(evidence_errors))
-
-    research_id = None
-    investment_context = None
-    cross_source_observations: List[Any] = []
-    captured_documents: List[Any] = []
-
-    # One SEC pass feeds both the financial history and the Investment
-    # Context, so a run that wants both reaches the filings once and the two
-    # cannot disagree. Either can be asked for on its own. The default asks for
-    # neither, so an ordinary run still touches no filing endpoint and the
-    # analysis output is unchanged by the context flag.
-    wants_sec = context_path is not None or include_financial_history
-    sec_evidence = (
-        _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
-    )
-
+    # Loaded before the summary engine, because the engine's reference
+    # precedence reads the distribution's eligibility. The load is pure -- it
+    # reads the committed dataset and writes nothing -- so hoisting it above the
+    # engine changes no other ordering.
     production_historical_pe = None
     if include_historical_pe:
         try:
@@ -1822,6 +1867,42 @@ def run_st_eva(
                     "reason_detail": str(exc),
                 }
             }
+
+    analysis = MarketImpliedAssumptionsEngine.analyze(
+        data=data,
+        reference_multiple=reference_multiple,
+        horizon_years=horizon_years,
+        pfcf_multiple=pfcf_multiple,
+        ev_ebitda_multiple=ev_ebitda_multiple,
+        ps_multiple=ps_multiple,
+        production_historical_pe=production_historical_pe,
+    )
+
+    analysis_errors = Validator.validate_analysis(analysis)
+    if analysis_errors:
+        raise ValueError("; ".join(analysis_errors))
+
+    evidence_errors = Validator.validate_evidence(
+        evidence,
+        evidence.ids(),
+    )
+    if evidence_errors:
+        raise ValueError("; ".join(evidence_errors))
+
+    research_id = None
+    investment_context = None
+    cross_source_observations: List[Any] = []
+    captured_documents: List[Any] = []
+
+    # One SEC pass feeds both the financial history and the Investment
+    # Context, so a run that wants both reaches the filings once and the two
+    # cannot disagree. Either can be asked for on its own. The default asks for
+    # neither, so an ordinary run still touches no filing endpoint and the
+    # analysis output is unchanged by the context flag.
+    wants_sec = context_path is not None or include_financial_history
+    sec_evidence = (
+        _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
+    )
 
     reverse_requirements = _build_reverse_requirements(
         data,

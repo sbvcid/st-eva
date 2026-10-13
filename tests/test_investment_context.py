@@ -79,6 +79,30 @@ from st_eva_runner import (
 REPO = Path(__file__).resolve().parent.parent
 
 
+def _eligible_distribution(median="33.195873"):
+    """An eligible production historical P/E distribution, as the loader emits it."""
+    return {
+        "distribution": {
+            "status": "USABLE_FOR_REFERENCE",
+            "usable_for_reference": True,
+            "sample_count": 24,
+            "total_evaluations": 27,
+            "min_observations_required": 20,
+            "period_start": "2021-07-28",
+            "period_end": "2026-07-30",
+            "percentiles": {
+                "10th": 25.602182,
+                "25th": 28.811204,
+                "median": float(median),
+                "75th": 35.400253,
+                "90th": 36.088407,
+            },
+            "input_set_id": "e6719c725702af9b8cc44285a85fa89e1b4df175c0becbb46ac8a30dd847027c",
+            "content_hash": "f3b133e4c5d42262d4ba1cb26266da05c3b4717f8862bcb26fded2c547df402d",
+        }
+    }
+
+
 def build_context_for(ticker, **kwargs):
     """Build a context the same way the CLI does, from a fixture."""
     data = CompanyResolver.resolve(ticker, mode="regression")
@@ -580,6 +604,34 @@ class TestConditionalContract(unittest.TestCase):
             )
             self.assertIn("eligibility_rule", reference)
             self.assertIn("eligible_as_reference", reference)
+
+    def test_a_production_median_is_not_recorded_as_a_band_median(self):
+        """
+        The summary's production historical P/E median is not a vendor band
+        statistic, so the context must not claim it came from the band.
+
+        Deriving the basis from which number happens to be present would make
+        exactly that false provenance claim: the extra figure here is
+        price-implied, and its conditional_on names the same reference.
+        """
+        document = build_context_for(
+            "MSFT",
+            engine={"production_historical_pe": _eligible_distribution()},
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "PRODUCTION_PE_MEDIAN")
+        self.assertEqual(reference["multiple"], 33.195873)
+        self.assertIsNone(
+            reference["source_ref"],
+            "a production median did not come from the vendor band",
+        )
+        self.assertTrue(reference["eligible_as_reference"])
+        self.assertIn("production historical P/E distribution", reference["eligibility_rule"])
+        self.assertEqual(
+            reference["selection_method"], "production_historical_pe_median"
+        )
+        self.assertFalse(reference["user_overridden"])
 
 
 class TestScopeContract(unittest.TestCase):

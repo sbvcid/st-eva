@@ -53,6 +53,8 @@ export const zhTW: Translations = {
       `以固定本益比對照近四季 EPS，按 ${years} 年折算之年化差距——不含要求報酬率、退出倍數或股利。逐情境之要求報酬率數字請參見反推需求矩陣。`,
     referencePe: '參考本益比',
     referencePeBasisUser: '您自訂的參考本益比',
+    referencePeBasisProduction:
+      '產出時點正確歷史本益比分佈之中位數（與矩陣期末倍數所使用者為同一參考；其合格樣本數與觀察期間請見下方產出時點歷史本益比區塊）',
     referencePeBasisBand: '資料商歷史本益比帶之中位數（≥ 20 個觀察值）',
     referencePeBasisNone: '無可用之參考本益比',
     seeMatrixLink: '逐情境數字請參見反向估值需求矩陣。',
