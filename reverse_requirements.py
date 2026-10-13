@@ -142,6 +142,18 @@ class EpsAnchor:
     is_user_assumption: bool = False
     sec_fact: Optional[Dict[str, Any]] = None
     sec_related_evidence: Optional[Dict[str, Any]] = None
+    # For a vendor-sourced value, the provider field and endpoint that recorded
+    # it (e.g. "defaultKeyStatistics.trailingEps" and the quoteSummary URL), and
+    # the provider that produced the value's own observation. The observation
+    # provider is distinct from the market-data provider on the anchor (which
+    # composes the price and fundamentals providers); an EPS figure's direct
+    # source is the former. Internal provenance only: deliberately kept out of
+    # contract_view so the report's start_eps block and fingerprint are
+    # unchanged. It feeds the human-readable sourced_facts entry, which is where
+    # the evidence model records a source description.
+    source_field: Optional[str] = None
+    source_url: Optional[str] = None
+    source_provider: Optional[str] = None
 
     def __post_init__(self) -> None:
         if not math_is_finite(self.value):
@@ -731,19 +743,48 @@ def build_scenario_evidence(
     sourced_facts: List[str] = [
         f"Market Price: {price:g} {currency or 'USD'} (as-of {as_of or 'latest'}, provider: {price_ev['provider']})"
     ]
+    # The EPS figure's direct source provider is the provider of its own
+    # observation, not the anchor's market-data provider (which composes the
+    # price and fundamentals providers). When the observation recorded one it is
+    # named as such; otherwise the anchor's provider stands, unchanged.
+    eps_source_provider = getattr(start_anchor, "source_provider", None)
+    eps_provider = eps_source_provider or start_anchor.provider
+    eps_provider_label = "EPS provider" if eps_source_provider else "provider"
     if not eps_ev["is_user_assumption"]:
         sec_note = ""
         if eps_ev["sec_fact"] and eps_ev["sec_fact"].get("accession"):
             # Direct provenance is claimed only when the data structures establish it.
             sec_note = f"; SEC {eps_ev['sec_fact'].get('form', '10-K')} accession {eps_ev['sec_fact']['accession']}"
         sourced_facts.append(
-            f"Starting EPS: {start_anchor.value:g} {start_anchor.currency or currency or 'USD'} ({start_anchor.basis}, provider: {start_anchor.provider}{sec_note})"
+            f"Starting EPS: {start_anchor.value:g} {start_anchor.currency or currency or 'USD'} ({start_anchor.basis}, {eps_provider_label}: {eps_provider}{sec_note})"
         )
     if not mult_ev["is_user_assumption"]:
         sample_note = f", sample size: {exit_multiple.sample_size}" if exit_multiple.sample_size else ""
         sourced_facts.append(
             f"Reference Exit Multiple: {exit_multiple.value:g}x ({exit_multiple.source}{sample_note})"
         )
+
+    # A provider-sourced starting EPS reports the provider field and endpoint
+    # that recorded the value, so the number is traceable to its actual raw
+    # material. This is stated only when a direct SEC fact is absent (a linked
+    # filing names itself in the entry above) and only from what the acquisition
+    # observation actually recorded; nothing here is inferred from a value or a
+    # related filing, and a source that declared no period date says so.
+    if not eps_ev["is_user_assumption"] and not (
+        eps_ev.get("sec_fact") and eps_ev["sec_fact"].get("accession")
+    ):
+        source_field = getattr(start_anchor, "source_field", None)
+        source_url = getattr(start_anchor, "source_url", None)
+        if source_field or source_url:
+            entry = f"Starting EPS source: {source_field or 'provider-reported value'}"
+            entry += f" (EPS provider: {eps_provider or 'unknown'}; source_type: {eps_ev['source_type']})"
+            if source_url:
+                entry += f"; source: {source_url}"
+            if start_anchor.period_end:
+                entry += f"; source-declared period end: {start_anchor.period_end}"
+            else:
+                entry += "; source declared no period date"
+            sourced_facts.append(entry)
 
     missing_or_unvalidated: List[str] = []
     if mult_ev["eligibility_state"] in ("DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT", "INSUFFICIENT_OBSERVATIONS_DESCRIPTIVE_ONLY"):

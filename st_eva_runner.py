@@ -2349,6 +2349,33 @@ def _observation_projecting_view_field(data: Any, metric: str) -> Optional[Obser
     return (available or matches)[0]
 
 
+def _vendor_source_reference(observation: Any) -> Tuple[Optional[str], Optional[str]]:
+    """The provider field and endpoint that recorded a vendor-sourced value.
+
+    Read from the observation's own recorded provenance -- the module/field it
+    was read out of and the endpoint URL it came from -- never parsed out of the
+    value and never taken from a related filing. Returns (None, None) when the
+    observation carries no such provenance, so a caller leaves the field absent
+    rather than inventing one.
+    """
+    if observation is None:
+        return None, None
+    raw = getattr(observation, "raw", None)
+    raw = raw if isinstance(raw, dict) else {}
+    module = raw.get("module")
+    field = raw.get("field")
+    if module and field:
+        source_field: Optional[str] = f"{module}.{field}"
+    elif field:
+        source_field = str(field)
+    else:
+        source_field = None
+    source_url = getattr(observation, "source_url", None)
+    if not source_field and not source_url:
+        return None, None
+    return source_field, (str(source_url) if source_url else None)
+
+
 def _sec_observation_supplying_anchor(
     data: Any,
     anchor: Any,
@@ -2639,6 +2666,17 @@ def _build_reverse_requirements(
             )
             # Related/cross-check evidence stays separate and must never be labeled direct source.
             sec_related = _find_related_sec_evidence(data.ticker)
+            # The observation that projected this value is the value's actual
+            # source. When it is a vendor observation, record its provider field
+            # and endpoint so a provider-sourced EPS is traceable to its raw
+            # material; a SEC filing observation is named by `sec_fact` instead.
+            projecting = None
+            for metric in _EPS_METRIC_FOR_ANCHOR_BASIS.get(str(anchor.basis or ""), ()):
+                projecting = _observation_projecting_view_field(data, metric)
+                if projecting is not None:
+                    break
+            source_field, source_url = _vendor_source_reference(projecting)
+            source_provider = getattr(projecting, "provider", None) if projecting is not None else None
             import dataclasses
             anchor = dataclasses.replace(
                 anchor,
@@ -2647,6 +2685,9 @@ def _build_reverse_requirements(
                 is_user_assumption=False,
                 sec_fact=sec_fact,
                 sec_related_evidence=sec_related,
+                source_field=source_field,
+                source_url=source_url,
+                source_provider=source_provider,
             )
     unavailable.extend(anchor_unavailable)
 
