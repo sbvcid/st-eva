@@ -2,7 +2,7 @@
 
 **Status checked:** 2026-10-13
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `c112e18` (R7-6: make the starting EPS period basis explicit in the matrix audit drawer and CSV export; R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
+**Current implementation baseline:** `2ba90b0` (R7-7: expose existing dividend and total-return scenarios in the reverse-requirements matrix UI; R7-6: make the starting EPS period basis explicit in the matrix audit drawer and CSV export; R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
 **Latest verified GitHub Actions:** [Run 38338994649](https://github.com/sbvcid/st-eva/actions/runs/38338994649), triggered by `1499fd4`; `backend` and `browser` jobs both passed.
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -978,5 +978,57 @@ source acquisition, `reverse-requirements/1.1` formulas, growth window or scenar
 generation, consensus-period comparability, historical P/E data or eligibility,
 investment-context basis, archive/replay/registry semantics, or dividend/total-return
 UI. The formula and selected EPS value remain unchanged.
+
+**GitHub Actions:** To be verified on next CI run; all local test suites and builds pass.
+
+
+## Dividend & Total-Return Comparison Exposed in UI (R7-7, 2026-10-13, commit 2ba90b0)
+
+**Objective.** R7-0 found that the API/report contract already carried `dividend_basis`,
+`total_return_scenarios`, and `price_vs_total_return_comparison` fields, but these
+were not meaningfully presented in the browser. The baseline reverse-requirements
+matrix is strictly price-return-only; when a dividend per share is supplied, two
+parallel total-return scenario sets are computed (cash-retained and reinvested).
+The task was to expose these existing calculations in the web UI so users can
+distinguish price-return-only assumptions from dividend-adjusted scenarios.
+
+**Changes.**
+
+- **UI display** (`ReverseRequirementsMatrix.tsx`): A new "Dividend & Total-Return
+  Comparison" section appears below the matrix table (for COMPUTED reports only):
+  - When `dividend_basis` is present: shows dividend per share, source, and both
+    convention definitions with their formulas (`P_T = P_0 × (1 + r)^T − T × D` for
+    cash-retained; `P_T = P_0 × (1 + r)^T − D × ((1 + r)^T − 1) / r` for
+    reinvested).
+  - When `price_vs_total_return_comparison` is present: renders a comparison table
+    with columns for Horizon, Req. Return, Exit Multiple, and three variant groups:
+    Price Return Only (baseline), Cash Dividends Retained (with Δ columns), and
+    Dividends Reinvested at Target Return (with Δ columns). All values use the
+    existing computed figures; no new calculations are introduced.
+  - When no `dividend_basis`: shows "No dividend input was supplied for this run.
+    The baseline matrix is price-return-only." with the "Price return only
+    (baseline)" label.
+  - When `status = NOT_COMPUTED`: the dividend section is not rendered.
+
+- **i18n** (`en.ts`, `zhTW.ts`, `types.ts`): Added English and Traditional Chinese
+  strings for all new labels, formulas, and conventions.
+
+- **Tests** (`ReverseRequirementsMatrix.test.tsx`): 7 new focused tests covering:
+  dividend-not-available message, dividend basis display, comparison table
+  rendering, both language renderings, and NOT_COMPUTED suppression.
+
+**Verification.**
+- Frontend Vitest **96 passed (8 files)**; TypeScript clean; production build green.
+- Backend dividend, reverse-requirements, and provenance suites **121 passed**.
+- No changes to `reverse-requirements/1.1` formulas, baseline matrix values,
+  dividend acquisition, or any other engine component.
+
+**Boundary.** The baseline matrix remains strictly price-return-only. The total-return
+scenarios are parallel, explicitly labelled, and their deltas are shown relative to
+the baseline. No dividend is double-counted or silently added to the price-only
+required-return calculation. Unavailable dividend inputs display their supplied
+reason (via `report.unavailable`) and never become zero. The reading-note wording
+ambiguity ("A required return is a price return unless a dividend was supplied")
+is preserved in the report but the UI now makes the convention explicit.
 
 **GitHub Actions:** To be verified on next CI run; all local test suites and builds pass.
