@@ -554,5 +554,81 @@ class TestTheMatrixIsUnchanged(unittest.TestCase):
                 )
 
 
+class TestReferenceSampleCountIsTheReferencesOwn(unittest.TestCase):
+    """
+    The reference block carries the observation count of the reference actually
+    selected, for the one basis that has a source count at all.
+
+    The count cannot be read from the vendor band here: the band is a different
+    object, and for two of the four bases it supplied nothing, so its count is
+    not the reference's. The context layer builds this field from what the
+    summary reports, so the summary has to report the right number or the
+    context has nothing correct to copy.
+    """
+
+    def test_the_production_reference_reports_the_distributions_own_count(self):
+        analysis = MarketImpliedAssumptionsEngine.analyze(
+            _inputs(historical_pe_band=_vendor_band(observations=7)),
+            production_historical_pe=_eligible_distribution(),
+        )
+        reference = analysis["reference"]
+
+        self.assertEqual(reference["method"], "production_historical_pe_median")
+        self.assertEqual(
+            reference["production_historical_pe_sample_count"],
+            24,
+            "the distribution holds 24 observations",
+        )
+        self.assertNotEqual(
+            reference["production_historical_pe_sample_count"],
+            _vendor_band(observations=7)["observations"],
+            "the vendor band's 7 is not the reference's source count",
+        )
+
+    def test_a_distribution_that_is_not_the_reference_contributes_no_count(self):
+        analysis = MarketImpliedAssumptionsEngine.analyze(
+            _inputs(historical_pe_band=_vendor_band(observations=7)),
+            reference_multiple=30.0,
+            production_historical_pe=_eligible_distribution(),
+        )
+        reference = analysis["reference"]
+
+        self.assertEqual(reference["method"], "user_supplied_multiple")
+        self.assertIsNone(
+            reference["production_historical_pe_sample_count"],
+            "an eligible distribution that was not selected has no count to report",
+        )
+
+    def test_a_band_reference_reports_no_production_count(self):
+        analysis = MarketImpliedAssumptionsEngine.analyze(
+            _inputs(historical_pe_band=_vendor_band(observations=40))
+        )
+        reference = analysis["reference"]
+
+        self.assertEqual(reference["method"], "historical_pe_median")
+        self.assertIsNone(
+            reference["production_historical_pe_sample_count"],
+            "the band is the reference, so no production count belongs here",
+        )
+
+    def test_no_reference_reports_no_production_count(self):
+        analysis = MarketImpliedAssumptionsEngine.analyze(_inputs())
+        reference = analysis["reference"]
+
+        self.assertEqual(reference["method"], "none")
+        self.assertIsNone(reference["production_historical_pe_sample_count"])
+
+    def test_the_status_is_still_reported_for_every_basis(self):
+        """Adding the count must not displace the eligibility status beside it."""
+        analysis = MarketImpliedAssumptionsEngine.analyze(
+            _inputs(historical_pe_band=_vendor_band(observations=7)),
+            production_historical_pe=_eligible_distribution(),
+        )
+        self.assertEqual(
+            analysis["reference"]["production_historical_pe_status"],
+            "USABLE_FOR_REFERENCE",
+        )
+
+
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()

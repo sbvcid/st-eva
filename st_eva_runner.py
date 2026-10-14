@@ -1570,6 +1570,21 @@ class MarketImpliedAssumptionsEngine:
         else:
             selected_pe = None
             selected_pe_method = "none"
+
+        # How many observations the selected reference is actually based on, so a
+        # consumer never has to guess it from a different object's sample size.
+        # Taken from the distribution only when the distribution *is* the
+        # reference; a supplier that is not in force has no count to report here.
+        production_pe_sample_count = None
+        if selected_pe_method == "production_historical_pe_median":
+            raw_sample_count = safe_float(
+                ((production_historical_pe or {}).get("distribution") or {}).get(
+                    "sample_count"
+                )
+            )
+            production_pe_sample_count = (
+                int(raw_sample_count) if raw_sample_count is not None else None
+            )
         selected_pfcf = pfcf_multiple if pfcf_multiple is not None else historical_pfcf_median
         selected_ev_ebitda = ev_ebitda_multiple if ev_ebitda_multiple is not None else historical_ev_ebitda_median
         selected_ps = ps_multiple if ps_multiple is not None else historical_ps_median
@@ -1624,10 +1639,14 @@ class MarketImpliedAssumptionsEngine:
                 "conditional_statement": "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
                 # The production distribution's own eligibility status, so a
                 # reader can tell an eligible reference from a descriptive one
-                # without re-deriving it. The sample count and observation
-                # period stay in the report's production-distribution summary
-                # rather than being duplicated here.
+                # without re-deriving it.
                 "production_historical_pe_status": production_pe_status,
+                # The observation count behind the selected reference, for the
+                # basis that has one. The full breakdown and observation period
+                # stay in the report's production-distribution summary; this is
+                # the single figure the reference's own provenance reports, and
+                # the context layer cannot read it from any other object.
+                "production_historical_pe_sample_count": production_pe_sample_count,
                 "historical_band_status": {
                     "pe": band_status(pe_band),
                     "ps": band_status(ps_band),

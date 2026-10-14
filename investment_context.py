@@ -862,6 +862,7 @@ class ContextBuilder:
         source_ref: Optional[str],
         basis: str,
         eligibility: Optional[Dict[str, Any]] = None,
+        source_observation_count: Optional[int] = None,
     ) -> str:
         """
         Register a valuation reference, and say plainly where it came from.
@@ -882,6 +883,16 @@ class ContextBuilder:
         under. It is optional because the secondary references (P/FCF,
         EV/EBITDA, P/S) still carry the vendor band's rule; the production
         historical P/E distribution states its own.
+
+        `source_observation_count` is the observation count of the reference's
+        own source, and only the basis knows which object that is. A production
+        median is based on the production historical P/E distribution, whose
+        count arrives as this argument; a historical median on the band it was
+        read from; a supplied multiple and an unavailable reference are based on
+        no observations at all, so the band's count -- whether or not the band
+        exists and whatever it declares -- is not theirs to report. Reading the
+        band unconditionally here would make this field a function of the band
+        rather than of the reference.
         """
         ref = reference_ref(name)
         band = getattr(self.data, f"historical_{source_metric}_band", None) if source_metric else None
@@ -890,6 +901,19 @@ class ContextBuilder:
         eligible = status == "USABLE_FOR_REFERENCE"
         if eligibility is not None:
             eligible = bool(eligibility.get("eligible_as_reference"))
+
+        # The count follows the basis. Only the two observed bases have a source
+        # that holds observations; the other two have none, so they report none
+        # rather than borrowing the band's number.
+        if basis == "PRODUCTION_PE_MEDIAN":
+            source_declared = safe_float(source_observation_count)
+        elif basis == "HISTORICAL_MEDIAN":
+            source_declared = declared
+        else:
+            source_declared = None
+        observation_count = (
+            int(source_declared) if source_declared is not None else None
+        )
 
         provenance = (
             PROVENANCE_OBSERVED
@@ -910,9 +934,7 @@ class ContextBuilder:
                 "provenance_kind": provenance,
                 "source_ref": source_ref,
                 "source_statistic": "median" if source_metric else None,
-                "source_observation_count": (
-                    int(declared) if declared is not None else None
-                ),
+                "source_observation_count": observation_count,
                 "eligible_as_reference": eligible,
                 "eligibility_rule": (
                     eligibility["eligibility_rule"]
@@ -1049,6 +1071,9 @@ class ContextBuilder:
                 source_ref=source_ref,
                 basis=basis,
                 eligibility=eligibility,
+                source_observation_count=analysis_reference.get(
+                    "production_historical_pe_sample_count"
+                ),
             )
         }
 

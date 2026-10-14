@@ -70,6 +70,7 @@ from st_eva_runner import (
     CompanyResolver,
     DeterministicMetricsEngine,
     MarketImpliedAssumptionsEngine,
+    MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
     build_evidence,
     material_observations,
     metrics_observation,
@@ -104,9 +105,18 @@ def _eligible_distribution(median="33.195873"):
 
 
 def build_context_for(ticker, **kwargs):
-    """Build a context the same way the CLI does, from a fixture."""
+    """Build a context the same way the CLI does, from a fixture.
+
+    `pe_band` replaces the fixture's vendor historical P/E band. A test that needs
+    a band declaring an observation count can supply one without editing the
+    shared fixture, and `resolve` builds a fresh view per call so nothing leaks
+    between tests.
+    """
+    pe_band = kwargs.pop("pe_band", None)
     data = CompanyResolver.resolve(ticker, mode="regression")
     assert data is not None
+    if pe_band is not None:
+        data.historical_pe_band = dict(pe_band)
     metrics = DeterministicMetricsEngine.compute(
         data.price_history, data.volume_history
     )
@@ -613,6 +623,12 @@ class TestConditionalContract(unittest.TestCase):
         Deriving the basis from which number happens to be present would make
         exactly that false provenance claim: the extra figure here is
         price-implied, and its conditional_on names the same reference.
+
+        The claim has to hold for *every* field that describes where the number
+        came from, not only `source_ref`. `source_observation_count` was once
+        read from the band whatever the basis was, so this same document could
+        say the reference did not come from the band and then report the band's
+        observation count as its own.
         """
         document = build_context_for(
             "MSFT",
@@ -626,12 +642,170 @@ class TestConditionalContract(unittest.TestCase):
             reference["source_ref"],
             "a production median did not come from the vendor band",
         )
+        self.assertEqual(
+            reference["source_observation_count"],
+            24,
+            "the reference's own source is the production historical P/E "
+            "distribution, which holds 24 observations",
+        )
         self.assertTrue(reference["eligible_as_reference"])
         self.assertIn("production historical P/E distribution", reference["eligibility_rule"])
         self.assertEqual(
             reference["selection_method"], "production_historical_pe_median"
         )
         self.assertFalse(reference["user_overridden"])
+
+
+class TestReferenceSourceObservationCount(unittest.TestCase):
+    """
+    `source_observation_count` is the observation count of the object the
+    reference's own basis names, and of nothing else.
+
+    The field used to be read from the vendor historical P/E band whatever the
+    basis was, so a reference taken from the production distribution reported
+    the band's count (7 for MSFT, 8 for AAPL) instead of its own (24, 36), and a
+    supplied or unavailable reference reported the band's count although neither
+    is based on any observations at all. Each case below pins one basis.
+    """
+
+    # An ineligible band that still declares a count: the shape a live
+    # acquisition returns, and the object that used to be mistaken for the
+    # reference's own source.
+    VENDOR_BAND = {
+        "median": 24.0,
+        "10th": 20.0,
+        "25th": 22.0,
+        "75th": 27.0,
+        "90th": 30.0,
+        "observations": 7,
+    }
+    # An eligible band, so HISTORICAL_MEDIAN is reachable at all.
+    ELIGIBLE_BAND = {
+        "median": 30.0,
+        "10th": 22.0,
+        "25th": 26.0,
+        "75th": 34.0,
+        "90th": 38.0,
+        "observations": 40,
+    }
+
+    def test_a_production_median_reports_the_distribution_count_not_the_bands(self):
+        document = build_context_for(
+            "MSFT",
+            engine={"production_historical_pe": _eligible_distribution()},
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "PRODUCTION_PE_MEDIAN")
+        self.assertEqual(
+            reference["source_observation_count"],
+            24,
+            "the reference's source is the production distribution, which holds "
+            "24 observations; the vendor band's 7 belongs to a different object",
+        )
+        self.assertNotEqual(
+            reference["source_observation_count"],
+            self.VENDOR_BAND["observations"],
+            "the vendor band's count is not the reference's source count",
+        )
+        self.assertIsNone(reference["source_ref"], "the band did not supply the multiple")
+
+    def test_a_production_median_keeps_its_count_with_no_band_present(self):
+        document = build_context_for(
+            "MSFT",
+            engine={"production_historical_pe": _eligible_distribution()},
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "PRODUCTION_PE_MEDIAN")
+        self.assertEqual(
+            reference["source_observation_count"],
+            24,
+            "the count belongs to the distribution, so a missing band cannot erase it",
+        )
+
+    def test_a_supplied_multiple_reports_no_source_observation_count(self):
+        document = build_context_for(
+            "MSFT",
+            engine={"reference_multiple": 30.0},
+            reference_multiple=30.0,
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "USER_SUPPLIED")
+        self.assertIsNone(
+            reference["source_observation_count"],
+            "a multiple supplied on the command line is based on no observations, "
+            "so the band's 7 is not its source count",
+        )
+
+    def test_an_unavailable_reference_reports_no_source_observation_count(self):
+        document = build_context_for(
+            "MSFT",
+            engine={
+                "production_historical_pe": {
+                    "distribution": {
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                    }
+                }
+            },
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "NONE")
+        self.assertIsNone(reference["multiple"])
+        self.assertIsNone(
+            reference["source_observation_count"],
+            "no reference is in force, so there is no source whose count could be "
+            "reported",
+        )
+
+    def test_a_historical_median_reports_the_band_it_was_read_from(self):
+        document = build_context_for("MSFT", pe_band=self.ELIGIBLE_BAND)
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "HISTORICAL_MEDIAN")
+        self.assertIsNotNone(
+            reference["source_ref"], "a historical median names the band it came from"
+        )
+        self.assertEqual(
+            reference["source_observation_count"],
+            40,
+            "the band is the reference here, so its own declared count is correct",
+        )
+
+    def test_an_eligible_reference_is_not_declared_on_an_ineligible_count(self):
+        """
+        The reported count and the reported eligibility must describe the same
+        object.
+
+        Before the fix this document claimed 7 observations and
+        `eligible_as_reference: true` under a rule naming the production
+        distribution -- a set of claims no single object satisfied, which is why
+        the two fields have to be asserted together rather than one at a time.
+        """
+        document = build_context_for(
+            "MSFT",
+            engine={"production_historical_pe": _eligible_distribution()},
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertTrue(reference["eligible_as_reference"])
+        self.assertIn(
+            "production historical P/E distribution", reference["eligibility_rule"]
+        )
+        self.assertGreaterEqual(
+            reference["source_observation_count"],
+            MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+            "an eligible reference cannot be based on fewer observations than its "
+            "own threshold while the payload reports the thinner vendor band",
+        )
 
 
 class TestScopeContract(unittest.TestCase):
