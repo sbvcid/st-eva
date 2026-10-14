@@ -144,6 +144,11 @@ class JobManager:
             return
 
         def on_progress(stage: JobProgressStage) -> None:
+            # The adapter announces COMPLETED just before it returns the result,
+            # so completion is recorded by set_result instead. Without this a
+            # poller could observe a completed job whose result is still None.
+            if stage == JobProgressStage.COMPLETED:
+                return
             with self.lock:
                 record.update_stage(stage)
 
