@@ -1125,33 +1125,32 @@ class ContextBuilder:
             )
         }
 
+        # The engine publishes the secondary medians under `implied_assumptions`,
+        # which is also where `validate_analysis` requires them, and where the
+        # derivation strings name them. Reading them from the `reference` block
+        # instead -- which carries only the valuation reference's own multiple --
+        # silently found nothing, so every secondary reference was recorded as
+        # NONE with a null multiple even when the engine had selected a median
+        # from an eligible band, and the implied figures conditional on it were
+        # dropped with it.
+        implied_assumptions = self.analysis.get("implied_assumptions") or {}
+        secondary_multiples = implied_assumptions.get("reference_multiples") or {}
+
         secondary = {
             "pfcf_reference": (
                 "pfcf",
                 self.user_references["pfcf_reference"],
-                safe_float(
-                    (analysis_reference.get("reference_multiples") or {}).get(
-                        "pfcf"
-                    )
-                ),
+                safe_float(secondary_multiples.get("pfcf")),
             ),
             "ev_ebitda_reference": (
                 "ev_ebitda",
                 self.user_references["ev_ebitda_reference"],
-                safe_float(
-                    (analysis_reference.get("reference_multiples") or {}).get(
-                        "ev_ebitda"
-                    )
-                ),
+                safe_float(secondary_multiples.get("ev_ebitda")),
             ),
             "ps_reference": (
                 "ps",
                 self.user_references["ps_reference"],
-                safe_float(
-                    (analysis_reference.get("reference_multiples") or {}).get(
-                        "ps"
-                    )
-                ),
+                safe_float(secondary_multiples.get("ps")),
             ),
         }
         for name, (metric, user_value, engine_value) in secondary.items():
@@ -1161,11 +1160,21 @@ class ContextBuilder:
                 secondary_basis = "USER_SUPPLIED"
             elif engine_value is not None:
                 secondary_basis = "HISTORICAL_MEDIAN"
+            # The same rule the valuation reference follows: only a band median
+            # is sourced from the band, and it must name the band it came from.
+            # An operator's multiple and an absent reference have no band source,
+            # so they name none.
+            band = getattr(self.data, f"historical_{metric}_band", None)
+            secondary_source_ref = (
+                self._band_ref(f"{metric}_band")
+                if band and secondary_basis == "HISTORICAL_MEDIAN"
+                else None
+            )
             refs[name] = self._register_reference(
                 name=name,
                 multiple=multiple,
                 source_metric=metric,
-                source_ref=None,
+                source_ref=secondary_source_ref,
                 basis=secondary_basis,
             )
 
@@ -1757,7 +1766,7 @@ class ContextBuilder:
             if numerator and reference:
                 self._add_derivation(
                     name=name,
-                    op="divide",
+                    op="amount_from_valuation_multiple",
                     operands=[numerator, reference],
                     engine_value=value,
                     unit=unit,

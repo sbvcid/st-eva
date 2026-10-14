@@ -1035,6 +1035,174 @@ class TestReferenceProvenanceThroughTheApiPath(unittest.TestCase):
         self.assertIsNone(stored["valuation_reference"]["source_observation_count"])
 
 
+class TestSecondaryReferenceProvenance(unittest.TestCase):
+    """
+    The three secondary references are references too, and follow the same rule as
+    the valuation reference: an observed one carries the engine's median, names
+    the band it came from, and is not confused with one that was supplied or is
+    absent.
+
+    They used to record `basis: NONE` with a null multiple in every case, because
+    the context read `reference_multiples` from the `reference` block while the
+    engine publishes it under `implied_assumptions` -- which is also where
+    `validate_analysis` requires it and where the derivation strings name it. The
+    reference the engine had selected from an eligible band was therefore invisible
+    in the document, and the implied figures conditional on it were withheld.
+    """
+
+    BANDS = {
+        "historical_pfcf_band": ("pfcf_reference", 20.0),
+        "historical_ev_ebitda_band": ("ev_ebitda_reference", 18.0),
+        "historical_ps_band": ("ps_reference", 5.0),
+    }
+
+    def _context(self, present=(), ineligible=(), **user):
+        """
+        A user multiple must reach `analyze` as well as the context builder.
+
+        The builder's parity check compares the engine's value against its own
+        recomputation, so a helper that supplied the multiple to only one of them
+        would be asking the document to reconcile two different references. The
+        runner passes it to both; so does this.
+        """
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        for attribute, (_, median) in self.BANDS.items():
+            if attribute in present:
+                data.__setattr__(
+                    attribute,
+                    {"median": median, "10th": median * 0.7, "25th": median * 0.85,
+                     "75th": median * 1.15, "90th": median * 1.3,
+                     "observations": 2 if attribute in ineligible else 25},
+                )
+        # The numerators the implied-figure derivations divide.
+        data.current_market_cap = 3_160_000_000_000.0
+        data.current_enterprise_value = 3_190_000_000_000.0
+        metrics = DeterministicMetricsEngine.compute(
+            data.price_history, data.volume_history
+        )
+        analysis = MarketImpliedAssumptionsEngine.analyze(data, **user)
+        document = build_investment_context(
+            data=data,
+            analysis=analysis,
+            evidence=build_evidence(data, metrics),
+            metrics=metrics,
+            material_observations=list(material_observations(data).values())
+            + [metrics_observation(data, metrics)],
+            generated_at="2026-06-30T00:00:00+00:00",
+            **user,
+        )
+        return document, analysis
+
+    @staticmethod
+    def _reference(document, name):
+        return document["provenance"]["refs"][f"refc:{name}"]
+
+    def test_the_engine_publishes_the_secondary_medians_under_implied_assumptions(self):
+        """
+        The location the reader depends on, asserted directly so a future move of
+        the value cannot silently empty every secondary reference again.
+        """
+        _, analysis = self._context(present=tuple(self.BANDS))
+        self.assertIsNone(
+            (analysis.get("reference") or {}).get("reference_multiples"),
+            "the reference block carries only the valuation reference's multiple",
+        )
+        self.assertEqual(
+            (analysis.get("implied_assumptions") or {}).get("reference_multiples"),
+            {"pe": None, "pfcf": 20.0, "ev_ebitda": 18.0, "ps": 5.0},
+        )
+
+    def test_an_observed_secondary_reference_names_its_band_and_its_multiple(self):
+        document, _ = self._context(present=tuple(self.BANDS))
+
+        for attribute, (name, median) in self.BANDS.items():
+            with self.subTest(reference=name):
+                reference = self._reference(document, name)
+                self.assertEqual(reference["basis"], "HISTORICAL_MEDIAN")
+                self.assertEqual(reference["multiple"], median)
+                self.assertEqual(reference["source_statistic"], "median")
+                self.assertEqual(reference["source_observation_count"], 25)
+                self.assertEqual(reference["eligible_as_reference"], True)
+                self.assertEqual(
+                    reference["source_ref"],
+                    {
+                        "pfcf_reference": "obs:ev-pfcf-band-001",
+                        "ev_ebitda_reference": "obs:ev-ev-ebitda-band-001",
+                        "ps_reference": "obs:ev-ps-band-001",
+                    }[name],
+                    "a historical median must name the band it came from",
+                )
+
+    def test_one_observed_secondary_leaves_the_others_absent(self):
+        document, _ = self._context(present=("historical_ps_band",))
+
+        observed = self._reference(document, "ps_reference")
+        self.assertEqual(observed["basis"], "HISTORICAL_MEDIAN")
+        self.assertEqual(observed["multiple"], 5.0)
+        self.assertEqual(observed["source_ref"], "obs:ev-ps-band-001")
+
+        for name in ("pfcf_reference", "ev_ebitda_reference"):
+            with self.subTest(reference=name):
+                reference = self._reference(document, name)
+                self.assertEqual(reference["basis"], "NONE")
+                self.assertIsNone(reference["multiple"])
+                self.assertIsNone(reference["source_ref"])
+                self.assertIsNone(reference["source_observation_count"])
+
+    def test_an_ineligible_secondary_band_is_not_a_reference(self):
+        document, _ = self._context(
+            present=("historical_ps_band",), ineligible=("historical_ps_band",)
+        )
+        reference = self._reference(document, "ps_reference")
+
+        self.assertEqual(reference["basis"], "NONE")
+        self.assertIsNone(reference["multiple"])
+        self.assertIsNone(
+            reference["source_ref"],
+            "2 observations is below the rule, so the band did not supply the "
+            "reference and must not be named as its source",
+        )
+        self.assertEqual(reference["eligible_as_reference"], False)
+
+    def test_a_supplied_secondary_names_no_band(self):
+        document, _ = self._context(present=("historical_ps_band",), ps_multiple=7.5)
+        reference = self._reference(document, "ps_reference")
+
+        self.assertEqual(reference["basis"], "USER_SUPPLIED")
+        self.assertEqual(reference["multiple"], 7.5)
+        self.assertIsNone(
+            reference["source_ref"],
+            "the multiple came from the operator, so the band is not its source",
+        )
+        self.assertIsNone(reference["source_statistic"])
+
+    def test_the_implied_amounts_are_published_with_a_monetary_unit(self):
+        """
+        The implied amounts divide a monetary aggregate by a valuation multiple,
+        so the result is money. They used to be withheld entirely, and the divide
+        table maps (currency, multiple) to per_share -- correct for price over a
+        P/E multiple, wrong here -- so enabling them without naming the operation
+        would have published a total revenue labelled per share.
+        """
+        document, _ = self._context(present=tuple(self.BANDS))
+
+        for name, numerator, median in (
+            ("implied_fcf", 3_160_000_000_000.0, 20.0),
+            ("implied_ebitda", 3_190_000_000_000.0, 18.0),
+            ("implied_revenue", 3_160_000_000_000.0, 5.0),
+        ):
+            with self.subTest(figure=name):
+                figure = document["derived"][name]["figure"]
+                self.assertEqual(figure["unit"], "currency", name)
+                self.assertEqual(figure["provenance_kind"], "CONDITIONAL")
+                self.assertAlmostEqual(figure["value"], numerator / median, places=6)
+
+    def test_the_registry_declares_the_implied_amount_operation_as_money(self):
+        spec = lookup("amount_from_valuation_multiple")
+        self.assertEqual(spec.output_unit, "currency")
+        self.assertEqual(spec.arity, 2)
+
+
 class TestScopeContract(unittest.TestCase):
     def test_data_quality_carries_no_grade(self):
         document = build_context_for("MSFT")

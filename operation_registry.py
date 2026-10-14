@@ -856,6 +856,26 @@ def _build_registry() -> None:
     )
     _register(
         _spec(
+            "amount_from_valuation_multiple",
+            arity=2,
+            input_kinds=(NUMERIC, NUMERIC),
+            output_kind=NUMERIC,
+            output_unit=Unit.CURRENCY.value,
+            formula="aggregate_amount / valuation_multiple",
+            unit_rule=(
+                "a monetary aggregate over a valuation multiple is the "
+                "aggregate's own denominator in money: a market capitalisation "
+                "over a P/S multiple is revenue, and over a P/FCF multiple is "
+                "free cash flow. A separate operation from divide because "
+                "divide maps a price over a P/E multiple to an amount per "
+                "share, and both operand pairs are (currency, multiple), so the "
+                "units alone cannot tell an aggregate from a per-share amount"
+            ),
+            implementation=lambda values, units: values[0] / values[1],
+        )
+    )
+    _register(
+        _spec(
             "enterprise_value",
             arity=2,
             input_kinds=(NUMERIC, NUMERIC),
