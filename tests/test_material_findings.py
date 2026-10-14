@@ -156,6 +156,10 @@ class TestF1CrossCurrencyDerivationIsRefused(unittest.TestCase):
         number with no economic meaning.
         """
         data = CompanyResolver.resolve("AAPL", mode="regression")
+        # This regression fixture intentionally lacks market cap. Inject a
+        # deterministic test-only numerator so the case isolates mixed-currency
+        # refusal instead of failing earlier for a missing input.
+        data.current_market_cap = 4_918_530_543_600.0
         metrics = DeterministicMetricsEngine.compute(
             data.price_history, data.volume_history
         )
@@ -449,6 +453,10 @@ class TestF4DerivedVersusReportedConflict(unittest.TestCase):
         # An issuer whose fixture publishes a market capitalisation, so the
         # implied share count exists and the identity can be checked at all.
         data = CompanyResolver.resolve("AAPL", mode="regression")
+        # The identity-check experiment requires market cap to derive implied
+        # shares. Supply it only in this test; do not fabricate a production
+        # AAPL input just to satisfy a regression check.
+        data.current_market_cap = 4_918_530_543_600.0
         metrics = DeterministicMetricsEngine.compute(
             data.price_history, data.volume_history
         )
