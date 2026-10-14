@@ -235,5 +235,51 @@ class TestVendorProvenanceIsNotPartOfTheMatrixContract(unittest.TestCase):
         self.assertIn(AAPL_QUOTE_SUMMARY_URL, joined)
 
 
+class TestStartingEpsCrossDateLimitation(unittest.TestCase):
+    def _evidence(self, anchor, as_of):
+        return build_scenario_evidence(
+            price=342.22, currency="USD", as_of=as_of,
+            price_evidence={"value": 342.22, "provider": MARKET_DATA_PROVIDER,
+                            "source_type": "API_LIVE", "as_of": as_of},
+            start_anchor=anchor,
+            exit_multiple=ReferenceMultiple(value=20.0, source="user_supplied"),
+            horizon_years=1.0, required_return=0.10, required_return_basis="PRICE_RETURN_ONLY",
+        )
+
+    def _provider_anchor(self, retrieved_at):
+        base = _provider_anchor()
+        return EpsAnchor(**{
+            **base.contract_view(),
+            "source_type": "REGRESSION_FIXTURE",
+            "source_field": "defaultKeyStatistics.trailingEps",
+            "source_url": AAPL_QUOTE_SUMMARY_URL,
+            "source_provider": EPS_OBSERVATION_PROVIDER,
+            "source_observation_type": "API_LIVE",
+            "source_retrieved_at": retrieved_at,
+        })
+
+    def test_a_later_retrieval_date_is_flagged_as_cross_date(self):
+        ev = self._evidence(self._provider_anchor("2026-10-13"), as_of="2026-10-06")
+        self.assertTrue(any(
+            "retrieved on 2026-10-13" in m and "market price date 2026-10-06" in m
+            for m in ev["missing_or_unvalidated"]
+        ))
+        self.assertTrue(any("not a verified point-in-time snapshot" in m for m in ev["missing_or_unvalidated"]))
+
+    def test_the_same_date_is_not_flagged(self):
+        ev = self._evidence(self._provider_anchor("2026-10-06T12:00:00+00:00"), as_of="2026-10-06")
+        self.assertFalse(any("point-in-time snapshot" in m for m in ev["missing_or_unvalidated"]))
+
+    def test_a_sec_linked_anchor_is_not_flagged(self):
+        linked = EpsAnchor(
+            value=8.72, basis=ANCHOR_TTM, months_covered=12.0, provider="SecEdgar", currency="USD",
+            source_type="REGULATORY_FILING", observation_id="ev-sec-eps-001",
+            sec_fact={"accession": "0000320193-25-000079", "form": "10-K"},
+            source_retrieved_at="2026-10-13",
+        )
+        ev = self._evidence(linked, as_of="2026-10-06")
+        self.assertFalse(any("point-in-time snapshot" in m for m in ev["missing_or_unvalidated"]))
+
+
 if __name__ == "__main__":
     unittest.main()

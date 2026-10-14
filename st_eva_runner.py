@@ -287,6 +287,50 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
         "source_type": "REGRESSION_FIXTURE",
         "provider": "RegressionFixture",
     },
+    # AAPL is a frozen sample of the values the live run observed, so the offline
+    # research flow reproduces the same market-implied assumptions without a
+    # provider call. The price is the canonical historical P/E dataset's last
+    # daily close (verifiable and tracked); the trailing EPS carries the source
+    # identity of the observation it was captured from, not the fixture's.
+    "AAPL": {
+        "ticker": "AAPL",
+        "company_name": "Apple Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "price": 333.63,
+        "price_date": "2026-10-06",
+        "price_source": "YahooFinance chart API daily close (canonical AAPL historical P/E dataset)",
+        "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL",
+        "current_eps": 8.72,
+        "forward_eps": UNAVAILABLE,
+        "consensus_forward_eps": UNAVAILABLE,
+        "next_event": UNAVAILABLE,
+        "next_event_status": "Unconfirmed",
+        # No synthetic band: the exit multiples come from the promoted canonical
+        # production historical P/E distribution loaded via include_historical_pe.
+        "historical_pe_band": {},
+        "price_history": [329.40, 333.02, 330.32, 333.69, 332.89, 333.63],
+        "volume_history": [38478000, 49988600, 36306300, 33278600, 34400900, 30425700],
+        "source_type": "REGRESSION_FIXTURE",
+        "provider": "RegressionFixture",
+        "retrieved_at": "2026-10-13",
+        "observations": [
+            {
+                "metric": "trailing_eps",
+                "value": 8.72,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/AAPL",
+                "definition": "Current/trailing EPS. Never synthesized.",
+                "methodology": "Yahoo quoteSummary defaultKeyStatistics.trailingEps",
+                "currency": "USD",
+                "currency_basis": "PER_SHARE",
+                "available_at_basis": "UNDECLARED",
+                "raw": {"module": "defaultKeyStatistics", "field": "trailingEps", "asOfDate": None},
+            }
+        ],
+    },
 }
 
 
@@ -1204,6 +1248,46 @@ class YahooFinanceProvider:
             return None
 
 
+def _fixture_declared_observations(data: Dict[str, Any]) -> List[Observation]:
+    """Observations a regression fixture declares with their own provenance.
+
+    A fixture is a frozen sample. A value it reproduces may carry the source
+    identity of the real observation it was captured from -- provider, source
+    type, endpoint, definition, methodology and raw field. Those are declared
+    per observation rather than assumed from the fixture's run-level provider,
+    so a fixture cannot silently reattribute a value to a different source, and
+    a value whose source declared no period stays undeclared.
+    """
+    result: List[Observation] = []
+    for spec in data.get("observations") or []:
+        result.append(
+            build_observation(
+                metric=str(spec["metric"]),
+                value=spec.get("value"),
+                unit=str(spec.get("unit") or Unit.PER_SHARE.value),
+                provider=str(spec.get("provider") or data.get("provider") or "RegressionFixture"),
+                source_type=str(
+                    spec.get("source_type")
+                    or data.get("source_type")
+                    or SourceType.REGRESSION_FIXTURE.value
+                ),
+                definition=str(spec.get("definition") or FIXTURE_METHODOLOGY),
+                methodology=str(spec.get("methodology") or FIXTURE_METHODOLOGY),
+                retrieved_at=str(spec.get("retrieved_at") or data.get("retrieved_at") or ""),
+                currency=spec.get("currency") or data.get("currency"),
+                currency_basis=spec.get("currency_basis"),
+                period_start=spec.get("period_start"),
+                period_end=spec.get("period_end"),
+                as_of=spec.get("as_of"),
+                available_at=spec.get("available_at"),
+                available_at_basis=spec.get("available_at_basis"),
+                source_url=spec.get("source_url"),
+                raw=spec.get("raw"),
+            )
+        )
+    return result
+
+
 class CompanyResolver:
     @staticmethod
     def resolve(query: str, mode: str = "auto") -> Optional[MarketData]:
@@ -1218,6 +1302,8 @@ class CompanyResolver:
                 "MICROSOFT": "MSFT",
                 "NU": "NU",
                 "NU HOLDINGS": "NU",
+                "AAPL": "AAPL",
+                "APPLE": "AAPL",
             }
             fixture_key = aliases.get(key)
             if fixture_key:
@@ -1256,10 +1342,11 @@ class CompanyResolver:
             historical_ev_ebitda_band=dict(data.get("historical_ev_ebitda_band", {})),
             source_type=data.get("source_type", "REGRESSION_FIXTURE"),
             provider=data.get("provider", "RegressionFixture"),
+            retrieved_at=data.get("retrieved_at", ""),
         )
         return _apply_observations_to_view(
             market_data,
-            price_observations(market_data),
+            price_observations(market_data) + _fixture_declared_observations(data),
         )
 
 
@@ -1899,7 +1986,13 @@ def run_st_eva(
     # cannot disagree. Either can be asked for on its own. The default asks for
     # neither, so an ordinary run still touches no filing endpoint and the
     # analysis output is unchanged by the context flag.
-    wants_sec = context_path is not None or include_financial_history
+    # A regression fixture is a frozen, offline sample: acquiring a live filing
+    # context for it would make the run network-dependent and non-reproducible,
+    # so the SEC context source is never consulted for a fixture.
+    wants_sec = (
+        (context_path is not None or include_financial_history)
+        and data.source_type != SourceType.REGRESSION_FIXTURE.value
+    )
     sec_evidence = (
         _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
     )
@@ -2677,6 +2770,8 @@ def _build_reverse_requirements(
                     break
             source_field, source_url = _vendor_source_reference(projecting)
             source_provider = getattr(projecting, "provider", None) if projecting is not None else None
+            source_observation_type = getattr(projecting, "source_type", None) if projecting is not None else None
+            source_retrieved_at = getattr(projecting, "retrieved_at", None) if projecting is not None else None
             import dataclasses
             anchor = dataclasses.replace(
                 anchor,
@@ -2688,6 +2783,8 @@ def _build_reverse_requirements(
                 source_field=source_field,
                 source_url=source_url,
                 source_provider=source_provider,
+                source_observation_type=source_observation_type,
+                source_retrieved_at=source_retrieved_at,
             )
     unavailable.extend(anchor_unavailable)
 

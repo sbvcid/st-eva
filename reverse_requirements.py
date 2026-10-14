@@ -41,7 +41,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from data_contract import currencies_match, parse_iso_date
+from data_contract import SourceType, currencies_match, parse_iso_date
 
 
 # Bumped whenever a formula below changes its meaning. Consumers compare this
@@ -154,6 +154,15 @@ class EpsAnchor:
     source_field: Optional[str] = None
     source_url: Optional[str] = None
     source_provider: Optional[str] = None
+    # The source type the value's own observation recorded (e.g. API_LIVE for a
+    # vendor sample). Distinct from the run's source_type, which says how this
+    # execution obtained its data (a live run, or a regression fixture replay).
+    source_observation_type: Optional[str] = None
+    # When the value's own observation was retrieved. A vendor TTM figure with
+    # no declared effective date can be retrieved on a different day than the
+    # market price it is paired with, which the evidence keeps visible rather
+    # than silently treating the two as one point-in-time snapshot.
+    source_retrieved_at: Optional[str] = None
 
     def __post_init__(self) -> None:
         if not math_is_finite(self.value):
@@ -776,8 +785,9 @@ def build_scenario_evidence(
         source_field = getattr(start_anchor, "source_field", None)
         source_url = getattr(start_anchor, "source_url", None)
         if source_field or source_url:
+            eps_source_type = getattr(start_anchor, "source_observation_type", None) or eps_ev["source_type"]
             entry = f"Starting EPS source: {source_field or 'provider-reported value'}"
-            entry += f" (EPS provider: {eps_provider or 'unknown'}; source_type: {eps_ev['source_type']})"
+            entry += f" (EPS provider: {eps_provider or 'unknown'}; source_type: {eps_source_type})"
             if source_url:
                 entry += f"; source: {source_url}"
             if start_anchor.period_end:
@@ -787,6 +797,26 @@ def build_scenario_evidence(
             sourced_facts.append(entry)
 
     missing_or_unvalidated: List[str] = []
+    # A regression fixture pairs inputs recorded on different days by
+    # construction (a captured EPS with no declared effective date beside a
+    # fixed market price dated earlier), so the pair is stated to be a
+    # cross-date input rather than a point-in-time snapshot. A live run reads
+    # its price and EPS from one acquisition, so this caveat is not raised for
+    # it. The effective date is never back-dated from the value itself, and a
+    # source that declared a period (a linked filing) is not flagged.
+    if (
+        str(getattr(start_anchor, "source_type", "")) == SourceType.REGRESSION_FIXTURE.value
+        and not eps_ev["is_user_assumption"]
+        and not (eps_ev.get("sec_fact") and eps_ev["sec_fact"].get("accession"))
+    ):
+        retrieved_at = getattr(start_anchor, "source_retrieved_at", None)
+        retrieved_date = str(retrieved_at)[:10] if retrieved_at else None
+        if retrieved_date and as_of and retrieved_date != str(as_of)[:10]:
+            missing_or_unvalidated.append(
+                f"Starting EPS observation was retrieved on {retrieved_date}, which differs from "
+                f"the market price date {as_of}; the EPS effective date is undeclared, so the "
+                "inputs span more than one date and this is not a verified point-in-time snapshot"
+            )
     if mult_ev["eligibility_state"] in ("DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT", "INSUFFICIENT_OBSERVATIONS_DESCRIPTIVE_ONLY"):
         missing_or_unvalidated.append(f"Exit multiple qualification: {mult_ev['eligibility_state']}")
     if start_anchor.period_undeclared_by_source:
