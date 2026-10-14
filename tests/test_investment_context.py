@@ -20,13 +20,16 @@ from pathlib import Path
 
 from data_contract import (
     COMPARABLE_METRICS,
+    METRIC_PRICE,
     METRIC_REVENUE,
    Observation,
    SourceType,
+    AvailabilityBasis,
     Unit,
     ValidationStatus,
 )
 from cross_validation import cross_validate
+import investment_context
 from investment_context import (
     CONTEXT_SCHEMA_VERSION,
    KIND_OBSERVATION,
@@ -66,11 +69,13 @@ from operation_registry import (
     result_unit,
 )
 from sec_provider import SECProvider
+from sqlite_archive import SQLiteArchive
 from st_eva_runner import (
     CompanyResolver,
     DeterministicMetricsEngine,
     MarketImpliedAssumptionsEngine,
     MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
+    build_context_from_observations,
     build_evidence,
     material_observations,
     metrics_observation,
@@ -806,6 +811,228 @@ class TestReferenceSourceObservationCount(unittest.TestCase):
             "an eligible reference cannot be based on fewer observations than its "
             "own threshold while the payload reports the thinner vendor band",
         )
+
+
+class TestReferenceSourceStatistic(unittest.TestCase):
+    """
+    `source_statistic` names the statistic the reference actually is, and follows
+    the basis for the same reason the observation count does.
+
+    Both observed bases are a median of their distribution. An operator's multiple
+    was never passed through a statistic, and an unavailable reference is not a
+    statistic at all, so neither has one to name. Reporting `median` for those two
+    described an object that was not in play -- the same mistake as reporting the
+    vendor band's observation count, in the field beside it.
+    """
+
+    VENDOR_BAND = TestReferenceSourceObservationCount.VENDOR_BAND
+    ELIGIBLE_BAND = TestReferenceSourceObservationCount.ELIGIBLE_BAND
+
+    def test_an_observed_production_reference_names_its_statistic(self):
+        document = build_context_for(
+            "MSFT",
+            engine={"production_historical_pe": _eligible_distribution()},
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "PRODUCTION_PE_MEDIAN")
+        self.assertEqual(reference["source_statistic"], "median")
+        self.assertEqual(reference["provenance_kind"], "OBSERVED")
+
+    def test_a_historical_median_names_the_statistic_it_is(self):
+        document = build_context_for("MSFT", pe_band=self.ELIGIBLE_BAND)
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "HISTORICAL_MEDIAN")
+        self.assertEqual(reference["source_statistic"], "median")
+        self.assertEqual(reference["provenance_kind"], "OBSERVED")
+
+    def test_a_supplied_multiple_names_no_statistic(self):
+        document = build_context_for(
+            "MSFT",
+            engine={"reference_multiple": 30.0},
+            reference_multiple=30.0,
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "USER_SUPPLIED")
+        self.assertIsNone(
+            reference["source_statistic"],
+            "a multiple supplied on the command line was never passed through a "
+            "statistic, so it must not claim to be a median",
+        )
+        self.assertEqual(reference["selection_method"], "user_supplied_multiple")
+
+    def test_an_unavailable_reference_names_no_statistic(self):
+        document = build_context_for(
+            "MSFT",
+            engine={
+                "production_historical_pe": {
+                    "distribution": {
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                    }
+                }
+            },
+            pe_band=self.VENDOR_BAND,
+        )
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "NONE")
+        self.assertIsNone(
+            reference["source_statistic"],
+            "no reference is in force, so there is no statistic it could be",
+        )
+        self.assertIsNone(reference["source_observation_count"])
+        self.assertEqual(reference["provenance_kind"], "UNAVAILABLE")
+
+    def test_the_published_block_and_the_registered_ref_agree(self):
+        """
+        The payload is published twice -- as the section and as provenance.refs --
+        so a field resolved in one place has to reach both.
+        """
+        document = build_context_for("MSFT", pe_band=self.VENDOR_BAND)
+        section = document["valuation_reference"]
+        registered = document["provenance"]["refs"]["refc:valuation_reference"]
+
+        for field in ("basis", "multiple", "source_statistic", "source_observation_count"):
+            with self.subTest(field=field):
+                self.assertEqual(registered[field], section[field])
+
+
+class TestUnsupportedReferenceBasis(unittest.TestCase):
+    """
+    A basis the context does not know is refused, not defaulted.
+
+    Every field in the reference block describes the reference's own source, so an
+    unrecognised basis would be recorded with source information that describes
+    nothing, and nothing downstream would notice. The old fall-through produced a
+    mixture that contradicted itself: `selection_method: none` beside
+    `source_statistic: median`.
+    """
+
+    def _builder(self):
+        data = CompanyResolver.resolve("MSFT", mode="regression")
+        metrics = DeterministicMetricsEngine.compute(
+            data.price_history, data.volume_history
+        )
+        return ContextBuilder(
+            data=data,
+            analysis=MarketImpliedAssumptionsEngine.analyze(data),
+            evidence=build_evidence(data, metrics),
+            metrics=metrics,
+        )
+
+    def test_an_unknown_basis_is_refused_rather_than_defaulted(self):
+        builder = self._builder()
+        with self.assertRaises(ContextError) as caught:
+            builder._register_reference(
+                name="valuation_reference",
+                multiple=20.0,
+                source_metric="pe",
+                source_ref=None,
+                basis="FUTURE_BASIS",
+            )
+        message = str(caught.exception)
+        self.assertIn("FUTURE_BASIS", message)
+        self.assertIn("HISTORICAL_MEDIAN", message, "the supported set is named")
+
+    def test_the_closed_set_matches_what_the_engine_produces(self):
+        """
+        The mapping is only a guard if it covers every basis the caller can emit.
+        A basis in the mapping that no engine method produces would be dead, and a
+        method without a basis would raise on a legitimate run.
+        """
+        supported = investment_context.REFERENCE_SOURCES
+        self.assertEqual(
+            sorted(supported),
+            ["HISTORICAL_MEDIAN", "NONE", "PRODUCTION_PE_MEDIAN", "USER_SUPPLIED"],
+            "the closed set changed; a new basis is a provenance decision, so this "
+            "assertion is the place to record it",
+        )
+        for basis in sorted(supported):
+            with self.subTest(basis=basis):
+                builder = self._builder()
+                ref = builder._register_reference(
+                    name="valuation_reference",
+                    multiple=20.0,
+                    source_metric="pe",
+                    source_ref=None,
+                    basis=basis,
+                )
+                self.assertEqual(builder.refs[ref].payload["basis"], basis)
+
+
+class TestReferenceProvenanceThroughTheApiPath(unittest.TestCase):
+    """
+    A null statistic and a null observation count have to survive the paths that
+    actually carry a context: the replay builder the API calls, JSON
+    serialization, the archive's stored form, and the document's own validator.
+    """
+
+    ASSET = "MSFT"
+    AS_OF = "2026-06-30"
+
+    def _price(self):
+        return Observation(
+            observation_id="ev-price-001",
+            metric=METRIC_PRICE,
+            value=425.5,
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            currency_basis="REPORTED",
+            period_start=None,
+            period_end=self.AS_OF,
+            as_of=self.AS_OF,
+            available_at="2026-06-30T20:00:00.000Z",
+            available_at_basis=AvailabilityBasis.OBSERVATION_INSTANT.value,
+            provider="YahooFinance",
+            source_type=SourceType.API_LIVE.value,
+            source_url=None,
+            definition="Observed current market price.",
+            methodology="chart API",
+            retrieved_at="2026-06-30T21:00:00+00:00",
+            raw={"regular_market_price": 425.5},
+            status=ValidationStatus.SINGLE_SOURCE,
+        )
+
+    def _replayed(self):
+        return build_context_from_observations(
+            [self._price()],
+            ticker=self.ASSET,
+            as_of=self.AS_OF,
+            generated_at="2026-06-30T21:30:00+00:00",
+        )
+
+    def test_a_reference_with_no_source_survives_serialization_and_validation(self):
+        document = self._replayed()
+        reference = document["valuation_reference"]
+
+        self.assertEqual(reference["basis"], "NONE")
+        self.assertIsNone(reference["source_statistic"])
+        self.assertIsNone(reference["source_observation_count"])
+
+        # What atomic_json_write does for --context, and what the API returns.
+        reloaded = json.loads(json.dumps(document, ensure_ascii=False))
+        self.assertIsNone(reloaded["valuation_reference"]["source_statistic"])
+        self.assertIsNone(reloaded["valuation_reference"]["source_observation_count"])
+        verify_document(reloaded)
+
+    def test_the_archive_store_keeps_the_null(self):
+        store = SQLiteArchive(":memory:")
+        self.addCleanup(store.close)
+
+        store.record_context(
+            self.ASSET, self._replayed(), replay_fidelity="SOURCE_DECLARED"
+        )
+        stored = store.context_at(self.ASSET, self.AS_OF)
+
+        self.assertIsNotNone(stored, "the context was stored for this instant")
+        self.assertIsNone(stored["valuation_reference"]["source_statistic"])
+        self.assertIsNone(stored["valuation_reference"]["source_observation_count"])
 
 
 class TestScopeContract(unittest.TestCase):

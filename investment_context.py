@@ -118,6 +118,41 @@ REASON_INSUFFICIENT_OBSERVATIONS = "INSUFFICIENT_OBSERVATIONS"
 REASON_CURRENCY_MISMATCH = "CURRENCY_MISMATCH"
 REASON_NOT_AVAILABLE = "NOT_AVAILABLE"
 
+# The bases a valuation reference may be recorded under, and what each one says
+# about its own source. This is the closed set: a reference whose basis is not
+# here cannot describe where its number came from, so the builder refuses the
+# document rather than defaulting the source fields -- a default would let a new
+# upstream basis ship with a provenance block that reads as if it were fine.
+#
+# `observed` distinguishes a reference computed from observations from one that
+# was not. `source_statistic` names the statistic the reference actually is:
+# both observed bases are a median of their distribution, an operator's multiple
+# was never passed through any statistic, and an unavailable reference is not a
+# statistic at all. `selection_method` is the engine's own name for the rung it
+# was chosen on.
+REFERENCE_SOURCES: Dict[str, Dict[str, Any]] = {
+    "PRODUCTION_PE_MEDIAN": {
+        "observed": True,
+        "source_statistic": "median",
+        "selection_method": "production_historical_pe_median",
+    },
+    "HISTORICAL_MEDIAN": {
+        "observed": True,
+        "source_statistic": "median",
+        "selection_method": "historical_pe_median",
+    },
+    "USER_SUPPLIED": {
+        "observed": False,
+        "source_statistic": None,
+        "selection_method": "user_supplied_multiple",
+    },
+    "NONE": {
+        "observed": False,
+        "source_statistic": None,
+        "selection_method": "none",
+    },
+}
+
 
 class ContextError(Exception):
     """A context could not be built, or a built context is not self-consistent."""
@@ -893,8 +928,29 @@ class ContextBuilder:
         exists and whatever it declares -- is not theirs to report. Reading the
         band unconditionally here would make this field a function of the band
         rather than of the reference.
+
+        `source_statistic` follows the basis for the same reason. Both observed
+        bases are a median of their distribution, so both name one; an operator's
+        multiple was never passed through a statistic and an unavailable reference
+        is not a statistic, so neither names one. Reporting `median` for those two
+        was the same mistake as reporting the band's observation count: a
+        provenance field describing an object that was not in play.
+
+        The supported bases are the closed set in `REFERENCE_SOURCES`, and an
+        unrecognised one raises. A new basis appearing upstream is a decision
+        about provenance that has to be made deliberately; defaulting the source
+        fields would record it as though it had been.
         """
         ref = reference_ref(name)
+        source = REFERENCE_SOURCES.get(basis)
+        if source is None:
+            raise ContextError(
+                f"reference {ref!r} declares basis {basis!r}, which this context "
+                f"does not support; supported bases are "
+                f"{sorted(REFERENCE_SOURCES)}. Every field below describes the "
+                "reference's own source, so an unrecognised basis would be "
+                "recorded with source information that describes nothing."
+            )
         band = getattr(self.data, f"historical_{source_metric}_band", None) if source_metric else None
         status = self._band_status(band) if source_metric else None
         declared = safe_float((band or {}).get("observations")) if band else None
@@ -904,7 +960,8 @@ class ContextBuilder:
 
         # The count follows the basis. Only the two observed bases have a source
         # that holds observations; the other two have none, so they report none
-        # rather than borrowing the band's number.
+        # rather than borrowing the band's number. The production distribution
+        # carries its own count in; the historical band is the count's source.
         if basis == "PRODUCTION_PE_MEDIAN":
             source_declared = safe_float(source_observation_count)
         elif basis == "HISTORICAL_MEDIAN":
@@ -915,13 +972,12 @@ class ContextBuilder:
             int(source_declared) if source_declared is not None else None
         )
 
-        provenance = (
-            PROVENANCE_OBSERVED
-            if basis in ("HISTORICAL_MEDIAN", "PRODUCTION_PE_MEDIAN")
-            else PROVENANCE_UNAVAILABLE
-            if multiple is None
-            else PROVENANCE_CONDITIONAL
-        )
+        if source["observed"]:
+            provenance = PROVENANCE_OBSERVED
+        elif multiple is None:
+            provenance = PROVENANCE_UNAVAILABLE
+        else:
+            provenance = PROVENANCE_CONDITIONAL
 
         self._register(
             ref,
@@ -933,7 +989,7 @@ class ContextBuilder:
                 "operand_field": "multiple",
                 "provenance_kind": provenance,
                 "source_ref": source_ref,
-                "source_statistic": "median" if source_metric else None,
+                "source_statistic": source["source_statistic"],
                 "source_observation_count": observation_count,
                 "eligible_as_reference": eligible,
                 "eligibility_rule": (
@@ -963,15 +1019,7 @@ class ContextBuilder:
                     )
                 ),
                 "selected_at": self.generated_at,
-                "selection_method": (
-                    "user_supplied_multiple"
-                    if basis == "USER_SUPPLIED"
-                    else "production_historical_pe_median"
-                    if basis == "PRODUCTION_PE_MEDIAN"
-                    else "historical_pe_median"
-                    if basis == "HISTORICAL_MEDIAN"
-                    else "none"
-                ),
+                "selection_method": source["selection_method"],
                 "user_overridden": basis == "USER_SUPPLIED",
             },
             operand_field="multiple",
