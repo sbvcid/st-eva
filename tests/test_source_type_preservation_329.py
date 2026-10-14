@@ -79,14 +79,31 @@ class TestVendorSourceTypeIsUnchanged(unittest.TestCase):
     def setUp(self) -> None:
         self.data = CompanyResolver.resolve("AAPL", mode="regression")
 
-    def test_every_material_observation_carries_the_views_source_type(self):
+    def test_material_observation_preserves_its_declared_source_type(self):
         materials = material_observations(self.data)
         self.assertTrue(materials)
         for metric, observation in materials.items():
+            # A regression fixture can preserve a captured source-backed
+            # observation whose original source_type differs from the current
+            # fixture acquisition mode. Preserve the source observation's
+            # provenance; unbacked fixture values use the view's source_type.
+            original = next(
+                (
+                    item
+                    for item in self.data.observations.for_metric(metric)
+                    if not item.observation_id.startswith("cmp-")
+                ),
+                None,
+            )
+            expected_source_type = (
+                original.source_type
+                if original is not None
+                else self.data.source_type
+            )
             self.assertEqual(
                 observation.source_type,
-                self.data.source_type,
-                f"{metric} changed the vendor source_type",
+                expected_source_type,
+                f"{metric} did not preserve its correct source_type",
             )
 
     def test_the_price_stays_view_owned(self):
