@@ -397,6 +397,10 @@ class TestS3DerivedFigureTraceability(unittest.TestCase):
         )
 
         data = CompanyResolver.resolve("AAPL", mode="regression")
+        # The AAPL fixture intentionally lacks market cap. This test isolates
+        # the negative-FCF refusal, so give it an explicit test-only numerator
+        # rather than letting a missing market cap mask the refusal reason.
+        data.current_market_cap = 4_918_530_543_600.0
         data.current_fcf = -136_683_000_000.0
         metrics = DeterministicMetricsEngine.compute(
             data.price_history, data.volume_history
