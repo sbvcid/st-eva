@@ -406,6 +406,33 @@ METRIC_CONSENSUS_FORWARD_EPS = "consensus_forward_eps"
 METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT = "consensus_forward_eps_analyst_count"
 METRIC_CONSENSUS_FORWARD_EPS_LOW = "consensus_forward_eps_low"
 METRIC_CONSENSUS_FORWARD_EPS_HIGH = "consensus_forward_eps_high"
+# The revision counts the source states per trend row, in windows the source
+# labels itself ("last 7 days"). A revision count is not an EPS amount: it
+# says how many estimates moved, never by how much.
+METRIC_CONSENSUS_REVISIONS_UP_7D = "consensus_forward_eps_up_revisions_7d"
+METRIC_CONSENSUS_REVISIONS_UP_30D = "consensus_forward_eps_up_revisions_30d"
+METRIC_CONSENSUS_REVISIONS_DOWN_7D = "consensus_forward_eps_down_revisions_7d"
+METRIC_CONSENSUS_REVISIONS_DOWN_30D = "consensus_forward_eps_down_revisions_30d"
+METRIC_CONSENSUS_REVISIONS_DOWN_90D = "consensus_forward_eps_down_revisions_90d"
+# The trend series of one forecast period's consensus, as the source presents
+# it on the same row: the estimate as presently published, and the same
+# estimate as it stood 7/30/60/90 days before acquisition, per the source's
+# own relative labels. One series, one forecast period, one declared currency.
+METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT = (
+    "consensus_forward_eps_trend_current"
+)
+METRIC_CONSENSUS_FORWARD_EPS_7D_AGO = "consensus_forward_eps_7d_ago"
+METRIC_CONSENSUS_FORWARD_EPS_30D_AGO = "consensus_forward_eps_30d_ago"
+METRIC_CONSENSUS_FORWARD_EPS_60D_AGO = "consensus_forward_eps_60d_ago"
+METRIC_CONSENSUS_FORWARD_EPS_90D_AGO = "consensus_forward_eps_90d_ago"
+# Deterministic differences inside that one series: the estimate as presently
+# published minus the same period's estimate N days ago. Both operands are
+# published values of the same block, so the comparison never crosses periods
+# or currencies.
+METRIC_CONSENSUS_REVISION_AMOUNT_7D = "consensus_forward_eps_change_7d"
+METRIC_CONSENSUS_REVISION_AMOUNT_30D = "consensus_forward_eps_change_30d"
+METRIC_CONSENSUS_REVISION_AMOUNT_60D = "consensus_forward_eps_change_60d"
+METRIC_CONSENSUS_REVISION_AMOUNT_90D = "consensus_forward_eps_change_90d"
 METRIC_PE_BAND = "pe_band"
 METRIC_PFCF_BAND = "pfcf_band"
 METRIC_PS_BAND = "ps_band"
@@ -498,6 +525,22 @@ CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
     METRIC_CONSENSUS_FORWARD_EPS_LOW,
     METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+    # The consensus estimate's revision counts and trend series, on the same
+    # selected row, with the deterministic differences inside that series.
+    METRIC_CONSENSUS_REVISIONS_UP_7D,
+    METRIC_CONSENSUS_REVISIONS_UP_30D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D,
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT,
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO,
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D,
 )
 
 CONTRACT_UNITS: Tuple[str, ...] = tuple(unit.value for unit in Unit)
@@ -532,6 +575,40 @@ CONTRACT_OBSERVATION_IDS: Dict[str, str] = {
 OBSERVATION_ID_CONSENSUS_ANALYST_COUNT = "obs-consensus-eps-analyst-count-001"
 OBSERVATION_ID_CONSENSUS_EPS_LOW = "obs-consensus-eps-low-001"
 OBSERVATION_ID_CONSENSUS_EPS_HIGH = "obs-consensus-eps-high-001"
+
+# The revision counts, the trend series of the same row, and the differences
+# inside that series. Like the sample above, they are inputs to
+# ev-consensus-eps-001's interpretation rather than separate material inputs,
+# so they are not listed in evidence_ids; these ids name the observations so a
+# reader can address them.
+OBSERVATION_ID_CONSENSUS_REVISIONS_UP_7D = "obs-consensus-eps-up-revisions-7d-001"
+OBSERVATION_ID_CONSENSUS_REVISIONS_UP_30D = (
+    "obs-consensus-eps-up-revisions-30d-001"
+)
+OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_7D = (
+    "obs-consensus-eps-down-revisions-7d-001"
+)
+OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_30D = (
+    "obs-consensus-eps-down-revisions-30d-001"
+)
+OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_90D = (
+    "obs-consensus-eps-down-revisions-90d-001"
+)
+OBSERVATION_ID_CONSENSUS_TREND_CURRENT = "obs-consensus-eps-trend-current-001"
+OBSERVATION_ID_CONSENSUS_EPS_7D_AGO = "obs-consensus-eps-7d-ago-001"
+OBSERVATION_ID_CONSENSUS_EPS_30D_AGO = "obs-consensus-eps-30d-ago-001"
+OBSERVATION_ID_CONSENSUS_EPS_60D_AGO = "obs-consensus-eps-60d-ago-001"
+OBSERVATION_ID_CONSENSUS_EPS_90D_AGO = "obs-consensus-eps-90d-ago-001"
+OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_7D = "obs-consensus-eps-change-7d-001"
+OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_30D = (
+    "obs-consensus-eps-change-30d-001"
+)
+OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_60D = (
+    "obs-consensus-eps-change-60d-001"
+)
+OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_90D = (
+    "obs-consensus-eps-change-90d-001"
+)
 
 # Price and volume history are inputs to ev-metrics-001 but are not themselves
 # material evidence, so they are not listed in evidence_ids.
@@ -588,6 +665,107 @@ METRIC_DEFINITIONS: Dict[str, str] = {
         "Highest analyst estimate behind the consensus forward EPS. Never "
         "synthesized; a range is not a dispersion measure."
     ),
+    METRIC_CONSENSUS_REVISIONS_UP_7D: (
+        "Number of analyst estimates for the consensus forward EPS's forecast "
+        "period revised upward inside the window the source labels 'last 7 "
+        "days'. A revision count is not an EPS amount: it says how many "
+        "estimates moved, never by how much. The window is the source's own "
+        "relative label and carries no absolute dates."
+    ),
+    METRIC_CONSENSUS_REVISIONS_UP_30D: (
+        "Number of analyst estimates for the consensus forward EPS's forecast "
+        "period revised upward inside the window the source labels 'last 30 "
+        "days'. A revision count is not an EPS amount: it says how many "
+        "estimates moved, never by how much. The window is the source's own "
+        "relative label and carries no absolute dates."
+    ),
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D: (
+        "Number of analyst estimates for the consensus forward EPS's forecast "
+        "period revised downward inside the window the source labels 'last 7 "
+        "days'. A revision count is not an EPS amount: it says how many "
+        "estimates moved, never by how much. The window is the source's own "
+        "relative label and carries no absolute dates."
+    ),
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D: (
+        "Number of analyst estimates for the consensus forward EPS's forecast "
+        "period revised downward inside the window the source labels 'last 30 "
+        "days'. A revision count is not an EPS amount: it says how many "
+        "estimates moved, never by how much. The window is the source's own "
+        "relative label and carries no absolute dates."
+    ),
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D: (
+        "Number of analyst estimates for the consensus forward EPS's forecast "
+        "period revised downward inside the window the source labels 'last 90 "
+        "days'. A revision count is not an EPS amount: it says how many "
+        "estimates moved, never by how much. The window is the source's own "
+        "relative label and carries no absolute dates."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT: (
+        "The consensus forward EPS for the consensus row's forecast period as "
+        "presently published, read from the source's own trend series on that "
+        "row. A different source field from the consensus average, with its "
+        "own declared currency; never substituted for it."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO: (
+        "The consensus forward EPS for the same forecast period as the "
+        "consensus average, as the source's trend series states it stood 7 "
+        "days before acquisition. The reference time is the source's own "
+        "relative label, not an absolute date, and is kept distinct from the "
+        "current value."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO: (
+        "The consensus forward EPS for the same forecast period as the "
+        "consensus average, as the source's trend series states it stood 30 "
+        "days before acquisition. The reference time is the source's own "
+        "relative label, not an absolute date, and is kept distinct from the "
+        "current value."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO: (
+        "The consensus forward EPS for the same forecast period as the "
+        "consensus average, as the source's trend series states it stood 60 "
+        "days before acquisition. The reference time is the source's own "
+        "relative label, not an absolute date, and is kept distinct from the "
+        "current value."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO: (
+        "The consensus forward EPS for the same forecast period as the "
+        "consensus average, as the source's trend series states it stood 90 "
+        "days before acquisition. The reference time is the source's own "
+        "relative label, not an absolute date, and is kept distinct from the "
+        "current value."
+    ),
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D: (
+        "The consensus forward EPS for one forecast period minus the same "
+        "period's estimate as the source's trend series states it stood 7 "
+        "days before acquisition. Both operands are published values of that "
+        "one series on one trend row, so the comparison never crosses periods "
+        "or currencies. A deterministic difference of two published values, "
+        "not a source-stated figure, and not derivable from revision counts."
+    ),
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D: (
+        "The consensus forward EPS for one forecast period minus the same "
+        "period's estimate as the source's trend series states it stood 30 "
+        "days before acquisition. Both operands are published values of that "
+        "one series on one trend row, so the comparison never crosses periods "
+        "or currencies. A deterministic difference of two published values, "
+        "not a source-stated figure, and not derivable from revision counts."
+    ),
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D: (
+        "The consensus forward EPS for one forecast period minus the same "
+        "period's estimate as the source's trend series states it stood 60 "
+        "days before acquisition. Both operands are published values of that "
+        "one series on one trend row, so the comparison never crosses periods "
+        "or currencies. A deterministic difference of two published values, "
+        "not a source-stated figure, and not derivable from revision counts."
+    ),
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D: (
+        "The consensus forward EPS for one forecast period minus the same "
+        "period's estimate as the source's trend series states it stood 90 "
+        "days before acquisition. Both operands are published values of that "
+        "one series on one trend row, so the comparison never crosses periods "
+        "or currencies. A deterministic difference of two published values, "
+        "not a source-stated figure, and not derivable from revision counts."
+    ),
     METRIC_PE_BAND: "Historical P/E reference band.",
     METRIC_PFCF_BAND: "Historical P/FCF reference band.",
     METRIC_PS_BAND: "Historical P/S reference band.",
@@ -613,6 +791,20 @@ METRIC_UNITS: Dict[str, str] = {
     METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT: Unit.COUNT.value,
     METRIC_CONSENSUS_FORWARD_EPS_LOW: UNIT_PER_SHARE,
     METRIC_CONSENSUS_FORWARD_EPS_HIGH: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_REVISIONS_UP_7D: Unit.COUNT.value,
+    METRIC_CONSENSUS_REVISIONS_UP_30D: Unit.COUNT.value,
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D: Unit.COUNT.value,
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D: Unit.COUNT.value,
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D: Unit.COUNT.value,
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D: UNIT_PER_SHARE,
     METRIC_PE_BAND: UNIT_MULTIPLE,
     METRIC_PFCF_BAND: UNIT_MULTIPLE,
     METRIC_PS_BAND: UNIT_MULTIPLE,

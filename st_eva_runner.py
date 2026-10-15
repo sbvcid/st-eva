@@ -46,9 +46,23 @@ from data_contract import (
     LegacyEvidenceRow,
     MATERIAL_METRICS,
     METRIC_CONSENSUS_FORWARD_EPS,
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO,
     METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
     METRIC_CONSENSUS_FORWARD_EPS_HIGH,
     METRIC_CONSENSUS_FORWARD_EPS_LOW,
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT,
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D,
+    METRIC_CONSENSUS_REVISIONS_UP_30D,
+    METRIC_CONSENSUS_REVISIONS_UP_7D,
     METRIC_DEFINITIONS,
     METRIC_ENTERPRISE_VALUE,
     METRIC_EBITDA,
@@ -159,6 +173,20 @@ class MarketData:
     consensus_forward_eps_analyst_count: Any = UNAVAILABLE
     consensus_forward_eps_low: Any = UNAVAILABLE
     consensus_forward_eps_high: Any = UNAVAILABLE
+    consensus_forward_eps_up_revisions_7d: Any = UNAVAILABLE
+    consensus_forward_eps_up_revisions_30d: Any = UNAVAILABLE
+    consensus_forward_eps_down_revisions_7d: Any = UNAVAILABLE
+    consensus_forward_eps_down_revisions_30d: Any = UNAVAILABLE
+    consensus_forward_eps_down_revisions_90d: Any = UNAVAILABLE
+    consensus_forward_eps_trend_current: Any = UNAVAILABLE
+    consensus_forward_eps_7d_ago: Any = UNAVAILABLE
+    consensus_forward_eps_30d_ago: Any = UNAVAILABLE
+    consensus_forward_eps_60d_ago: Any = UNAVAILABLE
+    consensus_forward_eps_90d_ago: Any = UNAVAILABLE
+    consensus_forward_eps_change_7d: Any = UNAVAILABLE
+    consensus_forward_eps_change_30d: Any = UNAVAILABLE
+    consensus_forward_eps_change_60d: Any = UNAVAILABLE
+    consensus_forward_eps_change_90d: Any = UNAVAILABLE
     consensus_forward_eps_period: Optional[str] = None
     # The fiscal-period end the source declared for that consensus estimate.
     # None when the source declared none; never inferred from the label.
@@ -374,6 +402,22 @@ VIEW_FIELD_FOR_METRIC: Dict[str, str] = {
     METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT: "consensus_forward_eps_analyst_count",
     METRIC_CONSENSUS_FORWARD_EPS_LOW: "consensus_forward_eps_low",
     METRIC_CONSENSUS_FORWARD_EPS_HIGH: "consensus_forward_eps_high",
+    METRIC_CONSENSUS_REVISIONS_UP_7D: "consensus_forward_eps_up_revisions_7d",
+    METRIC_CONSENSUS_REVISIONS_UP_30D: "consensus_forward_eps_up_revisions_30d",
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D: "consensus_forward_eps_down_revisions_7d",
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D: "consensus_forward_eps_down_revisions_30d",
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D: "consensus_forward_eps_down_revisions_90d",
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT: (
+        "consensus_forward_eps_trend_current"
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO: "consensus_forward_eps_7d_ago",
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO: "consensus_forward_eps_30d_ago",
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO: "consensus_forward_eps_60d_ago",
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO: "consensus_forward_eps_90d_ago",
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D: "consensus_forward_eps_change_7d",
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D: "consensus_forward_eps_change_30d",
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D: "consensus_forward_eps_change_60d",
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D: "consensus_forward_eps_change_90d",
     METRIC_PE_BAND: "historical_pe_band",
     METRIC_PFCF_BAND: "historical_pfcf_band",
     METRIC_PS_BAND: "historical_ps_band",
@@ -393,6 +437,42 @@ CONSENSUS_SAMPLE_METRICS: Tuple[str, ...] = (
     METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
     METRIC_CONSENSUS_FORWARD_EPS_LOW,
     METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+)
+
+# The revision counts, the same row's trend series, and the deterministic
+# differences inside that series. Each is tied to the forecast period and the
+# declared period end of the selected consensus row, so it travels with the
+# estimate it belongs to, as extra observations that never enter the evidence
+# array. A revision count and an EPS amount are different quantities and stay
+# in different metrics.
+CONSENSUS_REVISION_METRICS: Tuple[str, ...] = (
+    METRIC_CONSENSUS_REVISIONS_UP_7D,
+    METRIC_CONSENSUS_REVISIONS_UP_30D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D,
+)
+
+CONSENSUS_TREND_METRICS: Tuple[str, ...] = (
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT,
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO,
+)
+
+CONSENSUS_REVISION_AMOUNT_METRICS: Tuple[str, ...] = (
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D,
+)
+
+CONSENSUS_EXTRA_METRICS: Tuple[str, ...] = (
+    CONSENSUS_SAMPLE_METRICS
+    + CONSENSUS_REVISION_METRICS
+    + CONSENSUS_TREND_METRICS
+    + CONSENSUS_REVISION_AMOUNT_METRICS
 )
 
 FIXTURE_METHODOLOGY = "static regression fixture value; not live market data"
@@ -3972,7 +4052,9 @@ def _build_context_if_requested(
 
     # The consensus sample travels with the estimate it belongs to. It is not
     # material evidence, so it is selected from the view's own observation set
-    # and passed alongside rather than added to the evidence array.
+    # and passed alongside rather than added to the evidence array. The
+    # revision counts, trend series and in-series differences travel the same
+    # way: each names the selected consensus row's period and declared end.
     consensus_sample = [
         observation
         for observation in (
@@ -3980,7 +4062,7 @@ def _build_context_if_requested(
             for identifier in data.observations.ids()
         )
         if observation is not None
-        and observation.metric in CONSENSUS_SAMPLE_METRICS
+        and observation.metric in CONSENSUS_EXTRA_METRICS
     ]
 
     return build_investment_context(

@@ -29,9 +29,23 @@ from data_contract import (
     CurrencyBasis,
     METRIC_CASH,
     METRIC_CONSENSUS_FORWARD_EPS,
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_7D_AGO,
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO,
     METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
     METRIC_CONSENSUS_FORWARD_EPS_HIGH,
     METRIC_CONSENSUS_FORWARD_EPS_LOW,
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT,
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D,
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D,
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D,
+    METRIC_CONSENSUS_REVISIONS_UP_30D,
+    METRIC_CONSENSUS_REVISIONS_UP_7D,
     METRIC_DEFINITIONS,
     METRIC_EBITDA,
     METRIC_ENTERPRISE_VALUE,
@@ -49,8 +63,22 @@ from data_contract import (
     METRIC_TRAILING_EPS,
     Observation,
     OBSERVATION_ID_CONSENSUS_ANALYST_COUNT,
+    OBSERVATION_ID_CONSENSUS_EPS_30D_AGO,
+    OBSERVATION_ID_CONSENSUS_EPS_60D_AGO,
+    OBSERVATION_ID_CONSENSUS_EPS_7D_AGO,
+    OBSERVATION_ID_CONSENSUS_EPS_90D_AGO,
     OBSERVATION_ID_CONSENSUS_EPS_HIGH,
     OBSERVATION_ID_CONSENSUS_EPS_LOW,
+    OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_30D,
+    OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_60D,
+    OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_7D,
+    OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_90D,
+    OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_30D,
+    OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_7D,
+    OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_90D,
+    OBSERVATION_ID_CONSENSUS_REVISIONS_UP_30D,
+    OBSERVATION_ID_CONSENSUS_REVISIONS_UP_7D,
+    OBSERVATION_ID_CONSENSUS_TREND_CURRENT,
     ObservationSet,
     SOURCE_YAHOO,
     SourceType,
@@ -94,6 +122,46 @@ CONSENSUS_EPS_HIGH_DEFINITION = (
     "Highest analyst estimate behind the consensus forward EPS. Never "
     "synthesized; a range is not a dispersion measure."
 )
+REVISIONS_UP_7D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISIONS_UP_7D
+]
+REVISIONS_UP_30D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISIONS_UP_30D
+]
+REVISIONS_DOWN_7D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISIONS_DOWN_7D
+]
+REVISIONS_DOWN_30D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISIONS_DOWN_30D
+]
+REVISIONS_DOWN_90D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISIONS_DOWN_90D
+]
+TREND_CURRENT_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT
+]
+TREND_7D_AGO_DEFINITION = METRIC_DEFINITIONS[METRIC_CONSENSUS_FORWARD_EPS_7D_AGO]
+TREND_30D_AGO_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_FORWARD_EPS_30D_AGO
+]
+TREND_60D_AGO_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_FORWARD_EPS_60D_AGO
+]
+TREND_90D_AGO_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_FORWARD_EPS_90D_AGO
+]
+REVISION_AMOUNT_7D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISION_AMOUNT_7D
+]
+REVISION_AMOUNT_30D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISION_AMOUNT_30D
+]
+REVISION_AMOUNT_60D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISION_AMOUNT_60D
+]
+REVISION_AMOUNT_90D_DEFINITION = METRIC_DEFINITIONS[
+    METRIC_CONSENSUS_REVISION_AMOUNT_90D
+]
 FCF_DEFINITION = "Observed trailing free cash flow. Never synthesized."
 EBITDA_DEFINITION = "Observed trailing EBITDA. Never synthesized."
 REVENUE_DEFINITION = "Observed trailing revenue. Never synthesized."
@@ -426,7 +494,7 @@ class YahooFundamentalProvider:
     @staticmethod
     def _select_consensus_row(
         earnings_trend: Dict[str, Any],
-    ) -> Optional[Tuple[int, float, str, Optional[str], Dict[str, Any]]]:
+    ) -> Optional[Tuple[int, float, str, Optional[str], Dict[str, Any], Dict[str, Any]]]:
         """
         The trend row the consensus is taken from, with its whole estimate block.
 
@@ -435,10 +503,14 @@ class YahooFundamentalProvider:
         `numberOfAnalysts`, which the source states rather than leaving to be
         recovered from the mean.
 
+        The sixth element is the full trend row, so the same selection also
+        supplies the row's `epsRevisions` and `epsTrend` blocks; the estimate
+        block and the blocks read alongside it cannot come from different rows.
+
         Returns None when no row carries an estimate.
         """
         rows = earnings_trend.get("trend") or []
-        candidates: List[tuple[int, float, str, Optional[str], Dict[str, Any]]] = []
+        candidates: List[tuple[int, float, str, Optional[str], Dict[str, Any], Dict[str, Any]]] = []
 
         # Prefer the next fiscal-year estimate (+1y), then current year (0y),
         # and never substitute a historical actual.
@@ -450,7 +522,7 @@ class YahooFundamentalProvider:
                 continue
             priority = {"+1y": 0, "0y": 1, "+1q": 2, "0q": 3}.get(period, 99)
             declared_end = declared_date(row.get("endDate"))
-            candidates.append((priority, avg, period, declared_end, estimate))
+            candidates.append((priority, avg, period, declared_end, estimate, row))
 
         if not candidates:
             return None
@@ -649,6 +721,42 @@ class YahooFundamentalProvider:
                 self._consensus_sample_observations(
                     clean=clean,
                     estimate=selected_consensus_row[4],
+                    period=selected_consensus_row[2],
+                    period_end=selected_consensus_row[3],
+                    retrieved_at=retrieved_at,
+                    source_url=quote_summary_url,
+                    instrument_currency=instrument_currency,
+                )
+            )
+            # The revision counts, the trend series of the same forecast
+            # period, and the differences inside that series, all read from
+            # the same selected row the average came from. They travel as
+            # extra observations like the sample above, never as material
+            # evidence, and nothing here merges different periods or
+            # reference dates.
+            selected_row = selected_consensus_row[5]
+            observations.extend(
+                self._consensus_revision_observations(
+                    revisions=selected_row.get("epsRevisions"),
+                    period=selected_consensus_row[2],
+                    period_end=selected_consensus_row[3],
+                    retrieved_at=retrieved_at,
+                    source_url=quote_summary_url,
+                )
+            )
+            observations.extend(
+                self._consensus_trend_observations(
+                    trend_block=selected_row.get("epsTrend"),
+                    period=selected_consensus_row[2],
+                    period_end=selected_consensus_row[3],
+                    retrieved_at=retrieved_at,
+                    source_url=quote_summary_url,
+                    instrument_currency=instrument_currency,
+                )
+            )
+            observations.extend(
+                self._consensus_change_observations(
+                    trend_block=selected_row.get("epsTrend"),
                     period=selected_consensus_row[2],
                     period_end=selected_consensus_row[3],
                     retrieved_at=retrieved_at,
@@ -1419,6 +1527,312 @@ class YahooFundamentalProvider:
                     raw={
                         "module": "earningsTrend",
                         "field": f"trend[].earningsEstimate.{field}",
+                        "period": period,
+                        "period_end": period_end,
+                    },
+                )
+            )
+        return observations
+
+    def _consensus_revision_observations(
+        self,
+        revisions: Any,
+        period: Optional[str],
+        period_end: Optional[str],
+        retrieved_at: str,
+        source_url: Optional[str],
+    ) -> List[Observation]:
+        """
+        The revision counts the source states for the selected trend row.
+
+        `epsRevisions` counts analyst estimates revised up or down inside a
+        window the source labels itself ("last 7 days"). The window is the
+        source's own relative label, the source declares no absolute window
+        dates, and nothing here derives one. A revision count is not an EPS
+        amount: it says how many estimates moved, never by how much, so it
+        carries no currency even though the source attaches one to the block.
+
+        Each key is read exactly as the source spells it -- `downLast7Days`
+        and `downLast90days` are spelled differently from their `up`
+        counterparts and are not normalised. A value the source left as an
+        empty block is an absent value, never a zero; a count of zero the
+        source did state is a zero.
+        """
+        if not isinstance(revisions, dict):
+            revisions = {}
+        observations: List[Observation] = []
+        for metric, definition, source_key, observation_id in (
+            (
+                METRIC_CONSENSUS_REVISIONS_UP_7D,
+                REVISIONS_UP_7D_DEFINITION,
+                "upLast7days",
+                OBSERVATION_ID_CONSENSUS_REVISIONS_UP_7D,
+            ),
+            (
+                METRIC_CONSENSUS_REVISIONS_UP_30D,
+                REVISIONS_UP_30D_DEFINITION,
+                "upLast30days",
+                OBSERVATION_ID_CONSENSUS_REVISIONS_UP_30D,
+            ),
+            (
+                METRIC_CONSENSUS_REVISIONS_DOWN_7D,
+                REVISIONS_DOWN_7D_DEFINITION,
+                "downLast7Days",
+                OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_7D,
+            ),
+            (
+                METRIC_CONSENSUS_REVISIONS_DOWN_30D,
+                REVISIONS_DOWN_30D_DEFINITION,
+                "downLast30days",
+                OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_30D,
+            ),
+            (
+                METRIC_CONSENSUS_REVISIONS_DOWN_90D,
+                REVISIONS_DOWN_90D_DEFINITION,
+                "downLast90days",
+                OBSERVATION_ID_CONSENSUS_REVISIONS_DOWN_90D,
+            ),
+        ):
+            observations.append(
+                build_observation(
+                    metric=metric,
+                    value=raw_value(revisions.get(source_key)),
+                    unit=Unit.COUNT.value,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=definition,
+                    methodology=(
+                        f"Yahoo quoteSummary earningsTrend trend[period]"
+                        f".epsRevisions.{source_key}"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=None,
+                    currency_basis=CurrencyBasis.NOT_APPLICABLE.value,
+                    as_of=None,
+                    period_end=period_end,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=source_url,
+                    observation_id=observation_id,
+                    raw={
+                        "module": "earningsTrend",
+                        "field": f"trend[].epsRevisions.{source_key}",
+                        "period": period,
+                        "period_end": period_end,
+                    },
+                )
+            )
+        return observations
+
+    def _consensus_trend_observations(
+        self,
+        trend_block: Any,
+        period: Optional[str],
+        period_end: Optional[str],
+        retrieved_at: str,
+        source_url: Optional[str],
+        instrument_currency: Optional[str],
+    ) -> List[Observation]:
+        """
+        The trend series of one forecast period's consensus, as the source
+        presents it on the selected row.
+
+        `epsTrend` holds the estimate as presently published and the same
+        estimate as it stood 7/30/60/90 days before acquisition, per the
+        source's own relative labels. All five values belong to one forecast
+        period on one trend row and share the block's one declared currency,
+        so no two of them are ever merged: each snapshot keeps the row's
+        period label and declared period end, and the reference time stays
+        the source's relative label rather than a derived absolute date.
+        """
+        if not isinstance(trend_block, dict):
+            trend_block = {}
+        declared_currency = trend_block.get("epsTrendCurrency")
+        if isinstance(declared_currency, str) and declared_currency:
+            currency = declared_currency
+            currency_basis = CurrencyBasis.REPORTED.value
+        elif instrument_currency:
+            currency = instrument_currency
+            currency_basis = CurrencyBasis.INSTRUMENT_DEFAULT.value
+        else:
+            currency = None
+            currency_basis = CurrencyBasis.UNDECLARED.value
+
+        observations: List[Observation] = []
+        for metric, definition, source_key, observation_id in (
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_TREND_CURRENT,
+                TREND_CURRENT_DEFINITION,
+                "current",
+                OBSERVATION_ID_CONSENSUS_TREND_CURRENT,
+            ),
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_7D_AGO,
+                TREND_7D_AGO_DEFINITION,
+                "7daysAgo",
+                OBSERVATION_ID_CONSENSUS_EPS_7D_AGO,
+            ),
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_30D_AGO,
+                TREND_30D_AGO_DEFINITION,
+                "30daysAgo",
+                OBSERVATION_ID_CONSENSUS_EPS_30D_AGO,
+            ),
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_60D_AGO,
+                TREND_60D_AGO_DEFINITION,
+                "60daysAgo",
+                OBSERVATION_ID_CONSENSUS_EPS_60D_AGO,
+            ),
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_90D_AGO,
+                TREND_90D_AGO_DEFINITION,
+                "90daysAgo",
+                OBSERVATION_ID_CONSENSUS_EPS_90D_AGO,
+            ),
+        ):
+            observations.append(
+                build_observation(
+                    metric=metric,
+                    value=raw_value(trend_block.get(source_key)),
+                    unit=UNIT_PER_SHARE,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=definition,
+                    methodology=(
+                        f"Yahoo quoteSummary earningsTrend trend[period]"
+                        f".epsTrend.{source_key}"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=currency,
+                    currency_basis=currency_basis,
+                    as_of=None,
+                    period_end=period_end,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=source_url,
+                    observation_id=observation_id,
+                    raw={
+                        "module": "earningsTrend",
+                        "field": f"trend[].epsTrend.{source_key}",
+                        "period": period,
+                        "period_end": period_end,
+                    },
+                )
+            )
+        return observations
+
+    def _consensus_change_observations(
+        self,
+        trend_block: Any,
+        period: Optional[str],
+        period_end: Optional[str],
+        retrieved_at: str,
+        source_url: Optional[str],
+        instrument_currency: Optional[str],
+    ) -> List[Observation]:
+        """
+        The deterministic differences inside the row's one trend series.
+
+        Each is the estimate as presently published minus the same forecast
+        period's estimate N days ago: `epsTrend.current - epsTrend.<N>daysAgo`
+        on the same trend row. Both operands are published values of one
+        block, so the comparison never crosses forecast periods, reference
+        series, or currencies, and it is computed only when both operands are
+        present. This is an EPS revision amount; the revision counts say how
+        many estimates moved and are never used to produce it.
+        """
+        if not isinstance(trend_block, dict):
+            trend_block = {}
+        declared_currency = trend_block.get("epsTrendCurrency")
+        if isinstance(declared_currency, str) and declared_currency:
+            currency = declared_currency
+            currency_basis = CurrencyBasis.REPORTED.value
+        elif instrument_currency:
+            currency = instrument_currency
+            currency_basis = CurrencyBasis.INSTRUMENT_DEFAULT.value
+        else:
+            currency = None
+            currency_basis = CurrencyBasis.UNDECLARED.value
+
+        current_value = raw_value(trend_block.get("current"))
+        observations: List[Observation] = []
+        for metric, definition, source_key, observation_id, snapshot_id in (
+            (
+                METRIC_CONSENSUS_REVISION_AMOUNT_7D,
+                REVISION_AMOUNT_7D_DEFINITION,
+                "7daysAgo",
+                OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_7D,
+                OBSERVATION_ID_CONSENSUS_EPS_7D_AGO,
+            ),
+            (
+                METRIC_CONSENSUS_REVISION_AMOUNT_30D,
+                REVISION_AMOUNT_30D_DEFINITION,
+                "30daysAgo",
+                OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_30D,
+                OBSERVATION_ID_CONSENSUS_EPS_30D_AGO,
+            ),
+            (
+                METRIC_CONSENSUS_REVISION_AMOUNT_60D,
+                REVISION_AMOUNT_60D_DEFINITION,
+                "60daysAgo",
+                OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_60D,
+                OBSERVATION_ID_CONSENSUS_EPS_60D_AGO,
+            ),
+            (
+                METRIC_CONSENSUS_REVISION_AMOUNT_90D,
+                REVISION_AMOUNT_90D_DEFINITION,
+                "90daysAgo",
+                OBSERVATION_ID_CONSENSUS_REVISION_AMOUNT_90D,
+                OBSERVATION_ID_CONSENSUS_EPS_90D_AGO,
+            ),
+        ):
+            ago_value = raw_value(trend_block.get(source_key))
+            value = (
+                current_value - ago_value
+                if current_value is not None and ago_value is not None
+                else None
+            )
+            observations.append(
+                build_observation(
+                    metric=metric,
+                    value=value,
+                    unit=UNIT_PER_SHARE,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=definition,
+                    methodology=(
+                        f"Yahoo quoteSummary earningsTrend trend[period]"
+                        f".epsTrend.current minus trend[period].epsTrend."
+                        f"{source_key}; deterministic difference of two "
+                        "published values of one forecast period's trend "
+                        "series"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=currency,
+                    currency_basis=currency_basis,
+                    as_of=None,
+                    period_end=period_end,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=source_url,
+                    observation_id=observation_id,
+                    inputs=(OBSERVATION_ID_CONSENSUS_TREND_CURRENT, snapshot_id)
+                    if value is not None
+                    else (),
+                    raw={
+                        "module": "earningsTrend",
+                        "expression": (
+                            f"trend[].epsTrend.current - "
+                            f"trend[].epsTrend.{source_key}"
+                        ),
+                        "operands": {
+                            "current": {
+                                "field": "trend[].epsTrend.current",
+                                "value": current_value,
+                            },
+                            source_key: {
+                                "field": f"trend[].epsTrend.{source_key}",
+                                "value": ago_value,
+                            },
+                        },
                         "period": period,
                         "period_end": period_end,
                     },
