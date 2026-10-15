@@ -1,0 +1,327 @@
+{
+ "artifact": "AAPL production historical valuation references and mechanical P/FCF scenarios",
+ "created_at": "2026-10-15T12:35:54.093628+00:00",
+ "run": {
+  "research_id": "RES-4DC3AD389D",
+  "price": 342.96,
+  "price_date": "2026-10-14",
+  "currency": "USD",
+  "market_cap_usd": 4918530543600.0,
+  "reverse_matrix_fingerprint": "45e67f0af1903aa5487cc4a4a4031dd52128612fd6797dd6a3bfb287151cb14e",
+  "reverse_matrix_size": 80,
+  "command": "python st_eva_runner.py AAPL --mode live --historical-pe --historical-pfcf --context history/AAPL_context_20261015.json --dossier history/AAPL_research_dossier_20261015.json --dossier-report --json"
+ },
+ "production_historical_pe": {
+  "metric_id": "TTM_GAAP_DILUTED_PE",
+  "status": "USABLE_FOR_REFERENCE",
+  "usable_for_reference": true,
+  "sample_count": 36,
+  "total_evaluations": 36,
+  "period_start": "2018-01-02",
+  "period_end": "2026-07-31",
+  "percentiles": {
+   "10th": 17.332368,
+   "25th": 22.252219,
+   "median": 28.44563,
+   "75th": 32.442836,
+   "90th": 35.809784
+  },
+  "mean": 27.259109,
+  "std": 6.727807,
+  "min": 13.6875,
+  "max": 37.460317,
+  "input_set_id": "53af090e9be8a21a6f3a39835bc653126df66ac9323b89f02b667ecc466cae8a",
+  "content_hash": "c751f7641c84161b5858c5dd90612d82c7099bc7951bd61d117c59349be9fab6",
+  "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
+  "excluded_observations": [],
+  "current_snapshot": {
+   "evaluation_date": "2026-10-06",
+   "value": 38.260321,
+   "status": "AVAILABLE"
+  }
+ },
+ "production_historical_pfcf": {
+  "metric_id": "TTM_MARKET_CAP_TO_FCF",
+  "status": "USABLE_FOR_REFERENCE",
+  "usable_for_reference": true,
+  "sample_count": 35,
+  "total_evaluations": 36,
+  "period_start": "2018-02-02",
+  "period_end": "2026-07-31",
+  "percentiles": {
+   "10th": 16.081585,
+   "25th": 20.493527,
+   "median": 25.343981,
+   "75th": 29.789915,
+   "90th": 31.963623
+  },
+  "mean": 25.215693,
+  "std": 6.561805,
+  "min": 12.66376,
+  "max": 40.449569,
+  "input_set_id": "9fa0b7d742bebb557c9b76dac93802be2b56e909461d4785659e4c698b33521a",
+  "content_hash": "a269f24716b7be92a755a18b55fd1ab39227f11baa86eb409ef6520d0355e285",
+  "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
+  "excluded_observations": [
+   {
+    "evaluation_date": "2018-01-02",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_INSUFFICIENT_QUARTERS",
+    "reason_detail": "The four-quarter fiscal window ending at FY2017 Q4 is missing positions: [{'fiscal_year': 2017, 'fiscal_quarter': 1}, {'fiscal_year': 2017, 'fiscal_quarter': 2}]."
+   }
+  ],
+  "current_snapshot": {
+   "evaluation_date": "2026-10-06",
+   "value": 35.622984,
+   "price": 333.63,
+   "shares_outstanding": 14594180000.0,
+   "shares_as_of_date": "2026-07-17",
+   "market_cap_usd": 4869056273400.0,
+   "ttm_free_cash_flow_usd": 136683000000.0,
+   "ttm_window_anchor": {
+    "fiscal_year": 2026,
+    "fiscal_quarter": 3,
+    "period_end": "2026-06-27"
+   },
+   "ttm_window_quarters": [
+    {
+     "period_end": "2025-09-27",
+     "fiscal_year": 2025,
+     "fiscal_quarter": 4,
+     "operating_cash_flow_usd": 29728000000.0,
+     "capital_expenditure_usd": 3242000000.0,
+     "free_cash_flow_usd": 26486000000.0,
+     "knowable_from": "2026-07-31",
+     "operating_cash_flow_accessions": [
+      "0000320193-25-000079",
+      "0000320193-26-000020"
+     ],
+     "capital_expenditure_accessions": [
+      "0000320193-25-000079",
+      "0000320193-26-000020"
+     ]
+    },
+    {
+     "period_end": "2025-12-27",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 1,
+     "operating_cash_flow_usd": 53925000000.0,
+     "capital_expenditure_usd": 2373000000.0,
+     "free_cash_flow_usd": 51552000000.0,
+     "knowable_from": "2026-01-30",
+     "operating_cash_flow_accessions": [
+      "0000320193-26-000006"
+     ],
+     "capital_expenditure_accessions": [
+      "0000320193-26-000006"
+     ]
+    },
+    {
+     "period_end": "2026-03-28",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 2,
+     "operating_cash_flow_usd": 28702000000.0,
+     "capital_expenditure_usd": 1971000000.0,
+     "free_cash_flow_usd": 26731000000.0,
+     "knowable_from": "2026-05-01",
+     "operating_cash_flow_accessions": [
+      "0000320193-26-000013",
+      "0000320193-26-000006"
+     ],
+     "capital_expenditure_accessions": [
+      "0000320193-26-000013",
+      "0000320193-26-000006"
+     ]
+    },
+    {
+     "period_end": "2026-06-27",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 3,
+     "operating_cash_flow_usd": 34369000000.0,
+     "capital_expenditure_usd": 2455000000.0,
+     "free_cash_flow_usd": 31914000000.0,
+     "knowable_from": "2026-07-31",
+     "operating_cash_flow_accessions": [
+      "0000320193-26-000020",
+      "0000320193-26-000013"
+     ],
+     "capital_expenditure_accessions": [
+      "0000320193-26-000020",
+      "0000320193-26-000013"
+     ]
+    }
+   ]
+  }
+ },
+ "scenario_inputs": {
+  "market_cap_usd": 4918530543600.0,
+  "market_cap_basis": "vendor market-cap snapshot at the live price (342.96 USD as of 2026-10-14); the same input the standard implied_fcf figure uses",
+  "multiples_source": "production historical P/FCF distribution percentiles",
+  "scenario_definition": "Mechanical scenarios: the historical multiple is applied to the current market capitalization, so the implied figure is the free cash flow that price would correspond to at that multiple. None of these is a forecast, a fair value, a probability, or a recommendation, and none is selected as a conclusion."
+ },
+ "pfcf_percentile_scenarios": [
+  {
+   "percentile": "10th",
+   "pfcf_multiple": 16.081585,
+   "implied_fcf_usd": 305848617757.5158,
+   "formula": "current market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 4918530543600.0,
+    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
+   }
+  },
+  {
+   "percentile": "25th",
+   "pfcf_multiple": 20.493527,
+   "implied_fcf_usd": 240004101958.6331,
+   "formula": "current market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 4918530543600.0,
+    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
+   }
+  },
+  {
+   "percentile": "median",
+   "pfcf_multiple": 25.343981,
+   "implied_fcf_usd": 194070952925.66705,
+   "formula": "current market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 4918530543600.0,
+    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
+   }
+  },
+  {
+   "percentile": "75th",
+   "pfcf_multiple": 29.789915,
+   "implied_fcf_usd": 165107236579.89624,
+   "formula": "current market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 4918530543600.0,
+    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
+   }
+  },
+  {
+   "percentile": "90th",
+   "pfcf_multiple": 31.963623,
+   "implied_fcf_usd": 153879006256.58112,
+   "formula": "current market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 4918530543600.0,
+    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
+   }
+  }
+ ],
+ "internal_consistency_checks": [
+  {
+   "check": "pe_reference_block_matches_payload",
+   "passed": true,
+   "detail": "reference block (USABLE_FOR_REFERENCE, 36) == payload (USABLE_FOR_REFERENCE, 36)"
+  },
+  {
+   "check": "pfcf_reference_block_matches_payload",
+   "passed": true,
+   "detail": "reference block (USABLE_FOR_REFERENCE, 35) == payload (USABLE_FOR_REFERENCE, 35)"
+  },
+  {
+   "check": "context_records_production_bases_not_vendor_bands",
+   "passed": true,
+   "detail": "valuation_reference basis=PRODUCTION_PE_MEDIAN, pfcf_reference basis=PRODUCTION_PFCF_MEDIAN, neither names a vendor band"
+  },
+  {
+   "check": "context_counts_match_payloads",
+   "passed": true,
+   "detail": "context counts 36/35 == payload counts 36/35"
+  },
+  {
+   "check": "earnings_method_labels_production_median_as_its_own_source",
+   "passed": true,
+   "detail": "earnings-method reference source=production_historical_pe_percentile, sample_size=36, value=28.44563 == summary reference 28.44563"
+  },
+  {
+   "check": "pfcf_ttm_quarters_all_knowable_before_evaluation_date",
+   "passed": true,
+   "detail": "every TTM quarter's knowable_from <= evaluation date 2026-10-06"
+  },
+  {
+   "check": "pfcf_window_is_four_consecutive_quarters_with_a_q4",
+   "passed": true,
+   "detail": "anchor FY2026Q3; positions [(2025, 4), (2026, 1), (2026, 2), (2026, 3)]"
+  },
+  {
+   "check": "pfcf_ttm_total_equals_sum_of_quarters",
+   "passed": true,
+   "detail": "sum of quarters 136,683,000,000 == ttm_free_cash_flow 136,683,000,000"
+  },
+  {
+   "check": "pfcf_current_snapshot_recomputes",
+   "passed": true,
+   "detail": "333.63 x 14,594,180,000 / 136,683,000,000 = 35.622984"
+  },
+  {
+   "check": "reconstruction_evaluation_date_distinct_from_market_price_date",
+   "passed": true,
+   "detail": "historical evaluation date 2026-10-06 (canonical price series end) < market price date 2026-10-14"
+  },
+  {
+   "check": "consensus_series_uses_one_declared_period_end",
+   "passed": true,
+   "detail": "period ends across 18 consensus metrics: ['2027-09-30']"
+  },
+  {
+   "check": "consensus_down_90d_gap_preserved_not_zero_filled",
+   "passed": true,
+   "detail": "consensus_forward_eps_down_revisions_90d stays UNAVAILABLE (source states no value)"
+  },
+  {
+   "check": "consensus_changes_recompute_from_their_observations",
+   "passed": true,
+   "detail": "change_7d == trend_current - 7d_ago (and likewise for the other windows, by construction of the same series)"
+  },
+  {
+   "check": "vendor_band_status_stated_separately",
+   "passed": true,
+   "detail": "vendor bands: {'pe': 'DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS', 'ps': 'DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS', 'pfcf': 'UNAVAILABLE', 'ev_ebitda': 'DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS'}"
+  },
+  {
+   "check": "scenario_10th_recomputes",
+   "passed": true,
+   "detail": "4,918,530,543,600 / 16.081585 = 305,848,617,758"
+  },
+  {
+   "check": "scenario_25th_recomputes",
+   "passed": true,
+   "detail": "4,918,530,543,600 / 20.493527 = 240,004,101,959"
+  },
+  {
+   "check": "scenario_median_recomputes",
+   "passed": true,
+   "detail": "4,918,530,543,600 / 25.343981 = 194,070,952,926"
+  },
+  {
+   "check": "scenario_75th_recomputes",
+   "passed": true,
+   "detail": "4,918,530,543,600 / 29.789915 = 165,107,236,580"
+  },
+  {
+   "check": "scenario_90th_recomputes",
+   "passed": true,
+   "detail": "4,918,530,543,600 / 31.963623 = 153,879,006,257"
+  },
+  {
+   "check": "no_scenario_is_selected_as_a_conclusion",
+   "passed": true,
+   "detail": "five scenarios listed symmetrically; none is auto-selected as the answer"
+  }
+ ],
+ "known_gaps": [
+  "The vendor P/FCF band is UNAVAILABLE (its market-cap and FCF series share no dates); the production reconstruction is the only historical P/FCF reference, and the two are never merged.",
+  "consensus_cross_check.price_at_historical_median_pe is null because that field reads the vendor historical P/E band only; the production P/E median exists but is not wired into this cross-check field. Recorded as a method-scope gap, not backfilled.",
+  "The matrix's cash-flow method requires an explicitly supplied multiple; the historical percentile scenarios in this artifact are computed outside the matrix and are labelled as explicit scenario inputs.",
+  "The reconstruction's latest evaluation date is the canonical price series' last trading day (2026-10-06), which is earlier than the market price date (2026-10-14); the two are never presented as the same date."
+ ]
+}

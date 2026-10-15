@@ -2509,6 +2509,7 @@ def _build_valuation_multiples(
     historical_band: Optional[Dict[str, Any]],
     min_observations: int,
     production_historical_pe: Optional[Dict[str, Any]] = None,
+    representative: Optional[Any] = None,
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """
     The reference multiple for each valuation method, keyed by method.
@@ -2516,6 +2517,13 @@ def _build_valuation_multiples(
     Each method gets its own multiple and its own provenance. A P/E and a P/S
     are not interchangeable, and a method with no multiple supplied is left
     absent rather than filled from another method's number.
+
+    `representative` is the scenario set's representative multiple object, when
+    one was selected. When its value is what would otherwise be recorded as the
+    operator's P/E, its own labels travel instead: a median read from the
+    production historical distribution is recorded as exactly that, never as a
+    user assumption, for the same reason the context layer refuses to record a
+    production median as a vendor-band figure.
     """
     from reverse_requirements import (
         ReferenceMultiple,
@@ -2549,13 +2557,20 @@ def _build_valuation_multiples(
 
     user_pe = safe_float(reference_multiple)
     if user_pe is not None and user_pe > 0:
-        multiples["pe"] = ReferenceMultiple(
-            value=user_pe,
-            source="user_supplied",
-            is_user_assumption=True,
-            eligibility_state="USER_SPECIFIED",
-            usable_for_reference=True,
-        )
+        if (
+            representative is not None
+            and not getattr(representative, "is_user_assumption", False)
+            and safe_float(getattr(representative, "value", None)) == user_pe
+        ):
+            multiples["pe"] = representative
+        else:
+            multiples["pe"] = ReferenceMultiple(
+                value=user_pe,
+                source="user_supplied",
+                is_user_assumption=True,
+                eligibility_state="USER_SPECIFIED",
+                usable_for_reference=True,
+            )
     elif prod_scenarios:
         # Use median from production historical distribution
         median = next(
@@ -3049,6 +3064,7 @@ def _build_reverse_requirements(
 
     valuation_multiples, method_unavailable = _build_valuation_multiples(
         reference_multiple=(representative.value if representative is not None else None),
+        representative=representative,
         pfcf_multiple=pfcf_multiple,
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,

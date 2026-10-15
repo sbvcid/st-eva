@@ -821,5 +821,86 @@ class TestRiskFreeRate(unittest.TestCase):
         self.assertEqual(view["unit"], "percent_per_annum")
 
 
+class TestEarningsMethodRepresentativeProvenance(unittest.TestCase):
+    """
+    The report's earnings-method reference must name where its number came from.
+
+    The representative multiple is the median of the scenario set. When that set
+    is the production historical distribution's percentiles, the representative
+    is a production median, and labelling it `user_supplied` -- as the report
+    path did before this fix -- contradicts the same report's own reference
+    block and reads as if the operator had chosen the number.
+    """
+
+    def _representative(self):
+        return ReferenceMultiple(
+            value=28.44563,
+            source="production_historical_pe_percentile",
+            is_user_assumption=False,
+            eligibility_state="ELIGIBLE_PRODUCTION_DISTRIBUTION",
+            usable_for_reference=True,
+            period_label="median (2018-01-02 to 2026-07-31)",
+            sample_size=36,
+            sample_period="production historical P/E median from 36 observations",
+        )
+
+    def test_the_representative_production_median_keeps_its_own_labels(self):
+        from st_eva_runner import _build_valuation_multiples
+
+        representative = self._representative()
+        multiples, unavailable = _build_valuation_multiples(
+            reference_multiple=representative.value,
+            representative=representative,
+            pfcf_multiple=None,
+            ev_ebitda_multiple=None,
+            ps_multiple=None,
+            historical_band={},
+            min_observations=20,
+            production_historical_pe={"distribution": {"percentiles": {"median": 28.44563}}},
+        )
+        pe = multiples["pe"]
+        self.assertIs(pe, representative)
+        view = pe.contract_view()
+        self.assertEqual(view["source"], "production_historical_pe_percentile")
+        self.assertFalse(view["is_user_assumption"])
+        self.assertEqual(view["sample_size"], 36)
+
+    def test_a_user_supplied_multiple_is_still_recorded_as_an_assumption(self):
+        from st_eva_runner import _build_valuation_multiples
+
+        representative = self._representative()
+        multiples, _ = _build_valuation_multiples(
+            reference_multiple=30.0,
+            representative=representative,
+            pfcf_multiple=None,
+            ev_ebitda_multiple=None,
+            ps_multiple=None,
+            historical_band={},
+            min_observations=20,
+            production_historical_pe=None,
+        )
+        view = multiples["pe"].contract_view()
+        self.assertEqual(view["source"], "user_supplied")
+        self.assertTrue(view["is_user_assumption"])
+
+    def test_the_end_to_end_report_names_the_production_median_as_its_source(self):
+        from st_eva_runner import run_st_eva
+
+        result = run_st_eva(
+            "AAPL",
+            mode="regression",
+            include_historical_pe=True,
+            save_snapshot=False,
+        )
+        methods = (result["reverse_requirements"].get("valuation_methods") or {}).get(
+            "methods"
+        ) or {}
+        view = methods["earnings_multiple"]["reference_multiple"]
+        self.assertEqual(view["source"], "production_historical_pe_percentile")
+        self.assertFalse(view["is_user_assumption"])
+        self.assertEqual(view["value"], result["reference"]["multiple"])
+        self.assertEqual(view["sample_size"], 36)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
