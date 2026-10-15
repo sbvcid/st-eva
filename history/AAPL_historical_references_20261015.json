@@ -155,9 +155,25 @@
  },
  "scenario_inputs": {
   "market_cap_usd": 4918530543600.0,
-  "market_cap_basis": "vendor market-cap snapshot at the live price (342.96 USD as of 2026-10-14); the same input the standard implied_fcf figure uses",
+  "market_cap_basis": "vendor trailingMarketCap observation 4,918,530,543,600 USD stamped 2026-09-23 (Yahoo fundamentals-timeseries quarterly grid, the latest point). Independently verified: the 2026-09-23 close of 337.02 times 14,594,180,476 implied shares matches the 2026-07-17 cover-page count of 14,594,180,000 within 476 shares of vendor rounding. This is NOT the product of the 2026-10-14 live price with anything.",
   "multiples_source": "production historical P/FCF distribution percentiles",
-  "scenario_definition": "Mechanical scenarios: the historical multiple is applied to the current market capitalization, so the implied figure is the free cash flow that price would correspond to at that multiple. None of these is a forecast, a fair value, a probability, or a recommendation, and none is selected as a conclusion."
+  "scenario_definition": "Mechanical scenarios: the historical multiple is applied to the market capitalization above, so the implied figure is the free cash flow that capitalization would correspond to at that multiple. None of these is a forecast, a fair value, a probability, or a recommendation, and none is selected as a conclusion.",
+  "market_cap_reconciliation": {
+   "checked_on": "2026-10-15",
+   "vendor_cap_usd": 4918530543600.0,
+   "vendor_cap_stamp": "2026-09-23",
+   "vendor_cap_close_on_stamp": 337.0199890136719,
+   "implied_vendor_shares": 14594180476,
+   "cover_page_shares": 14594180000,
+   "cover_page_shares_as_of": "2026-07-17",
+   "implied_minus_cover_shares": 476,
+   "mixed_product_live_price_x_cover_shares_usd": 5005219972800.0,
+   "mixed_product_difference_vs_vendor_cap_usd": 86689429200.0,
+   "difference_explained": "the live price 342.96 (2026-10-14) minus the 2026-09-23 close 337.02 is 5.94 USD/share; 5.94 x 14,594,180,000 = 86,689,429,200 exactly. The share count is identical on both sides; the entire 86.69B difference is the price-date gap between the live quote and the vendor cap's quarter-grid stamp.",
+   "reconstruction_cap_usd": 4869056273400.0,
+   "reconstruction_basis": "2026-10-06 canonical close 333.63 x 14,594,180,000 knowable cover-page shares; point-in-time paired with the TTM FCF knowable at that date",
+   "conclusion": "no calculation error on either side; the two bases are kept and documented, and the mixed product is used by no calculation"
+  }
  },
  "pfcf_percentile_scenarios": [
   {
@@ -167,7 +183,7 @@
    "formula": "current market capitalization / P/FCF percentile multiple",
    "inputs": {
     "market_cap_usd": 4918530543600.0,
-    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "market_cap_basis": "vendor trailingMarketCap observation stamped 2026-09-23 (4,918,530,543,600 USD = the 2026-09-23 close 337.02 x 14,594,180,476 implied shares, matching the 2026-07-17 cover-page count); NOT the 2026-10-14 live price product",
     "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
    }
   },
@@ -178,7 +194,7 @@
    "formula": "current market capitalization / P/FCF percentile multiple",
    "inputs": {
     "market_cap_usd": 4918530543600.0,
-    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "market_cap_basis": "vendor trailingMarketCap observation stamped 2026-09-23 (4,918,530,543,600 USD = the 2026-09-23 close 337.02 x 14,594,180,476 implied shares, matching the 2026-07-17 cover-page count); NOT the 2026-10-14 live price product",
     "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
    }
   },
@@ -189,7 +205,7 @@
    "formula": "current market capitalization / P/FCF percentile multiple",
    "inputs": {
     "market_cap_usd": 4918530543600.0,
-    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "market_cap_basis": "vendor trailingMarketCap observation stamped 2026-09-23 (4,918,530,543,600 USD = the 2026-09-23 close 337.02 x 14,594,180,476 implied shares, matching the 2026-07-17 cover-page count); NOT the 2026-10-14 live price product",
     "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
    }
   },
@@ -200,7 +216,7 @@
    "formula": "current market capitalization / P/FCF percentile multiple",
    "inputs": {
     "market_cap_usd": 4918530543600.0,
-    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "market_cap_basis": "vendor trailingMarketCap observation stamped 2026-09-23 (4,918,530,543,600 USD = the 2026-09-23 close 337.02 x 14,594,180,476 implied shares, matching the 2026-07-17 cover-page count); NOT the 2026-10-14 live price product",
     "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
    }
   },
@@ -211,7 +227,7 @@
    "formula": "current market capitalization / P/FCF percentile multiple",
    "inputs": {
     "market_cap_usd": 4918530543600.0,
-    "market_cap_basis": "vendor market-cap snapshot (live price 342.96 USD as of 2026-10-14 x vendor share count)",
+    "market_cap_basis": "vendor trailingMarketCap observation stamped 2026-09-23 (4,918,530,543,600 USD = the 2026-09-23 close 337.02 x 14,594,180,476 implied shares, matching the 2026-07-17 cover-page count); NOT the 2026-10-14 live price product",
     "multiple_source": "production historical P/FCF distribution percentile, 35 point-in-time observations, 2018-02-02 to 2026-07-31"
    }
   }
