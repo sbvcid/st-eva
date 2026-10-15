@@ -949,7 +949,13 @@ class TestUnsupportedReferenceBasis(unittest.TestCase):
         supported = investment_context.REFERENCE_SOURCES
         self.assertEqual(
             sorted(supported),
-            ["HISTORICAL_MEDIAN", "NONE", "PRODUCTION_PE_MEDIAN", "USER_SUPPLIED"],
+            [
+                "HISTORICAL_MEDIAN",
+                "NONE",
+                "PRODUCTION_PE_MEDIAN",
+                "PRODUCTION_PFCF_MEDIAN",
+                "USER_SUPPLIED",
+            ],
             "the closed set changed; a new basis is a provenance decision, so this "
             "assertion is the place to record it",
         )

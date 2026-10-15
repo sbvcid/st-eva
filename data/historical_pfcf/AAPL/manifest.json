@@ -1,0 +1,60 @@
+{
+  "ticker": "AAPL",
+  "issuer_id": "CIK0000320193",
+  "entity_name": "Apple Inc.",
+  "fiscal_year_end": "0926",
+  "role": "production",
+  "metric": "TTM_MARKET_CAP_TO_FCF",
+  "provenance": {
+    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the operating cash flow, capital expenditure and cover-page shares outstanding concepts, plus the canonical price and acceptance evidence reused by path from data/historical_pe/AAPL. Each concept file is the byte-exact companyconcept API response; its sha256 pins what the reconstruction read.",
+    "promoted_on": "2026-10-15",
+    "concept_fetch": {
+      "fetched_on": "2026-10-15",
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000320193/{taxonomy}/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+      "response_units": "verbatim as returned: USD for both cash-flow concepts, shares for the dei concept"
+    },
+    "issuer_facts": {
+      "cik": "0000320193",
+      "fye_month": 9
+    },
+    "files": {
+      "net_cash_operating_concept.json": {
+        "bytes": 20478,
+        "content_sha256": "0506bdd34d1980378db3862b2565d757000e6435cd62f23a11b89eb694caaae0",
+        "source": "SEC EDGAR companyconcept us-gaap:NetCashProvidedByUsedInOperatingActivities (CIK0000320193)",
+        "definition": "Operating cash flow. The concept AAPL FY2017 and later filings tag. FY2016 filing facts are absent from this concept (AAPL tagged those filings under the ContinuingOperations variant), so FY2016 discrete quarters are only recoverable from later comparatives and the FY2016 Q1 span (2015-09-27..2015-12-26) is not recoverable at all. The FY2018 10-K comparative restates FY2016/FY2017 (ASU 2016-18 restricted-cash reclassification); point-in-time selection keeps the value visible at each evaluation date."
+      },
+      "capex_concept.json": {
+        "bytes": 16084,
+        "content_sha256": "f834e6d0b0da6fe8e926d50e93647ebeac398e43754fb8fb14c3038ababb163b",
+        "source": "SEC EDGAR companyconcept us-gaap:PaymentsToAcquirePropertyPlantAndEquipment (CIK0000320193)",
+        "definition": "Payments for acquisition of property, plant and equipment. Raw XBRL values are positive payment magnitudes; free cash flow subtracts them. Original-filing facts are complete from Q1 FY2016 onward."
+      },
+      "shares_outstanding_concept.json": {
+        "bytes": 10629,
+        "content_sha256": "7f82d86420d0ff08ca3618a7bdce02902a21f54f7d1d98166fd6e6ef61b71e0e",
+        "source": "SEC EDGAR companyconcept dei:EntityCommonStockSharesOutstanding (CIK0000320193)",
+        "definition": "Actual common shares outstanding as of each filing stated cover date. Counts are never split-adjusted: pre-2020-08-31 facts carry pre-split counts, pairing with the as-traded close series restored in the canonical price file."
+      },
+      "daily_prices.json (reused by path)": {
+        "path": "../historical_pe/AAPL/daily_prices.json",
+        "content_sha256": "bc259131ac0168a4f641dda7cadd9c7faa1c13265325f9f547d26a7233122741",
+        "source": "The canonical production historical P/E price series; not duplicated here so the two datasets cannot drift apart."
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "../historical_pe/AAPL/filing_acceptance_evidence.json",
+        "content_sha256": "ac74bcdd430efccaa8a0ce33d6fa7b539e46d4cae19e4d8b92b9f0b69f0d0654",
+        "source": "The canonical SGML-header acceptance index; not duplicated here."
+      }
+    },
+    "point_in_time_rule": "usable_date is derived from acceptance_datetime_header_et using the 16:00 ET cutoff rule at load time, identical to the historical P/E pipeline. Filings accepted before the price series begins resolve to the series first trading day (2018-01-02); no fact is ever used before the series starts. A discrete quarter derived from cumulative spans is knowable only when both constituent facts are usable, and the value in force at an evaluation date is the latest usable version of each constituent span (R-PIT-SUPERSEDE).",
+    "derivation_rule": "Free cash flow per fiscal quarter = operating cash flow minus capital expenditure for that same discrete quarter. Discrete quarters are deterministic differences of directly stated cumulative XBRL durations that share one fiscal-year start: Q1 from the stated quarter-length fact, Q2 = 6M - Q1, Q3 = 9M - 6M, Q4 = FY - 9M. Cumulative durations are never summed as if they were single quarters.",
+    "multiple_rule": "P/FCF = (as-traded close on the evaluation date x latest knowable cover-page shares outstanding) / TTM free cash flow, where the TTM window is four consecutive fiscal quarters containing a Q4 and every component must be knowable at the evaluation date. A non-positive TTM FCF produces no multiple. Market cap and the cash flows are all USD as filed.",
+    "known_limitations": [
+      "The operating-cash-flow concept does not carry AAPL FY2016 Q1 span, so the first evaluation date (2018-01-02) cannot anchor a complete FY2016 window and is reported as refused, not backfilled.",
+      "FY2016 and FY2017 operating cash flows entered this concept only through later comparatives, so those quarters knowability dates are later than the dates an analyst reading the original filings could have computed. The reconstruction is therefore conservative: it never uses a figure earlier than this dataset can show it, but for FY2016-FY2017 windows it can be later than contemporaneous public knowledge. The FY2016 Q1 quarter is the only one entirely absent.",
+      "Quarterly cash flows are differences of filed cumulative statements, not directly stated quarterly amounts; each observation components record the exact accessions and spans used.",
+      "The 8-K earnings releases furnish cash-flow figures without XBRL tags; they are not part of this dataset, so Q4 cash-flow knowability follows the 10-K acceptance dates."
+    ]
+  }
+}

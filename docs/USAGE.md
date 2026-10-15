@@ -87,9 +87,10 @@ Issuer-specific historical data paths:
 ```powershell
 python st_eva_runner.py AAPL --mode live --financial-history --no-snapshot
 python st_eva_runner.py MSFT --mode live --historical-pe --no-snapshot
+python st_eva_runner.py AAPL --mode live --historical-pfcf --no-snapshot
 ```
 
-These paths require their configured and qualifying evidence. Their existence does not imply that all metrics or issuers are covered by the same source path.
+These paths require their configured and qualifying evidence. Their existence does not imply that all metrics or issuers are covered by the same source path. `--historical-pfcf` builds the point-in-time historical P/FCF reference distribution for issuers with a promoted dataset (currently AAPL): TTM free cash flow from filed cumulative cash-flow statements (discrete quarters differenced from the stated YTD durations, never summed), the canonical daily price series, and cover-page shares outstanding, gated by the same >= 20 observation rule as the historical P/E distribution.
 
 ## Archive and replay
 

@@ -1525,6 +1525,28 @@ def production_pe_for_reference(
     return median, status
 
 
+def production_pfcf_for_reference(
+    production_historical_pfcf: Optional[Dict[str, Any]],
+) -> Tuple[Optional[float], str]:
+    """
+    The production historical P/FCF distribution as a summary reference.
+
+    The same gate and the same median rule as `production_pe_for_reference`,
+    applied to the market-cap-to-free-cash-flow reconstruction: the
+    distribution's own `usable_for_reference` flag decides, the median is read
+    from the distribution's own percentiles, and a descriptive-only
+    distribution keeps (None, status) everywhere.
+    """
+    distribution = (production_historical_pfcf or {}).get("distribution") or {}
+    status = str(distribution.get("status") or "UNAVAILABLE")
+    if distribution.get("usable_for_reference") is not True:
+        return None, status
+    median = safe_float((distribution.get("percentiles") or {}).get("median"))
+    if median is None or median <= 0:
+        return None, status
+    return median, status
+
+
 def band_status(
     band: Optional[Dict[str, Any]],
 ) -> str:
@@ -1592,6 +1614,7 @@ class MarketImpliedAssumptionsEngine:
         ev_ebitda_multiple: Optional[float] = None,
         ps_multiple: Optional[float] = None,
         production_historical_pe: Optional[Dict[str, Any]] = None,
+        production_historical_pfcf: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Reverse-engineer the assumptions implied by the observed price.
@@ -1607,6 +1630,11 @@ class MarketImpliedAssumptionsEngine:
         and never re-derives either from the vendor band, so the reference the
         summary reports and the reference the matrix's exit multiples were
         admitted under cannot drift apart.
+
+        `production_historical_pfcf` is the same thing for P/FCF: the
+        point-in-time market-cap-to-free-cash-flow reconstruction's own
+        distribution, gated by its own >= 20 observation rule. It competes for
+        the cash-flow reference only when the operator supplied none.
         """
         inputs = (
             data
@@ -1660,6 +1688,9 @@ class MarketImpliedAssumptionsEngine:
         production_pe_median, production_pe_status = production_pe_for_reference(
             production_historical_pe
         )
+        production_pfcf_median, production_pfcf_status = production_pfcf_for_reference(
+            production_historical_pfcf
+        )
 
         if reference_multiple is not None:
             selected_pe = reference_multiple
@@ -1688,7 +1719,38 @@ class MarketImpliedAssumptionsEngine:
             production_pe_sample_count = (
                 int(raw_sample_count) if raw_sample_count is not None else None
             )
-        selected_pfcf = pfcf_multiple if pfcf_multiple is not None else historical_pfcf_median
+        # The cash-flow reference follows the same precedence: an operator's
+        # multiple first, then the eligible production historical P/FCF
+        # distribution's median, then the vendor band's median. Each rung is
+        # labelled with its own method so the context layer never records a
+        # production median as a vendor-band figure.
+        if pfcf_multiple is not None:
+            selected_pfcf = pfcf_multiple
+            selected_pfcf_method = "user_supplied_multiple"
+        elif production_pfcf_median is not None:
+            selected_pfcf = production_pfcf_median
+            selected_pfcf_method = "production_historical_pfcf_median"
+        elif historical_pfcf_median is not None:
+            selected_pfcf = historical_pfcf_median
+            selected_pfcf_method = "historical_pfcf_median"
+        else:
+            selected_pfcf = None
+            selected_pfcf_method = "none"
+
+        # The observation count behind the selected cash-flow reference, read
+        # only from the distribution when the distribution *is* the reference
+        # -- the same rule the P/E reference follows.
+        production_pfcf_sample_count = None
+        if selected_pfcf_method == "production_historical_pfcf_median":
+            raw_pfcf_sample_count = safe_float(
+                ((production_historical_pfcf or {}).get("distribution") or {}).get(
+                    "sample_count"
+                )
+            )
+            production_pfcf_sample_count = (
+                int(raw_pfcf_sample_count) if raw_pfcf_sample_count is not None else None
+            )
+
         selected_ev_ebitda = ev_ebitda_multiple if ev_ebitda_multiple is not None else historical_ev_ebitda_median
         selected_ps = ps_multiple if ps_multiple is not None else historical_ps_median
 
@@ -1750,6 +1812,13 @@ class MarketImpliedAssumptionsEngine:
                 # the single figure the reference's own provenance reports, and
                 # the context layer cannot read it from any other object.
                 "production_historical_pe_sample_count": production_pe_sample_count,
+                # The cash-flow reference's own basis and status, so the P/FCF
+                # reference the context records names where its number came
+                # from the same way the P/E reference does.
+                "pfcf_method": selected_pfcf_method,
+                "pfcf_multiple": selected_pfcf,
+                "production_historical_pfcf_status": production_pfcf_status,
+                "production_historical_pfcf_sample_count": production_pfcf_sample_count,
                 "historical_band_status": {
                     "pe": band_status(pe_band),
                     "ps": band_status(ps_band),
@@ -2026,6 +2095,7 @@ def run_st_eva(
     render_dossier_report: bool = False,
     include_historical_pe: bool = False,
     enable_furnished_pe: bool = True,
+    include_historical_pfcf: bool = False,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
@@ -2077,6 +2147,46 @@ def run_st_eva(
                 }
             }
 
+    # The point-in-time historical P/FCF reconstruction, gated and loaded the
+    # same way as the P/E distribution. It is opt-in on its own flag, so a run
+    # that does not ask for it is computed exactly as before; when the
+    # reconstruction is not established for the ticker, the payload states
+    # that instead of inventing a band.
+    production_historical_pfcf = None
+    if include_historical_pfcf:
+        try:
+            from historical_pfcf import ISSUER_CONFIGS as PFCF_ISSUER_CONFIGS
+            from historical_pfcf import load_issuer_historical_pfcf
+
+            if data.ticker in PFCF_ISSUER_CONFIGS:
+                pfcf_result = load_issuer_historical_pfcf(
+                    PFCF_ISSUER_CONFIGS[data.ticker]
+                )
+                production_historical_pfcf = pfcf_result.to_dict()
+            else:
+                production_historical_pfcf = {
+                    "distribution": {
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_detail": (
+                            f"Production historical P/FCF dataset is not yet established "
+                            f"for {data.ticker}."
+                        ),
+                    }
+                }
+        except Exception as exc:
+            production_historical_pfcf = {
+                "distribution": {
+                    "status": "UNAVAILABLE",
+                    "usable_for_reference": False,
+                    "sample_count": 0,
+                    "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                    "reason_detail": str(exc),
+                }
+            }
+
     analysis = MarketImpliedAssumptionsEngine.analyze(
         data=data,
         reference_multiple=reference_multiple,
@@ -2085,6 +2195,7 @@ def run_st_eva(
         ev_ebitda_multiple=ev_ebitda_multiple,
         ps_multiple=ps_multiple,
         production_historical_pe=production_historical_pe,
+        production_historical_pfcf=production_historical_pfcf,
     )
 
     analysis_errors = Validator.validate_analysis(analysis)
@@ -2245,6 +2356,7 @@ def run_st_eva(
         "market_metrics": metrics,
         "reverse_requirements": reverse_requirements,
         "production_historical_pe": production_historical_pe,
+        "production_historical_pfcf": production_historical_pfcf,
         "missing_data": missing_data,
         "evidence_ids": evidence.ids(),
         "validation": {
@@ -4278,6 +4390,16 @@ def main() -> None:
         action="store_true",
         help="Negative path: disable Form 8-K Item 2.02 furnished evidence in historical P/E.",
     )
+    parser.add_argument(
+        "--historical-pfcf",
+        dest="historical_pfcf",
+        action="store_true",
+        help=(
+            "Opt-in: build the production point-in-time historical P/FCF reference "
+            "distribution from filed cash-flow statements, the canonical daily price "
+            "series and cover-page shares outstanding."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -4321,6 +4443,7 @@ def main() -> None:
         render_dossier_report=args.dossier_report,
         include_historical_pe=args.historical_pe,
         enable_furnished_pe=not args.no_furnished_pe,
+        include_historical_pfcf=args.historical_pfcf,
     )
 
     if result is None:

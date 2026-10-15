@@ -136,6 +136,11 @@ REFERENCE_SOURCES: Dict[str, Dict[str, Any]] = {
         "source_statistic": "median",
         "selection_method": "production_historical_pe_median",
     },
+    "PRODUCTION_PFCF_MEDIAN": {
+        "observed": True,
+        "source_statistic": "median",
+        "selection_method": "production_historical_pfcf_median",
+    },
     "HISTORICAL_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
@@ -962,7 +967,7 @@ class ContextBuilder:
         # that holds observations; the other two have none, so they report none
         # rather than borrowing the band's number. The production distribution
         # carries its own count in; the historical band is the count's source.
-        if basis == "PRODUCTION_PE_MEDIAN":
+        if basis in ("PRODUCTION_PE_MEDIAN", "PRODUCTION_PFCF_MEDIAN"):
             source_declared = safe_float(source_observation_count)
         elif basis == "HISTORICAL_MEDIAN":
             source_declared = declared
@@ -1158,6 +1163,17 @@ class ContextBuilder:
             secondary_basis = "NONE"
             if user_value is not None:
                 secondary_basis = "USER_SUPPLIED"
+            elif (
+                metric == "pfcf"
+                and (analysis_reference.get("pfcf_method"))
+                == "production_historical_pfcf_median"
+            ):
+                # A reference that came from the production historical P/FCF
+                # reconstruction is never recorded as a vendor-band median,
+                # for the same reason the P/E reference is not: pointing a
+                # point-in-time reconstruction at the band would be a false
+                # claim about where the number came from.
+                secondary_basis = "PRODUCTION_PFCF_MEDIAN"
             elif engine_value is not None:
                 secondary_basis = "HISTORICAL_MEDIAN"
             # The same rule the valuation reference follows: only a band median
@@ -1170,12 +1186,41 @@ class ContextBuilder:
                 if band and secondary_basis == "HISTORICAL_MEDIAN"
                 else None
             )
+            pfcf_eligibility = None
+            if secondary_basis == "PRODUCTION_PFCF_MEDIAN":
+                pfcf_status = analysis_reference.get(
+                    "production_historical_pfcf_status"
+                )
+                pfcf_sample_count = analysis_reference.get(
+                    "production_historical_pfcf_sample_count"
+                )
+                pfcf_eligibility = {
+                    "eligible_as_reference": True,
+                    "eligibility_rule": (
+                        "the production historical P/FCF distribution must report "
+                        "usable_for_reference"
+                    ),
+                    "eligibility_reason": (
+                        f"the production historical P/FCF distribution is "
+                        f"{pfcf_status}, so its median is a qualified reference"
+                        if pfcf_status
+                        else "the production historical P/FCF distribution is a "
+                        "qualified reference"
+                    ),
+                    "observation_count": pfcf_sample_count,
+                }
             refs[name] = self._register_reference(
                 name=name,
                 multiple=multiple,
                 source_metric=metric,
                 source_ref=secondary_source_ref,
                 basis=secondary_basis,
+                eligibility=pfcf_eligibility,
+                source_observation_count=(
+                    analysis_reference.get("production_historical_pfcf_sample_count")
+                    if secondary_basis == "PRODUCTION_PFCF_MEDIAN"
+                    else None
+                ),
             )
 
         self._register_constant(
