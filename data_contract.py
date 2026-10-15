@@ -400,6 +400,12 @@ METRIC_VOLUME_HISTORY = "volume_history"
 METRIC_TRAILING_EPS = "trailing_eps"
 METRIC_FORWARD_EPS = "forward_eps"
 METRIC_CONSENSUS_FORWARD_EPS = "consensus_forward_eps"
+# The estimates the consensus average is drawn from. The source states these on
+# the same trend row as the average, so they are observed alongside it rather
+# than derived from it: a count and a range cannot be recovered from a mean.
+METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT = "consensus_forward_eps_analyst_count"
+METRIC_CONSENSUS_FORWARD_EPS_LOW = "consensus_forward_eps_low"
+METRIC_CONSENSUS_FORWARD_EPS_HIGH = "consensus_forward_eps_high"
 METRIC_PE_BAND = "pe_band"
 METRIC_PFCF_BAND = "pfcf_band"
 METRIC_PS_BAND = "ps_band"
@@ -488,6 +494,10 @@ CONTRACT_METRICS: Tuple[str, ...] = (
     METRIC_DIVIDEND_INDICATED_RATE,
     METRIC_DIVIDEND_INDICATED_YIELD,
     METRIC_DIVIDEND_GROWTH_YOY,
+    # The consensus estimate's own sample, alongside the average it produces.
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
+    METRIC_CONSENSUS_FORWARD_EPS_LOW,
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH,
 )
 
 CONTRACT_UNITS: Tuple[str, ...] = tuple(unit.value for unit in Unit)
@@ -514,6 +524,14 @@ CONTRACT_OBSERVATION_IDS: Dict[str, str] = {
     METRIC_MARKET_CAP: "ev-market-cap-001",
     METRIC_PRICE_VOLUME_METRICS: "ev-metrics-001",
 }
+
+# The consensus estimate's sample is an input to ev-consensus-eps-001's
+# interpretation, not a separate material input, so it is not listed in
+# evidence_ids: the 2.2.3 evidence array and its order stay as they were. These
+# ids name the observations so a reader can address them.
+OBSERVATION_ID_CONSENSUS_ANALYST_COUNT = "obs-consensus-eps-analyst-count-001"
+OBSERVATION_ID_CONSENSUS_EPS_LOW = "obs-consensus-eps-low-001"
+OBSERVATION_ID_CONSENSUS_EPS_HIGH = "obs-consensus-eps-high-001"
 
 # Price and volume history are inputs to ev-metrics-001 but are not themselves
 # material evidence, so they are not listed in evidence_ids.
@@ -559,6 +577,17 @@ METRIC_DEFINITIONS: Dict[str, str] = {
     METRIC_TRAILING_EPS: "Current/trailing EPS. Never synthesized.",
     METRIC_FORWARD_EPS: "Forward EPS. Used only when explicitly supplied.",
     METRIC_CONSENSUS_FORWARD_EPS: "Consensus forward EPS. Never synthesized.",
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT: (
+        "Number of analyst estimates behind the consensus forward EPS."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_LOW: (
+        "Lowest analyst estimate behind the consensus forward EPS. Never "
+        "synthesized; a range is not a dispersion measure."
+    ),
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH: (
+        "Highest analyst estimate behind the consensus forward EPS. Never "
+        "synthesized; a range is not a dispersion measure."
+    ),
     METRIC_PE_BAND: "Historical P/E reference band.",
     METRIC_PFCF_BAND: "Historical P/FCF reference band.",
     METRIC_PS_BAND: "Historical P/S reference band.",
@@ -581,6 +610,9 @@ METRIC_UNITS: Dict[str, str] = {
     METRIC_TRAILING_EPS: UNIT_PER_SHARE,
     METRIC_FORWARD_EPS: UNIT_PER_SHARE,
     METRIC_CONSENSUS_FORWARD_EPS: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT: Unit.COUNT.value,
+    METRIC_CONSENSUS_FORWARD_EPS_LOW: UNIT_PER_SHARE,
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH: UNIT_PER_SHARE,
     METRIC_PE_BAND: UNIT_MULTIPLE,
     METRIC_PFCF_BAND: UNIT_MULTIPLE,
     METRIC_PS_BAND: UNIT_MULTIPLE,

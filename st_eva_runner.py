@@ -46,6 +46,9 @@ from data_contract import (
     LegacyEvidenceRow,
     MATERIAL_METRICS,
     METRIC_CONSENSUS_FORWARD_EPS,
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+    METRIC_CONSENSUS_FORWARD_EPS_LOW,
     METRIC_DEFINITIONS,
     METRIC_ENTERPRISE_VALUE,
     METRIC_EBITDA,
@@ -153,6 +156,9 @@ class MarketData:
     current_eps: Any = UNAVAILABLE
     forward_eps: Any = UNAVAILABLE
     consensus_forward_eps: Any = UNAVAILABLE
+    consensus_forward_eps_analyst_count: Any = UNAVAILABLE
+    consensus_forward_eps_low: Any = UNAVAILABLE
+    consensus_forward_eps_high: Any = UNAVAILABLE
     consensus_forward_eps_period: Optional[str] = None
     # The fiscal-period end the source declared for that consensus estimate.
     # None when the source declared none; never inferred from the label.
@@ -365,6 +371,9 @@ VIEW_FIELD_FOR_METRIC: Dict[str, str] = {
     METRIC_TRAILING_EPS: "current_eps",
     METRIC_FORWARD_EPS: "forward_eps",
     METRIC_CONSENSUS_FORWARD_EPS: "consensus_forward_eps",
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT: "consensus_forward_eps_analyst_count",
+    METRIC_CONSENSUS_FORWARD_EPS_LOW: "consensus_forward_eps_low",
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH: "consensus_forward_eps_high",
     METRIC_PE_BAND: "historical_pe_band",
     METRIC_PFCF_BAND: "historical_pfcf_band",
     METRIC_PS_BAND: "historical_ps_band",
@@ -375,6 +384,16 @@ VIEW_FIELD_FOR_METRIC: Dict[str, str] = {
     METRIC_ENTERPRISE_VALUE: "current_enterprise_value",
     METRIC_MARKET_CAP: "current_market_cap",
 }
+
+# The consensus estimate's own sample: the analyst count and the low/high ends of
+# the range, which the source states on the same trend row as the average it
+# publishes. Carried to the context as extra observations rather than as material
+# evidence, so the 2.2.3 evidence array and its order are unchanged.
+CONSENSUS_SAMPLE_METRICS: Tuple[str, ...] = (
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
+    METRIC_CONSENSUS_FORWARD_EPS_LOW,
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+)
 
 FIXTURE_METHODOLOGY = "static regression fixture value; not live market data"
 FIXTURE_HISTORY_METHODOLOGY = (
@@ -693,10 +712,14 @@ def material_observations(data: "MarketData") -> Dict[str, Observation]:
             )
             continue
 
-        if is_band:
-            currency, currency_basis = None, CurrencyBasis.NOT_APPLICABLE.value
-        else:
+        # Only a monetary value is denominated in something. A band is a
+        # multiple and a count is a count, so the instrument's currency is not
+        # theirs to carry -- stamping it onto them would assert a denomination
+        # the value does not have.
+        if unit in (Unit.CURRENCY.value, Unit.PER_SHARE.value):
             currency, currency_basis = _observed_currency(data, source)
+        else:
+            currency, currency_basis = None, CurrencyBasis.NOT_APPLICABLE.value
 
         # A band is computed by us from samples, so it has no single moment at
         # which it became available. The samples' own availability is what is
@@ -3947,6 +3970,19 @@ def _build_context_if_requested(
 
     sec_observations = list(sec_evidence.get("observations") or [])
 
+    # The consensus sample travels with the estimate it belongs to. It is not
+    # material evidence, so it is selected from the view's own observation set
+    # and passed alongside rather than added to the evidence array.
+    consensus_sample = [
+        observation
+        for observation in (
+            data.observations.get(identifier)
+            for identifier in data.observations.ids()
+        )
+        if observation is not None
+        and observation.metric in CONSENSUS_SAMPLE_METRICS
+    ]
+
     return build_investment_context(
         data=data,
         analysis=analysis,
@@ -3957,7 +3993,7 @@ def _build_context_if_requested(
         # same constructor guarantees the two agree on its identity.
         material_observations=list(material_observations(data).values())
         + [metrics_observation(data, metrics)],
-        extra_observations=sec_observations,
+        extra_observations=sec_observations + consensus_sample,
         horizon_years=horizon_years,
         reference_multiple=reference_multiple,
         pfcf_multiple=pfcf_multiple,

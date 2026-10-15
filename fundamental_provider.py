@@ -29,6 +29,9 @@ from data_contract import (
     CurrencyBasis,
     METRIC_CASH,
     METRIC_CONSENSUS_FORWARD_EPS,
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+    METRIC_CONSENSUS_FORWARD_EPS_LOW,
     METRIC_DEFINITIONS,
     METRIC_EBITDA,
     METRIC_ENTERPRISE_VALUE,
@@ -45,6 +48,9 @@ from data_contract import (
     METRIC_SHARES_OUTSTANDING,
     METRIC_TRAILING_EPS,
     Observation,
+    OBSERVATION_ID_CONSENSUS_ANALYST_COUNT,
+    OBSERVATION_ID_CONSENSUS_EPS_HIGH,
+    OBSERVATION_ID_CONSENSUS_EPS_LOW,
     ObservationSet,
     SOURCE_YAHOO,
     SourceType,
@@ -77,6 +83,17 @@ TIMESERIES_URL = (
 EPS_DEFINITION = "Current/trailing EPS. Never synthesized."
 FORWARD_EPS_DEFINITION = "Forward EPS. Used only when explicitly supplied."
 CONSENSUS_EPS_DEFINITION = "Consensus forward EPS. Never synthesized."
+CONSENSUS_ANALYST_COUNT_DEFINITION = (
+    "Number of analyst estimates behind the consensus forward EPS."
+)
+CONSENSUS_EPS_LOW_DEFINITION = (
+    "Lowest analyst estimate behind the consensus forward EPS. Never "
+    "synthesized; a range is not a dispersion measure."
+)
+CONSENSUS_EPS_HIGH_DEFINITION = (
+    "Highest analyst estimate behind the consensus forward EPS. Never "
+    "synthesized; a range is not a dispersion measure."
+)
 FCF_DEFINITION = "Observed trailing free cash flow. Never synthesized."
 EBITDA_DEFINITION = "Observed trailing EBITDA. Never synthesized."
 REVENUE_DEFINITION = "Observed trailing revenue. Never synthesized."
@@ -407,6 +424,40 @@ class YahooFundamentalProvider:
         return values[-1][1], values[-1][2], values[-1][0]
 
     @staticmethod
+    def _select_consensus_row(
+        earnings_trend: Dict[str, Any],
+    ) -> Optional[Tuple[int, float, str, Optional[str], Dict[str, Any]]]:
+        """
+        The trend row the consensus is taken from, with its whole estimate block.
+
+        One selection rule, so the average and the sample it is drawn from can
+        never come from different rows. The row also carries `low`, `high` and
+        `numberOfAnalysts`, which the source states rather than leaving to be
+        recovered from the mean.
+
+        Returns None when no row carries an estimate.
+        """
+        rows = earnings_trend.get("trend") or []
+        candidates: List[tuple[int, float, str, Optional[str], Dict[str, Any]]] = []
+
+        # Prefer the next fiscal-year estimate (+1y), then current year (0y),
+        # and never substitute a historical actual.
+        for row in rows:
+            period = row.get("period")
+            estimate = row.get("earningsEstimate") or {}
+            avg = raw_value(estimate.get("avg"))
+            if avg is None:
+                continue
+            priority = {"+1y": 0, "0y": 1, "+1q": 2, "0q": 3}.get(period, 99)
+            declared_end = declared_date(row.get("endDate"))
+            candidates.append((priority, avg, period, declared_end, estimate))
+
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: item[0])
+        return candidates[0]
+
+    @staticmethod
     def _extract_consensus_forward_eps(
         earnings_trend: Dict[str, Any],
     ) -> Optional[Tuple[float, str, Optional[str]]]:
@@ -425,27 +476,10 @@ class YahooFundamentalProvider:
 
         Returns None only when no row carries an estimate.
         """
-        rows = earnings_trend.get("trend") or []
-        candidates: List[tuple[int, float, str, Optional[str]]] = []
-
-        # Prefer the next fiscal-year estimate (+1y), then current year (0y),
-        # and never substitute a historical actual.
-        for row in rows:
-            period = row.get("period")
-            estimate = row.get("earningsEstimate") or {}
-            avg = raw_value(estimate.get("avg"))
-            if avg is None:
-                continue
-            priority = {"+1y": 0, "0y": 1, "+1q": 2, "0q": 3}.get(
-                period, 99
-            )
-            declared_end = declared_date(row.get("endDate"))
-            candidates.append((priority, avg, period, declared_end))
-
-        if not candidates:
+        selected = YahooFundamentalProvider._select_consensus_row(earnings_trend)
+        if selected is None:
             return None
-        candidates.sort(key=lambda item: item[0])
-        return candidates[0][1], candidates[0][2], candidates[0][3]
+        return selected[1], selected[2], selected[3]
 
     # -- acquisition -------------------------------------------------------
 
@@ -608,6 +642,20 @@ class YahooFundamentalProvider:
                 instrument_currency=instrument_currency,
             )
         )
+        # The sample behind that average, from the same selected row.
+        selected_consensus_row = self._select_consensus_row(trend)
+        if selected_consensus_row is not None:
+            observations.extend(
+                self._consensus_sample_observations(
+                    clean=clean,
+                    estimate=selected_consensus_row[4],
+                    period=selected_consensus_row[2],
+                    period_end=selected_consensus_row[3],
+                    retrieved_at=retrieved_at,
+                    source_url=quote_summary_url,
+                    instrument_currency=instrument_currency,
+                )
+            )
 
         valuation_types = [
             "trailingFreeCashFlow",
@@ -1285,6 +1333,98 @@ class YahooFundamentalProvider:
             )
 
         return emitted
+
+    def _consensus_sample_observations(
+        self,
+        clean: str,
+        estimate: Dict[str, Any],
+        period: Optional[str],
+        period_end: Optional[str],
+        retrieved_at: str,
+        source_url: Optional[str],
+        instrument_currency: Optional[str],
+    ) -> List[Observation]:
+        """
+        The sample the consensus average is drawn from, as the source states it.
+
+        `numberOfAnalysts`, `low` and `high` sit on the same trend row as the
+        average, so they are observed rather than derived: a count and a range
+        cannot be recovered from a mean. Each is emitted with the row's period
+        label and declared period end, so it cannot be attributed to a different
+        fiscal year than the average it belongs to.
+
+        Nothing is computed here. A range is not a dispersion measure, and no
+        standard deviation is invented from three numbers the source aggregated.
+        """
+        declared_currency = estimate.get("earningsCurrency")
+        currency = (
+            str(declared_currency)
+            if isinstance(declared_currency, str) and declared_currency
+            else instrument_currency
+        )
+        observations: List[Observation] = []
+
+        for metric, definition, unit, field, observation_id in (
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
+                CONSENSUS_ANALYST_COUNT_DEFINITION,
+                Unit.COUNT.value,
+                "numberOfAnalysts",
+                OBSERVATION_ID_CONSENSUS_ANALYST_COUNT,
+            ),
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_LOW,
+                CONSENSUS_EPS_LOW_DEFINITION,
+                UNIT_PER_SHARE,
+                "low",
+                OBSERVATION_ID_CONSENSUS_EPS_LOW,
+            ),
+            (
+                METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+                CONSENSUS_EPS_HIGH_DEFINITION,
+                UNIT_PER_SHARE,
+                "high",
+                OBSERVATION_ID_CONSENSUS_EPS_HIGH,
+            ),
+        ):
+            value = raw_value(estimate.get(field))
+            observations.append(
+                build_observation(
+                    metric=metric,
+                    value=value,
+                    unit=unit,
+                    provider=self.name,
+                    source_type=self.source_type,
+                    definition=definition,
+                    methodology=(
+                        f"Yahoo quoteSummary earningsTrend trend[period]"
+                        f".earningsEstimate.{field}"
+                    ),
+                    retrieved_at=retrieved_at,
+                    currency=(
+                        currency
+                        if unit == UNIT_PER_SHARE
+                        else None
+                    ),
+                    currency_basis=(
+                        self._per_share_currency_basis(currency)
+                        if unit == UNIT_PER_SHARE
+                        else CurrencyBasis.NOT_APPLICABLE.value
+                    ),
+                    as_of=None,
+                    period_end=period_end,
+                    available_at_basis=AvailabilityBasis.UNDECLARED.value,
+                    source_url=source_url,
+                    observation_id=observation_id,
+                    raw={
+                        "module": "earningsTrend",
+                        "field": f"trend[].earningsEstimate.{field}",
+                        "period": period,
+                        "period_end": period_end,
+                    },
+                )
+            )
+        return observations
 
     def _consensus_observation(
         self,

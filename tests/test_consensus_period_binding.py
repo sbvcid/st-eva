@@ -21,7 +21,13 @@ import unittest
 sys.path.insert(0, ".")
 
 from data_contract import (
+    CurrencyBasis,
     METRIC_CONSENSUS_FORWARD_EPS,
+    METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT,
+    METRIC_CONSENSUS_FORWARD_EPS_HIGH,
+    METRIC_CONSENSUS_FORWARD_EPS_LOW,
+    UNIT_PER_SHARE,
+    Unit,
     build_observation,
 )
 from fundamental_provider import (
@@ -720,6 +726,120 @@ class TestFormulaOutputsAreUnchanged(unittest.TestCase):
             self.assertTrue(anchor.period_undeclared_by_source)
             self.assertEqual(anchor.contract_view(), bad.start_anchor.contract_view())
             self.assertIsNone(anchor.sec_fact)
+
+
+class TestConsensusEstimateSample(unittest.TestCase):
+    """
+    The consensus average travels with the sample it was drawn from.
+
+    The source states the number of analyst estimates and the low and high ends of
+    their range on the same trend row as the average. Those were in the payload
+    and were not extracted, so the context could say what the consensus expected
+    (9.58335) but not how many analysts said it, nor how far apart they were.
+
+    These tests pin the extraction and the observation each value becomes. Nothing
+    is computed: a count and a range cannot be recovered from a mean, and a range
+    is not a dispersion measure.
+    """
+
+    DECLARED_END = "2027-09-30"
+
+    def _row(self, **estimate):
+        block = {"avg": 9.58335, "numberOfAnalysts": 40, "low": 8.69, "high": 10.67,
+                 "earningsCurrency": "USD"}
+        block.update(estimate)
+        return {"trend": [{"period": "+1y", "endDate": self.DECLARED_END,
+                           "earningsEstimate": block}]}
+
+    def _observations(self, trend, currency="USD"):
+        provider = YahooFundamentalProvider()
+        selected = provider._select_consensus_row(trend)
+        return provider._consensus_sample_observations(
+            clean="AAPL",
+            estimate=selected[4],
+            period=selected[2],
+            period_end=selected[3],
+            retrieved_at="2026-10-15T00:00:00+00:00",
+            source_url="https://example.invalid/quoteSummary",
+            instrument_currency=currency,
+        )
+
+    def test_the_sample_is_extracted_from_the_row_the_average_came_from(self):
+        observations = {o.metric: o for o in self._observations(self._row())}
+
+        self.assertEqual(
+            observations[METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT].value, 40
+        )
+        self.assertEqual(observations[METRIC_CONSENSUS_FORWARD_EPS_LOW].value, 8.69)
+        self.assertEqual(observations[METRIC_CONSENSUS_FORWARD_EPS_HIGH].value, 10.67)
+
+    def test_each_value_equals_the_field_the_source_reported(self):
+        """Raw and normalised agree, so the number is traceable to its field."""
+        trend = self._row()
+        row_estimate = trend["trend"][0]["earningsEstimate"]
+        for observation in self._observations(trend):
+            field = observation.raw["field"].rsplit(".", 1)[-1]
+            with self.subTest(field=field):
+                self.assertEqual(observation.value, row_estimate[field])
+
+    def test_the_sample_carries_the_average_s_declared_period(self):
+        for observation in self._observations(self._row()):
+            with self.subTest(metric=observation.metric):
+                self.assertEqual(observation.period_end, self.DECLARED_END)
+                self.assertEqual(observation.raw["period_end"], self.DECLARED_END)
+                self.assertEqual(observation.raw["period"], "+1y")
+                self.assertIsNone(
+                    observation.period_start,
+                    "the source states no start date, so none is fabricated",
+                )
+
+    def test_units_and_currency_are_the_ones_the_values_have(self):
+        observations = {o.metric: o for o in self._observations(self._row())}
+
+        count = observations[METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT]
+        self.assertEqual(count.unit, Unit.COUNT.value)
+        self.assertIsNone(
+            count.currency, "a count of analysts is not denominated in anything"
+        )
+        self.assertEqual(count.currency_basis, CurrencyBasis.NOT_APPLICABLE.value)
+
+        for metric in (METRIC_CONSENSUS_FORWARD_EPS_LOW, METRIC_CONSENSUS_FORWARD_EPS_HIGH):
+            with self.subTest(metric=metric):
+                observation = observations[metric]
+                self.assertEqual(observation.unit, UNIT_PER_SHARE)
+                self.assertEqual(observation.currency, "USD")
+
+    def test_the_source_declared_currency_is_used_when_it_states_one(self):
+        observations = self._observations(self._row(earningsCurrency="EUR"),
+                                          currency="USD")
+        low = next(o for o in observations
+                   if o.metric == METRIC_CONSENSUS_FORWARD_EPS_LOW)
+        self.assertEqual(
+            low.currency, "EUR",
+            "the row declared a currency, and the row is the source",
+        )
+
+    def test_a_field_the_source_omits_is_absent_rather_than_zero(self):
+        observations = {
+            o.metric: o
+            for o in self._observations(self._row(numberOfAnalysts=None))
+        }
+        count = observations[METRIC_CONSENSUS_FORWARD_EPS_ANALYST_COUNT]
+
+        self.assertIsNone(count.value)
+        self.assertFalse(count.is_available)
+        self.assertIsNotNone(
+            observations[METRIC_CONSENSUS_FORWARD_EPS_LOW].value,
+            "one absent field does not remove the others",
+        )
+
+    def test_no_row_means_no_sample_is_invented(self):
+        provider = YahooFundamentalProvider()
+        self.assertIsNone(provider._select_consensus_row({"trend": []}))
+        self.assertIsNone(
+            provider._select_consensus_row({"trend": [{"period": "+1y",
+                                                       "earningsEstimate": {}}]})
+        )
 
 
 if __name__ == "__main__":  # pragma: no cover
