@@ -805,6 +805,14 @@ ISSUER_CONFIGS: Dict[str, HistoricalPfcfConfig] = {
         prices_path=Path("data/historical_pe/AAPL/daily_prices.json"),
         acceptance_path=Path("data/historical_pe/AAPL/filing_acceptance_evidence.json"),
     ),
+    "MSFT": HistoricalPfcfConfig(
+        ticker="MSFT",
+        issuer_id="CIK0000789019",
+        fye_month=6,
+        data_dir=Path("data/historical_pfcf/MSFT"),
+        prices_path=Path("data/historical_pe/MSFT/daily_prices.json"),
+        acceptance_path=Path("data/historical_pe/MSFT/filing_acceptance_evidence.json"),
+    ),
 }
 
 

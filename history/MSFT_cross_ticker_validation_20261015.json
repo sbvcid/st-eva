@@ -1,0 +1,367 @@
+{
+ "artifact": "MSFT cross-ticker validation of the AAPL v1 pipeline",
+ "created_at": "2026-10-15T15:21:49.302865+00:00",
+ "run": {
+  "research_id": "RES-B35CA79AA4",
+  "price": 539.055,
+  "price_date": "2026-10-15",
+  "currency": "USD",
+  "market_cap_usd": 3717153817339.0,
+  "market_cap_stamp": "2026-09-23",
+  "reverse_matrix_fingerprint": "fc913ba02a5f78e227e76fe0b1a95dde90af10122e653d860b83907edd240415",
+  "reverse_matrix_size": 80,
+  "command": "python st_eva_runner.py MSFT --mode live --historical-pe --historical-pfcf --context history/MSFT_context_20261015.json --dossier history/MSFT_research_dossier_20261015.json --dossier-report --json"
+ },
+ "production_historical_pe": {
+  "status": "USABLE_FOR_REFERENCE",
+  "sample_count": 24,
+  "total_evaluations": 27,
+  "period_start": "2021-07-28",
+  "period_end": "2026-07-30",
+  "percentiles": {
+   "10th": 25.602182,
+   "25th": 28.811204,
+   "median": 33.195873,
+   "75th": 35.400253,
+   "90th": 36.088407
+  },
+  "input_set_id": "e6719c725702af9b8cc44285a85fa89e1b4df175c0becbb46ac8a30dd847027c",
+  "content_hash": "f3b133e4c5d42262d4ba1cb26266da05c3b4717f8862bcb26fded2c547df402d",
+  "excluded_observations": [
+   {
+    "evaluation_date": "2020-10-28",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_MISSING_Q4_EPS",
+    "reason_detail": "The four-quarter fiscal window contains an unfilled fiscal Q4 position after enumerating both filed and furnished evidence classes."
+   },
+   {
+    "evaluation_date": "2021-01-27",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_MISSING_Q4_EPS",
+    "reason_detail": "The four-quarter fiscal window contains an unfilled fiscal Q4 position after enumerating both filed and furnished evidence classes."
+   },
+   {
+    "evaluation_date": "2021-04-28",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_MISSING_Q4_EPS",
+    "reason_detail": "The four-quarter fiscal window contains an unfilled fiscal Q4 position after enumerating both filed and furnished evidence classes."
+   }
+  ],
+  "current_snapshot": {
+   "evaluation_date": "2026-10-06",
+   "value": 29.471047
+  }
+ },
+ "production_historical_pfcf": {
+  "status": "USABLE_FOR_REFERENCE",
+  "sample_count": 23,
+  "total_evaluations": 27,
+  "period_start": "2021-07-30",
+  "period_end": "2026-07-30",
+  "percentiles": {
+   "10th": 31.689999,
+   "25th": 37.401452,
+   "median": 41.578319,
+   "75th": 43.775513,
+   "90th": 49.12017
+  },
+  "input_set_id": "4cefcd9420bfad8be21d74ab2d205ce50d171cffe157b6b2cc70b141f9b8d1d2",
+  "content_hash": "134f616d05fa8f727b5055f7a9ae4418c5d53b7c7e4cdf09e187709faba00710",
+  "excluded_observations": [
+   {
+    "evaluation_date": "2020-10-28",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_INSUFFICIENT_QUARTERS",
+    "reason_detail": "The four-quarter fiscal window ending at FY2021 Q1 is missing positions: [{'fiscal_year': 2020, 'fiscal_quarter': 2}, {'fiscal_year': 2020, 'fiscal_quarter': 3}, {'fiscal_year': 2020, 'fiscal_quarter': 4}]."
+   },
+   {
+    "evaluation_date": "2021-01-27",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_INSUFFICIENT_QUARTERS",
+    "reason_detail": "The four-quarter fiscal window ending at FY2021 Q2 is missing positions: [{'fiscal_year': 2020, 'fiscal_quarter': 3}, {'fiscal_year': 2020, 'fiscal_quarter': 4}]."
+   },
+   {
+    "evaluation_date": "2021-04-28",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_INSUFFICIENT_QUARTERS",
+    "reason_detail": "The four-quarter fiscal window ending at FY2021 Q3 is missing positions: [{'fiscal_year': 2020, 'fiscal_quarter': 4}]."
+   },
+   {
+    "evaluation_date": "2021-07-28",
+    "status": "UNAVAILABLE",
+    "reason_code": "REASON_INSUFFICIENT_QUARTERS",
+    "reason_detail": "The four-quarter fiscal window ending at FY2021 Q3 is missing positions: [{'fiscal_year': 2020, 'fiscal_quarter': 4}]."
+   }
+  ],
+  "current_snapshot": {
+   "evaluation_date": "2026-10-06",
+   "value": 58.673194,
+   "price": 529.3,
+   "shares_outstanding": 7425545491.0,
+   "shares_as_of_date": "2026-07-23",
+   "market_cap_usd": 3930341228386.3,
+   "ttm_free_cash_flow_usd": 66987000000.0,
+   "ttm_window_anchor": {
+    "fiscal_year": 2026,
+    "fiscal_quarter": 4,
+    "period_end": "2026-06-30"
+   },
+   "ttm_window_quarters": [
+    {
+     "period_end": "2025-09-30",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 1,
+     "operating_cash_flow_usd": 45057000000.0,
+     "capital_expenditure_usd": 19394000000.0,
+     "free_cash_flow_usd": 25663000000.0,
+     "knowable_from": "2025-10-30",
+     "operating_cash_flow_accessions": [
+      "0001193125-25-256321"
+     ],
+     "capital_expenditure_accessions": [
+      "0001193125-25-256321"
+     ]
+    },
+    {
+     "period_end": "2025-12-31",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 2,
+     "operating_cash_flow_usd": 35758000000.0,
+     "capital_expenditure_usd": 29876000000.0,
+     "free_cash_flow_usd": 5882000000.0,
+     "knowable_from": "2026-01-29",
+     "operating_cash_flow_accessions": [
+      "0001193125-26-027207"
+     ],
+     "capital_expenditure_accessions": [
+      "0001193125-26-027207"
+     ]
+    },
+    {
+     "period_end": "2026-03-31",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 3,
+     "operating_cash_flow_usd": 46679000000.0,
+     "capital_expenditure_usd": 30876000000.0,
+     "free_cash_flow_usd": 15803000000.0,
+     "knowable_from": "2026-04-30",
+     "operating_cash_flow_accessions": [
+      "0001193125-26-191507"
+     ],
+     "capital_expenditure_accessions": [
+      "0001193125-26-191507"
+     ]
+    },
+    {
+     "period_end": "2026-06-30",
+     "fiscal_year": 2026,
+     "fiscal_quarter": 4,
+     "operating_cash_flow_usd": 55441000000.0,
+     "capital_expenditure_usd": 35802000000.0,
+     "free_cash_flow_usd": 19639000000.0,
+     "knowable_from": "2026-07-30",
+     "operating_cash_flow_accessions": [
+      "0001193125-26-323660",
+      "0001193125-26-191507"
+     ],
+     "capital_expenditure_accessions": [
+      "0001193125-26-323660",
+      "0001193125-26-191507"
+     ]
+    }
+   ]
+  }
+ },
+ "implied_assumptions": {
+  "forward_eps_at_reference_multiple": 16.238614962769617,
+  "eps_gap_vs_consensus": -0.3151231528460192,
+  "required_eps_cagr_from_current_eps": -0.07892144283779823,
+  "fcf_at_reference_multiple": 89401253026.5834,
+  "reference_multiples": {
+   "pe": 33.195873,
+   "pfcf": 41.578319,
+   "ev_ebitda": null,
+   "ps": null
+  }
+ },
+ "pfcf_percentile_scenarios": [
+  {
+   "percentile": "10th",
+   "pfcf_multiple": 31.689999,
+   "implied_fcf_usd": 117297378814.6538,
+   "formula": "market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 3717153817339.0,
+    "market_cap_basis": "Yahoo fundamentals-timeseries trailingMarketCap, stamped 2026-09-23 (verified against the cover-page share count); NOT the 2026-10-15 live-price product",
+    "multiple_source": "production historical P/FCF distribution percentile, 23 point-in-time observations, 2021-07-30 to 2026-07-30"
+   }
+  },
+  {
+   "percentile": "25th",
+   "pfcf_multiple": 37.401452,
+   "implied_fcf_usd": 99385281013.66225,
+   "formula": "market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 3717153817339.0,
+    "market_cap_basis": "Yahoo fundamentals-timeseries trailingMarketCap, stamped 2026-09-23 (verified against the cover-page share count); NOT the 2026-10-15 live-price product",
+    "multiple_source": "production historical P/FCF distribution percentile, 23 point-in-time observations, 2021-07-30 to 2026-07-30"
+   }
+  },
+  {
+   "percentile": "median",
+   "pfcf_multiple": 41.578319,
+   "implied_fcf_usd": 89401253026.5834,
+   "formula": "market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 3717153817339.0,
+    "market_cap_basis": "Yahoo fundamentals-timeseries trailingMarketCap, stamped 2026-09-23 (verified against the cover-page share count); NOT the 2026-10-15 live-price product",
+    "multiple_source": "production historical P/FCF distribution percentile, 23 point-in-time observations, 2021-07-30 to 2026-07-30"
+   }
+  },
+  {
+   "percentile": "75th",
+   "pfcf_multiple": 43.775513,
+   "implied_fcf_usd": 84913997863.12042,
+   "formula": "market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 3717153817339.0,
+    "market_cap_basis": "Yahoo fundamentals-timeseries trailingMarketCap, stamped 2026-09-23 (verified against the cover-page share count); NOT the 2026-10-15 live-price product",
+    "multiple_source": "production historical P/FCF distribution percentile, 23 point-in-time observations, 2021-07-30 to 2026-07-30"
+   }
+  },
+  {
+   "percentile": "90th",
+   "pfcf_multiple": 49.12017,
+   "implied_fcf_usd": 75674693661.25972,
+   "formula": "market capitalization / P/FCF percentile multiple",
+   "inputs": {
+    "market_cap_usd": 3717153817339.0,
+    "market_cap_basis": "Yahoo fundamentals-timeseries trailingMarketCap, stamped 2026-09-23 (verified against the cover-page share count); NOT the 2026-10-15 live-price product",
+    "multiple_source": "production historical P/FCF distribution percentile, 23 point-in-time observations, 2021-07-30 to 2026-07-30"
+   }
+  }
+ ],
+ "internal_consistency_checks": [
+  {
+   "check": "pe_reference_block_matches_payload",
+   "passed": true,
+   "detail": "(USABLE_FOR_REFERENCE, 24) == (USABLE_FOR_REFERENCE, 24)"
+  },
+  {
+   "check": "pfcf_reference_block_matches_payload",
+   "passed": true,
+   "detail": "(USABLE_FOR_REFERENCE, 23) == (USABLE_FOR_REFERENCE, 23)"
+  },
+  {
+   "check": "context_records_production_bases_not_vendor_bands",
+   "passed": true,
+   "detail": "bases PRODUCTION_PE_MEDIAN / PRODUCTION_PFCF_MEDIAN, neither names a vendor band"
+  },
+  {
+   "check": "context_counts_match_payloads",
+   "passed": true,
+   "detail": "24/23 == 24/23"
+  },
+  {
+   "check": "earnings_method_labels_production_median_as_its_own_source",
+   "passed": true,
+   "detail": "source=production_historical_pe_percentile, is_user_assumption=False, value=33.195873 == summary 33.195873"
+  },
+  {
+   "check": "vendor_cap_stamp_matches_cover_page_shares",
+   "passed": true,
+   "detail": "cap 3,717,153,817,339 / close 500.5899963378906 = 7,425,545,545 vs cover-page 7,425,545,491 (diff 54); stamp 2026-09-23, not the 2026-10-15 live price"
+  },
+  {
+   "check": "pfcf_ttm_total_equals_sum_of_quarters",
+   "passed": true,
+   "detail": "66,987,000,000 == 66,987,000,000"
+  },
+  {
+   "check": "pfcf_ttm_quarters_all_knowable_before_evaluation_date",
+   "passed": true,
+   "detail": "knowable_from ['2025-10-30', '2026-01-29', '2026-04-30', '2026-07-30'] <= 2026-07-30"
+  },
+  {
+   "check": "pfcf_observation_recomputes",
+   "passed": true,
+   "detail": "451.1 x 7,425,545,491 / 66,987,000,000 = 50.004681 == 50.004681"
+  },
+  {
+   "check": "pfcf_window_is_four_consecutive_quarters_with_a_q4",
+   "passed": true,
+   "detail": "anchor FY2026Q4"
+  },
+  {
+   "check": "reconstruction_evaluation_date_distinct_from_market_price_date",
+   "passed": true,
+   "detail": "2026-10-06 (canonical series end) < 2026-10-15 (live price date)"
+  },
+  {
+   "check": "implied_forward_eps_recomputes",
+   "passed": true,
+   "detail": "539.055 / 33.195873 = 16.238615"
+  },
+  {
+   "check": "eps_gap_recomputes",
+   "passed": true,
+   "detail": "16.238615 / 23.71027 - 1 = -0.315123"
+  },
+  {
+   "check": "implied_fcf_recomputes",
+   "passed": true,
+   "detail": "3,717,153,817,339 / 41.578319 = 89,401,253,027"
+  },
+  {
+   "check": "consensus_series_uses_one_declared_period_end",
+   "passed": true,
+   "detail": "period ends across 18 metrics: ['2028-06-30']"
+  },
+  {
+   "check": "consensus_down_90d_gap_preserved_not_zero_filled",
+   "passed": true,
+   "detail": "down_revisions_90d stays UNAVAILABLE (the source provides no value for MSFT either)"
+  },
+  {
+   "check": "consensus_changes_recompute",
+   "passed": true,
+   "detail": "change_7d == trend_current - 7d_ago"
+  },
+  {
+   "check": "scenario_10th_recomputes",
+   "passed": true,
+   "detail": "3,717,153,817,339 / 31.689999 = 117,297,378,815"
+  },
+  {
+   "check": "scenario_25th_recomputes",
+   "passed": true,
+   "detail": "3,717,153,817,339 / 37.401452 = 99,385,281,014"
+  },
+  {
+   "check": "scenario_median_recomputes",
+   "passed": true,
+   "detail": "3,717,153,817,339 / 41.578319 = 89,401,253,027"
+  },
+  {
+   "check": "scenario_75th_recomputes",
+   "passed": true,
+   "detail": "3,717,153,817,339 / 43.775513 = 84,913,997,863"
+  },
+  {
+   "check": "scenario_90th_recomputes",
+   "passed": true,
+   "detail": "3,717,153,817,339 / 49.12017 = 75,674,693,661"
+  },
+  {
+   "check": "no_scenario_is_selected_as_a_conclusion",
+   "passed": true,
+   "detail": "five scenarios listed symmetrically; none auto-selected"
+  }
+ ],
+ "known_gaps": [
+  "The vendor P/FCF band is UNAVAILABLE for MSFT as for AAPL; the production reconstruction is the only historical P/FCF reference.",
+  "consensus_down_revisions_90d is UNAVAILABLE for MSFT as for AAPL: the source provides no value in that block.",
+  "The consensus reference's declared period end (2028-06-30, the next fiscal year for a June-FYE issuer) is further from the twelve-month target (2027-10-15) than AAPL's was; the declared end and its source label are carried verbatim, and the gap-vs-consensus comparison keeps the 92-day tolerance rule.",
+  "The vendor market cap is stamped 2026-09-23 for MSFT as for AAPL; it is not the live-price product, and the scenario inputs say so."
+ ]
+}

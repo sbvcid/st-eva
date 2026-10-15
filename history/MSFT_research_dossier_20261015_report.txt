@@ -1,0 +1,350 @@
+==============================================================================
+ST-EVA 研究資料冊  |  MSFT  |  2026-10-15
+dossier research-dossier/1.0
+==============================================================================
+
+This dossier records sourced evidence and deterministic calculations made under explicitly stated assumptions. It does not assign probabilities to scenarios, rank them, or combine them into a single expected value. A conditional figure is the fundamental a chosen multiple corresponds to, not a claim about what the market expects.
+
+------------------------------------------------------------------------------
+市場與公司資料 / Market and company data
+------------------------------------------------------------------------------
+公司: MSFT (Live Acquired) (MSFT)  交易所: NMS  幣別: USD
+估值時點: 2026-10-15
+
+市場資料:
+  股價 539.05 USD   來源 YahooFinance+YahooFinanceFundamentals (API_LIVE)   來源欄位 Yahoo Finance chart API
+  市值 3,717,153,817,339   企業價值 3,697,328,817,339
+
+資料品質:
+  狀態: UNVERIFIABLE
+  取得錯誤: 無
+  共識 EPS 期間: +1y
+
+跨來源比對 (CROSS-SOURCE VERIFICATION):
+  7 of 7 metrics were cross-checked against a second source: 3 CONSISTENT, 1 METHODOLOGY_MISMATCH, 1 PERIOD_MISMATCH, 2 UNAVAILABLE.
+  指標                     狀態                     差異           說明
+  assets                 UNAVAILABLE            -            
+      assets could not be cross-checked: vendor side unavailable. Neither side is treated as the correct answer.
+  cash                   METHODOLOGY_MISMATCH   267.0552%    
+      cash was not compared because the two sources define it differently: currency differs: vendor None against filing 'USD' No numeric verdict is issued, both values are retained unchanged, and neither source is treated as authoritative.
+  eps_diluted            CONSISTENT             0.0000%      
+      eps_diluted agrees across the two sources. The vendor reports 16.79 and the filing source 16.79, a difference of 0.0000%, within the declared tolerance of 1.00% relative and 0.01 absolute (effective 0.01). Both values are retained unchanged.
+  long_term_debt         UNAVAILABLE            -            
+      long_term_debt could not be cross-checked: vendor side unavailable. Neither side is treated as the correct answer.
+  net_income             CONSISTENT             0.0000%      
+      net_income agrees across the two sources. The vendor reports 133749000000.0 and the filing source 133749000000.0, a difference of 0.0000%, within the declared tolerance of 0.50% relative and 50000000 absolute (effective 50000000). Both values are retained unchanged. The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified.
+  revenue                CONSISTENT             0.0000%      
+      revenue agrees across the two sources. The vendor reports 331839000000.0 and the filing source 331839000000.0, a difference of 0.0000%, within the declared tolerance of 0.50% relative and 50000000 absolute (effective 50000000). Both values are retained unchanged. The vendor's trailing aggregate is not the same computation as the filing-side roll-forward, so agreement is meaningful; but the vendor's ingestion path is not disclosed, so independence is unverified.
+  shares_outstanding     PERIOD_MISMATCH        0.0000%      
+      shares_outstanding could not be period-aligned: the vendor publishes 7425545491.0 with no date, while the filing source reports 7425545491.0 as of 2026-07-23. The two values are identical, which is consistent with the same underlying figure, but an undated value cannot be confirmed to be contemporaneous, so the agreement is reported and not validated.
+
+  未採用任何一方為權威值；每個數值皆保留原值。
+
+  * Market capitalization and enterprise value are taken as observed from the provider. They are not rebuilt from price times shares plus net debt, because the provider's debt and cash definitions are not reconciled to its share count.
+
+------------------------------------------------------------------------------
+歷史財務變化 / Financial history
+------------------------------------------------------------------------------
+本次執行未取得財報資料。
+  - financial_history: No filing observations were acquired for this run, so no financial history is presented. Pass --financial-history to acquire them.
+
+------------------------------------------------------------------------------
+資產負債表與資本結構 / Balance sheet and capital structure
+------------------------------------------------------------------------------
+本次執行未取得財報資料，因此沒有資產負債表資料。
+  - capital_structure: No filing observations were acquired for this run, so no balance sheet or share count is presented.
+
+------------------------------------------------------------------------------
+估值指標 / Valuation metrics
+------------------------------------------------------------------------------
+目前倍數 (以現價與已報告數字計算):
+  P/E (TTM)        30.58
+  前瞻 P/E           22.74
+  共識前瞻 P/E         22.74
+  P/S              11.20
+  P/FCF            55.49
+  EV/EBITDA        17.82
+
+殖利率:
+  FCF 殖利率          1.8%
+  EBITDA / EV      5.6%
+  營收 / 市值          8.9%
+
+歷史估值區間:
+  P/E        中位數 37.09      觀測數 7        可否作參考: DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS
+  P/S        中位數 13.44      觀測數 6        可否作參考: DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS
+  P/FCF      中位數 N/A        觀測數 未宣告      可否作參考: UNAVAILABLE
+  EV/EBITDA  中位數 23.49      觀測數 8        可否作參考: DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS
+  (採用門檻: 歷史區間需 >= 20 個觀測值方可作為參考)
+
+生產級點時歷史 P/E 分布 (PRODUCTION PIT HISTORICAL P/E):
+  狀態: USABLE_FOR_REFERENCE (門檻需求 >= 20 筆有效觀測值)
+  有效樣本數: 24   涵蓋期間: 2021-07-28 至 2026-07-30
+  抽樣時程: PERIODIC_FILING_USABLE_DATES (Evaluated on periodic SEC filing and earnings release usable dates (10-Q, 10-K, 8-K Item 2.02); not a continuous daily trading history.)
+  統計: 平均數 32.13   標準差 4.28   最小值 24.27   最大值 39.11
+  分位數參考:
+    10th 分位              25.60
+    25th 分位              28.81
+    50th 分位(中位數)         33.20
+    75th 分位              35.40
+    90th 分位              36.09
+  排除樣本數: 3 筆
+  估值參考狀態: 合格，已可作為多情境反推矩陣之參考倍數來源。
+
+共識交叉檢核:
+  共識前瞻 EPS          23.7103
+  以歷史中位數倍數計之價格 N/A
+  該價格 vs 現價        N/A
+
+  * An observed multiple is the multiple the market is applying to a reported figure today. It is not a reference and it does not imply what the market expects.
+  * A historical band whose observation count is below the stated threshold is reported but is not used as a reference multiple.
+  * Production historical P/E requires at least 20 valid point-in-time observations to qualify as a reference distribution.
+
+------------------------------------------------------------------------------
+股利資料與總報酬分析 / Dividends and total-return analysis
+------------------------------------------------------------------------------
+[股利與殖利率概況]
+  狀態: COMPUTED
+  過去12個月累計現金股利 (TTM): 3.6400 USD (殖利率: 0.68%)
+  最新單季配息: 0.9100 (USD, 除息日: 2026-08-20)
+  指示年化股利 (Indicated, 4x最新季配): 3.6400 (指示殖利率: 0.68%)
+  TTM 股利年增率 (YoY Growth): +9.64%
+  股利資料來源: Market chart events
+
+[歷史報酬率比較: 股價報酬 vs 總報酬 (Price Return vs Total Return)]
+  期間     起始日          結束日          純股價報酬CAGR        現金保留總報酬          DRIP再投資總報酬       股利貢獻(DRIP)    
+  1y     2025-10-06   2026-10-06   0.14%            0.83%            0.97%            +0.83%        
+  3y     2023-10-09   2026-10-06   17.12%           17.86%           18.03%           +0.91%        
+  5y     2021-10-06   2026-10-06   12.55%           13.19%           13.48%           +0.93%        
+
+[反推要求條件比較: 純股價報酬 vs 總報酬 (Reverse Requirements Comparison)]
+  (說明: 納入股利後，達到相同年化報酬率所需之終端股價與獲利門檻相應減輕)
+  持有期    目標報酬     出場PE     純股價要求(目標價/EPS/CAGR)  現金保留總報酬(目標價/EPS/CAGR/減免) 再投資總報酬(目標價/EPS/CAGR/減免) 
+  1y     8.0%     25.6x    582.18 / 22.74 / 29.0% 578.54 / 22.60 / 28.2% (-0.81%) 578.54 / 22.60 / 28.2% (-0.81%)
+  1y     8.0%     28.8x    582.18 / 20.21 / 14.6% 578.54 / 20.08 / 13.9% (-0.72%) 578.54 / 20.08 / 13.9% (-0.72%)
+  1y     8.0%     33.2x    582.18 / 17.54 / -0.5% 578.54 / 17.43 / -1.1% (-0.62%) 578.54 / 17.43 / -1.1% (-0.62%)
+  1y     8.0%     35.4x    582.18 / 16.45 / -6.7% 578.54 / 16.34 / -7.3% (-0.58%) 578.54 / 16.34 / -7.3% (-0.58%)
+  1y     8.0%     36.1x    582.18 / 16.13 / -8.5% 578.54 / 16.03 / -9.1% (-0.57%) 578.54 / 16.03 / -9.1% (-0.57%)
+  1y     10.0%    25.6x    592.96 / 23.16 / 31.4% 589.32 / 23.02 / 30.6% (-0.81%) 589.32 / 23.02 / 30.6% (-0.81%)
+  1y     10.0%    28.8x    592.96 / 20.58 / 16.7% 589.32 / 20.45 / 16.0% (-0.72%) 589.32 / 20.45 / 16.0% (-0.72%)
+  1y     10.0%    33.2x    592.96 / 17.86 / 1.3% 589.32 / 17.75 / 0.7% (-0.62%) 589.32 / 17.75 / 0.7% (-0.62%)
+  1y     10.0%    35.4x    592.96 / 16.75 / -5.0% 589.32 / 16.65 / -5.6% (-0.58%) 589.32 / 16.65 / -5.6% (-0.58%)
+  1y     10.0%    36.1x    592.96 / 16.43 / -6.8% 589.32 / 16.33 / -7.4% (-0.57%) 589.32 / 16.33 / -7.4% (-0.57%)
+  1y     12.0%    25.6x    603.74 / 23.58 / 33.8% 600.10 / 23.44 / 33.0% (-0.81%) 600.10 / 23.44 / 33.0% (-0.81%)
+  1y     12.0%    28.8x    603.74 / 20.96 / 18.9% 600.10 / 20.83 / 18.1% (-0.72%) 600.10 / 20.83 / 18.1% (-0.72%)
+  1y     12.0%    33.2x    603.74 / 18.19 / 3.2% 600.10 / 18.08 / 2.5% (-0.62%) 600.10 / 18.08 / 2.5% (-0.62%)
+  1y     12.0%    35.4x    603.74 / 17.05 / -3.3% 600.10 / 16.95 / -3.8% (-0.58%) 600.10 / 16.95 / -3.8% (-0.58%)
+  1y     12.0%    36.1x    603.74 / 16.73 / -5.1% 600.10 / 16.63 / -5.7% (-0.57%) 600.10 / 16.63 / -5.7% (-0.57%)
+  ... (共 80 組情境比對，詳見機器可讀 JSON 檔案)
+
+[近 8 季現金股利發放紀錄 (最新在前)]:
+  除息日          每股金額         拆股前原始金額          幣別         資料來源                
+  2026-08-20   0.9100       0.9100           USD        Market chart events 
+  2026-05-21   0.9100       0.9100           USD        Market chart events 
+  2026-02-19   0.9100       0.9100           USD        Market chart events 
+  2025-11-20   0.9100       0.9100           USD        Market chart events 
+  2025-08-21   0.8300       0.8300           USD        Market chart events 
+  2025-05-15   0.8300       0.8300           USD        Market chart events 
+  2025-02-20   0.8300       0.8300           USD        Market chart events 
+  2024-11-21   0.8300       0.8300           USD        Market chart events 
+
+  - sec_declared_dividends [MISSING_SEC_DIVIDEND_DATA]: No SEC regulatory filing observations of declared dividends were acquired for MSFT.
+
+  * Dividends are reported as verifiable point-in-time facts based on declared ex-dividend dates.
+  * Indicated annual dividend is strictly an annualized run-rate (latest quarterly payment x 4), distinguished from historical trailing twelve-month dividends and never guaranteed.
+  * Total returns are computed under two explicit conventions: (1) simple cash retention without reinvestment, and (2) full dividend reinvestment (DRIP) on ex-dates.
+  * Dividends are reported as verifiable point-in-time facts based on declared dates.
+  * Indicated annual dividend is strictly an annualized run-rate (latest quarterly payment x 4), never guaranteed.
+  * Total returns are computed under explicit conventions: (1) simple cash retention and (2) DRIP reinvestment.
+
+------------------------------------------------------------------------------
+目前價格的反推要求 / Reverse requirements at the current price
+------------------------------------------------------------------------------
+現價 539.05 USD (Yahoo Finance chart API)
+起始 EPS 17.6300  基礎 TRAILING_TWELVE_MONTHS  涵蓋 12.0 個月  期間 trailing twelve months (assumed; source stated no period)
+  注意: 來源未宣告 EPS 涵蓋期間，上列期間為假設值。
+
+  期間   要求報酬  期末P/E  期末需求價  所需EPS  所需CAGR  vs共識
+  -----  --------  -------  ----------  -------  --------  -------
+  1.0年   +8%       25.6     582.18      22.7394  +29.0%    -
+  1.0年   +8%       28.8     582.18      20.2067  +14.6%    -
+  1.0年   +8%       33.2     582.18      17.5377  -0.5%     -
+  1.0年   +8%       35.4     582.18      16.4456  -6.7%     -
+  1.0年   +8%       36.1     582.18      16.1320  -8.5%     -
+  1.0年   +10%      25.6     592.96      23.1605  +31.4%    -
+  1.0年   +10%      28.8     592.96      20.5809  +16.7%    -
+  1.0年   +10%      33.2     592.96      17.8625  +1.3%     -
+  1.0年   +10%      35.4     592.96      16.7502  -5.0%     -
+  1.0年   +10%      36.1     592.96      16.4308  -6.8%     -
+  1.0年   +12%      25.6     603.74      23.5816  +33.8%    -
+  1.0年   +12%      28.8     603.74      20.9551  +18.9%    -
+  1.0年   +12%      33.2     603.74      18.1872  +3.2%     -
+  1.0年   +12%      35.4     603.74      17.0547  -3.3%     -
+  1.0年   +12%      36.1     603.74      16.7295  -5.1%     -
+  1.0年   +15%      25.6     619.91      24.2133  +37.3%    -
+  1.0年   +15%      28.8     619.91      21.5164  +22.0%    -
+  1.0年   +15%      33.2     619.91      18.6744  +5.9%     -
+  1.0年   +15%      35.4     619.91      17.5115  -0.7%     -
+  1.0年   +15%      36.1     619.91      17.1776  -2.6%     -
+  2.0年   +8%       25.6     628.75      24.5586  +18.0%    -
+  2.0年   +8%       28.8     628.75      21.8232  +11.3%    -
+  2.0年   +8%       33.2     628.75      18.9407  +3.7%     -
+  2.0年   +8%       35.4     628.75      17.7613  +0.4%     -
+  2.0年   +8%       36.1     628.75      17.4226  -0.6%     -
+  2.0年   +10%      25.6     652.26      25.4766  +20.2%    -
+  2.0年   +10%      28.8     652.26      22.6390  +13.3%    -
+  2.0年   +10%      33.2     652.26      19.6487  +5.6%     -
+  2.0年   +10%      35.4     652.26      18.4252  +2.2%     -
+  2.0年   +10%      36.1     652.26      18.0739  +1.3%     -
+  2.0年   +12%      25.6     676.19      26.4114  +22.4%    -
+  2.0年   +12%      28.8     676.19      23.4697  +15.4%    -
+  2.0年   +12%      33.2     676.19      20.3697  +7.5%     -
+  2.0年   +12%      35.4     676.19      19.1013  +4.1%     -
+  2.0年   +12%      36.1     676.19      18.7371  +3.1%     -
+  2.0年   +15%      25.6     712.90      27.8453  +25.7%    -
+  2.0年   +15%      28.8     712.90      24.7439  +18.5%    -
+  2.0年   +15%      33.2     712.90      21.4756  +10.4%    -
+  2.0年   +15%      35.4     712.90      20.1383  +6.9%     -
+  2.0年   +15%      36.1     712.90      19.7543  +5.9%     -
+  3.0年   +8%       25.6     679.05      26.5233  +14.6%    -
+  3.0年   +8%       28.8     679.05      23.5691  +10.2%    -
+  3.0年   +8%       33.2     679.05      20.4560  +5.1%     -
+  3.0年   +8%       35.4     679.05      19.1822  +2.9%     -
+  3.0年   +8%       36.1     679.05      18.8164  +2.2%     -
+  3.0年   +10%      25.6     717.48      28.0243  +16.7%    -
+  3.0年   +10%      28.8     717.48      24.9029  +12.2%    -
+  3.0年   +10%      33.2     717.48      21.6136  +7.0%     -
+  3.0年   +10%      35.4     717.48      20.2677  +4.8%     -
+  3.0年   +10%      36.1     717.48      19.8812  +4.1%     -
+  3.0年   +12%      25.6     757.33      29.5808  +18.8%    -
+  3.0年   +12%      28.8     757.33      26.2861  +14.2%    -
+  3.0年   +12%      33.2     757.33      22.8141  +9.0%     -
+  3.0年   +12%      35.4     757.33      21.3934  +6.7%     -
+  3.0年   +12%      36.1     757.33      20.9855  +6.0%     -
+  3.0年   +15%      25.6     819.84      32.0221  +22.0%    -
+  3.0年   +15%      28.8     819.84      28.4554  +17.3%    -
+  3.0年   +15%      33.2     819.84      24.6969  +11.9%    -
+  3.0年   +15%      35.4     819.84      23.1590  +9.5%     -
+  3.0年   +15%      36.1     819.84      22.7174  +8.8%     -
+  5.0年   +8%       25.6     792.05      30.9368  +11.9%    -
+  5.0年   +8%       28.8     792.05      27.4910  +9.3%     -
+  5.0年   +8%       33.2     792.05      23.8599  +6.2%     -
+  5.0年   +8%       35.4     792.05      22.3741  +4.9%     -
+  5.0年   +8%       36.1     792.05      21.9475  +4.5%     -
+  5.0年   +10%      25.6     868.15      33.9094  +14.0%    -
+  5.0年   +10%      28.8     868.15      30.1325  +11.3%    -
+  5.0年   +10%      33.2     868.15      26.1525  +8.2%     -
+  5.0年   +10%      35.4     868.15      24.5239  +6.8%     -
+  5.0年   +10%      36.1     868.15      24.0563  +6.4%     -
+  5.0年   +12%      25.6     950.00      37.1062  +16.0%    -
+  5.0年   +12%      28.8     950.00      32.9733  +13.3%    -
+  5.0年   +12%      33.2     950.00      28.6180  +10.2%    -
+  5.0年   +12%      35.4     950.00      26.8359  +8.8%     -
+  5.0年   +12%      36.1     950.00      26.3242  +8.3%     -
+  5.0年   +15%      25.6     1,084.23    42.3492  +19.2%    -
+  5.0年   +15%      28.8     1,084.23    37.6323  +16.4%    -
+  5.0年   +15%      33.2     1,084.23    32.6617  +13.1%    -
+  5.0年   +15%      35.4     1,084.23    30.6278  +11.7%    -
+  5.0年   +15%      36.1     1,084.23    30.0438  +11.3%    -
+
+  * 期末 P/E 取自歷史區間分位數; 未標示者為使用者指定情境。
+  要求報酬為價格報酬，不含股息。CAGR 僅在兩端 EPS 期間可比較時計算。
+
+  情境標記: CONSENSUS_PERIOD_NOT_COMPARABLE, REQUIRED_RETURN_EXCLUDES_DIVIDENDS
+
+  * The baseline reverse-requirements matrix is strictly price-return-only; required returns exclude dividends.
+  * When a dividend per share is supplied, two additional scenario sets are computed: cash dividends retained and dividends reinvested at the target return.
+  * A required terminal EPS is the EPS that the chosen exit multiple corresponds to, not a forecast and not a market expectation.
+  * A CAGR is reported only when the gap between the two EPS anchors is long enough to annualise; otherwise the raw EPS change is reported without a rate.
+  * Risk-free rates, modelled cost of equity and investor target returns are three separate kinds of number and are never merged into one figure.
+  * A consensus gap is differenced only when the period the source declared for the consensus lines up with the terminal EPS window. Otherwise the gap is left unreported and the reason names both period ends; a missing gap is not a zero.
+  * This matrix is a set of conditional results under stated assumptions. It carries no probabilities, no weighting and no ranking, and it does not state which scenario is more likely.
+
+------------------------------------------------------------------------------
+多組假設下的估值結果 / Valuation under multiple assumptions
+------------------------------------------------------------------------------
+  方法                     隱含值        實際值        差異       參考倍數
+  盈利倍數法 (P/E)            16.2386       17.63         -7.9%      33.20 x (production_historical_pe_percentile)
+  營收倍數法 (P/S)            不可計算          331.84B       -          -
+  現金流倍數法 (P/FCF)         不可計算          66.99B        -          -
+  企業價值法 (EV/EBITDA)      不可計算          207.52B       -          -
+  隱含淨利率 (P/S + P/E 聯合)   不可計算          -             -          P/E 33.20 + P/S N/A
+
+  期末倍數情境來源: production_historical_pe_percentile
+
+  - valuation_method.revenue_multiple: market capitalization
+  - valuation_method.cash_flow_multiple: market capitalization
+  - valuation_method.enterprise_value_multiple: enterprise value
+
+  * Each method is conditional on its own reference multiple and carries that multiple's provenance.
+  * No method is ranked against another and no composite valuation is produced.
+  * Each method is conditional on its own reference multiple and carries that multiple's provenance and sample size.
+
+------------------------------------------------------------------------------
+與歷史及市場預估比較 / Comparison to history and estimates
+------------------------------------------------------------------------------
+  方法                 隱含值          實際值          差異      實際值定義
+  EPS                16.2386         17.63           -7.9%      observed trailing EPS
+      參考倍數 33.20 (production_historical_pe_percentile, 樣本 24)
+  Revenue            不可計算            331.84B         -          the observed trailing revenue
+  FCF                不可計算            66.99B          -          the observed trailing free cash flow
+  EBITDA             不可計算            207.52B         -          the observed trailing EBITDA
+
+隱含淨利率: 無法與實際淨利率比較 (缺少可比較的實際序列)
+
+  * The gap is the implied figure against the observed figure for the same method. It is not a forecast error and has no sign meaning.
+  * A positive gap means the reference multiple would require more than the company currently reports; it does not mean the company will deliver it.
+
+------------------------------------------------------------------------------
+利率與報酬條件 / Rates and return conditions
+------------------------------------------------------------------------------
+[1] 無風險利率 (觀測值):
+    未取得 (需 --risk-free-rates)
+
+[2] CAPM 股權要求報酬 (模型估計):
+    狀態: NOT_COMPUTED
+
+[3] 投資人設定報酬率 (情境輸入):
+    scenario_00    8.0%
+    scenario_01    10.0%
+    scenario_02    12.0%
+    scenario_03    15.0%
+
+  * These three are never averaged together. Substituting a single rate for all three would present an observation, a model estimate and a chosen hurdle as if they were the same kind of number.
+
+------------------------------------------------------------------------------
+資料限制 / Data limitations
+------------------------------------------------------------------------------
+[缺少資料 (本次執行的 acquisition 層)]
+  - historical_pfcf_band
+
+[不可計算 / 不適用 (含原因)]
+  - exit_multiple.band_scenarios [INSUFFICIENT_OBSERVATIONS]: The historical P/E band holds 7 observations, below the 20 required to read a percentile from it. The band's median of 37.09 is reported as a descriptive statistic only and is not used as a scenario exit multiple.
+  - valuation_method.cash_flow [NO_REFERENCE_MULTIPLE]: No P/FCF reference multiple was supplied, so this method produces no implied figure. It is not filled from another method's multiple.
+  - valuation_method.enterprise_value [NO_REFERENCE_MULTIPLE]: No EV/EBITDA reference multiple was supplied, so this method produces no implied figure. It is not filled from another method's multiple.
+  - valuation_method.revenue [NO_REFERENCE_MULTIPLE]: No P/S reference multiple was supplied, so this method produces no implied figure. It is not filled from another method's multiple.
+  - risk_free_rate [NOT_REQUESTED]: No risk-free rate was requested, so no cost of equity is modelled and the rate family is empty. Pass --risk-free-rates with --beta and --equity-risk-premium to compute one.
+  - sec_declared_dividends [MISSING_SEC_DIVIDEND_DATA]: No SEC regulatory filing observations of declared dividends were acquired for MSFT.
+
+[財務歷史限制]
+  - financial_history [NOT_ACQUIRED]: No filing observations were acquired for this run, so no financial history is presented. Pass --financial-history to acquire them.
+
+[折現現金流 (DCF)]
+  狀態: NOT_COMPUTED
+  現金流定義: UNDECLARED
+  缺少欄位: capex, cost_of_debt, depreciation_amortisation, market_value_of_debt, tax_rate, working_capital_change
+  The inputs required for a discounted cash flow model were not all observed, so no implied growth rate is reported. The missing inputs are named so a later run can close the gap rather than guess at it.
+
+[不可計算項目統計] 共 6 筆
+  INSUFFICIENT_OBSERVATIONS    1
+  MISSING_SEC_DIVIDEND_DATA    1
+  NOT_REQUESTED                1
+  NO_REFERENCE_MULTIPLE        3
+
+[執行層限制說明]
+  - Current price does not uniquely identify one future fundamental path.
+  - Reverse-engineered earnings/growth are conditional on the selected valuation multiple.
+  - ST-EVA does not invent EPS, consensus, probabilities, or target prices.
+  - This output is descriptive valuation analysis, not a buy/sell signal.
+
+  * An item listed here was requested and not produced, or was produced under conditions that limit it. Nothing listed here has been filled with a default, an interpolation or a borrowed value from a related metric.
