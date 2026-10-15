@@ -80,17 +80,18 @@ def _web_visible_analysis(core_result: Dict[str, Any]) -> Dict[str, Any]:
     # The production dataset's per-observation detail is not part of the API
     # contract; its eligibility state, identity and provenance are, and they are
     # in `production_historical_pe` and the report's own summary field.
-    production = visible.get("production_historical_pe")
-    if isinstance(production, dict):
-        slim = dict(production)
-        slim.pop("observations", None)
-        slim.pop("annual_observations", None)
-        distribution = slim.get("distribution")
-        if isinstance(distribution, dict):
-            slim["distribution"] = {
-                key: value for key, value in distribution.items() if key != "observations"
-            }
-        visible["production_historical_pe"] = slim
+    for key in ("production_historical_pe", "production_historical_pfcf"):
+        production = visible.get(key)
+        if isinstance(production, dict):
+            slim = dict(production)
+            slim.pop("observations", None)
+            slim.pop("annual_observations", None)
+            distribution = slim.get("distribution")
+            if isinstance(distribution, dict):
+                slim["distribution"] = {
+                    key: value for key, value in distribution.items() if key != "observations"
+                }
+            visible[key] = slim
 
     return visible
 
@@ -188,12 +189,17 @@ class AnalysisServiceAdapter:
                 # The production point-in-time historical P/E distribution is
                 # the observed reference this web path needs: without it a
                 # live submission has no eligible exit multiple and returns an
-                # uncomputable matrix. The runner keeps the vendor band, an
-                # ineligible distribution and an unsupported ticker as three
-                # separate explicit states, and adds no network acquisition of
-                # its own: the dataset it reads is the frozen SEC filing and
-                # pricing evidence under data/historical_pe/{TICKER}.
+                # uncomputable matrix. The P/FCF reconstruction is enabled for
+                # the same reason, so the cash-flow reference and its implied
+                # figure are available to issuers whose dataset exists, and
+                # stated as unavailable otherwise. The runner keeps the vendor
+                # band, an ineligible distribution and an unsupported ticker as
+                # three separate explicit states, and adds no network
+                # acquisition of its own: the datasets it reads are the frozen
+                # SEC filing and pricing evidence under
+                # data/historical_pe/{TICKER} and data/historical_pfcf/{TICKER}.
                 include_historical_pe=True,
+                include_historical_pfcf=True,
             )
 
             if core_result is None:
@@ -339,6 +345,9 @@ class AnalysisServiceAdapter:
                 required_eps_cagr=implied.get("required_eps_cagr_from_current_eps"),
                 selected_pe=ref_info.get("multiple"),
                 selected_pe_basis=ref_info.get("method"),
+                selected_pfcf=ref_info.get("pfcf_multiple"),
+                selected_pfcf_basis=ref_info.get("pfcf_method"),
+                implied_fcf_at_reference_multiple=implied.get("fcf_at_reference_multiple"),
                 summary_horizon_years=horizon_years,
                 observed_pe=obs_val.get("current_pe"),
                 observed_ps=obs_val.get("current_ps"),
@@ -393,6 +402,17 @@ class AnalysisServiceAdapter:
                             "reason_detail": prod_dist.get("reason_detail"),
                         }
 
+            # The cash-flow reference's compact statement, built the same way
+            # from the run's own payload: the distribution's identity and
+            # eligibility, plus the reconstruction's current snapshot. Absent
+            # when the payload is absent entirely.
+            production_pfcf_summary: Optional[Dict[str, Any]] = None
+            raw_pfcf = core_result.get("production_historical_pfcf")
+            if isinstance(raw_pfcf, dict):
+                from historical_pfcf import production_pfcf_summary
+
+                production_pfcf_summary = production_pfcf_summary(raw_pfcf)
+
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),
                 company_name=core_result.get("company_name", ""),
@@ -406,6 +426,7 @@ class AnalysisServiceAdapter:
                 refusal_reasons=sorted(list(set(refusal_reasons))),
                 reverse_requirements=reverse_reqs_dto,
                 production_historical_pe=production_pe_summary,
+                production_historical_pfcf=production_pfcf_summary,
                 raw_analysis=_web_visible_analysis(core_result),
             )
 

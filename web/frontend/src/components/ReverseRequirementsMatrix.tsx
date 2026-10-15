@@ -847,6 +847,91 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                             {report.production_historical_pe_summary.input_set_id.slice(0, 16)}
                                           </div>
                                         )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                   {/* Production historical P/FCF reference distribution.
+                                       The cash-flow counterpart of the block above, with the
+                                       same discipline: reported for what it is and never
+                                       filled from a band; an unavailable or unsupported
+                                       reconstruction is stated as such. */}
+                                   {report.production_historical_pfcf_summary && (
+                                     <div
+                                       data-testid="production-historical-pfcf"
+                                       className={`p-3 rounded-lg border shadow-2xs space-y-1 text-[11px] ${
+                                         report.production_historical_pfcf_summary.usable_for_reference
+                                           ? 'bg-emerald-50 border-emerald-200'
+                                           : 'bg-amber-50 border-amber-200'
+                                       }`}
+                                     >
+                                       <div className="font-semibold text-slate-800 flex items-center gap-1">
+                                         <Layers className="w-3 h-3" />
+                                         <span>
+                                           {report.production_historical_pfcf_summary.usable_for_reference
+                                             ? `${t.matrix.productionDistributionEligibleHeader}: ${t.matrix.productionPfcfDistributionName}`
+                                             : `${t.matrix.productionPfcfDistributionHeader}: ${t.matrix.productionPfcfDistributionName}`}
+                                         </span>
+                                       </div>
+                                       <div className="font-mono text-[10px] text-slate-600 space-y-0.5">
+                                         <div>
+                                           {t.matrix.statusLabel}: {report.production_historical_pfcf_summary.status || 'UNAVAILABLE'}
+                                         </div>
+                                         {report.production_historical_pfcf_summary.usable_for_reference ? (
+                                           <>
+                                             <div>
+                                               {t.matrix.qualifyingObservationsLabel}:{' '}
+                                               {report.production_historical_pfcf_summary.sample_count}
+                                               {report.production_historical_pfcf_summary.total_evaluations !==
+                                                 null &&
+                                                 report.production_historical_pfcf_summary.total_evaluations !== undefined &&
+                                                 ` / ${report.production_historical_pfcf_summary.total_evaluations}`}
+                                             </div>
+                                             <div>
+                                               {t.matrix.minObservationsLabel}:{' '}
+                                               {report.production_historical_pfcf_summary.min_observations_required}
+                                             </div>
+                                             <div>
+                                               {t.matrix.samplePeriodLabel}:{' '}
+                                               {report.production_historical_pfcf_summary.period_start} to{' '}
+                                               {report.production_historical_pfcf_summary.period_end}
+                                             </div>
+                                             {report.production_historical_pfcf_summary.percentiles && (
+                                               <div>
+                                                 {t.matrix.percentileLabel}:{' '}
+                                                 {Object.entries(report.production_historical_pfcf_summary.percentiles)
+                                                   .map(([key, value]) => `${key} ${Number(value).toFixed(2)}x`)
+                                                   .join(' · ')}
+                                               </div>
+                                             )}
+                                             {report.production_historical_pfcf_summary.current_pfcf !== null &&
+                                               report.production_historical_pfcf_summary.current_pfcf !== undefined && (
+                                                 <div>
+                                                   {t.matrix.currentPfcfLabel}:{' '}
+                                                   {Number(report.production_historical_pfcf_summary.current_pfcf).toFixed(2)}x (
+                                                   {report.production_historical_pfcf_summary.current_pfcf_as_of})
+                                                 </div>
+                                               )}
+                                             <div>
+                                               {t.matrix.asOfRuleLabel}:{' '}
+                                               {report.production_historical_pfcf_summary.evaluation_schedule_description}
+                                             </div>
+                                           </>
+                                         ) : (
+                                           <>
+                                             {report.production_historical_pfcf_summary.reason_detail && (
+                                               <div className="text-amber-800 italic">
+                                                 {report.production_historical_pfcf_summary.reason_detail}
+                                               </div>
+                                             )}
+                                           </>
+                                         )}
+                                         {report.production_historical_pfcf_summary.input_set_id && (
+                                           <div className="text-[9px] text-slate-500">
+                                             {t.matrix.datasetIdentityLabel}:{' '}
+                                             {report.production_historical_pfcf_summary.input_set_id.slice(0, 16)}
+                                           </div>
+                                         )}
                                        </div>
                                      </div>
                                    )}

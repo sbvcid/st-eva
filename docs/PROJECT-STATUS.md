@@ -1,9 +1,10 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-13
+**Status checked:** 2026-10-15
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `a386272` (R7-7 docs sync with verified CI; R7-7 dividend UI test fixes and conditional period label; R7-7: expose existing dividend and total-return scenarios in the reverse-requirements matrix UI; R7-6: make the starting EPS period basis explicit in the matrix audit drawer and CSV export; R7-5: the summary's reference P/E now uses the eligible production historical P/E distribution median, so it agrees with the matrix's exit multiples; R7-4: a computed matrix now shows its unavailable supporting inputs; R7-3: policy identity is newline-insensitive, so equivalent checkouts no longer diverge on replay; R7-2: matrix exit-multiple source labels name the actual source; R7-1: source-declared consensus period end preserved and comparability decided on it; R5: summary-card semantics reconciled + JSON/CSV audit export; R6: replay at the archival watermark; R6.1: replay reconciled to a run's own context snapshot; first-use mode = live with expanded assumptions)
-**Latest verified GitHub Actions:** Implementation commit `a074494` verified by [Run 38353151137](https://github.com/sbvcid/st-eva/actions/runs/38353151137) (`backend` and `browser` jobs both passed); docs commit `a386272` verified by [Run 38353390189](https://github.com/sbvcid/st-eva/actions/runs/38353390189) (`backend` and `browser` jobs both passed).
+**Current implementation baseline:** `37262ae` (multi-company workflow acceptance: the web path now carries the production historical P/FCF reference with its own basis, summary DTO and matrix-section display; before that — MSFT cross-ticker validation `37262ae` with the MSFT P/FCF dataset and issuer config; AAPL v1 market-cap reconciliation `9ca6999`; AAPL v1 research snapshot `fe7d7c7`; historical P/FCF reconstruction `fd311c5`; consensus revisions/trend extraction `66611ec`; earlier — R7 series, R6.x replay work, first-use mode = live with expanded assumptions)
+**Latest verified GitHub Actions:** `37262ae` verified `backend-tests` success, checked independently via the GitHub API on 2026-10-15; each later commit is verified in its own run.
+
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
 
@@ -1046,3 +1047,63 @@ required-return calculation. Unavailable dividend inputs display their supplied
 reason (via `report.unavailable`) and never become zero.
 
 **GitHub Actions:** Implementation commit `a074494` verified by [Run 38353151137](https://github.com/sbvcid/st-eva/actions/runs/38353151137) (`backend` and `browser` jobs both passed); docs commit `a386272` verified by [Run 38353390189](https://github.com/sbvcid/st-eva/actions/runs/38353390189) (`backend` and `browser` jobs both passed).
+
+
+## Multi-Company Research Workflow Acceptance (accepted 2026-10-15, commits 66611ec..37262ae + web wiring)
+
+**Objective.** Verify that the existing capability set — acquisition, historical
+P/E reference, historical P/FCF reconstruction, consensus revisions/trend, and
+current-price reverse assumptions — composes into one consistent, readable,
+traceable per-ticker research workflow, and that it reuses across companies
+without cross-contamination. Product positioning unchanged: traceable facts,
+deterministic calculations and price-implied assumptions; no ratings, forecasts
+or automatic multiple selection.
+
+**What was built and verified in this milestone.**
+
+- **Consensus revisions & trend extraction** (`66611ec`): the quoteSummary
+  `epsRevisions` and `epsTrend` blocks are extracted for the selected consensus
+  row — up/down revision counts (unit count, no currency), the trend series
+  (current + 7/30/60/90-days-ago), and four deterministic in-series differences
+  (current minus each snapshot). Relative source labels are kept verbatim; an
+  empty `downLast90days` block stays UNAVAILABLE, never zero.
+- **Historical P/FCF reconstruction without the vendor band** (`fd311c5`,
+  `historical_pfcf.py`, methodology `historical-pfcf/1.0`): TTM FCF from filed
+  cumulative cash-flow statements (discrete quarters differenced from stated YTD
+  durations, never summed), the canonical daily price series, and cover-page
+  shares outstanding; point-in-time knowability with R-PIT-SUPERSEDE restatement
+  handling; the same >= 20 gate. AAPL: 35/36 valid, median 25.3440,
+  USABLE_FOR_REFERENCE. The vendor cap was reconciled to its quarter-grid stamp
+  (2026-09-23) and the two market-cap bases are documented separately.
+- **MSFT cross-ticker validation** (`37262ae`): the same pipeline reused with
+  only an issuer config (fye_month=6) and a same-shaped dataset — 24/27 P/E
+  and 23/27 P/FCF observations, both USABLE_FOR_REFERENCE. No pipeline logic
+  changed; every finding was classified source-difference vs program-defect,
+  and no new defect was found.
+- **Multi-company workflow acceptance (this task)**: the one real usage gap
+  found was that the web path enabled the P/E reference but not the P/FCF
+  reference. Minimal wiring added: `include_historical_pfcf=True` in the
+  service adapter, a slimmed `production_historical_pfcf` in the visible
+  result, `ProductionHistoricalPfcfSummaryDTO`, `selected_pfcf` /
+  `selected_pfcf_basis` / `implied_fcf_at_reference_multiple` on
+  `ValuationSummary`, and a matrix-section P/FCF summary block mirroring the
+  P/E one (plus summary-card basis legend and i18n). Tests:
+  `test_production_pfcf_reference_flows_through_the_web_path` and
+  `test_references_are_isolated_per_ticker` (sequential AAPL/MSFT adapter runs
+  assert each ticker carries only its own references — medians 25.3440 vs
+  41.578319, period starts 2018-02-02 vs 2021-07-30). Full suite 2,227 passed /
+  169 skipped; frontend build clean.
+
+**Research artifacts** (all under `history/`): AAPL v1 snapshot
+(`AAPL_RES-4DC3AD389D_*`), AAPL historical-references + scenarios artifact with
+20 consistency checks, AAPL acceptance report; MSFT snapshot
+(`MSFT_RES-B35CA79AA4_*`), cross-ticker validation artifact with 23 checks,
+validation report; both companies' dossiers with the 80-scenario matrix.
+
+**Still not supported / open by design.** The consensus cross-check field reads
+only the vendor band (recorded method-scope gap); `down_revisions_90d` is
+source-absent for both companies; the matrix's cash-flow/EV/revenue methods
+require explicitly supplied multiples; historical multiples in any output are
+conditional scenarios, never a selected answer. Known limitations of the P/FCF
+reconstruction (OCF FY2016 Q1 hole for AAPL, comparative-later knowability,
+finance-lease boundary for MSFT) are recorded in the dataset manifests.

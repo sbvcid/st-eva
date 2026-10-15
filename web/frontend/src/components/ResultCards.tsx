@@ -62,6 +62,16 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
       : valuation.selected_pe != null
       ? null
       : t.results.referencePeBasisNone
+  const referencePfcfBasis =
+    valuation.selected_pfcf_basis === 'user_supplied_multiple'
+      ? t.results.referencePfcfBasisUser
+      : valuation.selected_pfcf_basis === 'production_historical_pfcf_median'
+      ? t.results.referencePfcfBasisProduction
+      : valuation.selected_pfcf_basis === 'historical_pfcf_median'
+      ? t.results.referencePfcfBasisBand
+      : valuation.selected_pfcf != null
+      ? null
+      : t.results.referencePfcfBasisNone
 
   return (
     <div className="space-y-4">
@@ -182,6 +192,17 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
               <p>
                 <span className="font-semibold text-slate-600">{t.results.referencePe}:</span>{' '}
                 {referencePeBasis}
+              </p>
+            )}
+            {(referencePfcfBasis || valuation.implied_fcf_at_reference_multiple != null) && (
+              <p>
+                <span className="font-semibold text-slate-600">
+                  {valuation.implied_fcf_at_reference_multiple != null
+                    ? `${t.results.impliedFcf}: ${(valuation.implied_fcf_at_reference_multiple / 1e9).toFixed(1)}B`
+                    : t.results.referencePfcf}
+                  :
+                </span>{' '}
+                {referencePfcfBasis}
               </p>
             )}
             <button

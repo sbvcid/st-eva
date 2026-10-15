@@ -633,6 +633,86 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
+    def test_production_pfcf_reference_flows_through_the_web_path(self):
+        """The cash-flow reference reaches the API with its own basis and state."""
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            dto = adapter.run_analysis_pipeline(ticker="MSFT", mode="regression")
+
+            vs = dto.valuation_summary
+            self.assertEqual(vs.selected_pfcf_basis, "production_historical_pfcf_median")
+            self.assertAlmostEqual(vs.selected_pfcf, 41.578319, places=6)
+            # The MSFT regression fixture carries no vendor trailing FCF, so the
+            # observed vendor multiple stays absent here; the reconstruction's
+            # own current snapshot below is what carries the current figure.
+
+            pfcf = dto.production_historical_pfcf
+            self.assertIsNotNone(pfcf)
+            self.assertEqual(pfcf.status, "USABLE_FOR_REFERENCE")
+            self.assertTrue(pfcf.usable_for_reference)
+            self.assertEqual(pfcf.sample_count, 23)
+            self.assertEqual(pfcf.total_evaluations, 27)
+            self.assertEqual(pfcf.min_observations_required, 20)
+            self.assertEqual(pfcf.period_start, "2021-07-30")
+            self.assertEqual(pfcf.period_end, "2026-07-30")
+            self.assertAlmostEqual(pfcf.percentiles["median"], 41.578319, places=6)
+            # The reconstruction's current snapshot, with its own date: the
+            # canonical series' last trading day, not the live price date.
+            self.assertAlmostEqual(pfcf.current_pfcf, 58.673194, places=6)
+            self.assertEqual(pfcf.current_pfcf_as_of, "2026-10-06")
+
+            # The P/E summary stays what it was; the two references are
+            # separate blocks, never merged.
+            pe = dto.production_historical_pe
+            self.assertIsNotNone(pe)
+            self.assertEqual(pe.status, "USABLE_FOR_REFERENCE")
+            self.assertEqual(pe.sample_count, 24)
+            # The raw payload no longer carries per-observation detail.
+            raw = dto.raw_analysis.get("production_historical_pfcf") or {}
+            self.assertNotIn("observations", raw.get("distribution") or {})
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_references_are_isolated_per_ticker(self):
+        """Each ticker's web result carries only its own references and consensus."""
+        import tempfile
+        import shutil
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            aapl = adapter.run_analysis_pipeline(ticker="AAPL", mode="regression")
+            msft = adapter.run_analysis_pipeline(ticker="MSFT", mode="regression")
+
+            # Each ticker's cash-flow reference is its own distribution's median.
+            self.assertEqual(aapl.valuation_summary.selected_pfcf_basis, "production_historical_pfcf_median")
+            self.assertAlmostEqual(aapl.valuation_summary.selected_pfcf, 25.343981, places=6)
+            self.assertEqual(aapl.production_historical_pfcf.sample_count, 35)
+            self.assertEqual(aapl.production_historical_pfcf.period_start, "2018-02-02")
+            self.assertAlmostEqual(
+                aapl.production_historical_pfcf.percentiles["median"], 25.343981, places=6
+            )
+            self.assertEqual(msft.valuation_summary.selected_pfcf_basis, "production_historical_pfcf_median")
+            self.assertAlmostEqual(msft.valuation_summary.selected_pfcf, 41.578319, places=6)
+            self.assertEqual(msft.production_historical_pfcf.period_start, "2021-07-30")
+            self.assertAlmostEqual(
+                msft.production_historical_pfcf.percentiles["median"], 41.578319, places=6
+            )
+            # The P/E references are equally isolated: each ticker's median is
+            # its own distribution's, never the other company's.
+            self.assertAlmostEqual(aapl.valuation_summary.selected_pe, 28.44563, places=6)
+            self.assertAlmostEqual(msft.valuation_summary.selected_pe, 33.195873, places=6)
+            # The consensus periods differ by company calendar in live runs
+            # (2027-09-30 for AAPL, 2028-06-30 for MSFT); the regression
+            # fixtures carry no declared period metadata, so that distinction
+            # is asserted by the live validation artifacts instead.
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -50,6 +50,13 @@ export interface Translations {
     referencePeBasisProduction: string
     referencePeBasisBand: string
     referencePeBasisNone: string
+    impliedFcf: string
+    impliedFcfBasis: string
+    referencePfcf: string
+    referencePfcfBasisUser: string
+    referencePfcfBasisProduction: string
+    referencePfcfBasisBand: string
+    referencePfcfBasisNone: string
     seeMatrixLink: string
     admissionStatus: string
     admitted: string
@@ -155,8 +162,10 @@ export interface Translations {
   eligibilityHistoricalBand: string
   eligibilityUserSpecified: string
   productionDistributionName: string
+  productionPfcfDistributionName: string
   vendorPeBandName: string
   productionDistributionHeader: string
+  productionPfcfDistributionHeader: string
   productionDistributionEligibleHeader: string
   statusLabel: string
   qualifyingObservationsLabel: string
@@ -165,6 +174,7 @@ export interface Translations {
   samplePeriodLabel: string
   percentileLabel: string
   currentPeLabel: string
+  currentPfcfLabel: string
   asOfRuleLabel: string
   datasetIdentityLabel: string
     eligibleReferenceBadge: string

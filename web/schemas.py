@@ -90,6 +90,13 @@ class ValuationSummary(BaseModel):
     # selected multiple, annualised over one horizon); it encodes no required
     # return, no exit multiple and no dividends, unlike a matrix scenario.
     selected_pe_basis: Optional[str] = None
+    # The cash-flow reference and the figure it inverts into, carried with the
+    # same basis discipline as the P/E reference: the basis names where the
+    # number came from, and an absent reference stays absent rather than being
+    # filled from the P/E or from a band.
+    selected_pfcf: Optional[float] = None
+    selected_pfcf_basis: Optional[str] = None
+    implied_fcf_at_reference_multiple: Optional[float] = None
     summary_horizon_years: Optional[float] = None
     observed_pe: Optional[float] = None
     observed_ps: Optional[float] = None
@@ -309,6 +316,42 @@ class ProductionHistoricalPeSummaryDTO(BaseModel):
     reason_detail: Optional[str] = None
 
 
+class ProductionHistoricalPfcfSummaryDTO(BaseModel):
+    """State of the production point-in-time historical P/FCF reference distribution.
+
+    The cash-flow counterpart of the P/E summary, with the same discipline: the
+    distribution qualifies only through its own eligibility gate, it is reported
+    separately from the vendor P/FCF band (which carries no usable history), and
+    an ineligible or unsupported distribution is stated as such rather than
+    being filled from anything else.
+    """
+
+    issuer_id: Optional[str] = None
+    instrument_id: Optional[str] = None
+    metric_id: Optional[str] = None
+    status: Optional[str] = None
+    usable_for_reference: Optional[bool] = None
+    sample_count: Optional[int] = None
+    total_evaluations: Optional[int] = None
+    min_observations_required: Optional[int] = None
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    mean: Optional[float] = None
+    std: Optional[float] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    percentiles: Optional[Dict[str, float]] = None
+    current_pfcf: Optional[float] = None
+    current_pfcf_as_of: Optional[str] = None
+    sampling_cadence: Optional[str] = None
+    evaluation_schedule_description: Optional[str] = None
+    excluded_observation_count: Optional[int] = None
+    input_set_id: Optional[str] = None
+    content_hash: Optional[str] = None
+    reason_code: Optional[str] = None
+    reason_detail: Optional[str] = None
+
+
 class ReverseRequirementsReportDTO(BaseModel):
     formula_version: str = "reverse-requirements/1.1"
     fingerprint: Optional[str] = None
@@ -325,6 +368,10 @@ class ReverseRequirementsReportDTO(BaseModel):
     # carries. The full dataset is not part of the API contract; its eligibility
     # state, identity and provenance are.
     production_historical_pe_summary: Optional[ProductionHistoricalPeSummaryDTO] = None
+    # The cash-flow counterpart, carried with the same separation from the
+    # vendor band. Absent when the reconstruction is not established for the
+    # ticker, which the summary itself states.
+    production_historical_pfcf_summary: Optional[ProductionHistoricalPfcfSummaryDTO] = None
     # The consensus the gap column is differenced against, with the period the
     # source declared for it. An eligible gap can be checked against these
     # facts, and a missing gap is explained by them rather than read as a zero.
@@ -344,6 +391,7 @@ class AnalysisResultDTO(BaseModel):
     refusal_reasons: List[str] = Field(default_factory=list)
     reverse_requirements: Optional[ReverseRequirementsReportDTO] = None
     production_historical_pe: Optional[ProductionHistoricalPeSummaryDTO] = None
+    production_historical_pfcf: Optional[ProductionHistoricalPfcfSummaryDTO] = None
     raw_analysis: Optional[Dict[str, Any]] = None
 
 

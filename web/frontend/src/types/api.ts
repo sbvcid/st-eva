@@ -60,6 +60,13 @@ export interface ValuationSummary {
   // `summary_horizon_years` is the horizon the summary CAGR is annualised
   // over (default 1.0 on the web path).
   selected_pe_basis?: string | null
+  // The cash-flow reference and the figure it inverts into, carried with the
+  // same basis discipline as the P/E reference: the basis names where the
+  // number came from, and an absent reference stays absent rather than being
+  // filled from the P/E or from a band.
+  selected_pfcf?: number | null
+  selected_pfcf_basis?: string | null
+  implied_fcf_at_reference_multiple?: number | null
   summary_horizon_years?: number | null
   observed_pe?: number | null
   observed_ps?: number | null
@@ -197,6 +204,33 @@ export interface ProductionHistoricalPeDTO {
   reason_detail?: string | null
 }
 
+export interface ProductionHistoricalPfcfDTO {
+  issuer_id?: string | null
+  instrument_id?: string | null
+  metric_id?: string | null
+  status?: string | null
+  usable_for_reference?: boolean | null
+  sample_count?: number | null
+  total_evaluations?: number | null
+  min_observations_required?: number | null
+  period_start?: string | null
+  period_end?: string | null
+  mean?: number | null
+  std?: number | null
+  min?: number | null
+  max?: number | null
+  percentiles?: Record<string, number> | null
+  current_pfcf?: number | null
+  current_pfcf_as_of?: string | null
+  sampling_cadence?: string | null
+  evaluation_schedule_description?: string | null
+  excluded_observation_count?: number | null
+  input_set_id?: string | null
+  content_hash?: string | null
+  reason_code?: string | null
+  reason_detail?: string | null
+}
+
 export interface ScenarioEvidenceDTO {
   price_evidence: MarketPriceEvidenceDTO
   eps_evidence: EpsAnchorEvidenceDTO
@@ -273,6 +307,7 @@ export interface ReverseRequirementsReportDTO {
   total_return_scenarios?: Record<string, any> | null
   price_vs_total_return_comparison?: Array<Record<string, any>> | null
   production_historical_pe_summary?: ProductionHistoricalPeDTO | null
+  production_historical_pfcf_summary?: ProductionHistoricalPfcfDTO | null
   consensus_reference?: ConsensusReferenceDTO
 }
 
@@ -289,6 +324,7 @@ export interface AnalysisResultDTO {
   refusal_reasons: string[]
   reverse_requirements?: ReverseRequirementsReportDTO | null
   production_historical_pe?: ProductionHistoricalPeDTO | null
+  production_historical_pfcf?: ProductionHistoricalPfcfDTO | null
   raw_analysis?: Record<string, any> | null
 }
 
