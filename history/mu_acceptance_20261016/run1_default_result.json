@@ -1,0 +1,548 @@
+﻿{
+    "job_id":  "job-87b65c54bc7a",
+    "ticker":  "MU",
+    "status":  "COMPLETED",
+    "stage":  "completed",
+    "created_at":  "2026-10-15T17:11:14.072315+00:00",
+    "updated_at":  "2026-10-15T17:11:19.727216+00:00",
+    "error":  null,
+    "result":  {
+                   "ticker":  "MU",
+                   "company_name":  "MU (Live Acquired)",
+                   "status":  "success",
+                   "research_id":  null,
+                   "as_of":  "2026-10-15",
+                   "source_identifiers":  [
+                                              "YahooFinance+YahooFinanceFundamentals",
+                                              "Yahoo Finance chart API",
+                                              "API_LIVE"
+                                          ],
+                   "admission_summary":  {
+                                             "total_admitted":  2,
+                                             "total_refused":  0,
+                                             "metrics_admitted":  [
+                                                                      "revenue"
+                                                                  ],
+                                             "refusals":  [
+                                                              {
+                                                                  "ref":  "obs:ev-pfcf-band-001",
+                                                                  "reason":  "pfcf_band was requested and not provided by YahooFinanceFundamentals",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "obs:obs-consensus_forward_eps_down_revisions_90d",
+                                                                  "reason":  "consensus_forward_eps_down_revisions_90d was requested and not provided by YahooFinanceFundamentals",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "refc:valuation_reference",
+                                                                  "reason":  "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "refc:pfcf_reference",
+                                                                  "reason":  "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "refc:ev_ebitda_reference",
+                                                                  "reason":  "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "refc:ps_reference",
+                                                                  "reason":  "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:implied_forward_eps",
+                                                                  "reason":  "not computable: operand 1 (refc:valuation_reference) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:consensus_price_at_median",
+                                                                  "reason":  "not computable: operand 1 (refc:valuation_reference) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:consensus_price_ratio",
+                                                                  "reason":  "not computable: operand 0 (der:consensus_price_at_median) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:consensus_price_gap",
+                                                                  "reason":  "not computable: operand 0 (der:consensus_price_ratio) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:required_eps_cagr",
+                                                                  "reason":  "not computable: operand 0 (der:implied_forward_eps) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:implied_fcf",
+                                                                  "reason":  "not computable: operand 1 (refc:pfcf_reference) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:implied_ebitda",
+                                                                  "reason":  "not computable: operand 1 (refc:ev_ebitda_reference) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:implied_revenue",
+                                                                  "reason":  "not computable: operand 1 (refc:ps_reference) is unavailable, and no substitute is permitted.",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:pe_percentile",
+                                                                  "reason":  "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:ps_percentile",
+                                                                  "reason":  "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it",
+                                                                  "category":  null
+                                                              },
+                                                              {
+                                                                  "ref":  "der:ev_ebitda_percentile",
+                                                                  "reason":  "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it",
+                                                                  "category":  null
+                                                              }
+                                                          ]
+                                         },
+                   "valuation_summary":  {
+                                             "analysis_type":  "market_implied_assumptions",
+                                             "current_price":  912.605,
+                                             "currency":  "USD",
+                                             "as_of":  "2026-10-15",
+                                             "forward_eps_at_reference_multiple":  null,
+                                             "eps_gap_vs_consensus":  null,
+                                             "required_eps_cagr":  null,
+                                             "selected_pe":  null,
+                                             "selected_pe_basis":  "none",
+                                             "selected_pfcf":  null,
+                                             "selected_pfcf_basis":  "none",
+                                             "implied_fcf_at_reference_multiple":  null,
+                                             "summary_horizon_years":  1.0,
+                                             "observed_pe":  12.803100448933783,
+                                             "observed_ps":  13.409995465948114,
+                                             "observed_pfcf":  46.25454419581996,
+                                             "observed_ev_ebitda":  17.43544294990118,
+                                             "consensus_forward_eps":  204.46593,
+                                             "consensus_forward_eps_period":  "+1y",
+                                             "consensus_forward_eps_period_end":  "2028-08-31",
+                                             "limitations":  [
+                                                                 "Current price does not uniquely identify one future fundamental path.",
+                                                                 "Reverse-engineered earnings/growth are conditional on the selected valuation multiple.",
+                                                                 "ST-EVA does not invent EPS, consensus, probabilities, or target prices.",
+                                                                 "This output is descriptive valuation analysis, not a buy/sell signal."
+                                                             ]
+                                         },
+                   "replay_summary":  {
+                                          "attempted":  true,
+                                          "outcome":  "DIVERGED",
+                                          "reason":  "the stored context and the rebuilt context differ. Either the code changed since archival, which is legitimate and the diff is informative, or the replay is not faithful, which is a defect. The document is reported rather than smoothed over.",
+                                          "matched":  false,
+                                          "reconstructed":  true,
+                                          "observations_used":  106,
+                                          "observations_considered":  106,
+                                          "replay_fidelity":  "OBSERVATIONAL",
+                                          "stored_document_hash":  "sha256:cae639d49666c61fde0848443c610947bd0be8ee5cc1906a25b418335edfc53c",
+                                          "rebuilt_document_hash":  "sha256:d2da4f084600d4f6973c5b25ea599be92de2e376ed6acca9ce8e049d493e39db"
+                                      },
+                   "refusal_reasons":  [
+                                           "consensus_forward_eps_down_revisions_90d was requested and not provided by YahooFinanceFundamentals",
+                                           "no valuation reference was available: the historical band is absent or too thin to be a reference, and none was supplied",
+                                           "not computable: operand 0 (der:consensus_price_at_median) is unavailable, and no substitute is permitted.",
+                                           "not computable: operand 0 (der:consensus_price_ratio) is unavailable, and no substitute is permitted.",
+                                           "not computable: operand 0 (der:implied_forward_eps) is unavailable, and no substitute is permitted.",
+                                           "not computable: operand 1 (refc:ev_ebitda_reference) is unavailable, and no substitute is permitted.",
+                                           "not computable: operand 1 (refc:pfcf_reference) is unavailable, and no substitute is permitted.",
+                                           "not computable: operand 1 (refc:ps_reference) is unavailable, and no substitute is permitted.",
+                                           "not computable: operand 1 (refc:valuation_reference) is unavailable, and no substitute is permitted.",
+                                           "pfcf_band was requested and not provided by YahooFinanceFundamentals",
+                                           "the band is not usable as a reference (DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS), so no percentile position is read from it"
+                                       ],
+                   "reverse_requirements":  {
+                                                "formula_version":  "reverse-requirements/1.1",
+                                                "fingerprint":  "0f3d04714b9a2d3eb1398cf02cdb86bf9a7d267cc6a087f4722a9936e9de09ed",
+                                                "status":  "NOT_COMPUTED",
+                                                "status_reason":  "The reverse requirements matrix needs a positive starting EPS and at least one exit multiple. See `unavailable` for what was missing.",
+                                                "matrix_size":  0,
+                                                "reverse_requirements_matrix":  [
+
+                                                                                ],
+                                                "reading_notes":  [
+                                                                      "The baseline reverse-requirements matrix is strictly price-return-only; required returns exclude dividends.",
+                                                                      "When a dividend per share is supplied, two additional scenario sets are computed: cash dividends retained and dividends reinvested at the target return.",
+                                                                      "A required terminal EPS is the EPS that the chosen exit multiple corresponds to, not a forecast and not a market expectation.",
+                                                                      "A CAGR is reported only when the gap between the two EPS anchors is long enough to annualise; otherwise the raw EPS change is reported without a rate.",
+                                                                      "Risk-free rates, modelled cost of equity and investor target returns are three separate kinds of number and are never merged into one figure.",
+                                                                      "A consensus gap is differenced only when the period the source declared for the consensus lines up with the terminal EPS window. Otherwise the gap is left unreported and the reason names both period ends; a missing gap is not a zero."
+                                                                  ],
+                                                "unavailable":  [
+                                                                    {
+                                                                        "item":  "exit_multiple.band_scenarios",
+                                                                        "reason":  "The historical P/E band holds 3 observations, below the 20 required to read a percentile from it. The band\u0027s median of 24.21 is reported as a descriptive statistic only and is not used as a scenario exit multiple.",
+                                                                        "reason_kind":  "INSUFFICIENT_OBSERVATIONS",
+                                                                        "blocks":  [
+                                                                                       "exit_multiple.band_scenarios"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "exit_multiple",
+                                                                        "reason":  "No exit multiple is available. The historical band did not carry enough observations and none was supplied, so the reverse requirements matrix cannot be built.",
+                                                                        "reason_kind":  "MISSING",
+                                                                        "blocks":  [
+                                                                                       "reverse_requirements_matrix"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "valuation_method.earnings_multiple",
+                                                                        "reason":  "No P/E reference is available: none was supplied and neither the production historical distribution nor the historical band carried enough observations.",
+                                                                        "reason_kind":  "NO_REFERENCE_MULTIPLE",
+                                                                        "blocks":  [
+                                                                                       "valuation_methods"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "valuation_method.cash_flow",
+                                                                        "reason":  "No P/FCF reference multiple was supplied, so this method produces no implied figure. It is not filled from another method\u0027s multiple.",
+                                                                        "reason_kind":  "NO_REFERENCE_MULTIPLE",
+                                                                        "blocks":  [
+                                                                                       "valuation_methods.cash_flow"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "valuation_method.enterprise_value",
+                                                                        "reason":  "No EV/EBITDA reference multiple was supplied, so this method produces no implied figure. It is not filled from another method\u0027s multiple.",
+                                                                        "reason_kind":  "NO_REFERENCE_MULTIPLE",
+                                                                        "blocks":  [
+                                                                                       "valuation_methods.enterprise_value"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "valuation_method.revenue",
+                                                                        "reason":  "No P/S reference multiple was supplied, so this method produces no implied figure. It is not filled from another method\u0027s multiple.",
+                                                                        "reason_kind":  "NO_REFERENCE_MULTIPLE",
+                                                                        "blocks":  [
+                                                                                       "valuation_methods.revenue"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "risk_free_rate",
+                                                                        "reason":  "No risk-free rate was requested, so no cost of equity is modelled and the rate family is empty. Pass --risk-free-rates with --beta and --equity-risk-premium to compute one.",
+                                                                        "reason_kind":  "NOT_REQUESTED",
+                                                                        "blocks":  [
+                                                                                       "cost_of_equity"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "dividend_payments",
+                                                                        "reason":  "No market dividend event history was acquired for MU.",
+                                                                        "reason_kind":  "MISSING_DIVIDEND_DATA",
+                                                                        "blocks":  [
+                                                                                       "dividends"
+                                                                                   ]
+                                                                    },
+                                                                    {
+                                                                        "item":  "sec_declared_dividends",
+                                                                        "reason":  "No SEC regulatory filing observations of declared dividends were acquired for MU.",
+                                                                        "reason_kind":  "MISSING_SEC_DIVIDEND_DATA",
+                                                                        "blocks":  [
+                                                                                       "sec_filing_evidence"
+                                                                                   ]
+                                                                    }
+                                                                ],
+                                                "dividend_basis":  null,
+                                                "total_return_scenarios":  null,
+                                                "price_vs_total_return_comparison":  [
+
+                                                                                     ],
+                                                "production_historical_pe_summary":  {
+                                                                                         "issuer_id":  null,
+                                                                                         "instrument_id":  null,
+                                                                                         "metric_id":  null,
+                                                                                         "status":  "UNAVAILABLE",
+                                                                                         "usable_for_reference":  false,
+                                                                                         "sample_count":  0,
+                                                                                         "total_evaluations":  null,
+                                                                                         "min_observations_required":  null,
+                                                                                         "period_start":  null,
+                                                                                         "period_end":  null,
+                                                                                         "mean":  null,
+                                                                                         "std":  null,
+                                                                                         "min":  null,
+                                                                                         "max":  null,
+                                                                                         "percentiles":  {
+
+                                                                                                         },
+                                                                                         "current_pe":  null,
+                                                                                         "current_pe_as_of":  null,
+                                                                                         "sampling_cadence":  null,
+                                                                                         "evaluation_schedule_description":  null,
+                                                                                         "excluded_observation_count":  0,
+                                                                                         "input_set_id":  null,
+                                                                                         "content_hash":  null,
+                                                                                         "reason_code":  "REASON_INSUFFICIENT_OBSERVATIONS",
+                                                                                         "reason_detail":  "Production historical P/E dataset is not yet established for MU."
+                                                                                     },
+                                                "production_historical_pfcf_summary":  null,
+                                                "consensus_reference":  {
+                                                                            "eps":  204.46593,
+                                                                            "provider":  "YahooFinanceFundamentals",
+                                                                            "basis":  "FORWARD_TWELVE_MONTHS",
+                                                                            "months_covered":  12.0,
+                                                                            "source_period_label":  "+1y",
+                                                                            "period_end":  "2028-08-31",
+                                                                            "period_end_declared_by_source":  true,
+                                                                            "target_period_end":  "2027-10-15",
+                                                                            "comparison_tolerance_days":  92,
+                                                                            "comparable_horizon_years":  1.0
+                                                                        }
+                                            },
+                   "production_historical_pe":  {
+                                                    "issuer_id":  null,
+                                                    "instrument_id":  null,
+                                                    "metric_id":  null,
+                                                    "status":  "UNAVAILABLE",
+                                                    "usable_for_reference":  false,
+                                                    "sample_count":  0,
+                                                    "total_evaluations":  null,
+                                                    "min_observations_required":  null,
+                                                    "period_start":  null,
+                                                    "period_end":  null,
+                                                    "mean":  null,
+                                                    "std":  null,
+                                                    "min":  null,
+                                                    "max":  null,
+                                                    "percentiles":  {
+
+                                                                    },
+                                                    "current_pe":  null,
+                                                    "current_pe_as_of":  null,
+                                                    "sampling_cadence":  null,
+                                                    "evaluation_schedule_description":  null,
+                                                    "excluded_observation_count":  0,
+                                                    "input_set_id":  null,
+                                                    "content_hash":  null,
+                                                    "reason_code":  "REASON_INSUFFICIENT_OBSERVATIONS",
+                                                    "reason_detail":  "Production historical P/E dataset is not yet established for MU."
+                                                },
+                   "production_historical_pfcf":  {
+                                                      "issuer_id":  null,
+                                                      "instrument_id":  null,
+                                                      "metric_id":  null,
+                                                      "status":  "UNAVAILABLE",
+                                                      "usable_for_reference":  false,
+                                                      "sample_count":  0,
+                                                      "total_evaluations":  null,
+                                                      "min_observations_required":  null,
+                                                      "period_start":  null,
+                                                      "period_end":  null,
+                                                      "mean":  null,
+                                                      "std":  null,
+                                                      "min":  null,
+                                                      "max":  null,
+                                                      "percentiles":  {
+
+                                                                      },
+                                                      "current_pfcf":  null,
+                                                      "current_pfcf_as_of":  null,
+                                                      "sampling_cadence":  null,
+                                                      "evaluation_schedule_description":  null,
+                                                      "excluded_observation_count":  0,
+                                                      "input_set_id":  null,
+                                                      "content_hash":  null,
+                                                      "reason_code":  "REASON_INSUFFICIENT_OBSERVATIONS",
+                                                      "reason_detail":  "Production historical P/FCF dataset is not yet established for MU."
+                                                  },
+                   "raw_analysis":  {
+                                        "analysis_type":  "market_implied_assumptions",
+                                        "research_id":  null,
+                                        "ticker":  "MU",
+                                        "company_name":  "MU (Live Acquired)",
+                                        "as_of":  "2026-10-15",
+                                        "horizon":  "1-8 weeks",
+                                        "event":  {
+                                                      "name":  null,
+                                                      "date":  "UNAVAILABLE",
+                                                      "status":  "Unconfirmed"
+                                                  },
+                                        "market_snapshot":  {
+                                                                "price":  912.605,
+                                                                "currency":  "USD",
+                                                                "exchange":  "NMS",
+                                                                "provider":  "YahooFinance+YahooFinanceFundamentals",
+                                                                "source":  "Yahoo Finance chart API",
+                                                                "source_type":  "API_LIVE"
+                                                            },
+                                        "data_quality":  {
+                                                             "discrepancy_status":  "UNVERIFIABLE",
+                                                             "acquisition_errors":  [
+
+                                                                                    ],
+                                                             "consensus_forward_eps_period":  "+1y",
+                                                             "consensus_forward_eps_period_end":  "2028-08-31"
+                                                         },
+                                        "observed_valuation":  {
+                                                                   "current_pe":  12.803100448933783,
+                                                                   "forward_pe":  4.463359739199582,
+                                                                   "consensus_forward_pe":  4.463359739199582,
+                                                                   "current_pfcf":  46.25454419581996,
+                                                                   "current_ev_ebitda":  17.43544294990118,
+                                                                   "current_ps":  13.409995465948114,
+                                                                   "historical_pe_band":  {
+                                                                                              "10th":  12.87951,
+                                                                                              "25th":  17.128251,
+                                                                                              "median":  24.209486,
+                                                                                              "75th":  24.4935315,
+                                                                                              "90th":  24.6639588,
+                                                                                              "observations":  3
+                                                                                          },
+                                                                   "historical_ps_band":  {
+                                                                                              "10th":  3.2649528,
+                                                                                              "25th":  4.2630075,
+                                                                                              "median":  5.530493,
+                                                                                              "75th":  7.4876565,
+                                                                                              "90th":  10.386645600000001,
+                                                                                              "observations":  7
+                                                                                          },
+                                                                   "historical_pfcf_band":  {
+
+                                                                                            },
+                                                                   "historical_ev_ebitda_band":  {
+                                                                                                     "10th":  6.7407684,
+                                                                                                     "25th":  9.9076,
+                                                                                                     "median":  15.924,
+                                                                                                     "75th":  20.62735,
+                                                                                                     "90th":  29.284800000000004,
+                                                                                                     "observations":  7
+                                                                                                 },
+                                                                   "approx_historical_pe_percentile":  null,
+                                                                   "approx_historical_ps_percentile":  null,
+                                                                   "approx_historical_ev_ebitda_percentile":  null
+                                                               },
+                                        "market_implied_assumptions":  {
+                                                                           "forward_eps_at_reference_multiple":  null,
+                                                                           "eps_gap_vs_consensus":  null,
+                                                                           "required_eps_cagr_from_current_eps":  null,
+                                                                           "required_eps_growth":  null,
+                                                                           "fcf_at_reference_multiple":  null,
+                                                                           "ebitda_at_reference_multiple":  null,
+                                                                           "revenue_at_reference_multiple":  null,
+                                                                           "implied_net_margin":  null,
+                                                                           "reference_multiples":  {
+                                                                                                       "pe":  null,
+                                                                                                       "pfcf":  null,
+                                                                                                       "ev_ebitda":  null,
+                                                                                                       "ps":  null
+                                                                                                   }
+                                                                       },
+                                        "consensus_cross_check":  {
+                                                                      "consensus_forward_eps":  204.46593,
+                                                                      "price_at_historical_median_pe":  null,
+                                                                      "price_gap_vs_historical_median_on_consensus_eps":  null
+                                                                  },
+                                        "fundamental_snapshot":  {
+                                                                     "current_fcf":  26172000000.0,
+                                                                     "current_ebitda":  68305000000.0,
+                                                                     "current_revenue":  90274000000.0,
+                                                                     "current_enterprise_value":  1190927930693.0,
+                                                                     "current_market_cap":  1210573930693.0
+                                                                 },
+                                        "reference":  {
+                                                          "method":  "none",
+                                                          "multiple":  null,
+                                                          "conditional_statement":  "Implied fundamentals are conditional on the selected valuation multiple. Price alone does not identify a unique fundamental path.",
+                                                          "production_historical_pe_status":  "UNAVAILABLE",
+                                                          "production_historical_pe_sample_count":  null,
+                                                          "pfcf_method":  "none",
+                                                          "pfcf_multiple":  null,
+                                                          "production_historical_pfcf_status":  "UNAVAILABLE",
+                                                          "production_historical_pfcf_sample_count":  null,
+                                                          "historical_band_status":  {
+                                                                                         "pe":  "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+                                                                                         "ps":  "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+                                                                                         "pfcf":  "UNAVAILABLE",
+                                                                                         "ev_ebitda":  "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+                                                                                     },
+                                                          "min_observations_for_reference":  20
+                                                      },
+                                        "market_metrics":  {
+                                                               "return_1d":  -0.0016682795728359956,
+                                                               "return_5d":  -0.11897106639824329,
+                                                               "return_20d":  -0.0663887667838875,
+                                                               "return_60d":  -0.048854588896267925,
+                                                               "realized_volatility_annualized":  0.7161035513211733,
+                                                               "average_volume":  32106864.09090909,
+                                                               "latest_volume_vs_average":  -0.19241786034962982,
+                                                               "observations":  66
+                                                           },
+                                        "reverse_requirements":  {
+                                                                     "formula_version":  "reverse-requirements/1.1",
+                                                                     "fingerprint":  "0f3d04714b9a2d3eb1398cf02cdb86bf9a7d267cc6a087f4722a9936e9de09ed",
+                                                                     "matrix_size":  0,
+                                                                     "status":  "NOT_COMPUTED",
+                                                                     "status_reason":  "The reverse requirements matrix needs a positive starting EPS and at least one exit multiple. See `unavailable` for what was missing."
+                                                                 },
+                                        "production_historical_pe":  {
+                                                                         "distribution":  {
+                                                                                              "status":  "UNAVAILABLE",
+                                                                                              "usable_for_reference":  false,
+                                                                                              "sample_count":  0,
+                                                                                              "reason_code":  "REASON_INSUFFICIENT_OBSERVATIONS",
+                                                                                              "reason_detail":  "Production historical P/E dataset is not yet established for MU."
+                                                                                          }
+                                                                     },
+                                        "production_historical_pfcf":  {
+                                                                           "distribution":  {
+                                                                                                "status":  "UNAVAILABLE",
+                                                                                                "usable_for_reference":  false,
+                                                                                                "sample_count":  0,
+                                                                                                "reason_code":  "REASON_INSUFFICIENT_OBSERVATIONS",
+                                                                                                "reason_detail":  "Production historical P/FCF dataset is not yet established for MU."
+                                                                                            }
+                                                                       },
+                                        "missing_data":  [
+                                                             "historical_pfcf_band"
+                                                         ],
+                                        "evidence_ids":  [
+                                                             "ev-price-001",
+                                                             "ev-current-eps-001",
+                                                             "ev-forward-eps-001",
+                                                             "ev-consensus-eps-001",
+                                                             "ev-pe-band-001",
+                                                             "ev-pfcf-band-001",
+                                                             "ev-ps-band-001",
+                                                             "ev-ev-ebitda-band-001",
+                                                             "ev-fcf-001",
+                                                             "ev-ebitda-001",
+                                                             "ev-revenue-001",
+                                                             "ev-enterprise-value-001",
+                                                             "ev-market-cap-001",
+                                                             "ev-metrics-001"
+                                                         ],
+                                        "validation":  {
+                                                           "status":  "PASSED",
+                                                           "validator_version":  "2.2.3"
+                                                       },
+                                        "limitations":  [
+                                                            "Current price does not uniquely identify one future fundamental path.",
+                                                            "Reverse-engineered earnings/growth are conditional on the selected valuation multiple.",
+                                                            "ST-EVA does not invent EPS, consensus, probabilities, or target prices.",
+                                                            "This output is descriptive valuation analysis, not a buy/sell signal."
+                                                        ],
+                                        "version_metadata":  {
+                                                                 "engine":  "ST-EVA Market-Implied Assumptions Engine",
+                                                                 "version":  "2.2.3",
+                                                                 "analysis_type":  "market_implied_assumptions",
+                                                                 "calculation_engine":  "deterministic-python",
+                                                                 "data_policy":  "zero-synthetic-financial-data",
+                                                                 "validator_version":  "2.2.3",
+                                                                 "schema_version":  "2.2.3"
+                                                             }
+                                    }
+               }
+}
