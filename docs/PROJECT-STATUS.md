@@ -3,7 +3,7 @@
 **Status checked:** 2026-10-16
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** `2293a70` (MU third-ticker research-flow acceptance) with the archive-reconstruction-completeness fix on top; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `37262ae` verified `backend-tests` success, checked independently via the GitHub API on 2026-10-15; each later commit is verified in its own run.
+**Latest verified GitHub Actions:** `27297f0` verified `backend` and `browser` jobs success in run `38847386100`, checked independently via the GitHub API on 2026-10-16; each later commit is verified in its own run.
 
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.

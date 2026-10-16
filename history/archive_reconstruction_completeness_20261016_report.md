@@ -128,4 +128,4 @@
 - 適用測試：新檔 13 passed / 43 subtests；相關子集 101 + 371 passed；全套件 2252 passed / 169 skipped / 488 subtests。
 - `git diff --check` 通過；改動僅 `st_eva_runner.py` + 新測試檔 + 本報告。
 - 持久性 SQLite 檔（`data/archives/{AAPL,MSFT,MU}.sqlite`）唯讀檢查（`PRAGMA integrity_check` 皆 `ok`），未重建/刪除/覆寫。
-- 遠端 CI：push 後以 GitHub API 獨立查證（見結案實際結果）。
+- 遠端 CI：commit `27297f0` 的 run `38847386100` 經 GitHub API 獨立查證，`backend` 與 `browser` 兩個 job 皆 `success`（2026-10-16）。本機與 `origin/master` 同步、工作目錄乾淨。
