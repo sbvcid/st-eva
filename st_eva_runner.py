@@ -32,7 +32,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from data_contract import (
     AvailabilityBasis,
@@ -2211,7 +2211,7 @@ def run_st_eva(
 
     research_id = None
     investment_context = None
-    cross_source_observations: List[Any] = []
+    context_extra_observations: List[Any] = []
     captured_documents: List[Any] = []
 
     # One SEC pass feeds both the financial history and the Investment
@@ -2257,7 +2257,7 @@ def run_st_eva(
         # requested, so the default path is byte-identical to 2.2.3.
         (
             investment_context,
-            cross_source_observations,
+            context_extra_observations,
             captured_documents,
         ) = _build_context_if_requested(
             data=data,
@@ -2287,7 +2287,7 @@ def run_st_eva(
                 evidence=evidence,
                 metrics=metrics,
                 context=investment_context,
-                cross_source_observations=cross_source_observations,
+                context_extra_observations=context_extra_observations,
                 captured_documents=captured_documents,
             )
 
@@ -3717,15 +3717,17 @@ def _archive_run(
     evidence: EvidenceStore,
     metrics: Dict[str, Any],
     context: Optional[Dict[str, Any]],
-    cross_source_observations: Sequence[Any] = (),
+    context_extra_observations: Sequence[Any] = (),
     captured_documents: Sequence[Any] = (),
 ) -> Any:
     """
     Persist one run: its observations, then its context.
 
-    Every observation the context used is archived, including the ones a second
-    source contributed. Archiving a subset would leave the snapshot referencing
-    facts the archive has never seen, and it could not be replayed.
+    Every observation the context registered beyond the material set is
+    archived here -- the facts a second source contributed and the consensus
+    sample the selected estimate carries. Archiving a subset would leave the
+    snapshot referencing facts the archive has never seen, and it could not be
+    replayed.
 
     The context is archived after the observations, because a snapshot that
     references facts the archive has never seen is a snapshot that cannot be
@@ -3781,7 +3783,7 @@ def _archive_run(
         if observation is not None:
             archive.record_observation(asset, observation)
             recorded += 1
-    for observation in cross_source_observations:
+    for observation in context_extra_observations:
         archive.record_observation(
             asset, observation, document_hashes=_document_hashes_of(observation)
         )
@@ -3995,6 +3997,28 @@ def market_data_from_observations(
     return projected
 
 
+def consensus_sample_observations(
+    observations: Iterable[Observation],
+) -> List[Observation]:
+    """
+    The consensus sample the selected estimate carries, as observations.
+
+    The source states `numberOfAnalysts`, a low/high range, revision counts and
+    a trend series alongside the consensus average it aggregates. The engine
+    reads only the average, so these are not material evidence and do not enter
+    `EVIDENCE_METRICS`. The context registers them, though, so a snapshot that
+    carries them can only be replayed when the archive holds them too -- the
+    same rule every other context observation obeys. Selecting them here keeps
+    the live context and its replay from drifting apart.
+    """
+    return [
+        observation
+        for observation in observations
+        if observation is not None
+        and observation.metric in CONSENSUS_EXTRA_METRICS
+    ]
+
+
 def build_context_from_observations(
     observations: Sequence[Observation],
     ticker: str,
@@ -4070,6 +4094,12 @@ def build_context_from_observations(
 
         cross_validation = cross_validate_all(vendor, filing)
 
+    # The consensus sample travels with the estimate it belongs to, exactly as
+    # it does on the live path: the rebuild must register the same
+    # non-material observations the archived run did, or the two documents
+    # cannot describe the same knowledge.
+    extra_observations = filing + consensus_sample_observations(observations)
+
     return build_investment_context(
         data=data,
         analysis=analysis,
@@ -4080,7 +4110,7 @@ def build_context_from_observations(
         # same constructor guarantees the two agree on its identity.
         material_observations=list(material_observations(data).values())
         + [metrics_observation(data, metrics)],
-        extra_observations=filing,
+        extra_observations=extra_observations,
         cross_validation=cross_validation,
         generated_at=generated_at,
         cik=metadata.get("cik"),
@@ -4168,11 +4198,11 @@ def _build_context_if_requested(
     """
     Assemble an Investment Context from evidence already acquired.
 
-    Returns the document, the observations a second source contributed, and the
-    source documents fetched. All three go to the archive: a snapshot that
-    references facts the archive never saw cannot be replayed, and an
-    observation that does not name the document it came from is a number with
-    an unverifiable origin.
+    Returns the document, every observation the context registered beyond the
+    material set (the second source's facts and the consensus sample), and the
+    source documents fetched. All go to the archive: a snapshot that references
+    facts the archive never saw cannot be replayed, and an observation that does
+    not name the document it came from is a number with an unverifiable origin.
     """
     from investment_context import build_investment_context
 
@@ -4183,15 +4213,11 @@ def _build_context_if_requested(
     # and passed alongside rather than added to the evidence array. The
     # revision counts, trend series and in-series differences travel the same
     # way: each names the selected consensus row's period and declared end.
-    consensus_sample = [
-        observation
-        for observation in (
-            data.observations.get(identifier)
-            for identifier in data.observations.ids()
-        )
-        if observation is not None
-        and observation.metric in CONSENSUS_EXTRA_METRICS
-    ]
+    consensus_sample = consensus_sample_observations(
+        data.observations.get(identifier)
+        for identifier in data.observations.ids()
+    )
+    context_extra_observations = sec_observations + consensus_sample
 
     return build_investment_context(
         data=data,
@@ -4203,7 +4229,7 @@ def _build_context_if_requested(
         # same constructor guarantees the two agree on its identity.
         material_observations=list(material_observations(data).values())
         + [metrics_observation(data, metrics)],
-        extra_observations=sec_observations + consensus_sample,
+        extra_observations=context_extra_observations,
         horizon_years=horizon_years,
         reference_multiple=reference_multiple,
         pfcf_multiple=pfcf_multiple,
@@ -4212,7 +4238,7 @@ def _build_context_if_requested(
         cross_validation=sec_evidence.get("cross_validation") or {},
         cik=sec_evidence.get("cik"),
         sec_entity_name=sec_evidence.get("entity_name"),
-    ), sec_observations, list(sec_evidence.get("documents") or [])
+    ), context_extra_observations, list(sec_evidence.get("documents") or [])
 
 
 def main() -> None:
