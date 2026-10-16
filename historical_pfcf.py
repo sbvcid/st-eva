@@ -813,8 +813,15 @@ ISSUER_CONFIGS: Dict[str, HistoricalPfcfConfig] = {
         prices_path=Path("data/historical_pe/MSFT/daily_prices.json"),
         acceptance_path=Path("data/historical_pe/MSFT/filing_acceptance_evidence.json"),
     ),
+    "MU": HistoricalPfcfConfig(
+        ticker="MU",
+        issuer_id="CIK0000723125",
+        fye_month=8,
+        data_dir=Path("data/historical_pfcf/MU"),
+        prices_path=Path("data/historical_pe/MU/daily_prices.json"),
+        acceptance_path=Path("data/historical_pe/MU/filing_acceptance_evidence.json"),
+    ),
 }
-
 
 def _concept_spans_from_payload(
     *,
