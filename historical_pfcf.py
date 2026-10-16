@@ -931,6 +931,13 @@ def load_issuer_historical_pfcf(
 
     # -- prices: the canonical chart payload, restored to as-traded closes --
     price_payload = json.loads(prices_path.read_bytes().decode("utf-8"))["chart"]["result"][0]
+    _meta = price_payload.get("meta", {})
+    _granularity = _meta.get("dataGranularity")
+    if _granularity != "1d":
+        raise ValueError(
+            f"Price data granularity must be '1d', got '{_granularity}'; "
+            f"quarterly or monthly aggregates cannot serve as daily prices"
+        )
     quote = price_payload["indicators"]["quote"][0]
     bars = {
         datetime.datetime.fromtimestamp(stamp, UTC).date().isoformat(): float(

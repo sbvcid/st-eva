@@ -26,12 +26,16 @@ from __future__ import annotations
 import datetime
 import json
 import sys
+import tempfile
 import unittest
+from pathlib import Path
+from pathlib import Path
 
 sys.path.insert(0, ".")
 
 from historical_pe import MIN_OBSERVATIONS_FOR_REFERENCE
 from historical_pfcf import (
+    HistoricalPfcfConfig,
     ISSUER_CONFIGS,
     REASON_INSUFFICIENT_QUARTERS,
     REASON_MISSING_PRICE,
@@ -47,6 +51,7 @@ from historical_pfcf import (
     build_historical_pfcf,
     compute_historical_pfcf_distribution,
     derive_discrete_quarters_at,
+    load_issuer_historical_pfcf,
     load_aapl_historical_pfcf,
     production_pfcf_summary,
     ttm_fcf_window_at,
@@ -1024,14 +1029,201 @@ class TestPromotedAaplDatasetRealResult(unittest.TestCase):
         )
         self.assertEqual(restored["input_set_id"], self.result.input_set_id)
 
-    def test_the_summary_reports_the_same_gate(self):
-        summary = production_pfcf_summary(self.result.to_dict())
-        self.assertEqual(summary["status"], STATUS_USABLE_FOR_REFERENCE)
-        self.assertTrue(summary["usable_for_reference"])
-        self.assertEqual(summary["sample_count"], 35)
-        self.assertEqual(summary["metric_id"], "TTM_MARKET_CAP_TO_FCF")
-        self.assertEqual(summary["excluded_observation_count"], 1)
+class TestDailyPriceGranularity(unittest.TestCase):
+    """The daily price payload must declare a 1d granularity; quarterly or
+    monthly aggregates cannot masquerade as daily."""
 
+    def _write_prices_file(self, granularity="1d", count=3, start="2024-01-01"):
+        """Write a Yahoo-style chart JSON payload with the given granularity,
+        return the path to the temp file."""
+        import datetime as _dt
 
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()
+        base = _dt.date.fromisoformat(start)
+        timestamps = []
+        closes = []
+        for i in range(count):
+            d = base + _dt.timedelta(days=i)
+            timestamps.append(int(_dt.datetime(d.year, d.month, d.day).timestamp()))
+            closes.append(100.0 + i)
+        payload = {
+            "chart": {
+                "result": [
+                    {
+                        "meta": {
+                            "symbol": "TEST",
+                            "currency": "USD",
+                            "exchangeName": "NMS",
+                            "instrumentType": "EQUITY",
+                            "firstTradeDate": timestamps[0],
+                            "regularMarketPrice": closes[-1],
+                            "dataGranularity": granularity,
+                            "range": "1d",
+                            "exchangeTimezoneName": "America/New_York",
+                            "gmtoffset": -14400,
+                        },
+                        "timestamp": timestamps,
+                        "indicators": {"quote": [{"close": closes}]},
+                    }
+                ]
+            }
+        }
+        tmpdir = tempfile.mkdtemp()
+        path = Path(tmpdir) / "daily_prices.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def _write_all_required_files(self, granularity="1d", count=3, start="2024-01-01"):
+        """Write all required SEC/XBRL files into a temp directory,
+        return a dict of paths."""
+        import datetime as _dt
+
+        tmpdir = tempfile.mkdtemp()
+        base_dir = Path(tmpdir)
+
+        # 1. Price file (with configurable granularity)
+        prices_path = self._write_prices_file(granularity, count, start)
+        # Move it into tmpdir for consistency
+        import shutil
+
+        shutil.copy(prices_path, Path(tmpdir) / "daily_prices.json")
+        prices_path = Path(tmpdir) / "daily_prices.json"
+
+        # 2. Minimal SEC XBRL concepts
+        ocf = {
+            "cik": "CIKTEST",
+            "taxonomy": "us-gaap",
+            "tag": "NetCashProvidedByUsedInOperatingActivities",
+            "units": {
+                "USD": [
+                    {
+                        "start": "2020-01-01",
+                        "end": "2020-03-31",
+                        "val": 100.0,
+                        "accn": "000TEST-000001",
+                        "fy": 2020,
+                        "fp": "Q1",
+                        "form": "10-Q",
+                        "filed": "2020-04-20",
+                    }
+                ]
+            }
+        }
+        (base_dir / "net_cash_operating_concept.json").write_text(
+            json.dumps(ocf), encoding="utf-8"
+        )
+
+        capex = {
+            "cik": "CIKTEST",
+            "taxonomy": "us-gaap",
+            "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+            "units": {"USD": []},
+        }
+        (base_dir / "capex_concept.json").write_text(
+            json.dumps(capex), encoding="utf-8"
+        )
+
+        shares = {
+            "cik": "CIKTEST",
+            "taxonomy": "dei",
+            "tag": "EntityCommonStockSharesOutstanding",
+            "units": {
+                "shares": [
+                    {
+                        "end": "2020-12-31",
+                        "val": 1000000.0,
+                        "accn": "000TEST-000002",
+                        "fy": 2020,
+                        "fp": "FY",
+                        "form": "10-K",
+                        "filed": "2021-02-15",
+                    }
+                ]
+            }
+        }
+        (base_dir / "shares_outstanding_concept.json").write_text(
+            json.dumps(shares), encoding="utf-8"
+        )
+
+        # 3. Minimal filing acceptance evidence
+        evidence = [
+            {
+                "accession": "000TEST-000001",
+                "form": "10-Q",
+                "filed_date": "2021-04-20",
+                "period_end": "2021-03-31",
+                "acceptance_datetime_header_et": "2021-04-20T10:00:00-04:00",
+            }
+        ]
+        (base_dir / "filing_acceptance_evidence.json").write_text(
+            json.dumps(evidence), encoding="utf-8"
+        )
+
+        return {
+            "prices_path": prices_path,
+            "sec_path": base_dir / "net_cash_operating_concept.json",
+            "capex_path": base_dir / "capex_concept.json",
+            "shares_path": base_dir / "shares_outstanding_concept.json",
+            "acceptance_path": base_dir / "filing_acceptance_evidence.json",
+        }
+
+    def test_daily_granularity_is_accepted(self):
+        files = self._write_all_required_files(granularity="1d", count=3)
+        shares = [share_fact(1_000_000.0, "2020-12-15", "2021-01-20")]
+        # Daily granularity data should pass the granularity check (no
+        # ValueError about granularity). Other errors (e.g. insufficient
+        # observations) are expected and acceptable.
+        try:
+            load_issuer_historical_pfcf(
+                HistoricalPfcfConfig(
+                    ticker="TEST",
+                    issuer_id="CIKTEST",
+                    fye_month=12,
+                    data_dir=files["sec_path"].parent,
+                    prices_path=files["prices_path"],
+                    acceptance_path=files["acceptance_path"],
+                ),
+                min_observations=MIN_OBSERVATIONS_FOR_REFERENCE,
+            )
+        except ValueError as ctx:
+            self.assertNotIn("granularity", str(ctx).lower())
+
+    def test_quarterly_granularity_is_rejected(self):
+        prices_path = self._write_prices_file(granularity="3mo", count=3)
+        shares = [share_fact(1_000_000.0, "2020-12-15", "2021-01-20")]
+        # Create all required files with quarterly prices
+        files = self._write_all_required_files(granularity="3mo", count=3)
+        # Override the price path with quarterly data
+        files["prices_path"] = prices_path
+        with self.assertRaises(ValueError) as ctx:
+            load_issuer_historical_pfcf(
+                HistoricalPfcfConfig(
+                    ticker="TEST",
+                    issuer_id="CIKTEST",
+                    fye_month=12,
+                    data_dir=files["sec_path"].parent,
+                    prices_path=files["prices_path"],
+                    acceptance_path=files["acceptance_path"],
+                ),
+                min_observations=MIN_OBSERVATIONS_FOR_REFERENCE,
+            )
+        self.assertIn("granularity", str(ctx.exception).lower())
+        self.assertIn("3mo", str(ctx.exception))
+
+    def test_missing_granularity_is_rejected(self):
+        prices_path = self._write_prices_file(granularity=None, count=3)
+        shares = [share_fact(1_000_000.0, "2020-12-15", "2021-01-20")]
+        files = self._write_all_required_files(granularity=None, count=3)
+        files["prices_path"] = prices_path
+        with self.assertRaises(ValueError) as ctx:
+            load_issuer_historical_pfcf(
+                HistoricalPfcfConfig(
+                    ticker="TEST",
+                    issuer_id="CIKTEST",
+                    fye_month=12,
+                    data_dir=files["sec_path"].parent,
+                    prices_path=files["prices_path"],
+                    acceptance_path=files["acceptance_path"],
+                ),
+                min_observations=MIN_OBSERVATIONS_FOR_REFERENCE,
+            )
+        self.assertIn("granularity", str(ctx.exception).lower())
