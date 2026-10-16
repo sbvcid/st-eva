@@ -1,9 +1,9 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-16
+**Status checked:** 2026-10-17
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) on top of `2293a70` (MU third-ticker research-flow acceptance) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `50043be` verified `backend` and `browser` jobs success in run `38862119614`, checked independently via the GitHub API on 2026-10-16; each later commit is verified in its own run.
+**Current implementation baseline:** MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Latest verified GitHub Actions:** `985ba22` verified `backend` and `browser` jobs success in run `38971097167` (checked via the GitHub API on 2026-10-17); the previous baseline `6c66550` was verified in run `38955389118`. Each later commit is verified in its own run.
 
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -13,6 +13,8 @@ This is the live, changeable implementation/status record. The root [README](../
 This section is the hand-off checkpoint for future conversations and coding agents. Use the current status below; do not restart prior audits just because a new conversation begins.
 
 **Completed and should not be repeated without a concrete reason**
+
+- **MU historical P/E is live with furnished Q4 evidence (2026-10-17 round, commit `985ba22`, CI run `38971097167`).** The production distribution is `USABLE_FOR_REFERENCE` with 335 valid point-in-time TTM observations spanning 2019-03-21 to 2026-08-31 (median 21.549505; the 20-observation gate untouched), built from three tracked inputs: the new `data/historical_pe/MU/q4_evidence_records.json` (six fiscal Q4 GAAP diluted EPS facts directly stated in 8-K Item 2.02 EX-99.1 exhibits, FY2021–FY2026, furnished/unaudited provenance), the corrected `filing_acceptance_evidence.json` (true ET acceptance times; the previous values were submissions-API serializations that ran 4–5h late and mis-dated 65 usable dates), and the existing MU XBRL concept data. `build_historical_pe` now refuses position-filled windows whose period ends are not consecutive calendar quarters (`REASON_INSUFFICIENT_QUARTERS` with an explicit gap detail) — the month-grid quarter mapping can otherwise assemble a "TTM" that skips a real quarter for 52/53-week filers; this also corrected two pre-existing defective AAPL observations (2018-05-03, 2024-05-03; AAPL baselines recomputed: furnished 30→28, filed-only 18→14). The latest-date TTM snapshot stays `UNAVAILABLE` with `REASON_MISSING_Q4_EPS`: the furnished FQ4-26 fact (32.87, quarter ended 2026-09-03) is knowable, but the month-grid maps that fiscal year end to fiscal 2027 Q1, so the (2026, Q4) window slot stays empty — a fiscal-calendar method question deliberately not changed this round. See the section at the end of this file; do not re-derive the 8-K hunt or the acceptance-time offset finding.
 
 - **Declared SEC diluted-EPS evidence is live** (`50043be`, verified by run `38862119614`). The reverse-requirements report carries `declared_eps_evidence`: the latest directly stated 10-K fiscal-year and 10-Q quarter facts of `us-gaap:EarningsPerShareDiluted` from the run's own SEC acquisition (packaged dataset as fallback), with declared period, accession/form/filed/acceptance time, GAAP concept and an explicit three-state status; per-scenario `related_sec_evidence` now prefers the run's acquisition with the frozen record shape unchanged. Cross-check evidence only — no calculation, admission, threshold, fingerprint input or network-envelope change. See the section at the end of this file for the case evidence; do not re-derive the "the vendor anchor has no declared period or basis" finding again.
 - **Archive reconstruction completeness for the consensus sample is fixed** (on top of `2293a70`). The archive's own contract — stated in `archive.py`, `_build_context_if_requested` and `_archive_run`: "a snapshot that references facts the archive never saw cannot be replayed" — requires every observation a context registers to be archived. The live path registered the 17 consensus observations (analyst count, low/high range, revision counts, trend series, in-series differences) into the context via `extra_observations` but returned only the second-source observations for archival, so a consensus-bearing snapshot referenced 17 un-archived observations and its replay reported `DIVERGED`. `st_eva_runner.py` now selects the consensus sample with the shared `consensus_sample_observations(...)` helper, returns it for archival, and registers it on the rebuild path too. Verified with the real saved AAPL/MSFT/MU contexts (`tests/test_consensus_archive_completeness.py`, 13 tests / 43 subtests): a consensus-bearing run archives every referenced observation and replays to `MATCH` with the same `context_id`; evidence_ids keep their order and count. The AAPL/MSFT archived contexts that still report `DIVERGED` do so because the code changed after archival (new glossary/derived entries), which is the legitimate case the reason string names — do not force those to `MATCH`. The real archives under `data/archives` were read-only checked (`PRAGMA integrity_check` = ok) and were not rebuilt, deleted or overwritten. See `history/archive_reconstruction_completeness_20261016_report.md`.
@@ -1183,3 +1185,130 @@ questions TTM construction must answer are untouched: this block states filed
 annual and quarterly facts with their periods; it does not build a TTM, does
 not rank or reconcile the vendor figure against them, and does not widen the
 `evidence_valuation_boundary` admission (still `revenue` only).
+
+## MU historical P/E and M2 TTM EPS evidence round (2026-10-17)
+
+**Question.** Can MU build a qualified historical P/E reference distribution,
+and can a traceable TTM EPS be established for the latest complete four-quarter
+period?
+
+**Answers in one line.** Historical P/E: yes — `USABLE_FOR_REFERENCE`, 335
+valid observations, 2019-03-21 to 2026-08-31, median 21.549505, 20-observation
+gate untouched. M2 TTM at the latest date: the four quarterly facts all exist
+and are traceable, but the existing fiscal-position rules cannot assemble them
+into a window; the exact blocking condition is recorded below and nothing was
+relaxed.
+
+### 1. The Q4 evidence (new dataset, `data/historical_pe/MU/q4_evidence_records.json`)
+
+MU stopped tagging Item 302 quarterly data in 10-Ks after FY2020, so fiscal
+Q4s from FY2021 on have no quarter-length `us-gaap:EarningsPerShareDiluted`
+fact. The Q4 values are directly stated in the earnings releases furnished as
+8-K Item 2.02 EX-99.1 exhibits. Each record: GAAP column of the Quarterly
+Financial Results table, equal to the headline GAAP per-diluted-share figure,
+different from the exhibit's twelve-month figure and from the quoted non-GAAP
+figure (recorded as quoted-but-not-used); period end stated in the release's
+own text and equal to the 10-K annual fact's span end; SGML-header acceptance
+time in ET; usable date = next trading day (every release accepted
+16:00:27–16:02:28 ET, after the 16:00 cutoff); content sha256 of the exhibit
+bytes. FY2016–FY2020 Q4s need no 8-K record: 10-K quarter-length facts already
+fill those positions. Study tooling (fetch/build/verify, offline replay) and
+frozen sources live in the git-ignored
+`research/experiments/mu-historical-pe-q4-study/`; the promote tool is
+`tools/promote_mu_q4_evidence.py`.
+
+| Fiscal Q4 | Period end | GAAP diluted EPS | Accession | Accepted (ET) | Usable |
+| --- | --- | --- | --- | --- | --- |
+| FY2021 | 2021-09-02 | 2.39 | 0000723125-21-000060 | 2021-09-28 16:01:35 | 2021-09-29 |
+| FY2022 | 2022-09-01 | 1.35 | 0000723125-22-000044 | 2022-09-29 16:00:31 | 2022-09-30 |
+| FY2023 | 2023-08-31 | -1.31 | 0000723125-23-000051 | 2023-09-27 16:00:28 | 2023-09-28 |
+| FY2024 | 2024-08-29 | 0.79 | 0000723125-24-000023 | 2024-09-25 16:00:27 | 2024-09-26 |
+| FY2025 | 2025-08-28 | 2.83 | 0000723125-25-000024 | 2025-09-23 16:02:28 | 2025-09-24 |
+| FY2026 | 2026-09-03 | 32.87 | 0000723125-26-000018 | 2026-09-30 16:02:22 | 2026-10-01 |
+
+### 2. The acceptance-time defect (corrected, `filing_acceptance_evidence.json`)
+
+The file's `acceptance_datetime_header_et` values were EDGAR submissions-API
+`acceptanceDateTime` strings, which serialize true UTC **plus** the Eastern
+UTC offset of the acceptance instant (a double-DST artifact), suffixed `Z`.
+Read back as UTC — what the loader does — they ran 4h (EDT) / 5h (EST) late,
+pushing afternoon acceptances past the 16:00 ET cutoff and mis-dating 65 of
+1003 usable dates, including 23 of the 37 filings that carry quarter/annual
+EPS facts. The rebuild stores true ET for all 1003 rows: SGML-header
+authoritative for the 43 evidence-relevant accessions, a deterministic offset
+correction (validated to reproduce all 43 SGML values) for the rest, with the
+original API value kept per row under `acceptance_datetime_submissions_api`
+and an explicit `acceptance_datetime_basis`. The row set is unchanged.
+EDGAR's own filing index pages ("Accepted 2026-09-30 16:02:22") confirm the
+SGML value is the acceptance wall clock in ET.
+
+### 3. The window-continuity guard (`historical_pe.py`)
+
+Filling the four fiscal positions is not sufficient for a TTM window: the
+month-grid quarter mapping can fill all four positions with period ends that
+skip a real quarter (a 182-day gap), because 52/53-week filers' quarter ends
+drift across month boundaries (MU's June quarter ends and early-September
+fiscal year ends map onto the wrong slots). `build_historical_pe` now refuses
+such windows with `REASON_INSUFFICIENT_QUARTERS` and an explicit gap detail,
+in both the dated loop and the current snapshot. This corrected two
+pre-existing defective AAPL observations (2018-05-03 and 2024-05-03 skipped
+the actual summer quarter); AAPL baselines were independently recomputed:
+furnished 30→28 valid (median 27.805696→28.286075, excluded 6→8), filed-only
+18→14 (excluded 18→22). MSFT is unaffected (all its windows are consecutive
+calendar quarters; its reproducibility tests pass unchanged).
+
+### 4. Before/after on the real MU dataset
+
+| Metric | Before | After |
+| --- | --- | --- |
+| Valid TTM observations | 136 / 585 | 335 / 575 |
+| Distribution status | USABLE_FOR_REFERENCE | USABLE_FOR_REFERENCE |
+| Period | 2017-10-27 → 2021-12-31 | 2019-03-21 → 2026-08-31 |
+| Median / mean | 15.324275 / 14.135639 | 21.549505 / 25.60395 |
+| Excluded (MISSING_Q4 / INSUFFICIENT / NON_POSITIVE) | 198 / 165 / 86 | 48 / 164 / 28 |
+| Current snapshot (2026-10-16) | UNAVAILABLE, MISSING_Q4_EPS | UNAVAILABLE, MISSING_Q4_EPS |
+
+The historical P/FCF dataset shares the acceptance file, so its usable dates
+corrected too: 321→316 valid observations (median 71.492487→71.708773), still
+`USABLE_FOR_REFERENCE`; no P/FCF file was modified. MU's live CLI run with
+`--historical-pe` now selects the production distribution as the P/E reference
+(exit multiples 6.586579 / 11.498185 / 21.549505 / 27.842925 / 41.234489).
+
+### 5. M2 TTM EPS at the latest complete four quarters — exact blocking condition
+
+The latest complete four actual quarters (ends 2025-11-27, 2026-02-26,
+2026-05-28, 2026-09-03) all have traceable facts: three filed 10-Q facts
+(4.60, 12.07, 24.67) and the furnished FQ4-26 (32.87), all diluted GAAP, all
+usable well before 2026-10-16, with consistent period ends (each pair
+~13 weeks; the Q4 is 14 weeks; FY2026 is a 53-week year). The pipeline cannot
+assemble them: `quarter_number(2026-09-03, fye=8)` maps the fiscal year end to
+fiscal 2027 Q1, so the (2026, Q4) position stays empty while the furnished
+fact sits in the window's (2027, Q1) slot, and the snapshot reports
+`REASON_MISSING_Q4_EPS`. Removing this requires classifying quarters from the
+issuer's actual fiscal calendar rather than a month grid — a methodology
+change deliberately not made this round. For reference only, the four
+directly stated quarterly figures sum to 74.21 against the audited annual
+74.33 (per-share figures are not strictly additive across differing
+share counts — the reason FY-minus-YTD stays banned).
+
+### 6. Tests and verification
+
+`tests/test_mu_historical_pe.py` (25 tests): canonical record identity and
+provenance, GAAP/non-GAAP/annual isolation (including against the tracked
+XBRL annual facts), furnished-class preservation with Item 2.02 legal note,
+16:00 ET usable dates against real MU trading days, the corrected acceptance
+file (true ET + preserved API values + basis, and all 43 SGML-verified values
+reproduced from the tracked table), the continuity guard (synthetic 182-day
+skip refused, contiguous window available, real FY2023-era windows refused,
+every valid window's gaps within 80–100 days), the pinned distribution state,
+the snapshot's missing-quarter condition, R-PIT-SUPERSEDE on the 2025-02-27
+restatement pair, replay determinism, and the `QuarterEpsEvidence` contract
+(non-GAAP metric, derived evidence, unknown class all rejected). Full backend
+suite: **2,311 passed, 169 skipped, 478 subtests passed** locally. CI run
+`38971097167` (commit `985ba22`): backend and browser jobs success. The verification stage of the Q4 study (13 checks) is ALL PASS.
+
+**Boundary.** No valuation formula, buy/sell judgment, subjective probability,
+M1 source-independence standard, or the 20-observation gate was touched. MU
+Phase 0–3, MSFT cross-case and historical P/FCF research records are
+untouched. The quarter_number formula was not re-adjusted; the fiscal-calendar
+limitation is recorded, not worked around.
