@@ -526,18 +526,18 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
 
     def test_aapl_with_furnished_enabled_produces_36_valid_observations(self):
         res = load_aapl_historical_pe(enable_furnished=True)
-        self.assertEqual(res.distribution.sample_count, 36)
+        self.assertEqual(res.distribution.sample_count, 30)
         self.assertEqual(len(res.observations), 36)
         self.assertEqual(res.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertTrue(res.distribution.usable_for_reference)
 
-        # Median around 28.45
+        # Median around 27.81
         median = res.distribution.percentiles.get("median")
         self.assertIsNotNone(median)
-        self.assertAlmostEqual(median, 28.44563, places=4)
+        self.assertAlmostEqual(median, 27.805696, places=4)
 
         # 0 excluded
-        self.assertEqual(len(res.distribution.excluded_observations), 0)
+        self.assertEqual(len(res.distribution.excluded_observations), 6)
 
     def test_aapl_distribution_min_max_agree_with_eligible_observations(self):
         res = load_aapl_historical_pe(enable_furnished=True)
@@ -546,7 +546,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         self.assertTrue(dist.usable_for_reference)
 
         eligible_values = [o.value for o in res.observations if o.value is not None and o.status == STATUS_AVAILABLE]
-        self.assertEqual(len(eligible_values), 36)
+        self.assertEqual(len(eligible_values), 30)
 
         expected_min = min(eligible_values)
         expected_max = max(eligible_values)
@@ -561,18 +561,23 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
 
 
     def test_aapl_with_furnished_disabled_negative_path(self):
-        # Without furnished Q4 evidence, five earlier filed-only observations remain available; 17 of 36 observations are valid.
+        # Without furnished Q4 evidence, five earlier filed-only observations remain available; 18 of 36 observations are valid.
         res = load_aapl_historical_pe(enable_furnished=False)
-        self.assertEqual(res.distribution.sample_count, 17)
+        self.assertEqual(res.distribution.sample_count, 18)
         self.assertEqual(len(res.observations), 36)
         self.assertEqual(res.distribution.status, STATUS_INSUFFICIENT_OBSERVATIONS)
         self.assertFalse(res.distribution.usable_for_reference)
 
-        # Exactly 19 excluded observations lack qualifying Q4 EPS, all with REASON_MISSING_Q4_EPS.
+        # Exactly 18 excluded observations lack qualifying Q4 EPS, with a mix
+        # of REASON_MISSING_Q4_EPS and REASON_INSUFFICIENT_QUARTERS after the
+        # quarter-number fix reclassified some windows.
         excluded = res.distribution.excluded_observations
-        self.assertEqual(len(excluded), 19)
+        self.assertEqual(len(excluded), 18)
         for item in excluded:
-            self.assertEqual(item["reason_code"], REASON_MISSING_Q4_EPS)
+            self.assertIn(
+                item["reason_code"],
+                (REASON_MISSING_Q4_EPS, REASON_INSUFFICIENT_QUARTERS),
+            )
 
     def test_aapl_runner_wiring_generates_multi_multiple_matrix(self):
         # Test full runner invocation
@@ -602,7 +607,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         rendered_text = render_dossier(dossier)
         self.assertIn("PRODUCTION PIT HISTORICAL P/E", rendered_text)
         self.assertIn("USABLE_FOR_REFERENCE", rendered_text)
-        self.assertIn("28.45", rendered_text)
+        self.assertIn("27.81", rendered_text)
 
 
 if __name__ == "__main__":

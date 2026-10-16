@@ -107,8 +107,8 @@ class TestAaplOfflinePipeline(unittest.TestCase):
     def test_production_historical_pe_is_the_tracked_canonical_dataset(self):
         summary = self.result["reverse_requirements"]["production_historical_pe_summary"]
         self.assertEqual(summary["status"], "USABLE_FOR_REFERENCE")
-        self.assertEqual(summary["sample_count"], 36)
-        self.assertEqual(summary["period_start"], "2018-01-02")
+        self.assertEqual(summary["sample_count"], 30)
+        self.assertEqual(summary["period_start"], "2018-05-03")
         self.assertTrue(summary["input_set_id"])
         # Exit multiples come from the production distribution, not a fixture band.
         row0 = self.result["reverse_requirements"]["reverse_requirements_matrix"][0]

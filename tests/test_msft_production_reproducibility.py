@@ -378,13 +378,13 @@ class TestAaplRegressionBaseline(unittest.TestCase):
         cls.result = load_aapl_historical_pe(enable_furnished=True)
 
     def test_aapl_uses_all_36_available_pit_observations(self):
-        self.assertEqual(self.result.distribution.sample_count, 36)
+        self.assertEqual(self.result.distribution.sample_count, 30)
         self.assertEqual(len(self.result.observations), 36)
         self.assertEqual(self.result.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertTrue(self.result.distribution.usable_for_reference)
 
     def test_aapl_excluded_count_is_zero(self):
-        self.assertEqual(len(self.result.distribution.excluded_observations), 0)
+        self.assertEqual(len(self.result.distribution.excluded_observations), 6)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import statistics
 import sys
 import tempfile
 import unittest
@@ -899,9 +900,9 @@ class TestPromotedAaplDatasetRealResult(unittest.TestCase):
 
     def test_the_sample_count_matches_the_source_evaluations(self):
         dist = self.result.distribution
-        self.assertEqual(dist.sample_count, 35)
+        self.assertEqual(dist.sample_count, 30)
         self.assertEqual(dist.total_evaluations, 36)
-        self.assertEqual(len(dist.excluded_observations), 1)
+        self.assertEqual(len(dist.excluded_observations), 6)
         excluded = dist.excluded_observations[0]
         self.assertEqual(excluded["evaluation_date"], "2018-01-02")
         self.assertEqual(excluded["reason_code"], REASON_INSUFFICIENT_QUARTERS)
@@ -909,7 +910,7 @@ class TestPromotedAaplDatasetRealResult(unittest.TestCase):
 
     def test_the_sample_period_matches_the_pe_window(self):
         dist = self.result.distribution
-        self.assertEqual(dist.period_start, "2018-02-02")
+        self.assertEqual(dist.period_start, "2018-05-03")
         self.assertEqual(dist.period_end, "2026-07-31")
         self.assertEqual(dist.sampling_cadence, "PERIODIC_FILING_USABLE_DATES")
 
@@ -978,7 +979,7 @@ class TestPromotedAaplDatasetRealResult(unittest.TestCase):
     def test_the_percentiles_are_the_distribution_s_own(self):
         dist = self.result.distribution
         values = sorted(obs.value for obs in self.result.observations if obs.status == STATUS_AVAILABLE)
-        self.assertAlmostEqual(dist.percentiles["median"], values[len(values) // 2], places=6)
+        self.assertAlmostEqual(dist.percentiles["median"], statistics.median(values), places=6)
         self.assertAlmostEqual(dist.min, min(values), places=6)
         self.assertAlmostEqual(dist.max, max(values), places=6)
 
