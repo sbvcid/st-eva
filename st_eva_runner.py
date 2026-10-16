@@ -373,15 +373,14 @@ def _derive_discrepancy_status(data: "MarketData") -> str:
     Classify the evidence quality of an acquired dataset.
 
     This is an evidence state, not an investment rating. A single provider
-    cannot verify itself, so a live single-source acquisition is reported as
-    UNVERIFIABLE rather than silently trusted.
+    cannot verify itself, so a successful live single-source acquisition is
+    reported as SINGLE_SOURCE rather than silently trusted; acquisition
+    failure or missing required data remains UNVERIFIABLE.
     """
     if data.errors:
         return ValidationStatus.UNVERIFIABLE.value
     if data.discrepancy_status == ValidationStatus.DISCREPANT.value:
         return "DATA_DISCREPANCY"
-    if data.source_type == SourceType.API_LIVE.value:
-        return ValidationStatus.UNVERIFIABLE.value
     return ValidationStatus.SINGLE_SOURCE.value
 
 
@@ -1414,7 +1413,21 @@ class CompanyResolver:
                     REGRESSION_TEST_FIXTURES[fixture_key]
                 )
 
-        return YahooFinanceProvider().fetch(key)
+        return YahooFinanceProvider().fetch(key) or MarketData(
+            ticker=key,
+            company_name=f"{key} (Live Acquired)",
+            exchange="Unknown",
+            currency="USD",
+            price=UNAVAILABLE,
+            price_date="",
+            price_source="Yahoo Finance chart API",
+            price_source_url=None,
+            price_history=[],
+            volume_history=[],
+            source_type=SourceType.API_LIVE.value,
+            provider="YahooFinance",
+            errors=["price fetch failed: no price data returned"],
+        )
 
     @staticmethod
     def _from_fixture(data: Dict[str, Any]) -> MarketData:
@@ -2101,6 +2114,13 @@ def run_st_eva(
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
+        return None
+
+    # Price fetch failure: the run could not acquire price data at all.
+    # Return None so the caller can report "could not acquire usable market data."
+    # Other validation errors (e.g., DATA_DISCREPANCY) are NOT converted here:
+    # they still raise ValueError as before.
+    if data.errors and data.price == UNAVAILABLE:
         return None
 
     data_errors = Validator.validate_data(data)

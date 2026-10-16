@@ -38,7 +38,7 @@ METHOD_LABELS = {
 }
 
 DISCREPANCY_LABELS = {
-    "UNVERIFIABLE": "無法驗證（單一來源）",
+    "UNVERIFIABLE": "無法驗證（資料取得失敗或必要資料缺失）",
     "SINGLE_SOURCE": "單一來源",
     "VERIFIED": "已交叉驗證",
     "CONSISTENT": "來源一致",
