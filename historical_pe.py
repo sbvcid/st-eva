@@ -157,7 +157,7 @@ def quarter_number(period_end: datetime.date, fye_month: int) -> int:
     months_after = (period_end.month - fye_month) % 12
     if months_after == 0:
         return 4
-    return min(months_after // 3, 3)
+    return (months_after - 1) // 3 + 1
 
 
 # ---------------------------------------------------------------------------
@@ -991,6 +991,13 @@ ISSUER_CONFIGS = {
         issuer_id="CIK0000789019",
         fye_month=6,
         data_dir=Path("data/historical_pe/MSFT"),
+        canonical_path=None,
+    ),
+    "MU": IssuerHistoricalPeConfig(
+        ticker="MU",
+        issuer_id="CIK0000723125",
+        fye_month=8,
+        data_dir=Path("data/historical_pe/MU"),
         canonical_path=None,
     ),
 }
