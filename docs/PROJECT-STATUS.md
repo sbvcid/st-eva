@@ -2,8 +2,8 @@
 
 **Status checked:** 2026-10-16
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** `2293a70` (MU third-ticker research-flow acceptance) with the archive-reconstruction-completeness fix on top; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `27297f0` verified `backend` and `browser` jobs success in run `38847386100`, checked independently via the GitHub API on 2026-10-16; each later commit is verified in its own run.
+**Current implementation baseline:** `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) on top of `2293a70` (MU third-ticker research-flow acceptance) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Latest verified GitHub Actions:** `50043be` verified `backend` and `browser` jobs success in run `38862119614`, checked independently via the GitHub API on 2026-10-16; each later commit is verified in its own run.
 
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -14,6 +14,7 @@ This section is the hand-off checkpoint for future conversations and coding agen
 
 **Completed and should not be repeated without a concrete reason**
 
+- **Declared SEC diluted-EPS evidence is live** (`50043be`, verified by run `38862119614`). The reverse-requirements report carries `declared_eps_evidence`: the latest directly stated 10-K fiscal-year and 10-Q quarter facts of `us-gaap:EarningsPerShareDiluted` from the run's own SEC acquisition (packaged dataset as fallback), with declared period, accession/form/filed/acceptance time, GAAP concept and an explicit three-state status; per-scenario `related_sec_evidence` now prefers the run's acquisition with the frozen record shape unchanged. Cross-check evidence only — no calculation, admission, threshold, fingerprint input or network-envelope change. See the section at the end of this file for the case evidence; do not re-derive the "the vendor anchor has no declared period or basis" finding again.
 - **Archive reconstruction completeness for the consensus sample is fixed** (on top of `2293a70`). The archive's own contract — stated in `archive.py`, `_build_context_if_requested` and `_archive_run`: "a snapshot that references facts the archive never saw cannot be replayed" — requires every observation a context registers to be archived. The live path registered the 17 consensus observations (analyst count, low/high range, revision counts, trend series, in-series differences) into the context via `extra_observations` but returned only the second-source observations for archival, so a consensus-bearing snapshot referenced 17 un-archived observations and its replay reported `DIVERGED`. `st_eva_runner.py` now selects the consensus sample with the shared `consensus_sample_observations(...)` helper, returns it for archival, and registers it on the rebuild path too. Verified with the real saved AAPL/MSFT/MU contexts (`tests/test_consensus_archive_completeness.py`, 13 tests / 43 subtests): a consensus-bearing run archives every referenced observation and replays to `MATCH` with the same `context_id`; evidence_ids keep their order and count. The AAPL/MSFT archived contexts that still report `DIVERGED` do so because the code changed after archival (new glossary/derived entries), which is the legitimate case the reason string names — do not force those to `MATCH`. The real archives under `data/archives` were read-only checked (`PRAGMA integrity_check` = ok) and were not rebuilt, deleted or overwritten. See `history/archive_reconstruction_completeness_20261016_report.md`.
 - **P0 CI contract repair is complete** at commit `cb5ab8c`, and restored after sync regression. The 4 backend failures seen in run `38141809016` (reintroduced in `661e0df`) were fixed by restoring the verified `cb5ab8c` contracts in `investment_context.py` and correcting `.gitignore`. Local test results: full backend suite 1,897 passed, 168 skipped, 140 subtests passed; targeted tests 4 passed; archive-isolation 6 passed; web API 15 passed; frontend build passed.
 - Persistent local SQLite files were SHA-256 checked before and after the test runs; the reported hashes were unchanged. Do not rerun this audit unless a subsequent task touches database persistence or tests.
@@ -1108,3 +1109,77 @@ require explicitly supplied multiples; historical multiples in any output are
 conditional scenarios, never a selected answer. Known limitations of the P/FCF
 reconstruction (OCF FY2016 Q1 hole for AAPL, comparative-later knowability,
 finance-lease boundary for MSFT) are recorded in the dataset manifests.
+
+## Declared SEC Diluted-EPS Evidence (added 2026-10-16, commit `50043be`, verified by run `38862119614`)
+
+**Gap this closes.** A live run's vendor EPS anchor declares no period coverage
+and no accounting basis, and the only period-declared alternative visible in
+the output — the per-scenario `related_sec_evidence` record — was read from the
+packaged datasets under `data/historical_pe/{TICKER}`, which exist for `AAPL`
+and `MSFT` only. Every other ticker had no filing-side period or basis anywhere
+in the report, even when the run had already acquired the issuer's SEC facts,
+and no scenario row carries evidence at all when the matrix is not computed.
+Two cross-company research records (`IBKR` MU Phase 3 and the MSFT cross-case)
+independently recorded the consequence: an anchor figure with an undeclared
+period and an unreported GAAP/non-GAAP basis next to a filed figure the report
+never showed.
+
+**What changed (`st_eva_runner.py`; no calculation, no admission, no new
+network).**
+
+- The reverse-requirements report now carries `declared_eps_evidence`, built
+  from *this run's own SEC acquisition* when it ran: the latest directly
+  stated 10-K fiscal-year fact and the latest directly stated 10-Q quarter fact
+  of `us-gaap:EarningsPerShareDiluted` by period end (ties broken by covered
+  span, then filed date, then accession), each with value, currency, unit,
+  concept, accession, form, fiscal period/year, filed date, acceptance time
+  and source URL. Derived windows (FY-minus-YTD roll-forwards, summed
+  quarters) are excluded by the observation's own `derivation` marker: they
+  are the acquisition's arithmetic, not the filer's statement.
+- Per-scenario `related_sec_evidence` now prefers this run's acquisition and
+  keeps the packaged dataset as the fallback, so a run that acquired no filing
+  evidence behaves exactly as before. The record shape is unchanged, R2.1 is
+  untouched, and the record remains cross-check evidence that never becomes
+  the source of the selected anchor.
+- Three explicit states, nothing filled in: `AVAILABLE` (names the facts and
+  whether they came from `RUN_ACQUISITION` or `PACKAGED_DATASET`),
+  `UNAVAILABLE` (the acquisition asked and the source reported none), and
+  `NOT_ACQUIRED` (this run never asked and no packaged dataset exists; the
+  reason names `--context` as the way to acquire them). The block is evidence
+  only: every computed row, the fingerprint, the `unavailable` list and the
+  anchor contract are unchanged, and no new request is made to fill it.
+
+**Case evidence (2026-10-16, live acquisition, three issuers; full before/after
+pairs preserved in the IBKR research repository under
+`research/st-eva-declared-eps/20261016-133400/`).**
+
+- `MU`: `related_sec_evidence` was `null` and now carries the FY2026 10-K fact
+  (74.33, 2025-08-29..2026-09-03, accession `0000723125-26-000023`, filed
+  2026-10-09), with interim Q3 24.67 (`0000723125-26-000015`); the block states
+  both. The vendor anchor still reports "period coverage was not declared by
+  source" and no direct SEC source — the declared fact is cross-check only
+  even where the values coincide.
+- `AAPL`: the per-scenario record stays the FY2025 10-K fact (7.46), now
+  supplied by the run's own acquisition, and the block adds the interim Q3
+  FY2026 fact (2.02, 2026-03-29..2026-06-27) that no output carried before.
+- `MSFT`: the block states FY2026 (17.95) and Q3 (4.27); the anchor's 17.82
+  stays declared as vendor-undeclared rather than "corrected" to either.
+- Regression: nine before/after run pairs (basic / context / context+multiple
+  per issuer). Every computation row is identical; the only new report key is
+  `declared_eps_evidence`.
+
+**Tests.** `tests/test_declared_eps_evidence.py` (20 tests): identity refusal
+for incomplete records, derived-window exclusion, deterministic selection
+including the longer-cumulative tie case, live-over-frozen preference,
+fallback when only interim facts exist, a ticker with no source at all, the
+three block states, the per-scenario flow with R2.1 preserved, the
+unchanged-calculation check, and the regression path. Full backend suite
+**2,272 passed, 169 skipped, 488 subtests passed (240 s)**. CI run
+`38862119614`: backend and browser jobs success. No persistent database was
+written; every run used a temporary context path.
+
+**Boundary.** The ISO-week/53-week, restatement and per-share-additivity
+questions TTM construction must answer are untouched: this block states filed
+annual and quarterly facts with their periods; it does not build a TTM, does
+not rank or reconcile the vendor figure against them, and does not widen the
+`evidence_valuation_boundary` admission (still `revenue` only).
