@@ -30,7 +30,7 @@ import tempfile
 import urllib.request
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -2246,6 +2246,20 @@ def run_st_eva(
         equity_risk_premium=equity_risk_premium,
         risk_free_tenor=risk_free_tenor,
         sec_observations=sec_evidence.get("observations") if include_financial_history else None,
+        # The run's own filing evidence, when the SEC source actually ran. It
+        # carries the declared diluted-EPS facts the report states, and the
+        # related cross-check each scenario row shows; it is not a valuation
+        # input and its presence changes no calculation. A run that consulted
+        # no filing endpoint passes None and keeps the packaged-dataset
+        # fallback it always had.
+        sec_eps_evidence=(
+            {
+                "observations": list(sec_evidence.get("observations") or []),
+                "cik": sec_evidence.get("cik"),
+            }
+            if wants_sec and sec_evidence.get("acquired")
+            else None
+        ),
         cross_validation=sec_evidence.get("cross_validation") if wants_sec else None,
         production_historical_pe=production_historical_pe,
         prefer_eps_anchor=prefer_eps_anchor,
@@ -2868,8 +2882,163 @@ def _sec_filing_fact_from_observation(
     }
 
 
-def _find_related_sec_evidence(ticker: str) -> Optional[Dict[str, Any]]:
-    """Locate related SEC filing evidence for cross-check (not direct provenance)."""
+# -- declared diluted-EPS evidence -------------------------------------------
+#
+# The vendor EPS anchor carries no declared period, and the issuer's own answer
+# to "which period does this figure cover, and on which accounting basis" is in
+# its filings. The SEC acquisition path already reads the filed
+# us-gaap:EarningsPerShareDiluted facts for a run; these helpers publish the
+# latest *directly stated* annual and interim facts from that acquisition so a
+# reader can line the vendor figure up against declared periods and a declared
+# GAAP basis.
+#
+# Two boundaries this evidence never crosses:
+#
+#   * It is cross-check evidence. It does not become the source of the
+#     selected anchor -- that requires the input-to-fact linkage R2.1 defines --
+#     and its presence never implies the vendor figure equals it.
+#   * Only the filer's own statement counts. Derived windows (FY-minus-YTD
+#     roll-forwards and summed discrete quarters) are the acquisition's own
+#     arithmetic, not the filer's declaration, and are excluded by the presence
+#     of `derivation` on the observation's raw payload.
+
+DECLARED_EPS_SELECTION_RULE = (
+    "Latest annual 10-K fiscal-year fact and latest discrete interim 10-Q "
+    "quarter fact of us-gaap:EarningsPerShareDiluted, by period end; directly "
+    "stated facts only (no FY-minus-YTD or summed-quarter derivations)."
+)
+
+
+def _declared_eps_fact_record(
+    observation: Any,
+    cik: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    A declared diluted-EPS fact, built from the observation's own identity.
+
+    The record requires the filing's own identity (accession, form, filed
+    date, period end) and the declared per-share unit; anything less is not a
+    declared fact and is refused rather than half-identified. No value is ever
+    matched or compared here: a record's identity is what it is, independent of
+    whether the run's selected anchor happens to share its number.
+    """
+    if observation is None:
+        return None
+    if str(getattr(observation, "metric", "") or "") not in SEC_EPS_DILUTED_METRICS:
+        return None
+    raw = getattr(observation, "raw", None)
+    raw = raw if isinstance(raw, dict) else {}
+    if raw.get("derivation"):
+        # The acquisition's own arithmetic is not the filer's statement.
+        return None
+    if not _is_sec_filing_observation(observation):
+        return None
+
+    sec_fact = raw.get("sec_fact") if isinstance(raw.get("sec_fact"), dict) else {}
+    accession = raw.get("accession") or sec_fact.get("accession")
+    form = raw.get("form") or sec_fact.get("form")
+    filed = raw.get("filed") or sec_fact.get("filed")
+    period_start = getattr(observation, "period_start", None) or sec_fact.get("start")
+    period_end = getattr(observation, "period_end", None) or sec_fact.get("end")
+    value = safe_float(getattr(observation, "value", None))
+    unit = str(sec_fact.get("unit") or "")
+    if unit and unit not in ("USD/shares", "USD-per-shares"):
+        # A figure stated in another unit is a different fact.
+        return None
+    if not (accession and form and filed and period_end and value is not None):
+        # Without the filing's own identity there is nothing to point at.
+        return None
+
+    document_url = None
+    if cik and accession:
+        cik_digits = str(cik).lstrip("0") or "0"
+        document_url = (
+            f"https://www.sec.gov/Archives/edgar/data/{cik_digits}/"
+            f"{str(accession).replace('-', '')}/{accession}-index.htm"
+        )
+
+    return {
+        "value": value,
+        "currency": getattr(observation, "currency", None) or "USD",
+        "unit": unit or SEC_EPS_UNIT,
+        "concept": SEC_EPS_CONCEPT,
+        "taxonomy": str(sec_fact.get("taxonomy") or "us-gaap"),
+        "tag": str(sec_fact.get("tag") or "EarningsPerShareDiluted"),
+        "accession": str(accession),
+        "form": str(form),
+        "fiscal_year": sec_fact.get("fy"),
+        "fiscal_period": str(sec_fact.get("fp") or "") or None,
+        "filed_date": str(filed),
+        "available_at": getattr(observation, "available_at", None),
+        "available_at_basis": getattr(observation, "available_at_basis", None),
+        "period_start": str(period_start or ""),
+        "period_end": str(period_end),
+        "observation_id": getattr(observation, "observation_id", None),
+        "source_url": getattr(observation, "source_url", None),
+        "document_url": document_url,
+    }
+
+
+def _declared_eps_span_days(record: Dict[str, Any]) -> int:
+    """The record's covered span, for ordering facts that share a period end."""
+    start = str(record.get("period_start") or "")
+    end = str(record.get("period_end") or "")
+    if not start or not end:
+        return 0
+    try:
+        return (date.fromisoformat(end) - date.fromisoformat(start)).days
+    except ValueError:
+        return 0
+
+
+def _declared_eps_facts_from_observations(
+    observations: Optional[Sequence[Any]],
+    cik: Optional[str] = None,
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """
+    The latest declared annual and interim diluted-EPS facts, or None each.
+
+    Selection is deterministic: facts are ordered by period end, then by
+    covered span (a cumulative fact wins over a shorter one ending the same
+    day), then by filed date and accession. Derived observations never enter
+    the candidate set (see `_declared_eps_fact_record`).
+    """
+    records: List[Dict[str, Any]] = []
+    for observation in observations or ():
+        record = _declared_eps_fact_record(observation, cik)
+        if record is not None:
+            records.append(record)
+
+    def _order(record: Dict[str, Any]) -> Tuple[str, int, str, str]:
+        return (
+            str(record.get("period_end") or ""),
+            _declared_eps_span_days(record),
+            str(record.get("filed_date") or ""),
+            str(record.get("accession") or ""),
+        )
+
+    annuals = [
+        record
+        for record in records
+        if record.get("form") == "10-K"
+        and str(record.get("fiscal_period") or "") == "FY"
+    ]
+    interims = [record for record in records if record.get("form") == "10-Q"]
+    latest_annual = max(annuals, key=_order) if annuals else None
+    latest_interim = max(interims, key=_order) if interims else None
+    return latest_annual, latest_interim
+
+
+def _frozen_declared_eps_evidence(ticker: str) -> Optional[Dict[str, Any]]:
+    """
+    The packaged dataset's latest annual diluted-EPS fact, as a full record.
+
+    This reads the frozen instrument under `data/historical_pe/{ticker}` that
+    the production research paths ship. It exists so a run that acquired no
+    live filing evidence keeps the cross-check it always had; it is never
+    preferred over the run's own acquisition, and a ticker without a packaged
+    dataset has no fallback (the absence is stated, not filled).
+    """
     concept_file = Path(f"data/historical_pe/{ticker}/eps_diluted_concept.json")
     if not concept_file.exists():
         return None
@@ -2879,26 +3048,209 @@ def _find_related_sec_evidence(ticker: str) -> Optional[Dict[str, Any]]:
         units = (cdata.get("units") or {}).get("USD/shares") or []
         annual_10k = [x for x in units if x.get("form") == "10-K" and x.get("fp") == "FY"]
         cand = annual_10k[-1] if annual_10k else (units[-1] if units else None)
-        if cand:
-            accn = cand.get("accn")
-            cik = cdata.get("cik")
-            url = None
-            if cik and accn:
-                url = f"https://www.sec.gov/Archives/edgar/data/{str(cik)}/{str(accn).replace('-', '')}/{str(accn)}-index.htm"
-            return {
-                "accession": str(accn) if accn else None,
-                "form": str(cand.get("form", "10-K")),
-                "filed_date": str(cand.get("filed") or ""),
-                "concept": "us-gaap:EarningsPerShareDiluted",
-                "unit": "USD/shares",
-                "period_start": str(cand.get("start") or ""),
-                "period_end": str(cand.get("end") or ""),
-                "document_url": url,
-                "note": "Related SEC filing (cross-check); not verified as direct source of selected EPS value",
-            }
+        if not cand:
+            return None
+        accn = cand.get("accn")
+        cik = cdata.get("cik")
+        url = None
+        if cik and accn:
+            url = (
+                f"https://www.sec.gov/Archives/edgar/data/{str(cik)}/"
+                f"{str(accn).replace('-', '')}/{str(accn)}-index.htm"
+            )
+        return {
+            "value": cand.get("val"),
+            "currency": "USD",
+            "unit": "USD/shares",
+            "concept": SEC_EPS_CONCEPT,
+            "taxonomy": "us-gaap",
+            "tag": "EarningsPerShareDiluted",
+            "accession": str(accn) if accn else None,
+            "form": str(cand.get("form", "10-K")),
+            "fiscal_year": cand.get("fy"),
+            "fiscal_period": str(cand.get("fp") or "") or None,
+            "filed_date": str(cand.get("filed") or ""),
+            "available_at": None,
+            "available_at_basis": None,
+            "period_start": str(cand.get("start") or ""),
+            "period_end": str(cand.get("end") or ""),
+            "observation_id": None,
+            "source_url": (
+                f"https://data.sec.gov/api/xbrl/companyconcept/CIK{str(cik).zfill(10)}"
+                f"/us-gaap/EarningsPerShareDiluted.json"
+                if cik
+                else None
+            ),
+            "document_url": url,
+        }
     except Exception:
-        pass
-    return None
+        return None
+
+
+def _find_related_sec_evidence(
+    ticker: str,
+    sec_observations: Optional[Sequence[Any]] = None,
+    cik: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Related SEC filing evidence for cross-check (not direct provenance).
+
+    Prefers the latest declared annual fact from this run's own SEC
+    acquisition; falls back to the packaged dataset's fact when the run
+    acquired no filing evidence (the behaviour every existing caller had).
+    The record shape is unchanged.
+    """
+    latest_annual: Optional[Dict[str, Any]] = None
+    if sec_observations:
+        latest_annual, _ = _declared_eps_facts_from_observations(
+            sec_observations, cik
+        )
+    if latest_annual is None:
+        latest_annual = _frozen_declared_eps_evidence(ticker)
+    if latest_annual is None:
+        return None
+    return {
+        "accession": latest_annual.get("accession"),
+        "form": str(latest_annual.get("form") or "10-K"),
+        "filed_date": str(latest_annual.get("filed_date") or ""),
+        "concept": SEC_EPS_CONCEPT,
+        "unit": SEC_EPS_UNIT,
+        "period_start": str(latest_annual.get("period_start") or ""),
+        "period_end": str(latest_annual.get("period_end") or ""),
+        "document_url": latest_annual.get("document_url"),
+        "note": "Related SEC filing (cross-check); not verified as direct source of selected EPS value",
+    }
+
+
+def _build_declared_eps_evidence_block(
+    ticker: str,
+    sec_eps_evidence: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    The report-level statement of the declared diluted-EPS facts.
+
+    Three states, stated rather than implied: `AVAILABLE` names the facts and
+    where they came from, `UNAVAILABLE` says the acquisition asked and the
+    source reported none, and `NOT_ACQUIRED` says this run never asked (and no
+    packaged dataset exists to fall back on). Nothing is filled in.
+    """
+    block: Dict[str, Any] = {
+        "selection_rule": DECLARED_EPS_SELECTION_RULE,
+        "basis": "GAAP_DILUTED_EPS",
+        "concept": SEC_EPS_CONCEPT,
+        "status": "NOT_ACQUIRED",
+        "source": None,
+        "provider": None,
+        "source_type": None,
+        "latest_annual": None,
+        "latest_interim": None,
+        "cross_check_note": (
+            "Declared filing facts are shown for cross-check only: they are not "
+            "the source of the selected starting EPS, and no input-to-fact "
+            "linkage is claimed. The vendor figure's own period coverage is "
+            "declared by its source or explicitly reported as undeclared."
+        ),
+        "unavailable": [],
+    }
+
+    if sec_eps_evidence is not None:
+        observations = list(sec_eps_evidence.get("observations") or [])
+        cik = sec_eps_evidence.get("cik")
+        latest_annual, latest_interim = _declared_eps_facts_from_observations(
+            observations, cik
+        )
+        if latest_annual is None and latest_interim is None:
+            block["status"] = "UNAVAILABLE"
+            block["source"] = "RUN_ACQUISITION"
+            block["provider"] = "SecEdgar"
+            block["source_type"] = SourceType.REGULATORY_FILING.value
+            block["unavailable"].append(
+                {
+                    "item": "declared_eps_evidence",
+                    "reason": (
+                        "The SEC acquisition ran and reported no directly "
+                        "stated diluted-EPS fact for this issuer, so no "
+                        "declared period or basis can be shown for the EPS "
+                        "anchor."
+                    ),
+                    "reason_kind": "SOURCE_SILENT",
+                    "blocks": ["declared_eps_evidence"],
+                }
+            )
+            return block
+        block["status"] = "AVAILABLE"
+        block["source"] = "RUN_ACQUISITION"
+        block["provider"] = "SecEdgar"
+        block["source_type"] = SourceType.REGULATORY_FILING.value
+        block["latest_annual"] = latest_annual
+        block["latest_interim"] = latest_interim
+        if latest_annual is None:
+            block["unavailable"].append(
+                {
+                    "item": "declared_eps_evidence.latest_annual",
+                    "reason": (
+                        "The acquired filing evidence carried no directly "
+                        "stated 10-K fiscal-year diluted-EPS fact, so no "
+                        "declared annual fact is shown."
+                    ),
+                    "reason_kind": "SOURCE_SILENT",
+                    "blocks": ["declared_eps_evidence.latest_annual"],
+                }
+            )
+        if latest_interim is None:
+            block["unavailable"].append(
+                {
+                    "item": "declared_eps_evidence.latest_interim",
+                    "reason": (
+                        "The acquired filing evidence carried no directly "
+                        "stated 10-Q quarterly diluted-EPS fact, so no "
+                        "declared interim fact is shown."
+                    ),
+                    "reason_kind": "SOURCE_SILENT",
+                    "blocks": ["declared_eps_evidence.latest_interim"],
+                }
+            )
+        return block
+
+    # This run acquired no filing evidence. The packaged dataset, where one
+    # exists, keeps the cross-check it always supplied; nothing new is
+    # fetched to fill the block, so the default path's network envelope is
+    # unchanged.
+    frozen = _frozen_declared_eps_evidence(ticker)
+    if frozen is not None:
+        block["status"] = "AVAILABLE"
+        block["source"] = "PACKAGED_DATASET"
+        block["provider"] = "SecEdgar"
+        block["source_type"] = SourceType.REGULATORY_FILING.value
+        block["latest_annual"] = frozen
+        block["unavailable"].append(
+            {
+                "item": "declared_eps_evidence.latest_interim",
+                "reason": (
+                    "The packaged dataset supplies the latest annual fact "
+                    "only; no interim fact is packaged. Run with --context to "
+                    "acquire the issuer's filing evidence."
+                ),
+                "reason_kind": "NOT_AVAILABLE_IN_DATASET",
+                "blocks": ["declared_eps_evidence.latest_interim"],
+            }
+        )
+        return block
+
+    block["unavailable"].append(
+        {
+            "item": "declared_eps_evidence",
+            "reason": (
+                "No SEC filing evidence was acquired in this run and no "
+                "packaged dataset exists for this ticker, so no declared "
+                "period or basis can be shown for the EPS anchor. Run with "
+                "--context to acquire the issuer's filing evidence."
+            ),
+            "reason_kind": "NOT_ACQUIRED",
+            "blocks": ["declared_eps_evidence"],
+        }
+    )
+    return block
 
 
 def _build_reverse_requirements(
@@ -2918,6 +3270,7 @@ def _build_reverse_requirements(
     equity_risk_premium: Optional[float],
     risk_free_tenor: str,
     sec_observations: Optional[Sequence[Any]] = None,
+    sec_eps_evidence: Optional[Dict[str, Any]] = None,
     cross_validation: Optional[Dict[str, Any]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
     prefer_eps_anchor: Optional[str] = None,
@@ -3007,7 +3360,17 @@ def _build_reverse_requirements(
                 anchor.value, source_observation=supplying
             )
             # Related/cross-check evidence stays separate and must never be labeled direct source.
-            sec_related = _find_related_sec_evidence(data.ticker)
+            # The run's own SEC acquisitions are preferred (they are identically
+            # identified and current); the packaged dataset is the fallback for
+            # runs that acquired none, which is the behaviour every existing
+            # caller had.
+            sec_related = _find_related_sec_evidence(
+                data.ticker,
+                (sec_eps_evidence or {}).get("observations")
+                if sec_eps_evidence
+                else None,
+                (sec_eps_evidence or {}).get("cik") if sec_eps_evidence else None,
+            )
             # The observation that projected this value is the value's actual
             # source. When it is a vendor observation, record its provider field
             # and endpoint so a provider-sourced EPS is traceable to its raw
@@ -3310,6 +3673,9 @@ def _build_reverse_requirements(
                 "The reverse requirements matrix needs a positive starting EPS. "
                 "See `unavailable` for what was missing."
             ),
+            "declared_eps_evidence": _build_declared_eps_evidence_block(
+                data.ticker, sec_eps_evidence
+            ),
         }
         return report
 
@@ -3371,6 +3737,14 @@ def _build_reverse_requirements(
         for unav in dividend_pkg["unavailable"]:
             if unav["item"] not in {it.get("item") for it in report.get("unavailable", [])}:
                 report["unavailable"].append(dict(unav))
+
+    # The declared diluted-EPS facts the run's own SEC acquisition read, stated
+    # as their own evidence block: declared period, form/accession and GAAP
+    # concept, with the vendor anchor's undeclared coverage left as the vendor
+    # stated it. Cross-check evidence only; it feeds no calculation.
+    report["declared_eps_evidence"] = _build_declared_eps_evidence_block(
+        data.ticker, sec_eps_evidence
+    )
 
     # Financial history from the same run's sourced observations. When no SEC
     # observations were acquired the block reports that rather than showing an
