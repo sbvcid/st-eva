@@ -899,7 +899,7 @@ class TestEarningsMethodRepresentativeProvenance(unittest.TestCase):
         self.assertEqual(view["source"], "production_historical_pe_percentile")
         self.assertFalse(view["is_user_assumption"])
         self.assertEqual(view["value"], result["reference"]["multiple"])
-        self.assertEqual(view["sample_size"], 30)
+        self.assertEqual(view["sample_size"], 28)
 
 
 if __name__ == "__main__":

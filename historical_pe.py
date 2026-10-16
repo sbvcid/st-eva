@@ -160,6 +160,17 @@ def quarter_number(period_end: datetime.date, fye_month: int) -> int:
     return (months_after - 1) // 3 + 1
 
 
+def _window_ends_consecutive(window_ends: Sequence[datetime.date]) -> bool:
+    """Whether the window's period ends are consecutive quarters in calendar
+    time: each adjacent pair of quarter ends spans one quarter (13 or 14
+    weeks), the same span QUARTER_MIN_DAYS..QUARTER_MAX_DAYS admits."""
+    for earlier, later in zip(window_ends, window_ends[1:]):
+        gap = (later - earlier).days
+        if gap < QUARTER_MIN_DAYS or gap > QUARTER_MAX_DAYS:
+            return False
+    return True
+
+
 # ---------------------------------------------------------------------------
 # Point-in-time usable-date resolver
 # ---------------------------------------------------------------------------
@@ -673,6 +684,22 @@ def build_historical_pe(
                     ttm_reason_detail = (
                         f"The four-quarter fiscal window is missing positions: {missing_positions}."
                     )
+            elif not _window_ends_consecutive(window_ends):
+                # Invariant F-2 at calendar level: the fiscal-position grid can
+                # fill all four positions with period ends that are not
+                # consecutive quarters for a 52/53-week filer whose quarter ends
+                # drift across month boundaries (e.g. MU's June quarter ends).
+                # Such a filled window is not a TTM window and is refused.
+                gaps = [
+                    (window_ends[i + 1] - window_ends[i]).days
+                    for i in range(len(window_ends) - 1)
+                ]
+                ttm_reason = REASON_INSUFFICIENT_QUARTERS
+                ttm_reason_detail = (
+                    "The fiscal-position window is filled but its period ends are not consecutive "
+                    f"calendar quarters (gap days {gaps} between sorted ends {window_ends}); "
+                    "a month-grid fiscal mapping cannot represent this issuer's quarter sequence."
+                )
             else:
                 # All 4 positions filled!
                 for end in window_ends:
@@ -891,6 +918,16 @@ def build_historical_pe(
 
             if cur_missing:
                 cur_ttm_reason = REASON_MISSING_Q4_EPS if any(p["fiscal_quarter"] == 4 for p in cur_missing) else REASON_INSUFFICIENT_QUARTERS
+            elif not _window_ends_consecutive(
+                sorted(
+                    datetime.date.fromisoformat(c["period_end"])
+                    for c in cur_components
+                )
+            ):
+                # Invariant F-2 at calendar level, as in the dated loop: a
+                # position-filled window over non-adjacent quarter ends is not
+                # a TTM window.
+                cur_ttm_reason = REASON_INSUFFICIENT_QUARTERS
             else:
                 total_eps_cur = sum(c["value"] for c in cur_components)
                 if total_eps_cur > 0 and cur_p_val is not None:

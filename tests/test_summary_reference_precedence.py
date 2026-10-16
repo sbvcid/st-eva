@@ -522,11 +522,11 @@ class TestTheMatrixIsUnchanged(unittest.TestCase):
                 "matrix_size": 80,
                 "distinct_exit_multiples": {
                     # AAPL
-                    '17.529686|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '23.376458|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '27.805696|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '33.168902|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '36.240982|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
+                    '17.715401|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
+                    '24.785061|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
+                    '28.286075|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
+                    '33.333948|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
+                    '36.334726|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
                 },
             },
         }

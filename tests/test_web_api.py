@@ -704,7 +704,7 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
             )
             # The P/E references are equally isolated: each ticker's median is
             # its own distribution's, never the other company's.
-            self.assertAlmostEqual(aapl.valuation_summary.selected_pe, 27.805696, places=6)
+            self.assertAlmostEqual(aapl.valuation_summary.selected_pe, 28.286075, places=6)
             self.assertAlmostEqual(msft.valuation_summary.selected_pe, 33.195873, places=6)
             # The consensus periods differ by company calendar in live runs
             # (2027-09-30 for AAPL, 2028-06-30 for MSFT); the regression
