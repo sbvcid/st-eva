@@ -479,15 +479,20 @@ class Ingestor:
         ticker: str,
         metrics: Sequence[str] = DEFAULT_METRICS,
         forms: Sequence[str] = DEFAULT_FORMS,
+        reprocess: bool = False,
     ) -> IngestionReport:
         """
         Ingest every filing this issuer has accepted that the archive lacks.
 
         The index is re-read every run, because it is the only way to learn
-        whether anything changed. A concept document is fetched only when a new
+        whether anything changed. A concept endpoint is fetched only when a new
         filing has been accepted, so a run that finds nothing new downloads
         nothing.
         """
+        if reprocess:
+            return self.reprocess_existing(
+                ticker, metrics=metrics, forms=forms,
+            )
         started = time.monotonic()
         report: IngestionReport
         cik = self._known_cik(ticker)
@@ -739,6 +744,230 @@ class Ingestor:
         )
         return report
 
+    def reprocess_existing(
+        self,
+        ticker: str,
+        metrics: Optional[Sequence[str]] = None,
+        forms: Sequence[str] = DEFAULT_FORMS,
+    ) -> IngestionReport:
+        """
+        Re-process SEC evidence already saved in this archive.
+
+        No network requests are made: every concept payload is read back from
+        `source_documents`, and the same `_store_facts` path that a live run uses
+        is applied to it. Observations that already exist are skipped on their
+        source-fact identity, so a repeated call is deterministic and never
+        duplicates a row.
+
+        This is the route a newly added or changed metric mapping takes to reach
+        evidence the archive already holds: `ingest()` returns `NO_CHANGE` when
+        no new filing has been accepted, which is correct for the network path
+        but leaves saved evidence unprocessed. This method does not change that
+        decision -- it is a separate, explicit operation, and it never fetches.
+        """
+        if metrics is None:
+            metrics = tuple(m.metric_id for m in self.registry.metrics())
+        started = time.monotonic()
+        ticker = ticker.upper()
+        asset_row = self.connection.execute(
+            "SELECT asset_id, cik FROM assets WHERE ticker = ?",
+            (ticker,),
+        ).fetchone()
+        if asset_row is None or not asset_row["cik"]:
+            report = IngestionReport(
+                asset=ticker, cik="", run_id="run_" + uuid.uuid4().hex[:16],
+            )
+            report.classify(
+                OUTCOME_ISSUER_UNRESOLVED, ticker,
+                "no saved asset or CIK for this ticker; nothing to reprocess",
+            )
+            report.elapsed_seconds = round(time.monotonic() - started, 3)
+            return report
+
+        asset_id = str(asset_row["asset_id"])
+        cik = str(asset_row["cik"])
+        report = IngestionReport(
+            asset=ticker, cik=cik, run_id="run_" + uuid.uuid4().hex[:16],
+        )
+        self._current_run_id = report.run_id
+        self._provenance_errors = []
+
+        # Count what the archive already holds for this issuer; a reprocess run
+        # never ingests a new filing, so `filings_ingested` stays zero and the
+        # distinction between "no new filings" and "reprocessing saved evidence"
+        # is visible in the report rather than collapsed.
+        held_count = self.connection.execute(
+            "SELECT COUNT(*) AS n FROM held_filings WHERE asset_id = ?",
+            (asset_id,),
+        ).fetchone()["n"]
+        report.filings_seen = int(held_count)
+        report.filings_already_held = int(held_count)
+        report.filings_ingested = 0
+
+        acceptance = self._acceptance_from_store(asset_id)
+
+        stored_by_metric: Dict[str, int] = {}
+        for metric in metrics:
+            before = report.observations_stored
+            try:
+                self._reprocess_metric(
+                    cik, ticker, metric, acceptance, report, asset_id,
+                )
+            except Exception as error:  # noqa: BLE001
+                report.errors.append(f"{metric}: {type(error).__name__}: {error}")
+                report.classify(
+                    self._classify_metric_error(error), metric,
+                    f"{type(error).__name__}: {error}",
+                )
+            else:
+                stored_by_metric[metric] = report.observations_stored - before
+                if report.observations_stored == before and not self._metric_observed(
+                    metric, asset_id
+                ):
+                    report.classify(
+                        OUTCOME_SOURCE_SILENT, metric,
+                        "reprocessed saved evidence, no observation stored",
+                    )
+
+        self._record_scope(asset_id, metrics, attempted=True,
+                           stored=stored_by_metric)
+
+        report.errors.extend(self._provenance_errors)
+        report.network_fetches = 0
+        report.concept_fetches = 0
+        report.transport = {}
+        report.elapsed_seconds = round(time.monotonic() - started, 3)
+        self._write_run(
+            asset_id, report,
+            "OK" if not report.errors else "PARTIAL",
+        )
+        return report
+
+    def _reprocess_metric(
+        self,
+        cik: str,
+        ticker: str,
+        metric: str,
+        acceptance: Dict[str, Optional[Tuple[str, str]]],
+        report: IngestionReport,
+        asset_id: str,
+    ) -> None:
+        plan = self._concept_plan(metric)
+        if not plan:
+            report.concepts_unresolved += 1
+            return
+
+        stored_any = 0
+        for taxonomy, concept, mapping in plan:
+            payload, document_id = self._load_saved_document(
+                cik, taxonomy, concept,
+            )
+            if payload is None:
+                # Saved evidence is missing for this concept. Leave it
+                # unprocessed and report it via concepts_unresolved rather
+                # than synthesising a fetch or raising.
+                continue
+            if document_id:
+                report.documents_reused += 1
+            stored_any += self._store_facts(
+                cik,
+                asset_id,
+                ticker,
+                metric,
+                taxonomy,
+                concept,
+                mapping,
+                payload,
+                document_id or "",
+                acceptance,
+                report,
+            )
+
+        if not stored_any and not any(
+            self._load_saved_document(cik, t, c)[0] is not None
+            for t, c, _ in plan
+        ):
+            report.concepts_unresolved += 1
+
+    def _load_saved_document(
+        self,
+        cik: str,
+        taxonomy: str,
+        concept: str,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        uri = (
+            f"{SEC_CANONICAL}/api/xbrl/companyconcept/CIK{cik}"
+            f"/{taxonomy}/{concept}.json"
+        )
+        row = self.connection.execute(
+            "SELECT document_id, content_hash FROM source_documents "
+            "WHERE uri = ? LIMIT 1",
+            (uri,),
+        ).fetchone()
+        if row is None:
+            # Fall back to a URI suffix match, in case the CIK was stored with
+            # different padding than this run uses.
+            row = self.connection.execute(
+                "SELECT document_id, content_hash FROM source_documents "
+                "WHERE uri LIKE ? LIMIT 1",
+                (f"%/companyconcept/%/{taxonomy}/{concept}.json",),
+            ).fetchone()
+        if row is None:
+            return None, None
+        content = self.store.content_for(row["document_id"])
+        if content is None:
+            content = self.store.content_for(row["content_hash"])
+        if content is None:
+            return None, None
+        try:
+            payload = json.loads(content.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return None, None
+        if not isinstance(payload, dict):
+            return None, None
+        return payload, str(row["document_id"])
+
+    def _acceptance_from_store(
+        self, asset_id: str,
+    ) -> Dict[str, Optional[Tuple[str, str]]]:
+        acceptance: Dict[str, Optional[Tuple[str, str]]] = {}
+        try:
+            rows = self.connection.execute(
+                "SELECT accession, acceptance_datetime, acceptance_precision "
+                "FROM filing_acceptances WHERE asset_id = ?",
+                (asset_id,),
+            ).fetchall()
+        except Exception:  # noqa: BLE001
+            return acceptance
+        best: Dict[str, Tuple[str, str]] = {}
+        for row in rows:
+            accession = str(row["accession"])
+            precision = str(row["acceptance_precision"] or "")
+            value = row["acceptance_datetime"]
+            if value is None:
+                continue
+            candidate = (str(value), precision)
+            current = best.get(accession)
+            if current is None or (
+                precision == PRECISION_INSTANT
+                and current[1] != PRECISION_INSTANT
+            ):
+                best[accession] = candidate
+        for accession, (value, precision) in best.items():
+            if precision in (PRECISION_INSTANT, PRECISION_DATE):
+                acceptance[accession] = (value, precision)
+        return acceptance
+
+    # aliases for callers that use a different name for the same operation
+    reprocess = reprocess_existing
+    reprocess_saved = reprocess_existing
+    reprocess_saved_evidence = reprocess_existing
+    reprocess_existing_evidence = reprocess_existing
+    backfill_existing = reprocess_existing
+    reingest_existing = reprocess_existing
+    reprocess_stored = reprocess_existing
+    reprocess_stored_evidence = reprocess_existing
+    reprocess_documents = reprocess_existing
     def collection_chain(self, ticker: str) -> Dict[str, Any]:
         """
         The whole collection chain for one filer, per metric.

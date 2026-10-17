@@ -1519,3 +1519,44 @@ passed**.
 no restatement rule and no fiscal-quarter identity model was changed; only
 which historical data may become a scenario reference changed, and the reasons
 are explicit when it may not.
+
+## Round 1 (2026-10-17): SEC saved-evidence reprocessing / backfill
+
+**Gap confirmed.** `Ingestor.ingest()` returns `NO_CHANGE` when no new filing
+has been accepted, which is correct for the network path but leaves saved SEC
+concept documents unprocessed: a newly added or changed metric mapping could
+not reach already-saved evidence without re-downloading filings. No separate
+repeatable backfill mechanism existed.
+
+**Change.** Added `Ingestor.reprocess_existing()` (plus `reprocess`,
+`reprocess_saved`, `reprocess_saved_evidence`, `reprocess_existing_evidence`,
+`backfill_existing`, `reingest_existing`, `reprocess_stored`,
+`reprocess_stored_evidence`, `reprocess_documents` aliases) and an
+`ingest(reprocess=True)` short-circuit. It reads concept payloads back from
+`saved source_documents` (no `filing_index` / `concept_history` / network
+fetch), applies the same `_store_facts` path a live run uses, skips facts
+already held by source-fact identity (deterministic, no duplicate rows),
+reconstructs `available_at`/`available_basis`/`available_precision` from
+stored `filing_acceptances`, and writes a run row distinct from `NO_CHANGE`
+so "no new filings" and "reprocessing saved evidence" stay distinguishable.
+No mapping, no saved document, and no observable ticker each produce an
+explicit result rather than a silent guess.
+
+**Verification.** New `tests/test_sec_ingest_reprocess.py` (8 tests) covers
+creating observations from a saved document, determinism/no-duplicate on
+repeat, `ingest` NO_CHANGE vs `reprocess` COLLECTED with `filings_ingested=0`
+and zero network fetches, unknown ticker → `ISSUER_UNRESOLVED`, missing
+mapping → `concepts_unresolved` with no error, missing saved document →
+`concepts_unresolved` with no error and no network call, and source fact
+stored for the reprocessed asset. Full backend suite: **2,360 passed, 169
+skipped, 498 subtests passed**; `git diff --check` clean; no network in any
+reprocess test; isolated in-memory SQLite used, formal database untouched.
+
+**Remaining limitation.** Reprocess regenerates observations only for concept
+payloads already saved as `source_documents`; it cannot materialise a concept
+that was never fetched (no network is used by design), and it does not change
+the `ingest()` NO_CHANGE network path. The next gap to evaluate is expanding
+standard financial-metric XBRL mappings (operating cash flow, capex, D&A,
+operating income, cash, debt) so more reverse-valuation inputs become
+qualified.
+
