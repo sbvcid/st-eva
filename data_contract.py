@@ -441,6 +441,8 @@ METRIC_FREE_CASH_FLOW = "free_cash_flow"
 METRIC_EBITDA = "ebitda"
 METRIC_OPERATING_CASH_FLOW = "operating_cash_flow"
 METRIC_CAPEX = "capex"
+METRIC_OPERATING_INCOME = "operating_income"
+METRIC_DEPRECIATION_AND_AMORTIZATION = "depreciation_and_amortization"
 METRIC_REVENUE = "revenue"
 METRIC_NET_INCOME = "net_income"
 METRIC_EPS_DILUTED = "eps_diluted"
@@ -2105,6 +2107,8 @@ class ValuationInputs:
     current_fcf: Any = UNAVAILABLE
     current_operating_cash_flow: Any = UNAVAILABLE
     current_capex: Any = UNAVAILABLE
+    current_operating_income: Any = UNAVAILABLE
+    current_depreciation_and_amortization: Any = UNAVAILABLE
     current_ebitda: Any = UNAVAILABLE
     current_revenue: Any = UNAVAILABLE
     current_enterprise_value: Any = UNAVAILABLE
@@ -2157,6 +2161,12 @@ class ValuationInputs:
                 observations, METRIC_OPERATING_CASH_FLOW
             ),
             current_capex=cls._scalar(observations, METRIC_CAPEX),
+            current_operating_income=cls._scalar(
+                observations, METRIC_OPERATING_INCOME
+            ),
+            current_depreciation_and_amortization=cls._scalar(
+                observations, METRIC_DEPRECIATION_AND_AMORTIZATION
+            ),
             current_ebitda=cls._scalar(observations, METRIC_EBITDA),
             current_revenue=cls._scalar(observations, METRIC_REVENUE),
             current_enterprise_value=cls._scalar(
@@ -2198,6 +2208,12 @@ class ValuationInputs:
                 view, "current_operating_cash_flow", UNAVAILABLE
             ),
             current_capex=getattr(view, "current_capex", UNAVAILABLE),
+            current_operating_income=getattr(
+                view, "current_operating_income", UNAVAILABLE
+            ),
+            current_depreciation_and_amortization=getattr(
+                view, "current_depreciation_and_amortization", UNAVAILABLE
+            ),
             current_ebitda=getattr(view, "current_ebitda", UNAVAILABLE),
             current_revenue=getattr(view, "current_revenue", UNAVAILABLE),
             current_enterprise_value=getattr(

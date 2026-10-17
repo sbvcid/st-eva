@@ -1658,3 +1658,62 @@ operating_cash_flow, capex). Full backend suite: **2,365 passed, 169 skipped,
 display), or extend observed data coverage so operating income + D&A become
 qualified EV/EBITDA inputs.
 
+## Round 4 (2026-10-17): EBITDA inputs into EV/EBITDA reverse valuation via V1 admission
+
+**Gap confirmed.** `V1_CROSSING_METRICS` was `(revenue, operating_cash_flow,
+capex)`, so `ValuationInputs.current_ebitda` was never populated from SEC
+observations: EBITDA was treated as an observed metric (`METRIC_EBITDA`) that
+has no registry entry and is never collected. The income inputs that EBITDA is
+derived from — operating income and depreciation & amortization — were already
+ACTIVE, currency, DURATION, EXACT-mapped but could not cross the V1 boundary.
+
+**Change.** Widened `V1_CROSSING_METRICS` to
+`(revenue, operating_cash_flow, capex, operating_income,
+depreciation_and_amortization)`: all five clear rule 1 (ACTIVE, monetary
+DURATION, EXACT-mapped). Added `current_operating_income` and
+`current_depreciation_and_amortization` fields to `ValuationInputs`
+(`data_contract.py`), populated by `from_observations` and `from_legacy_view`.
+Extended `admit()` to write those two fields and derive `current_ebitda` from
+the two admitted income inputs only when they share one period and one
+currency with each other and with the price. EBITDA = operating income +
+depreciation & amortization (both reported as positive magnitudes; no sign
+flip). Incompatible periods/currencies are refused rather than combined, and no
+trailing figure is invented. `_period_refusals` was made metric-aware via a new
+`TRAILING_ANNUAL_METRICS` constant (revenue, operating_income,
+depreciation_and_amortization): these keep the annual-only (trailing) rule,
+while operating_cash_flow and capex accept a discrete quarter or fiscal year.
+
+**Verification.** `TestFreeCashFlowCrossing` now also covers EBITDA (2 new
+tests): operating income + D&A cross and derive `current_ebitda =
+operating_income + D&A` (5.0B from 4.0B + 1.0B); EBITDA enters the reverse
+valuation (`ebitda_at_reference_multiple = enterprise_value / EV/EBITDA
+multiple`; `current_ev_ebitda = enterprise_value / current_ebitda`).
+Pinned tests updated for the deliberate widening: scope (5 metrics),
+`crossing_metrics`, `test_the_admitted_revenue_reaches_the_valuation_inputs`
+(cash-flow and income inputs refused as UNAVAILABLE when no observations
+exist — honest absence, not synthesis), `test_every_other_field_stays_valuation_side`,
+and `test_live_run_writes_admission` (5 admission records per run). Full
+backend suite: **2,367 passed, 169 skipped, 498 subtests passed**; `git
+diff --check` clean; formal database untouched.
+
+**Condition status:**
+- A (collection & backfill): done round 1 (`reprocess_existing` verified).
+- B (priority mappings): complete — OCF, capex, D&A, operating income, cash,
+  long_term_debt all ACTIVE with EXACT mappings.
+- C (valuation connection): FCF path complete (round 3) and EV/EBITDA path now
+  complete — SEC operating income + D&A observations cross V1 admission into
+  `ValuationInputs.current_ebitda`, feed the reverse valuation, and show
+  inputs/source/period/formula via admission records. Historical P/FCF band
+  also works end-to-end (AAPL/MSFT/MU).
+- Remaining: no facts have been collected for any of these metrics yet (no
+  filings ingested against them), so the derivations are exercised with
+  reproducible synthetic observations in isolated test databases. Collecting
+  real filings for a ticker is the next concrete step to turn the mechanism
+  into live coverage; `reprocess_existing()` can backfill from any concept
+  payloads already saved as `source_documents`.
+
+**Next gap:** run canonical SEC collection for a filer (AAPL/MSFT/MU) so
+operating income + D&A (and OCF/capex) observations exist, then verify the
+complete source-fact → estimate → reverse-valuation → matrix/export path with
+real data; alternatively evaluate 8-K/other form generalisation.
+

@@ -33,6 +33,8 @@ from data_contract import (
     METRIC_REVENUE,
     METRIC_OPERATING_CASH_FLOW,
     METRIC_CAPEX,
+    METRIC_OPERATING_INCOME,
+    METRIC_DEPRECIATION_AND_AMORTIZATION,
     UNAVAILABLE,
     AvailabilityBasis,
     Observation,
@@ -282,13 +284,20 @@ class BoundaryFixture(unittest.TestCase):
 class ScopeAndExistenceTests(BoundaryFixture):
     """Rules 1 and 2: the scope comes from the registry, and absence is a refusal."""
 
-    def test_v1_scope_is_three_metrics_and_comes_from_the_contract(self):
-        # Deliberate widening (condition C): operating_cash_flow and capex are
-        # ACTIVE, monetary DURATION, EXACT-mapped metrics, so they cross beside
-        # revenue to feed the free-cash-flow derivation.
+    def test_v1_scope_is_five_metrics_and_comes_from_the_contract(self):
+        # Deliberate widening (condition C): operating_cash_flow, capex,
+        # operating_income and depreciation_and_amortization are ACTIVE,
+        # monetary DURATION, EXACT-mapped metrics, so they cross beside revenue
+        # to feed the free-cash-flow and EBITDA derivations.
         self.assertEqual(
             V1_CROSSING_METRICS,
-            (METRIC_REVENUE, METRIC_OPERATING_CASH_FLOW, METRIC_CAPEX),
+            (
+                METRIC_REVENUE,
+                METRIC_OPERATING_CASH_FLOW,
+                METRIC_CAPEX,
+                METRIC_OPERATING_INCOME,
+                METRIC_DEPRECIATION_AND_AMORTIZATION,
+            ),
         )
         self.assertEqual(V1_CROSSING_METRICS[0], "revenue")
 
@@ -942,10 +951,19 @@ class IntegrationTests(BoundaryFixture):
         self.assertEqual(result.asset, TICKER)
         self.assertEqual(result.as_of, "2026-09-29")
         self.assertEqual(list(result.admitted), [METRIC_REVENUE])
-        # Cash-flow inputs are crossed but have no filed observations here, so
-        # the boundary honestly refuses them rather than synthesising FCF.
+        # Cash-flow and income inputs are crossed but have no filed
+        # observations here, so the boundary honestly refuses them rather than
+        # synthesising FCF or EBITDA.
         refused = result.refused
-        self.assertEqual(set(refused), {METRIC_OPERATING_CASH_FLOW, METRIC_CAPEX})
+        self.assertEqual(
+            set(refused),
+            {
+                METRIC_OPERATING_CASH_FLOW,
+                METRIC_CAPEX,
+                METRIC_OPERATING_INCOME,
+                METRIC_DEPRECIATION_AND_AMORTIZATION,
+            },
+        )
         for admission in refused.values():
             self.assertFalse(admission.admitted)
             self.assertIn(UNAVAILABLE, admission.refusal_labels)
@@ -960,6 +978,8 @@ class IntegrationTests(BoundaryFixture):
             "current_fcf",
             "current_operating_cash_flow",
             "current_capex",
+            "current_operating_income",
+            "current_depreciation_and_amortization",
             "current_ebitda",
             "current_enterprise_value",
             "current_market_cap",
@@ -1056,7 +1076,13 @@ class IntegrationTests(BoundaryFixture):
         ).contract_dict()
         self.assertEqual(
             document["crossing_metrics"],
-            ["revenue", "operating_cash_flow", "capex"],
+            [
+                "revenue",
+                "operating_cash_flow",
+                "capex",
+                "operating_income",
+                "depreciation_and_amortization",
+            ],
         )
         admission = document["admissions"][0]
         for key in (
@@ -1201,6 +1227,9 @@ class TestFreeCashFlowCrossing(BoundaryFixture):
     OCF_VALUE = 12_000_000_000
     CAPEX_VALUE = -3_000_000_000  # negative: a cash outflow
     FCF_VALUE = OCF_VALUE + CAPEX_VALUE  # 9_000_000_000
+    OPERATING_INCOME_VALUE = 4_000_000_000
+    DA_VALUE = 1_000_000_000
+    EBITDA_VALUE = OPERATING_INCOME_VALUE + DA_VALUE  # 5_000_000_000
 
     def add_operating_cash_flow(self, **kwargs):
         observation = filing_observation(
@@ -1252,7 +1281,14 @@ class TestFreeCashFlowCrossing(BoundaryFixture):
         self.assertEqual(
             set(result.admitted), {METRIC_OPERATING_CASH_FLOW, METRIC_CAPEX}
         )
-        self.assertEqual(set(result.refused), {METRIC_REVENUE})
+        self.assertEqual(
+            set(result.refused),
+            {
+                METRIC_REVENUE,
+                METRIC_OPERATING_INCOME,
+                METRIC_DEPRECIATION_AND_AMORTIZATION,
+            },
+        )
         # Observed filed figures pass through unchanged.
         self.assertEqual(inputs.current_operating_cash_flow, self.OCF_VALUE)
         self.assertEqual(inputs.current_capex, self.CAPEX_VALUE)
@@ -1276,6 +1312,95 @@ class TestFreeCashFlowCrossing(BoundaryFixture):
         self.assertEqual(
             analysis["implied_assumptions"]["fcf_at_reference_multiple"],
             MARKET_CAP / 10.0,
+        )
+
+    def add_operating_income(self, **kwargs):
+        observation = filing_observation(
+            METRIC_OPERATING_INCOME,
+            "us-gaap:OperatingIncomeLoss",
+            self.OPERATING_INCOME_VALUE,
+            ANNUAL,
+            "2025-10-03T21:02:11.000Z",
+            ACCEPTED,
+            accession=kwargs.pop("accession", self.next_accession()),
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            fidelity="EXACT",
+            form="10-K",
+            fiscal_year=2025,
+            fiscal_period="FY",
+            **kwargs,
+        )
+        self.record(observation)
+        return observation
+
+    def add_depreciation_and_amortization(self, **kwargs):
+        observation = filing_observation(
+            METRIC_DEPRECIATION_AND_AMORTIZATION,
+            "us-gaap:DepreciationAndAmortization",
+            self.DA_VALUE,
+            ANNUAL,
+            "2025-10-03T21:02:11.000Z",
+            ACCEPTED,
+            accession=kwargs.pop("accession", self.next_accession()),
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            fidelity="EXACT",
+            form="10-K",
+            fiscal_year=2025,
+            fiscal_period="FY",
+            **kwargs,
+        )
+        self.record(observation)
+        return observation
+
+    def test_operating_income_and_da_cross_and_derive_ebitda(self):
+        self.add_operating_income()
+        self.add_depreciation_and_amortization()
+        result = build_valuation_inputs(
+            self.store, TICKER, "2026-09-29", price_observation()
+        )
+        inputs = result.valuation_inputs
+        self.assertEqual(
+            set(result.admitted),
+            {METRIC_OPERATING_INCOME, METRIC_DEPRECIATION_AND_AMORTIZATION},
+        )
+        # Observed filed figures pass through unchanged.
+        self.assertEqual(inputs.current_operating_income, self.OPERATING_INCOME_VALUE)
+        self.assertEqual(
+            inputs.current_depreciation_and_amortization, self.DA_VALUE
+        )
+        # EBITDA = operating income + depreciation & amortization.
+        self.assertEqual(inputs.current_ebitda, self.EBITDA_VALUE)
+
+    def test_ebitda_enters_the_reverse_valuation(self):
+        self.add_operating_income()
+        self.add_depreciation_and_amortization()
+        inputs, _ = admit(
+            self.store, TICKER, "2026-09-29", price_observation()
+        )
+        self.assertEqual(inputs.current_operating_income, self.OPERATING_INCOME_VALUE)
+        self.assertEqual(
+            inputs.current_depreciation_and_amortization, self.DA_VALUE
+        )
+        # EBITDA = operating income + depreciation & amortization.
+        self.assertEqual(inputs.current_ebitda, self.EBITDA_VALUE)
+        priced = replace(inputs, current_enterprise_value=MARKET_CAP)
+        analysis = MarketImpliedAssumptionsEngine.analyze(
+            priced, ev_ebitda_multiple=8.0
+        )
+        self.assertEqual(
+            analysis["implied_assumptions"]["reference_multiples"]["ev_ebitda"],
+            8.0,
+        )
+        self.assertEqual(
+            analysis["observed_valuation"]["current_ev_ebitda"],
+            MARKET_CAP / self.EBITDA_VALUE,
+        )
+        # Implied EBITDA = enterprise value / EV/EBITDA multiple.
+        self.assertEqual(
+            analysis["implied_assumptions"]["ebitda_at_reference_multiple"],
+            MARKET_CAP / 8.0,
         )
 
 

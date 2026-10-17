@@ -14,24 +14,27 @@ archive.
         -> ValuationInputs.current_operating_cash_flow
         -> ValuationInputs.current_capex
         -> ValuationInputs.current_fcf (derived from the two cash-flow inputs)
+        -> ValuationInputs.current_operating_income
+        -> ValuationInputs.current_depreciation_and_amortization
+        -> ValuationInputs.current_ebitda (derived from the two income inputs)
     -> MarketImpliedAssumptionsEngine.analyze
 
 Two measured facts shape every decision below, both from the MU pilot archive.
 
-**`revenue`, `operating_cash_flow` and `capex` are the metrics V1 may cross.**
-The evidence registry holds twenty-one ACTIVE filing metrics; `ValuationInputs`
-holds thirteen engine metrics; the intersection is `revenue`,
-`operating_cash_flow` and `capex`. V1 admits those three and refuses the rest
-by name, rather than discovering later that each had a semantic problem of its
-own.
+**`revenue`, `operating_cash_flow`, `capex`, `operating_income` and
+`depreciation_and_amortization` are the metrics V1 may cross.** The evidence
+registry holds twenty-one ACTIVE filing metrics; `ValuationInputs` holds
+thirteen engine metrics; the intersection is those five. V1 admits them and
+refuses the rest by name, rather than discovering later that each had a semantic
+problem of its own.
 
-**None of the three may be synthesised.** Each is *"Observed ... Never
+**None of the five may be synthesised.** Each is *"Observed ... Never
 synthesised."* in its metric definition (`data_contract.py`). V1 therefore
 admits an *observed filed period* and refuses a cumulative one. Free cash flow
-is the single exception: it is derived from the admitted `operating_cash_flow`
-and `capex` only when they share one period and one currency with each other
-and with the price; capex sign is handled explicitly because SEC XBRL reports
-capex as a negative cash outflow.
+and EBITDA are the single exceptions: each is derived only from admitted inputs
+that share one period and one currency with each other and with the price. Capex
+sign is handled explicitly because SEC XBRL reports capex as a negative cash
+outflow.
 
 What V1 deliberately does not do:
 
@@ -73,6 +76,8 @@ from data_contract import (
     METRIC_REVENUE,
     METRIC_OPERATING_CASH_FLOW,
     METRIC_CAPEX,
+    METRIC_OPERATING_INCOME,
+    METRIC_DEPRECIATION_AND_AMORTIZATION,
     QUARTER_MAX_DAYS,
     QUARTER_MIN_DAYS,
     YEAR_MAX_DAYS,
@@ -104,13 +109,28 @@ from evidence_query import (
 # It is deliberately narrow: only metrics the registry holds as ACTIVE,
 # monetary DURATION concepts with an EXACT mapping may cross. `operating_cash_flow`
 # and `capex` meet that bar (both are EXACT-mapped, currency, DURATION), so they
-# cross beside `revenue` to feed the free-cash-flow derivation. `free_cash_flow`
+# cross beside `revenue` to feed the free-cash-flow derivation. `operating_income`
+# and `depreciation_and_amortization` meet the same bar and cross beside them to
+# feed the EBITDA derivation, which is the input surface for EV/EBITDA. `free_cash_flow`
 # and `ebitda` themselves have no registry entry and remain off the crossing: they
 # are not filing figures, and ST-EVA does not synthesise them here.
 V1_CROSSING_METRICS: Tuple[str, ...] = (
     METRIC_REVENUE,
     METRIC_OPERATING_CASH_FLOW,
     METRIC_CAPEX,
+    METRIC_OPERATING_INCOME,
+    METRIC_DEPRECIATION_AND_AMORTIZATION,
+)
+
+# Metrics declared *trailing*: only an observed annual filing (approximately one
+# fiscal year, 330-400 days) may cross. A discrete quarter is not trailing and
+# must not be annualised into one. Revenue is the original case; operating
+# income and depreciation & amortization are income-statement flows used in the
+# same trailing EBITDA derivation, so they follow the same rule.
+TRAILING_ANNUAL_METRICS: Tuple[str, ...] = (
+    METRIC_REVENUE,
+    METRIC_OPERATING_INCOME,
+    METRIC_DEPRECIATION_AND_AMORTIZATION,
 )
 
 # The registry must agree on all three of these before a metric is a candidate.
@@ -845,15 +865,15 @@ def _period_refusals(observation: Observation, metric: str) -> List[Refusal]:
         return [_refusal(PERIOD_NOT_DISCRETE, "the period has no readable length")]
     if YEAR_MIN_DAYS <= days <= YEAR_MAX_DAYS:
         return []
-    if metric == METRIC_REVENUE:
-        # Revenue is declared trailing; a quarter is not trailing and must not
-        # be annualised into one.
+    if metric in TRAILING_ANNUAL_METRICS:
+        # Declared trailing: a quarter is not trailing and must not be
+        # annualised into one. Nothing here annualises or rolls forward.
         if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
             return [
                 _refusal(
                     PERIOD_NOT_DISCRETE,
                     f"the period spans {days} days, which is a discrete quarter, not "
-                    f"the trailing annual figure `current_revenue` declares",
+                    f"the trailing annual figure `{metric}` declares",
                 )
             ]
         return [
@@ -861,8 +881,8 @@ def _period_refusals(observation: Observation, metric: str) -> List[Refusal]:
                 PERIOD_NOT_DISCRETE,
                 f"the period spans {days} days, which is neither an observed annual "
                 f"filing ({YEAR_MIN_DAYS}-{YEAR_MAX_DAYS} days) nor any other "
-                f"trailing figure; `current_revenue` is declared trailing and must "
-                f"not be synthesised from a partial or cumulative period",
+                f"trailing figure; `{metric}` is declared trailing and must not be "
+                f"synthesised from a partial or cumulative period",
             )
         ]
     # Cash-flow metrics are period flows: a discrete quarter or a fiscal year
@@ -1258,6 +1278,45 @@ def _derive_free_cash_flow(
     return ocf - capex_value
 
 
+# EBITDA derivation.
+#
+# EBITDA is operating income plus depreciation and amortization. Both are income
+# statement flows reported as positive magnitudes, so no sign flip is needed:
+# operating income already excludes D&A, and adding D&A back restores earnings
+# before the non-cash charges. Operating income and D&A must share one period and
+# one currency with each other and with the price; otherwise EBITDA stays
+# UNAVAILABLE and no incompatible periods or currencies are combined.
+def _derive_ebitda(
+    operating_income: Optional[Admission],
+    depreciation_and_amortization: Optional[Admission],
+    price_currency: Optional[str],
+) -> Optional[float]:
+    """
+    Derive EBITDA from admitted operating income and depreciation & amortization.
+
+    Returns `None` when either input is absent or non-numeric, when the two
+    sit on different periods or currencies, or when either currency differs
+    from the valuation-side price's currency.
+    """
+    if operating_income is None or depreciation_and_amortization is None:
+        return None
+    if (
+        not is_number(operating_income.value)
+        or not is_number(depreciation_and_amortization.value)
+    ):
+        return None
+    if (
+        operating_income.period_start != depreciation_and_amortization.period_start
+        or operating_income.period_end != depreciation_and_amortization.period_end
+    ):
+        return None
+    if operating_income.currency != depreciation_and_amortization.currency:
+        return None
+    if price_currency is not None and operating_income.currency != price_currency:
+        return None
+    return float(operating_income.value) + float(depreciation_and_amortization.value)
+
+
 def admit(
     store: ArchiveStore,
     asset: str,
@@ -1338,13 +1397,34 @@ def admit(
     free_cash_flow = _derive_free_cash_flow(
         operating_cash_flow, capex, checked_price.currency
     )
-    # `current_revenue`, `current_operating_cash_flow` and `current_capex`
-    # are observed filed figures; `current_fcf` is derived from the two
-    # cash-flow admissions only when they share one period and one currency
-    # with each other and with the price. Every other field keeps the
-    # dataclass's own default, which is what "kept valuation-side" means in
-    # code: `UNAVAILABLE` for a scalar and `{}` for a band, never a zero and
-    # never a related metric.
+    operating_income = next(
+        (
+            admission
+            for admission in admissions
+            if admission.metric == METRIC_OPERATING_INCOME
+            and admission.admitted
+        ),
+        None,
+    )
+    depreciation_and_amortization = next(
+        (
+            admission
+            for admission in admissions
+            if admission.metric == METRIC_DEPRECIATION_AND_AMORTIZATION
+            and admission.admitted
+        ),
+        None,
+    )
+    ebitda = _derive_ebitda(
+        operating_income, depreciation_and_amortization, checked_price.currency
+    )
+    # `current_revenue`, `current_operating_cash_flow`, `current_capex`,
+    # `current_operating_income` and `current_depreciation_and_amortization`
+    # are observed filed figures; `current_fcf` and `current_ebitda` are
+    # derived only when their inputs share one period and one currency with
+    # each other and with the price. Every other field keeps the dataclass's
+    # own default: `UNAVAILABLE` for a scalar and `{}` for a band, never a
+    # zero and never a related metric.
     inputs = ValuationInputs(
         price=float(checked_price.value),
         currency=checked_price.currency,
@@ -1358,8 +1438,20 @@ def admit(
         current_capex=(
             capex.value if capex is not None else UNAVAILABLE
         ),
+        current_operating_income=(
+            operating_income.value if operating_income is not None
+            else UNAVAILABLE
+        ),
+        current_depreciation_and_amortization=(
+            depreciation_and_amortization.value
+            if depreciation_and_amortization is not None
+            else UNAVAILABLE
+        ),
         current_fcf=(
             free_cash_flow if free_cash_flow is not None else UNAVAILABLE
+        ),
+        current_ebitda=(
+            ebitda if ebitda is not None else UNAVAILABLE
         ),
     )
     return inputs, admissions
