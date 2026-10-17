@@ -2753,10 +2753,33 @@ def _vendor_source_reference(observation: Any) -> Tuple[Optional[str], Optional[
     return source_field, (str(source_url) if source_url else None)
 
 
+def _vendor_eps_provenance(data: Any, metric: str) -> Dict[str, Any]:
+    """
+    The run-context provenance of one supplier EPS field.
+
+    Read from the observation that projected the engine's own view field, by the
+    same selection rule that filled it. The catalogue's supplier entries carry
+    this identity so a requested supplier anchor is the same traceable figure
+    the default path would have served.
+    """
+    observation = _observation_projecting_view_field(data, metric)
+    source_field, source_url = _vendor_source_reference(observation)
+    return {
+        "observation": observation,
+        "source_field": source_field,
+        "source_url": source_url,
+        "provider": getattr(observation, "provider", None) if observation is not None else None,
+        "observation_type": getattr(observation, "source_type", None) if observation is not None else None,
+        "retrieved_at": getattr(observation, "retrieved_at", None) if observation is not None else None,
+        "observation_id": getattr(observation, "observation_id", None) if observation is not None else None,
+    }
+
+
 def _sec_observation_supplying_anchor(
     data: Any,
     anchor: Any,
     sec_observations: Optional[Sequence[Any]] = None,
+    metrics: Optional[Sequence[str]] = None,
 ) -> Optional[Observation]:
     """
     The SEC observation that actually supplied the anchor's value, if any.
@@ -2767,10 +2790,15 @@ def _sec_observation_supplying_anchor(
     that filing and the filing fact may be named as its source. When the field
     was projected from a vendor or fixture observation, no filing fact may be
     named, however close a historical figure's value is to it.
+
+    ``metrics`` narrows the projection metrics checked, for a caller that
+    already knows which engine field its figure came from; the default reads
+    the mapping from the anchor's basis.
     """
     if anchor is None or getattr(anchor, "is_user_assumption", False):
         return None
-    metrics = _EPS_METRIC_FOR_ANCHOR_BASIS.get(str(getattr(anchor, "basis", "") or ""))
+    if metrics is None:
+        metrics = _EPS_METRIC_FOR_ANCHOR_BASIS.get(str(getattr(anchor, "basis", "") or ""))
     if not metrics:
         return None
     anchor_value = safe_float(getattr(anchor, "value", None))
@@ -3146,6 +3174,7 @@ def _find_related_sec_evidence(
 def _build_declared_eps_evidence_block(
     ticker: str,
     sec_eps_evidence: Optional[Dict[str, Any]],
+    selected_anchor_is_sec_filing: bool = False,
 ) -> Dict[str, Any]:
     """
     The report-level statement of the declared diluted-EPS facts.
@@ -3154,6 +3183,11 @@ def _build_declared_eps_evidence_block(
     where they came from, `UNAVAILABLE` says the acquisition asked and the
     source reported none, and `NOT_ACQUIRED` says this run never asked (and no
     packaged dataset exists to fall back on). Nothing is filled in.
+
+    When the run's selected starting anchor is itself a filing figure, the
+    cross-check note says so: the block then restates the same filing record's
+    report-level view rather than claiming the facts are unrelated to the
+    selection.
     """
     block: Dict[str, Any] = {
         "selection_rule": DECLARED_EPS_SELECTION_RULE,
@@ -3166,10 +3200,16 @@ def _build_declared_eps_evidence_block(
         "latest_annual": None,
         "latest_interim": None,
         "cross_check_note": (
-            "Declared filing facts are shown for cross-check only: they are not "
-            "the source of the selected starting EPS, and no input-to-fact "
-            "linkage is claimed. The vendor figure's own period coverage is "
-            "declared by its source or explicitly reported as undeclared."
+            "The selected starting EPS is itself an issuer-reported filing "
+            "anchor, so the declared facts below restate the filing record the "
+            "anchor was adopted from."
+            if selected_anchor_is_sec_filing
+            else (
+                "Declared filing facts are shown for cross-check only: they are not "
+                "the source of the selected starting EPS, and no input-to-fact "
+                "linkage is claimed. The vendor figure's own period coverage is "
+                "declared by its source or explicitly reported as undeclared."
+            )
         ),
         "unavailable": [],
     }
@@ -3318,8 +3358,26 @@ def _build_reverse_requirements(
         rate_as_decimal,
         select_rate,
     )
+    from eps_anchor_evidence import (
+        ANCHOR_SUPPLIER_CONSENSUS,
+        ANCHOR_SUPPLIER_FORWARD,
+        ANCHOR_SUPPLIER_TRAILING,
+        NATURE_DERIVED,
+        NATURE_DIRECT_FILING,
+        NATURE_PROVIDER_REPORTED,
+        SELECTION_RULE,
+        build_eps_anchor_candidates,
+        candidate_to_eps_anchor,
+        is_explicit_anchor_id,
+        is_legacy_anchor_preference,
+        select_anchor,
+        unknown_anchor_request_refusal,
+    )
+    import dataclasses
 
     unavailable: List[Dict[str, Any]] = []
+    eps_anchor_catalogue: Optional[Dict[str, Any]] = None
+    eps_anchor_selection: Optional[Dict[str, Any]] = None
 
     trailing_eps = safe_float(data.current_eps)
     forward_eps = safe_float(data.forward_eps)
@@ -3354,6 +3412,121 @@ def _build_reverse_requirements(
                     "blocks": ["start_anchor"],
                 }
             ]
+    elif (
+        prefer_eps_anchor
+        and not is_explicit_anchor_id(prefer_eps_anchor)
+        and not is_legacy_anchor_preference(prefer_eps_anchor)
+    ):
+        # A request that names no catalogue anchor and no legacy preference is
+        # refused outright: reinterpreting it as a preference would start the
+        # growth bridge from a figure the caller did not ask for.
+        requested_name = str(prefer_eps_anchor)
+        refusal = unknown_anchor_request_refusal(requested_name)
+        eps_anchor_selection = {
+            "requested": requested_name,
+            "mode": "EXPLICIT",
+            "rule": SELECTION_RULE,
+            "selected_anchor_id": None,
+            "refused": [dict(refusal)],
+        }
+        anchor = None
+        anchor_unavailable = [dict(refusal)]
+    elif is_explicit_anchor_id(prefer_eps_anchor):
+        # An explicit catalogue request names one anchor and is satisfied only
+        # by that anchor: the catalogue is built from what this run observed
+        # and what the tracked SEC datasets hold, the named entry is selected
+        # or refused with its reason, and a refused anchor is never replaced by
+        # a different figure.
+        trailing_prov = _vendor_eps_provenance(data, METRIC_TRAILING_EPS)
+        forward_prov = _vendor_eps_provenance(data, METRIC_FORWARD_EPS)
+        consensus_prov = _vendor_eps_provenance(data, METRIC_CONSENSUS_FORWARD_EPS)
+        catalogue = build_eps_anchor_candidates(
+            ticker=data.ticker,
+            valuation_date=data.price_date,
+            currency=data.currency,
+            trailing_eps=trailing_eps,
+            forward_eps=forward_eps,
+            consensus_eps=consensus_eps,
+            provider=data.provider,
+            trailing_source_field=trailing_prov["source_field"],
+            trailing_source_url=trailing_prov["source_url"],
+            trailing_observation_type=trailing_prov["observation_type"],
+            trailing_retrieved_at=trailing_prov["retrieved_at"],
+            trailing_observation_id=trailing_prov["observation_id"],
+            forward_source_field=forward_prov["source_field"],
+            forward_source_url=forward_prov["source_url"],
+            forward_observation_type=forward_prov["observation_type"],
+            forward_retrieved_at=forward_prov["retrieved_at"],
+            forward_observation_id=forward_prov["observation_id"],
+            consensus_source_field=consensus_prov["source_field"],
+            consensus_source_url=consensus_prov["source_url"],
+            consensus_observation_type=consensus_prov["observation_type"],
+            consensus_retrieved_at=consensus_prov["retrieved_at"],
+            consensus_observation_id=consensus_prov["observation_id"],
+            run_observations=sec_observations,
+        )
+        selection = select_anchor(catalogue, str(prefer_eps_anchor))
+        eps_anchor_catalogue = catalogue.contract_view()
+        eps_anchor_selection = selection.contract_view()
+        if selection.candidate is None:
+            anchor = None
+            anchor_unavailable = [dict(item) for item in selection.refused]
+        else:
+            candidate = selection.candidate
+            anchor_unavailable = []
+            anchor = candidate_to_eps_anchor(candidate, currency=data.currency)
+            if candidate.nature == NATURE_PROVIDER_REPORTED:
+                # A supplier entry is the same kind of figure the default path
+                # serves, so it keeps the same run-context provenance, and the
+                # direct-filing linkage follows the same identity rule.
+                prov = {
+                    ANCHOR_SUPPLIER_TRAILING: trailing_prov,
+                    ANCHOR_SUPPLIER_FORWARD: forward_prov,
+                    ANCHOR_SUPPLIER_CONSENSUS: consensus_prov,
+                }[candidate.anchor_id]
+                supplying = _sec_observation_supplying_anchor(
+                    data,
+                    anchor,
+                    sec_observations,
+                    metrics=(METRIC_TRAILING_EPS,)
+                    if candidate.anchor_id == ANCHOR_SUPPLIER_TRAILING
+                    else (METRIC_FORWARD_EPS,)
+                    if candidate.anchor_id == ANCHOR_SUPPLIER_FORWARD
+                    else (METRIC_CONSENSUS_FORWARD_EPS,),
+                )
+                sec_fact = _resolve_sec_eps_fact(
+                    anchor.value, source_observation=supplying
+                )
+                sec_related = _find_related_sec_evidence(
+                    data.ticker,
+                    (sec_eps_evidence or {}).get("observations")
+                    if sec_eps_evidence
+                    else None,
+                    (sec_eps_evidence or {}).get("cik") if sec_eps_evidence else None,
+                )
+                anchor = dataclasses.replace(
+                    anchor,
+                    source_type=str(
+                        getattr(prov["observation"], "source_type", None)
+                        or data.source_type
+                        or "OBSERVED"
+                    ),
+                    observation_id=prov["observation_id"] or candidate.observation_id,
+                    sec_fact=sec_fact,
+                    sec_related_evidence=sec_related,
+                    source_field=prov["source_field"],
+                    source_url=prov["source_url"],
+                    source_provider=prov["provider"],
+                    source_observation_type=prov["observation_type"],
+                    source_retrieved_at=prov["retrieved_at"],
+                )
+            else:
+                # A filing anchor's source is the filing itself; the catalogue
+                # entry already carries its accession, period and availability.
+                anchor = dataclasses.replace(
+                    anchor,
+                    source_type=SourceType.REGULATORY_FILING.value,
+                )
     else:
         anchor, anchor_unavailable = build_start_anchor(
             trailing_eps=trailing_eps,
@@ -3405,7 +3578,6 @@ def _build_reverse_requirements(
             source_provider = getattr(projecting, "provider", None) if projecting is not None else None
             source_observation_type = getattr(projecting, "source_type", None) if projecting is not None else None
             source_retrieved_at = getattr(projecting, "retrieved_at", None) if projecting is not None else None
-            import dataclasses
             anchor = dataclasses.replace(
                 anchor,
                 source_type=str(data.source_type or "OBSERVED"),
@@ -3420,6 +3592,15 @@ def _build_reverse_requirements(
                 source_retrieved_at=source_retrieved_at,
             )
     unavailable.extend(anchor_unavailable)
+
+    # When the adopted anchor is itself a filing figure, the declared-EPS
+    # block's cross-check note must not claim the opposite. The flag is read
+    # from the anchor's declared nature, never inferred from a value.
+    adopted_sec_anchor = bool(
+        anchor is not None
+        and getattr(anchor, "anchor_id", None)
+        and getattr(anchor, "anchor_nature", "") in (NATURE_DIRECT_FILING, NATURE_DERIVED)
+    )
 
     if not reference_multiples:
         reference_multiples = [reference_multiple] if reference_multiple is not None else []
@@ -3681,6 +3862,14 @@ def _build_reverse_requirements(
             "price_vs_total_return_comparison": [],
             "dividend_basis": None,
             "unavailable": list(unavailable),
+            **(
+                {
+                    "eps_anchor_catalogue": eps_anchor_catalogue,
+                    "eps_anchor_selection": eps_anchor_selection,
+                }
+                if eps_anchor_catalogue is not None or eps_anchor_selection is not None
+                else {}
+            ),
             "reading_notes": [
                 "The baseline reverse-requirements matrix is strictly price-return-only; required returns exclude dividends.",
                 "When a dividend per share is supplied, two additional scenario sets are computed: cash dividends retained and dividends reinvested at the target return.",
@@ -3695,7 +3884,9 @@ def _build_reverse_requirements(
                 "See `unavailable` for what was missing."
             ),
             "declared_eps_evidence": _build_declared_eps_evidence_block(
-                data.ticker, sec_eps_evidence
+                data.ticker,
+                sec_eps_evidence,
+                selected_anchor_is_sec_filing=adopted_sec_anchor,
             ),
         }
         return report
@@ -3751,6 +3942,8 @@ def _build_reverse_requirements(
         unavailable=unavailable,
         production_historical_pe=production_historical_pe,
         price_evidence=price_evidence,
+        eps_anchor_catalogue=eps_anchor_catalogue,
+        eps_anchor_selection=eps_anchor_selection,
     )
 
     report["dividends"] = dividend_pkg
@@ -3764,7 +3957,9 @@ def _build_reverse_requirements(
     # concept, with the vendor anchor's undeclared coverage left as the vendor
     # stated it. Cross-check evidence only; it feeds no calculation.
     report["declared_eps_evidence"] = _build_declared_eps_evidence_block(
-        data.ticker, sec_eps_evidence
+        data.ticker,
+        sec_eps_evidence,
+        selected_anchor_is_sec_filing=adopted_sec_anchor,
     )
 
     # Financial history from the same run's sourced observations. When no SEC

@@ -155,6 +155,15 @@ class SecFactDTO(BaseModel):
     period_start: Optional[str] = None
     period_end: Optional[str] = None
     document_url: Optional[str] = None
+    # When the filing entered the public record, and on what basis that instant
+    # is declared. Present for an EPS anchor adopted from the catalogue; None
+    # for the related-evidence cross-check, which declares a filed date only.
+    acceptance_datetime: Optional[str] = None
+    available_at: Optional[str] = None
+    available_at_basis: Optional[str] = None
+    evidence_class: Optional[str] = None
+    gaap_basis: Optional[str] = None
+    source_url: Optional[str] = None
 
 
 class RelatedSecEvidenceDTO(BaseModel):
@@ -189,6 +198,18 @@ class EpsAnchorDTO(BaseModel):
     observation_id: Optional[str] = None
     is_user_assumption: bool = False
     sec_fact: Optional[SecFactDTO] = None
+    # The EPS anchor catalogue entry this anchor was adopted from, with the
+    # nature that distinguishes a provider-reported figure from a directly
+    # stated filing fact and from a derived sum, when it became public, and
+    # the directly stated quarterly components a derived sum was built from.
+    # All absent for the legacy vendor anchors.
+    anchor_id: Optional[str] = None
+    anchor_nature: Optional[str] = None
+    anchor_gaap_basis: Optional[str] = None
+    available_at: Optional[str] = None
+    available_at_basis: Optional[str] = None
+    sec_components: Optional[List[Dict[str, Any]]] = None
+    annual_comparison: Optional[Dict[str, Any]] = None
 
 
 class MarketPriceEvidenceDTO(BaseModel):
@@ -215,6 +236,13 @@ class EpsAnchorEvidenceDTO(BaseModel):
     observation_id: Optional[str] = None
     is_user_assumption: bool = False
     sec_fact: Optional[SecFactDTO] = None
+    anchor_id: Optional[str] = None
+    anchor_nature: Optional[str] = None
+    anchor_gaap_basis: Optional[str] = None
+    available_at: Optional[str] = None
+    available_at_basis: Optional[str] = None
+    sec_components: Optional[List[Dict[str, Any]]] = None
+    annual_comparison: Optional[Dict[str, Any]] = None
 
 
 class ExitMultipleEvidenceDTO(BaseModel):
@@ -376,6 +404,12 @@ class ReverseRequirementsReportDTO(BaseModel):
     # source declared for it. An eligible gap can be checked against these
     # facts, and a missing gap is explained by them rather than read as a zero.
     consensus_reference: ConsensusReferenceDTO = ConsensusReferenceDTO()
+    # The EPS anchor catalogue and the selection record, present when the run
+    # asked for a named catalogue anchor: every entry the issuer has evidence
+    # for, and which one the matrix actually started from, or the specific
+    # reason the named one was refused.
+    eps_anchor_catalogue: Optional[Dict[str, Any]] = None
+    eps_anchor_selection: Optional[Dict[str, Any]] = None
 
 
 class AnalysisResultDTO(BaseModel):

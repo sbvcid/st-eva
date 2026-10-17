@@ -189,6 +189,20 @@ class EpsAnchor:
     # market price it is paired with, which the evidence keeps visible rather
     # than silently treating the two as one point-in-time snapshot.
     source_retrieved_at: Optional[str] = None
+    # The EPS anchor catalogue entry this anchor was adopted from, with the
+    # identity that entry carries: what the figure is (provider-reported, a
+    # directly stated filing fact, or a derived sum), the accounting basis the
+    # source declared, when it became public, and the directly stated quarterly
+    # components a derived sum was built from. Empty for the legacy vendor
+    # anchors, whose provenance is the fields above alone.
+    anchor_id: Optional[str] = None
+    anchor_nature: str = ""
+    anchor_gaap_basis: str = ""
+    anchor_available_at: Optional[str] = None
+    anchor_available_at_basis: str = ""
+    sec_components: Optional[Tuple[Dict[str, Any], ...]] = None
+    anchor_derivation: str = ""
+    annual_comparison: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if not math_is_finite(self.value):
@@ -199,7 +213,7 @@ class EpsAnchor:
             )
 
     def contract_view(self) -> Dict[str, Any]:
-        return {
+        view = {
             "value": self.value,
             "basis": self.basis,
             "months_covered": self.months_covered,
@@ -215,6 +229,22 @@ class EpsAnchor:
             "sec_fact": self.sec_fact,
             "sec_related_evidence": self.sec_related_evidence,
         }
+        # A catalogue-adopted anchor extends its contract view with the identity
+        # that makes it traceable: which entry it is, what kind of figure it is,
+        # when it became public, and the directly stated quarterly components a
+        # derived sum was built from. A legacy anchor's view is unchanged, so
+        # every fingerprint computed before this field existed still matches.
+        if self.anchor_id is not None:
+            view["anchor_id"] = self.anchor_id
+            view["anchor_nature"] = self.anchor_nature
+            view["anchor_gaap_basis"] = self.anchor_gaap_basis
+            view["anchor_available_at"] = self.anchor_available_at
+            view["anchor_available_at_basis"] = self.anchor_available_at_basis
+            view["anchor_derivation"] = self.anchor_derivation
+            view["annual_comparison"] = self.annual_comparison
+            if self.sec_components:
+                view["sec_components"] = [dict(item) for item in self.sec_components]
+        return view
 
 
 def math_is_finite(value: Any) -> bool:
@@ -734,6 +764,20 @@ def build_scenario_evidence(
         "is_user_assumption": bool(pe_info.get("is_user_assumption", False)),
     }
 
+    # The synthetic vendor observation id is a legacy-path default only. An
+    # anchor adopted from the EPS anchor catalogue carries its own identity --
+    # the accession that states a filing figure, or the run observation id the
+    # catalogue recorded for a supplier figure -- and is never labelled with
+    # another figure's observation id.
+    eps_observation_id = getattr(start_anchor, "observation_id", None)
+    if (
+        eps_observation_id is None
+        and getattr(start_anchor, "anchor_id", None) is None
+        and not getattr(start_anchor, "is_user_assumption", False)
+    ):
+        eps_observation_id = "ev-current-eps-001"
+    sec_components = getattr(start_anchor, "sec_components", None) or ()
+
     eps_ev = {
         "value": start_anchor.value,
         "basis": start_anchor.basis,
@@ -745,11 +789,22 @@ def build_scenario_evidence(
         "currency": start_anchor.currency or currency,
         "period_undeclared_by_source": start_anchor.period_undeclared_by_source,
         "source_type": getattr(start_anchor, "source_type", "") or ("USER_SUPPLIED" if getattr(start_anchor, "is_user_assumption", False) else "OBSERVED"),
-        "observation_id": getattr(start_anchor, "observation_id", None) or ("ev-current-eps-001" if not getattr(start_anchor, "is_user_assumption", False) else None),
+        "observation_id": eps_observation_id,
         "is_user_assumption": getattr(start_anchor, "is_user_assumption", False),
         "sec_fact": getattr(start_anchor, "sec_fact", None),
         "sec_related_evidence": getattr(start_anchor, "sec_related_evidence", None),
     }
+    # Catalogue-adopted anchors extend the evidence contract with the identity
+    # that makes them traceable; legacy vendor anchors keep the original 14-field
+    # contract so existing provenance assertions stay valid.
+    if getattr(start_anchor, "anchor_id", None) is not None:
+        eps_ev["anchor_id"] = getattr(start_anchor, "anchor_id", None)
+        eps_ev["anchor_nature"] = getattr(start_anchor, "anchor_nature", "")
+        eps_ev["anchor_gaap_basis"] = getattr(start_anchor, "anchor_gaap_basis", "")
+        eps_ev["available_at"] = getattr(start_anchor, "anchor_available_at", None)
+        eps_ev["available_at_basis"] = getattr(start_anchor, "anchor_available_at_basis", "")
+        eps_ev["sec_components"] = [dict(item) for item in sec_components] if sec_components else None
+        eps_ev["annual_comparison"] = getattr(start_anchor, "annual_comparison", None)
 
     mult_ev = {
         "value": exit_multiple.value,
@@ -797,6 +852,20 @@ def build_scenario_evidence(
         sample_note = f", sample size: {exit_multiple.sample_size}" if exit_multiple.sample_size else ""
         sourced_facts.append(
             f"Reference Exit Multiple: {exit_multiple.value:g}x ({exit_multiple.source}{sample_note})"
+        )
+
+    # A derived twelve-month anchor keeps its four directly stated quarterly
+    # components visible, so a reader can check the sum against the filings it
+    # was built from. The sum is this engine's arithmetic; no issuer stated it.
+    if sec_components and not eps_ev["is_user_assumption"]:
+        component_summary = "; ".join(
+            f"{item.get('period_start') or 'undeclared start'}..{item.get('period_end')}"
+            f" = {item.get('value')} ({item.get('form')} accession {item.get('accession')})"
+            for item in sec_components
+        )
+        sourced_facts.append(
+            f"Starting EPS derivation: four directly stated quarterly filing facts summed "
+            f"over {start_anchor.period_start} to {start_anchor.period_end} ({component_summary})"
         )
 
     # A provider-sourced starting EPS reports the provider field and endpoint
@@ -848,12 +917,20 @@ def build_scenario_evidence(
     if start_anchor.period_undeclared_by_source:
         missing_or_unvalidated.append("Starting EPS period coverage was not declared by source")
     # Explicit provenance limitation: direct SEC link must be proven, never inferred from existence.
-    # Every sourced (non-user) anchor either names the filing that supplied it or
-    # states that its direct SEC source is not established; the value itself is
-    # kept and its declared provider is what the evidence reports.
+    # Every sourced (non-user) anchor either names the filing that supplied it
+    # or states what its figure actually is. A derived twelve-month anchor is
+    # not an unestablished link: its components are directly stated filings,
+    # and the thing that is not an issuer statement is the sum itself.
     related = eps_ev.get("sec_related_evidence") or None
     if not eps_ev["is_user_assumption"] and not (eps_ev.get("sec_fact") and eps_ev["sec_fact"].get("accession")):
-        limitation = "Direct SEC source of selected EPS not established"
+        if sec_components:
+            limitation = (
+                "Starting EPS is a derived twelve-month sum of four directly stated "
+                "quarterly filing facts; the sum itself is this engine's arithmetic "
+                "and was not stated by the issuer"
+            )
+        else:
+            limitation = "Direct SEC source of selected EPS not established"
         if related and related.get("accession"):
             limitation += "; related filing shown for cross-check only"
         missing_or_unvalidated.append(limitation)
@@ -2199,10 +2276,18 @@ def build_reverse_requirements_report(
     unavailable: Optional[Iterable[Dict[str, Any]]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
     price_evidence: Optional[Dict[str, Any]] = None,
+    eps_anchor_catalogue: Optional[Dict[str, Any]] = None,
+    eps_anchor_selection: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the whole V1 package: the matrix, the cash flow cross-checks, the
     separated rate families, and an explicit statement of what is missing.
+
+    The EPS anchor catalogue and its selection record travel with the report
+    when the run asked for a named catalogue anchor: every entry the issuer has
+    evidence for, what each one is, and which one the matrix actually started
+    from (or the specific reason the named one was refused). A run that made no
+    explicit request reports neither block and is byte-identical to before.
     """
     from historical_pe import production_distribution_summary
 
@@ -2441,6 +2526,14 @@ def build_reverse_requirements_report(
         "price_vs_total_return_comparison": comparison_rows,
         "dividend_basis": dividend_basis_block,
         "unavailable": list(unavailable or []),
+        **(
+            {
+                "eps_anchor_catalogue": eps_anchor_catalogue,
+                "eps_anchor_selection": eps_anchor_selection,
+            }
+            if eps_anchor_catalogue is not None or eps_anchor_selection is not None
+            else {}
+        ),
         "reading_notes": [
             "The baseline reverse-requirements matrix is strictly price-return-only; required returns exclude dividends.",
             "When a dividend per share is supplied, two additional scenario sets are computed: cash dividends retained and dividends reinvested at the target return.",

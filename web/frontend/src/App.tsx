@@ -479,6 +479,8 @@ const MainApp: React.FC = () => {
                     <option value="trailing">{t.assumptions.epsTrailing}</option>
                     <option value="forward">{t.assumptions.epsForward}</option>
                     <option value="consensus">{t.assumptions.epsConsensus}</option>
+                    <option value="SEC_ANNUAL_DILUTED_EPS">{t.assumptions.epsSecAnnual}</option>
+                    <option value="SEC_TTM_FOUR_QUARTERS">{t.assumptions.epsSecTtm}</option>
                     <option value="user">{t.assumptions.epsUser}</option>
                   </select>
                 </div>

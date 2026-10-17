@@ -104,6 +104,31 @@ export interface SecFactDTO {
   period_start?: string | null
   period_end?: string | null
   document_url?: string | null
+  acceptance_datetime?: string | null
+  available_at?: string | null
+  available_at_basis?: string | null
+  evidence_class?: string | null
+  gaap_basis?: string | null
+  source_url?: string | null
+}
+
+export interface EpsAnchorComponentDTO {
+  period_start?: string | null
+  period_end?: string | null
+  value?: number | null
+  form?: string | null
+  accession?: string | null
+  filed_date?: string | null
+  acceptance_datetime?: string | null
+  available_at?: string | null
+  available_at_basis?: string | null
+  evidence_class?: string | null
+  fiscal_year?: number | string | null
+  fiscal_period?: string | null
+  fiscal_quarter?: number | string | null
+  concept?: string | null
+  gaap_basis?: string | null
+  source_url?: string | null
 }
 
 export interface RelatedSecEvidenceDTO extends SecFactDTO {
@@ -124,6 +149,13 @@ export interface EpsAnchorDTO {
   observation_id?: string | null
   is_user_assumption?: boolean
   sec_fact?: SecFactDTO | null
+  anchor_id?: string | null
+  anchor_nature?: string | null
+  anchor_gaap_basis?: string | null
+  available_at?: string | null
+  available_at_basis?: string | null
+  sec_components?: EpsAnchorComponentDTO[] | null
+  annual_comparison?: Record<string, any> | null
 }
 
 export interface MarketPriceEvidenceDTO {
@@ -150,6 +182,13 @@ export interface EpsAnchorEvidenceDTO {
   observation_id?: string | null
   is_user_assumption?: boolean
   sec_fact?: SecFactDTO | null
+  anchor_id?: string | null
+  anchor_nature?: string | null
+  anchor_gaap_basis?: string | null
+  available_at?: string | null
+  available_at_basis?: string | null
+  sec_components?: EpsAnchorComponentDTO[] | null
+  annual_comparison?: Record<string, any> | null
 }
 
 export interface ExitMultipleEvidenceDTO {
@@ -309,6 +348,8 @@ export interface ReverseRequirementsReportDTO {
   production_historical_pe_summary?: ProductionHistoricalPeDTO | null
   production_historical_pfcf_summary?: ProductionHistoricalPfcfDTO | null
   consensus_reference?: ConsensusReferenceDTO
+  eps_anchor_catalogue?: Record<string, any> | null
+  eps_anchor_selection?: Record<string, any> | null
 }
 
 export interface AnalysisResultDTO {

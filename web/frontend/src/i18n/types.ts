@@ -103,6 +103,8 @@ export interface Translations {
     epsForward: string
     epsConsensus: string
     epsUser: string
+    epsSecAnnual: string
+    epsSecTtm: string
     userEpsLabel: string
     resetDefaults: string
   }
@@ -202,6 +204,14 @@ export interface Translations {
     startEpsCoverageAssumed: string
     startEpsCoverageDeclared: string
     startEpsPeriodUnavailable: string
+    anchorNatureDirectFiling: string
+    anchorNatureDerived: string
+    anchorNatureProviderReported: string
+    startEpsAvailableAt: string
+    startEpsDerivedComponentsHeader: string
+    startEpsAnnualComparisonLabel: string
+    startEpsAnnualComparisonAgrees: string
+    startEpsAnnualDifferenceKept: string
     // Dividend / Total Return
     dividendSectionTitle: string
     dividendNotAvailable: string

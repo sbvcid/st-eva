@@ -611,6 +611,10 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                         className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
                                           sc.evidence.eps_evidence.is_user_assumption
                                             ? 'bg-blue-100 text-blue-800'
+                                            : sc.evidence.eps_evidence.anchor_nature === 'DIRECT_FILING'
+                                            ? 'bg-emerald-100 text-emerald-800'
+                                            : sc.evidence.eps_evidence.anchor_nature === 'DERIVED_FROM_DIRECT_FILINGS'
+                                            ? 'bg-teal-100 text-teal-800'
                                             : sc.evidence.eps_evidence.sec_fact
                                             ? 'bg-emerald-100 text-emerald-800'
                                             : 'bg-amber-100 text-amber-800'
@@ -618,6 +622,10 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                       >
                                         {sc.evidence.eps_evidence.is_user_assumption
                                           ? t.matrix.userSpecifiedBadge
+                                          : sc.evidence.eps_evidence.anchor_nature === 'DIRECT_FILING'
+                                          ? t.matrix.anchorNatureDirectFiling
+                                          : sc.evidence.eps_evidence.anchor_nature === 'DERIVED_FROM_DIRECT_FILINGS'
+                                          ? t.matrix.anchorNatureDerived
                                           : sc.evidence.eps_evidence.sec_fact
                                           ? t.matrix.secLinkedFactBadge
                                           : t.matrix.providerSourcedBadge}
@@ -667,9 +675,35 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                         </div>
                                       )}
                                       <div>Provider: {sc.evidence.eps_evidence.provider || 'reported'}</div>
+                                      {sc.evidence.eps_evidence.available_at && (
+                                        <div>
+                                          {t.matrix.startEpsAvailableAt}: {sc.evidence.eps_evidence.available_at}
+                                          {sc.evidence.eps_evidence.available_at_basis ? ` (${sc.evidence.eps_evidence.available_at_basis})` : ''}
+                                        </div>
+                                      )}
                                       {sc.evidence.eps_evidence.observation_id && (
                                         <div className="font-mono text-[10px] text-indigo-700">
                                           {sc.evidence.eps_evidence.observation_id}
+                                        </div>
+                                      )}
+                                      {/* Derived twelve-month anchor: the four directly stated quarterly
+                                          filings it sums, so the engine's arithmetic is checkable. */}
+                                      {(sc.evidence.eps_evidence.sec_components?.length || 0) > 0 && (
+                                        <div className="mt-1 pt-1 border-t border-teal-200 space-y-0.5 text-[10px] font-mono text-teal-800">
+                                          <div className="font-semibold">{t.matrix.startEpsDerivedComponentsHeader}</div>
+                                          {(sc.evidence.eps_evidence.sec_components || []).map((comp, ci) => (
+                                            <div key={ci}>
+                                              {comp.period_start || '?'} .. {comp.period_end} = {comp.value} ({comp.form} accn {comp.accession}{comp.evidence_class === 'furnished' ? ', furnished' : ''})
+                                            </div>
+                                          ))}
+                                          {sc.evidence.eps_evidence.annual_comparison?.comparable && (
+                                            <div className="text-[9px] text-teal-700 italic">
+                                              {t.matrix.startEpsAnnualComparisonLabel}: {sc.evidence.eps_evidence.annual_comparison.annual_value} —{' '}
+                                              {sc.evidence.eps_evidence.annual_comparison.agrees
+                                                ? t.matrix.startEpsAnnualComparisonAgrees
+                                                : t.matrix.startEpsAnnualDifferenceKept}
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                       {/* Direct SEC source — rendered only when the input-to-fact linkage is proven */}
@@ -688,8 +722,10 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           <div>{sc.evidence.eps_evidence.sec_fact.concept}</div>
                                         </div>
                                       )}
-                                      {/* Direct SEC source not established: state it, keep the value */}
-                                      {!sc.evidence.eps_evidence.sec_fact && !sc.evidence.eps_evidence.is_user_assumption && (
+                                      {/* Direct SEC source not established: state it, keep the value.
+                                          A derived anchor's components are directly stated filings, so the
+                                          derivation block above is its provenance and this caveat is not raised. */}
+                                      {!sc.evidence.eps_evidence.sec_fact && (sc.evidence.eps_evidence.sec_components?.length || 0) === 0 && !sc.evidence.eps_evidence.is_user_assumption && (
                                         <div className="mt-1 pt-1 border-t border-amber-200 text-[10px] font-mono text-amber-800">
                                           <div className="font-semibold">Direct SEC source: not established</div>
                                           <div className="text-[9px] text-amber-700 italic">
