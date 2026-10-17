@@ -164,7 +164,7 @@ class TestTheDecisionIsUnchangedByThisFix(unittest.TestCase):
             seed(registry)
             active = [m.metric_id for m in registry.metrics()
                       if m.status == "ACTIVE"]
-            self.assertEqual(len(active), 20)
+            self.assertEqual(len(active), 21)
         finally:
             store.close()
 

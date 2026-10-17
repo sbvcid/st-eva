@@ -1560,3 +1560,48 @@ standard financial-metric XBRL mappings (operating cash flow, capex, D&A,
 operating income, cash, debt) so more reverse-valuation inputs become
 qualified.
 
+## Round 2 (2026-10-17): standard metric mapping — depreciation and amortization
+
+**Gap confirmed.** Condition B's priority list (operating cash flow, capex,
+depreciation & amortization, operating income, cash, debt) was complete except
+for D&A: `us-gaap:DepreciationAndAmortization` / `ifrs-full:
+DepreciationAndAmortizationExpense` had no registry entry, so D&A could not be
+imported, backfilled, or used as an EV/EBITDA input. `operating_cash_flow`,
+`capex`, `cash`, `operating_income`, `long_term_debt` were already ACTIVE with
+EXACT mappings, and FCF reverse valuation was already verified end-to-end via
+the historical P/FCF pipeline (AAPL/MSFT/MU datasets; `test_historical_pfcf`
+and the web-API P/FCF checks pass). `DEFAULT_METRICS` and the registry's
+active-metric snapshot are pinned by tests, so this round added one deliberate
+metric rather than widening the ingestion default.
+
+**Change.** Added `depreciation_and_amortization` to `registry_seed.py`:
+ACTIVE, `unit_family="currency"`, `normal_period_type="DURATION"`,
+`comparability_group="income_statement_flows"`, with EXACT mappings to
+`us-gaap:DepreciationAndAmortization` and `ifrs-full:
+DepreciationAndAmortizationExpense` (both concepts registered in `CONCEPTS`,
+both `MAPPING_EXACT` → `IDENTITY` relation_kind). Updated the pinned active
+metric count (20 → 21) and mapping totals (50 → 52; identity 46 → 48; EXACT
+30 → 32) in `tests/test_collection_metric_scope.py`,
+`tests/test_mapping_relation_kind.py`, `tests/test_metric_supersession.py`,
+`tests/test_restricted_stock_promotion_300.py`,
+`tests/test_semantic_conflict.py`, `tests/test_source_conditional_supersession.py`,
+`tests/test_vendor_debt_projection.py`, `tests/test_ifrs_capex_promotion.py`
+and `tests/test_ifrs_current_portion_promotion.py`. `DEFAULT_METRICS` was left
+untouched (it remains a pinned legacy slice; canonical collection reads the
+ACTIVE registry, so D&A is in the import universe).
+
+**Verification.** New `TestDepreciationAndAmortizationMapping` in
+`tests/test_collection_metric_scope.py` (3 tests): D&A is ACTIVE/currency/
+DURATION; US-GAAP and IFRS mappings are EXACT to the correct concepts. Full
+backend suite: **2,363 passed, 169 skipped, 498 subtests passed**; `git
+diff --check` clean; formal database untouched.
+
+**Remaining limitation.** D&A is now mapped and ACTIVE, but no D&A facts have
+been collected yet (canonical collection must run against a filer's filings),
+and `reprocess_existing()` can only backfill D&A from concept payloads already
+saved as `source_documents`. FCF reverse valuation works via the historical
+P/FCF band, but the observed `current_fcf` scalar is not populated through the
+V1 admission boundary (which admits only `revenue`). Next gap: either extend
+V1 admission to carry cash-flow metrics into `ValuationInputs`, or verify D&A
+end-to-end via collection + reprocess + EV/EBITDA display.
+

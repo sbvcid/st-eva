@@ -210,7 +210,7 @@ class TestEvidenceOutlivesTheRuleThatDisagreesWithIt(unittest.TestCase):
             sum(self.ledger["status_counts"].values()),
             self.ledger["metrics_total"],
         )
-        self.assertEqual(self.ledger["metrics_total"], 20)
+        self.assertEqual(self.ledger["metrics_total"], 21)
 
     def test_a_conflicted_cell_is_not_a_backlog_item(self):
         # Backlog means "work to do": we have not handled this metric yet. The

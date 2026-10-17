@@ -150,7 +150,7 @@ class TestTheSupersessionStillHolds(unittest.TestCase):
     def test_the_core_metric_count_did_not_change(self):
         active = [m.metric_id for m in self.registry.metrics()
                   if m.status == "ACTIVE"]
-        self.assertEqual(len(active), 20)
+        self.assertEqual(len(active), 21)
 
     def test_no_mapping_was_added_or_promoted(self):
         """The four concepts and their types are exactly what 2.33 declared."""

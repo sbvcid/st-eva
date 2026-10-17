@@ -70,9 +70,9 @@ UNRESOLVED = ConceptResolution.UNRESOLVED_NO_APPLICABLE_MAPPING
 
 # The registry counts this promotion is expected to produce. Pinned rather than
 # computed, because a computed expectation is the current value restated.
-EXPECTED_TOTAL = 50
-EXPECTED_IDENTITY = 46
-EXPECTED_IDENTITY_BY_TYPE = {"EXACT": 30, "PARTIAL": 15, "EQUIVALENT": 1}
+EXPECTED_TOTAL = 52
+EXPECTED_IDENTITY = 48
+EXPECTED_IDENTITY_BY_TYPE = {"EXACT": 32, "PARTIAL": 15, "EQUIVALENT": 1}
 EXPECTED_COMPOSITION = 4
 
 

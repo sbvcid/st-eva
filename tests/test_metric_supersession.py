@@ -87,7 +87,7 @@ class TestTheDecisionIsRecorded(unittest.TestCase):
         """One metric leaves, one arrives. Renaming is not adding."""
         active = [m.metric_id for m in self.registry.metrics()
                   if m.status == "ACTIVE"]
-        self.assertEqual(len(active), 20)
+        self.assertEqual(len(active), 21)
         self.assertNotIn(LEGACY, active)
         self.assertIn(DECIDED, active)
 

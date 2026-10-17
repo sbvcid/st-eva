@@ -138,7 +138,7 @@ class TestThePromotedMapping(unittest.TestCase):
     def test_6_the_core_metric_count_is_unchanged(self) -> None:
         active = [m.metric_id for m in self.registry.metrics()
                   if m.status == "ACTIVE"]
-        self.assertEqual(len(active), 20)
+        self.assertEqual(len(active), 21)
 
     def test_15_the_promotion_resolves_nothing_else(self) -> None:
         """

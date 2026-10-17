@@ -477,6 +477,20 @@ METRICS: Tuple[Metric, ...] = (
         normal_period_type="DURATION",
         comparability_group="noncash_expenses",
     ),
+    Metric(
+        metric_id="depreciation_and_amortization",
+        display_name="Depreciation and amortization",
+        statement="INCOME",
+        semantic_definition=(
+            "Depreciation and amortization expense recognised in the reporting "
+            "period -- the non-cash charge for consuming long-lived assets and "
+            "allocating intangible-asset cost. Taken only as the filer reports "
+            "it; not computed by ST-EVA."
+        ),
+        unit_family="currency",
+        normal_period_type="DURATION",
+        comparability_group="income_statement_flows",
+    ),
 )
 
 # Concepts observed in AAPL filings. Definitions are the SEC's own wording,
@@ -582,6 +596,28 @@ CONCEPTS: Tuple[Concept, ...] = (
         label="Net Income (Loss)",
         source_definition=(
             "Net income (loss) attributable to the parent."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            US_GAAP, "DepreciationAndAmortization"
+        ),
+        taxonomy=US_GAAP,
+        concept="DepreciationAndAmortization",
+        label="Depreciation, Depletion and Amortization",
+        source_definition=(
+            "Depreciation, depletion and amortization for the period."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
+            IFRS_FULL, "DepreciationAndAmortizationExpense"
+        ),
+        taxonomy=IFRS_FULL,
+        concept="DepreciationAndAmortizationExpense",
+        label="Depreciation and amortization expense",
+        source_definition=(
+            "The amount of depreciation and amortization expense."
         ),
     ),
     Concept(
@@ -1811,6 +1847,28 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
             "narrower still. PARTIAL on that basis and not on the framework. "
             "Window: earliest reported period for the element across filers "
             "using the taxonomy"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="depreciation_and_amortization",
+        concept_id=concept_id_for(
+            US_GAAP, "DepreciationAndAmortization"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "depreciation, depletion and amortization for the period -- the "
+            "standard US-GAAP non-cash expense element"
+        ),
+    ),
+    ConceptMapping(
+        metric_id="depreciation_and_amortization",
+        concept_id=concept_id_for(
+            IFRS_FULL, "DepreciationAndAmortizationExpense"
+        ),
+        mapping_type=MAPPING_EXACT,
+        notes=(
+            "the IFRS element for depreciation and amortization expense, the "
+            "same construct as us-gaap:DepreciationAndAmortization"
         ),
     ),
 )

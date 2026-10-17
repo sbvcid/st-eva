@@ -86,7 +86,7 @@ import merge_sources  # noqa: E402
 import reconcile_bulk  # noqa: E402
 import sec_ingest  # noqa: E402
 from core_registry import CoreRegistry  # noqa: E402
-from registry_seed import seed  # noqa: E402
+from registry_seed import IFRS_FULL, US_GAAP, seed  # noqa: E402
 from sqlite_archive import SQLiteArchive  # noqa: E402
 
 LEGACY = "debt"
@@ -149,7 +149,11 @@ class CanonicalEnumeration(unittest.TestCase):
     def test_the_registry_declares_twenty_active_metrics(self) -> None:
         store, registry = fresh()
         try:
-            self.assertEqual(len(active_metric_ids(registry)), 20)
+            # `depreciation_and_amortization` was added as a deliberate, mapped
+            # metric (US-GAAP and IFRS EXACT); it is income-statement, currency,
+            # DURATION, and active at ingestion time. The count moves with the
+            # registry, which is the source of truth.
+            self.assertEqual(len(active_metric_ids(registry)), 21)
         finally:
             store.close()
 
@@ -564,3 +568,58 @@ def _resolvable_ticker(source):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDepreciationAndAmortizationMapping(unittest.TestCase):
+    """
+    `depreciation_and_amortization` was added as a deliberate, mapped metric
+    (condition B of the SEC-evidence roadmap). It is needed for the EV/EBITDA
+    input surface (operating income + D&A) and is semantically pinned to the
+    SEC's own elements, not inferred from a name.
+    """
+
+    def setUp(self) -> None:
+        self.store = SQLiteArchive(":memory:")
+        self.addCleanup(self.store.close)
+        self.registry = CoreRegistry(self.store.connection)
+        seed(self.registry)
+        self.store.connection.commit()
+
+    def test_metric_is_active_currency_duration(self) -> None:
+        metric = self.registry.metric("depreciation_and_amortization")
+        self.assertIsNotNone(metric)
+        self.assertEqual(metric.status, "ACTIVE")
+        self.assertEqual(metric.unit_family, "currency")
+        self.assertEqual(metric.normal_period_type, "DURATION")
+
+    def test_us_gaap_mapping_is_exact(self) -> None:
+        sources = self.registry.effective_metric_sources(
+            "depreciation_and_amortization")
+        us_gaap = [
+            s for s in sources
+            if s["concept"].startswith(US_GAAP + ":")
+        ]
+        self.assertEqual(
+            us_gaap,
+            [{"concept": US_GAAP + ":DepreciationAndAmortization",
+              "mapping_type": "EXACT",
+              "effective_from": None,
+              "effective_to": None}],
+            us_gaap,
+        )
+
+    def test_ifrs_mapping_is_exact(self) -> None:
+        sources = self.registry.effective_metric_sources(
+            "depreciation_and_amortization")
+        ifrs = [
+            s for s in sources
+            if s["concept"].startswith(IFRS_FULL + ":")
+        ]
+        self.assertEqual(
+            ifrs,
+            [{"concept": IFRS_FULL + ":DepreciationAndAmortizationExpense",
+              "mapping_type": "EXACT",
+              "effective_from": None,
+              "effective_to": None}],
+            ifrs,
+        )

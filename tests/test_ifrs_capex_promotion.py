@@ -132,7 +132,7 @@ class TestNothingElseMoved(unittest.TestCase):
     def test_the_core_metric_count_is_unchanged(self):
         active = [m.metric_id for m in self.registry.metrics()
                    if m.status == "ACTIVE"]
-        self.assertEqual(len(active), 20)
+        self.assertEqual(len(active), 21)
 
     def test_the_refuted_concept_is_not_mapped(self):
         """C was refuted in 2.36 and stays unmapped."""
