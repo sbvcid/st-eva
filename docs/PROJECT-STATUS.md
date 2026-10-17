@@ -1,9 +1,9 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-17
+**Status checked:** 2026-10-17 (second round: fiscal quarter identity normalisation)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `985ba22` verified `backend` and `browser` jobs success in run `38971097167` (checked via the GitHub API on 2026-10-17); the previous baseline `6c66550` was verified in run `38955389118`. Each later commit is verified in its own run.
+**Current implementation baseline:** fiscal quarter identity normalisation round (`fiscal_calendar.py` issuer-declared identity model; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Latest verified GitHub Actions:** `c972a05` (fiscal quarter identity round) verified `backend` and `browser` jobs success in run `39009039107`; `985ba22` verified in run `38971097167`; the earlier baseline `6c66550` in run `38955389118` (checked via the GitHub API on 2026-10-17). Each later commit is verified in its own run.
 
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -14,6 +14,7 @@ This section is the hand-off checkpoint for future conversations and coding agen
 
 **Completed and should not be repeated without a concrete reason**
 
+- **Fiscal quarter identity is issuer-declared, not a month grid (2026-10-17 second round, commit `c972a05`, CI run `39009039107`).** The month-grid fiscal_year_of/quarter_number mislabelled 11 of MU's 38 and 4 of AAPL's 42 quarter ends (52/53-week calendars drift quarter ends across month boundaries) and blocked MU's FY2026 TTM. `fiscal_calendar.py` derives identity from the issuer's own declarations (filing focus fields, prior-year comparatives, annual span positions), refuses unidentifiable periods, and both engines consume it; the TTM denominator is marked a derived sum with the audited annual carried beside it. MU snapshot now AVAILABLE (P/E 12.11171 on derived TTM EPS 74.21 vs audited 74.33, both preserved); AAPL P/E restored to 36/36 (median 28.44563, the pre-refactor value); MSFT unchanged. Do not re-derive the misclassification inventory or reintroduce month-grid identity. See the section at the end of this file.
 - **MU historical P/E is live with furnished Q4 evidence (2026-10-17 round, commit `985ba22`, CI run `38971097167`).** The production distribution is `USABLE_FOR_REFERENCE` with 335 valid point-in-time TTM observations spanning 2019-03-21 to 2026-08-31 (median 21.549505; the 20-observation gate untouched), built from three tracked inputs: the new `data/historical_pe/MU/q4_evidence_records.json` (six fiscal Q4 GAAP diluted EPS facts directly stated in 8-K Item 2.02 EX-99.1 exhibits, FY2021–FY2026, furnished/unaudited provenance), the corrected `filing_acceptance_evidence.json` (true ET acceptance times; the previous values were submissions-API serializations that ran 4–5h late and mis-dated 65 usable dates), and the existing MU XBRL concept data. `build_historical_pe` now refuses position-filled windows whose period ends are not consecutive calendar quarters (`REASON_INSUFFICIENT_QUARTERS` with an explicit gap detail) — the month-grid quarter mapping can otherwise assemble a "TTM" that skips a real quarter for 52/53-week filers; this also corrected two pre-existing defective AAPL observations (2018-05-03, 2024-05-03; AAPL baselines recomputed: furnished 30→28, filed-only 18→14). The latest-date TTM snapshot stays `UNAVAILABLE` with `REASON_MISSING_Q4_EPS`: the furnished FQ4-26 fact (32.87, quarter ended 2026-09-03) is knowable, but the month-grid maps that fiscal year end to fiscal 2027 Q1, so the (2026, Q4) window slot stays empty — a fiscal-calendar method question deliberately not changed this round. See the section at the end of this file; do not re-derive the 8-K hunt or the acceptance-time offset finding.
 
 - **Declared SEC diluted-EPS evidence is live** (`50043be`, verified by run `38862119614`). The reverse-requirements report carries `declared_eps_evidence`: the latest directly stated 10-K fiscal-year and 10-Q quarter facts of `us-gaap:EarningsPerShareDiluted` from the run's own SEC acquisition (packaged dataset as fallback), with declared period, accession/form/filed/acceptance time, GAAP concept and an explicit three-state status; per-scenario `related_sec_evidence` now prefers the run's acquisition with the frozen record shape unchanged. Cross-check evidence only — no calculation, admission, threshold, fingerprint input or network-envelope change. See the section at the end of this file for the case evidence; do not re-derive the "the vendor anchor has no declared period or basis" finding again.
@@ -1312,3 +1313,104 @@ M1 source-independence standard, or the 20-observation gate was touched. MU
 Phase 0–3, MSFT cross-case and historical P/FCF research records are
 untouched. The quarter_number formula was not re-adjusted; the fiscal-calendar
 limitation is recorded, not worked around.
+
+## Fiscal quarter identity normalisation and TTM evidence consistency (2026-10-17, second round)
+
+**Question.** Where exactly was the fiscal-quarter classification wrong, is it
+one issuer's data problem or a model defect, and does MU FY2026 TTM EPS stand
+once identity is fixed?
+
+**Answers in one line.** It is a generic model defect: the month-grid
+`fiscal_year_of`/`quarter_number` cannot express 52/53-week fiscal calendars.
+It mislabelled 11 of MU's 38 quarter ends and 4 of AAPL's 42 (Apple's
+14-week first quarters push Q2 onto April 1 and Q3 onto July 1 in 2017 and
+2023); MSFT's calendar quarters were unaffected. Replacing the grid with an
+issuer-declared identity model (`fiscal_calendar.py`) makes the MU FY2026 TTM
+stand: the current snapshot is now `AVAILABLE` with TTM EPS 74.21 (derived,
+marked as such) beside the audited annual 74.33 (kept, not reconciled).
+
+### 1. The new period model (`fiscal_calendar.py`, invariant F-16)
+
+Fiscal identity now comes from the issuer's own declarations, in decreasing
+authority: (1) `PRIMARY_FILING_FOCUS` — the 10-Q/10-K whose conformed period
+of report equals the period end declares (dei:FiscalYearFocus,
+dei:FiscalPeriodFocus); a 10-K period end is fiscal Q4; (2)
+`PRIOR_YEAR_COMPARATIVE` — a 10-Q instance whose period end sits one fiscal
+year (364/371 days, ±14 tolerance) before the filing's own quarter end is
+that filing's quarter one year earlier; (3) `ANNUAL_SPAN_POSITION` — a
+quarter end inside an issuer-declared annual span sits a whole number of
+quarter-lengths before that span's end. Every duration span end is a
+quarter-end candidate (cumulative-only filers derive discrete Q2/Q3 from
+6M/9M spans whose ends are quarter ends). Rules cross-check; a period with
+no consistent declaration is returned as unresolved and the loaders exclude
+it explicitly — never a neighbouring-quarter assignment. Coverage proof: all
+three issuers' previously-ingested quarter ends and annual spans resolve
+(zero observation loss); identity never touches usable dates, restatement
+supersede, or eligibility.
+
+### 2. Engine changes
+
+`historical_pe.py` (logic_version 1.1.0): window anchoring and position
+matching in both the dated loop and the current snapshot use the evidence's
+declared identity; the month grid is no longer consulted. The TTM
+denominator is now explicitly marked a derived indicator:
+`quarter_denominator_derivation = {method: SUM_OF_FOUR_DIRECTLY_STATED_
+QUARTERLY_EPS, derived_not_issuer_declared: true, annual_eps_in_force_at_
+evaluation_date, note}` — the audited annual figure in force is carried
+beside the derived sum so per-share non-additivity stays visible. The
+window-continuity guard stays as a structural safety net (it never fires on
+correctly identified data). Furnished Q4 records now carry their release's
+own fiscal-year label, cross-checked against the issuer's declared annual
+span end for that fiscal year (refused on disagreement).
+`historical_pfcf.py` (logic_version 1.1.0): the same calendar replaces the
+grid in discrete-quarter derivation and TTM window assembly; window payloads
+carry `identity_source`.
+
+### 3. Before/after (production datasets recomputed)
+
+| Issuer · metric | Before | After | Why |
+| --- | --- | --- | --- |
+| AAPL P/E | 28/36 valid, 8 excluded, median 28.286075, from 2018-08-02 | **36/36, 0 excluded, median 28.44563, from 2018-01-02** | drifted Q2/Q3 restored; collided windows assemble |
+| AAPL P/FCF | 30/36, median 25.25802 | **35/36, median 25.343981** | same drift fix |
+| MSFT P/E | 24/27, median 33.195873 | **24/27, median 33.195873 (unchanged)** | calendar quarters, grid agreed |
+| MSFT P/FCF | 23/27, median 41.578319 | **23/27, median 41.578319 (unchanged)** | same |
+| MU P/E | 335/575, median 21.549505, snapshot UNAVAILABLE | **454/575, median 20.552342, from 2017-10-26 to 2026-10-16, snapshot AVAILABLE 12.11171** | true FY windows; FY2026 completes |
+| MU P/FCF | 316/575, median 71.708773, snapshot UNAVAILABLE | **362/575, median 67.712721, snapshot AVAILABLE 17.246994** | same |
+
+Exclusions after (MU P/E): 3 INSUFFICIENT_QUARTERS + 118 NON_POSITIVE_EPS —
+the fiscal 2023 loss era now assembles honestly and is refused as
+non-positive instead of being unassemblable. AAPL's disabled-furnished case
+went 14→17 valid (19 exclusions, all MISSING_Q4_EPS, the filed-only era).
+The MU summary note lists zero lost ingested ends (the 21 unresolved payload
+ends were never ingested; their facts' accessions are outside the acceptance
+index).
+
+### 4. MU FY2026 TTM — verified, with the 74.21/74.33 gap preserved
+
+Snapshot (2026-10-16): components Q1 4.60 (filed), Q2 12.07 (filed), Q3
+24.67 (filed), Q4 32.87 (furnished 8-K), anchor (2026, Q4); denominator 74.21
+marked `SUM_OF_FOUR_DIRECTLY_STATED_QUARTERLY_EPS` /
+`derived_not_issuer_declared`; audited annual 74.33 (FY2026 10-K, accession
+0000723125-26-000023) carried beside it; P/E 12.11171 = 898.81 / 74.21. No
+FY-minus-YTD anywhere; the sum is never presented as an issuer-declared
+figure.
+
+### 5. Tests
+
+`tests/test_fiscal_calendar.py` (16): month-end and 52/53-week
+classification, cumulative-span quarter ends, Q4 from 10-K period ends,
+cross-month and cross-fiscal-year ends, the 53-week boundary, the
+prior-year-comparative rule (364 and 371 days), annual-span positions,
+unresolvable periods, value-independence of identity, and identity never
+moving knowability. MU additions: P/FCF FY2026 anchor/labels, no-skip-window
+invariant, FY2023-era honest non-positive refusal, snapshot verification
+with derivation marking. Full backend suite: **2,330 passed, 169 skipped,
+496 subtests passed**; CI run `39009039107` (commit `c972a05`): backend
+and browser jobs success.
+
+**Boundary.** No valuation formula, buy/sell mechanism, subjective
+probability, 20-observation gate, PIT rule, restatement rule or observation
+eligibility was changed; the identity model only re-labels periods and
+refuses unidentifiable ones. Round-one research records
+(`research/experiments/mu-historical-pe-q4-study/`, the declared-eps report)
+are untouched; this section is the new status record.
