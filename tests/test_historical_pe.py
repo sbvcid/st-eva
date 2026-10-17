@@ -526,20 +526,21 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
 
     def test_aapl_with_furnished_enabled_produces_36_valid_observations(self):
         res = load_aapl_historical_pe(enable_furnished=True)
-        self.assertEqual(res.distribution.sample_count, 28)
+        self.assertEqual(res.distribution.sample_count, 36)
         self.assertEqual(len(res.observations), 36)
         self.assertEqual(res.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertTrue(res.distribution.usable_for_reference)
 
-        # Median around 28.29
+        # Median around 28.45 -- the value the original POC-era baseline
+        # carried, restored by issuer-declared fiscal identity.
         median = res.distribution.percentiles.get("median")
         self.assertIsNotNone(median)
-        self.assertAlmostEqual(median, 28.286075, places=4)
+        self.assertAlmostEqual(median, 28.44563, places=4)
 
-        # 8 excluded: 6 lacking qualifying Q4 evidence plus the two
-        # position-filled windows whose period ends are not consecutive
-        # calendar quarters (2018-05-03, 2024-05-03 skip a real quarter).
-        self.assertEqual(len(res.distribution.excluded_observations), 8)
+        # Zero exclusions: the drifted AAPL quarter ends (April 1 / July 1 in
+        # 2017 and 2023) occupy their true fiscal positions, so the windows
+        # that collided under the month grid now assemble on every date.
+        self.assertEqual(len(res.distribution.excluded_observations), 0)
 
     def test_aapl_distribution_min_max_agree_with_eligible_observations(self):
         res = load_aapl_historical_pe(enable_furnished=True)
@@ -548,7 +549,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         self.assertTrue(dist.usable_for_reference)
 
         eligible_values = [o.value for o in res.observations if o.value is not None and o.status == STATUS_AVAILABLE]
-        self.assertEqual(len(eligible_values), 28)
+        self.assertEqual(len(eligible_values), 36)
 
         expected_min = min(eligible_values)
         expected_max = max(eligible_values)
@@ -564,19 +565,17 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
 
     def test_aapl_with_furnished_disabled_negative_path(self):
         # Without furnished Q4 evidence, filed-only observations remain
-        # available; 14 of 36 observations are valid.
+        # available; 17 of 36 observations are valid, and the exclusions are
+        # exactly the 2022+ evaluation dates whose filed-only era lacks
+        # qualifying Q4 evidence.
         res = load_aapl_historical_pe(enable_furnished=False)
-        self.assertEqual(res.distribution.sample_count, 14)
+        self.assertEqual(res.distribution.sample_count, 17)
         self.assertEqual(len(res.observations), 36)
         self.assertEqual(res.distribution.status, STATUS_INSUFFICIENT_OBSERVATIONS)
         self.assertFalse(res.distribution.usable_for_reference)
 
-        # Exactly 22 excluded observations lack qualifying Q4 EPS or a
-        # consecutive-quarter window, with a mix of REASON_MISSING_Q4_EPS and
-        # REASON_INSUFFICIENT_QUARTERS after the quarter-number fix
-        # reclassified some windows.
         excluded = res.distribution.excluded_observations
-        self.assertEqual(len(excluded), 22)
+        self.assertEqual(len(excluded), 19)
         for item in excluded:
             self.assertIn(
                 item["reason_code"],
@@ -611,7 +610,7 @@ class TestAaplEndToEndAndNegativePath(unittest.TestCase):
         rendered_text = render_dossier(dossier)
         self.assertIn("PRODUCTION PIT HISTORICAL P/E", rendered_text)
         self.assertIn("USABLE_FOR_REFERENCE", rendered_text)
-        self.assertIn("28.29", rendered_text)
+        self.assertIn("28.45", rendered_text)
 
 
 if __name__ == "__main__":

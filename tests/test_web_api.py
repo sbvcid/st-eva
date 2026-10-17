@@ -690,11 +690,11 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
 
             # Each ticker's cash-flow reference is its own distribution's median.
             self.assertEqual(aapl.valuation_summary.selected_pfcf_basis, "production_historical_pfcf_median")
-            self.assertAlmostEqual(aapl.valuation_summary.selected_pfcf, 25.25802, places=6)
-            self.assertEqual(aapl.production_historical_pfcf.sample_count, 30)
-            self.assertEqual(aapl.production_historical_pfcf.period_start, "2018-05-03")
+            self.assertAlmostEqual(aapl.valuation_summary.selected_pfcf, 25.343981, places=6)
+            self.assertEqual(aapl.production_historical_pfcf.sample_count, 35)
+            self.assertEqual(aapl.production_historical_pfcf.period_start, "2018-02-02")
             self.assertAlmostEqual(
-                aapl.production_historical_pfcf.percentiles["median"], 25.25802, places=6
+                aapl.production_historical_pfcf.percentiles["median"], 25.343981, places=6
             )
             self.assertEqual(msft.valuation_summary.selected_pfcf_basis, "production_historical_pfcf_median")
             self.assertAlmostEqual(msft.valuation_summary.selected_pfcf, 41.578319, places=6)
@@ -704,7 +704,7 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
             )
             # The P/E references are equally isolated: each ticker's median is
             # its own distribution's, never the other company's.
-            self.assertAlmostEqual(aapl.valuation_summary.selected_pe, 28.286075, places=6)
+            self.assertAlmostEqual(aapl.valuation_summary.selected_pe, 28.44563, places=6)
             self.assertAlmostEqual(msft.valuation_summary.selected_pe, 33.195873, places=6)
             # The consensus periods differ by company calendar in live runs
             # (2027-09-30 for AAPL, 2028-06-30 for MSFT); the regression

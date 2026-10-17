@@ -35,6 +35,7 @@ from historical_pe import (
     QuarterEpsEvidence,
     REASON_INSUFFICIENT_QUARTERS,
     REASON_MISSING_Q4_EPS,
+    REASON_NON_POSITIVE_EPS,
     STATUS_AVAILABLE,
     STATUS_USABLE_FOR_REFERENCE,
     build_historical_pe,
@@ -207,9 +208,10 @@ class TestMuLoaderAdoptsFurnishedQ4(unittest.TestCase):
         cls.result = _load_mu()
 
     def test_all_six_furnished_records_enter_the_evidence_stream(self):
-        # Five fill completed TTM windows; the sixth (FQ4-26) is knowable but
-        # its fiscal-position slot ((2027, Q1) under the month grid) cannot
-        # complete a window, so it surfaces in the current snapshot instead.
+        # With issuer-declared fiscal identity the FY2026 Q4 furnished fact
+        # fills its true (2026, Q4) position, so every one of the six
+        # furnished records now completes real TTM windows, and the current
+        # snapshot is itself the FY2026 window.
         furnished = [
             c
             for o in self.result.observations
@@ -217,14 +219,11 @@ class TestMuLoaderAdoptsFurnishedQ4(unittest.TestCase):
             if c["evidence_class"] == EVIDENCE_CLASS_FURNISHED
         ]
         adopted_accessions = {c["accession"] for c in furnished}
-        self.assertEqual(
-            adopted_accessions,
-            set(EXPECTED_Q4) - {"0000723125-26-000018"},
-        )
-        snapshot_ends = {
+        self.assertEqual(adopted_accessions, set(EXPECTED_Q4))
+        snapshot_accessions = {
             c["accession"] for c in self.result.current_snapshot.eps_state["components"]
         }
-        self.assertIn("0000723125-26-000018", snapshot_ends)
+        self.assertIn("0000723125-26-000018", snapshot_accessions)
 
     def test_furnished_components_keep_their_class_and_provenance(self):
         seen = set()
@@ -447,27 +446,45 @@ class TestWindowContinuityGuard(unittest.TestCase):
         # Sum 0.68; close 100 -> 147.058824
         self.assertAlmostEqual(obs.value, 100.0 / 0.68, places=6)
 
-    def test_real_mu_fy2023_anchor_windows_are_refused_not_fabricated(self):
-        # The fiscal-position grid fills the FY2023-anchored window by pairing
-        # the 2023-08-31 furnished Q4 with ends that skip 2023-06-01; the
-        # guard refuses it, so the FY2023-era dates hold no fabricated TTM.
-        # The same guard also refuses the pre-existing 2017-era skip windows.
+    def test_real_mu_fy2023_era_windows_are_true_fiscal_quarters_excluded_as_losses(self):
+        # The fiscal-year 2023 loss era assembles honestly under issuer-
+        # declared identity: each window holds the four issuer-declared
+        # fiscal quarters in sequence (no 182-day skip, no fabricated sum)
+        # and is refused as non-positive. The continuity guard never fires
+        # on this data; it stays as a structural safety net.
         result = _load_mu()
-        refused_dates = [
+        guard_refusals = [
             o.evaluation_date
             for o in result.observations
             if o.reason_detail and "not consecutive" in o.reason_detail
         ]
-        self.assertTrue(refused_dates)
-        fy2023_era = [
-            day for day in refused_dates if "2023-09-28" <= day <= "2024-09-25"
+        self.assertEqual(guard_refusals, [])
+        era = [
+            o
+            for o in result.observations
+            if "2023-09-28" <= o.evaluation_date <= "2024-09-25"
+            and o.evaluation_date < "2024-09-26"
         ]
-        self.assertTrue(fy2023_era, f"no FY2023-era refusals in {refused_dates}")
-        for o in result.observations:
-            if o.evaluation_date in refused_dates:
-                self.assertEqual(o.status, "UNAVAILABLE")
-                self.assertIsNone(o.value)
-                self.assertEqual(o.eps_state["components"], [])
+        self.assertTrue(era)
+        true_fy2023 = ("2022-09-01", "2022-12-01", "2023-03-02", "2023-06-01", "2023-08-31")
+        true_fy2024 = ("2023-11-30", "2024-02-29", "2024-05-30", "2024-08-29")
+        for o in era:
+            ends = sorted(c["period_end"] for c in o.eps_state["components"])
+            self.assertTrue(
+                set(ends) <= set(true_fy2023) | set(true_fy2024),
+                f"window {ends} is not built from issuer-declared fiscal quarters",
+            )
+            gaps = [
+                (
+                    datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)
+                ).days
+                for a, b in zip(ends, ends[1:])
+            ]
+            for gap in gaps:
+                self.assertLessEqual(gap, 100)
+            self.assertEqual(o.status, "UNAVAILABLE")
+            self.assertIsNone(o.value)
+            self.assertEqual(o.reason_code, REASON_NON_POSITIVE_EPS)
 
     def test_real_mu_valid_windows_are_consecutive_calendar_quarters(self):
         result = _load_mu()
@@ -508,8 +525,12 @@ class TestMuDistributionState(unittest.TestCase):
         self.assertTrue(dist.usable_for_reference)
         self.assertGreaterEqual(dist.sample_count, 20)
         self.assertEqual(dist.min_observations_required, 20)
-        self.assertEqual(dist.period_start, "2019-03-21")
-        self.assertEqual(dist.period_end, "2026-08-31")
+        # Issuer-declared identity extends the valid series in both
+        # directions: the FY2016/FY2017 windows assemble correctly from
+        # 2017-10-26, and the FY2026 window carries the series to the last
+        # frozen trading day.
+        self.assertEqual(dist.period_start, "2017-10-26")
+        self.assertEqual(dist.period_end, "2026-10-16")
 
     def test_the_median_is_pinned_against_an_independent_recomputation(self):
         values = sorted(
@@ -528,21 +549,55 @@ class TestMuDistributionState(unittest.TestCase):
             self.result.distribution.percentiles["median"], median, places=6
         )
 
-    def test_current_snapshot_names_its_exact_blocking_condition(self):
+    def test_current_snapshot_verifies_the_fy2026_ttm(self):
+        # Issuer-declared identity places the furnished FQ4-26 in its true
+        # (2026, Q4) position, so the latest-date snapshot now assembles the
+        # real FY2026 window: three filed 10-Q facts plus the furnished
+        # release figure, anchored at fiscal 2026's fourth quarter.
         snapshot = self.result.current_snapshot
         self.assertIsNotNone(snapshot)
-        self.assertEqual(snapshot.status, "UNAVAILABLE")
-        self.assertEqual(snapshot.reason_code, REASON_MISSING_Q4_EPS)
-        # The furnished FQ4-26 fact exists and is knowable; the window fails
-        # because the month-grid maps the 2026-09-03 fiscal year end to the
-        # next fiscal year's first quarter, leaving the (2026, Q4) slot empty.
-        self.assertEqual(snapshot.evaluation_date, "2026-10-16")
+        self.assertEqual(snapshot.status, STATUS_AVAILABLE)
+        self.assertIsNone(snapshot.reason_code)
+        eps_state = snapshot.eps_state
         self.assertEqual(
-            snapshot.eps_state["missing_quarters"],
-            [{"fiscal_year": 2026, "fiscal_quarter": 4}],
+            eps_state["window_anchor"], {"fiscal_year": 2026, "fiscal_quarter": 4}
         )
-        component_ends = [c["period_end"] for c in snapshot.eps_state["components"]]
-        self.assertIn("2026-09-03", component_ends)
+        components = eps_state["components"]
+        self.assertEqual(
+            [(c["period_end"], c["value"]) for c in components],
+            [
+                ("2025-11-27", 4.60),
+                ("2026-02-26", 12.07),
+                ("2026-05-28", 24.67),
+                ("2026-09-03", 32.87),
+            ],
+        )
+        self.assertEqual(components[3]["evidence_class"], EVIDENCE_CLASS_FURNISHED)
+        self.assertEqual(
+            {c["fiscal_quarter"] for c in components}, {1, 2, 3, 4}
+        )
+        self.assertEqual({c["fiscal_year"] for c in components}, {2026})
+
+        # The denominator is marked as a derived sum of the four directly
+        # stated quarterly figures (74.21), and the issuer's audited annual
+        # figure in force at the same date (74.33) is carried beside it: the
+        # per-share non-additivity gap stays visible, never reconciled away.
+        denominator = eps_state["quarter_denominator"]
+        self.assertEqual(denominator, 74.21)
+        derivation = eps_state["quarter_denominator_derivation"]
+        self.assertTrue(derivation["derived_not_issuer_declared"])
+        self.assertEqual(
+            derivation["method"], "SUM_OF_FOUR_DIRECTLY_STATED_QUARTERLY_EPS"
+        )
+        annual = derivation["annual_eps_in_force_at_evaluation_date"]
+        self.assertEqual(annual["value"], 74.33)
+        self.assertEqual(annual["fiscal_year"], 2026)
+        self.assertEqual(annual["accession"], "0000723125-26-000023")
+        # The multiple itself: price on the last trading day divided by the
+        # derived TTM EPS sum.
+        self.assertAlmostEqual(
+            snapshot.value, snapshot.price_state["close"] / 74.21, places=6
+        )
 
     def test_restated_quarter_supersedes_only_from_its_own_usable_date(self):
         # The 2025-02-27 quarter appears twice in XBRL: original 10-Q
@@ -636,6 +691,66 @@ class TestQuarterEpsEvidenceContract(unittest.TestCase):
         self.assertEqual(filed.evidence_class, EVIDENCE_CLASS_FILED)
         self.assertEqual(furnished.evidence_class, EVIDENCE_CLASS_FURNISHED)
         self.assertNotEqual(filed.to_dict(), furnished.to_dict())
+
+
+class TestMuHistoricalPfcfFiscalIdentity(unittest.TestCase):
+    """The P/FCF pipeline shares the fiscal identity model: MU's drifted
+    quarter ends must land in their true fiscal positions there too, and the
+    FY2026 window must complete from the cumulative-span derivations."""
+
+    @classmethod
+    def setUpClass(cls):
+        from historical_pfcf import ISSUER_CONFIGS as PFCF_CONFIGS
+        from historical_pfcf import load_issuer_historical_pfcf
+
+        cls.result = load_issuer_historical_pfcf(PFCF_CONFIGS["MU"])
+
+    def test_current_snapshot_anchors_on_true_fy2026_q4(self):
+        snapshot = self.result.current_snapshot
+        self.assertIsNotNone(snapshot)
+        self.assertEqual(snapshot.status, "AVAILABLE")
+        anchor = snapshot.ttm_window["anchor"]
+        self.assertEqual(
+            anchor,
+            {"fiscal_year": 2026, "fiscal_quarter": 4, "period_end": "2026-09-03"},
+        )
+        positions = snapshot.ttm_window["positions"]
+        self.assertEqual(
+            positions,
+            [
+                {"fiscal_year": 2026, "fiscal_quarter": q}
+                for q in (1, 2, 3, 4)
+            ],
+        )
+
+    def test_derived_fy2026_quarters_carry_their_true_fiscal_labels(self):
+        # MU states cumulative cash flows: Q2 and Q3 are derived by
+        # differencing the 6M/9M spans, and their period ends (2026-02-26,
+        # 2026-05-28) are month-grid traps the old code got wrong.
+        window = self.result.current_snapshot.ttm_window
+        by_end = {q["period_end"]: q for q in window["quarters"]}
+        self.assertEqual(by_end["2025-11-27"]["fiscal_quarter"], 1)
+        self.assertEqual(by_end["2026-02-26"]["fiscal_quarter"], 2)
+        self.assertEqual(by_end["2026-05-28"]["fiscal_quarter"], 3)
+        self.assertEqual(by_end["2026-09-03"]["fiscal_quarter"], 4)
+        self.assertTrue(
+            all(q["identity_source"] for q in window["quarters"]),
+            "each discrete quarter should carry its identity provenance",
+        )
+
+    def test_no_valid_window_skips_a_calendar_quarter(self):
+        # Quarter ends inside every valid P/FCF window must be consecutive
+        # quarters in calendar time (~13 weeks apart); a 182-day gap would
+        # mean a skipped real quarter presented as a TTM sum.
+        for obs in self.result.distribution.observations:
+            ends = sorted(
+                datetime.date.fromisoformat(q["period_end"])
+                for q in obs["ttm_window"]["quarters"]
+            )
+            gaps = [(b - a).days for a, b in zip(ends, ends[1:])]
+            for gap in gaps:
+                self.assertGreaterEqual(gap, 80)
+                self.assertLessEqual(gap, 100)
 
 
 if __name__ == "__main__":

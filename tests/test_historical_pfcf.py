@@ -35,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, ".")
 
 from historical_pe import MIN_OBSERVATIONS_FOR_REFERENCE
+from fiscal_calendar import build_fiscal_calendar_from_identities
 from historical_pfcf import (
     HistoricalPfcfConfig,
     ISSUER_CONFIGS,
@@ -159,6 +160,28 @@ def _quarters_for_fy2020(fye_month=12):
     return spans
 
 
+def _fy2020_calendar():
+    """
+    The December fiscal calendar as issuer-declared identities.
+
+    The synthetic fixtures file on calendar quarters (fiscal year = calendar
+    year), so the declared quarter ends are the calendar quarter ends of
+    fiscal 2020 and its neighbours. Supplying them explicitly keeps the
+    engine on the single issuer-declared identity path; no month grid exists
+    in the engine any more.
+    """
+    return build_fiscal_calendar_from_identities(
+        {
+            "2019-12-31": (2019, 4),
+            "2020-03-31": (2020, 1),
+            "2020-06-30": (2020, 2),
+            "2020-09-30": (2020, 3),
+            "2020-12-31": (2020, 4),
+            "2021-03-31": (2021, 1),
+        }
+    )
+
+
 def _in_force_all(spans, day="2030-01-01"):
     by_key = {}
     for span in spans:
@@ -179,7 +202,7 @@ class TestCumulativeToDiscreteConversion(unittest.TestCase):
             spans_in_force=_in_force_all(_quarters_for_fy2020()),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2030-01-01",
             issuer_id="CIKTEST",
         )
@@ -206,7 +229,7 @@ class TestCumulativeToDiscreteConversion(unittest.TestCase):
             spans_in_force=_in_force_all(_quarters_for_fy2020()),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2030-01-01",
             issuer_id="CIKTEST",
         )
@@ -222,7 +245,7 @@ class TestCumulativeToDiscreteConversion(unittest.TestCase):
             spans_in_force=_in_force_all(spans),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2030-01-01",
             issuer_id="CIKTEST",
         )
@@ -236,7 +259,7 @@ class TestCumulativeToDiscreteConversion(unittest.TestCase):
             spans_in_force=_in_force_all(_quarters_for_fy2020()),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2030-01-01",
             issuer_id="CIKTEST",
         )
@@ -255,7 +278,7 @@ class TestCumulativeToDiscreteConversion(unittest.TestCase):
             spans_in_force=_in_force_all(spans),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2030-01-01",
             issuer_id="CIKTEST",
         )
@@ -266,7 +289,7 @@ class TestCumulativeToDiscreteConversion(unittest.TestCase):
             spans_in_force=_in_force_all(_quarters_for_fy2020()),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2030-01-01",
             issuer_id="CIKTEST",
         )
@@ -285,7 +308,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
             spans_in_force=_in_force_all(_quarters_for_fy2020(), day="2020-12-31"),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2020-12-31",
             issuer_id="CIKTEST",
         )
@@ -294,7 +317,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
             spans_in_force=_in_force_all(_quarters_for_fy2020(), day="2021-01-20"),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2021-01-20",
             issuer_id="CIKTEST",
         )
@@ -313,7 +336,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
             spans_in_force=_in_force_all(spans, day="2020-07-19"),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2020-07-19",
             issuer_id="CIKTEST",
         )
@@ -322,7 +345,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
             spans_in_force=_in_force_all(spans, day="2020-07-20"),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_date="2020-07-20",
             issuer_id="CIKTEST",
         )
@@ -340,11 +363,16 @@ class TestPointInTimeKnowability(unittest.TestCase):
             ocf_span("2015-09-27", "2016-06-25", 49_698_000_000.0, "2017-08-02"),
             capex_span("2015-09-27", "2016-09-24", 29_500_000_000.0, "2017-11-03", form="10-K"),
         ]
+        # September fiscal calendar (AAPL-style): the 2016-09-24 fiscal year
+        # end is fiscal 2016's fourth quarter, the 2016-06-25 end its third.
+        september_calendar = build_fiscal_calendar_from_identities(
+            {"2016-06-25": (2016, 3), "2016-09-24": (2016, 4)}
+        )
         before = derive_discrete_quarters_at(
             spans_in_force=_in_force_all(spans, day="2018-11-04"),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=9,
+            fiscal_calendar=september_calendar,
             evaluation_date="2018-11-04",
             issuer_id="CIKTEST",
         )
@@ -352,7 +380,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
             spans_in_force=_in_force_all(spans, day="2018-11-05"),
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=9,
+            fiscal_calendar=september_calendar,
             evaluation_date="2018-11-05",
             issuer_id="CIKTEST",
         )
@@ -406,8 +434,10 @@ class TestTtmWindow(unittest.TestCase):
         for end, fcf in fcf_by_end.items():
             end_d = datetime.date.fromisoformat(end)
             quarters[end_d] = {
+                # December fiscal calendar: the calendar quarter IS the fiscal
+                # quarter, and the fiscal year is the calendar year.
                 "fiscal_year": end_d.year,
-                "fiscal_quarter": ((end_d.month - 1) // 3) or 4,
+                "fiscal_quarter": ((end_d.month - 1) % 12) // 3 + 1,
                 "period_end": end,
                 "free_cash_flow": fcf,
                 "knowable_from": (knowable or {}).get(end, "2000-01-01"),
@@ -423,7 +453,7 @@ class TestTtmWindow(unittest.TestCase):
                 "2020-09-30": 130.0,
             }
         )
-        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-01", fye_month=12)
+        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-01")
         self.assertIsNone(reason)
         self.assertEqual(window["total_free_cash_flow"], 460.0)
         self.assertEqual(window["anchor"]["fiscal_quarter"], 3)
@@ -442,7 +472,7 @@ class TestTtmWindow(unittest.TestCase):
                 "2020-09-30": 130.0,
             }
         )
-        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-01", fye_month=12)
+        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-01")
         self.assertIsNone(window)
         self.assertEqual(reason, REASON_INSUFFICIENT_QUARTERS)
 
@@ -456,10 +486,10 @@ class TestTtmWindow(unittest.TestCase):
             },
             knowable={"2020-09-30": "2020-10-20"},
         )
-        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-19", fye_month=12)
+        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-19")
         self.assertIsNone(window)
         self.assertEqual(reason, REASON_INSUFFICIENT_QUARTERS)
-        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-20", fye_month=12)
+        window, reason, _ = ttm_fcf_window_at(quarters=quarters, day="2020-10-20")
         self.assertIsNone(reason)
         self.assertEqual(window["total_free_cash_flow"], 460.0)
 
@@ -487,7 +517,7 @@ class TestMultipleUnitsAndSplitConsistency(unittest.TestCase):
             cash_flow_spans=self._spans_for_two_years(),
             share_counts=shares,
             prices=prices,
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_dates=["2021-01-20", "2021-04-20"],
             min_observations=MIN_OBSERVATIONS_FOR_REFERENCE,
         )
@@ -522,7 +552,7 @@ class TestMultipleUnitsAndSplitConsistency(unittest.TestCase):
             cash_flow_spans=self._spans_for_two_years(),
             share_counts=shares,
             prices=prices,
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_dates=["2020-07-31", "2020-09-01"],
             min_observations=MIN_OBSERVATIONS_FOR_REFERENCE,
         )
@@ -548,7 +578,7 @@ class TestRefusals(unittest.TestCase):
             cash_flow_spans=spans,
             share_counts=shares,
             prices=prices,
-            fye_month=12,
+            fiscal_calendar=_fy2020_calendar(),
             evaluation_dates=[day],
             min_observations=MIN_OBSERVATIONS_FOR_REFERENCE,
         )
@@ -900,9 +930,14 @@ class TestPromotedAaplDatasetRealResult(unittest.TestCase):
 
     def test_the_sample_count_matches_the_source_evaluations(self):
         dist = self.result.distribution
-        self.assertEqual(dist.sample_count, 30)
+        # Issuer-declared fiscal identity re-assembles the drifted AAPL
+        # quarters (Q2 on April 1, Q3 on July 1 in 2017 and 2023), so the
+        # FY2017/FY2023-anchored windows that the month grid could not fill
+        # are now complete: 35 of 36 evaluation dates are valid, the first
+        # (2018-01-02) predates the FY2017 annual evidence and stays refused.
+        self.assertEqual(dist.sample_count, 35)
         self.assertEqual(dist.total_evaluations, 36)
-        self.assertEqual(len(dist.excluded_observations), 6)
+        self.assertEqual(len(dist.excluded_observations), 1)
         excluded = dist.excluded_observations[0]
         self.assertEqual(excluded["evaluation_date"], "2018-01-02")
         self.assertEqual(excluded["reason_code"], REASON_INSUFFICIENT_QUARTERS)
@@ -910,7 +945,7 @@ class TestPromotedAaplDatasetRealResult(unittest.TestCase):
 
     def test_the_sample_period_matches_the_pe_window(self):
         dist = self.result.distribution
-        self.assertEqual(dist.period_start, "2018-05-03")
+        self.assertEqual(dist.period_start, "2018-02-02")
         self.assertEqual(dist.period_end, "2026-07-31")
         self.assertEqual(dist.sampling_cadence, "PERIODIC_FILING_USABLE_DATES")
 

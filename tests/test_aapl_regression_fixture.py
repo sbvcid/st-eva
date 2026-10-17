@@ -107,8 +107,11 @@ class TestAaplOfflinePipeline(unittest.TestCase):
     def test_production_historical_pe_is_the_tracked_canonical_dataset(self):
         summary = self.result["reverse_requirements"]["production_historical_pe_summary"]
         self.assertEqual(summary["status"], "USABLE_FOR_REFERENCE")
-        self.assertEqual(summary["sample_count"], 28)
-        self.assertEqual(summary["period_start"], "2018-08-02")
+        # Issuer-declared fiscal identity restores the full series: every
+        # evaluation date yields a valid observation (the drifted AAPL
+        # quarter ends sit in their true fiscal positions again).
+        self.assertEqual(summary["sample_count"], 36)
+        self.assertEqual(summary["period_start"], "2018-01-02")
         self.assertTrue(summary["input_set_id"])
         # Exit multiples come from the production distribution, not a fixture band.
         row0 = self.result["reverse_requirements"]["reverse_requirements_matrix"][0]

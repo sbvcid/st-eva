@@ -60,6 +60,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from fiscal_calendar import FiscalCalendar, build_fiscal_calendar
 from historical_pe import (
     MIN_OBSERVATIONS_FOR_REFERENCE,
     QUARTER_MAX_DAYS,
@@ -71,14 +72,12 @@ from historical_pe import (
     UTC,
     canonical_json_hash,
     compute_distribution_percentiles,
-    fiscal_year_of,
-    quarter_number,
     restore_as_traded_close,
     resolve_usable_date,
 )
 
 METHODOLOGY = "historical-pfcf/1.0"
-LOGIC_VERSION = "historical-pfcf/1.0.0"
+LOGIC_VERSION = "historical-pfcf/1.1.0"
 FORMULA_VERSION = "historical-pfcf/1.0"
 
 # Metric identifier emitted by the historical P/FCF engine.
@@ -328,7 +327,7 @@ def derive_discrete_quarters_at(
     spans_in_force: Mapping[Tuple[str, str], CashFlowSpanEvidence],
     ocf_role: str,
     capex_role: str,
-    fye_month: int,
+    fiscal_calendar: "FiscalCalendar",
     evaluation_date: str,
     issuer_id: str,
 ) -> Dict[datetime.date, Dict[str, Any]]:
@@ -341,6 +340,12 @@ def derive_discrete_quarters_at(
     quarter-length duration (M-2). The quarter-length case is a directly
     stated Q1. Both constituents must be in force at the evaluation date, so
     a derived quarter can never be knowable before its own inputs (M-3).
+
+    Each discrete quarter's fiscal year and quarter come from the issuer's
+    own declarations (the fiscal calendar built from the filings' XBRL focus
+    fields and annual spans), never from a month grid: 52/53-week filers'
+    quarter ends drift across month boundaries. A span end with no issuer
+    declaration is left out, never assigned to a neighbouring quarter.
     """
     def _discrete_for(role: str) -> Dict[datetime.date, Dict[str, Any]]:
         own = {
@@ -400,9 +405,15 @@ def derive_discrete_quarters_at(
             # One concept states the quarter and the other does not: the
             # quarter's free cash flow is absent, not zero (M-1).
             continue
+        identity = fiscal_calendar.identity_for(end_d.isoformat())
+        if identity is None:
+            # No issuer declaration identifies this period's fiscal year and
+            # quarter; the quarter is left out rather than mislabelled.
+            continue
         combined[end_d] = {
-            "fiscal_year": fiscal_year_of(end_d, fye_month),
-            "fiscal_quarter": quarter_number(end_d, fye_month),
+            "fiscal_year": identity.fiscal_year,
+            "fiscal_quarter": identity.fiscal_quarter,
+            "identity_source": identity.identity_source,
             "period_end": end_d.isoformat(),
             "operating_cash_flow": ocf["value"],
             "capital_expenditure": capex["value"],
@@ -422,15 +433,16 @@ def ttm_fcf_window_at(
     *,
     quarters: Mapping[datetime.date, Dict[str, Any]],
     day: str,
-    fye_month: int,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[str]]:
     """
     The TTM FCF window knowable at `day` (M-4).
 
     Anchors on the greatest fiscal-quarter position with knowable evidence
-    and walks back four consecutive positions. The window must contain a Q4
-    by construction of the anchor walk; a missing position refuses the
-    window. There is no rollback to an earlier anchor and no synthesis.
+    and walks back four consecutive positions. The anchor's fiscal year and
+    quarter are the issuer-declared identity carried by the quarter itself;
+    the window must contain a Q4 by construction of the anchor walk; a
+    missing position refuses the window. There is no rollback to an earlier
+    anchor and no synthesis.
     """
     known = {
         end: quarter for end, quarter in quarters.items() if quarter["knowable_from"] <= day
@@ -440,8 +452,8 @@ def ttm_fcf_window_at(
             f"No discrete quarter free cash flow is knowable at evaluation date {day}."
         )
     anchor = max(known)
-    anchor_year = fiscal_year_of(anchor, fye_month)
-    anchor_number = quarter_number(anchor, fye_month)
+    anchor_year = known[anchor]["fiscal_year"]
+    anchor_number = known[anchor]["fiscal_quarter"]
 
     positions: List[Tuple[int, int]] = []
     year, number = anchor_year, anchor_number
@@ -458,8 +470,8 @@ def ttm_fcf_window_at(
         matches = [
             end
             for end in known
-            if fiscal_year_of(end, fye_month) == pos_year
-            and quarter_number(end, fye_month) == pos_number
+            if known[end]["fiscal_year"] == pos_year
+            and known[end]["fiscal_quarter"] == pos_number
         ]
         if matches:
             window_quarters.append(known[max(matches)])
@@ -495,7 +507,7 @@ def build_historical_pfcf(
     cash_flow_spans: Sequence[CashFlowSpanEvidence],
     share_counts: Sequence[ShareCountEvidence],
     prices: Mapping[str, Dict[str, Any]],
-    fye_month: int,
+    fiscal_calendar: "FiscalCalendar",
     evaluation_dates: Sequence[str],
     current_price_day: Optional[str] = None,
     min_observations: int = MIN_OBSERVATIONS_FOR_REFERENCE,
@@ -507,7 +519,9 @@ def build_historical_pfcf(
     `prices` maps each trading day to {"close", "currency"} plus optional
     accounting-basis metadata; `evaluation_dates` are the usable dates the
     distribution is sampled on (M-6). Every refusal carries a closed-set
-    reason code and a detail naming what was missing (M-8).
+    reason code and a detail naming what was missing (M-8). Fiscal positions
+    come from `fiscal_calendar`, the issuer-declared identity model; the
+    month grid cannot represent 52/53-week fiscal calendars.
     """
     # Span identity is (role, start, end): operating cash flow and capital
     # expenditure state the same cumulative periods, and a version of one
@@ -551,12 +565,12 @@ def build_historical_pfcf(
             spans_in_force=spans_in_force,
             ocf_role="operating_cash_flow",
             capex_role="capital_expenditure",
-            fye_month=fye_month,
+            fiscal_calendar=fiscal_calendar,
             evaluation_date=day,
             issuer_id=issuer_id,
         )
         window, window_reason, window_detail = ttm_fcf_window_at(
-            quarters=quarters, day=day, fye_month=fye_month
+            quarters=quarters, day=day
         )
 
         price = prices.get(day)
@@ -599,6 +613,7 @@ def build_historical_pfcf(
                         "period_end": quarter["period_end"],
                         "fiscal_year": quarter["fiscal_year"],
                         "fiscal_quarter": quarter["fiscal_quarter"],
+                        "identity_source": quarter.get("identity_source"),
                         "operating_cash_flow": quarter["operating_cash_flow"],
                         "capital_expenditure": quarter["capital_expenditure"],
                         "free_cash_flow": quarter["free_cash_flow"],
@@ -983,6 +998,15 @@ def load_issuer_historical_pfcf(
     capex_payload = json.loads(capex_path.read_text(encoding="utf-8"))
     shares_payload = json.loads(shares_path.read_text(encoding="utf-8"))
 
+    # Fiscal identities from the issuer's own declarations. The cumulative
+    # cash-flow spans' period ends are quarter ends (3M/6M/9M cumulative and
+    # fiscal-year spans each end where a fiscal quarter ends); the primary
+    # filings of those spans declare their fiscal year and quarter. The
+    # month grid cannot represent 52/53-week calendars and is no longer used.
+    fiscal_calendar = build_fiscal_calendar(
+        [ocf_payload, capex_payload], filings_index, units=("USD",)
+    )
+
     cash_flow_spans = _concept_spans_from_payload(
         payload=ocf_payload,
         unit="USD",
@@ -1030,18 +1054,36 @@ def load_issuer_historical_pfcf(
     # introduce an evaluation date of their own.
     evaluation_dates = sorted({filing["usable_date"] for filing in filings_index.values()})
 
-    return build_historical_pfcf(
+    result = build_historical_pfcf(
         issuer_id=config.issuer_id,
         instrument_id=config.ticker,
         cash_flow_spans=cash_flow_spans,
         share_counts=share_counts,
         prices=prices_map,
-        fye_month=config.fye_month,
+        fiscal_calendar=fiscal_calendar,
         evaluation_dates=evaluation_dates,
         current_price_day=current_price_day,
         min_observations=min_observations,
         input_set_id=input_set_id,
     )
+    # Only span ends that actually carry indexed facts can be lost to an
+    # unresolved identity; report those precisely, never payload-wide noise.
+    indexed_quarter_ends = {
+        span.end
+        for span in cash_flow_spans
+        if span.duration_days is not None
+        and QUARTER_MIN_DAYS <= span.duration_days <= QUARTER_MAX_DAYS
+    }
+    lost_ends = sorted(
+        end for end in indexed_quarter_ends if end not in fiscal_calendar.quarter_identity
+    )
+    if lost_ends:
+        result.summary_notes.append(
+            f"{len(lost_ends)} quarter periods carry cash-flow facts but no issuer "
+            "declaration identifying their fiscal year and quarter and are excluded "
+            f"from the discrete-quarter stream rather than mislabelled: {lost_ends}."
+        )
+    return result
 
 
 def load_aapl_historical_pfcf(

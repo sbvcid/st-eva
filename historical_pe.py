@@ -24,6 +24,11 @@ Invariants enforced:
   F-13: Determinism (identical input_set_id + logic_version -> identical content_hash).
   F-14: Source identity is complete (accession, form, url, content hash).
   F-15: Same accounting metric across classes (GAAP_DILUTED_EPS).
+  F-16: Fiscal identity of a period is the issuer's own declaration (dei
+        focus fields of the declaring filing, the earnings release's quarter
+        label, or the issuer's annual span) -- never a month grid, which
+        cannot represent 52/53-week calendars; a period with no issuer
+        declaration is excluded, never assigned to a neighbouring quarter.
 """
 
 from __future__ import annotations
@@ -38,13 +43,20 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 from zoneinfo import ZoneInfo
 
+from fiscal_calendar import (
+    IDENTITY_COMPARATIVE,
+    IDENTITY_PRIMARY,
+    IDENTITY_SPAN_POSITION,
+    build_fiscal_calendar,
+)
+
 ET = ZoneInfo("America/New_York")
 UTC = datetime.timezone.utc
 CUTOFF_ET = datetime.time(16, 0)
 
 METHODOLOGY = "historical-pe/1.0"
 METHODOLOGY_AMENDMENT = "Amendment 1 (2026-10-07), Decisions 10-14"
-LOGIC_VERSION = "historical-pe/1.0.2"
+LOGIC_VERSION = "historical-pe/1.1.0"
 FORMULA_VERSION = "historical-pe/1.0"
 
 # Explicit reason-code enumeration included in each result.
@@ -641,10 +653,17 @@ def build_historical_pe(
             ttm_reason = REASON_INSUFFICIENT_QUARTERS
             ttm_reason_detail = f"No quarter EPS evidence is knowable at evaluation date {day}."
         else:
-            # Anchor on greatest fiscal-quarter position with known evidence
+            # Anchor on greatest fiscal-quarter position with known evidence.
+            # Fiscal positions come from the evidence's issuer-declared
+            # identity (dei:FiscalYearFocus / dei:FiscalPeriodFocus of the
+            # declaring filing, the earnings release's own quarter label, or
+            # the issuer's annual span), never from a month grid: 52/53-week
+            # filers' quarter ends drift across month boundaries and a month
+            # grid assigns them to the wrong fiscal quarter.
             anchor = ends_sorted[-1]
-            anchor_year = fiscal_year_of(anchor, fye_month)
-            anchor_number = quarter_number(anchor, fye_month)
+            anchor_evidence = known_quarters[anchor]
+            anchor_year = anchor_evidence.fiscal_year
+            anchor_number = anchor_evidence.fiscal_quarter
 
             positions: List[Tuple[int, int]] = []
             cur_y = anchor_year
@@ -661,7 +680,8 @@ def build_historical_pe(
             for pos_y, pos_q in positions:
                 matches = [
                     end for end in ends_sorted
-                    if fiscal_year_of(end, fye_month) == pos_y and quarter_number(end, fye_month) == pos_q
+                    if known_quarters[end].fiscal_year == pos_y
+                    and known_quarters[end].fiscal_quarter == pos_q
                 ]
                 if matches:
                     window_ends.append(matches[-1])
@@ -729,13 +749,49 @@ def build_historical_pe(
         forms_present = sorted({c["form"] for c in ttm_components})
         audit_statuses = sorted({c["audit_status"] for c in ttm_components})
 
+        ttm_denominator = round(sum(c["value"] for c in ttm_components), 6) if not missing_positions and ttm_components else None
+        denominator_derivation = None
+        if ttm_denominator is not None:
+            # The TTM denominator is a derived sum of four directly stated
+            # quarterly figures, never an issuer-declared annual figure.
+            # Per-share amounts are not strictly additive across quarters with
+            # differing share counts, so the sum can differ from the issuer's
+            # audited annual EPS; the annual figure in force at this date is
+            # carried beside it so the gap stays visible instead of being
+            # reconciled away.
+            annual_in_force = None
+            for annual_end in sorted(annual_by_end):
+                versions = [v for v in annual_by_end[annual_end] if v.usable_date <= day]
+                if versions:
+                    annual_ev = versions[-1]
+                    annual_in_force = {
+                        "value": annual_ev.value,
+                        "period_end": annual_ev.period_end,
+                        "fiscal_year": annual_ev.fiscal_year,
+                        "accession": annual_ev.accession,
+                    }
+            denominator_derivation = {
+                "method": "SUM_OF_FOUR_DIRECTLY_STATED_QUARTERLY_EPS",
+                "derived_not_issuer_declared": True,
+                "annual_eps_in_force_at_evaluation_date": annual_in_force,
+                "note": (
+                    "The TTM denominator sums four issuer-declared fiscal "
+                    "quarters' directly stated GAAP diluted EPS. It is a "
+                    "derived TTM indicator, not an issuer-declared figure; "
+                    "per-share amounts are not strictly additive across "
+                    "quarters with differing share counts, so it can differ "
+                    "from the audited annual EPS recorded beside it."
+                ),
+            }
+
         eps_state = {
             "status": STATUS_AVAILABLE if not missing_positions and ttm_components else STATUS_UNAVAILABLE,
             "window_anchor": {
                 "fiscal_year": positions[-1][0],
                 "fiscal_quarter": positions[-1][1],
             } if known_quarters else None,
-            "quarter_denominator": round(sum(c["value"] for c in ttm_components), 6) if not missing_positions and ttm_components else None,
+            "quarter_denominator": ttm_denominator,
+            "quarter_denominator_derivation": denominator_derivation,
             "quarters_required": 4,
             "quarters_present": len(ttm_components),
             "missing_quarters": missing_positions,
@@ -892,12 +948,18 @@ def build_historical_pe(
         cur_ttm_status = STATUS_UNAVAILABLE
         cur_ttm_val = None
         cur_ttm_reason = None
+        cur_denominator = None
+        cur_denominator_derivation = None
 
         if known_quarters_cur:
+            # Fiscal positions from the anchor evidence's issuer-declared
+            # identity, as in the dated loop; the month grid cannot represent
+            # 52/53-week calendars.
             anchor_cur = max(known_quarters_cur.keys())
+            anchor_cur_evidence = known_quarters_cur[anchor_cur]
             pos_cur = []
-            cy = fiscal_year_of(anchor_cur, fye_month)
-            cq = quarter_number(anchor_cur, fye_month)
+            cy = anchor_cur_evidence.fiscal_year
+            cq = anchor_cur_evidence.fiscal_quarter
             for _ in range(4):
                 pos_cur.append((cy, cq))
                 cq -= 1
@@ -909,7 +971,8 @@ def build_historical_pe(
             for py, pq in pos_cur:
                 m = [
                     end for end in sorted(known_quarters_cur.keys())
-                    if fiscal_year_of(end, fye_month) == py and quarter_number(end, fye_month) == pq
+                    if known_quarters_cur[end].fiscal_year == py
+                    and known_quarters_cur[end].fiscal_quarter == pq
                 ]
                 if m:
                     cur_components.append(known_quarters_cur[m[-1]].to_dict())
@@ -936,6 +999,41 @@ def build_historical_pe(
                 elif total_eps_cur <= 0:
                     cur_ttm_reason = REASON_NON_POSITIVE_EPS
 
+            if not cur_missing and cur_components:
+                # Same derivation marking as the dated loop: the TTM
+                # denominator is a derived sum, never an issuer-declared
+                # annual figure; the audited annual in force is carried
+                # beside it so any per-share non-additivity stays visible.
+                cur_denominator = round(sum(c["value"] for c in cur_components), 6)
+                cur_annual_versions = [
+                    v
+                    for versions in annual_by_end.values()
+                    for v in versions
+                    if v.usable_date <= cur_day
+                ]
+                cur_annual_in_force = None
+                if cur_annual_versions:
+                    annual_ev = max(cur_annual_versions, key=lambda v: v.period_end)
+                    cur_annual_in_force = {
+                        "value": annual_ev.value,
+                        "period_end": annual_ev.period_end,
+                        "fiscal_year": annual_ev.fiscal_year,
+                        "accession": annual_ev.accession,
+                    }
+                cur_denominator_derivation = {
+                    "method": "SUM_OF_FOUR_DIRECTLY_STATED_QUARTERLY_EPS",
+                    "derived_not_issuer_declared": True,
+                    "annual_eps_in_force_at_evaluation_date": cur_annual_in_force,
+                    "note": (
+                        "The TTM denominator sums four issuer-declared fiscal "
+                        "quarters' directly stated GAAP diluted EPS. It is a "
+                        "derived TTM indicator, not an issuer-declared figure; "
+                        "per-share amounts are not strictly additive across "
+                        "quarters with differing share counts, so it can differ "
+                        "from the audited annual EPS recorded beside it."
+                    ),
+                }
+
         current_snapshot = HistoricalPeObservation(
             observation_id=f"histpe-{METRIC_CURRENT_PE}-{instrument_id}-{cur_day}",
             issuer_id=issuer_id,
@@ -949,7 +1047,16 @@ def build_historical_pe(
             value=round(cur_ttm_val, 6) if cur_ttm_val is not None else None,
             unit="multiple",
             currency=None,
-            eps_state={"components": cur_components, "missing_quarters": cur_missing},
+            eps_state={
+                "components": cur_components,
+                "missing_quarters": cur_missing,
+                "window_anchor": {
+                    "fiscal_year": pos_cur[-1][0],
+                    "fiscal_quarter": pos_cur[-1][1],
+                } if known_quarters_cur else None,
+                "quarter_denominator": cur_denominator,
+                "quarter_denominator_derivation": cur_denominator_derivation,
+            },
             price_state={
                 "price_date": cur_day,
                 "close": cur_p_val,
@@ -1317,8 +1424,51 @@ def load_issuer_historical_pe(
     
     concept_sha = hashlib.sha256(concept_path.read_bytes()).hexdigest()
     
-    # Quarterly and annual evidence from filed XBRL facts
+    # Quarterly and annual evidence from filed XBRL facts. Fiscal identity is
+    # issuer-declared: the 10-Q/10-K whose conformed period of report equals
+    # the fact's period end declares the period's fiscal year and quarter in
+    # its own XBRL focus fields; comparative and annual-span rules fill the
+    # rest. The month grid is no longer consulted for identity -- it cannot
+    # represent 52/53-week calendars whose quarter ends drift across months.
     concept_payload = json.loads(concept_path.read_text(encoding="utf-8"))
+    fiscal_calendar = build_fiscal_calendar([concept_payload], filings_index)
+    identity_notes: List[str] = []
+    quarter_span_ends_with_indexed_fact: Set[str] = set()
+    annual_span_ends_with_indexed_fact: Set[str] = set()
+    for fact in concept_payload["units"]["USD/shares"]:
+        if not fact.get("start") or fact["accn"] not in filings_index:
+            continue
+        span = (
+            datetime.date.fromisoformat(fact["end"])
+            - datetime.date.fromisoformat(fact["start"])
+        ).days
+        if QUARTER_MIN_DAYS <= span <= QUARTER_MAX_DAYS:
+            quarter_span_ends_with_indexed_fact.add(fact["end"])
+        elif YEAR_MIN_DAYS <= span <= YEAR_MAX_DAYS and fact["form"] == "10-K":
+            annual_span_ends_with_indexed_fact.add(fact["end"])
+    lost_quarter_ends = sorted(
+        end
+        for end in quarter_span_ends_with_indexed_fact
+        if end not in fiscal_calendar.quarter_identity
+    )
+    lost_annual_ends = sorted(
+        end
+        for end in annual_span_ends_with_indexed_fact
+        if end not in fiscal_calendar.annual_fiscal_year
+    )
+    if lost_quarter_ends:
+        identity_notes.append(
+            f"{len(lost_quarter_ends)} quarter periods carry facts but no issuer "
+            "declaration identifying their fiscal year and quarter and are excluded "
+            "from the quarterly evidence stream rather than assigned to a "
+            f"neighbouring quarter: {lost_quarter_ends}."
+        )
+    if lost_annual_ends:
+        identity_notes.append(
+            f"{len(lost_annual_ends)} annual periods carry 10-K facts but no "
+            "issuer declaration resolving their fiscal year and are excluded: "
+            f"{lost_annual_ends}."
+        )
     quarter_evidence: List[QuarterEpsEvidence] = []
     annual_evidence: List[QuarterEpsEvidence] = []
     
@@ -1335,8 +1485,13 @@ def load_issuer_historical_pe(
         form = filing_meta["form"]
         
         if QUARTER_MIN_DAYS <= span <= QUARTER_MAX_DAYS:
-            fy = fiscal_year_of(end_d, issuer_config.fye_month)
-            fq = quarter_number(end_d, issuer_config.fye_month)
+            identity = fiscal_calendar.quarter_identity.get(end_d.isoformat())
+            if identity is None:
+                # No issuer declaration identifies this period; excluding it is
+                # the honest refusal (never a neighbouring-quarter assignment).
+                continue
+            fy = identity.fiscal_year
+            fq = identity.fiscal_quarter
             q_ev = QuarterEpsEvidence(
                 evidence_id=f"ev-filed-{accn}-{end_d.isoformat()}",
                 issuer_id=issuer_config.issuer_id,
@@ -1357,11 +1512,15 @@ def load_issuer_historical_pe(
                 content_sha256=concept_sha,
                 stated_directly=True,
                 derivation="directly tagged quarter-length XBRL fact",
+                fiscal_position_source=identity.identity_source,
             )
             quarter_evidence.append(q_ev)
         
         elif YEAR_MIN_DAYS <= span <= YEAR_MAX_DAYS and form == "10-K":
-            fy = fiscal_year_of(end_d, issuer_config.fye_month)
+            fy = fiscal_calendar.annual_fiscal_year.get(end_d.isoformat())
+            if fy is None:
+                # Covered by the lost_annual_ends note; skip without guessing.
+                continue
             a_ev = QuarterEpsEvidence(
                 evidence_id=f"ev-annual-{accn}-{end_d.isoformat()}",
                 issuer_id=issuer_config.issuer_id,
@@ -1382,6 +1541,7 @@ def load_issuer_historical_pe(
                 content_sha256=concept_sha,
                 stated_directly=True,
                 derivation="directly tagged annual XBRL fact",
+                fiscal_position_source=IDENTITY_PRIMARY,
             )
             annual_evidence.append(a_ev)
     
@@ -1394,8 +1554,27 @@ def load_issuer_historical_pe(
             period_end_d = datetime.date.fromisoformat(rec["quarter_period_end"])
             acceptance_dt = datetime.datetime.fromisoformat(rec["acceptance_datetime"])
             usable_d, usable_r = resolve_usable_date(acceptance_dt, trading_days)
-            fy = fiscal_year_of(period_end_d, issuer_config.fye_month)
+            # The release itself declares the fiscal year of the quarter it
+            # reports ("fourth quarter of fiscal N, which ended <date>"). The
+            # issuer's declared annual span for that fiscal year, when already
+            # on file, must end on the same date; a disagreement refuses the
+            # record instead of silently relabelling either side.
+            fy = rec.get("fiscal_year")
             fq = 4
+            if not isinstance(fy, int):
+                identity_notes.append(
+                    f"Furnished Q4 record {rec.get('accession')} is refused: it "
+                    "declares no fiscal year for its quarter."
+                )
+                continue
+            declared_year_end = fiscal_calendar.fiscal_year_end(fy)
+            if declared_year_end is not None and declared_year_end != rec["quarter_period_end"]:
+                identity_notes.append(
+                    f"Furnished Q4 record {rec.get('accession')} is refused: its "
+                    f"period end {rec['quarter_period_end']} disagrees with the "
+                    f"issuer's declared fiscal {fy} annual period end {declared_year_end}."
+                )
+                continue
             
             furn_ev = QuarterEpsEvidence(
                 evidence_id=f"ev-furn-{rec['accession']}-{period_end_d.isoformat()}",
@@ -1421,6 +1600,7 @@ def load_issuer_historical_pe(
                 content_sha256=rec.get("content_sha256"),
                 stated_directly=True,
                 derivation="directly stated in exhibit Three Months Ended column",
+                fiscal_position_source="ISSUER_DECLARED_EARNINGS_RELEASE",
                 item_2_02_furnished_not_filed=True,
             )
             quarter_evidence.append(furn_ev)
@@ -1462,7 +1642,7 @@ def load_issuer_historical_pe(
     
     current_price = prices_map.get(trading_days[-1])
     
-    return build_historical_pe(
+    result = build_historical_pe(
         issuer_id=issuer_config.issuer_id,
         instrument_id=issuer_config.ticker,
         quarter_evidence=quarter_evidence,
@@ -1475,6 +1655,9 @@ def load_issuer_historical_pe(
         min_observations=min_observations,
         input_set_id=input_set_id,
     )
+    if identity_notes:
+        result.summary_notes.extend(identity_notes)
+    return result
 
 
 def load_aapl_historical_pe(

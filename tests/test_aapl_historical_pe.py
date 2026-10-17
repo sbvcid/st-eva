@@ -122,7 +122,7 @@ class TestAaplCanonicalDatasetIsSelfContained(unittest.TestCase):
 
         self.assertEqual(result.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertEqual(len(result.observations), 36)
-        self.assertEqual(result.distribution.sample_count, 28)
+        self.assertEqual(result.distribution.sample_count, 36)
 
 
 class TestAaplQ4EvidenceSchema(unittest.TestCase):

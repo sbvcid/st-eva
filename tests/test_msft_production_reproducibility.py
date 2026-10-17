@@ -378,17 +378,15 @@ class TestAaplRegressionBaseline(unittest.TestCase):
         cls.result = load_aapl_historical_pe(enable_furnished=True)
 
     def test_aapl_uses_all_36_available_pit_observations(self):
-        self.assertEqual(self.result.distribution.sample_count, 28)
+        # Issuer-declared fiscal identity re-assembles every AAPL window
+        # correctly, so all 36 evaluation dates produce valid observations.
+        self.assertEqual(self.result.distribution.sample_count, 36)
         self.assertEqual(len(self.result.observations), 36)
         self.assertEqual(self.result.distribution.status, STATUS_USABLE_FOR_REFERENCE)
         self.assertTrue(self.result.distribution.usable_for_reference)
 
     def test_aapl_excluded_count_is_zero(self):
-        # 6 observations lack qualifying Q4 evidence; 2 more are the
-        # position-filled windows whose period ends are not consecutive
-        # calendar quarters (2018-05-03, 2024-05-03), refused since the
-        # window-continuity guard.
-        self.assertEqual(len(self.result.distribution.excluded_observations), 8)
+        self.assertEqual(len(self.result.distribution.excluded_observations), 0)
 
 
 if __name__ == "__main__":
