@@ -1068,12 +1068,10 @@ def load_issuer_historical_pfcf(
     )
     # Only span ends that actually carry indexed facts can be lost to an
     # unresolved identity; report those precisely, never payload-wide noise.
-    indexed_quarter_ends = {
-        span.end
-        for span in cash_flow_spans
-        if span.duration_days is not None
-        and QUARTER_MIN_DAYS <= span.duration_days <= QUARTER_MAX_DAYS
-    }
+    # Cumulative (6M/9M) span ends are quarter-end candidates too, so an
+    # unresolved identity on a cumulative period is reported rather than
+    # silently ignored.
+    indexed_quarter_ends = {span.end for span in cash_flow_spans if span.duration_days is not None}
     lost_ends = sorted(
         end for end in indexed_quarter_ends if end not in fiscal_calendar.quarter_identity
     )
@@ -1082,6 +1080,17 @@ def load_issuer_historical_pfcf(
             f"{len(lost_ends)} quarter periods carry cash-flow facts but no issuer "
             "declaration identifying their fiscal year and quarter and are excluded "
             f"from the discrete-quarter stream rather than mislabelled: {lost_ends}."
+        )
+    if fiscal_calendar.unresolved:
+        result.summary_notes.append(
+            f"{len(fiscal_calendar.unresolved)} fiscal periods remain unresolved by "
+            f"issuer declaration and are excluded rather than assigned: "
+            f"{[item['period_end'] for item in fiscal_calendar.unresolved]}."
+        )
+    if fiscal_calendar.warnings:
+        result.summary_notes.append(
+            f"{len(fiscal_calendar.warnings)} fiscal identity conflicts were recorded "
+            f"and not silently resolved: {fiscal_calendar.warnings}."
         )
     return result
 

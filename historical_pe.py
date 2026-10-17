@@ -1433,7 +1433,7 @@ def load_issuer_historical_pe(
     concept_payload = json.loads(concept_path.read_text(encoding="utf-8"))
     fiscal_calendar = build_fiscal_calendar([concept_payload], filings_index)
     identity_notes: List[str] = []
-    quarter_span_ends_with_indexed_fact: Set[str] = set()
+    all_period_ends_with_indexed_fact: Set[str] = set()
     annual_span_ends_with_indexed_fact: Set[str] = set()
     for fact in concept_payload["units"]["USD/shares"]:
         if not fact.get("start") or fact["accn"] not in filings_index:
@@ -1442,13 +1442,12 @@ def load_issuer_historical_pe(
             datetime.date.fromisoformat(fact["end"])
             - datetime.date.fromisoformat(fact["start"])
         ).days
-        if QUARTER_MIN_DAYS <= span <= QUARTER_MAX_DAYS:
-            quarter_span_ends_with_indexed_fact.add(fact["end"])
-        elif YEAR_MIN_DAYS <= span <= YEAR_MAX_DAYS and fact["form"] == "10-K":
+        all_period_ends_with_indexed_fact.add(fact["end"])
+        if YEAR_MIN_DAYS <= span <= YEAR_MAX_DAYS and fact["form"] == "10-K":
             annual_span_ends_with_indexed_fact.add(fact["end"])
     lost_quarter_ends = sorted(
         end
-        for end in quarter_span_ends_with_indexed_fact
+        for end in all_period_ends_with_indexed_fact
         if end not in fiscal_calendar.quarter_identity
     )
     lost_annual_ends = sorted(
@@ -1468,6 +1467,17 @@ def load_issuer_historical_pe(
             f"{len(lost_annual_ends)} annual periods carry 10-K facts but no "
             "issuer declaration resolving their fiscal year and are excluded: "
             f"{lost_annual_ends}."
+        )
+    if fiscal_calendar.unresolved:
+        identity_notes.append(
+            f"{len(fiscal_calendar.unresolved)} fiscal periods remain unresolved by "
+            f"issuer declaration and are excluded rather than assigned: "
+            f"{[item['period_end'] for item in fiscal_calendar.unresolved]}."
+        )
+    if fiscal_calendar.warnings:
+        identity_notes.append(
+            f"{len(fiscal_calendar.warnings)} fiscal identity conflicts were recorded "
+            f"and not silently resolved: {fiscal_calendar.warnings}."
         )
     quarter_evidence: List[QuarterEpsEvidence] = []
     annual_evidence: List[QuarterEpsEvidence] = []

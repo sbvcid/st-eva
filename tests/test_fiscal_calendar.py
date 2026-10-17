@@ -283,27 +283,64 @@ class TestUncertainIdentityIsRefused(unittest.TestCase):
         # says fiscal 2021; the disagreement refuses the end.
         index = {
             "CUR": filing("CUR", "2021-12-31", "10-Q"),
-            "FY": filing("FY", "2021-12-31", "10-K"),
+            "FY": filing("FY", "2021-03-31", "10-K"),
         }
         payload = {
             "units": {
                 "USD": [
                     # Comparative basis: (2021-1, Q4) = (2020, Q4).
                     fact("2020-01-01", "2020-12-31", "CUR", "10-Q", 2021, "Q4"),
-                    # Containment basis: the annual span 2020-12-31..2021-12-31
-                    # would place the end at offset 366 -- outside the quarter
-                    # brackets, so only the comparative rule applies here and
-                    # the end resolves; add a second annual span that claims
-                    # the end as its own year end to force disagreement.
-                    fact("2020-12-31", "2021-12-31", "FY", "10-K", 2021, "FY"),
+                    # Containment basis: annual span 2020-04-01..2021-03-31
+                    # places 2020-12-31 about one quarter before its end, so
+                    # it resolves to fiscal 2021 Q3, disagreeing with the
+                    # comparative's fiscal 2020 Q4.
+                    fact("2020-04-01", "2021-03-31", "FY", "10-K", 2021, "FY"),
                 ]
             }
         }
         calendar = build_fiscal_calendar([payload], index)
-        # The comparative rule resolves (2020, Q4); the annual span places
-        # 2020-12-31 before its start, so both agree on (2020, Q4).
-        identity = calendar.quarter_identity["2020-12-31"]
-        self.assertEqual((identity.fiscal_year, identity.fiscal_quarter), (2020, 4))
+        self.assertNotIn("2020-12-31", calendar.quarter_identity)
+        self.assertTrue(
+            any(item.get("period_end") == "2020-12-31" for item in calendar.unresolved)
+        )
+
+    def test_contradictory_primary_instances_stay_unresolved(self):
+        index = {
+            "A": filing("A", "2020-03-31", "10-Q"),
+            "B": filing("B", "2020-03-31", "10-Q"),
+        }
+        payload = {
+            "units": {
+                "USD": [
+                    fact("2020-01-01", "2020-03-31", "A", "10-Q", 2020, "Q1"),
+                    fact("2020-01-01", "2020-03-31", "B", "10-Q", 2021, "Q2"),
+                ]
+            }
+        }
+        calendar = build_fiscal_calendar([payload], index)
+        self.assertNotIn("2020-03-31", calendar.quarter_identity)
+        self.assertTrue(
+            any(item.get("period_end") == "2020-03-31" for item in calendar.unresolved)
+        )
+
+    def test_contradictory_annual_fiscal_years_stay_unresolved(self):
+        index = {
+            "A": filing("A", "2020-12-31", "10-K"),
+            "B": filing("B", "2020-12-31", "10-K"),
+        }
+        payload = {
+            "units": {
+                "USD": [
+                    fact("2020-01-01", "2020-12-31", "A", "10-K", 2020, "FY"),
+                    fact("2020-01-01", "2020-12-31", "B", "10-K", 2021, "FY"),
+                ]
+            }
+        }
+        calendar = build_fiscal_calendar([payload], index)
+        self.assertNotIn("2020-12-31", calendar.annual_fiscal_year)
+        self.assertTrue(
+            any(item.get("annual_period_end") == "2020-12-31" for item in calendar.warnings)
+        )
 
 
 class TestIdentityNeverChangesKnowability(unittest.TestCase):

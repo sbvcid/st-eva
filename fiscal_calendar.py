@@ -151,21 +151,38 @@ def _resolve_annual_spans(
                 candidates.setdefault(span_end, []).append((fy - years, "comparative", instance["accn"]))
 
     for span_end, found in candidates.items():
-        values = {fy for fy, _, _ in found}
-        if len(values) > 1:
+        primary_found = [item for item in found if item[1] == "primary"]
+        primary_values = {fy for fy, _, _ in primary_found}
+        if len(primary_values) > 1:
             warnings.append(
                 {
                     "annual_period_end": span_end,
-                    "reason": "annual instances declare different fiscal years",
+                    "reason": "annual primary instances declare different fiscal years",
                     "candidates": [
                         {"fiscal_year": fy, "basis": basis, "accession": accn}
                         for fy, basis, accn in found
                     ],
                 }
             )
-        # Deterministic: primary declarations win, then the latest filed.
-        best = sorted(found, key=lambda item: (item[1] != "primary", item[2]))[0]
-        resolved[span_end] = best[0]
+            continue
+        if primary_found:
+            resolved[span_end] = sorted(primary_values)[0]
+            continue
+        comparative_values = {fy for fy, _, _ in found}
+        if len(comparative_values) > 1:
+            warnings.append(
+                {
+                    "annual_period_end": span_end,
+                    "reason": "annual comparative instances declare different fiscal years",
+                    "candidates": [
+                        {"fiscal_year": fy, "basis": basis, "accession": accn}
+                        for fy, basis, accn in found
+                    ],
+                }
+            )
+            continue
+        if comparative_values:
+            resolved[span_end] = sorted(comparative_values)[0]
     return resolved, {span_end: min((_parse_date(i["start"]) for i in spans), default=None) for span_end, spans in annual_spans.items()}
 
 
@@ -291,6 +308,17 @@ def build_fiscal_calendar(
                         ],
                     }
                 )
+                calendar.unresolved.append(
+                    {
+                        "period_end": end,
+                        "reason": "primary instances declare different fiscal periods",
+                        "candidates": [
+                            {"fiscal_year": fy, "fiscal_quarter": q, "basis": IDENTITY_PRIMARY, "accession": accn}
+                            for fy, q, _, accn, _ in primary_candidates
+                        ],
+                    }
+                )
+                continue
             fy, q, form, accession, _ = sorted(
                 primary_candidates, key=lambda item: (item[2] != "10-Q", item[4], item[3])
             )[0]
