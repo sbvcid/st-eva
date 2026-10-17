@@ -11,25 +11,27 @@ archive.
         -> replay-eligible contract Observations
     -> V1 admission
         -> ValuationInputs.current_revenue
+        -> ValuationInputs.current_operating_cash_flow
+        -> ValuationInputs.current_capex
+        -> ValuationInputs.current_fcf (derived from the two cash-flow inputs)
     -> MarketImpliedAssumptionsEngine.analyze
 
 Two measured facts shape every decision below, both from the MU pilot archive.
 
-**`revenue` is the only metric the two vocabularies share.** The evidence
-registry holds twenty ACTIVE filing metrics; `ValuationInputs` holds thirteen
-engine metrics; the intersection is `revenue`. V1 admits `revenue` and refuses
-the other twelve by name, rather than discovering later that each had a semantic
-problem of its own.
+**`revenue`, `operating_cash_flow` and `capex` are the metrics V1 may cross.**
+The evidence registry holds twenty-one ACTIVE filing metrics; `ValuationInputs`
+holds thirteen engine metrics; the intersection is `revenue`,
+`operating_cash_flow` and `capex`. V1 admits those three and refuses the rest
+by name, rather than discovering later that each had a semantic problem of its
+own.
 
-**`current_revenue` may not be synthesised.** `METRIC_DEFINITIONS` declares
-`revenue` to be *"Observed trailing revenue. Never synthesized."*
-(`data_contract.py:552`). `sec_provider` already implements three TTM
-constructions -- `SUM_OF_DISCRETE_QUARTERS`, `ANNUAL_FACT_AS_TRAILING_WINDOW`
-and a roll-forward -- and every one of them produces a figure this boundary is
-forbidden to write. They are licensed for the 2.3-B comparison layer, whose output
-is a `CrossValidationResult`, not a `ValuationInputs` field. V1 therefore admits
-an *observed filed period* and refuses a cumulative one, which is the whole
-difference between a filing and a trailing figure.
+**None of the three may be synthesised.** Each is *"Observed ... Never
+synthesised."* in its metric definition (`data_contract.py`). V1 therefore
+admits an *observed filed period* and refuses a cumulative one. Free cash flow
+is the single exception: it is derived from the admitted `operating_cash_flow`
+and `capex` only when they share one period and one currency with each other
+and with the price; capex sign is handled explicitly because SEC XBRL reports
+capex as a negative cash outflow.
 
 What V1 deliberately does not do:
 
@@ -69,6 +71,8 @@ from core_registry import CoreRegistry
 from data_contract import (
     METRIC_PRICE,
     METRIC_REVENUE,
+    METRIC_OPERATING_CASH_FLOW,
+    METRIC_CAPEX,
     QUARTER_MAX_DAYS,
     QUARTER_MIN_DAYS,
     YEAR_MAX_DAYS,
@@ -97,10 +101,17 @@ from evidence_query import (
 # hand-written list, and it is a single reference to `data_contract` rather than
 # a copy of a string -- so a rename cannot leave a second spelling behind.
 #
-# It is deliberately one metric. Widening it is not a matter of adding a name
-# here: each addition needs its own period, currency and synthesis answer, and
-# `free_cash_flow` and `ebitda` have no registry entry at all.
-V1_CROSSING_METRICS: Tuple[str, ...] = (METRIC_REVENUE,)
+# It is deliberately narrow: only metrics the registry holds as ACTIVE,
+# monetary DURATION concepts with an EXACT mapping may cross. `operating_cash_flow`
+# and `capex` meet that bar (both are EXACT-mapped, currency, DURATION), so they
+# cross beside `revenue` to feed the free-cash-flow derivation. `free_cash_flow`
+# and `ebitda` themselves have no registry entry and remain off the crossing: they
+# are not filing figures, and ST-EVA does not synthesise them here.
+V1_CROSSING_METRICS: Tuple[str, ...] = (
+    METRIC_REVENUE,
+    METRIC_OPERATING_CASH_FLOW,
+    METRIC_CAPEX,
+)
 
 # The registry must agree on all three of these before a metric is a candidate.
 # This is the rule that the scope is derived from the registry rather than
@@ -809,15 +820,18 @@ def _ambiguity_refusals(
     return []
 
 
-def _period_refusals(observation: Observation) -> List[Refusal]:
+def _period_refusals(observation: Observation, metric: str) -> List[Refusal]:
     """
-    Rule 7: an observed annual filing, and nothing else.
+    Rule 7: the period must be discrete and, for `current_revenue`, annual.
 
     `current_revenue` is declared *trailing*, so only an observed annual filing
     (approximately one fiscal year, 330-400 days) may cross. A discrete quarter
-    is not trailing, a cumulative stub is not trailing, and an instant is not a
-    period at all. Nothing here annualises, rolls forward, or calls into
-    `sec_provider`'s TTM constructions.
+    is not trailing, so it is refused for revenue: nothing here annualises,
+    rolls forward, or calls into `sec_provider`'s TTM constructions.
+
+    Cash-flow metrics (`operating_cash_flow`, `capex`) are period flows, not
+    trailing figures, so a discrete quarter or a fiscal year is a legitimate
+    observed period for them.
     """
     if observation.period_start is None or observation.period_end is None:
         return [
@@ -831,21 +845,36 @@ def _period_refusals(observation: Observation) -> List[Refusal]:
         return [_refusal(PERIOD_NOT_DISCRETE, "the period has no readable length")]
     if YEAR_MIN_DAYS <= days <= YEAR_MAX_DAYS:
         return []
-    if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
+    if metric == METRIC_REVENUE:
+        # Revenue is declared trailing; a quarter is not trailing and must not
+        # be annualised into one.
+        if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
+            return [
+                _refusal(
+                    PERIOD_NOT_DISCRETE,
+                    f"the period spans {days} days, which is a discrete quarter, not "
+                    f"the trailing annual figure `current_revenue` declares",
+                )
+            ]
         return [
             _refusal(
                 PERIOD_NOT_DISCRETE,
-                f"the period spans {days} days, which is a discrete quarter, not "
-                f"the trailing annual figure `current_revenue` declares",
+                f"the period spans {days} days, which is neither an observed annual "
+                f"filing ({YEAR_MIN_DAYS}-{YEAR_MAX_DAYS} days) nor any other "
+                f"trailing figure; `current_revenue` is declared trailing and must "
+                f"not be synthesised from a partial or cumulative period",
             )
         ]
+    # Cash-flow metrics are period flows: a discrete quarter or a fiscal year
+    # is a legitimate observed period.
+    if QUARTER_MIN_DAYS <= days <= QUARTER_MAX_DAYS:
+        return []
     return [
         _refusal(
             PERIOD_NOT_DISCRETE,
             f"the period spans {days} days, which is neither an observed annual "
-            f"filing ({YEAR_MIN_DAYS}-{YEAR_MAX_DAYS} days) nor any other "
-            f"trailing figure; `current_revenue` is declared trailing and must "
-            f"not be synthesised from a partial or cumulative period",
+            f"filing ({YEAR_MIN_DAYS}-{YEAR_MAX_DAYS} days) nor a discrete quarter "
+            f"({QUARTER_MIN_DAYS}-{QUARTER_MAX_DAYS} days)",
         )
     ]
 
@@ -995,7 +1024,7 @@ def _admit_one(
         )
         mappings[observation.observation_id] = (mapping_type, relation_kind)
         refusals.extend(mapping_refusals)
-        refusals.extend(_period_refusals(observation))
+        refusals.extend(_period_refusals(observation, metric))
         refusals.extend(
             _availability_refusals(classes[observation.observation_id], observation)
         )
@@ -1182,6 +1211,53 @@ def _admit_one(
     )
 
 
+# Free cash flow derivation.
+#
+# SEC XBRL reports capital expenditure as a cash outflow (a negative number), so
+# free cash flow is operating cash flow plus the reported capex -- equivalently
+# operating cash flow less the absolute spending. If a source reports capex as a
+# positive spending figure instead, it is subtracted. OCF and capex must share one
+# period and one currency; a mismatch means the derivation is refused rather than
+# combining incompatible periods or currencies, and no trailing figure is ever
+# invented from them.
+#
+#   free_cash_flow = operating_cash_flow + capex_reported   (capex <= 0, an outflow)
+#   free_cash_flow = operating_cash_flow - capex_reported   (capex > 0, a spending figure)
+def _derive_free_cash_flow(
+    operating_cash_flow: Optional[Admission],
+    capex: Optional[Admission],
+    price_currency: Optional[str],
+) -> Optional[float]:
+    """
+    Derive free cash flow from admitted operating cash flow and capex.
+
+    Returns `None` when either input is absent or non-numeric, when the two
+    sit on different periods or currencies, or when either currency differs
+    from the valuation-side price's currency. The derivation never combines
+    incompatible periods or currencies.
+    """
+    if operating_cash_flow is None or capex is None:
+        return None
+    if not is_number(operating_cash_flow.value) or not is_number(capex.value):
+        return None
+    if (
+        operating_cash_flow.period_start != capex.period_start
+        or operating_cash_flow.period_end != capex.period_end
+    ):
+        return None
+    if operating_cash_flow.currency != capex.currency:
+        return None
+    if price_currency is not None and operating_cash_flow.currency != price_currency:
+        return None
+    ocf = float(operating_cash_flow.value)
+    capex_value = float(capex.value)
+    if capex_value < 0:
+        # SEC reports capex as a negative cash outflow; adding it reduces FCF.
+        return ocf + capex_value
+    # A source that reports capex as a positive spending figure is subtracted.
+    return ocf - capex_value
+
+
 def admit(
     store: ArchiveStore,
     asset: str,
@@ -1242,15 +1318,48 @@ def admit(
         ),
         None,
     )
-    # Only `current_revenue` is ever written. Every other field keeps the
-    # dataclass's own default, which is what "kept valuation-side" means in code:
-    # `UNAVAILABLE` for a scalar and `{}` for a band, never a zero and never a
-    # related metric.
+    operating_cash_flow = next(
+        (
+            admission
+            for admission in admissions
+            if admission.metric == METRIC_OPERATING_CASH_FLOW
+            and admission.admitted
+        ),
+        None,
+    )
+    capex = next(
+        (
+            admission
+            for admission in admissions
+            if admission.metric == METRIC_CAPEX and admission.admitted
+        ),
+        None,
+    )
+    free_cash_flow = _derive_free_cash_flow(
+        operating_cash_flow, capex, checked_price.currency
+    )
+    # `current_revenue`, `current_operating_cash_flow` and `current_capex`
+    # are observed filed figures; `current_fcf` is derived from the two
+    # cash-flow admissions only when they share one period and one currency
+    # with each other and with the price. Every other field keeps the
+    # dataclass's own default, which is what "kept valuation-side" means in
+    # code: `UNAVAILABLE` for a scalar and `{}` for a band, never a zero and
+    # never a related metric.
     inputs = ValuationInputs(
         price=float(checked_price.value),
         currency=checked_price.currency,
         current_revenue=(
             revenue.value if revenue is not None else UNAVAILABLE
+        ),
+        current_operating_cash_flow=(
+            operating_cash_flow.value if operating_cash_flow is not None
+            else UNAVAILABLE
+        ),
+        current_capex=(
+            capex.value if capex is not None else UNAVAILABLE
+        ),
+        current_fcf=(
+            free_cash_flow if free_cash_flow is not None else UNAVAILABLE
         ),
     )
     return inputs, admissions

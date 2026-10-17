@@ -439,6 +439,8 @@ METRIC_PS_BAND = "ps_band"
 METRIC_EV_EBITDA_BAND = "ev_ebitda_band"
 METRIC_FREE_CASH_FLOW = "free_cash_flow"
 METRIC_EBITDA = "ebitda"
+METRIC_OPERATING_CASH_FLOW = "operating_cash_flow"
+METRIC_CAPEX = "capex"
 METRIC_REVENUE = "revenue"
 METRIC_NET_INCOME = "net_income"
 METRIC_EPS_DILUTED = "eps_diluted"
@@ -2101,6 +2103,8 @@ class ValuationInputs:
     forward_eps: Any = UNAVAILABLE
     consensus_forward_eps: Any = UNAVAILABLE
     current_fcf: Any = UNAVAILABLE
+    current_operating_cash_flow: Any = UNAVAILABLE
+    current_capex: Any = UNAVAILABLE
     current_ebitda: Any = UNAVAILABLE
     current_revenue: Any = UNAVAILABLE
     current_enterprise_value: Any = UNAVAILABLE
@@ -2149,6 +2153,10 @@ class ValuationInputs:
                 observations, METRIC_CONSENSUS_FORWARD_EPS
             ),
             current_fcf=cls._scalar(observations, METRIC_FREE_CASH_FLOW),
+            current_operating_cash_flow=cls._scalar(
+                observations, METRIC_OPERATING_CASH_FLOW
+            ),
+            current_capex=cls._scalar(observations, METRIC_CAPEX),
             current_ebitda=cls._scalar(observations, METRIC_EBITDA),
             current_revenue=cls._scalar(observations, METRIC_REVENUE),
             current_enterprise_value=cls._scalar(
@@ -2186,6 +2194,10 @@ class ValuationInputs:
                 view, "consensus_forward_eps", UNAVAILABLE
             ),
             current_fcf=getattr(view, "current_fcf", UNAVAILABLE),
+            current_operating_cash_flow=getattr(
+                view, "current_operating_cash_flow", UNAVAILABLE
+            ),
+            current_capex=getattr(view, "current_capex", UNAVAILABLE),
             current_ebitda=getattr(view, "current_ebitda", UNAVAILABLE),
             current_revenue=getattr(view, "current_revenue", UNAVAILABLE),
             current_enterprise_value=getattr(

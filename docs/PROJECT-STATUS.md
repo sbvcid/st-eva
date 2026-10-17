@@ -1605,3 +1605,56 @@ V1 admission boundary (which admits only `revenue`). Next gap: either extend
 V1 admission to carry cash-flow metrics into `ValuationInputs`, or verify D&A
 end-to-end via collection + reprocess + EV/EBITDA display.
 
+## Round 3 (2026-10-17): cash-flow inputs into FCF reverse valuation via V1 admission
+
+**Gap confirmed.** `V1_CROSSING_METRICS` was `(revenue,)`, so `ValuationInputs.current_fcf`
+was never populated from SEC observations: FCF was treated as an observed metric
+(`METRIC_FREE_CASH_FLOW`) that has no registry entry and is never collected. The
+cash-flow inputs that FCF is derived from — operating cash flow and capex — were
+already ACTIVE, currency, DURATION, EXACT-mapped but could not cross the V1
+boundary at all. Widening the boundary for revenue alone would have left the
+FCF derivation impossible.
+
+**Change.** Widened `V1_CROSSING_METRICS` to `(revenue, operating_cash_flow,
+capex)`: both additions are ACTIVE, monetary DURATION, EXACT-mapped, so they
+clear rule 1. Added `current_operating_cash_flow` and `current_capex` fields to
+`ValuationInputs` (`data_contract.py`), populated by `from_observations` and
+`from_legacy_view`. Extended `admit()` to write those two fields and derive
+`current_fcf` from the two admitted cash-flow inputs only when they share one
+period and one currency with each other and with the price. Capex sign is
+handled explicitly: SEC XBRL reports capex as a negative cash outflow, so
+`FCF = OCF + capex_reported` (equivalently OCF − |capex|); a source reporting
+capex as a positive spending figure is subtracted. Incompatible periods or
+currencies are refused rather than combined, and no trailing figure is
+invented. `_period_refusals` was made metric-aware: revenue keeps its annual-
+only (trailing) rule, while OCF/capex accept a discrete quarter or fiscal year.
+
+**Verification.** New `TestFreeCashFlowCrossing` in
+`tests/test_evidence_valuation_boundary.py` (2 tests): OCF + capex cross and
+derive `current_fcf = OCF + capex` (9.0B from 12.0B − 3.0B outflow); FCF enters
+the reverse valuation (`fcf_at_reference_multiple = market_cap / P/FCF
+multiple`). Pinned tests updated for the deliberate widening:
+`test_v1_scope_is_three_metrics...`, `crossing_metrics`,
+`test_the_admitted_revenue_reaches_the_valuation_inputs` (cash-flow inputs now
+refused as SOURCE_SILENT/UNAVAILABLE when no observations exist — honest
+absence, not synthesis), and
+`test_live_run_writes_admission` (3 admission records per run: revenue,
+operating_cash_flow, capex). Full backend suite: **2,365 passed, 169 skipped,
+498 subtests passed**; `git diff --check` clean; formal database untouched.
+
+**Condition status:**
+- A (collection & backfill): done round 1 (`reprocess_existing` verified).
+- B (priority mappings): complete — OCF, capex, D&A, operating income, cash,
+  long_term_debt all ACTIVE with EXACT mappings.
+- C (valuation connection): FCF path complete — SEC cash-flow observations
+  cross V1 admission into `ValuationInputs.current_fcf`, feed the reverse
+  valuation, and show inputs/source/period/formula via the admission records.
+  The historical P/FCF band also works end-to-end (AAPL/MSFT/MU).
+- Remaining: D&A facts not yet collected (no filings ingested for D&A), so the
+  EV/EBITDA path (operating income + D&A) is mapped but not yet fed by live
+  observations; and no 8-K/other form generalisation yet.
+
+**Next gap:** verify D&A end-to-end (collection → reprocess → EV/EBITDA
+display), or extend observed data coverage so operating income + D&A become
+qualified EV/EBITDA inputs.
+

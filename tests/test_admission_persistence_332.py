@@ -544,8 +544,13 @@ class TestProductionAdmissionWritePath(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertGreater(self.store.admission_count(), 0)
         admissions = self.store.admissions_for("MSFT")
-        self.assertEqual(len(admissions), 1)
-        self.assertEqual(admissions[0]["metric"], "revenue")
+        # V1 now crosses revenue, operating_cash_flow and capex, so a live run
+        # writes one admission record per crossing metric.
+        self.assertEqual(len(admissions), 3)
+        self.assertEqual(
+            {a["metric"] for a in admissions},
+            {"revenue", "operating_cash_flow", "capex"},
+        )
 
     def test_repeated_same_run_is_idempotent(self):
         import io, sys

@@ -31,6 +31,8 @@ from core_registry import CoreRegistry
 from data_contract import (
     METRIC_PRICE,
     METRIC_REVENUE,
+    METRIC_OPERATING_CASH_FLOW,
+    METRIC_CAPEX,
     UNAVAILABLE,
     AvailabilityBasis,
     Observation,
@@ -280,8 +282,14 @@ class BoundaryFixture(unittest.TestCase):
 class ScopeAndExistenceTests(BoundaryFixture):
     """Rules 1 and 2: the scope comes from the registry, and absence is a refusal."""
 
-    def test_v1_scope_is_one_metric_and_comes_from_the_contract(self):
-        self.assertEqual(V1_CROSSING_METRICS, (METRIC_REVENUE,))
+    def test_v1_scope_is_three_metrics_and_comes_from_the_contract(self):
+        # Deliberate widening (condition C): operating_cash_flow and capex are
+        # ACTIVE, monetary DURATION, EXACT-mapped metrics, so they cross beside
+        # revenue to feed the free-cash-flow derivation.
+        self.assertEqual(
+            V1_CROSSING_METRICS,
+            (METRIC_REVENUE, METRIC_OPERATING_CASH_FLOW, METRIC_CAPEX),
+        )
         self.assertEqual(V1_CROSSING_METRICS[0], "revenue")
 
     def test_the_registry_agrees_that_revenue_is_a_monetary_duration_metric(self):
@@ -934,7 +942,13 @@ class IntegrationTests(BoundaryFixture):
         self.assertEqual(result.asset, TICKER)
         self.assertEqual(result.as_of, "2026-09-29")
         self.assertEqual(list(result.admitted), [METRIC_REVENUE])
-        self.assertEqual(result.refused, {})
+        # Cash-flow inputs are crossed but have no filed observations here, so
+        # the boundary honestly refuses them rather than synthesising FCF.
+        refused = result.refused
+        self.assertEqual(set(refused), {METRIC_OPERATING_CASH_FLOW, METRIC_CAPEX})
+        for admission in refused.values():
+            self.assertFalse(admission.admitted)
+            self.assertIn(UNAVAILABLE, admission.refusal_labels)
 
     def test_every_other_field_stays_valuation_side(self):
         self.add_revenue()
@@ -944,6 +958,8 @@ class IntegrationTests(BoundaryFixture):
             "forward_eps",
             "consensus_forward_eps",
             "current_fcf",
+            "current_operating_cash_flow",
+            "current_capex",
             "current_ebitda",
             "current_enterprise_value",
             "current_market_cap",
@@ -1038,7 +1054,10 @@ class IntegrationTests(BoundaryFixture):
         document = build_valuation_inputs(
             self.store, TICKER, "2026-09-29", price_observation()
         ).contract_dict()
-        self.assertEqual(document["crossing_metrics"], ["revenue"])
+        self.assertEqual(
+            document["crossing_metrics"],
+            ["revenue", "operating_cash_flow", "capex"],
+        )
         admission = document["admissions"][0]
         for key in (
             "metric",
@@ -1163,6 +1182,101 @@ class IntegrationTests(BoundaryFixture):
                     node.value,
                     "a cross-source observation id must not be recognised here",
                 )
+
+
+class TestFreeCashFlowCrossing(BoundaryFixture):
+    """
+    Condition C: cash-flow observations cross the V1 boundary into
+    `ValuationInputs` and derive free cash flow, which the reverse-valuation
+    engine consumes.
+
+    SEC XBRL reports capital expenditure as a negative cash outflow, so free
+    cash flow is operating cash flow plus capex. OCF and capex must share one
+    period and one currency with each other and with the price; otherwise FCF
+    stays `UNAVAILABLE` and no incompatible periods or currencies are combined.
+    """
+
+    OCF_CONCEPT = "us-gaap:NetCashProvidedByUsedInOperatingActivities"
+    CAPEX_CONCEPT = "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment"
+    OCF_VALUE = 12_000_000_000
+    CAPEX_VALUE = -3_000_000_000  # negative: a cash outflow
+    FCF_VALUE = OCF_VALUE + CAPEX_VALUE  # 9_000_000_000
+
+    def add_operating_cash_flow(self, **kwargs):
+        observation = filing_observation(
+            METRIC_OPERATING_CASH_FLOW,
+            self.OCF_CONCEPT,
+            self.OCF_VALUE,
+            QUARTER,
+            "2026-06-01T00:00:00.000Z",
+            ACCEPTED,
+            accession=kwargs.pop("accession", self.next_accession()),
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            fidelity="EXACT",
+            form="10-Q",
+            fiscal_year=2026,
+            fiscal_period="Q3",
+            **kwargs,
+        )
+        self.record(observation)
+        return observation
+
+    def add_capex(self, **kwargs):
+        observation = filing_observation(
+            METRIC_CAPEX,
+            self.CAPEX_CONCEPT,
+            self.CAPEX_VALUE,
+            QUARTER,
+            "2026-06-01T00:00:00.000Z",
+            ACCEPTED,
+            accession=kwargs.pop("accession", self.next_accession()),
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            fidelity="EXACT",
+            form="10-Q",
+            fiscal_year=2026,
+            fiscal_period="Q3",
+            **kwargs,
+        )
+        self.record(observation)
+        return observation
+
+    def test_ocf_and_capex_cross_and_derive_free_cash_flow(self):
+        self.add_operating_cash_flow()
+        self.add_capex()
+        result = build_valuation_inputs(
+            self.store, TICKER, "2026-09-29", price_observation()
+        )
+        inputs = result.valuation_inputs
+        self.assertEqual(
+            set(result.admitted), {METRIC_OPERATING_CASH_FLOW, METRIC_CAPEX}
+        )
+        self.assertEqual(set(result.refused), {METRIC_REVENUE})
+        # Observed filed figures pass through unchanged.
+        self.assertEqual(inputs.current_operating_cash_flow, self.OCF_VALUE)
+        self.assertEqual(inputs.current_capex, self.CAPEX_VALUE)
+        # FCF = OCF + capex (capex is a negative SEC outflow).
+        self.assertEqual(inputs.current_fcf, self.FCF_VALUE)
+
+    def test_free_cash_flow_enters_the_reverse_valuation(self):
+        self.add_operating_cash_flow()
+        self.add_capex()
+        inputs, _ = admit(
+            self.store, TICKER, "2026-09-29", price_observation()
+        )
+        priced = replace(inputs, current_market_cap=MARKET_CAP)
+        analysis = MarketImpliedAssumptionsEngine.analyze(
+            priced, pfcf_multiple=10.0
+        )
+        self.assertEqual(
+            analysis["reference"]["pfcf_method"], "user_supplied_multiple"
+        )
+        # Implied FCF = market cap / P/FCF multiple.
+        self.assertEqual(
+            analysis["implied_assumptions"]["fcf_at_reference_multiple"],
+            MARKET_CAP / 10.0,
+        )
 
 
 if __name__ == "__main__":
