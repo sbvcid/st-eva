@@ -489,32 +489,29 @@ class TestTheMatrixIsUnchanged(unittest.TestCase):
                     msg="the published total-growth equation moved",
                 )
 
-    def test_the_matrix_is_identical_to_the_pre_change_baseline(self):
+    def test_the_matrix_is_identical_to_the_unified_eligibility_baseline(self):
         """
-        The matrix is a separate calculation and this task must not move it.
+        The matrix carries only qualified historical rows.
 
-        Every scenario row, the exit multiples with their eligibility states,
-        the unavailable list, the matrix status and the formula version are
-        compared against the values captured from the parent commit of this
-        change. A difference here means the selection change leaked into the
-        matrix and the task's own boundary was crossed.
+        Under the unified eligibility rule a vendor band that declares no
+        sample count is descriptive only and contributes no matrix rows, so the
+        MSFT regression run's matrix is the production distribution's
+        percentiles alone and the band's exclusion is stated in `unavailable`.
+        AAPL's fixture carries no band at all, so its matrix is unchanged from
+        the pre-change baseline. A difference here means the eligibility rule
+        moved without the rule itself changing.
         """
         baseline = {
             "MSFT": {
                 "status": "COMPUTED",
-                "matrix_size": 160,
+                "matrix_size": 80,
                 "distinct_exit_multiples": {
-                    # MSFT
-                    '22.0|historical_pe_band_percentile|DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT',
+                    # MSFT: the production distribution's percentiles only.
                     '25.602182|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '26.0|historical_pe_band_percentile|DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT',
                     '28.811204|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '30.0|historical_pe_band_percentile|DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT',
                     '33.195873|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '34.0|historical_pe_band_percentile|DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT',
                     '35.400253|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
                     '36.088407|production_historical_pe_percentile|ELIGIBLE_PRODUCTION_DISTRIBUTION',
-                    '38.0|historical_pe_band_percentile|DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT',
                 },
             },
             "AAPL": {
@@ -552,6 +549,28 @@ class TestTheMatrixIsUnchanged(unittest.TestCase):
                 self.assertEqual(
                     report["formula_version"], "reverse-requirements/1.1"
                 )
+
+    def test_the_unverified_band_exclusion_is_stated_not_silent(self):
+        # The MSFT fixture band declares no sample count; the unified rule
+        # refuses it from the scenario set and names why.
+        report = self.result["MSFT"]["reverse_requirements"]
+        band_items = [
+            item
+            for item in report["unavailable"]
+            if item.get("item") == "exit_multiple.band_scenarios"
+        ]
+        self.assertTrue(band_items, "the band's exclusion must be stated")
+        self.assertEqual(band_items[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
+        self.assertIn("descriptive statistic only", band_items[0]["reason"])
+        # AAPL's fixture carries no band at all, so it states nothing about one.
+        aapl_report = self.result["AAPL"]["reverse_requirements"]
+        self.assertFalse(
+            [
+                item
+                for item in aapl_report["unavailable"]
+                if item.get("item") == "exit_multiple.band_scenarios"
+            ]
+        )
 
 
 class TestReferenceSampleCountIsTheReferencesOwn(unittest.TestCase):

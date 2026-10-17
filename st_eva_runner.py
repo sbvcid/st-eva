@@ -1486,16 +1486,17 @@ class DeterministicMetricsEngine:
 def band_is_usable_for_reference(
     band: Optional[Dict[str, Any]],
 ) -> bool:
-    """A band is usable only when its positive median and sample size are verifiable."""
-    if not band:
-        return False
-    median = safe_float(band.get("median"))
-    observations = safe_float(band.get("observations"))
-    if median is None or median <= 0:
-        return False
-    if observations is None or observations < 0 or not observations.is_integer():
-        return False
-    return observations >= MIN_BAND_OBSERVATIONS_FOR_REFERENCE
+    """A band is usable only when its positive median and sample size are verifiable.
+
+    Delegates to the shared eligibility rule in `reverse_requirements`, so the
+    summary's gate and the matrix's scenario gate are one rule, not two.
+    """
+    from reverse_requirements import band_reference_eligibility
+
+    usable, _ = band_reference_eligibility(
+        band, min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE
+    )
+    return usable
 
 
 def band_median_for_reference(
@@ -4011,7 +4012,7 @@ def assert_true(condition: bool, message: str) -> None:
 def run_regression_tests() -> None:
     print("=== ST-EVA 2.0 Regression Tests ===")
 
-    for ticker in ("TENCENT", "MSFT", "NU"):
+    for ticker, fixture_multiple in (("TENCENT", 18.5), ("MSFT", 30.0), ("NU", 20.0)):
         result = run_st_eva(
             ticker,
             mode="regression",
@@ -4022,11 +4023,42 @@ def run_regression_tests() -> None:
             result["analysis_type"] == "market_implied_assumptions",
             f"{ticker}: wrong analysis type",
         )
+        # The fixtures' historical P/E bands declare no sample count, so under
+        # the unified eligibility rule they are descriptive only: they are
+        # neither the summary's reference nor matrix scenarios. A reference-free
+        # run therefore states that no reference exists, and the implied EPS
+        # becomes computable only from an explicitly supplied multiple.
+        assert_true(
+            result["reference"]["historical_band_status"]["pe"]
+            == "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT",
+            f"{ticker}: the fixture band must stay descriptive-only",
+        )
+        assert_true(
+            result["reference"]["method"] == "none",
+            f"{ticker}: an undeclared-count band must not become the reference",
+        )
         assert_true(
             result["market_implied_assumptions"][
                 "forward_eps_at_reference_multiple"
-            ] is not None,
-            f"{ticker}: implied EPS missing",
+            ] is None,
+            f"{ticker}: no implied EPS may be fabricated without a reference",
+        )
+
+        explicit = run_st_eva(
+            ticker,
+            mode="regression",
+            reference_multiple=fixture_multiple,
+            save_snapshot=False,
+        )
+        assert_true(explicit is not None, f"{ticker}: explicit-multiple run missing")
+        assert_true(
+            abs(
+                explicit["market_implied_assumptions"][
+                    "forward_eps_at_reference_multiple"
+                ]
+                - (explicit["market_snapshot"]["price"] / fixture_multiple)
+            ) < 1e-9,
+            f"{ticker}: implied EPS from the supplied multiple failed",
         )
         print(f"[PASS] {ticker}")
 

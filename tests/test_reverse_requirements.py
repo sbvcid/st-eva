@@ -127,6 +127,235 @@ class TestHistoricalBandReferenceEligibility(unittest.TestCase):
         self.assertEqual(unavailable[0]["blocks"], [])
 
 
+class TestUnifiedHistoricalReferenceEligibility(unittest.TestCase):
+    """Every path that turns historical P/E data into matrix scenarios applies
+    the same eligibility judgement, with the rejection reason kept explicit.
+
+    The paths are: `build_exit_multiples` (single-reference conversion),
+    `exit_multiples_from_band` (matrix percentile scenarios),
+    `exit_multiples_from_production_distribution` (production distribution
+    scenarios), and the runner's `_build_exit_multiple_scenarios` (the wiring
+    the web path calls). A band whose sample count is missing or unverifiable,
+    and a distribution whose own gate marks it ineligible, must be refused by
+    all of them; a user-supplied multiple stays USER_SPECIFIED everywhere and
+    is never labelled a historical reference.
+    """
+
+    MIN_OBS = 20
+
+    @staticmethod
+    def _band(observations):
+        band = {
+            "10th": 14.0,
+            "25th": 17.0,
+            "median": 20.0,
+            "75th": 25.0,
+            "90th": 32.0,
+        }
+        if observations is not None:
+            band["observations"] = observations
+        return band
+
+    def test_missing_sample_count_is_refused_by_every_path(self):
+        from reverse_requirements import exit_multiples_from_band
+        from st_eva_runner import _build_exit_multiple_scenarios, band_status
+
+        band = self._band(None)
+
+        build_multiples, build_unavailable = build_exit_multiples(
+            historical_pe_band=band, user_pe_multiple=None, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(build_multiples, [])
+        self.assertEqual(build_unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
+
+        band_multiples, band_unavailable = exit_multiples_from_band(
+            band, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(band_multiples, [])
+        self.assertEqual(band_unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
+        self.assertIn("descriptive statistic only", band_unavailable[0]["reason"])
+
+        scenarios, _ = _build_exit_multiple_scenarios(
+            historical_band=band,
+            user_multiples=(),
+            min_observations=self.MIN_OBS,
+        )
+        self.assertEqual(scenarios, [])
+
+        self.assertEqual(band_status(band), "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT")
+
+    def test_below_threshold_is_refused_by_every_path(self):
+        from reverse_requirements import exit_multiples_from_band
+        from st_eva_runner import _build_exit_multiple_scenarios, band_status
+
+        band = self._band(19)
+
+        build_multiples, build_unavailable = build_exit_multiples(
+            historical_pe_band=band, user_pe_multiple=None, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(build_multiples, [])
+        self.assertEqual(build_unavailable[0]["reason_kind"], "INSUFFICIENT_OBSERVATIONS")
+
+        band_multiples, band_unavailable = exit_multiples_from_band(
+            band, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(band_multiples, [])
+        self.assertEqual(band_unavailable[0]["reason_kind"], "INSUFFICIENT_OBSERVATIONS")
+        self.assertIn("19 observations", band_unavailable[0]["reason"])
+
+        scenarios, unavailable = _build_exit_multiple_scenarios(
+            historical_band=band,
+            user_multiples=(),
+            min_observations=self.MIN_OBS,
+        )
+        self.assertEqual(scenarios, [])
+        self.assertEqual(unavailable[0]["reason_kind"], "INSUFFICIENT_OBSERVATIONS")
+
+        self.assertEqual(
+            band_status(band), "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS"
+        )
+
+    def test_at_and_above_threshold_is_eligible_on_every_path(self):
+        from reverse_requirements import exit_multiples_from_band
+        from st_eva_runner import _build_exit_multiple_scenarios, band_status
+
+        for count in (20, 40):
+            with self.subTest(count=count):
+                band = self._band(count)
+
+                build_multiples, build_unavailable = build_exit_multiples(
+                    historical_pe_band=band,
+                    user_pe_multiple=None,
+                    min_observations=self.MIN_OBS,
+                )
+                self.assertEqual(len(build_multiples), 1)
+                self.assertEqual(
+                    build_multiples[0].eligibility_state, "ELIGIBLE_HISTORICAL_BAND"
+                )
+                self.assertTrue(build_multiples[0].usable_for_reference)
+                self.assertEqual(build_unavailable, [])
+
+                band_multiples, band_unavailable = exit_multiples_from_band(
+                    band, min_observations=self.MIN_OBS
+                )
+                self.assertEqual(band_unavailable, [])
+                self.assertEqual([m.value for m in band_multiples], [14.0, 17.0, 20.0, 25.0, 32.0])
+                self.assertEqual(
+                    {m.eligibility_state for m in band_multiples},
+                    {"ELIGIBLE_HISTORICAL_BAND"},
+                )
+                self.assertTrue(all(m.usable_for_reference for m in band_multiples))
+                self.assertTrue(all(m.sample_size == count for m in band_multiples))
+
+                scenarios, unavailable = _build_exit_multiple_scenarios(
+                    historical_band=band,
+                    user_multiples=(),
+                    min_observations=self.MIN_OBS,
+                )
+                self.assertEqual(unavailable, [])
+                self.assertEqual([m.value for m in scenarios], [14.0, 17.0, 20.0, 25.0, 32.0])
+
+                self.assertEqual(band_status(band), "USABLE_FOR_REFERENCE")
+
+    def test_ineligible_distribution_status_refuses_scenarios_even_with_enough_count(self):
+        from reverse_requirements import exit_multiples_from_production_distribution
+
+        distribution = {
+            "status": "DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS",
+            "usable_for_reference": False,
+            "sample_count": 24,
+            "percentiles": {"10th": 20.0, "25th": 22.0, "median": 24.0, "75th": 27.0, "90th": 30.0},
+        }
+        multiples, unavailable = exit_multiples_from_production_distribution(
+            distribution, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(multiples, [])
+        self.assertEqual(len(unavailable), 1)
+        self.assertEqual(unavailable[0]["reason_kind"], "INELIGIBLE_STATUS")
+        self.assertIn("DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS", unavailable[0]["reason"])
+        self.assertIn("descriptive statistic only", unavailable[0]["reason"])
+
+    def test_distribution_without_a_verifiable_sample_count_is_refused(self):
+        from reverse_requirements import exit_multiples_from_production_distribution
+
+        distribution = {
+            "status": "USABLE_FOR_REFERENCE",
+            "usable_for_reference": True,
+            "sample_count": None,
+            "percentiles": {"median": 24.0},
+        }
+        multiples, unavailable = exit_multiples_from_production_distribution(
+            distribution, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(multiples, [])
+        self.assertEqual(
+            unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED"
+        )
+
+    def test_eligible_distribution_yields_labelled_scenarios(self):
+        from reverse_requirements import exit_multiples_from_production_distribution
+
+        distribution = {
+            "status": "USABLE_FOR_REFERENCE",
+            "usable_for_reference": True,
+            "sample_count": 24,
+            "period_start": "2021-07-28",
+            "period_end": "2026-07-30",
+            "percentiles": {"10th": 25.602182, "25th": 28.811204, "median": 33.195873, "75th": 35.400253, "90th": 36.088407},
+        }
+        multiples, unavailable = exit_multiples_from_production_distribution(
+            distribution, min_observations=self.MIN_OBS
+        )
+        self.assertEqual(unavailable, [])
+        self.assertEqual(len(multiples), 5)
+        for multiple in multiples:
+            self.assertEqual(multiple.source, "production_historical_pe_percentile")
+            self.assertEqual(
+                multiple.eligibility_state, "ELIGIBLE_PRODUCTION_DISTRIBUTION"
+            )
+            self.assertTrue(multiple.usable_for_reference)
+            self.assertFalse(multiple.is_user_assumption)
+            self.assertEqual(multiple.sample_size, 24)
+
+    def test_user_supplied_multiple_is_never_labelled_a_historical_reference(self):
+        from st_eva_runner import _build_exit_multiple_scenarios
+
+        # Over an eligible band and an eligible distribution, the user's point
+        # keeps its own source and eligibility state.
+        scenarios, unavailable = _build_exit_multiple_scenarios(
+            historical_band=self._band(40),
+            user_multiples=(21.0, 33.0),
+            min_observations=self.MIN_OBS,
+        )
+        self.assertEqual(unavailable, [])
+        by_value = {}
+        for multiple in scenarios:
+            by_value.setdefault(multiple.value, multiple)
+        self.assertEqual(by_value[21.0].source, "user_supplied")
+        self.assertEqual(by_value[21.0].eligibility_state, "USER_SPECIFIED")
+        self.assertTrue(by_value[21.0].is_user_assumption)
+        self.assertEqual(by_value[33.0].source, "user_supplied")
+        self.assertEqual(by_value[33.0].eligibility_state, "USER_SPECIFIED")
+        for value, multiple in by_value.items():
+            if value in (21.0, 33.0):
+                continue
+            self.assertFalse(multiple.is_user_assumption)
+            self.assertEqual(multiple.source, "historical_pe_band_percentile")
+
+        # Over no historical data at all the user's point is the only scenario
+        # and is still labelled as their assumption.
+        scenarios, unavailable = _build_exit_multiple_scenarios(
+            historical_band=None,
+            user_multiples=(27.5,),
+            min_observations=self.MIN_OBS,
+        )
+        self.assertEqual(unavailable, [])
+        self.assertEqual(len(scenarios), 1)
+        self.assertEqual(scenarios[0].source, "user_supplied")
+        self.assertEqual(scenarios[0].eligibility_state, "USER_SPECIFIED")
+        self.assertTrue(scenarios[0].is_user_assumption)
+
+
 class TestRequiredExitPrice(unittest.TestCase):
     def test_known_answer_single_year(self):
         # 100 * 1.10**1 = 110

@@ -169,12 +169,17 @@ class TestBandScenarioMultiples(unittest.TestCase):
         self.assertEqual(unavailable[0]["reason_kind"], "INSUFFICIENT_OBSERVATIONS")
         self.assertIn("descriptive statistic only", unavailable[0]["reason"])
 
-    def test_band_without_declared_count_is_usable(self):
+    def test_band_without_declared_count_is_descriptive_only(self):
+        # Unified eligibility rule: a band that declares no sample count cannot
+        # be verified against the threshold, so it produces no scenario
+        # multiples and its exclusion is stated with its own reason kind.
         multiples, unavailable = exit_multiples_from_band(
             {"median": 22.0}, min_observations=20
         )
-        self.assertEqual(len(multiples), 1)
-        self.assertEqual(unavailable, [])
+        self.assertEqual(multiples, [])
+        self.assertEqual(len(unavailable), 1)
+        self.assertEqual(unavailable[0]["reason_kind"], "OBSERVATION_COUNT_UNVERIFIED")
+        self.assertIn("descriptive statistic only", unavailable[0]["reason"])
 
     def test_non_positive_percentiles_are_skipped(self):
         multiples, _ = exit_multiples_from_band(

@@ -112,6 +112,32 @@ def _declared_sample_count(value: Any) -> Optional[int]:
     return int(numeric)
 
 
+def band_reference_eligibility(
+    band: Optional[Dict[str, Any]],
+    *,
+    min_observations: int,
+) -> Tuple[bool, Optional[int]]:
+    """
+    The single historical-band eligibility rule every P/E reference path shares.
+
+    A band may serve as a reference only when it declares a valid non-negative
+    integer sample count of at least `min_observations` and a positive median.
+    Returns ``(usable, declared_count)``. A band whose count is missing or
+    unverifiable is never usable, whatever statistics it carries: an uncounted
+    sample cannot be checked against the threshold, so its figures stay
+    descriptive no matter which path reads them.
+    """
+    median = _safe_float((band or {}).get("median"))
+    declared = _declared_sample_count((band or {}).get("observations"))
+    usable = (
+        median is not None
+        and median > 0
+        and declared is not None
+        and declared >= min_observations
+    )
+    return usable, declared
+
+
 @dataclass(frozen=True)
 class EpsAnchor:
     """
@@ -1478,14 +1504,14 @@ def build_exit_multiples(
 
     band = historical_pe_band or {}
     band_median = _safe_float(band.get("median"))
-    declared_count = _declared_sample_count(band.get("observations"))
+    usable, declared_count = band_reference_eligibility(band, min_observations=min_observations)
     supplied_multiple_value = _safe_float(user_pe_multiple)
     supplied_multiple_usable = (
         supplied_multiple_value is not None and supplied_multiple_value > 0
     )
 
     if band_median is not None and band_median > 0:
-        if declared_count is not None and declared_count >= min_observations:
+        if usable:
             multiples.append(
                 ReferenceMultiple(
                     value=band_median,
@@ -1591,11 +1617,14 @@ def exit_multiples_from_band(
     """
     Exit multiple scenarios taken from a historical distribution.
 
-    Only a band with enough observations to read a percentile from is used.
-    When the sample is thin the band's own median is still reported as a
-    descriptive figure, but it is not turned into a scenario, because calling
-    an 8-sample median a historical distribution would present an under-sampled
-    statistic as though it were an established fact about the past.
+    Only a band that passes the shared eligibility rule
+    (`band_reference_eligibility`: a declared sample count of at least
+    `min_observations` beside a positive median) contributes scenarios. A thin
+    band's median, and a band that declares no sample count at all, are
+    reported as descriptive figures but are not turned into scenarios, because
+    calling an uncounted or under-sampled median a historical distribution
+    would present a descriptive statistic as though it were an established
+    fact about the past.
 
     The returned multiples are labelled with the percentile they came from and
     carry the sample size, so a reader can see how thin the history is.
@@ -1608,34 +1637,30 @@ def exit_multiples_from_band(
     if band_median is None:
         return multiples, unavailable
 
-    declared = band.get("observations")
-    if declared is None:
-        # No declared count: treated as usable, matching the existing engine's
-        # rule that keeps explicit user input and fixtures working.
-        usable = True
-        count_text = "not declared"
-        band_eligibility = "DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT"
-    else:
-        count = int(declared)
-        usable = count >= min_observations
-        count_text = str(count)
-        band_eligibility = (
-            "ELIGIBLE_HISTORICAL_BAND"
-            if usable
-            else "INSUFFICIENT_OBSERVATIONS_DESCRIPTIVE_ONLY"
-        )
-
+    usable, declared = band_reference_eligibility(band, min_observations=min_observations)
     if not usable:
+        if declared is None:
+            reason_kind = "OBSERVATION_COUNT_UNVERIFIED"
+            reason = (
+                "The historical P/E band does not declare a valid non-negative integer "
+                "observation count, so it cannot be verified against the %d required "
+                "to read a percentile from it. The band's median of %.4g is reported as "
+                "a descriptive statistic only and is not used as a scenario exit "
+                "multiple." % (min_observations, band_median)
+            )
+        else:
+            reason_kind = "INSUFFICIENT_OBSERVATIONS"
+            reason = (
+                "The historical P/E band holds %d observations, below the %d required "
+                "to read a percentile from it. The band's median of %.4g is reported as "
+                "a descriptive statistic only and is not used as a scenario exit "
+                "multiple." % (declared, min_observations, band_median)
+            )
         unavailable.append(
             {
                 "item": "exit_multiple.band_scenarios",
-                "reason": (
-                    "The historical P/E band holds %s observations, below the %d required "
-                    "to read a percentile from it. The band's median of %.4g is reported as "
-                    "a descriptive statistic only and is not used as a scenario exit "
-                    "multiple." % (count_text, min_observations, band_median)
-                ),
-                "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+                "reason": reason,
+                "reason_kind": reason_kind,
                 "blocks": ["exit_multiple.band_scenarios"],
             }
         )
@@ -1657,11 +1682,11 @@ def exit_multiples_from_band(
                 period_label=str(band.get("period_label") or ""),
                 sample_size=declared,
                 sample_period=(
-                    "band percentiles from %s observations" % count_text
+                    "band percentiles from %d observations" % declared
                 ),
                 is_user_assumption=False,
-                eligibility_state=band_eligibility,
-                usable_for_reference=(declared is not None and int(declared) >= min_observations),
+                eligibility_state="ELIGIBLE_HISTORICAL_BAND",
+                usable_for_reference=True,
             )
         )
     return multiples, unavailable
@@ -1676,9 +1701,13 @@ def exit_multiples_from_production_distribution(
     """
     Exit multiple scenarios taken from a production point-in-time historical P/E distribution.
 
-    Strictly enforces ADR Decision 9 & CONTRACT §K.2: only a distribution with >= min_observations
-    qualifies for reference distribution status. If below the threshold, descriptive statistics
-    are reported, but no scenario multiples are produced.
+    Strictly enforces ADR Decision 9 & CONTRACT §K.2: only a distribution that
+    its own gate marks eligible (`usable_for_reference` true, or the status that
+    states it) qualifies for reference distribution status. A distribution that
+    declares too few observations, or one that carries enough observations but
+    declares itself ineligible, is reported with its reason and produces no
+    scenario multiples: the declared eligibility status is what decides, so a
+    merely large count cannot promote a distribution the gate refused.
     """
     multiples: List[ReferenceMultiple] = []
     unavailable: List[Dict[str, Any]] = []
@@ -1692,26 +1721,58 @@ def exit_multiples_from_production_distribution(
     percentiles_dict = distribution.get("percentiles") or {}
     median = _safe_float(percentiles_dict.get("median"))
 
-    if sample_count is None or median is None:
+    if median is None:
         return multiples, unavailable
 
-    usable = bool(
-        distribution.get("usable_for_reference")
-        or (status == "USABLE_FOR_REFERENCE")
-        or (sample_count >= min_observations)
-    )
-
-    if not usable:
+    declared_count = _declared_sample_count(sample_count)
+    if declared_count is None:
+        # A distribution that declares no verifiable sample count cannot be
+        # checked against the threshold; state that instead of returning
+        # silently.
         unavailable.append(
             {
                 "item": "exit_multiple.production_historical_pe_scenarios",
                 "reason": (
-                    "The production historical P/E distribution holds %d observations, below the %d "
-                    "required to establish an authoritative reference distribution. The median of %.4g "
-                    "is reported as a descriptive statistic only and is not used as a scenario exit "
-                    "multiple." % (sample_count, min_observations, median)
+                    "The production historical P/E distribution does not declare a valid "
+                    "non-negative integer sample count, so it cannot be verified against "
+                    "the %d required to establish an authoritative reference distribution. "
+                    "The median of %.4g is reported as a descriptive statistic only and is "
+                    "not used as a scenario exit multiple." % (min_observations, median)
                 ),
-                "reason_kind": "INSUFFICIENT_OBSERVATIONS",
+                "reason_kind": "OBSERVATION_COUNT_UNVERIFIED",
+                "blocks": ["exit_multiple.production_historical_pe_scenarios"],
+            }
+        )
+        return multiples, unavailable
+
+    usable = (
+        distribution.get("usable_for_reference") is True
+        or status == "USABLE_FOR_REFERENCE"
+    )
+
+    if not usable:
+        if declared_count >= min_observations:
+            reason_kind = "INELIGIBLE_STATUS"
+            reason = (
+                "The production historical P/E distribution holds %d observations but "
+                "declares the eligibility status %s, so it is not an authoritative "
+                "reference distribution. The median of %.4g is reported as a descriptive "
+                "statistic only and is not used as a scenario exit multiple."
+                % (declared_count, status, median)
+            )
+        else:
+            reason_kind = "INSUFFICIENT_OBSERVATIONS"
+            reason = (
+                "The production historical P/E distribution holds %d observations, below the %d "
+                "required to establish an authoritative reference distribution. The median of %.4g "
+                "is reported as a descriptive statistic only and is not used as a scenario exit "
+                "multiple." % (declared_count, min_observations, median)
+            )
+        unavailable.append(
+            {
+                "item": "exit_multiple.production_historical_pe_scenarios",
+                "reason": reason,
+                "reason_kind": reason_kind,
                 "blocks": ["exit_multiple.production_historical_pe_scenarios"],
             }
         )
@@ -1732,10 +1793,10 @@ def exit_multiples_from_production_distribution(
                 value=val,
                 source="production_historical_pe_percentile",
                 period_label=f"{key} ({period_label})" if period_label else key,
-                sample_size=sample_count,
+                sample_size=declared_count,
                 sample_period=(
                     "production historical P/E %s from %d observations (%s)"
-                    % (key, sample_count, period_label)
+                    % (key, declared_count, period_label)
                 ),
                 is_user_assumption=False,
                 eligibility_state="ELIGIBLE_PRODUCTION_DISTRIBUTION",

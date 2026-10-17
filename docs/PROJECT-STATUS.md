@@ -1,9 +1,9 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-17 (second round: fiscal quarter identity normalisation)
+**Status checked:** 2026-10-17 (third round: unified historical P/E reference eligibility)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** fiscal quarter identity normalisation round (`fiscal_calendar.py` issuer-declared identity model; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions; on top of `a9a6630` (fail-closed fiscal period identity-conflict rules: equally authoritative sources disagreeing on a period's FY/quarter are marked unresolved and excluded rather than arbitrarily chosen; cumulative-only and annual unresolved identities are reported in production notes)
-**Latest verified GitHub Actions:** `c972a05` (fiscal quarter identity round) verified `backend` and `browser` jobs success in run `39009039107`; `985ba22` verified in run `38971097167`; the earlier baseline `6c66550` in run `38955389118` (checked via the GitHub API on 2026-10-17). Each later commit is verified in its own run. Commit `a9a6630` (fail-closed fiscal period identity-conflict rules) was verified locally: full backend suite 2,332 passed, 169 skipped, 496 subtests passed; AAPL/MSFT/MU production observation counts unchanged.
+**Current implementation baseline:** unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) on top of the fiscal quarter identity normalisation round (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Latest verified GitHub Actions:** `1fc53ae` (fail-closed identity-conflict status record) verified `backend` and `browser` jobs success, backend run `39013776391` (checked via the GitHub API on 2026-10-17); `c972a05` (fiscal quarter identity round) verified `backend` and `browser` jobs success in run `39009039107`; `985ba22` verified in run `38971097167`; the earlier baseline `6c66550` in run `38955389118` (checked via the GitHub API on 2026-10-17). Each later commit is verified in its own run.
 
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -14,6 +14,7 @@ This section is the hand-off checkpoint for future conversations and coding agen
 
 **Completed and should not be repeated without a concrete reason**
 
+- **Historical P/E reference eligibility is one rule across every matrix path (2026-10-17 third round).** `reverse_requirements.band_reference_eligibility` (positive median + declared non-negative integer sample count >= 20) is now the single gate: `exit_multiples_from_band` no longer turns an undeclared-count band into matrix scenarios (`OBSERVATION_COUNT_UNVERIFIED` refusal instead), `exit_multiples_from_production_distribution` no longer admits a distribution whose declared eligibility is not usable merely because its raw count clears the threshold (`INELIGIBLE_STATUS`), and `st_eva_runner.band_is_usable_for_reference` delegates to the same rule. Eligible distributions (`ELIGIBLE_PRODUCTION_DISTRIBUTION` / `ELIGIBLE_HISTORICAL_BAND`), descriptive-only historical data (explicit unavailable reasons, never scenario rows) and user multiples (`USER_SPECIFIED`, never labelled historical) stay three distinct kinds. Production P/E outputs unchanged for AAPL (36 obs, matrix 80), MSFT (24 obs; web matrix 160→80, the five unverified band rows dropped with the exclusion stated) and MU (454 obs). The CLI `run_regression_tests()` helper, which had been failing at `1fc53ae` because the fixtures' undeclared-count bands can no longer serve as the summary reference, now asserts the fail-closed state and the implied EPS from an explicit multiple. Do not reintroduce the "missing count is usable" band branch or a count-based override of the distribution's own eligibility status. See the section at the end of this file.
 - **Fiscal quarter identity is issuer-declared, not a month grid (2026-10-17 second round, commit `c972a05`, CI run `39009039107`).** The month-grid fiscal_year_of/quarter_number mislabelled 11 of MU's 38 and 4 of AAPL's 42 quarter ends (52/53-week calendars drift quarter ends across month boundaries) and blocked MU's FY2026 TTM. `fiscal_calendar.py` derives identity from the issuer's own declarations (filing focus fields, prior-year comparatives, annual span positions), refuses unidentifiable periods, and both engines consume it; the TTM denominator is marked a derived sum with the audited annual carried beside it. MU snapshot now AVAILABLE (P/E 12.11171 on derived TTM EPS 74.21 vs audited 74.33, both preserved); AAPL P/E restored to 36/36 (median 28.44563, the pre-refactor value); MSFT unchanged. Do not re-derive the misclassification inventory or reintroduce month-grid identity. The `a9a6630` fail-closed round adds: equal-authority primary, comparative and annual-span declarations that disagree on a period's fiscal year/quarter leave the period unresolved (recorded in `FiscalCalendar.warnings`/`unresolved`) instead of being collapsed into an arbitrary pick; annual primary declarations still win over comparatives; production notes now surface unresolved quarter periods including cumulative-only span ends and annual identity conflicts. `tests/test_fiscal_calendar.py` now requires contradictory comparative/span, primary-conflict and annual-FY-conflict cases to stay unresolved. See the section at the end of this file.
 - **MU historical P/E is live with furnished Q4 evidence (2026-10-17 round, commit `985ba22`, CI run `38971097167`).** The production distribution is `USABLE_FOR_REFERENCE` with 335 valid point-in-time TTM observations spanning 2019-03-21 to 2026-08-31 (median 21.549505; the 20-observation gate untouched), built from three tracked inputs: the new `data/historical_pe/MU/q4_evidence_records.json` (six fiscal Q4 GAAP diluted EPS facts directly stated in 8-K Item 2.02 EX-99.1 exhibits, FY2021–FY2026, furnished/unaudited provenance), the corrected `filing_acceptance_evidence.json` (true ET acceptance times; the previous values were submissions-API serializations that ran 4–5h late and mis-dated 65 usable dates), and the existing MU XBRL concept data. `build_historical_pe` now refuses position-filled windows whose period ends are not consecutive calendar quarters (`REASON_INSUFFICIENT_QUARTERS` with an explicit gap detail) — the month-grid quarter mapping can otherwise assemble a "TTM" that skips a real quarter for 52/53-week filers; this also corrected two pre-existing defective AAPL observations (2018-05-03, 2024-05-03; AAPL baselines recomputed: furnished 30→28, filed-only 18→14). The latest-date TTM snapshot stays `UNAVAILABLE` with `REASON_MISSING_Q4_EPS`: the furnished FQ4-26 fact (32.87, quarter ended 2026-09-03) is knowable, but the month-grid maps that fiscal year end to fiscal 2027 Q1, so the (2026, Q4) window slot stays empty — a fiscal-calendar method question deliberately not changed this round. See the section at the end of this file; do not re-derive the 8-K hunt or the acceptance-time offset finding.
 
@@ -1414,3 +1415,106 @@ eligibility was changed; the identity model only re-labels periods and
 refuses unidentifiable ones. Round-one research records
 (`research/experiments/mu-historical-pe-q4-study/`, the declared-eps report)
 are untouched; this section is the new status record.
+
+## Unified historical P/E reference eligibility across matrix paths (2026-10-17, third round)
+
+**Question.** Do the historical-median selection helper and the matrix's
+historical P/E band conversion path apply the same eligibility judgement to
+sample count, eligibility status and missing metadata, and can historical data
+that fails a quality condition still enter the reverse-requirements matrix as
+an automatically chosen scenario reference?
+
+**Answers in one line.** They did not agree: `exit_multiples_from_band` treated
+a band with no declared sample count as usable and emitted matrix scenarios for
+it, while the summary helper (`band_median_for_reference`) refused the same
+band; the production distribution gate additionally let a raw
+`sample_count >= 20` override a declared ineligible status. The unified rule
+now gates every path and keeps the rejection reasons explicit.
+
+### 1. The single rule (`reverse_requirements.band_reference_eligibility`)
+
+A historical band may serve as a reference only when it declares a valid
+non-negative integer sample count of at least 20 beside a positive median. An
+uncounted sample cannot be checked against the threshold, so a missing or
+unverifiable count is never usable, whatever statistics the band carries.
+
+- `exit_multiples_from_band` (the matrix percentile-scenario path) now uses
+  this rule: an undeclared-count band contributes no scenarios and its
+  exclusion is stated in `unavailable` (`item` `exit_multiple.band_scenarios`,
+  `reason_kind` `OBSERVATION_COUNT_UNVERIFIED`); a thin band keeps the existing
+  `INSUFFICIENT_OBSERVATIONS` refusal. Only eligible bands produce scenarios,
+  labelled `ELIGIBLE_HISTORICAL_BAND` with `usable_for_reference=True` and the
+  declared count as `sample_size`.
+- `exit_multiples_from_production_distribution` gates on the distribution's own
+  declaration (`usable_for_reference is True` or status
+  `USABLE_FOR_REFERENCE`). A distribution that declares enough observations
+  but an ineligible status is refused with `INELIGIBLE_STATUS`; one without a
+  verifiable sample count is refused with `OBSERVATION_COUNT_UNVERIFIED`
+  (previously a silent empty return); below-threshold keeps
+  `INSUFFICIENT_OBSERVATIONS`. A large raw count can no longer promote a
+  distribution the gate refused.
+- `build_exit_multiples` (single-reference conversion) already implemented the
+  same judgement and now reuses the shared predicate.
+- `st_eva_runner.band_is_usable_for_reference` (the summary-side gate behind
+  `band_median_for_reference` and `band_status`) delegates to the same rule, so
+  the summary and the matrix cannot disagree about whether a qualified
+  reference exists.
+
+### 2. The three kinds stay distinct
+
+- **Eligible historical distribution**: scenario rows carry
+  `ELIGIBLE_PRODUCTION_DISTRIBUTION` or `ELIGIBLE_HISTORICAL_BAND`,
+  `usable_for_reference=True`, `sample_size` = the declared count, and
+  `is_user_assumption=False`.
+- **Descriptive-only historical data**: the summary reports
+  `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT` /
+  `DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS`, the matrix states the refusal
+  in `unavailable` with its own reason kind, and no scenario rows are produced.
+- **User-supplied P/E**: `USER_SPECIFIED`, `is_user_assumption=True`, and never
+  labelled a historical reference, whichever path carries it.
+
+### 3. Actual output changes (AAPL / MSFT / MU)
+
+| Path | Before | After | Why |
+| --- | --- | --- | --- |
+| AAPL web regression matrix | 80 rows, 5 production percentiles | unchanged | fixture carries no vendor band |
+| MSFT web regression matrix | 160 rows incl. 5 band rows (22/26/30/34/38) labelled `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT` | **80 rows, production percentiles only; `unavailable` states `exit_multiple.band_scenarios` (`OBSERVATION_COUNT_UNVERIFIED`)** | the fixture band declares no sample count, so it is no longer a scenario source |
+| MSFT/TENCENT/NU reference-free fixture runs without a production distribution | matrices built on unverified band rows | **`NOT_COMPUTED` with the explicit exit-multiple reason** | same rule; no eligible multiple exists |
+| AAPL/MSFT/MU production P/E distributions | 36 / 24 / 454 observations, all `USABLE_FOR_REFERENCE` | unchanged, scenario percentile sets identical (AAPL 17.332368-35.809784, MSFT 25.602182-36.088407, MU 5.126018-35.914989) | the production gate already refused them nothing |
+| Summary reference (`selected_pe`) | production median (MSFT 33.195873) | unchanged | the summary side was already strict |
+
+The MSFT matrix change is the intended effect of the eligibility fix, not a
+test-expectation accommodation: the dropped rows are exactly the
+`historical_pe_band_percentile` rows whose band declares no sample count, and
+the baseline test now pins the new set with the exclusion stated.
+
+### 4. The CLI regression helper
+
+`run_regression_tests()` had been failing at `1fc53ae` (pre-existing, outside
+pytest CI): the TENCENT/MSFT/NU fixture bands declare no sample count, so the
+strict summary reference already reported `none` and the helper's "implied EPS
+missing" assertion could not hold. The helper now asserts the fail-closed state
+(band stays `DESCRIPTIVE_ONLY_UNVERIFIED_SAMPLE_COUNT`, method `none`, no
+implied EPS fabricated) and verifies the implied-EPS arithmetic from an
+explicitly supplied multiple per fixture. It passes.
+
+### 5. Tests
+
+New `TestUnifiedHistoricalReferenceEligibility` (8 tests) walks the same cases
+through `build_exit_multiples`, `exit_multiples_from_band`,
+`exit_multiples_from_production_distribution`, the runner's
+`_build_exit_multiple_scenarios` and `band_status`: missing sample count,
+below/at/above threshold, ineligible status with a sufficient count, a
+distribution without a verifiable count, eligible-distribution labelling, and
+user-multiple labelling. Updated: the MSFT web matrix baseline (160 -> 80 with
+the band exclusion asserted), `test_band_without_declared_count_is_usable` ->
+`test_band_without_declared_count_is_descriptive_only`, and the wiring/
+anchor-evidence tests whose reference-free fixture runs no longer have a matrix
+(now pass an explicit multiple; their assertions are about EPS provenance, not
+the multiple). Full backend suite: **2,341 passed, 169 skipped, 498 subtests
+passed**.
+
+**Boundary.** No valuation formula, no 20-observation threshold, no PIT rule,
+no restatement rule and no fiscal-quarter identity model was changed; only
+which historical data may become a scenario reference changed, and the reasons
+are explicit when it may not.

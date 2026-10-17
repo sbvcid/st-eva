@@ -453,8 +453,14 @@ class TestTheReverseReportIntegration(unittest.TestCase):
     def test_the_fixture_path_keeps_the_packaged_cross_check(self):
         # A regression run acquires no filing evidence, so the block reports
         # the packaged dataset and the scenario cross-check is exactly the
-        # record every existing caller saw.
-        result = run_st_eva("MSFT", mode="regression", save_snapshot=False)
+        # record every existing caller saw. The fixture band declares no
+        # sample count, so the matrix needs an explicitly supplied multiple.
+        result = run_st_eva(
+            "MSFT",
+            mode="regression",
+            reference_multiple=25.0,
+            save_snapshot=False,
+        )
         package = result["reverse_requirements"]
         block = package["declared_eps_evidence"]
         self.assertEqual(block["source"], "PACKAGED_DATASET")

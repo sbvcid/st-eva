@@ -77,20 +77,59 @@ class TestRunProducesReverseRequirements(unittest.TestCase):
 class TestMatrixReflectsTheObservedPrice(unittest.TestCase):
     def test_matrix_size_is_the_full_cross_product(self):
         # The MSFT fixture carries a historical band with no declared
-        # observation count, which the existing engine treats as usable, so the
-        # matrix runs over the band's percentile set plus the supplied point.
+        # observation count. Under the unified eligibility rule an undeclared
+        # count is never a reference, so the only scenario multiple is the
+        # explicitly supplied point and the matrix is its cross product.
         result = _run(
             reverse_horizons=(1.0, 2.0),
             required_returns=(0.10, 0.12),
             reference_multiple=20.0,
         )
+        package = result["reverse_requirements"]
         multiples = {
             row["exit_multiple"]["value"]
-            for row in result["reverse_requirements"]["reverse_requirements_matrix"]
+            for row in package["reverse_requirements_matrix"]
         }
-        expected = result["reverse_requirements"]["matrix_size"]
-        self.assertEqual(expected, 2 * 2 * len(multiples))
-        self.assertGreater(len(multiples), 1, "a single multiple is not a scenario set")
+        self.assertEqual(package["matrix_size"], 2 * 2 * len(multiples))
+        self.assertEqual(multiples, {20.0})
+        self.assertEqual(
+            {row["exit_multiple"]["eligibility_state"] for row in package["reverse_requirements_matrix"]},
+            {"USER_SPECIFIED"},
+        )
+        # The band's exclusion from the scenario set is stated, not silent.
+        self.assertTrue(
+            any(
+                item.get("item") == "exit_multiple.band_scenarios"
+                and item.get("reason_kind") == "OBSERVATION_COUNT_UNVERIFIED"
+                for item in package["unavailable"]
+            ),
+            package["unavailable"],
+        )
+
+    def test_an_eligible_band_still_yields_a_percentile_scenario_set(self):
+        # A band that declares its sample count keeps producing the percentile
+        # set on the matrix path, so the cross product over a range still
+        # exists when the history is verifiable.
+        from st_eva_runner import _build_exit_multiple_scenarios
+
+        scenarios, unavailable = _build_exit_multiple_scenarios(
+            historical_band={
+                "10th": 10.0,
+                "25th": 15.0,
+                "median": 20.0,
+                "75th": 30.0,
+                "90th": 40.0,
+                "observations": 120,
+            },
+            user_multiples=(),
+            min_observations=20,
+        )
+        self.assertEqual([m.value for m in scenarios], [10.0, 15.0, 20.0, 30.0, 40.0])
+        self.assertEqual(unavailable, [])
+        self.assertTrue(all(m.usable_for_reference for m in scenarios))
+        self.assertEqual(
+            {m.eligibility_state for m in scenarios}, {"ELIGIBLE_HISTORICAL_BAND"}
+        )
 
     def test_a_supplied_multiple_overrides_the_band(self):
         # An explicitly supplied multiple replaces the band median rather than
@@ -104,9 +143,10 @@ class TestMatrixReflectsTheObservedPrice(unittest.TestCase):
         self.assertEqual(sources[27.0], "user_supplied")
 
     def test_matrix_is_absent_without_an_exit_multiple(self):
-        # The MSFT fixture carries a historical band with no declared
-        # observation count, so it is usable; a ticker with no band at all and
-        # no user multiple must report that it cannot build the matrix.
+        # Neither the MSFT nor the NU fixture band declares a sample count, so
+        # under the unified eligibility rule neither is a reference: with no
+        # user multiple the matrix is reported as uncomputable, not built on a
+        # descriptive statistic.
         result = run_st_eva("NU", mode="regression", save_snapshot=False)
         package = result["reverse_requirements"]
         if package["status"] == "NOT_COMPUTED":
@@ -376,7 +416,10 @@ class TestScenarioProvenanceAndReproducibility(unittest.TestCase):
                 self.assertAlmostEqual(steps[3]["output_value"], scen["required_eps_cagr"], places=4)
 
     def test_source_evidence_resolves_to_actual_input_records(self):
-        result = _run()
+        # The fixture band declares no sample count, so a reference-free run
+        # has no eligible exit multiple; the evidence assertions run on a row
+        # computed from an explicitly supplied multiple.
+        result = _run(reference_multiple=25.0)
         matrix = result["reverse_requirements"]["reverse_requirements_matrix"]
         self.assertGreater(len(matrix), 0)
         scen = matrix[0]

@@ -194,7 +194,15 @@ class TestVendorAnchorDoesNotInheritSecFiling(unittest.TestCase):
         )
 
     def test_regression_forward_anchor_carries_no_sec_fact(self):
-        result = run_st_eva("MSFT", mode="regression", save_snapshot=False)
+        # The fixture band declares no sample count, so a reference-free run
+        # has no eligible exit multiple; the anchor-evidence assertions run on
+        # a matrix computed from an explicitly supplied multiple.
+        result = run_st_eva(
+            "MSFT",
+            mode="regression",
+            reference_multiple=25.0,
+            save_snapshot=False,
+        )
         scenario = _first_scenario(result["reverse_requirements"])
         evidence = scenario["evidence"]
         self.assertIsNone(
@@ -219,6 +227,7 @@ class TestVendorAnchorDoesNotInheritSecFiling(unittest.TestCase):
         result = run_st_eva(
             "MSFT",
             mode="regression",
+            reference_multiple=25.0,
             save_snapshot=False,
             prefer_eps_anchor="consensus",
         )
