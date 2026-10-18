@@ -1794,3 +1794,10 @@ MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:Depreciati
 - Backend full: 1205 passed, 114 skipped, 1 failed (pre-existing test_mapping_relation_kind.py unrelated).
 - Frontend Vitest: 8 files / 99 tests passed (33s); npm run build passed (vite, 1908 modules).
 - No new defects from correction; no empty commit added; remote sync confirmed.
+- - -   2 0 2 6 - 1 0 - 1 8   p r o d u c t   i m p r o v e m e n t   ( r e v e r s e - v a l u a t i o n   P / F C F )   - - -  
+ -   N e w   c a p a b i l i t y :   s c r i p t s / r e v e r s e _ v a l u a t i o n _ p f c f . p y   ( f o r m u l a :   r e q u i r e d _ f c f   =   p r i c e   /   m e d i a n _ p f c f ) .  
+ -   M U   C O M P U T E D :   p r i c e   8 9 8 . 8 1   /   m e d i a n   7 3 . 3 3   =   1 2 . 2 6   ( m a n u a l   v e r i f y   1 2 . 2 5 7 ) ;   s o u r c e   p r o d u c t i o n _ o u t p u t . j s o n   +   d a i l y _ p r i c e s . j s o n .  
+ -   A A P L / M S F T   R E F U S E D :   m i s s i n g   p r o d u c t i o n _ o u t p u t   ( o n l y   c o n c e p t s ) ;   n o   s y n t h e t i c   d a t a ,   n o   g a t e   r e l a x a t i o n .  
+ -   R e f u s a l   r u l e s ,   s o u r c e   n o t e s ,   f o r m u l a   d o c u m e n t e d   i n   d a t a / r e v e r s e _ v a l u a t i o n _ p f c f . j s o n .  
+ -   N o   D & A / 8 - K / m a p p i n g   r e p e a t ;   c o m m i t t e d   a n d   p u s h e d .  
+ 
