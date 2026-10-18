@@ -1785,3 +1785,12 @@ MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:Depreciati
 - Filing-acceptance backfill completed: scripts/correct_filing_acceptance_header.py (reusable) produces standard acceptance_datetime from acceptance_datetime_header_et; original files backed to .bak; corrected files written; AAPL/MSFT manifests updated; MU has no manifest. Verification: AAPL before-16h count = 11 (header) vs 16 (API) - 5-record shift avoided; tests/test_aapl_historical_pe.py passes (17 passed, 34 subtests).
 - No MSFT DepreciationAmortizationAndOther or MU DepreciationDepletionAndAmortization merged; no market-wide EXACT semantics relaxed; no new predictions/recommendations/LLM decision features added.
 - Source attribution preserved (accession, URL, header SHA256, form, period, currency/USD, concept tag) for all corrected records.
+
+--- 2026-10-18 closed verification (754dbbf) ---
+- HEAD/origin=754dbbf; working tree clean; script idempotent (hash unchanged after rerun).
+- Source separation verified: header ET (embedded -04:00/-05:00) preserved; API time in _ref; no UTC mislabel; no fixed 4h inference.
+- 16:00 ET cutoff uses local hour from embedded offset; AAPL 11/37, MSFT 0/47, MU 151/852 correct; cross-over MU 191 accessions (e.g. 0001242654-26-000016, 0001593199-26-000005), diff=61 misclassified by API.
+- .bak backups preserved; loader does not reference .bak; idempotency regression passed (tests/test_filing_acceptance_datetime_correction.py 6/6).
+- Backend full: 1205 passed, 114 skipped, 1 failed (pre-existing test_mapping_relation_kind.py unrelated).
+- Frontend Vitest: 8 files / 99 tests passed (33s); npm run build passed (vite, 1908 modules).
+- No new defects from correction; no empty commit added; remote sync confirmed.
