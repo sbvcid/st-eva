@@ -16,7 +16,7 @@ import {
  */
 
 /** Bump when the JSON envelope or CSV column set changes incompatibly. */
-export const EXPORT_SCHEMA_VERSION = 'st-eva-reverse-requirements-export/1.1'
+export const EXPORT_SCHEMA_VERSION = 'st-eva-reverse-requirements-export/1.2'
 export const EXPORT_GENERATOR = 'st-eva-web'
 
 export interface ReverseRequirementsExportEnvelope {
@@ -181,6 +181,11 @@ export const REVERSE_REQUIREMENTS_CSV_COLUMNS = [
   'report_selected_pfcf',
   'report_selected_pfcf_basis',
   'report_implied_fcf_at_reference_multiple',
+  // The observed market capitalisation the implied cash-flow figure was
+  // inverted from, in the report `currency`. With `report_selected_pfcf` this
+  // makes the figure recomputable (`market cap / P/FCF`) straight from the
+  // file; it is a total, never a per-share figure.
+  'report_market_cap',
 ] as const
 
 type CsvRow = Record<string, unknown>
@@ -249,6 +254,7 @@ function reportLevelFields(
     report_selected_pfcf_basis: valuation?.selected_pfcf_basis ?? null,
     report_implied_fcf_at_reference_multiple:
       valuation?.implied_fcf_at_reference_multiple ?? null,
+    report_market_cap: valuation?.market_cap ?? null,
     report_unavailable_json: jsonColumn(report?.unavailable ?? []),
   }
 }

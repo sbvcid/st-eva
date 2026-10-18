@@ -59,6 +59,11 @@ class AdmissionSummary(BaseModel):
     total_admitted: int = 0
     total_refused: int = 0
     metrics_admitted: List[str] = Field(default_factory=list)
+    # The metric names behind `total_refused`, deduplicated in archival order,
+    # so the refused count is reconcilable with a list the interface can show
+    # without reading the mixed `refusals` feed (which also carries context
+    # unavailability entries that are not admission rows).
+    metrics_refused: List[str] = Field(default_factory=list)
     refusals: List[RefusalItem] = Field(default_factory=list)
 
 
@@ -97,6 +102,12 @@ class ValuationSummary(BaseModel):
     selected_pfcf: Optional[float] = None
     selected_pfcf_basis: Optional[str] = None
     implied_fcf_at_reference_multiple: Optional[float] = None
+    # The market capitalisation the implied cash-flow figure was inverted from
+    # (`implied_fcf_at_reference_multiple == market_cap / selected_pfcf`). It is
+    # the run's own observed market cap -- a total in `currency`, never a
+    # per-share figure -- carried so the headline number can be recomputed from
+    # the response and the export instead of taken on trust.
+    market_cap: Optional[float] = None
     summary_horizon_years: Optional[float] = None
     observed_pe: Optional[float] = None
     observed_ps: Optional[float] = None

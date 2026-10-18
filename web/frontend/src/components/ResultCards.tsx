@@ -277,13 +277,26 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
                 )}
               </div>
             ) : (
-              <div className="mt-1 text-xs text-slate-600">
+              <div className="mt-1 text-xs text-slate-600 space-y-0.5">
                 {admission.metrics_admitted.length > 0 ? (
-                  <span>
-                    {t.results.admittedMetricsPrefix} {admission.metrics_admitted.join(', ')}
-                  </span>
+                  <div>
+                    <span>
+                      {t.results.admittedMetricsPrefix} {admission.metrics_admitted.join(', ')}
+                    </span>
+                  </div>
                 ) : (
-                  <span>{t.results.coreFactsAdmitted}</span>
+                  <div>{t.results.coreFactsAdmitted}</div>
+                )}
+                {/* The refused side of a partial admission, listed by metric so
+                    the "refused" count is reconcilable with names a reader can
+                    see, not only with the reason feed. */}
+                {(admission.metrics_refused?.length ?? 0) > 0 && (
+                  <div className="text-slate-500" data-testid="refused-metrics">
+                    <span>
+                      {t.results.refusedMetricsPrefix}{' '}
+                      {(admission.metrics_refused ?? []).join(', ')}
+                    </span>
+                  </div>
                 )}
               </div>
             )}

@@ -66,6 +66,7 @@ export interface Translations {
     refusalExplanation: string
     coreFactsAdmitted: string
     admittedMetricsPrefix: string
+    refusedMetricsPrefix: string
     observedMultiples: string
     trailingPe: string
     ps: string

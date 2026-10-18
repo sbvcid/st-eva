@@ -24,6 +24,10 @@ export interface AdmissionSummary {
   total_admitted: number
   total_refused: number
   metrics_admitted: string[]
+  // The metric names behind `total_refused` (deduplicated), so the refused
+  // count can be reconciled with a list even when `refusals` also carries
+  // context-availability entries that are not admission rows.
+  metrics_refused?: string[]
   refusals: RefusalItem[]
 }
 
@@ -67,6 +71,11 @@ export interface ValuationSummary {
   selected_pfcf?: number | null
   selected_pfcf_basis?: string | null
   implied_fcf_at_reference_multiple?: number | null
+  // The observed market capitalisation the cash-flow figure was inverted from
+  // (`implied_fcf_at_reference_multiple == market_cap / selected_pfcf`), in
+  // `currency`. A total, never a per-share figure; carried so the headline can
+  // be recomputed from the response and the export.
+  market_cap?: number | null
   summary_horizon_years?: number | null
   observed_pe?: number | null
   observed_ps?: number | null

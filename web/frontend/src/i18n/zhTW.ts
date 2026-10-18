@@ -77,6 +77,7 @@ export const zhTW: Translations = {
       '依據數據契約與可比性規則（例如跨幣別或未映射會計基礎），此發行人已被合法拒絕準入。此為正式契約審查結果，非系統異常。',
     coreFactsAdmitted: '核心財務事實已成功準入估值計算邊界。',
     admittedMetricsPrefix: '已準入指標：',
+    refusedMetricsPrefix: '遭拒指標：',
     observedMultiples: '觀測估值倍數',
     trailingPe: '歷史本益比 (Trailing P/E)',
     ps: '股價營收比 (P/S)',

@@ -77,6 +77,7 @@ export const en: Translations = {
       'This issuer was legitimately withheld per data contract and comparability rules (e.g. cross-currency or unmapped basis). This is a formal contract result, not a system defect.',
     coreFactsAdmitted: 'Core facts admitted into valuation input boundary.',
     admittedMetricsPrefix: 'Admitted metrics:',
+    refusedMetricsPrefix: 'Refused metrics:',
     observedMultiples: 'Observed Valuation Multiples',
     trailingPe: 'Trailing P/E',
     ps: 'P/S (Revenue)',

@@ -181,3 +181,50 @@ describe('ResultCards headline-metric reconciliation', () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('ResultCards partial-admission reconciliation', () => {
+  it('lists the admitted and refused metrics behind the counts', () => {
+    const partial: AdmissionSummary = {
+      total_admitted: 1,
+      total_refused: 4,
+      metrics_admitted: ['revenue'],
+      metrics_refused: [
+        'operating_cash_flow',
+        'capex',
+        'operating_income',
+        'depreciation_and_amortization',
+      ],
+      refusals: [],
+    }
+
+    render(
+      <I18nProvider initialLang="en">
+        <ResultCards
+          ticker="MU"
+          companyName="Micron Technology"
+          asOf="2026-10-16"
+          valuation={{ limitations: [], current_price: 878.84, currency: 'USD', selected_pfcf: 67.712721, selected_pfcf_basis: 'production_historical_pfcf_median', implied_fcf_at_reference_multiple: 17878087201.56143, market_cap: 1210573930693.0 } as ValuationSummary}
+          admission={partial}
+          replay={{ ...replay, outcome: 'DIVERGED', matched: false }}
+          refusalReasons={[]}
+          sourceIdentifiers={[]}
+        />
+      </I18nProvider>,
+    )
+
+    // The count is reconcilable with a list: all four refused metric names are
+    // shown, not only the reason feed.
+    expect(screen.getByText(/Admitted metrics:/)).toBeInTheDocument()
+    const refusedLine = screen.getByTestId('refused-metrics')
+    expect(refusedLine.textContent).toMatch(/Refused metrics:/)
+    expect(refusedLine.textContent).toMatch(/operating_cash_flow/)
+    expect(refusedLine.textContent).toMatch(/capex/)
+    expect(refusedLine.textContent).toMatch(/operating_income/)
+    expect(refusedLine.textContent).toMatch(/depreciation_and_amortization/)
+  })
+
+  it('omits the refused line when nothing was refused', () => {
+    renderCards({ current_price: 336.64 })
+    expect(screen.queryByTestId('refused-metrics')).not.toBeInTheDocument()
+  })
+})

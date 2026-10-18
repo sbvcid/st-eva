@@ -420,6 +420,9 @@ const buildResult = (
       selected_pfcf: 25.343981,
       selected_pfcf_basis: 'production_historical_pfcf_median',
       implied_fcf_at_reference_multiple: 192118844496.4761,
+      // The observed market cap the implied figure is inverted from; the
+      // fixture keeps them consistent (market cap / median == implied FCF).
+      market_cap: 4869056344660.645,
       summary_horizon_years: 1.0,
       observed_pe: 38.26,
       limitations: ['Conditional reverse valuation'],
@@ -605,6 +608,9 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
       expect(row.report_implied_fcf_at_reference_multiple).toBe(
         '192118844496.4761',
       )
+      // The market-cap operand travels too, so the figure is recomputable
+      // from the file: market cap / selected P/FCF == implied FCF.
+      expect(row.report_market_cap).toBe('4869056344660.645')
       expect(row.currency).toBe('USD')
     })
   })
@@ -620,6 +626,7 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     result.valuation_summary.selected_pfcf = null
     result.valuation_summary.selected_pfcf_basis = null
     result.valuation_summary.implied_fcf_at_reference_multiple = null
+    result.valuation_summary.market_cap = null
     const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
     const row = rows[0]
     expect(row.report_production_pfcf_status).toBe('')
@@ -628,6 +635,7 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     expect(row.report_selected_pfcf).toBe('')
     expect(row.report_selected_pfcf_basis).toBe('')
     expect(row.report_implied_fcf_at_reference_multiple).toBe('')
+    expect(row.report_market_cap).toBe('')
   })
 
   it('preserves missing values as empty fields rather than zeros', () => {

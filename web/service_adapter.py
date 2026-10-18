@@ -52,6 +52,23 @@ def default_replay_doc_builder(
 DEFAULT_ARCHIVES_DIR = "data/archives"
 
 
+def _as_number(value: Any) -> Optional[float]:
+    """
+    The value when it is a real finite number, else None.
+
+    The runner reports an absent operand with a sentinel (``UNAVAILABLE``), and
+    an absent operand is an absence -- never 0, never a parse error. Only the
+    market-cap operand is read through this so far, because it is the one the
+    summary carries straight from the runner's snapshot.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    if number != number or number in (float("inf"), float("-inf")):
+        return None
+    return number
+
+
 def _web_visible_analysis(core_result: Dict[str, Any]) -> Dict[str, Any]:
     """
     The analysis payload as the API reports it, without verbatim duplication.
@@ -294,6 +311,7 @@ class AnalysisServiceAdapter:
             # Extract admissions summary from archive
             admissions_list = archive.admissions_for(clean_ticker)
             metrics_admitted: List[str] = []
+            metrics_refused: List[str] = []
             total_admitted = 0
             total_refused = 0
 
@@ -305,6 +323,9 @@ class AnalysisServiceAdapter:
                         metrics_admitted.append(metric_name)
                 else:
                     total_refused += 1
+                    metric_name = adm.get("metric")
+                    if metric_name and metric_name not in metrics_refused:
+                        metrics_refused.append(metric_name)
                     refusals_json = adm.get("refusals_json")
                     if refusals_json:
                         try:
@@ -326,6 +347,7 @@ class AnalysisServiceAdapter:
                 total_admitted=total_admitted,
                 total_refused=total_refused,
                 metrics_admitted=metrics_admitted,
+                metrics_refused=metrics_refused,
                 refusals=refusal_items,
             )
 
@@ -335,6 +357,7 @@ class AnalysisServiceAdapter:
             implied = core_result.get("market_implied_assumptions", {})
             ref_info = core_result.get("reference", {})
             data_quality = core_result.get("data_quality", {})
+            fundamental = core_result.get("fundamental_snapshot", {})
 
             valuation_summary = ValuationSummary(
                 analysis_type=core_result.get("analysis_type"),
@@ -349,6 +372,7 @@ class AnalysisServiceAdapter:
                 selected_pfcf=ref_info.get("pfcf_multiple"),
                 selected_pfcf_basis=ref_info.get("pfcf_method"),
                 implied_fcf_at_reference_multiple=implied.get("fcf_at_reference_multiple"),
+                market_cap=_as_number(fundamental.get("current_market_cap")),
                 summary_horizon_years=horizon_years,
                 observed_pe=obs_val.get("current_pe"),
                 observed_ps=obs_val.get("current_ps"),
