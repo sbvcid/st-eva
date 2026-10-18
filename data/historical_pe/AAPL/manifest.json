@@ -27,8 +27,9 @@
       },
       "filing_acceptance_evidence.json": {
         "row_count": 48,
-        "content_sha256": "ac74bcdd430efccaa8a0ce33d6fa7b539e46d4cae19e4d8b92b9f0b69f0d0654",
-        "source": "SEC EDGAR SGML header ACCEPTANCE-DATETIME index (10-K/10-Q/8-K Item 2.02)"
+        "content_sha256": "b839d7315f2e0511a9ab34a138a767abdaf1d5ab7ee9503c4b1bd4172e6bf7be",
+        "source": "SEC EDGAR SGML header ACCEPTANCE-DATETIME index (10-K/10-Q/8-K Item 2.02)",
+        "bytes": 39063
       },
       "q4_evidence_records.json": {
         "record_count": 5,

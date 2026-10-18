@@ -1777,3 +1777,11 @@ MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:Depreciati
 
 **Next gap:** decide whether to accept the MU/MSFT D&A honest gaps or evaluate a carefully-scoped mapping (only if taxonomy semantics support it for a specific issuer without relaxing market-wide qualification); or evaluate 8-K/other form generalisation. Do NOT merge MSFT's `DepreciationAmortizationAndOther` or MU's `DepreciationDepletionAndAmortization` into D&A without semantic evidence.
 
+
+--- 2026-10-18 verified update (ST-EVA goal continuation, no D&A change) ---
+- HEAD = e10158ab80060fa56da4d52af2813060200b5dc3; origin/master same; working tree clean.
+- e10158a restricted-mapping fix preserved; MU filing_acceptance_evidence correction (header ET) remains effective.
+- 8-K Item 2.02 / EX-99.1 evaluation (AAPL/MSFT/MU): all Q4 evidence records present (AAPL FY21-25, MSFT FY21-26, MU FY21-26) with source_url, accession, form, item_2_02_furnished_not_filed verified. HTML exhibits contain diluted EPS headline only; statement_columns hold period labels, not quantified revenue/net-income structures; no XBRL instance facts for those items in 8-K attachments; therefore 8-K generalisation to other concepts is not a reliable new coverage path at this stage.
+- Filing-acceptance backfill completed: scripts/correct_filing_acceptance_header.py (reusable) produces standard acceptance_datetime from acceptance_datetime_header_et; original files backed to .bak; corrected files written; AAPL/MSFT manifests updated; MU has no manifest. Verification: AAPL before-16h count = 11 (header) vs 16 (API) - 5-record shift avoided; tests/test_aapl_historical_pe.py passes (17 passed, 34 subtests).
+- No MSFT DepreciationAmortizationAndOther or MU DepreciationDepletionAndAmortization merged; no market-wide EXACT semantics relaxed; no new predictions/recommendations/LLM decision features added.
+- Source attribution preserved (accession, URL, header SHA256, form, period, currency/USD, concept tag) for all corrected records.
