@@ -1403,6 +1403,70 @@ class TestFreeCashFlowCrossing(BoundaryFixture):
             MARKET_CAP / 8.0,
         )
 
+    def test_depletion_and_amortization_concept_is_refused(self):
+        # us-gaap:DepreciationDepletionAndAmortization includes depletion per
+        # the US-GAAP taxonomy, so it is not pure depreciation & amortization
+        # and must not cross the V1 boundary as an EXACT mapping.
+        observation = filing_observation(
+            METRIC_DEPRECIATION_AND_AMORTIZATION,
+            "us-gaap:DepreciationDepletionAndAmortization",
+            self.DA_VALUE,
+            ANNUAL,
+            "2025-10-03T21:02:11.000Z",
+            ACCEPTED,
+            accession=self.next_accession(),
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            fidelity="EXACT",
+            form="10-K",
+            fiscal_year=2025,
+            fiscal_period="FY",
+        )
+        self.record(observation)
+        result = build_valuation_inputs(
+            self.store, TICKER, "2026-09-29", price_observation()
+        )
+        inputs = result.valuation_inputs
+        self.assertEqual(inputs.current_depreciation_and_amortization, UNAVAILABLE)
+        self.assertEqual(inputs.current_ebitda, UNAVAILABLE)
+        refused = result.refused
+        self.assertIn(METRIC_DEPRECIATION_AND_AMORTIZATION, refused)
+        self.assertFalse(refused[METRIC_DEPRECIATION_AND_AMORTIZATION].admitted)
+        labels = [getattr(x, "label", str(x)) for x in refused[METRIC_DEPRECIATION_AND_AMORTIZATION].refusals]
+        self.assertIn("MAPPING_NOT_EXACT", labels)
+
+    def test_company_custom_concept_is_refused(self):
+        # Company-custom concepts that bundle "other" items or are issuer
+        # specific must not be unconditionally treated as market-wide EXACT
+        # depreciation & amortization.
+        observation = filing_observation(
+            METRIC_DEPRECIATION_AND_AMORTIZATION,
+            "msft:DepreciationAmortizationAndOther",
+            self.DA_VALUE,
+            ANNUAL,
+            "2025-10-03T21:02:11.000Z",
+            ACCEPTED,
+            accession=self.next_accession(),
+            unit=Unit.CURRENCY.value,
+            currency="USD",
+            fidelity="EXACT",
+            form="10-K",
+            fiscal_year=2025,
+            fiscal_period="FY",
+        )
+        self.record(observation)
+        result = build_valuation_inputs(
+            self.store, TICKER, "2026-09-29", price_observation()
+        )
+        inputs = result.valuation_inputs
+        self.assertEqual(inputs.current_depreciation_and_amortization, UNAVAILABLE)
+        self.assertEqual(inputs.current_ebitda, UNAVAILABLE)
+        refused = result.refused
+        self.assertIn(METRIC_DEPRECIATION_AND_AMORTIZATION, refused)
+        self.assertFalse(refused[METRIC_DEPRECIATION_AND_AMORTIZATION].admitted)
+        labels = [getattr(x, "label", str(x)) for x in refused[METRIC_DEPRECIATION_AND_AMORTIZATION].refusals]
+        self.assertIn("MAPPING_NOT_EXACT", labels)
+
 
 if __name__ == "__main__":
     unittest.main()

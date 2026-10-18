@@ -1731,7 +1731,18 @@ real data; alternatively evaluate 8-K/other form generalisation.
 
 `reprocess_existing()` verified on real data: idempotent (0 new observations, all skipped), 0 network fetches, documents reused, distinct from `ingest()` NO_CHANGE.
 
-**Honest gap (documented, not merged):** MSFT and MU return **zero** `us-gaap:DepreciationAndAmortization` facts (the registered EXACT D&A mapping). MSFT reports `us-gaap:Depreciation` (70 facts); MU reports `us-gaap:DepreciationDepletionAndAmortization` (121 facts). Per the anti-merging rule these are NOT folded into D&A — they are different concepts (depletion, expense vs. income-statement D&A) without sufficient semantic evidence. So EBITDA is **refused with a precise reason** for MSFT/MU rather than synthesized; only AAPL completes EBITDA.
+**Honest D&A mapping gap (documented with XBRL evidence, not merged):**
+
+| Ticker | Concept used | Value | Period | Accession | Reason not mapped as pure D&A |
+|--------|-------------|-------|--------|-----------|-------------------------------|
+| AAPL | us-gaap:DepreciationAndAmortization | 8,300M | FY2016 | 0001628280-16-020309 | mapped (pure D&A) ✓ |
+| MU | us-gaap:DepreciationDepletionAndAmortization | 8,352M | FY2025 (2024-08-30..2025-08-28) | 0000723125-25-000028 | concept includes depletion per US-GAAP taxonomy; Micron reports no `us-gaap:Depletion` (404), so the 8,352M IS pure D&A in substance, but the concept tag is broader than D&A and cannot be market-wide EXACT |
+| MSFT | msft:DepreciationAmortizationAndOther | 34,153M | FY2025 | 0000950170-25-100235 | company-custom `msft:` concept bundling "other" items; not pure D&A and not market-wide EXACT |
+
+MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:DepreciationDepletionAndAmortization` (MSFT: 404), or `us-gaap:DepreciationAndAmortizationExpense` (MSFT: 404) concepts that are pure D&A. EBITDA is therefore **refused with a precise reason** for MSFT/MU rather than synthesized. AAPL's pure `us-gaap:DepreciationAndAmortization` is the working demonstration.
+
+**Tests added:** `TestFreeCashFlowCrossing.test_depletion_and_amortization_concept_is_refused` and `test_company_custom_concept_is_refused` — verify non-pure-D&A concepts (depletion-bundling and company-custom "other") are refused with `MAPPING_NOT_EXACT`.
+
 
 **FCF path (condition C priority 1) — real, independently recomputed:**
 - SEC reports capex (`us-gaap:PaymentsToAcquirePropertyPlantAndEquipment`) as a **positive** spending figure for all three filers, so FCF = OCF − capex (sign handled explicitly; never added blindly).
@@ -1753,8 +1764,8 @@ real data; alternatively evaluate 8-K/other form generalisation.
 **Condition status:**
 - A (collection & backfill): complete — real SEC collection for AAPL/MSFT/MU + `reprocess_existing` verified.
 - B (priority mappings): complete — OCF, capex, D&A, operating income, cash, long_term_debt all ACTIVE with EXACT mappings.
-- C (valuation connection): complete — FCF and EV/EBITDA paths run from real SEC observations through qualification → derivation → reverse valuation, independently recomputed. D&A facts not yet collected for MSFT/MU (exact mapping returns zero; gap documented).
-- Remaining: no facts yet for MSFT/MU D&A (exact mapping returns zero); 8-K/other form generalisation not yet evaluated.
+- C (valuation connection): complete — FCF and EV/EBITDA paths run from real SEC observations through qualification → derivation → reverse valuation, independently recomputed. AAPL's pure D&A flows into EBITDA reverse valuation (verified through `admit()` with same-period FY2015 data). MU/MSFT D&A documented as honest gaps (no pure-D&A concept reported).
+- Remaining: MSFT/MU have no pure `us-gaap:DepreciationAndAmortization` concept; MU uses `DepreciationDepletionAndAmortization` (includes depletion) and MSFT uses company-custom `DepreciationAmortizationAndOther` (includes other). Neither can be market-wide EXACT per taxonomy semantics. 8-K/other form generalisation not yet evaluated.
 
-**Next gap:** collect real filings so MSFT/MU D&A (via a correctly-semantic concept if one is justified) or accept the honest gap; or evaluate 8-K/other form generalisation. Do NOT merge MSFT's `Depreciation` or MU's `DepreciationDepletionAndAmortization` into D&A without semantic evidence.
+**Next gap:** decide whether to accept the MU/MSFT D&A honest gaps or evaluate a carefully-scoped mapping (only if taxonomy semantics support it for a specific issuer without relaxing market-wide qualification); or evaluate 8-K/other form generalisation. Do NOT merge MSFT's `DepreciationAmortizationAndOther` or MU's `DepreciationDepletionAndAmortization` into D&A without semantic evidence.
 
