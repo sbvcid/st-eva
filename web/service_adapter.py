@@ -20,6 +20,7 @@ from web.schemas import (
     AdmissionSummary,
     AnalysisResultDTO,
     JobProgressStage,
+    ProductionHistoricalPfcfSummaryDTO,
     RefusalItem,
     ReplaySummary,
     ReverseRequirementsReportDTO,
@@ -412,6 +413,26 @@ class AnalysisServiceAdapter:
                 from historical_pfcf import production_pfcf_summary
 
                 production_pfcf_summary = production_pfcf_summary(raw_pfcf)
+
+            # The report carries the cash-flow reference statement beside the
+            # P/E one, so the scenario matrix and the export can state whether a
+            # qualified P/FCF reference exists. The core report already emits it;
+            # this keeps a legacy payload that predates that emission reporting
+            # the same state rather than an absent one.
+            if (
+                reverse_reqs_dto is not None
+                and reverse_reqs_dto.production_historical_pfcf_summary is None
+                and production_pfcf_summary is not None
+            ):
+                reverse_reqs_dto = reverse_reqs_dto.model_copy(
+                    update={
+                        "production_historical_pfcf_summary": (
+                            ProductionHistoricalPfcfSummaryDTO.model_validate(
+                                production_pfcf_summary
+                            )
+                        )
+                    }
+                )
 
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),

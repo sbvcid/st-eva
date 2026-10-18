@@ -943,6 +943,35 @@ class TestReportAssembly(unittest.TestCase):
         block = self._report(pfcf_multiple=None)["cash_flow_cross_checks"]
         self.assertIsNone(block["required_at_reference_multiple"]["fcf"]["required_fcf"])
 
+    def test_pfcf_reference_statement_is_carried_when_supplied(self):
+        payload = {
+            "issuer_id": "CIK0000723125",
+            "instrument_id": "MU",
+            "input_set_id": "pfcf-input-set",
+            "distribution": {
+                "metric_id": "TTM_P_FCF",
+                "status": "USABLE_FOR_REFERENCE",
+                "usable_for_reference": True,
+                "sample_count": 362,
+                "min_observations_required": 20,
+                "percentiles": {"median": 67.712721},
+            },
+        }
+        summary = self._report(production_historical_pfcf=payload)[
+            "production_historical_pfcf_summary"
+        ]
+        self.assertIsNotNone(summary)
+        self.assertEqual(summary["status"], "USABLE_FOR_REFERENCE")
+        self.assertTrue(summary["usable_for_reference"])
+        self.assertEqual(summary["sample_count"], 362)
+        self.assertAlmostEqual(summary["percentiles"]["median"], 67.712721, places=6)
+        # The full per-observation payload is not duplicated into the summary.
+        self.assertNotIn("distribution", summary)
+
+    def test_pfcf_reference_statement_is_absent_when_not_supplied(self):
+        report = self._report()
+        self.assertIsNone(report["production_historical_pfcf_summary"])
+
     def test_dcf_block_not_attempted_without_inputs(self):
         block = self._report()["dcf"]
         self.assertEqual(block["status"], "NOT_ATTEMPTED")

@@ -2283,6 +2283,7 @@ def run_st_eva(
         ),
         cross_validation=sec_evidence.get("cross_validation") if wants_sec else None,
         production_historical_pe=production_historical_pe,
+        production_historical_pfcf=production_historical_pfcf,
         prefer_eps_anchor=prefer_eps_anchor,
         user_eps=user_eps,
     )
@@ -3334,6 +3335,7 @@ def _build_reverse_requirements(
     sec_eps_evidence: Optional[Dict[str, Any]] = None,
     cross_validation: Optional[Dict[str, Any]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
+    production_historical_pfcf: Optional[Dict[str, Any]] = None,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
 ) -> Dict[str, Any]:
@@ -3941,6 +3943,7 @@ def _build_reverse_requirements(
         dcf_inputs=dcf_inputs,
         unavailable=unavailable,
         production_historical_pe=production_historical_pe,
+        production_historical_pfcf=production_historical_pfcf,
         price_evidence=price_evidence,
         eps_anchor_catalogue=eps_anchor_catalogue,
         eps_anchor_selection=eps_anchor_selection,

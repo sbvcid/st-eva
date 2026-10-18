@@ -355,6 +355,25 @@ const computedReport: ReverseRequirementsReportDTO = {
     current_pe_as_of: '2026-10-06',
     input_set_id: '01f618068fabc',
   },
+  // The cash-flow reference, with the values the production P/FCF loader
+  // actually returns for AAPL (median 25.343981 over 35 eligible observations),
+  // so the export test exercises the same shape the API serves.
+  production_historical_pfcf_summary: {
+    issuer_id: 'CIK0000320193',
+    instrument_id: 'AAPL',
+    metric_id: 'TTM_P_FCF',
+    status: 'USABLE_FOR_REFERENCE',
+    usable_for_reference: true,
+    sample_count: 35,
+    total_evaluations: 35,
+    min_observations_required: 20,
+    period_start: '2018-01-02',
+    period_end: '2026-10-06',
+    percentiles: { median: 25.343981 },
+    current_pfcf: 32.0,
+    current_pfcf_as_of: '2026-10-06',
+    input_set_id: 'pfcf-input-set',
+  },
   consensus_reference: {
     eps: 9.58043,
     provider: 'YahooFinanceFundamentals',
@@ -394,6 +413,13 @@ const buildResult = (
       required_eps_cagr: 0.2858,
       selected_pe: 30.0,
       selected_pe_basis: 'user_supplied_multiple',
+      // The cash-flow reverse valuation: the reference multiple in force and
+      // the company-level total FCF it inverts into, from the AAPL production
+      // P/FCF median (25.343981) applied to the real market capitalisation
+      // (14,594,180,000 shares at USD 333.63).
+      selected_pfcf: 25.343981,
+      selected_pfcf_basis: 'production_historical_pfcf_median',
+      implied_fcf_at_reference_multiple: 192118844496.4761,
       summary_horizon_years: 1.0,
       observed_pe: 38.26,
       limitations: ['Conditional reverse valuation'],
@@ -477,6 +503,22 @@ describe('buildReverseRequirementsJson (typed result contract)', () => {
     expect(rr.production_historical_pe_summary.status).toBe('USABLE_FOR_REFERENCE')
     expect(rr.production_historical_pe_summary.usable_for_reference).toBe(true)
     expect(rr.production_historical_pe_summary.min_observations_required).toBe(20)
+
+    // The cash-flow counterpart travels beside it, and the reverse valuation
+    // it inverts into is on the valuation summary, so the JSON export states
+    // the same P/FCF reference the interface shows.
+    expect(rr.production_historical_pfcf_summary.status).toBe(
+      'USABLE_FOR_REFERENCE',
+    )
+    expect(rr.production_historical_pfcf_summary.usable_for_reference).toBe(true)
+    expect(rr.production_historical_pfcf_summary.sample_count).toBe(35)
+    expect(parsed.result.valuation_summary.selected_pfcf).toBe(25.343981)
+    expect(parsed.result.valuation_summary.selected_pfcf_basis).toBe(
+      'production_historical_pfcf_median',
+    )
+    expect(
+      parsed.result.valuation_summary.implied_fcf_at_reference_multiple,
+    ).toBe(192118844496.4761)
   })
 
   it('keeps R2.1 direct SEC provenance and cross-check evidence distinct', () => {
@@ -541,6 +583,51 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     expect(descriptiveRow.exit_multiple_eligibility_state).toBe(
       'DESCRIPTIVE_ONLY_INSUFFICIENT_OBSERVATIONS',
     )
+  })
+
+  it('exports the cash-flow (P/FCF) reverse valuation with its basis and eligibility', () => {
+    const result = buildResult(computedReport)
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+
+    // Report-level, so every scenario row carries the same cash-flow
+    // reference the response states.
+    rows.forEach((row) => {
+      expect(row.report_production_pfcf_status).toBe('USABLE_FOR_REFERENCE')
+      expect(row.report_production_pfcf_usable_for_reference).toBe('true')
+      expect(row.report_production_pfcf_sample_count).toBe('35')
+      expect(row.report_production_pfcf_reason_code).toBe('')
+      // The multiple in force, the basis that names it, and the company-level
+      // total FCF it inverts into in the report currency.
+      expect(row.report_selected_pfcf).toBe('25.343981')
+      expect(row.report_selected_pfcf_basis).toBe(
+        'production_historical_pfcf_median',
+      )
+      expect(row.report_implied_fcf_at_reference_multiple).toBe(
+        '192118844496.4761',
+      )
+      expect(row.currency).toBe('USD')
+    })
+  })
+
+  it('leaves the cash-flow reverse valuation empty when no P/FCF reference exists', () => {
+    // A report with no P/FCF summary and a valuation with no selected multiple
+    // must not gain a fabricated figure.
+    const noPfcfReport: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      production_historical_pfcf_summary: null,
+    }
+    const result = buildResult(noPfcfReport)
+    result.valuation_summary.selected_pfcf = null
+    result.valuation_summary.selected_pfcf_basis = null
+    result.valuation_summary.implied_fcf_at_reference_multiple = null
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const row = rows[0]
+    expect(row.report_production_pfcf_status).toBe('')
+    expect(row.report_production_pfcf_usable_for_reference).toBe('')
+    expect(row.report_production_pfcf_sample_count).toBe('')
+    expect(row.report_selected_pfcf).toBe('')
+    expect(row.report_selected_pfcf_basis).toBe('')
+    expect(row.report_implied_fcf_at_reference_multiple).toBe('')
   })
 
   it('preserves missing values as empty fields rather than zeros', () => {

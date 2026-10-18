@@ -7,9 +7,7 @@
     "header_source_sha256": "2c488536ff037bba9b12509774c87f67c8fb871090d222789093fdf07c9f249e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459020047996/0001564590-20-047996-index-headers.html",
     "period_end": "2020-09-30",
-    "sec_items": "",
-    "acceptance_datetime": "2020-10-27T16:21:58-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2021-01-26T16:04:05-05:00",
@@ -19,9 +17,7 @@
     "header_source_sha256": "eedf700d1426d58bdde02e4e6db5903029061e314224e271e01eab35bb4525fb",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312521017683/0001193125-21-017683-index-headers.html",
     "period_end": "2021-01-26",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2021-01-26T16:04:05-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2021-01-26T16:09:34-05:00",
@@ -31,9 +27,7 @@
     "header_source_sha256": "130484710c99104726d02b00b36e06d1ded0ad5f5dcd8b1d30d0b8d1d48ef91e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459021002316/0001564590-21-002316-index-headers.html",
     "period_end": "2020-12-31",
-    "sec_items": "",
-    "acceptance_datetime": "2021-01-26T16:09:34-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2021-04-27T16:04:57-04:00",
@@ -43,9 +37,7 @@
     "header_source_sha256": "b4ed7fb64b74f39dc2740f4ed16c7347a66fadd6972eed674b78763e3039f2fb",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312521134213/0001193125-21-134213-index-headers.html",
     "period_end": "2021-04-27",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2021-04-27T16:04:57-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2021-04-27T16:09:38-04:00",
@@ -55,9 +47,7 @@
     "header_source_sha256": "3242f07bd8b6435d2cbc740446680557b58758676444b4dbdbad8e87a425aa66",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459021020891/0001564590-21-020891-index-headers.html",
     "period_end": "2021-03-31",
-    "sec_items": "",
-    "acceptance_datetime": "2021-04-27T16:09:38-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2021-07-27T16:41:19-04:00",
@@ -67,9 +57,7 @@
     "header_source_sha256": "f0facd7cbc04d7da5b6abd2bd01869927ef24fcbd2e94e243f8a718691d228d9",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312521225746/0001193125-21-225746-index-headers.html",
     "period_end": "2021-07-27",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2021-07-27T16:41:19-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2021-07-29T16:21:55-04:00",
@@ -79,9 +67,7 @@
     "header_source_sha256": "24121d7d5c97b863afe9de7abadbe8dea1d07e6cee5ad65db8deb6b7094e0bfd",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459021039151/0001564590-21-039151-index-headers.html",
     "period_end": "2021-06-30",
-    "sec_items": "",
-    "acceptance_datetime": "2021-07-29T16:21:55-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2021-10-26T16:04:14-04:00",
@@ -91,9 +77,7 @@
     "header_source_sha256": "83b1c77b7434dc8e71646ea609eae85c55a03a8cbb7fd1df785e858f54baa2aa",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312521307941/0001193125-21-307941-index-headers.html",
     "period_end": "2021-10-26",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2021-10-26T16:04:14-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2021-10-26T16:11:30-04:00",
@@ -103,9 +87,7 @@
     "header_source_sha256": "519febfdfd76fa15c10b86d6e11f11671c2561fadaf64e6ed87c46d0ae9fdfa3",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459021051992/0001564590-21-051992-index-headers.html",
     "period_end": "2021-09-30",
-    "sec_items": "",
-    "acceptance_datetime": "2021-10-26T16:11:30-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2022-01-25T16:03:05-05:00",
@@ -115,9 +97,7 @@
     "header_source_sha256": "79881ef30a7abaf14fe4bab937ff3a9eaf3a551e63b95ab4c1f60d9767f0b11d",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312522017041/0001193125-22-017041-index-headers.html",
     "period_end": "2022-01-25",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2022-01-25T16:03:05-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2022-01-25T16:09:04-05:00",
@@ -127,9 +107,7 @@
     "header_source_sha256": "ef7bbddc612d7ffe913b2450073ab40f243266a127541e633a4e627295ae77a8",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459022002324/0001564590-22-002324-index-headers.html",
     "period_end": "2021-12-31",
-    "sec_items": "",
-    "acceptance_datetime": "2022-01-25T16:09:04-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2022-04-26T16:03:59-04:00",
@@ -139,9 +117,7 @@
     "header_source_sha256": "760c49103d510e64903e636f3a5db88f03e4424bcff20247b2f3ef85d1b38625",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312522120207/0001193125-22-120207-index-headers.html",
     "period_end": "2022-04-26",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2022-04-26T16:03:59-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2022-04-26T16:08:55-04:00",
@@ -151,9 +127,7 @@
     "header_source_sha256": "4fd9f10cb78f2949c970fc4940e50807208bc441418065a71462ade96e5a2f71",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459022015675/0001564590-22-015675-index-headers.html",
     "period_end": "2022-03-31",
-    "sec_items": "",
-    "acceptance_datetime": "2022-04-26T16:08:55-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2022-07-26T16:02:59-04:00",
@@ -163,9 +137,7 @@
     "header_source_sha256": "82e26aa5c96c938f17a180bae5f533184b3c692391466d8414697174a914dee9",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312522202034/0001193125-22-202034-index-headers.html",
     "period_end": "2022-07-26",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2022-07-26T16:02:59-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2022-07-28T16:06:19-04:00",
@@ -175,9 +147,7 @@
     "header_source_sha256": "c8b0030a17d0739baa2b4b3fa1f1f5902070c9c8348bbddfe2c04ea930945925",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459022026876/0001564590-22-026876-index-headers.html",
     "period_end": "2022-06-30",
-    "sec_items": "",
-    "acceptance_datetime": "2022-07-28T16:06:19-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2022-10-25T16:02:59-04:00",
@@ -187,9 +157,7 @@
     "header_source_sha256": "abbb80bee25eeb3285256959965f8a24e3af6954de6f601345be36102d99007c",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312522268356/0001193125-22-268356-index-headers.html",
     "period_end": "2022-10-25",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2022-10-25T16:02:59-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2022-10-25T16:08:55-04:00",
@@ -199,9 +167,7 @@
     "header_source_sha256": "c067a9d26c975fad3f32762d0442cfef87b1a45a2a54ccb6af23f4776da6e379",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459022035087/0001564590-22-035087-index-headers.html",
     "period_end": "2022-09-30",
-    "sec_items": "",
-    "acceptance_datetime": "2022-10-25T16:08:55-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2023-01-24T16:28:00-05:00",
@@ -211,9 +177,7 @@
     "header_source_sha256": "eb1c5b59c2a295a88c2697c89d08b05e9699f540c9ba7e22173cc42739473287",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523014230/0001193125-23-014230-index-headers.html",
     "period_end": "2023-01-24",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2023-01-24T16:28:00-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2023-01-24T16:34:20-05:00",
@@ -223,9 +187,7 @@
     "header_source_sha256": "e5d2517dd254457fcd2da6e4a33433a4542a9c719f2ae57691c1604151e60f6e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000156459023000733/0001564590-23-000733-index-headers.html",
     "period_end": "2022-12-31",
-    "sec_items": "",
-    "acceptance_datetime": "2023-01-24T16:34:20-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2023-04-25T16:03:03-04:00",
@@ -235,9 +197,7 @@
     "header_source_sha256": "3631444967742009e0866b1312c45fc5dcc2393fbbf8e74fb4d7b041c7cda1a1",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523115280/0001193125-23-115280-index-headers.html",
     "period_end": "2023-04-25",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2023-04-25T16:03:03-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2023-04-25T16:07:43-04:00",
@@ -247,9 +207,7 @@
     "header_source_sha256": "e4e8306b7990988951ab2ba0e62fcdf9be691ae60e5b2a20638fb2d0cec6688e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023014423/0000950170-23-014423-index-headers.html",
     "period_end": "2023-03-31",
-    "sec_items": "",
-    "acceptance_datetime": "2023-04-25T16:07:43-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2023-07-25T16:02:47-04:00",
@@ -259,9 +217,7 @@
     "header_source_sha256": "dedbfc41202edfe5e8f6a2802fda5a519bd779559d2c01d9d32e97e21ecbdcad",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023034400/0000950170-23-034400-index-headers.html",
     "period_end": "2023-07-25",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2023-07-25T16:02:47-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2023-07-27T16:01:56-04:00",
@@ -271,9 +227,7 @@
     "header_source_sha256": "1a54a419e29db46eed6e84289ff817d462fb11294fda3cd8d881fd89d818bf89",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023035122/0000950170-23-035122-index-headers.html",
     "period_end": "2023-06-30",
-    "sec_items": "",
-    "acceptance_datetime": "2023-07-27T16:01:56-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2023-10-24T16:03:29-04:00",
@@ -283,9 +237,7 @@
     "header_source_sha256": "61b836c96ca482d0c8e0aa1738922b4cbf89e4fe642679831f791bcc4507d39b",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023054848/0000950170-23-054848-index-headers.html",
     "period_end": "2023-10-24",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2023-10-24T16:03:29-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2023-10-24T16:07:40-04:00",
@@ -295,9 +247,7 @@
     "header_source_sha256": "ef336f1b216e83137cc6af20eee5b033e49af9a4489fb3299c8c50aeb0a78a44",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023054855/0000950170-23-054855-index-headers.html",
     "period_end": "2023-09-30",
-    "sec_items": "",
-    "acceptance_datetime": "2023-10-24T16:07:40-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2024-01-30T16:03:17-05:00",
@@ -307,9 +257,7 @@
     "header_source_sha256": "5b2333ed5f98e002eb0d923f30e6dbb613dc66967e32ac58aae640dbd30ca388",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024008809/0000950170-24-008809-index-headers.html",
     "period_end": "2024-01-30",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2024-01-30T16:03:17-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2024-01-30T16:05:46-05:00",
@@ -319,9 +267,7 @@
     "header_source_sha256": "a7ce1ede86ae4e841d0a35d7d0e448a43128c27aecf4130c8c86fd8e3279a5f2",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024008814/0000950170-24-008814-index-headers.html",
     "period_end": "2023-12-31",
-    "sec_items": "",
-    "acceptance_datetime": "2024-01-30T16:05:46-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2024-04-25T16:03:19-04:00",
@@ -331,9 +277,7 @@
     "header_source_sha256": "524351f8f4624ecdc71d595689a37eb162cac732a2489d089b3d52d0946948ba",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024048268/0000950170-24-048268-index-headers.html",
     "period_end": "2024-04-25",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2024-04-25T16:03:19-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2024-04-25T16:06:24-04:00",
@@ -343,9 +287,7 @@
     "header_source_sha256": "51b1978bfd8c3db8873af4171fbe60ae5969088fb0b9b91f5321869e3029e3bd",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024048288/0000950170-24-048288-index-headers.html",
     "period_end": "2024-03-31",
-    "sec_items": "",
-    "acceptance_datetime": "2024-04-25T16:06:24-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2024-07-30T16:03:22-04:00",
@@ -355,9 +297,7 @@
     "header_source_sha256": "33f40eb3835bd72ec497b02195944cf6b689489a9a98656fc59e1ecea9fe1bd3",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024087835/0000950170-24-087835-index-headers.html",
     "period_end": "2024-07-30",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2024-07-30T16:03:22-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2024-07-30T16:06:22-04:00",
@@ -367,9 +307,7 @@
     "header_source_sha256": "117f3f502b76639805cf6db35ac9c9ad26c68131f12ab87f56b385e3120bb43e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/0000950170-24-087843-index-headers.html",
     "period_end": "2024-06-30",
-    "sec_items": "",
-    "acceptance_datetime": "2024-07-30T16:06:22-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2024-10-30T16:04:07-04:00",
@@ -379,9 +317,7 @@
     "header_source_sha256": "6cf78bd2c556fb6badb348ec1675080856041ee6336404b719222c0484aa1cd5",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024118955/0000950170-24-118955-index-headers.html",
     "period_end": "2024-10-30",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2024-10-30T16:04:07-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2024-10-30T16:07:17-04:00",
@@ -391,9 +327,7 @@
     "header_source_sha256": "08e2b009c995c5c512e7ac7b679d66270c87e30b997764870e04435b0284925e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024118967/0000950170-24-118967-index-headers.html",
     "period_end": "2024-09-30",
-    "sec_items": "",
-    "acceptance_datetime": "2024-10-30T16:07:17-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2025-01-29T16:08:56-05:00",
@@ -403,9 +337,7 @@
     "header_source_sha256": "56a7630c85c50524cadf697be3df4d31d1190d25626ccf1147c7e24f035e83f7",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025010484/0000950170-25-010484-index-headers.html",
     "period_end": "2025-01-29",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2025-01-29T16:08:56-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2025-01-29T16:11:54-05:00",
@@ -415,9 +347,7 @@
     "header_source_sha256": "ec52b5636155050e46dadb24f08e072fc5e66c42638fb996798179eb32a6f2b4",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025010491/0000950170-25-010491-index-headers.html",
     "period_end": "2024-12-31",
-    "sec_items": "",
-    "acceptance_datetime": "2025-01-29T16:11:54-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2025-04-30T16:06:03-04:00",
@@ -427,9 +357,7 @@
     "header_source_sha256": "5a8b0afdb1177201161c084ffa8f9f0602296adaaac5c2c7522c2b974cc68f47",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025061032/0000950170-25-061032-index-headers.html",
     "period_end": "2025-04-30",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2025-04-30T16:06:03-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2025-04-30T16:08:52-04:00",
@@ -439,9 +367,7 @@
     "header_source_sha256": "95f850e217413fd7a5d81e4d05432141dcd8ed36284ffc06c825722ad222f56e",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025061046/0000950170-25-061046-index-headers.html",
     "period_end": "2025-03-31",
-    "sec_items": "",
-    "acceptance_datetime": "2025-04-30T16:08:52-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2025-07-30T16:08:53-04:00",
@@ -451,9 +377,7 @@
     "header_source_sha256": "4f07be2f50d13d07a2860a958dc8983f470e6da622f2a8407fa174877ba017e7",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100226/0000950170-25-100226-index-headers.html",
     "period_end": "2025-07-30",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2025-07-30T16:08:53-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2025-07-30T16:11:40-04:00",
@@ -463,9 +387,7 @@
     "header_source_sha256": "bc0844f9329693994d65c22dbc52e600d48676c5ca2173bced4dc8ad3372abc7",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/0000950170-25-100235-index-headers.html",
     "period_end": "2025-06-30",
-    "sec_items": "",
-    "acceptance_datetime": "2025-07-30T16:11:40-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2025-10-29T16:07:42-04:00",
@@ -475,9 +397,7 @@
     "header_source_sha256": "4e823c145ad7b2cb432f988785a4ca481e6b121294dbe863c7ad82be0dbb10b5",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525256310/0001193125-25-256310-index-headers.html",
     "period_end": "2025-10-28",
-    "sec_items": "2.02,7.01,9.01",
-    "acceptance_datetime": "2025-10-29T16:07:42-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,7.01,9.01"
   },
   {
     "acceptance_datetime_header_et": "2025-10-29T16:10:48-04:00",
@@ -487,9 +407,7 @@
     "header_source_sha256": "dcd30ce5650e1998f61f63ebd319f9ce1c56533149c698c8a7a1acf21512155c",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525256321/0001193125-25-256321-index-headers.html",
     "period_end": "2025-09-30",
-    "sec_items": "",
-    "acceptance_datetime": "2025-10-29T16:10:48-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2026-01-28T16:04:38-05:00",
@@ -499,9 +417,7 @@
     "header_source_sha256": "23473cd9231ff7ea248192379febc8a52a573e215a08d41a7fb870ed377a5eb5",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526027198/0001193125-26-027198-index-headers.html",
     "period_end": "2026-01-28",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2026-01-28T16:04:38-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2026-01-28T16:07:34-05:00",
@@ -511,9 +427,7 @@
     "header_source_sha256": "9ab0cacb1911a96e7df60b6a56a6abe0802515c58b87f407d41e9541fc57bbe8",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526027207/0001193125-26-027207-index-headers.html",
     "period_end": "2025-12-31",
-    "sec_items": "",
-    "acceptance_datetime": "2026-01-28T16:07:34-05:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2026-04-29T16:03:31-04:00",
@@ -523,9 +437,7 @@
     "header_source_sha256": "4a10087105cb8ab1ab9013dd44a4d66019ec0ffea4d95763db0be0ca5622ad3f",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191457/0001193125-26-191457-index-headers.html",
     "period_end": "2026-04-29",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2026-04-29T16:03:31-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2026-04-29T16:06:24-04:00",
@@ -535,9 +447,7 @@
     "header_source_sha256": "7b8036685442d689d50cd2458868bd2f278ade16188706f5a9c550b62e11ed6c",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191507/0001193125-26-191507-index-headers.html",
     "period_end": "2026-03-31",
-    "sec_items": "",
-    "acceptance_datetime": "2026-04-29T16:06:24-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   },
   {
     "acceptance_datetime_header_et": "2026-07-29T16:04:53-04:00",
@@ -547,9 +457,7 @@
     "header_source_sha256": "32be7f27f5ada52180d776bc899d8c8367bf644f5b50132dfd02b9389b2125b5",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index-headers.html",
     "period_end": "2026-07-29",
-    "sec_items": "2.02,9.01",
-    "acceptance_datetime": "2026-07-29T16:04:53-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": "2.02,9.01"
   },
   {
     "acceptance_datetime_header_et": "2026-07-29T16:08:01-04:00",
@@ -559,8 +467,6 @@
     "header_source_sha256": "a4677192c07a6636922022fed76de7f1dc6724d6ac6d3cbd64aeb04f824178c8",
     "header_source_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index-headers.html",
     "period_end": "2026-06-30",
-    "sec_items": "",
-    "acceptance_datetime": "2026-07-29T16:08:01-04:00",
-    "acceptance_source": "header_et"
+    "sec_items": ""
   }
 ]

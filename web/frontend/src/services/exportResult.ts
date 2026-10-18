@@ -16,7 +16,7 @@ import {
  */
 
 /** Bump when the JSON envelope or CSV column set changes incompatibly. */
-export const EXPORT_SCHEMA_VERSION = 'st-eva-reverse-requirements-export/1.0'
+export const EXPORT_SCHEMA_VERSION = 'st-eva-reverse-requirements-export/1.1'
 export const EXPORT_GENERATOR = 'st-eva-web'
 
 export interface ReverseRequirementsExportEnvelope {
@@ -162,6 +162,25 @@ export const REVERSE_REQUIREMENTS_CSV_COLUMNS = [
   'missing_or_unvalidated_json',
   'flags_json',
   'comparison_notes_json',
+  // Cash-flow (P/FCF) reverse valuation, report level and repeated on every
+  // row. Appended at the end so every pre-existing column keeps its position
+  // for a consumer that reads the file positionally. `report_selected_pfcf` is
+  // the reference multiple actually in force (the operator's own when supplied,
+  // otherwise the eligible production historical P/FCF median);
+  // `report_selected_pfcf_basis` names which of those it is;
+  // `report_implied_fcf_at_reference_multiple` is the company-level TOTAL free
+  // cash flow the market capitalisation corresponds to at that multiple
+  // (`market cap / P/FCF`), in the report's `currency` -- it is never a
+  // per-share figure. The status/eligibility fields state whether a qualified
+  // P/FCF reference exists at all, so a refusal is readable as one.
+  'report_production_pfcf_status',
+  'report_production_pfcf_usable_for_reference',
+  'report_production_pfcf_sample_count',
+  'report_production_pfcf_reason_code',
+  'report_production_pfcf_reason_detail',
+  'report_selected_pfcf',
+  'report_selected_pfcf_basis',
+  'report_implied_fcf_at_reference_multiple',
 ] as const
 
 type CsvRow = Record<string, unknown>
@@ -191,6 +210,8 @@ function reportLevelFields(
   report: ReverseRequirementsReportDTO | null | undefined,
 ): CsvRow {
   const summary = report?.production_historical_pe_summary ?? null
+  const pfcfSummary = report?.production_historical_pfcf_summary ?? null
+  const valuation = result.valuation_summary ?? null
   const consensus = report?.consensus_reference ?? null
   return {
     ticker: result.ticker,
@@ -213,6 +234,21 @@ function reportLevelFields(
     report_production_pe_status: summary?.status ?? null,
     report_production_pe_usable_for_reference:
       summary?.usable_for_reference ?? null,
+    // The cash-flow reference and the reverse-valuation it inverts into. Read
+    // from the report's own P/FCF summary for eligibility and from the
+    // valuation summary for the multiple/result, exactly as the P/E reference
+    // is read, so the export cannot state a P/FCF reference the response does
+    // not carry.
+    report_production_pfcf_status: pfcfSummary?.status ?? null,
+    report_production_pfcf_usable_for_reference:
+      pfcfSummary?.usable_for_reference ?? null,
+    report_production_pfcf_sample_count: pfcfSummary?.sample_count ?? null,
+    report_production_pfcf_reason_code: pfcfSummary?.reason_code ?? null,
+    report_production_pfcf_reason_detail: pfcfSummary?.reason_detail ?? null,
+    report_selected_pfcf: valuation?.selected_pfcf ?? null,
+    report_selected_pfcf_basis: valuation?.selected_pfcf_basis ?? null,
+    report_implied_fcf_at_reference_multiple:
+      valuation?.implied_fcf_at_reference_multiple ?? null,
     report_unavailable_json: jsonColumn(report?.unavailable ?? []),
   }
 }

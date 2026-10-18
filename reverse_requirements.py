@@ -2275,6 +2275,7 @@ def build_reverse_requirements_report(
     dcf_inputs: Optional[Dict[str, Any]] = None,
     unavailable: Optional[Iterable[Dict[str, Any]]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
+    production_historical_pfcf: Optional[Dict[str, Any]] = None,
     price_evidence: Optional[Dict[str, Any]] = None,
     eps_anchor_catalogue: Optional[Dict[str, Any]] = None,
     eps_anchor_selection: Optional[Dict[str, Any]] = None,
@@ -2498,6 +2499,21 @@ def build_reverse_requirements_report(
         "risk_free_rates": [r.contract_view() for r in risk_free_rates],
     }
 
+    # The compact statement of the production historical P/FCF distribution,
+    # built by the same helper the API layer uses so the report and the run
+    # cannot disagree about the cash-flow reference's eligibility. Imported
+    # lazily to keep this module free of a load-time dependency on the P/FCF
+    # reconstruction. Absent, as its P/E counterpart already is, when the run
+    # acquired no P/FCF payload.
+    if production_historical_pfcf is None:
+        production_historical_pfcf_summary = None
+    else:
+        from historical_pfcf import production_pfcf_summary
+
+        production_historical_pfcf_summary = production_pfcf_summary(
+            production_historical_pfcf
+        )
+
     return {
         "report": "reverse_requirements_v1",
         "formula_version": FORMULA_VERSION,
@@ -2518,6 +2534,12 @@ def build_reverse_requirements_report(
         "production_historical_pe_summary": production_distribution_summary(
             production_historical_pe
         ),
+        # The cash-flow counterpart, carried beside the P/E summary with the
+        # same separation from the vendor band and from user assumptions. The
+        # reference multiple and the company-level FCF it inverts into are
+        # reported by the valuation summary; this states whether a qualified
+        # P/FCF reference exists at all, so a refusal is readable as one.
+        "production_historical_pfcf_summary": production_historical_pfcf_summary,
         # The consensus the gap column is differenced against, with the period
         # the source declared for it, so an eligible gap can be checked and a
         # missing one explained rather than read as a zero.
