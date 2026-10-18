@@ -200,6 +200,23 @@ OBSERVED_ADOPTION = "OBSERVED_ADOPTION"
 ADOPTION_BASES = (OBSERVED_ADOPTION,)
 
 
+def _scope_matches(
+    scope: Optional[Dict[str, Any]],
+    asset_id: Optional[str],
+    as_of: Optional[str],
+    accession: Optional[str] = None,
+) -> bool:
+    """Restricted mapping scope applies when issuer/filing conditions match.
+    No scope means universal; ticker or accession mismatch means inapplicable."""
+    if not scope:
+        return True
+    if "ticker" in scope and scope["ticker"] != asset_id:
+        return False
+    if "accession" in scope and scope["accession"] != accession:
+        return False
+    return True
+
+
 class RegistryError(Exception):
     """The registry was asked for something it does not hold."""
 
@@ -1544,6 +1561,8 @@ class CoreRegistry:
         metric_id: str,
         source_concept: Optional[str] = None,
         as_of: Optional[str] = None,
+        asset_id: Optional[str] = None,
+        accession: Optional[str] = None,
     ) -> ObservationMapping:
         """
         Resolve one observation: stored metric + its own source concept.
@@ -1580,7 +1599,7 @@ class CoreRegistry:
             )
         supersession = self.supersession_of(metric_id)
         resolution = self.resolve_source_concept(
-            source_concept, as_of=as_of, asset_id=None)
+            source_concept, as_of=as_of, asset_id=asset_id, accession=accession)
         if resolution.status == ConceptResolution.AMBIGUOUS_MAPPING:
             return ObservationMapping(
                 stored_metric_id=metric_id,
@@ -1673,6 +1692,7 @@ class CoreRegistry:
         concept_id: Optional[str],
         as_of: Optional[str] = None,
         asset_id: Optional[str] = None,
+        accession: Optional[str] = None,
     ) -> ConceptResolution:
         """
         Where a source concept points, preferring a direct declaration.
@@ -1702,6 +1722,22 @@ class CoreRegistry:
             )
 
         pairs = self.metrics_for_concept(concept_id, as_of=as_of)
+        # Restricted scope: a mapping with scope only applies to the declared
+        # issuer (and by archive selection, to the filing). Filter before
+        # adoption widening so an unscoped global claim never suppresses a
+        # scoped restricted claim incorrectly, and vice versa.
+        pairs = [
+            (mapping, metric) for mapping, metric in pairs
+            if _scope_matches(mapping.scope, asset_id, as_of, accession)
+        ]
+        # When a restricted (scoped) mapping applies to this asset, do not also
+        # allow an unscoped global claim for the same concept — that would
+        # create ambiguity between global and restricted for the same ticker.
+        restricted_kept = [
+            (m, metric) for m, metric in pairs if m.scope is not None
+        ]
+        if restricted_kept:
+            pairs = restricted_kept
         adoption = self.adoption_for(asset_id, concept_id) if asset_id else None
         if adoption is not None and as_of is not None:
             # Adoption widens the window a concept applies in; it never changes

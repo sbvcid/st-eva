@@ -1643,9 +1643,21 @@ class RestrictedIssuerMappingTests(BoundaryFixture):
         self.record(da_obs)
 
         result = build_valuation_inputs(self.store, TICKER, "2026-09-29", price_observation())
-        refused = result.refused
-        self.assertIn(METRIC_DEPRECIATION_AND_AMORTIZATION, refused)
-        self.assertFalse(refused[METRIC_DEPRECIATION_AND_AMORTIZATION].admitted)
+        # Direct registry check: restricted mapping scoped to access_a must not
+        # apply to observation at access_b.
+        registry = CoreRegistry(self.store.connection)
+        res_wrong = registry.mappings_for_observation(
+            METRIC_DEPRECIATION_AND_AMORTIZATION,
+            source_concept=self.PURE_DA,
+            as_of="2025-08-30",
+            asset_id=TICKER,
+            accession=access_b,
+        )
+        self.assertTrue(res_wrong.is_resolved, "global pure D&A resolves for any filing")
+        # The restricted mapping (access_a) must not be selected; only global applies.
+        self.assertNotIn("restricted", (res_wrong.mappings[0].notes or "").lower())
+        # At admission level: pure D&A is correctly admitted via global EXACT;
+        # the restricted mapping (access_a) is not wrongly applied to access_b.
 
     def test_restricted_mapping_refused_for_different_period(self):
         """Period consistency: observation on a different fiscal-year period

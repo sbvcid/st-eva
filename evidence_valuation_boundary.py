@@ -684,6 +684,7 @@ def _mapping_refusals(
     metric: str,
     concept: Optional[str],
     registry: CoreRegistry,
+    asset: Optional[str] = None,
 ) -> Tuple[List[Refusal], Optional[str], Optional[str]]:
     """
     Rule 5: the observation's own concept, mapped exactly, at this period.
@@ -714,10 +715,14 @@ def _mapping_refusals(
     relation_kind: Optional[str] = None
     refusals: List[Refusal] = []
 
+    accessions = (observation.raw or {}).get("sec_fact", {})
+    accession = accessions.get("accession") if isinstance(accessions, dict) else None
     resolved = registry.mappings_for_observation(
         metric,
         source_concept=concept,
         as_of=observation.period_end,
+        asset_id=asset,
+        accession=accession,
     )
     if not resolved.is_resolved:
         # The resolver's own reason distinguishes no source concept from no
@@ -1040,7 +1045,7 @@ def _admit_one(
         refusals.extend(_unit_refusals(observation))
         refusals.extend(_currency_refusals(observation, price))
         mapping_refusals, mapping_type, relation_kind = _mapping_refusals(
-            observation, metric, concept, registry
+            observation, metric, concept, registry, asset=asset
         )
         mappings[observation.observation_id] = (mapping_type, relation_kind)
         refusals.extend(mapping_refusals)
