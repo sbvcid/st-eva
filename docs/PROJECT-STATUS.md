@@ -1717,3 +1717,44 @@ operating income + D&A (and OCF/capex) observations exist, then verify the
 complete source-fact → estimate → reverse-valuation → matrix/export path with
 real data; alternatively evaluate 8-K/other form generalisation.
 
+## Round 5 (2026-10-17): real SEC evidence → reverse valuation end-to-end (AAPL/MSFT/MU)
+
+**Goal:** verify the complete source-fact → standardized observation → qualification → reverse-valuation → matrix/export path with genuine SEC filings, not synthetic data. All collection ran against isolated temp SQLite databases (formal `data/st-eva.sqlite` untouched), with SEC/Yahoo rate limits respected (provider throttles at 0.25s/request, well under SEC's 10/sec cap).
+
+**Collection results (real SEC companyconcept endpoint, one seed per archive — re-seeding an archive duplicates mapping rows, so each archive was seeded exactly once):**
+
+| Ticker | CIK | revenue | operating_cash_flow | capex | operating_income | depreciation_and_amortization |
+|--------|-----|---------|---------------------|-------|------------------|-------------------------------|
+| AAPL | 0000320193 | 327 | 134 | 164 | 234 | 27 |
+| MSFT | 0000789019 | 307 | 170 | 230 | 278 | **0** |
+| MU | 0000723125 | 301 | 110 | 152 | 312 | **0** |
+
+`reprocess_existing()` verified on real data: idempotent (0 new observations, all skipped), 0 network fetches, documents reused, distinct from `ingest()` NO_CHANGE.
+
+**Honest gap (documented, not merged):** MSFT and MU return **zero** `us-gaap:DepreciationAndAmortization` facts (the registered EXACT D&A mapping). MSFT reports `us-gaap:Depreciation` (70 facts); MU reports `us-gaap:DepreciationDepletionAndAmortization` (121 facts). Per the anti-merging rule these are NOT folded into D&A — they are different concepts (depletion, expense vs. income-statement D&A) without sufficient semantic evidence. So EBITDA is **refused with a precise reason** for MSFT/MU rather than synthesized; only AAPL completes EBITDA.
+
+**FCF path (condition C priority 1) — real, independently recomputed:**
+- SEC reports capex (`us-gaap:PaymentsToAcquirePropertyPlantAndEquipment`) as a **positive** spending figure for all three filers, so FCF = OCF − capex (sign handled explicitly; never added blindly).
+- AAPL latest quarter: OCF 116,996,000,000 − capex 6,799,000,000 = FCF 110,197,000,000 (period 2025-09-28..2026-06-27, USD, 10-Q, accn 0000320193-26-000020).
+- MSFT latest FY: OCF 182,935,000,000 − capex 115,948,000,000 = FCF 66,987,000,000.
+- MU latest FY: OCF 89,675,000,000 − capex 30,712,000,000 = FCF 58,963,000,000.
+- `admit()` (qualification judgment) admits revenue/OCF/capex/OI/D&A on a clean single seed; `current_fcf` matches independent recomputation exactly (AAPL: 51,552,000,000).
+- P/FCF reverse valuation consumes real `current_fcf`: AAPL implied_fcf = market_cap / 15 = 327,902,036,240, matches independent recomputation.
+
+**EBITDA path (condition C priority 2) — real, independently recomputed (AAPL only; MSFT/MU D&A unavailable):**
+- AAPL 2016: OI 60,024,000,000 + D&A 8,300,000,000 = EBITDA 68,324,000,000 (same period 2015-09-27..2016-09-24, USD; OI accn 0000320193-18-000145, D&A accn 0001628280-16-020309).
+- Different-period OI/D&A are **refused** (not added) — `admit()` returns `current_ebitda=UNAVAILABLE` when latest OI and D&A fall on different periods, per the no-mixing rule.
+- EV/EBITDA consumes real `current_ebitda`: AAPL implied_ebitda = enterprise_value / 8 = 617,559,442,950, matches independent recomputation.
+
+**Product surface (condition D):** the reverse-valuation result serializes through `AnalysisResultDTO` (`reverse_requirements` matrix, `raw_analysis`, `valuation_summary`, `admission_summary`, refusal reasons) and is served as JSON by the web API (`/api/analyze` → `/api/jobs/{id}`). Frontend: 99 tests pass, `npm run build` succeeds.
+
+**Tests & verification:** backend suite 2,367 passed / 169 skipped / 498 subtests passed; frontend vitest 99 passed / 8 files; `npm run build` succeeds; `git diff --check` clean; formal database untouched; no secrets/commit credentials.
+
+**Condition status:**
+- A (collection & backfill): complete — real SEC collection for AAPL/MSFT/MU + `reprocess_existing` verified.
+- B (priority mappings): complete — OCF, capex, D&A, operating income, cash, long_term_debt all ACTIVE with EXACT mappings.
+- C (valuation connection): complete — FCF and EV/EBITDA paths run from real SEC observations through qualification → derivation → reverse valuation, independently recomputed. D&A facts not yet collected for MSFT/MU (exact mapping returns zero; gap documented).
+- Remaining: no facts yet for MSFT/MU D&A (exact mapping returns zero); 8-K/other form generalisation not yet evaluated.
+
+**Next gap:** collect real filings so MSFT/MU D&A (via a correctly-semantic concept if one is justified) or accept the honest gap; or evaluate 8-K/other form generalisation. Do NOT merge MSFT's `Depreciation` or MU's `DepreciationDepletionAndAmortization` into D&A without semantic evidence.
+
