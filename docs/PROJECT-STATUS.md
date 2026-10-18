@@ -1741,6 +1741,11 @@ real data; alternatively evaluate 8-K/other form generalisation.
 
 MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:DepreciationDepletionAndAmortization` (MSFT: 404), or `us-gaap:DepreciationAndAmortizationExpense` (MSFT: 404) concepts that are pure D&A. EBITDA is therefore **refused with a precise reason** for MSFT/MU rather than synthesized. AAPL's pure `us-gaap:DepreciationAndAmortization` is the working demonstration.
 
+**Restricted-issuer-mapping evaluation (2026-10-18, commit pending):**
+- MU `us-gaap:DepreciationDepletionAndAmortization` (8,352M FY2025, accession 0000723125-25-000028): concept taxonomy explicitly includes depletion (label "Depreciation, Depletion and Amortization"); Micron reports no separate `us-gaap:Depletion` (404) but absence of a tag is not sufficient evidence that depletion is zero in the aggregate; filing presentation label has not been verified as limiting to "Depreciation expense and amortization of intangible assets". Safe EXACT mapping refused.
+- MSFT `msft:DepreciationAmortizationAndOther` (34,153M FY2025, accession 0000950170-25-100235): company-custom concept bundling "other"; refused.
+- Architecture note: `ConceptMapping.scope` exists (`scope_json`) and `ConceptAdoption` records observed use, but `resolve_source_concept` applies scope filtering only to PARTIAL/component claims, not to EXACT identity claims — a restricted EXACT insertion for a concept that already has global EXACT (e.g., `us-gaap:DepreciationAndAmortization`) creates duplicate EXACT rows and ambiguity (`AMBIGUOUS_MAPPING` → refusal). Therefore safe issuer-scoped EXACT for MU D&A is not achievable without either (a) replacing the global EXACT (unacceptable for cross-issuer correctness) or (b) extending `resolve_source_concept` to filter EXACT by `scope`/`asset_id` — a schema/logic change outside this task's safe scope. The honest gap is preserved.
+
 **Tests added:** `TestFreeCashFlowCrossing.test_depletion_and_amortization_concept_is_refused` and `test_company_custom_concept_is_refused` — verify non-pure-D&A concepts (depletion-bundling and company-custom "other") are refused with `MAPPING_NOT_EXACT`.
 
 
