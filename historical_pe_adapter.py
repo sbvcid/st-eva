@@ -34,6 +34,34 @@ class HistoricalPriceAdapterError(Exception):
     """Raised when price acquisition or persistence fails."""
 
 
+def manifest_path(path: Path) -> str:
+    """Return a portable, forward-slash path for a manifest entry.
+
+    Manifests are read on Windows and on Linux, so a native Windows path with
+    backslashes does not resolve on Linux and a POSIX absolute path does not
+    resolve on Windows. Record forward slashes, and prefer a path relative to
+    the repository root so the manifest travels with the checkout.
+    """
+    resolved = Path(path).resolve()
+    try:
+        return resolved.relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
+def write_json_lf(path: Path, payload: Any) -> bytes:
+    """Write JSON so the file's bytes are identical on every platform.
+
+    Writing through text mode would translate newlines to CRLF on Windows, so
+    the byte count and SHA-256 of the saved file would differ from a Linux
+    checkout of the same commit. Serialize in memory and write the bytes, which
+    keeps the recorded digest and length platform-independent.
+    """
+    data = json.dumps(payload, indent=2, ensure_ascii=False).encode("utf-8")
+    Path(path).write_bytes(data)
+    return data
+
+
 # ---------------------------------------------------------------------------
 # External source: Yahoo Finance chart API
 # ---------------------------------------------------------------------------
@@ -104,8 +132,10 @@ def parse_yahoo_price_bars(
     """
     Parse a Yahoo Finance chart result into standardized daily price records.
 
-    Returns (records, meta). Each record has price_date, close, currency,
-    accounting_basis, price_source, price_source_url.
+    Returns (records, meta). Each record has price_date, timestamp, close,
+    currency, accounting_basis, price_source, price_source_url. The source
+    timestamp is carried through so re-saving a parsed series reproduces the
+    same file byte for byte.
 
     Raises HistoricalPriceAdapterError when no usable closes are present.
     """
@@ -131,6 +161,7 @@ def parse_yahoo_price_bars(
         price_date = datetime.fromtimestamp(int(stamp), tz=timezone.utc).date().isoformat()
         records.append({
             "price_date": price_date,
+            "timestamp": int(stamp),
             "close": round(close_val, 6),
             "currency": currency,
             "accounting_basis": "as_traded",
@@ -182,10 +213,11 @@ def save_standardized_prices(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     prices_path = out_dir / "daily_prices.json"
-    manifest_path = out_dir / "prices_manifest.json"
+    manifest_file = out_dir / "prices_manifest.json"
 
     timestamp_ints = [
-        int(datetime.fromisoformat(r["price_date"]).replace(tzinfo=timezone.utc).timestamp())
+        int(r["timestamp"]) if r.get("timestamp") is not None
+        else int(datetime.fromisoformat(r["price_date"]).replace(tzinfo=timezone.utc).timestamp())
         for r in records
     ]
 
@@ -254,12 +286,12 @@ def save_standardized_prices(
         "saved_at": str(datetime.now(timezone.utc)),
         "files": {
             "daily_prices.json": {
-                "path": str(prices_path),
+                "path": manifest_path(prices_path),
                 "bytes": len(payload_bytes),
                 "content_sha256": standardized_content_sha256,
             },
             "prices_manifest.json": {
-                "path": str(manifest_path),
+                "path": manifest_path(manifest_file),
             },
         },
         "has_split_events": bool(raw_events.get("splits")),
@@ -268,11 +300,13 @@ def save_standardized_prices(
                 "Source-traceable, date and currency semantics explicit. "
                 "Not repackaged from existing SQLite observations. "
                 "raw_response_sha256 is the hash of the raw HTTP response body; "
-                "standardized_content_sha256 is the hash of this saved normalized file.",
+                "standardized_content_sha256 is the hash of this saved normalized file. "
+                "Recorded paths use forward slashes so the manifest resolves on "
+                "Windows and on Linux, and the files are written with LF line "
+                "endings so the recorded byte count and SHA-256 are identical on "
+                "every platform.",
     }
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    write_json_lf(manifest_file, manifest)
 
     return {
         "ticker": ticker.upper(),
@@ -282,7 +316,7 @@ def save_standardized_prices(
         "currency": meta.get("currency", "USD"),
         "source_url": source_url,
         "prices_path": str(prices_path),
-        "manifest_path": str(manifest_path),
+        "manifest_path": str(manifest_file),
         "standardized_content_sha256": standardized_content_sha256,
         "raw_response_sha256": raw_response_sha256,
         "has_split_events": bool(raw_events.get("splits")),

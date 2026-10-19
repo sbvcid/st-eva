@@ -67,8 +67,8 @@
     "current_snapshot_date": "2026-10-19",
     "current_snapshot_status": "AVAILABLE",
     "current_snapshot_value": 30.21875,
-    "input_set_id": "3a90086cd54a3f1e70b4c18a886dd19a244b5a5c734d6b480d596540e207458e",
-    "content_hash": "669b92f9f8664a0f4eedbeaef63e16264c576fa4ad51018aba18882fa6daae92"
+    "input_set_id": "c71f89d587d0dadcc8743f5b81991cc7e3abd3a600fcc481a6103bc020d1bc54",
+    "content_hash": "d6c9cc88f8308628ffd7c2ef9c6bf816596431032198777256cfe0135d81af55"
   },
   "files": {
     "daily_prices.json": {
@@ -78,28 +78,28 @@
     },
     "prices_manifest.json": {
       "path": "data/historical_pe/SOFI/prices_manifest.json",
-      "bytes": 1335,
-      "content_sha256": "775277cd0d99a0bcea3c241987719d55cce1f71bed2b98c3e565f1bc6191be9a"
+      "bytes": 1502,
+      "content_sha256": "d8dc1c0fed87db32ca8181969d51e5e7a9d35fb5e5dd9873b95aba145f2b54bb"
     },
     "sec_submissions.json": {
       "path": "data/historical_pe/SOFI/sec_submissions.json",
-      "bytes": 313599,
-      "content_sha256": "c3803139c777e6963e688a4ed285f8e76507807a3c37cfd675a338a90e5d8951"
+      "bytes": 297935,
+      "content_sha256": "54a855e96760c14fce6616f594792c6de306d945f0e2dad0465518cbd7bb8b89"
     },
     "eps_diluted_concept.json": {
       "path": "data/historical_pe/SOFI/eps_diluted_concept.json",
-      "bytes": 18075,
-      "content_sha256": "fac668db706cd7ff0caf065c85c17cff5f823d474fb25d56dacaad284a6af446"
+      "bytes": 17348,
+      "content_sha256": "e11a7d5358fd27b2736abbf1ff8c628d80067634a089829c2437a8afa6fbe4f6"
     },
     "filing_acceptance_evidence.json": {
       "path": "data/historical_pe/SOFI/filing_acceptance_evidence.json",
-      "bytes": 747744,
-      "content_sha256": "8c893f7413762338990415b9c02312d8fe6fb4a826db07270e0767f9a495e05c"
+      "bytes": 729256,
+      "content_sha256": "34049f442e618a4017562c355aef0624177fb8d374d40d8aeabc2efa41e14c85"
     },
     "q4_evidence_records.json": {
       "path": "data/historical_pe/SOFI/q4_evidence_records.json",
-      "bytes": 5627,
-      "content_sha256": "dabcb3626aca93538c010dc1fe7d28bf953869125571b11d0421c51fc00d2db7"
+      "bytes": 5516,
+      "content_sha256": "b5d8ac0e3592b231c168fd84fb5d7c6b9b847191c522b76af6c20a51545069fc"
     }
   },
   "sources_attempted": [
@@ -114,6 +114,6 @@
     "The 864 acceptance rows for forms other than 10-K, 10-K/A, 10-Q, 8-K and 8-K/A carry the SEC submissions API acceptance time converted to Eastern; they are labelled SEC_SUBMISSIONS_API_DERIVED with header_verified=false and carry no header hash. None of them is used by the historical P/E pipeline.",
     "SOFI is not registered in historical_pe.ISSUER_CONFIGS, so the web path does not serve this distribution; the qualification recorded here comes from running the production loader directly."
   ],
-  "note": "Qualified historical P/E dataset. 1255 daily closes acquired from Yahoo Finance (USD, as-traded) and 69 SEC diluted-EPS XBRL facts plus 4 furnished Q4 earnings records give the production pipeline a real evidence set; it returns USABLE_FOR_REFERENCE with 130 qualifying observations over 2024-11-08..2026-09-24 (median 47.299768) and an AVAILABLE current snapshot at 30.21875. The >=20-observation reference gate is unchanged and was met by the evidence, not by relaxing any rule. prices_manifest.json continues to describe the price acquisition on its own.",
+  "note": "Qualified historical P/E dataset. 1255 daily closes acquired from Yahoo Finance (USD, as-traded) and 69 SEC diluted-EPS XBRL facts plus 4 furnished Q4 earnings records give the production pipeline a real evidence set; it returns USABLE_FOR_REFERENCE with 130 qualifying observations over 2024-11-08..2026-09-24 (median 47.299768) and an AVAILABLE current snapshot at 30.21875. The >=20-observation reference gate is unchanged and was met by the evidence, not by relaxing any rule. prices_manifest.json continues to describe the price acquisition on its own. The dataset files are stored with canonical LF bytes and forward-slash paths so the recorded digests and paths are identical on Windows and on Linux.",
   "derived_at": "2026-10-19 18:21:25.000000+00:00"
 }

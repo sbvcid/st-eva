@@ -1,0 +1,7 @@
+# The historical P/E datasets record the byte count and SHA-256 of their own
+# data files, and the production loader derives input_set_id from the same
+# bytes. A checkout that rewrites line endings would change those digests, so
+# a digest recorded on one platform would not match the same commit checked
+# out on another. Force LF for the dataset directory so the working tree, the
+# git blob and every checkout platform agree byte for byte.
+data/historical_pe/**/*.json text eol=lf

@@ -1948,7 +1948,9 @@ Re-ran `historical_pe.py` `load_issuer_historical_pe()` on SOFI after the correc
 
 ### GitHub Actions backend status
 
-The `backend-tests` workflow has been **failing on every push**, including pushes that predate all SOFI work. Comparing the run for this SOFI commit (39290402337, `42 failed, 2353 passed, 170 skipped`) against the pre-SOFI MUFG run (39239093577, `42 failed, 2323 passed, 169 skipped`), the failing test sets are **byte-identical**: 42 in both, zero only-in-new, zero only-in-pre. The +30 passing tests are the new adapter tests; this round introduced **no new failure and fixed none**.
+The `backend-tests` workflow has been **failing on every push**, including pushes that predate all SOFI work. Comparing the run for the first SOFI commit (39290402337, `42 failed, 2353 passed, 170 skipped`) against the pre-SOFI MUFG run (39239093577, `42 failed, 2323 passed, 169 skipped`), the failing test sets are **byte-identical**: 42 in both, zero only-in-new, zero only-in-pre. The +30 passing tests are the new adapter tests; that commit introduced **no new failure and fixed none**.
+
+> **Correction (added with the next round).** The commit that followed, `157e636`, then added three manifest-integrity tests and **did** introduce three new failures: its run (39304225754) reported `45 failed, 2364 passed, 170 skipped`, i.e. exactly the three new tests failing and nothing else. The statement above is accurate for `9cb3610` only; the "no new failure" claim does not extend to `157e636`. Those three failures and their root cause are resolved in the next section.
 
 The 42 pre-existing failures fall into four unrelated groups, none touching historical P/E, the price adapter, or SEC evidence:
 - `ValuationInputs` has no attribute `observations` (22 failures across `test_evidence_valuation_boundary.py`, `test_historical_pfcf.py`, `test_summary_reference_precedence.py`)
@@ -1975,6 +1977,85 @@ A full local run of `tests/` reproduces the same picture: `41 failed, 2411 passe
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## SOFI Manifest Digests: Cross-Platform Byte Contract (2026-10-19)
+
+Continued from `157e636`. The three failures that commit introduced in CI are fixed. No price data was re-downloaded and no test was relaxed or removed.
+
+### The three CI failures and their single root cause
+
+CI run 39304225754 for `157e636` reported `45 failed, 2364 passed, 170 skipped` against the pre-SOFI baseline 39239093577's `42 failed, 2323 passed, 169 skipped` — exactly three new failures, all of them the new manifest tests:
+
+- `test_main_manifest_digests_match_the_actual_files` — `AssertionError: 1335 != 1304 : manifest byte count is stale for prices_manifest.json`
+- `test_prices_manifest_digest_matches_the_actual_daily_prices_file` — `AssertionError: False is not true : prices manifest references a missing file: data\historical_pe\SOFI\daily_prices.json`
+- `test_manifest_pipeline_block_matches_the_live_pipeline_output` — `AssertionError: '3a90086cd54a3f1e70b4c18a886dd19a244b5a5c734d6b480d596540e207458e' != 'c71f89d587d0dadcc8743f5b81991cc7e3abd3a600fcc481a6103bc020d1bc54'`
+
+All three had one cause: **the repository had no `.gitattributes`, so the recorded digests were platform-specific.** `core.autocrlf=true` was set on the Windows workstation, so the JSON data files sat in the working tree with CRLF while the git blobs stayed LF. Measured on the SOFI dataset:
+
+| file | git blob | Windows working tree | CI (Linux) sees |
+| --- | --- | --- | --- |
+| `daily_prices.json` | 56786 bytes, LF | 56786 bytes, LF | 56786 bytes, LF |
+| `prices_manifest.json` | 1304 bytes, LF | 1335 bytes, CRLF | 1304 bytes, LF |
+| `eps_diluted_concept.json` | 17348 bytes, LF | 18075 bytes, CRLF | 17348 bytes, LF |
+| `filing_acceptance_evidence.json` | 729256 bytes, LF | 747744 bytes, CRLF | 729256 bytes, LF |
+| `q4_evidence_records.json` | 5516 bytes, LF | 5627 bytes, CRLF | 5516 bytes, LF |
+
+`1335 - 1304 = 31` bytes over 31 lines is exactly the CRLF/LF difference, and the recorded `input_set_id` was a digest over those CRLF bytes. The path failure was the same class of problem: `prices_manifest.json` recorded a native Windows path with backslashes, which is a single filename on Linux and does not resolve. The AAPL dataset already followed the correct convention — its digest-verified files are LF in both the blob and the working tree, and `test_aapl_historical_pe.py::test_manifest_role_and_hashes_match_canonical_files` verifies them against raw bytes.
+
+### Fixes
+
+1. **`.gitattributes` added** — `data/historical_pe/**/*.json text eol=lf`. The dataset files are digest-verified against their exact bytes and the production loader derives `input_set_id` from the same bytes, so the checkout must not rewrite line endings. This makes the blob, the working tree and every checkout platform agree byte for byte, and it also closes the same latent instability for the MU files, whose working tree was CRLF while their blob was LF.
+2. **All SOFI dataset files rewritten with canonical LF bytes**, and the AAPL/MSFT/MU working trees re-checked out so the local tree matches the Linux CI byte for byte. The committed blobs for AAPL/MSFT/MU are unchanged — only their working-tree representation is now consistent.
+3. **`historical_pe_adapter.py` — portable paths and LF output:**
+   - new `manifest_path(path)` helper records forward-slash paths, relative to the repository root when the file is inside it, so a manifest resolves on Windows and on Linux;
+   - new `write_json_lf(path, payload)` helper serializes in memory and writes bytes, so text mode cannot translate newlines to CRLF and change the recorded byte count and digest;
+   - `save_standardized_prices()` now uses both, and `parse_yahoo_price_bars()` carries the source epoch timestamp so re-saving a parsed series reproduces the same file byte for byte instead of collapsing the timestamp to midnight UTC.
+4. **Manifests regenerated from the live data** with the corrected digests and portable paths.
+
+### Verification that the fix is platform-independent
+
+The CI's own reported live `input_set_id` for `157e636` was `c71f89d587d0dadcc8743f5b81991cc7e3abd3a600fcc481a6103bc020d1bc54`. The regenerated manifest now records **that same value**, computed on Windows from the LF-canonical files. A simulation that materializes the git blobs (what a Linux runner checks out) into a temporary tree and runs the production loader against them reproduces:
+
+- `input_set_id` = `c71f89d587d0dadcc8743f5b81991cc7e3abd3a600fcc481a6103bc020d1bc54` — matches the manifest
+- `content_hash` = `d6c9cc88f8308628ffd7c2ef9c6bf816596431032198777256cfe0135d81af55` — matches the manifest
+- `sample_count` = 130, median = 47.299768 — match the manifest
+- every byte count and SHA-256 recorded in both manifests matches the blob bytes the Linux runner will read
+
+The production output is unchanged by the fix: `USABLE_FOR_REFERENCE`, **130** observations, 2024-11-08 to 2026-09-24, median **47.299768**, current snapshot **AVAILABLE at 30.21875**, 200 excluded (98 `REASON_MISSING_Q4_EPS`, 102 `REASON_NON_POSITIVE_EPS`). The ≥ 20 qualifying-observation gate is unchanged.
+
+### Tests
+
+`tests/test_historical_pe_adapter.py` grew from 44 to 50 unit tests (50 passed, 1 live test gated by `ST_EVA_ADAPTER_LIVE=1`). New coverage:
+
+- every git-tracked dataset file has canonical LF bytes (the gitignored local artifact is excluded, and the check degrades safely if git is unavailable)
+- `.gitattributes` exists and forces `eol=lf` for the dataset directory
+- every path recorded in a manifest uses forward slashes and resolves to an existing file
+- the adapter writes LF bytes and records forward-slash paths
+- the adapter preserves the source timestamps, so a parsed series round-trips to the same file
+
+The manifest's recorded production block is still compared against a live `load_issuer_historical_pe()` run by `test_manifest_pipeline_block_matches_the_live_pipeline_output`; that test was **not** weakened — it now passes because the underlying bytes are platform-independent.
+
+### CI
+
+The three new failures are gone. Full local backend run of `tests/`: **`41 failed, 2417 passed, 170 skipped, 498 subtests`** — the same 41 failures as before this round plus the 6 new tests, and the three manifest failures resolved:
+
+| comparison | result |
+| --- | --- |
+| CI run of `157e636` (39304225754) | 45 failed, 2364 passed, 170 skipped |
+| local full run after this round | 41 failed, 2417 passed, 170 skipped |
+| `test_main_manifest_digests_match_the_actual_files` | **resolved** (failing in CI, passing locally) |
+| `test_prices_manifest_digest_matches_the_actual_daily_prices_file` | **resolved** (failing in CI, passing locally) |
+| `test_manifest_pipeline_block_matches_the_live_pipeline_output` | **resolved** (failing in CI, passing locally) |
+| new regressions vs the CI run of `157e636` | **none** |
+| new regressions vs baseline 39239093577 | **none** |
+
+The local set differs from the CI set by exactly one entry in the other direction: `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes` fails in CI and passes locally, in both the baseline and this round — an environment-dependent pre-existing MUFG failure, untouched by this work.
+
+The designated historical P/E, adapter and reproducibility suites pass locally (`146 passed, 1 skipped, 121 subtests` for `test_historical_pe.py`, `test_aapl_historical_pe.py`, `test_msft_historical_pe.py`, `test_mu_historical_pe.py`, `test_historical_pe_adapter.py` and `test_msft_production_reproducibility.py`).
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-SOFI data integrity and acceptance are closed: the manifest parses and states the qualified production state, every pipeline-consumable filing acceptance time is backed by a fetched and hashed SEC SGML header, API-derived times are labelled as such without fabricated hashes, and the production pipeline reproduces 130 qualifying observations with median 47.299768 and an AVAILABLE snapshot. The 42 pre-existing backend CI failures remain red and are unrelated to this work; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
+The three CI failures introduced by `157e636` are fixed at the root cause: the dataset files now carry canonical LF bytes on every platform, the manifests record forward-slash paths that resolve everywhere, and the recorded `input_set_id` reproduces the value the Linux CI runner computes. The production output is unchanged (130 observations, median 47.299768, snapshot AVAILABLE). The remaining backend CI failures are the pre-existing set confirmed against baseline 39239093577; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.

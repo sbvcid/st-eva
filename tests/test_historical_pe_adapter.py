@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -330,6 +331,68 @@ class TestSaveStandardizedPrices(unittest.TestCase):
             quote = chart_result["indicators"]["quote"][0]
             self.assertEqual(quote["adjclose"], adjclose)
 
+    def test_written_files_use_lf_line_endings(self):
+        """Text mode would emit CRLF on Windows, making the recorded byte count
+        and SHA-256 differ from a Linux checkout of the same content."""
+        result = _make_chart_result([20.22, 21.05])
+        records, meta = parse_yahoo_price_bars(result, "SOFI")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = str(Path(tmpdir) / "data" / "historical_pe" / "{ticker}")
+            summary = save_standardized_prices(
+                "SOFI", records, meta, output_dir=out_dir,
+                raw_response_sha256="test_raw_hash_value",
+            )
+            for path in (Path(summary["prices_path"]), Path(summary["manifest_path"])):
+                raw = path.read_bytes()
+                self.assertNotIn(b"\r", raw, f"{path.name} must use LF line endings")
+
+            manifest = json.loads(Path(summary["manifest_path"]).read_text(encoding="utf-8"))
+            prices_raw = Path(summary["prices_path"]).read_bytes()
+            self.assertEqual(
+                manifest["files"]["daily_prices.json"]["bytes"], len(prices_raw)
+            )
+            self.assertEqual(
+                manifest["files"]["daily_prices.json"]["content_sha256"],
+                hashlib.sha256(prices_raw).hexdigest(),
+            )
+
+    def test_manifest_records_forward_slash_paths(self):
+        """A backslash path does not resolve on Linux."""
+        result = _make_chart_result([20.22, 21.05])
+        records, meta = parse_yahoo_price_bars(result, "SOFI")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = str(Path(tmpdir) / "data" / "historical_pe" / "{ticker}")
+            summary = save_standardized_prices(
+                "SOFI", records, meta, output_dir=out_dir,
+                raw_response_sha256="test_raw_hash_value",
+            )
+            manifest = json.loads(Path(summary["manifest_path"]).read_text(encoding="utf-8"))
+            for name, meta_entry in manifest["files"].items():
+                recorded = meta_entry["path"]
+                self.assertNotIn(
+                    "\\", recorded,
+                    f"{name} records a backslash path, which does not resolve on Linux: {recorded}",
+                )
+                self.assertTrue(
+                    Path(recorded).is_file(),
+                    f"{name} records a path that does not resolve: {recorded}",
+                )
+
+    def test_source_timestamps_are_preserved(self):
+        """The saved series must keep the source timestamps, so re-saving the
+        parsed series reproduces the same file byte for byte."""
+        result = _make_chart_result([20.22, 21.05])
+        records, meta = parse_yahoo_price_bars(result, "SOFI")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = str(Path(tmpdir) / "data" / "historical_pe" / "{ticker}")
+            summary = save_standardized_prices(
+                "SOFI", records, meta, output_dir=out_dir,
+                raw_response_sha256="test_raw_hash_value",
+            )
+            payload = json.loads(Path(summary["prices_path"]).read_text(encoding="utf-8"))
+            chart_result = payload["chart"]["result"][0]
+            self.assertEqual(chart_result["timestamp"], result["timestamp"])
+
 
 class TestAcquireStandardizedPrices(unittest.TestCase):
     """End-to-end: fetch, parse, validate, save. Min-observations gate."""
@@ -395,6 +458,74 @@ class TestLiveAcquireSOFI(unittest.TestCase):
         self.assertTrue(Path(summary["prices_path"]).exists())
         self.assertTrue(Path(summary["manifest_path"]).exists())
         self.assertLess(summary["first_date"], summary["last_date"])
+
+
+class TestSofiDatasetCanonicalBytes(unittest.TestCase):
+    """The dataset files must carry canonical LF bytes on every platform.
+
+    The manifests record the byte count and SHA-256 of these files, and the
+    production loader derives input_set_id from the same bytes. A checkout that
+    rewrote line endings would make a recorded digest platform-specific, so
+    the same commit would verify on one platform and fail on another.
+    """
+
+    DATA_DIR = Path("data/historical_pe")
+
+    def _tracked_dataset_files(self):
+        """Tracked dataset files only.
+
+        Some files under the dataset directory are gitignored local artifacts
+        (generated outputs), so they are not part of the committed byte
+        contract and must not be asserted on.
+        """
+        try:
+            result = subprocess.run(
+                ["git", "ls-files", "--", str(self.DATA_DIR).replace("\\", "/")],
+                capture_output=True, text=True, timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return
+        if result.returncode != 0:
+            return
+        for line in result.stdout.splitlines():
+            if line.strip():
+                yield Path(line.strip())
+
+    def test_every_dataset_file_has_canonical_lf_bytes(self):
+        offenders = []
+        for path in self._tracked_dataset_files():
+            raw = path.read_bytes()
+            if b"\r" in raw:
+                offenders.append(f"{path} has {raw.count(13)} CR bytes")
+        self.assertEqual(
+            offenders, [],
+            "dataset files must use LF endings so their digests are platform-independent: "
+            + "; ".join(offenders),
+        )
+
+    def test_gitattributes_forces_lf_for_the_dataset_directory(self):
+        attrs = Path(".gitattributes")
+        self.assertTrue(attrs.is_file(), ".gitattributes must exist to keep dataset bytes stable")
+        text = attrs.read_text(encoding="utf-8")
+        self.assertIn("data/historical_pe/", text)
+        self.assertIn("eol=lf", text)
+
+    def test_manifest_paths_use_forward_slashes(self):
+        for path in self._tracked_dataset_files():
+            if path.name != "manifest.json":
+                continue
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for name, meta in (data.get("files") or {}).items():
+                recorded = meta.get("path")
+                self.assertIsNotNone(recorded, f"{path}: {name} has no path")
+                self.assertNotIn(
+                    "\\", recorded,
+                    f"{path}: {name} records a backslash path, which does not resolve on Linux: {recorded}",
+                )
+                self.assertTrue(
+                    Path(recorded).is_file(),
+                    f"{path}: {name} records a path that does not resolve: {recorded}",
+                )
 
 
 class TestSofiManifestIntegrity(unittest.TestCase):
