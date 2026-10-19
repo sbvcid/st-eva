@@ -36,16 +36,16 @@ class FxRate:
     original_amounts: Optional[dict] = None
 
 
-# MUFG explicit FX rate: USD/JPY as observed on 2026-10-09 (most recent
-# Federal Reserve H.10 daily observation available as of 2026-10-16).
+# ---------------------------------------------------------------------------
+# Fiscal-period FX rate: Federal Reserve H.10 observation for 2026-10-09.
+#
+# This rate is tied to a specific H.10 publication date (2026-10-09) and is
+# used only when a corresponding fiscal-period source and conversion method
+# are available. It is NOT the analysis-date rate and must not be used as a
+# proxy for 2026-10-16.
+# ---------------------------------------------------------------------------
 # Source: Federal Reserve H.10 daily bilateral exchange rate, Japanese Yen
 # per U.S. dollar = 158.3400, i.e. 1 JPY = 1/158.3400 = 0.006316 USD.
-# This rate is a reference input for MUFG cross-currency calculations only;
-# it is not introduced as a general ST-EVA FX facility.
-#
-# Quote direction: USD per JPY means 1 JPY = rate USD.
-#   To convert JPY -> USD: usd = jpy * rate_usd_per_jpy
-#   To convert USD -> JPY: jpy = usd / rate_usd_per_jpy
 MUFG_FX_RATE_USD_PER_JPY = FxRate(
     rate_usd_per_jpy=0.006316,
     as_of="2026-10-09",
@@ -55,11 +55,52 @@ MUFG_FX_RATE_USD_PER_JPY = FxRate(
     original_amounts={
         "note": "158.3400 JPY per USD (Federal Reserve H.10, 2026-10-09). "
         "1 JPY = 0.006316 USD. Reciprocal: 1 USD = 158.3400 JPY. "
-        "This is the most recent H.10 observation available as of 2026-10-16; "
-        "the H.10 weekly release covering 2026-10-16 was not yet published. "
-        "Rate is sourced from the Federal Reserve.",
+        "Fiscal-period FX rate observation date: 2026-10-09. "
+        "Not the analysis-date rate; do not use as a proxy for 2026-10-16.",
     },
 )
+
+# ---------------------------------------------------------------------------
+# Analysis-date FX rate: ECB reference rates for 2026-10-16.
+#
+# Derived from ECB reference rates published on 2026-10-16:
+#   1 EUR = 1.1253 USD
+#   1 EUR = 177.82 JPY
+#   => 1 JPY = 1.1253 / 177.82 USD = 0.0063283095... USD
+#
+# This is the analysis-date spot reference rate used for converting JPY
+# financial data to USD for current valuation comparison. It is distinct from
+# the fiscal-period H.10 rate above.
+# ---------------------------------------------------------------------------
+# Source: ECB reference rates, 2026-10-16.
+MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY = FxRate(
+    rate_usd_per_jpy=1.1253 / 177.82,
+    as_of="2026-10-16",
+    provider="European Central Bank (ECB)",
+    source_url="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_rates/html/index.en.html",
+    quote_direction="USD per JPY",
+    original_amounts={
+        "note": "Derived from ECB reference rates 2026-10-16: "
+        "1 EUR = 1.1253 USD, 1 EUR = 177.82 JPY. "
+        "Derived USD/JPY = 1.1253 / 177.82 = 0.0063283095... USD per JPY. "
+        "Analysis-date spot reference rate for cross-currency valuation "
+        "comparison. Distinct from the fiscal-period H.10 rate "
+        "(2026-10-09, 0.006316 USD/JPY). "
+        "Rate carried unrounded; do not use rounded display values as inputs.",
+    },
+)
+
+
+def mufg_fx_rate() -> Optional[FxRate]:
+    """Return the MUFG fiscal-period FX rate reference (Fed H.10, 2026-10-09),
+    or None if unavailable."""
+    return MUFG_FX_RATE_USD_PER_JPY
+
+
+def mufg_fx_rate_analysis_date() -> Optional[FxRate]:
+    """Return the MUFG analysis-date FX rate reference (ECB, 2026-10-16),
+    or None if unavailable."""
+    return MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY
 
 
 def mufg_fx_rate() -> Optional[FxRate]:

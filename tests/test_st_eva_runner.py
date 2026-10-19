@@ -593,14 +593,95 @@ class TestMUFGAdrRatio(unittest.TestCase):
         self.assertAlmostEqual(jpy, 3464.22, places=0)
 
 
-class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
-    """End-to-end MUFG cross-currency analysis with corrected FX and ADR."""
+class TestMUFGFxRateAnalysisDate(unittest.TestCase):
+    """Isolated tests for MUFG analysis-date FX rate (fx_rates.py)."""
 
-    def test_mufg_cross_currency_with_corrected_values(self):
+    def test_mufg_fx_rate_analysis_date_is_ecb_derived(self):
+        from fx_rates import MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY
+        self.assertIsNotNone(MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY)
+        self.assertEqual(MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.provider, "European Central Bank (ECB)")
+        self.assertEqual(MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.as_of, "2026-10-16")
+        self.assertEqual(MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.quote_direction, "USD per JPY")
+        # ECB-derived rate: 1 EUR = 1.1253 USD, 1 EUR = 177.82 JPY
+        # => USD/JPY = 1.1253 / 177.82 = 0.0063283095...
+        expected_rate = 1.1253 / 177.82
+        self.assertAlmostEqual(
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.rate_usd_per_jpy,
+            expected_rate,
+            places=10,
+        )
+        # Distinct from fiscal-period H.10 rate (0.006316)
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY
+        self.assertNotEqual(
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.rate_usd_per_jpy,
+            MUFG_FX_RATE_USD_PER_JPY.rate_usd_per_jpy,
+        )
+        self.assertIn("1.1253", MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.original_amounts["note"])
+        self.assertIn("177.82", MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.original_amounts["note"])
+        self.assertIn("2026-10-16", MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.original_amounts["note"])
+
+    def test_analysis_date_rate_not_disguised_as_fiscal_period(self):
+        from fx_rates import (
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY,
+            MUFG_FX_RATE_USD_PER_JPY,
+        )
+        # The analysis-date rate (2026-10-16) must not have the fiscal-period
+        # H.10 date (2026-10-09) or provider.
+        self.assertNotEqual(
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.as_of, "2026-10-09"
+        )
+        self.assertNotEqual(
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.provider,
+            "Federal Reserve Board H.10",
+        )
+        # The fiscal-period rate must not have the analysis-date date.
+        self.assertNotEqual(
+            MUFG_FX_RATE_USD_PER_JPY.as_of, "2026-10-16"
+        )
+        self.assertNotEqual(
+            MUFG_FX_RATE_USD_PER_JPY.provider,
+            "European Central Bank (ECB)",
+        )
+
+
+class TestMUFGAdrRatio(unittest.TestCase):
+    """Isolated tests for MUFG ADR ratio (adr_ratio.py)."""
+
+    def test_mufg_adr_ratio_is_one_to_one_per_nyse(self):
+        from adr_ratio import MUFG_ADR_RATIO
+        self.assertIsNotNone(MUFG_ADR_RATIO)
+        self.assertEqual(MUFG_ADR_RATIO.provider, "NYSE")
+        self.assertEqual(MUFG_ADR_RATIO.exchange, "NYSE")
+        # NYSE listing: "EACH REP 1 ORD SHS" → 1 ADR = 1 ordinary share.
+        self.assertEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 1.0)
+        # The old incorrect 2.0 shares/ADR must not be used.
+        self.assertNotEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 2.0)
+        self.assertIn("EACH REP 1 ORD SHS", MUFG_ADR_RATIO.original_amounts["note"])
+        self.assertNotIn("÷ 2", MUFG_ADR_RATIO.original_amounts["note"])
+
+    def test_adr_price_to_underlying_usd_uses_one_to_one(self):
+        from adr_ratio import MUFG_ADR_RATIO, adr_price_to_underlying_usd
+        # $21.88 ADR price ÷ 1.0 = $21.88 underlying share price (USD)
+        underlying = adr_price_to_underlying_usd(21.88, MUFG_ADR_RATIO)
+        self.assertAlmostEqual(underlying, 21.88, places=4)
+
+    def test_underlying_usd_to_jpy_uses_corrected_fx(self):
+        from adr_ratio import MUFG_ADR_RATIO, underlying_usd_to_jpy
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY
+        # $21.88 / 0.006316 USD/JPY ≈ ¥3,464
+        jpy = underlying_usd_to_jpy(21.88, MUFG_FX_RATE_USD_PER_JPY)
+        self.assertAlmostEqual(jpy, 3464.22, places=0)
+
+
+class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
+    """End-to-end MUFG cross-currency analysis with two FX scopes."""
+
+    def test_mufg_cross_currency_two_fx_scopes(self):
         result = run_st_eva(
             ticker="MUFG",
             mode="auto",
             fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
             save_snapshot=False,
         )
@@ -608,33 +689,47 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         cc = result["cross_currency"]
         self.assertTrue(cc["applicable"])
 
-        # FX rate details must reflect the corrected H.10 rate.
-        self.assertIsNotNone(cc["fx_rate"])
-        self.assertAlmostEqual(cc["fx_rate"]["rate_usd_per_jpy"], 0.006316, places=6)
-        # The runner labels operator-supplied rates as "operator-supplied";
-        # the module-level MUFG_FX_RATE_USD_PER_JPY carries the H.10 provider.
-        self.assertEqual(cc["fx_rate"]["provider"], "operator-supplied")
+        # Fiscal-period FX rate (Fed H.10, 2026-10-09) - reference only.
+        self.assertIsNotNone(cc["fx_rate_fiscal_period"])
+        fp = cc["fx_rate_fiscal_period"]
+        self.assertAlmostEqual(fp["rate_usd_per_jpy"], 0.006316, places=6)
+        self.assertEqual(fp["as_of"], "2026-10-09")
+        self.assertEqual(fp["provider"], "operator-supplied")
+        self.assertEqual(fp["scope"], "fiscal_period")
+        self.assertNotIn("analysis_date", fp["note"].lower())
+
+        # Analysis-date FX rate (ECB, 2026-10-16) - used for conversions.
+        self.assertIsNotNone(cc["fx_rate_analysis_date"])
+        ad = cc["fx_rate_analysis_date"]
+        expected_rate = 1.1253 / 177.82
+        self.assertAlmostEqual(ad["rate_usd_per_jpy"], expected_rate, places=10)
+        self.assertEqual(ad["as_of"], "2026-10-16")
+        self.assertEqual(ad["provider"], "European Central Bank (ECB)")
+        self.assertEqual(ad["scope"], "analysis_date")
+        self.assertIn("1.1253", ad["note"])
+        self.assertIn("177.82", ad["note"])
 
         # ADR ratio must be 1.0 per NYSE listing.
         self.assertIsNotNone(cc["adr_ratio"])
         self.assertEqual(cc["adr_ratio"]["underlying_shares_per_adr"], 1.0)
-        # The runner labels operator-supplied ratios as "operator-supplied";
-        # the module-level MUFG_ADR_RATIO carries the NYSE provider.
         self.assertEqual(cc["adr_ratio"]["provider"], "operator-supplied")
 
-        # Revenue conversion: JPY revenue → USD using corrected FX rate.
+        # Revenue conversion uses analysis-date rate.
         self.assertIsNotNone(cc["revenue_conversion"])
         rev = cc["revenue_conversion"]
-        self.assertAlmostEqual(rev["fx_rate_used"], 0.006316, places=6)
-        # P/S must use USD market cap / USD-converted JPY revenue.
+        self.assertAlmostEqual(rev["fx_rate_used"], expected_rate, places=10)
+        self.assertEqual(rev["fx_scope"], "analysis_date")
+        self.assertEqual(rev["fx_as_of"], "2026-10-16")
         self.assertIsNotNone(rev["ps_ratio_usd_converted"])
         # The raw JPY/USD P/S 0.03x must NOT be reported as valid.
         self.assertNotAlmostEqual(rev["ps_ratio_usd_converted"], 0.03, places=2)
 
-        # EPS conversion: JPY diluted EPS → USD per share / per ADR.
+        # EPS conversion uses analysis-date rate.
         self.assertIsNotNone(cc["eps_conversion"])
         eps = cc["eps_conversion"]
-        self.assertAlmostEqual(eps["fx_rate_used"], 0.006316, places=6)
+        self.assertAlmostEqual(eps["fx_rate_used"], expected_rate, places=10)
+        self.assertEqual(eps["fx_scope"], "analysis_date")
+        self.assertEqual(eps["fx_as_of"], "2026-10-16")
         self.assertEqual(eps["adr_ratio_used"], 1.0)
         # With 1:1 ADR, EPS per share == EPS per ADR.
         self.assertAlmostEqual(
@@ -650,9 +745,60 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         # Corporate targets shown separately from EPS, not converted to growth rate.
         self.assertIsNotNone(cc["corporate_target_comparison"])
         tgt = cc["corporate_target_comparison"]
+        self.assertAlmostEqual(tgt["fx_rate_used"], expected_rate, places=10)
+        self.assertEqual(tgt["fx_scope"], "analysis_date")
         self.assertIsNotNone(tgt["net_income_fy2025_actual_usd"])
         self.assertIsNotNone(tgt["net_income_target_fy2026_usd"])
         self.assertIn("NOT converted to an EPS growth rate", tgt["note"])
+
+    def test_mufg_fiscal_period_rate_not_used_for_conversions(self):
+        """When both rates are provided, conversions use the analysis-date
+        rate, not the fiscal-period rate."""
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
+            adr_underlying_shares_per_adr=1.0,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        cc = result["cross_currency"]
+        # Both rates present in output.
+        self.assertIsNotNone(cc["fx_rate_fiscal_period"])
+        self.assertIsNotNone(cc["fx_rate_analysis_date"])
+        # Conversions use analysis-date rate (0.0063283095), not fiscal-period (0.006316).
+        self.assertAlmostEqual(
+            cc["revenue_conversion"]["fx_rate_used"],
+            1.1253 / 177.82,
+            places=10,
+        )
+        self.assertNotAlmostEqual(
+            cc["revenue_conversion"]["fx_rate_used"],
+            0.006316,
+            places=6,
+        )
+
+    def test_mufg_fallback_to_fiscal_period_when_no_analysis_date(self):
+        """When only fiscal-period rate is provided, conversions use it."""
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            adr_underlying_shares_per_adr=1.0,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        cc = result["cross_currency"]
+        self.assertIsNotNone(cc["fx_rate_fiscal_period"])
+        self.assertIsNone(cc["fx_rate_analysis_date"])
+        # Conversions fall back to fiscal-period rate.
+        self.assertAlmostEqual(
+            cc["revenue_conversion"]["fx_rate_used"],
+            0.006316,
+            places=6,
+        )
+        self.assertEqual(cc["revenue_conversion"]["fx_scope"], "fiscal_period")
 
     def test_mufg_historical_pe_insufficient_observations(self):
         """Historical P/E band has 8 observations (< 20) → UNAVAILABLE."""
@@ -660,6 +806,7 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
             ticker="MUFG",
             mode="auto",
             fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
             include_historical_pe=True,
             save_snapshot=False,
@@ -675,12 +822,52 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
             ticker="MUFG",
             mode="auto",
             fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
             save_snapshot=False,
         )
         self.assertIsNotNone(result)
         rr = result["reverse_requirements"]
         self.assertEqual(rr["status"], "NOT_COMPUTED")
+
+
+class TestMUFGRegressionDatesAndPrecision(unittest.TestCase):
+    """Regression tests for FX date, quote direction, precision, and ADR ratio."""
+
+    def test_analysis_date_is_2026_10_16_not_2026_10_09(self):
+        from fx_rates import MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY
+        self.assertEqual(MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.as_of, "2026-10-16")
+
+    def test_fiscal_period_date_is_2026_10_09(self):
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY
+        self.assertEqual(MUFG_FX_RATE_USD_PER_JPY.as_of, "2026-10-09")
+
+    def test_quote_direction_is_usd_per_jpy(self):
+        from fx_rates import MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY, MUFG_FX_RATE_USD_PER_JPY
+        self.assertEqual(
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.quote_direction, "USD per JPY"
+        )
+        self.assertEqual(MUFG_FX_RATE_USD_PER_JPY.quote_direction, "USD per JPY")
+
+    def test_ecb_rate_carries_unrounded_value(self):
+        from fx_rates import MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY
+        # Rate computed as 1.1253 / 177.82, not rounded to 4 decimal places.
+        expected = 1.1253 / 177.82
+        self.assertAlmostEqual(
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.rate_usd_per_jpy,
+            expected,
+            places=12,
+        )
+        # Rounded display value (0.0063) must not equal the unrounded input.
+        self.assertNotEqual(
+            round(MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.rate_usd_per_jpy, 4),
+            MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY.rate_usd_per_jpy,
+        )
+
+    def test_adr_ratio_is_one_to_one_not_two_to_one(self):
+        from adr_ratio import MUFG_ADR_RATIO
+        self.assertEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 1.0)
+        self.assertNotEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 2.0)
 
 
 if __name__ == "__main__":

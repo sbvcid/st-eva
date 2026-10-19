@@ -2113,6 +2113,7 @@ def run_st_eva(
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
     fx_rate_usd_per_jpy: Optional[float] = None,
+    fx_analysis_date_usd_per_jpy: Optional[float] = None,
     adr_underlying_shares_per_adr: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
@@ -2363,10 +2364,27 @@ def run_st_eva(
     # financials). No implicit conversion: every converted figure names the
     # FX rate, ADR ratio, and original amounts.
     # ------------------------------------------------------------------
+    # Cross-currency processing for MUFG (USD price/market cap vs JPY
+    # financials). Two distinct FX scopes are maintained:
+    #
+    #   1. Analysis-date spot rate (fx_analysis_date_usd_per_jpy):
+    #      ECB-derived rate for 2026-10-16 (0.0063283095 USD/JPY).
+    #      Used to convert JPY financial data to USD for current
+    #      valuation comparison.
+    #
+    #   2. Fiscal-period rate (fx_rate_usd_per_jpy):
+    #      Federal Reserve H.10 observation for 2026-10-09
+    #      (0.006316 USD/JPY). Kept as a separate reference observation;
+    #      NOT used as a proxy for the analysis-date rate.
+    #
+    # No implicit conversion: every converted figure names the FX rate,
+    # ADR ratio, as_of date, and original amounts.
+    # ------------------------------------------------------------------
     cross_currency: Dict[str, Any] = {
         "applicable": False,
         "reason": None,
-        "fx_rate": None,
+        "fx_rate_fiscal_period": None,
+        "fx_rate_analysis_date": None,
         "adr_ratio": None,
         "revenue_conversion": None,
         "eps_conversion": None,
@@ -2376,20 +2394,38 @@ def run_st_eva(
     }
 
     fx_rate = None
+    fx_analysis_date = None
     adr = None
+
+    # Fiscal-period FX rate (Fed H.10, 2026-10-09)
     if fx_rate_usd_per_jpy is not None:
         try:
             from fx_rates import FxRate, convert_jpy_to_usd, convert_usd_to_jpy
 
             fx_rate = FxRate(
                 rate_usd_per_jpy=fx_rate_usd_per_jpy,
-                as_of=data.price_date,
+                as_of="2026-10-09",
                 provider="operator-supplied",
                 source_url="operator-supplied",
                 quote_direction="USD per JPY",
             )
         except Exception:
             fx_rate = None
+
+    # Analysis-date FX rate (ECB, 2026-10-16) - used for conversions
+    if fx_analysis_date_usd_per_jpy is not None:
+        try:
+            from fx_rates import FxRate, convert_jpy_to_usd, convert_usd_to_jpy
+
+            fx_analysis_date = FxRate(
+                rate_usd_per_jpy=fx_analysis_date_usd_per_jpy,
+                as_of="2026-10-16",
+                provider="European Central Bank (ECB)",
+                source_url="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_rates/html/index.en.html",
+                quote_direction="USD per JPY",
+            )
+        except Exception:
+            fx_analysis_date = None
 
     if adr_underlying_shares_per_adr is not None:
         try:
@@ -2405,18 +2441,38 @@ def run_st_eva(
         except Exception:
             adr = None
 
-    if fx_rate is not None or adr is not None:
+    # Determine which FX rate to use for conversions: analysis-date rate
+    # takes precedence; fiscal-period rate is reference-only.
+    fx_for_conversion = fx_analysis_date if fx_analysis_date is not None else fx_rate
+    fx_scope = "analysis_date" if fx_analysis_date is not None else "fiscal_period"
+
+    if fx_for_conversion is not None or adr is not None:
         cross_currency["applicable"] = True
 
         if fx_rate is not None:
-            cross_currency["fx_rate"] = {
+            cross_currency["fx_rate_fiscal_period"] = {
                 "rate_usd_per_jpy": fx_rate.rate_usd_per_jpy,
                 "as_of": fx_rate.as_of,
                 "provider": fx_rate.provider,
                 "source_url": fx_rate.source_url,
                 "quote_direction": fx_rate.quote_direction,
-                "note": "Explicit FX reference for MUFG cross-currency "
-                        "calculations only. Not a general ST-EVA FX facility.",
+                "scope": "fiscal_period",
+                "note": "Fiscal-period FX reference (Fed H.10, 2026-10-09). "
+                        "Not used as a proxy for the analysis-date rate.",
+            }
+
+        if fx_analysis_date is not None:
+            cross_currency["fx_rate_analysis_date"] = {
+                "rate_usd_per_jpy": fx_analysis_date.rate_usd_per_jpy,
+                "as_of": fx_analysis_date.as_of,
+                "provider": fx_analysis_date.provider,
+                "source_url": fx_analysis_date.source_url,
+                "quote_direction": fx_analysis_date.quote_direction,
+                "scope": "analysis_date",
+                "note": "Analysis-date spot reference (ECB, 2026-10-16). "
+                        "Derived from 1 EUR = 1.1253 USD and 1 EUR = 177.82 JPY "
+                        "(USD/JPY = 1.1253 / 177.82). Used for converting JPY "
+                        "financial data to USD for current valuation comparison.",
             }
 
         if adr is not None:
@@ -2429,13 +2485,13 @@ def run_st_eva(
                 "note": "1 MUFG ADR = N underlying ordinary shares.",
             }
 
-        # Revenue conversion: JPY revenue -> USD using explicit FX rate.
+        # Revenue conversion: JPY revenue -> USD using the analysis-date FX rate.
         # The Yahoo revenue observation is flagged CURRENCY_MISMATCH against
         # the USD market cap; the SEC revenue observations are also JPY.
         # Convert each JPY revenue figure explicitly with the named FX rate.
         revenue_jpy = safe_float(data.current_revenue)
-        if revenue_jpy is not None and fx_rate is not None:
-            revenue_usd = convert_jpy_to_usd(revenue_jpy, fx_rate)
+        if revenue_jpy is not None and fx_for_conversion is not None:
+            revenue_usd = convert_jpy_to_usd(revenue_jpy, fx_for_conversion)
             market_cap_usd = safe_float(data.current_market_cap)
             ps_ratio_usd = (
                 market_cap_usd / revenue_usd
@@ -2445,14 +2501,18 @@ def run_st_eva(
             cross_currency["revenue_conversion"] = {
                 "revenue_jpy": revenue_jpy,
                 "revenue_usd_converted": revenue_usd,
-                "fx_rate_used": fx_rate.rate_usd_per_jpy,
-                "fx_as_of": fx_rate.as_of,
+                "fx_rate_used": fx_for_conversion.rate_usd_per_jpy,
+                "fx_scope": fx_scope,
+                "fx_as_of": fx_for_conversion.as_of,
                 "market_cap_usd": market_cap_usd,
                 "ps_ratio_usd_converted": ps_ratio_usd,
                 "note": "P/S computed as USD market cap / USD-converted JPY "
-                        "revenue using the explicit FX rate above. The raw "
-                        "JPY revenue / USD market cap ratio (P/S 0.03x) mixes "
-                        "currencies and is not reported as a valid multiple.",
+                        "revenue using the explicit analysis-date FX rate. The "
+                        "raw JPY revenue / USD market cap ratio (P/S 0.03x) "
+                        "mixes currencies and is not reported as a valid "
+                        "multiple. Revenue period (Yahoo: as_of 2026-06-30) "
+                        "differs from market cap as_of (2026-09-23); periods "
+                        "are not reconciled.",
             }
 
         # EPS conversion: JPY diluted EPS -> USD using FX rate + ADR ratio.
@@ -2510,9 +2570,9 @@ def run_st_eva(
             sec_diluted_eps_accession = None
             sec_diluted_eps_fiscal_year = None
 
-        if fx_rate is not None and sec_diluted_eps_jpy is not None:
+        if fx_for_conversion is not None and sec_diluted_eps_jpy is not None:
             eps_usd_per_share = convert_jpy_to_usd(
-                sec_diluted_eps_jpy, fx_rate
+                sec_diluted_eps_jpy, fx_for_conversion
             )
             if adr is not None:
                 eps_usd_per_adr = eps_usd_per_share * adr.underlying_shares_per_adr
@@ -2522,8 +2582,9 @@ def run_st_eva(
                 "eps_jpy_per_share": sec_diluted_eps_jpy,
                 "eps_usd_per_share_converted": eps_usd_per_share,
                 "eps_usd_per_adr_converted": eps_usd_per_adr,
-                "fx_rate_used": fx_rate.rate_usd_per_jpy,
-                "fx_as_of": fx_rate.as_of,
+                "fx_rate_used": fx_for_conversion.rate_usd_per_jpy,
+                "fx_scope": fx_scope,
+                "fx_as_of": fx_for_conversion.as_of,
                 "adr_ratio_used": (
                     adr.underlying_shares_per_adr if adr else None
                 ),
@@ -2531,17 +2592,17 @@ def run_st_eva(
                 "fiscal_year": sec_diluted_eps_fiscal_year,
                 "accession": sec_diluted_eps_accession,
                 "note": "SEC diluted EPS (JPY per underlying share) "
-                        "converted to USD using the explicit FX rate and "
-                        "ADR ratio. Not mixed with Yahoo USD EPS without "
-                        "explicit disclosure.",
+                        "converted to USD using the explicit analysis-date FX "
+                        "rate and ADR ratio. Not mixed with Yahoo USD EPS "
+                        "without explicit disclosure.",
             }
 
         # TTM EPS derivation from SEC annual diluted EPS.
         # True TTM requires quarterly data; only annual SEC observations are
         # available for MUFG. The latest annual diluted EPS is the closest
         # available figure; it is labelled as annual, not TTM.
-        if fx_rate is not None and sec_diluted_eps_jpy is not None:
-            ttm_eps_usd = convert_jpy_to_usd(sec_diluted_eps_jpy, fx_rate)
+        if fx_for_conversion is not None and sec_diluted_eps_jpy is not None:
+            ttm_eps_usd = convert_jpy_to_usd(sec_diluted_eps_jpy, fx_for_conversion)
             if adr is not None:
                 ttm_eps_usd_per_adr = ttm_eps_usd * adr.underlying_shares_per_adr
             else:
@@ -2553,8 +2614,9 @@ def run_st_eva(
                 "basis": "Latest annual diluted EPS (SEC 20-F), not true TTM "
                          "(quarterly SEC data not available in archive).",
                 "currency": "JPY (original) / USD (converted)",
-                "fx_rate_used": fx_rate.rate_usd_per_jpy,
-                "fx_as_of": fx_rate.as_of,
+                "fx_rate_used": fx_for_conversion.rate_usd_per_jpy,
+                "fx_scope": fx_scope,
+                "fx_as_of": fx_for_conversion.as_of,
                 "adr_ratio_used": (
                     adr.underlying_shares_per_adr if adr else None
                 ),
@@ -2572,19 +2634,21 @@ def run_st_eva(
         # to EPS growth rate without share count.
         net_income_fy2025_jpy = 2427000000000.0  # ¥2.427T actual FY2025
         net_income_target_fy2026_jpy = 2700000000000.0  # ¥2.7T target FY2026
-        if fx_rate is not None:
+        if fx_for_conversion is not None:
             net_income_fy2025_usd = convert_jpy_to_usd(
-                net_income_fy2025_jpy, fx_rate
+                net_income_fy2025_jpy, fx_for_conversion
             )
             net_income_target_fy2026_usd = convert_jpy_to_usd(
-                net_income_target_fy2026_jpy, fx_rate
+                net_income_target_fy2026_jpy, fx_for_conversion
             )
             cross_currency["corporate_target_comparison"] = {
                 "net_income_fy2025_actual_jpy": net_income_fy2025_jpy,
                 "net_income_fy2025_actual_usd": net_income_fy2025_usd,
                 "net_income_target_fy2026_jpy": net_income_target_fy2026_jpy,
                 "net_income_target_fy2026_usd": net_income_target_fy2026_usd,
-                "fx_rate_used": fx_rate.rate_usd_per_jpy,
+                "fx_rate_used": fx_for_conversion.rate_usd_per_jpy,
+                "fx_scope": fx_scope,
+                "fx_as_of": fx_for_conversion.as_of,
                 "derived_ttm_eps_usd_per_share": (
                     cross_currency["ttm_eps"]["eps_usd_per_share"]
                     if cross_currency["ttm_eps"] else None
