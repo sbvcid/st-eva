@@ -1,17 +1,36 @@
 {
   "ticker": "SOFI",
   "ticker_identifier": "SOFI",
-  "role": "production_candidate_checked",
-  "status": "INSUFFICIENT_OBSERVATIONS",
-  "sample_count": 0,
-  "effective_observations": 0,
-  "qualifying_observations": 0,
+  "role": "price_acquisition",
+  "status": "PRICE_DATA_ACQUIRED",
+  "price_count": 1255,
+  "coverage": {
+    "first_date": "2021-10-19",
+    "last_date": "2026-10-19"
+  },
+  "currency": "USD",
+  "source": {
+    "provider": "Yahoo Finance chart API v8",
+    "url": "https://query1.finance.yahoo.com/v8/finance/chart/SOFI",
+    "content_sha256": "7bfd5475d3529262ddf1790650f017118080f2b7db34721c607f52e30a07fff2"
+  },
+  "files": {
+    "daily_prices.json": {
+      "path": "data/historical_pe/SOFI/daily_prices.json",
+      "bytes": 56731,
+      "content_sha256": "7bfd5475d3529262ddf1790650f017118080f2b7db34721c607f52e30a07fff2"
+    },
+    "prices_manifest.json": {
+      "path": "data/historical_pe/SOFI/prices_manifest.json"
+    }
+  },
   "sources_attempted": [
-    "data/archives/SOFI.sqlite (primary archive)",
-    "SOFI price observation (2 points, 2026-10-19)",
-    "SOFI eps_diluted observations (14 fiscal periods)"
+    "https://query1.finance.yahoo.com/v8/finance/chart/SOFI (Yahoo Finance chart API v8, external acquisition)",
+    "data/archives/SOFI.sqlite (SQLite archive, secondary source, 2 pre-existing price observations)"
   ],
   "archive_observation_summary": 2,
-  "note": "Verified against existing pipeline rules. Not promoted to production reference due to insufficient structured historical evidence.",
-  "derived_at": "2026-10-19 15:41:18.923088+00:00"
+  "note": "1255 daily close prices acquired from Yahoo Finance (source-traceable, USD, as-traded basis). "
+          "Archive SQLite observations (2 points) are pre-existing and not repackaged as new data. "
+          "Price data only; no EPS evidence acquired yet, so this is not a complete historical P/E reference dataset.",
+  "derived_at": "2026-10-19 16:14:27.390640+00:00"
 }

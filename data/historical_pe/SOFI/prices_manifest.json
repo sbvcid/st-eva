@@ -1,0 +1,29 @@
+{
+  "ticker": "SOFI",
+  "symbol": "SOFI",
+  "exchange": "NMS",
+  "currency": "USD",
+  "role": "price_acquisition",
+  "source": {
+    "provider": "Yahoo Finance chart API v8",
+    "url": "https://query1.finance.yahoo.com/v8/finance/chart/SOFI",
+    "content_sha256": "6dceb23304326f5d72332728de352c3b9fab3c5f447af752df2cc90956b6d5c6"
+  },
+  "price_count": 1255,
+  "coverage": {
+    "first_date": "2021-10-19",
+    "last_date": "2026-10-19"
+  },
+  "saved_at": "2026-10-19 16:16:59.777635+00:00",
+  "files": {
+    "daily_prices.json": {
+      "path": "data\\historical_pe\\SOFI\\daily_prices.json",
+      "bytes": 56732,
+      "content_sha256": "6dceb23304326f5d72332728de352c3b9fab3c5f447af752df2cc90956b6d5c6"
+    },
+    "prices_manifest.json": {
+      "path": "data\\historical_pe\\SOFI\\prices_manifest.json"
+    }
+  },
+  "note": "Standardized daily close prices acquired from Yahoo Finance. Source-traceable, date and currency semantics explicit. Not repackaged from existing SQLite observations."
+}
