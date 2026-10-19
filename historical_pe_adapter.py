@@ -44,12 +44,16 @@ def fetch_yahoo_daily_prices(
     range_param: str = DEFAULT_RANGE,
     interval: str = DEFAULT_INTERVAL,
     timeout: int = REQUEST_TIMEOUT,
-) -> Dict[str, Any]:
+) -> Tuple[Dict[str, Any], str]:
     """
     Fetch daily historical price bars for a ticker from Yahoo Finance chart API.
 
-    Returns the raw chart result dict. Raises HistoricalPriceAdapterError on
-    network failure, HTTP error, or an empty/malformed response.
+    Returns (chart_result, raw_response_sha256). The chart result dict is the
+    parsed Yahoo Finance chart response. raw_response_sha256 is the SHA-256 of
+    the raw HTTP response body, kept distinct from the standardized file hash.
+
+    Raises HistoricalPriceAdapterError on network failure, HTTP error, or an
+    empty/malformed response.
     """
     url = YAHOO_CHART_URL.format(ticker=ticker.upper()) + f"?range={range_param}&interval={interval}"
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -70,6 +74,8 @@ def fetch_yahoo_daily_prices(
             f"Yahoo Finance request failed for {ticker}: {exc}"
         ) from exc
 
+    raw_response_sha256 = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError as exc:
@@ -88,7 +94,7 @@ def fetch_yahoo_daily_prices(
             f"Yahoo Finance returned no chart result for {ticker}"
         )
 
-    return result[0]
+    return result[0], raw_response_sha256
 
 
 def parse_yahoo_price_bars(
@@ -159,15 +165,16 @@ def save_standardized_prices(
     meta: Dict[str, Any],
     output_dir: str = "data/historical_pe/{ticker}",
     raw_payload: Optional[Dict[str, Any]] = None,
+    raw_response_sha256: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Save standardized daily price records as JSON with full source traceability.
 
     Writes:
       - daily_prices.json: normalized records in the Yahoo-chart shape consumed
-        by historical_pe.py (chart.wrapped with meta/timestamp/indicators).
+        by historical_pe.py (chart.wrapped with meta/timestamp/indicators/events).
       - prices_manifest.json: source, count, coverage period, save location,
-        currency, and content digests.
+        currency, content digests (raw HTTP response hash and standardized file hash).
 
     Returns a summary dict with count, coverage period, source URL, and save paths.
     """
@@ -181,6 +188,24 @@ def save_standardized_prices(
         int(datetime.fromisoformat(r["price_date"]).replace(tzinfo=timezone.utc).timestamp())
         for r in records
     ]
+
+    # Preserve corporate-action events (splits/dividends) from the raw Yahoo
+    # response so historical_pe.py can restore provider-adjusted closes to the
+    # as-traded basis. If the source explicitly reports no events, record that
+    # explicitly rather than omitting the field.
+    raw_events: Dict[str, Any] = {}
+    if raw_payload is not None:
+        raw_events = raw_payload.get("events") or {}
+    if not raw_events:
+        raw_events = {}
+
+    # Preserve adjclose if the source provides it; distinct from the as-traded
+    # close that the engine requires.
+    adjclose_values: List[Optional[float]] = []
+    if raw_payload is not None:
+        quote = (raw_payload.get("indicators") or {}).get("quote") or [{}]
+        adjclose_values = quote[0].get("adjclose") or []
+
     chart_payload = {
         "chart": {
             "result": [
@@ -195,15 +220,17 @@ def save_standardized_prices(
                         "quote": [
                             {
                                 "close": [r["close"] for r in records],
+                                "adjclose": adjclose_values if adjclose_values else None,
                             }
                         ]
                     },
+                    "events": raw_events,
                 }
             ]
         }
     }
     payload_bytes = json.dumps(chart_payload, indent=2, ensure_ascii=False).encode("utf-8")
-    content_sha256 = hashlib.sha256(payload_bytes).hexdigest()
+    standardized_content_sha256 = hashlib.sha256(payload_bytes).hexdigest()
     prices_path.write_bytes(payload_bytes)
 
     source_url = meta.get("source_url") or YAHOO_CHART_URL.format(ticker=ticker.upper())
@@ -216,7 +243,8 @@ def save_standardized_prices(
         "source": {
             "provider": "Yahoo Finance chart API v8",
             "url": source_url,
-            "content_sha256": content_sha256,
+            "raw_response_sha256": raw_response_sha256,
+            "standardized_content_sha256": standardized_content_sha256,
         },
         "price_count": len(records),
         "coverage": {
@@ -228,15 +256,19 @@ def save_standardized_prices(
             "daily_prices.json": {
                 "path": str(prices_path),
                 "bytes": len(payload_bytes),
-                "content_sha256": content_sha256,
+                "content_sha256": standardized_content_sha256,
             },
             "prices_manifest.json": {
                 "path": str(manifest_path),
             },
         },
+        "has_split_events": bool(raw_events.get("splits")),
+        "has_dividend_events": bool(raw_events.get("dividends")),
         "note": "Standardized daily close prices acquired from Yahoo Finance. "
                 "Source-traceable, date and currency semantics explicit. "
-                "Not repackaged from existing SQLite observations.",
+                "Not repackaged from existing SQLite observations. "
+                "raw_response_sha256 is the hash of the raw HTTP response body; "
+                "standardized_content_sha256 is the hash of this saved normalized file.",
     }
     manifest_path.write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -251,7 +283,10 @@ def save_standardized_prices(
         "source_url": source_url,
         "prices_path": str(prices_path),
         "manifest_path": str(manifest_path),
-        "content_sha256": content_sha256,
+        "standardized_content_sha256": standardized_content_sha256,
+        "raw_response_sha256": raw_response_sha256,
+        "has_split_events": bool(raw_events.get("splits")),
+        "has_dividend_events": bool(raw_events.get("dividends")),
     }
 
 
@@ -274,7 +309,7 @@ def acquire_standardized_prices(
     Raises HistoricalPriceAdapterError on any failure (network, parse,
     insufficient observations).
     """
-    chart_result = fetch_yahoo_daily_prices(
+    chart_result, raw_response_sha256 = fetch_yahoo_daily_prices(
         ticker, range_param=range_param, interval=interval, timeout=timeout
     )
     records, meta = parse_yahoo_price_bars(chart_result, ticker)
@@ -286,7 +321,8 @@ def acquire_standardized_prices(
         )
 
     return save_standardized_prices(
-        ticker, records, meta, output_dir=output_dir, raw_payload=chart_result
+        ticker, records, meta, output_dir=output_dir,
+        raw_payload=chart_result, raw_response_sha256=raw_response_sha256,
     )
 
 

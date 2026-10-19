@@ -1860,34 +1860,63 @@ MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:Depreciati
 - Correction 5 (reverse EPS matrix): historical P/E band has 8 observations (< 20 minimum), so production_historical_pe_status = UNAVAILABLE and the matrix cannot use historical distribution as reference. Reverse requirements status = NOT_COMPUTED when no user-supplied exit multiple; observed P/E 14.3x is NOT treated as historical reference or recommended exit multiple. Matrix accepts user-supplied exit P/E only when starting EPS passes currency/period/semantics review.
 - Tests: backend full suite passed (2405 passed / 169 skipped / 498 subtests, 1 pre-existing unrelated failure in test_mapping_relation_kind.py); new TestMUFGFxRate, TestMUFGAdrRatio, TestMUFGFxRateAnalysisDate, TestMUFGCrossCurrencyAnalysis, TestMUFGRegressionDatesAndPrecision (18 tests) added to tests/test_st_eva_runner.py; frontend Vitest 8 files / 103 passed. End-to-end MUFG verification: two FX scopes distinct, analysis-date rate used for conversions, P/S 0.03x rejected as mixed-currency, converted P/S = 5.20x, EPS converted with disclosure, reverse matrix correctly refuses historical P/E (8 obs < 20).
 
-## SOFI Historical Price Acquisition via historical_pe_adapter (2026-10-19)
+## SOFI Historical Price Acquisition and SEC Evidence via historical_pe_adapter (2026-10-19)
 
-**Gap confirmed.** `historical_pe_adapter.py` had only SQLite archive reading and manifest generation; it did not acquire external historical prices. `min_observations_for_reference` was unused, error handling used a bare `except Exception`, and the entry point was SOFI-hardcoded rather than a generic ticker interface.
+**Gap confirmed.** `historical_pe_adapter.py` had only SQLite archive reading and manifest generation; it did not acquire external historical prices. `min_observations_for_reference` was unused, error handling used a bare `except Exception`, and the entry point was SOFI-hardcoded rather than a generic ticker interface. No SEC EPS evidence existed for SOFI.
 
-**Change.** Rewrote `historical_pe_adapter.py` as a generic ticker data acquisition interface:
+**Change — adapter.** Rewrote `historical_pe_adapter.py` as a generic ticker data acquisition interface:
 
-- `fetch_yahoo_daily_prices(ticker, ...)` — fetches daily bars from Yahoo Finance chart API v8 (`https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range=5y&interval=1d`), with specific exception handling for HTTP errors, network errors, invalid JSON, and empty results (no bare `except`).
+- `fetch_yahoo_daily_prices(ticker, ...)` — fetches daily bars from Yahoo Finance chart API v8 (`https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range=5y&interval=1d`), returns `(chart_result, raw_response_sha256)` with specific exception handling for HTTP errors, network errors, invalid JSON, and empty results (no bare `except`).
 - `parse_yahoo_price_bars(chart_result, ticker)` — normalizes into standardized records with `price_date`, `close` (as-traded), `currency`, `accounting_basis`, `price_source`, `price_source_url`; drops null closes rather than zero-filling; raises on zero usable records.
-- `save_standardized_prices(ticker, records, meta, ...)` — writes `daily_prices.json` (Yahoo-chart shape consumable by `historical_pe.py`) and `prices_manifest.json` (source, count, coverage period, save path, currency, content SHA256).
+- `save_standardized_prices(ticker, records, meta, ..., raw_payload, raw_response_sha256)` — writes `daily_prices.json` (Yahoo-chart shape consumable by `historical_pe.py`, including `events.splits` and `indicators.adjclose`) and `prices_manifest.json` (source, count, coverage period, save path, currency, **distinct** `raw_response_sha256` for the raw HTTP response and `standardized_content_sha256` for the saved normalized file).
 - `acquire_standardized_prices(ticker, ..., min_observations_for_reference=20)` — end-to-end fetch/parse/validate/save; enforces the `min_observations_for_reference` gate.
 - `read_sqlite_price_observations(archive_path, ticker)` — clearly-labelled secondary source; archive reads are never repackaged as newly acquired data.
 - Legacy `build_sofi_historical_pe_dataset` kept for compatibility, delegating to the archive read.
 
-**Real acquisition result (SOFI, live Yahoo Finance, 2026-10-19):**
+**Change — hash consistency fix.** `data/historical_pe/SOFI/manifest.json` had inconsistent bytes (56,731) and SHA-256 (`7bfd5475...`) that did not match the actual `daily_prices.json` (56,732 bytes, SHA `6dceb233...`). After re-saving with the corrected adapter, actual file is **56,786 bytes, SHA-256 `c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7`**. All manifest records updated to match actual file. Tests verify manifest bytes/SHA match actual file, raw-response hash is distinct from standardized hash, and content changes produce hash changes.
+
+**Real price acquisition result (SOFI, live Yahoo Finance, 2026-10-19):**
 - 1,255 daily close prices, all non-null, USD, as-traded basis
 - Coverage: 2021-10-19 to 2026-10-19
 - Source URL: `https://query1.finance.yahoo.com/v8/finance/chart/SOFI`
-- Saved to: `data/historical_pe/SOFI/daily_prices.json` (56,731 bytes, SHA256 `7bfd5475d3529262ddf1790650f017118080f2b7db34721c607f52e30a07fff2`)
+- Raw response SHA-256: `32e143487548564d015656614ffcf8fb5d0aaf19bc9439c658557d66f360b112`
+- Standardized content SHA-256: `c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7`
+- Saved to: `data/historical_pe/SOFI/daily_prices.json` (56,786 bytes)
 - Manifest: `data/historical_pe/SOFI/prices_manifest.json`
+- No split events or dividend events in source (source explicitly reports empty events; recorded as `"events": {}`, not omitted)
+- `adjclose` field preserved when present in source (null for SOFI)
 - Existing `data/historical_pe/SOFI/manifest.json` updated to `PRICE_DATA_ACQUIRED` with source URL, count, coverage, save paths; archive SQLite observations (2 pre-existing points) listed separately as secondary source, not repackaged.
-- Price data only — no EPS evidence acquired yet, so this is not a complete historical P/E reference dataset.
 
-**Next step:** SEC financial report evidence acquisition for SOFI (diluted EPS concept, filing acceptance) to complete the historical P/E reference pipeline. No SEC data was acquired this round.
+**Change — SEC evidence acquisition.** Acquired SOFI SEC data from official EDGAR endpoints:
 
-**Tests.** New `tests/test_historical_pe_adapter.py`: 16 unit tests (16 passed, 1 live test gated by `ST_EVA_ADAPTER_LIVE=1`). Covers fetch success, HTTP error, network error, invalid JSON, empty result, null-close dropping, all-null rejection, manifest/file writing, min-observations gate, fetch-error propagation, SQLite archive read, and live end-to-end SOFI acquisition. Existing `tests/test_historical_pe.py` (48 tests) unchanged and passing.
+- **CIK**: 0001818874 (SoFi Technologies, Inc., Nasdaq)
+- `data/historical_pe/SOFI/sec_submissions.json` — 973 filings from SEC submissions API (6× 10-K, 18× 10-Q, 81× 8-K, etc.)
+- `data/historical_pe/SOFI/eps_diluted_concept.json` — 69 `us-gaap:EarningsPerShareDiluted` XBRL facts (15× 10-K annual, 54× 10-Q quarterly), CIK zero-padded to 10 digits
+- `data/historical_pe/SOFI/filing_acceptance_evidence.json` — 973 rows with accession, form, period_end, `acceptance_datetime_header_et` (ET with offset, not raw UTC Z), `acceptance_datetime_submissions_api`, `api_minus_header_hours`
+- `data/historical_pe/SOFI/q4_evidence_records.json` — 4 Q4 earnings records from 8-K Item 2.02 EX-99.1 exhibits:
+  - FY2025 Q4 (2025-12-31): diluted EPS 0.13, accession 0001818874-26-000008, accepted 2026-01-30T02:07:34-05:00
+  - FY2024 Q4 (2024-12-31): diluted EPS 0.29, accession 0001818874-25-000006, accepted 2025-01-27T02:05:01-05:00
+  - FY2023 Q4 (2023-12-31): diluted EPS 0.02, accession 0001818874-24-000004, accepted 2024-01-29T02:05:33-05:00
+  - FY2022 Q4 (2022-12-31): diluted EPS -0.05 (net loss), accession 0001818874-23-000005, accepted 2023-01-30T02:09:20-05:00
+- FY2021 Q4: no Item 2.02 earnings 8-K found; not fabricated
 
-**Verification.** Live SOFI acquisition confirmed via real Yahoo Finance response (200 OK, 1,255 timestamps, 1,255 non-null closes, currency USD, exchange NMS). All unit tests pass; existing historical_pe test suite (48 tests) passes with no regressions.
+**Production pipeline validation.** Ran `historical_pe.py` `load_issuer_historical_pe()` on SOFI:
+
+- Distribution status: **USABLE_FOR_REFERENCE** (≥ 20 observation gate met)
+- Valid observations: **130** (period 2024-11-08 to 2026-09-24)
+- Total evaluations: 330; excluded: 200
+- Median P/E: 47.299768; mean 57.297255; range 28.81–179.20
+- Current snapshot (2026-10-19): AVAILABLE, P/E 30.21875
+- Excluded reasons: REASON_MISSING_Q4_EPS (98, pre-Q4-evidence dates), REASON_NON_POSITIVE_EPS (102, loss-making periods)
+- All available observations use `accounting_basis: as_traded`; PIT monotonicity enforced (usable_date ≤ evaluation_date); all unavailable reasons are explicit closed-enumeration codes
+- No interpolation, no fabricated values, no vendor descriptive median used to bypass gate
+
+**Next step.** SOFI historical P/E reference is established with 130 qualifying observations. No EPS evidence gap remains for the pipeline. Archive cleanup remains deferred per existing decision.
+
+**Tests.** New `tests/test_historical_pe_adapter.py`: 30 unit tests (30 passed, 1 live test gated by `ST_EVA_ADAPTER_LIVE=1`). Covers fetch success, HTTP/network/JSON/empty errors, null-close dropping, all-null rejection, manifest/file writing, hash consistency (raw vs standardized, byte count, change detection), splits/events preservation, adjclose preservation, min-observations gate, fetch-error propagation, SQLite archive read, SEC evidence file format, Q4 evidence format, and SOFI production pipeline validation (PIT monotonicity, price basis, unavailable reasons, reference eligibility). Existing `tests/test_historical_pe.py` (48 tests) plus AAPL/MSFT/MU tests all pass with no regressions (106 total).
+
+**Verification.** Live SOFI acquisition confirmed via real Yahoo Finance response (200 OK, 1,255 timestamps, 1,255 non-null closes, currency USD, exchange NMS). SEC data acquired from official EDGAR endpoints. All unit tests pass; existing historical_pe test suites pass with no regressions.
 
 ## Next task status
 
-The SOFI price data acquisition is complete. The next concrete step is SEC diluted-EPS evidence acquisition for SOFI so the historical P/E reference pipeline can be evaluated for SOFI (currently blocked: no EPS data, price data alone is insufficient for a reference distribution). No product blocker; archive cleanup remains deferred per existing decision.
+SOFI historical price acquisition and SEC evidence acquisition are complete. The historical P/E production pipeline produces USABLE_FOR_REFERENCE with 130 qualifying observations. No product blocker; archive cleanup remains deferred per existing decision.

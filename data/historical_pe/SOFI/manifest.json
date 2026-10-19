@@ -12,13 +12,14 @@
   "source": {
     "provider": "Yahoo Finance chart API v8",
     "url": "https://query1.finance.yahoo.com/v8/finance/chart/SOFI",
-    "content_sha256": "7bfd5475d3529262ddf1790650f017118080f2b7db34721c607f52e30a07fff2"
+    "raw_response_sha256": "32e143487548564d015656614ffcf8fb5d0aaf19bc9439c658557d66f360b112",
+    "standardized_content_sha256": "c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7"
   },
   "files": {
     "daily_prices.json": {
       "path": "data/historical_pe/SOFI/daily_prices.json",
-      "bytes": 56731,
-      "content_sha256": "7bfd5475d3529262ddf1790650f017118080f2b7db34721c607f52e30a07fff2"
+      "bytes": 56786,
+      "content_sha256": "c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7"
     },
     "prices_manifest.json": {
       "path": "data/historical_pe/SOFI/prices_manifest.json"
