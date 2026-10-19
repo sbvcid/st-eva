@@ -1894,10 +1894,10 @@ MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:Depreciati
 - `data/historical_pe/SOFI/eps_diluted_concept.json` — 69 `us-gaap:EarningsPerShareDiluted` XBRL facts (15× 10-K annual, 54× 10-Q quarterly), CIK zero-padded to 10 digits
 - `data/historical_pe/SOFI/filing_acceptance_evidence.json` — 973 rows with accession, form, period_end, `acceptance_datetime_header_et` (ET with offset, not raw UTC Z), `acceptance_datetime_submissions_api`, `api_minus_header_hours`
 - `data/historical_pe/SOFI/q4_evidence_records.json` — 4 Q4 earnings records from 8-K Item 2.02 EX-99.1 exhibits:
-  - FY2025 Q4 (2025-12-31): diluted EPS 0.13, accession 0001818874-26-000008, accepted 2026-01-30T02:07:34-05:00
-  - FY2024 Q4 (2024-12-31): diluted EPS 0.29, accession 0001818874-25-000006, accepted 2025-01-27T02:05:01-05:00
-  - FY2023 Q4 (2023-12-31): diluted EPS 0.02, accession 0001818874-24-000004, accepted 2024-01-29T02:05:33-05:00
-  - FY2022 Q4 (2022-12-31): diluted EPS -0.05 (net loss), accession 0001818874-23-000005, accepted 2023-01-30T02:09:20-05:00
+  - FY2025 Q4 (2025-12-31): diluted EPS 0.13, accession 0001818874-26-000008, accepted 2026-01-30T07:07:34-05:00
+  - FY2024 Q4 (2024-12-31): diluted EPS 0.29, accession 0001818874-25-000006, accepted 2025-01-27T07:05:01-05:00
+  - FY2023 Q4 (2023-12-31): diluted EPS 0.02, accession 0001818874-24-000004, accepted 2024-01-29T07:05:33-05:00
+  - FY2022 Q4 (2022-12-31): diluted EPS -0.05 (net loss), accession 0001818874-23-000005, accepted 2023-01-30T07:09:20-05:00
 - FY2021 Q4: no Item 2.02 earnings 8-K found; not fabricated
 
 **Production pipeline validation.** Ran `historical_pe.py` `load_issuer_historical_pe()` on SOFI:
@@ -1917,6 +1917,64 @@ MU and MSFT report NO `us-gaap:DepreciationAndAmortization`, `us-gaap:Depreciati
 
 **Verification.** Live SOFI acquisition confirmed via real Yahoo Finance response (200 OK, 1,255 timestamps, 1,255 non-null closes, currency USD, exchange NMS). SEC data acquired from official EDGAR endpoints. All unit tests pass; existing historical_pe test suites pass with no regressions.
 
+## SOFI Data Integrity and Acceptance Corrections (2026-10-19)
+
+Continued from `9cb3610`. This round addressed SOFI data integrity and acceptance only; no price data was re-downloaded and no new source audit was performed.
+
+### Manifest was not valid JSON
+
+`data/historical_pe/SOFI/manifest.json` failed a standard JSON parser with `Expecting ',' delimiter: line 34 column 11`. Cause: the `note` value was written as a multi-line JavaScript-style string concatenation, which JSON does not allow. Rewritten as valid JSON. Its role, status and description were also stale — it still carried `role: price_acquisition` / `status: PRICE_DATA_ACQUIRED` and the wording "no EPS evidence acquired yet, so this is not a complete historical P/E reference dataset", which the acquired SEC evidence had made false. Now `role: production_candidate_qualified`, `status: USABLE_FOR_REFERENCE`, with the SEC evidence block, the production-pipeline result block, per-file digests, the sources actually consulted, and an explicit `known_gaps` list. `prices_manifest.json` continues to describe the price acquisition on its own and is unchanged.
+
+The manifest is now generated from the live saved data and a live `load_issuer_historical_pe()` run, so its digests, counts and pipeline figures cannot drift from the evidence.
+
+### Filing acceptance time source was not header-verified
+
+`filing_acceptance_evidence.json` previously carried `acceptance_datetime_header_et` values derived from the SEC **submissions API** only, with `header_source_sha256: null` and no independent header check. The field name therefore claimed more than the evidence supported.
+
+Every 10-K, 10-K/A, 10-Q, 8-K and 8-K/A accession — 109 in total, covering every filing form the historical P/E pipeline can consume — was re-verified against the real EDGAR SGML header at `https://www.sec.gov/Archives/edgar/data/1818874/<accession>/<accession>-index-headers.html`:
+
+- 109/109 headers fetched successfully, 0 failures.
+- The SGML `ACCEPTANCE-DATETIME` field is the **Eastern wall clock** of acceptance, not UTC. Read as UTC it yields a time 4h (EDT) / 5h (EST) early — this was the source of a wrong intermediate conclusion in this round, corrected after re-reading the field with the correct timezone.
+- With the correct reading, the submissions API `acceptanceDateTime`, read as a UTC instant and expressed in Eastern, **agrees with the SGML header for all 109 accessions** (`api_minus_header_hours = 0.0` for every one). For SOFI the submissions API carries a true UTC instant; there is no double-offset artifact here.
+- **0 of 109 committed acceptance times differed** from the header-verified value, so the previously stored times were correct and no observation moved.
+
+Each verified row now carries `acceptance_datetime_source: SEC_EDGAR_SGML_HEADER_ACCEPTANCE_DATETIME`, the real `header_source_url`, the real `header_source_sha256` (SHA-256 of the actually-fetched header bytes), `header_source_bytes` and `header_verified: true`. The remaining 864 rows — forms the pipeline never consumes (Form 4, 144, 3, 5, 25, 424B, S-*, DEF 14A, ARS, …) — are labelled `acceptance_datetime_source: SEC_SUBMISSIONS_API_DERIVED` with `header_verified: false`, `header_source_sha256: null` and `header_source_url: null`. No header hash is asserted for any row that was not actually fetched.
+
+**Q4 evidence correction.** `q4_evidence_records.json` had the same defect: its four `acceptance_datetime` values were read from the SGML header as if they were UTC, making them 5h early (e.g. FY2025 Q4 stored `2026-01-30T02:07:34-05:00`, header `2026-01-30T07:07:34-05:00`). All four are now the header-verified Eastern values and carry the real header URL, SHA-256 and byte count. Because all four are before the 16:00 ET cutoff either way, the derived usable dates are unchanged and the production output is unaffected.
+
+### Production pipeline reproducibility
+
+Re-ran `historical_pe.py` `load_issuer_historical_pe()` on SOFI after the corrections. Reproduced exactly: **USABLE_FOR_REFERENCE**, **130** valid observations, period **2024-11-08 to 2026-09-24**, median **47.299768**, current snapshot **AVAILABLE at 30.21875**, 330 evaluations with 200 excluded (REASON_MISSING_Q4_EPS 98, REASON_NON_POSITIVE_EPS 102). The ≥ 20 qualifying-observation gate is unchanged and was met by the evidence. Only `input_set_id` and `content_hash` moved, because the input file bytes changed when the header evidence and corrected Q4 times were written.
+
+### GitHub Actions backend status
+
+The `backend-tests` workflow has been **failing on every push**, including pushes that predate all SOFI work. Comparing the run for this SOFI commit (39290402337, `42 failed, 2353 passed, 170 skipped`) against the pre-SOFI MUFG run (39239093577, `42 failed, 2323 passed, 169 skipped`), the failing test sets are **byte-identical**: 42 in both, zero only-in-new, zero only-in-pre. The +30 passing tests are the new adapter tests; this round introduced **no new failure and fixed none**.
+
+The 42 pre-existing failures fall into four unrelated groups, none touching historical P/E, the price adapter, or SEC evidence:
+- `ValuationInputs` has no attribute `observations` (22 failures across `test_evidence_valuation_boundary.py`, `test_historical_pfcf.py`, `test_summary_reference_precedence.py`)
+- replay identity returns `DIVERGED` instead of `MATCH` (9 failures across `test_r6_1_replay_snapshot_identity.py`, `test_r6_replay_divergence.py`)
+- `test_mapping_relation_kind.py::TestResolverIsolation::test_an_exact_claim_beats_a_measured_partial_one` — `'sbc' != 'sga'` (1)
+- `test_st_eva_runner.py` — `TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'` and `test_mufg_cross_currency_two_fx_scopes` asserting `unexpectedly None` (2)
+
+The designated historical P/E and adapter test suites pass locally (120 passed, 1 skipped, 34 subtests). That is **not** the same as the whole CI being green: the 42 pre-existing failures are still red in CI and are out of scope for this round.
+
+A full local run of `tests/` reproduces the same picture: `41 failed, 2411 passed, 170 skipped, 498 subtests`. The local failure set is a **strict subset** of the CI set — 0 local-only failures (no new regressions), and the single CI-only failure is `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes`, which fails in CI and passes locally (environment-dependent, MUFG, untouched by this round).
+
+### Tests
+
+`tests/test_historical_pe_adapter.py` grew from 30 to 44 unit tests (44 passed, 1 live test gated by `ST_EVA_ADAPTER_LIVE=1`). New coverage:
+- both `manifest.json` and `prices_manifest.json` parse with a standard JSON parser
+- the main manifest's recorded byte counts and SHA-256 match the actual files, and agree with `prices_manifest.json` for `daily_prices.json`
+- the main manifest's status and recorded counts match the saved evidence (EPS fact count, acceptance row counts split by verification, Q4 record count and fiscal years, price count)
+- the main manifest's `production_pipeline` block equals a live `load_issuer_historical_pe()` run (status, sample count, totals, exclusion reason breakdown, percentiles, mean/min/max, input_set_id, content_hash, current snapshot)
+- the main manifest carries no stale "no EPS evidence" / `PRICE_DATA_ACQUIRED` wording
+- every acceptance row states its time source and precision; header-verified rows carry a real 64-hex header hash and header URL; API-derived rows never claim verification and never carry a header hash; every 10-K/10-Q/8-K row is header-verified
+- every acceptance time used by the EPS and Q4 evidence is Eastern with an explicit offset, and the raw submissions API value is preserved beside it
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-SOFI historical price acquisition and SEC evidence acquisition are complete. The historical P/E production pipeline produces USABLE_FOR_REFERENCE with 130 qualifying observations. No product blocker; archive cleanup remains deferred per existing decision.
+SOFI data integrity and acceptance are closed: the manifest parses and states the qualified production state, every pipeline-consumable filing acceptance time is backed by a fetched and hashed SEC SGML header, API-derived times are labelled as such without fabricated hashes, and the production pipeline reproduces 130 qualifying observations with median 47.299768 and an AVAILABLE snapshot. The 42 pre-existing backend CI failures remain red and are unrelated to this work; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.

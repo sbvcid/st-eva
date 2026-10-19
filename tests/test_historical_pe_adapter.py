@@ -397,6 +397,230 @@ class TestLiveAcquireSOFI(unittest.TestCase):
         self.assertLess(summary["first_date"], summary["last_date"])
 
 
+class TestSofiManifestIntegrity(unittest.TestCase):
+    """Both SOFI manifests must parse and their recorded digests must be true."""
+
+    MANIFEST = Path("data/historical_pe/SOFI/manifest.json")
+    PRICES_MANIFEST = Path("data/historical_pe/SOFI/prices_manifest.json")
+
+    def test_main_manifest_parses_with_a_standard_json_parser(self):
+        self.assertTrue(self.MANIFEST.exists(), "manifest.json must exist")
+        text = self.MANIFEST.read_text(encoding="utf-8")
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            self.fail(f"manifest.json must parse with a standard JSON parser: {exc}")
+        self.assertIsInstance(data, dict)
+        self.assertEqual(data["ticker"], "SOFI")
+
+    def test_prices_manifest_parses_with_a_standard_json_parser(self):
+        self.assertTrue(self.PRICES_MANIFEST.exists(), "prices_manifest.json must exist")
+        text = self.PRICES_MANIFEST.read_text(encoding="utf-8")
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            self.fail(f"prices_manifest.json must parse with a standard JSON parser: {exc}")
+        self.assertIsInstance(data, dict)
+        self.assertEqual(data["ticker"], "SOFI")
+
+    def test_main_manifest_digests_match_the_actual_files(self):
+        data = json.loads(self.MANIFEST.read_text(encoding="utf-8"))
+        files = data.get("files") or {}
+        self.assertGreater(len(files), 0, "main manifest must record the dataset files")
+        for name, meta in files.items():
+            path = Path(meta["path"])
+            self.assertTrue(path.exists(), f"manifest references a missing file: {path}")
+            raw = path.read_bytes()
+            self.assertEqual(
+                meta["bytes"], len(raw),
+                f"manifest byte count is stale for {name}",
+            )
+            self.assertEqual(
+                meta["content_sha256"], hashlib.sha256(raw).hexdigest(),
+                f"manifest SHA-256 is stale for {name}",
+            )
+
+    def test_prices_manifest_digest_matches_the_actual_daily_prices_file(self):
+        data = json.loads(self.PRICES_MANIFEST.read_text(encoding="utf-8"))
+        meta = data["files"]["daily_prices.json"]
+        path = Path(meta["path"])
+        self.assertTrue(path.exists(), f"prices manifest references a missing file: {path}")
+        raw = path.read_bytes()
+        self.assertEqual(meta["bytes"], len(raw), "prices manifest byte count is stale")
+        self.assertEqual(
+            meta["content_sha256"], hashlib.sha256(raw).hexdigest(),
+            "prices manifest SHA-256 is stale",
+        )
+
+    def test_main_manifest_does_not_duplicate_the_prices_manifest_digest(self):
+        """The main manifest's own digest for daily_prices.json must equal the
+        prices manifest's, so the two cannot drift apart silently."""
+        main = json.loads(self.MANIFEST.read_text(encoding="utf-8"))
+        prices = json.loads(self.PRICES_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual(
+            main["files"]["daily_prices.json"]["content_sha256"],
+            prices["files"]["daily_prices.json"]["content_sha256"],
+        )
+        self.assertEqual(
+            main["files"]["daily_prices.json"]["bytes"],
+            prices["files"]["daily_prices.json"]["bytes"],
+        )
+
+    def test_main_manifest_status_matches_the_saved_data(self):
+        """The manifest's status must be the pipeline's own judgement, and the
+        recorded counts must match what the saved evidence actually yields."""
+        data = json.loads(self.MANIFEST.read_text(encoding="utf-8"))
+        pipeline = data["production_pipeline"]
+
+        # The status must be the qualified state, not a price-only state.
+        self.assertEqual(data["status"], "USABLE_FOR_REFERENCE")
+        self.assertEqual(pipeline["status"], data["status"])
+        self.assertTrue(pipeline["usable_for_reference"])
+        self.assertGreaterEqual(pipeline["sample_count"], pipeline["min_observations_required"])
+
+        # The recorded SEC evidence counts must match the saved files.
+        with open("data/historical_pe/SOFI/eps_diluted_concept.json", encoding="utf-8") as f:
+            concept = json.load(f)
+        fact_count = len(concept["units"]["USD/shares"])
+        self.assertEqual(
+            data["sec_evidence"]["eps_diluted_fact_count"], fact_count
+        )
+
+        with open("data/historical_pe/SOFI/filing_acceptance_evidence.json", encoding="utf-8") as f:
+            acceptance = json.load(f)
+        self.assertEqual(
+            data["sec_evidence"]["filing_acceptance_row_count"], len(acceptance)
+        )
+        verified = sum(1 for r in acceptance if r.get("header_verified"))
+        api_derived = sum(1 for r in acceptance if not r.get("header_verified"))
+        self.assertEqual(data["sec_evidence"]["header_verified_row_count"], verified)
+        self.assertEqual(data["sec_evidence"]["api_derived_row_count"], api_derived)
+        self.assertEqual(verified + api_derived, len(acceptance))
+
+        with open("data/historical_pe/SOFI/q4_evidence_records.json", encoding="utf-8") as f:
+            q4 = json.load(f)
+        self.assertEqual(
+            data["sec_evidence"]["q4_evidence_record_count"], len(q4["records"])
+        )
+        self.assertEqual(
+            data["sec_evidence"]["q4_evidence_fiscal_years"],
+            sorted(r["fiscal_year"] for r in q4["records"]),
+        )
+
+        # The price count must match the saved price series.
+        with open("data/historical_pe/SOFI/daily_prices.json", encoding="utf-8") as f:
+            prices = json.load(f)
+        chart = prices["chart"]["result"][0]
+        self.assertEqual(data["price_count"], len(chart["timestamp"]))
+        self.assertEqual(data["price_count"], len(chart["indicators"]["quote"][0]["close"]))
+
+    def test_main_manifest_does_not_claim_missing_eps_evidence(self):
+        """The stale 'no EPS evidence' wording must not survive."""
+        data = json.loads(self.MANIFEST.read_text(encoding="utf-8"))
+        blob = json.dumps(data).lower()
+        self.assertNotIn("no eps evidence", blob)
+        self.assertNotIn("price_data_acquired", blob)
+        self.assertEqual(data["role"], "production_candidate_qualified")
+
+
+class TestSofiAcceptanceTimeProvenance(unittest.TestCase):
+    """The acceptance-time source must be stated honestly, per row."""
+
+    PATH = Path("data/historical_pe/SOFI/filing_acceptance_evidence.json")
+    HEADER_FORMS = ("10-K", "10-K/A", "10-Q", "8-K", "8-K/A")
+
+    def setUp(self):
+        with open(self.PATH, encoding="utf-8") as f:
+            self.rows = json.load(f)
+        self.by_accn = {r["accession"]: r for r in self.rows}
+
+    def test_every_row_declares_its_acceptance_time_source(self):
+        for row in self.rows:
+            self.assertIn(
+                row.get("acceptance_datetime_source"),
+                ("SEC_EDGAR_SGML_HEADER_ACCEPTANCE_DATETIME", "SEC_SUBMISSIONS_API_DERIVED"),
+                f"row does not state its acceptance-time source: {row}",
+            )
+            self.assertEqual(
+                row.get("acceptance_datetime_precision"), "SECOND",
+                f"row does not state acceptance-time precision: {row}",
+            )
+            self.assertIsNotNone(row.get("acceptance_datetime_header_et"))
+
+    def test_header_verified_rows_carry_real_header_evidence(self):
+        verified = [r for r in self.rows if r.get("header_verified")]
+        self.assertGreater(len(verified), 0, "no header-verified rows present")
+        for row in verified:
+            self.assertEqual(
+                row["acceptance_datetime_source"],
+                "SEC_EDGAR_SGML_HEADER_ACCEPTANCE_DATETIME",
+            )
+            url = row.get("header_source_url")
+            self.assertIsNotNone(url, f"verified row without a header URL: {row}")
+            self.assertIn("index-headers.html", url)
+            sha = row.get("header_source_sha256")
+            self.assertIsNotNone(sha, f"verified row without a header hash: {row}")
+            self.assertEqual(len(sha), 64, "header hash must be a SHA-256 hex digest")
+            int(sha, 16)
+            self.assertGreater(row.get("header_source_bytes") or 0, 0)
+
+    def test_api_derived_rows_never_claim_header_verification(self):
+        for row in self.rows:
+            if row.get("acceptance_datetime_source") == "SEC_SUBMISSIONS_API_DERIVED":
+                self.assertFalse(
+                    row.get("header_verified"),
+                    f"API-derived row claims header verification: {row}",
+                )
+                self.assertIsNone(
+                    row.get("header_source_sha256"),
+                    f"API-derived row carries a header hash: {row}",
+                )
+                self.assertIsNone(
+                    row.get("header_source_url"),
+                    f"API-derived row carries a header URL: {row}",
+                )
+
+    def test_pipeline_forms_are_all_header_verified(self):
+        """Every 10-K / 10-Q / 8-K the pipeline can consume is header-verified."""
+        for row in self.rows:
+            if row["form"] in self.HEADER_FORMS:
+                self.assertTrue(
+                    row.get("header_verified"),
+                    f"{row['form']} accession is not header-verified: {row['accession']}",
+                )
+
+    def test_accession_times_used_by_the_eps_and_q4_evidence_are_et(self):
+        """Every acceptance instant the EPS/Q4 evidence relies on is Eastern with
+        an explicit offset, and the API value is preserved beside it."""
+        with open("data/historical_pe/SOFI/eps_diluted_concept.json", encoding="utf-8") as f:
+            concept = json.load(f)
+        used = {f["accn"] for f in concept["units"]["USD/shares"] if f.get("start")}
+        with open("data/historical_pe/SOFI/q4_evidence_records.json", encoding="utf-8") as f:
+            used |= {r["accession"] for r in json.load(f)["records"]}
+
+        self.assertGreater(len(used), 0)
+        for accn in used:
+            row = self.by_accn.get(accn)
+            self.assertIsNotNone(row, f"acceptance row missing for {accn}")
+            value = row["acceptance_datetime_header_et"]
+            self.assertTrue(
+                value.endswith("-04:00") or value.endswith("-05:00"),
+                f"acceptance time is not Eastern with an offset: {accn} -> {value}",
+            )
+            self.assertIsNotNone(
+                row.get("acceptance_datetime_submissions_api"),
+                f"the raw submissions API value must be preserved: {accn}",
+            )
+
+    def test_api_minus_header_offset_is_recorded_for_verified_rows(self):
+        for row in self.rows:
+            if row.get("header_verified"):
+                self.assertIsNotNone(
+                    row.get("api_minus_header_hours"),
+                    f"verified row without the API-minus-header offset: {row['accession']}",
+                )
+
+
 class TestSofiSecEvidenceFiles(unittest.TestCase):
     """SEC evidence files for SOFI: format, content, and traceability."""
 
@@ -474,6 +698,23 @@ class TestSofiSecEvidenceFiles(unittest.TestCase):
 class TestSofiHistoricalPePipeline(unittest.TestCase):
     """Run historical_pe.py production pipeline on SOFI and validate results."""
 
+    def _run(self):
+        from historical_pe import (
+            IssuerHistoricalPeConfig,
+            load_issuer_historical_pe,
+            MIN_OBSERVATIONS_FOR_REFERENCE,
+        )
+        config = IssuerHistoricalPeConfig(
+            ticker="SOFI",
+            issuer_id="0001818874",
+            fye_month=12,
+            data_dir=Path("data/historical_pe/SOFI"),
+            canonical_path=None,
+        )
+        return load_issuer_historical_pe(
+            config, enable_furnished=True, min_observations=MIN_OBSERVATIONS_FOR_REFERENCE
+        )
+
     def test_sofi_pipeline_produces_usable_reference(self):
         from historical_pe import (
             IssuerHistoricalPeConfig,
@@ -497,6 +738,48 @@ class TestSofiHistoricalPePipeline(unittest.TestCase):
         self.assertIsNotNone(res.distribution.period_start)
         self.assertIsNotNone(res.distribution.period_end)
         self.assertIsNotNone(res.distribution.percentiles.get("median"))
+
+    def test_manifest_pipeline_block_matches_the_live_pipeline_output(self):
+        """The manifest's recorded production result must be the pipeline's own
+        output for the saved data, not a stale or hand-written claim."""
+        from historical_pe import STATUS_USABLE_FOR_REFERENCE
+
+        res = self._run()
+        with open("data/historical_pe/SOFI/manifest.json", encoding="utf-8") as f:
+            manifest = json.load(f)
+        recorded = manifest["production_pipeline"]
+
+        self.assertEqual(recorded["status"], res.distribution.status)
+        self.assertEqual(recorded["status"], STATUS_USABLE_FOR_REFERENCE)
+        self.assertEqual(recorded["usable_for_reference"], res.distribution.usable_for_reference)
+        self.assertEqual(recorded["sample_count"], res.distribution.sample_count)
+        self.assertEqual(recorded["total_evaluations"], res.distribution.total_evaluations)
+        self.assertEqual(recorded["excluded_observations"], len(res.distribution.excluded_observations))
+        self.assertEqual(recorded["sample_period_start"], res.distribution.period_start)
+        self.assertEqual(recorded["sample_period_end"], res.distribution.period_end)
+        self.assertEqual(
+            recorded["percentiles"], res.distribution.percentiles,
+        )
+        self.assertEqual(
+            recorded["percentiles"]["median"], res.distribution.percentiles["median"]
+        )
+        self.assertEqual(recorded["mean"], res.distribution.mean)
+        self.assertEqual(recorded["min"], res.distribution.min)
+        self.assertEqual(recorded["max"], res.distribution.max)
+        self.assertEqual(recorded["input_set_id"], res.input_set_id)
+        self.assertEqual(recorded["content_hash"], res.content_hash)
+
+        # The excluded-reason breakdown must be the pipeline's own.
+        reasons = {}
+        for obs in res.distribution.excluded_observations:
+            reasons[obs["reason_code"]] = reasons.get(obs["reason_code"], 0) + 1
+        self.assertEqual(recorded["excluded_reason_counts"], reasons)
+
+        # The current snapshot must match too.
+        self.assertIsNotNone(res.current_snapshot)
+        self.assertEqual(recorded["current_snapshot_status"], res.current_snapshot.status)
+        self.assertEqual(recorded["current_snapshot_date"], res.current_snapshot.evaluation_date)
+        self.assertEqual(recorded["current_snapshot_value"], res.current_snapshot.value)
 
     def test_sofi_pipeline_price_basis_is_as_traded(self):
         from historical_pe import (

@@ -1,19 +1,74 @@
 {
   "ticker": "SOFI",
   "ticker_identifier": "SOFI",
-  "role": "price_acquisition",
-  "status": "PRICE_DATA_ACQUIRED",
+  "entity_name": "SoFi Technologies, Inc.",
+  "issuer_id": "0001818874",
+  "fiscal_year_end": "1231",
+  "role": "production_candidate_qualified",
+  "status": "USABLE_FOR_REFERENCE",
+  "currency": "USD",
   "price_count": 1255,
   "coverage": {
     "first_date": "2021-10-19",
     "last_date": "2026-10-19"
   },
-  "currency": "USD",
-  "source": {
+  "price_source": {
     "provider": "Yahoo Finance chart API v8",
     "url": "https://query1.finance.yahoo.com/v8/finance/chart/SOFI",
     "raw_response_sha256": "32e143487548564d015656614ffcf8fb5d0aaf19bc9439c658557d66f360b112",
-    "standardized_content_sha256": "c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7"
+    "standardized_content_sha256": "c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7",
+    "price_manifest": "data/historical_pe/SOFI/prices_manifest.json"
+  },
+  "sec_evidence": {
+    "provider": "SEC EDGAR",
+    "cik": "0001818874",
+    "submissions_url": "https://data.sec.gov/submissions/CIK0001818874.json",
+    "eps_concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0001818874/us-gaap/EarningsPerShareDiluted.json",
+    "eps_diluted_fact_count": 69,
+    "filing_acceptance_row_count": 973,
+    "header_verified_row_count": 109,
+    "api_derived_row_count": 864,
+    "q4_evidence_record_count": 4,
+    "q4_evidence_fiscal_years": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "acceptance_datetime_source": "SEC EDGAR SGML header ACCEPTANCE-DATETIME (Eastern wall clock), independently fetched and hashed for every 10-K, 10-K/A, 10-Q, 8-K and 8-K/A accession; the remaining rows carry the SEC submissions API acceptance time converted to Eastern and are labelled SEC_SUBMISSIONS_API_DERIVED with header_verified=false",
+    "acceptance_datetime_precision": "SECOND",
+    "api_minus_header_hours_observed": 0.0
+  },
+  "production_pipeline": {
+    "entry_point": "historical_pe.load_issuer_historical_pe",
+    "logic_version": "historical-pe/1.1.0",
+    "status": "USABLE_FOR_REFERENCE",
+    "usable_for_reference": true,
+    "sample_count": 130,
+    "total_evaluations": 330,
+    "excluded_observations": 200,
+    "excluded_reason_counts": {
+      "REASON_MISSING_Q4_EPS": 98,
+      "REASON_NON_POSITIVE_EPS": 102
+    },
+    "min_observations_required": 20,
+    "sample_period_start": "2024-11-08",
+    "sample_period_end": "2026-09-24",
+    "percentiles": {
+      "10th": 34.40145,
+      "25th": 37.502967,
+      "median": 47.299768,
+      "75th": 54.025914,
+      "90th": 136.74
+    },
+    "mean": 57.297255,
+    "min": 28.810811,
+    "max": 179.2,
+    "current_snapshot_date": "2026-10-19",
+    "current_snapshot_status": "AVAILABLE",
+    "current_snapshot_value": 30.21875,
+    "input_set_id": "3a90086cd54a3f1e70b4c18a886dd19a244b5a5c734d6b480d596540e207458e",
+    "content_hash": "669b92f9f8664a0f4eedbeaef63e16264c576fa4ad51018aba18882fa6daae92"
   },
   "files": {
     "daily_prices.json": {
@@ -22,16 +77,43 @@
       "content_sha256": "c1424311458a87a52d8598dbd90db8d661a2a2c480466511f90db9b62b0f61b7"
     },
     "prices_manifest.json": {
-      "path": "data/historical_pe/SOFI/prices_manifest.json"
+      "path": "data/historical_pe/SOFI/prices_manifest.json",
+      "bytes": 1335,
+      "content_sha256": "775277cd0d99a0bcea3c241987719d55cce1f71bed2b98c3e565f1bc6191be9a"
+    },
+    "sec_submissions.json": {
+      "path": "data/historical_pe/SOFI/sec_submissions.json",
+      "bytes": 313599,
+      "content_sha256": "c3803139c777e6963e688a4ed285f8e76507807a3c37cfd675a338a90e5d8951"
+    },
+    "eps_diluted_concept.json": {
+      "path": "data/historical_pe/SOFI/eps_diluted_concept.json",
+      "bytes": 18075,
+      "content_sha256": "fac668db706cd7ff0caf065c85c17cff5f823d474fb25d56dacaad284a6af446"
+    },
+    "filing_acceptance_evidence.json": {
+      "path": "data/historical_pe/SOFI/filing_acceptance_evidence.json",
+      "bytes": 747744,
+      "content_sha256": "8c893f7413762338990415b9c02312d8fe6fb4a826db07270e0767f9a495e05c"
+    },
+    "q4_evidence_records.json": {
+      "path": "data/historical_pe/SOFI/q4_evidence_records.json",
+      "bytes": 5627,
+      "content_sha256": "dabcb3626aca93538c010dc1fe7d28bf953869125571b11d0421c51fc00d2db7"
     }
   },
   "sources_attempted": [
-    "https://query1.finance.yahoo.com/v8/finance/chart/SOFI (Yahoo Finance chart API v8, external acquisition)",
-    "data/archives/SOFI.sqlite (SQLite archive, secondary source, 2 pre-existing price observations)"
+    "https://query1.finance.yahoo.com/v8/finance/chart/SOFI (Yahoo Finance chart API v8, external acquisition, 1255 daily closes)",
+    "https://data.sec.gov/submissions/CIK0001818874.json (SEC submissions API, 973 filings)",
+    "https://data.sec.gov/api/xbrl/companyconcept/CIK0001818874/us-gaap/EarningsPerShareDiluted.json (SEC XBRL company concept, 69 facts)",
+    "https://www.sec.gov/Archives/edgar/data/1818874/<accession>/<accession>-index-headers.html (SEC SGML headers, 109 filings independently fetched and hashed)",
+    "data/archives/SOFI.sqlite (SQLite archive, secondary source, 2 pre-existing price observations, not repackaged as new data)"
   ],
-  "archive_observation_summary": 2,
-  "note": "1255 daily close prices acquired from Yahoo Finance (source-traceable, USD, as-traded basis). "
-          "Archive SQLite observations (2 points) are pre-existing and not repackaged as new data. "
-          "Price data only; no EPS evidence acquired yet, so this is not a complete historical P/E reference dataset.",
-  "derived_at": "2026-10-19 16:14:27.390640+00:00"
+  "known_gaps": [
+    "FY2021 Q4 has no Form 8-K Item 2.02 earnings release in EDGAR, so no furnished Q4 EPS evidence exists for that quarter; it is not fabricated and the resulting windows are refused with REASON_MISSING_Q4_EPS.",
+    "The 864 acceptance rows for forms other than 10-K, 10-K/A, 10-Q, 8-K and 8-K/A carry the SEC submissions API acceptance time converted to Eastern; they are labelled SEC_SUBMISSIONS_API_DERIVED with header_verified=false and carry no header hash. None of them is used by the historical P/E pipeline.",
+    "SOFI is not registered in historical_pe.ISSUER_CONFIGS, so the web path does not serve this distribution; the qualification recorded here comes from running the production loader directly."
+  ],
+  "note": "Qualified historical P/E dataset. 1255 daily closes acquired from Yahoo Finance (USD, as-traded) and 69 SEC diluted-EPS XBRL facts plus 4 furnished Q4 earnings records give the production pipeline a real evidence set; it returns USABLE_FOR_REFERENCE with 130 qualifying observations over 2024-11-08..2026-09-24 (median 47.299768) and an AVAILABLE current snapshot at 30.21875. The >=20-observation reference gate is unchanged and was met by the evidence, not by relaxing any rule. prices_manifest.json continues to describe the price acquisition on its own.",
+  "derived_at": "2026-10-19 18:21:25.000000+00:00"
 }
