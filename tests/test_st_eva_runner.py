@@ -870,5 +870,60 @@ class TestMUFGRegressionDatesAndPrecision(unittest.TestCase):
         self.assertNotEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 2.0)
 
 
+class TestMUFGCrossCurrencyPsRejection(unittest.TestCase):
+    """Regression tests: cross-currency P/S must be refused, not computed."""
+
+    def test_mufg_cross_currency_ps_is_none_not_0_03x(self):
+        """MUFG market cap (USD) / revenue (JPY) must NOT produce 0.03x P/S."""
+        from fx_rates import mufg_fx_rate_analysis_date
+        from adr_ratio import mufg_adr_ratio
+
+        fx = mufg_fx_rate_analysis_date()
+        adr = mufg_adr_ratio()
+
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=fx.rate_usd_per_jpy,
+            adr_underlying_shares_per_adr=adr.underlying_shares_per_adr,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        obs = result["observed_valuation"]
+        # Mixed-currency P/S must be refused, not computed.
+        self.assertIsNone(obs["current_ps"])
+        # The cross-currency section must still carry the converted figure.
+        cc = result["cross_currency"]
+        self.assertIsNotNone(cc["revenue_conversion"])
+        self.assertAlmostEqual(
+            cc["revenue_conversion"]["ps_ratio_usd_converted"], 5.20, places=1
+        )
+
+    def test_mufg_cross_currency_ps_limitation(self):
+        """When P/S is refused due to currency mismatch, a limitation is added."""
+        from fx_rates import mufg_fx_rate_analysis_date
+        from adr_ratio import mufg_adr_ratio
+
+        fx = mufg_fx_rate_analysis_date()
+        adr = mufg_adr_ratio()
+
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=fx.rate_usd_per_jpy,
+            adr_underlying_shares_per_adr=adr.underlying_shares_per_adr,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        limitations = result.get("limitations", [])
+        ps_limitations = [
+            l for l in limitations if "P/S not reported" in l
+        ]
+        self.assertEqual(len(ps_limitations), 1)
+        self.assertIn("currency", ps_limitations[0].lower())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1794,7 +1794,24 @@ class MarketImpliedAssumptionsEngine:
             if enterprise_value and selected_ev_ebitda and selected_ev_ebitda > 0 else None
         )
 
-        current_ps = market_cap / current_revenue if market_cap and current_revenue and current_revenue > 0 else None
+        # P/S requires market cap and revenue in the same currency. A
+        # cross-currency ratio (e.g. USD market cap / JPY revenue) is refused,
+        # not computed, and the converted figure is reported separately in
+        # cross_currency.revenue_conversion instead.
+        _mc_obs = data.observations.latest("market_cap")
+        _rev_obs = data.observations.latest("revenue")
+        _mc_currency = _mc_obs.currency if _mc_obs else data.currency
+        _rev_currency = _rev_obs.currency if _rev_obs else None
+        _currencies_compatible = (
+            _rev_currency is not None
+            and _mc_currency is not None
+            and _rev_currency == _mc_currency
+        )
+        current_ps = (
+            market_cap / current_revenue
+            if market_cap and current_revenue and current_revenue > 0 and _currencies_compatible
+            else None
+        )
         implied_revenue = market_cap / selected_ps if market_cap and selected_ps and selected_ps > 0 else None
         implied_net_margin = (
             (implied_forward_eps / (implied_revenue / (market_cap / inputs.price)))
@@ -2648,10 +2665,10 @@ def run_st_eva(
                 "net_income_fy2025_actual_usd": net_income_fy2025_usd,
                 "net_income_target_fy2026_jpy": net_income_target_fy2026_jpy,
                 "net_income_target_fy2026_usd": net_income_target_fy2026_usd,
-                "fx_rate_used": fx_for_conversion.rate_usd_per_jpy,
-                "fx_scope": fx_scope,
-                "fx_as_of": fx_for_conversion.as_of,
-                "derived_ttm_eps_usd_per_share": (
+        "fx_rate_used": fx_for_conversion.rate_usd_per_jpy,
+        "fx_scope": fx_scope,
+        "fx_as_of": fx_for_conversion.as_of,
+        "derived_ttm_eps_usd_per_share": (
                     cross_currency["ttm_eps"]["eps_usd_per_share"]
                     if cross_currency["ttm_eps"] else None
                 ),
@@ -2661,6 +2678,18 @@ def run_st_eva(
                         "an EPS growth rate because the share count needed for "
                         "that conversion is not available in this run.",
             }
+
+        # Currency-compatibility check for P/S: market cap currency vs revenue
+        # currency. Determines whether current_ps is computed or refused.
+        _mc_cur_lim = data.currency
+        _rev_cur_lim = None
+        try:
+            _mc_obs_lim = data.observations.latest("market_cap")
+            _rev_obs_lim = data.observations.latest("revenue")
+            _mc_cur_lim = _mc_obs_lim.currency if _mc_obs_lim else data.currency
+            _rev_cur_lim = _rev_obs_lim.currency if _rev_obs_lim else None
+        except Exception:
+            pass
 
     result = {
         "analysis_type": VERSION_METADATA["analysis_type"],
@@ -2711,7 +2740,23 @@ def run_st_eva(
             "Reverse-engineered earnings/growth are conditional on the selected valuation multiple.",
             "ST-EVA does not invent EPS, consensus, probabilities, or target prices.",
             "This output is descriptive valuation analysis, not a buy/sell signal.",
-        ],
+        ]
+        + (
+            [
+                "P/S not reported: market cap currency and revenue currency differ "
+                "(cross-currency ratio is not a valid valuation multiple). "
+                "A currency-converted P/S is shown separately in the cross-currency section."
+            ]
+            if (
+                lambda _mc_o, _rev_o: (
+                    (_rev_o.currency if _rev_o else None) is not None
+                    and (_mc_o.currency if _mc_o else data.currency) is not None
+                    and (_rev_o.currency if _rev_o else None)
+                    != (_mc_o.currency if _mc_o else data.currency)
+                )
+            )(data.observations.latest("market_cap"), data.observations.latest("revenue"))
+            else []
+        ),
         "version_metadata": VERSION_METADATA,
     }
 
