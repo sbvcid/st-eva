@@ -98,6 +98,20 @@ export const en: Translations = {
     regressionNotice: 'REGRESSION FIXTURE (TEST DATA)',
     regressionNoticeDesc:
       'This valuation reflects static test fixture data, not live market observations. Do not treat as real-time market quotes.',
+    // Admission detail: distinct metric count vs observation row count
+    admittedMetricsDetail: (distinct: number, rows: number, names: string) =>
+      `${distinct} metric(s) / ${rows} observation row(s): ${names}`,
+    refusedMetricsDetail: (distinct: number, rows: number, names: string) =>
+      `${distinct} metric(s) / ${rows} observation row(s): ${names}`,
+    // P/FCF reference label: inferred, not an actual observation
+    impliedFcfReferenceLabel:
+      'Total FCF Reference (inferred from historical P/FCF median)',
+    // Matrix limitation: top-level P/FCF single-point vs per-scenario matrix input
+    matrixPfcfLimitationNotice:
+      'The top-level FCF figure is a single-point reference inferred from the historical P/FCF median. It is not used as a per-scenario exit multiple in the reverse-requirements matrix, which draws exit multiples from the historical P/E distribution or user-supplied multiples only. The two references serve different purposes and are not interchangeable.',
+    // Replay divergence structured diff labels
+    replayDiffHeader: 'Replay divergence detail:',
+    replayDiffAvailability: 'Observation availability:',
   },
   assumptions: {
     title: 'Scenario Assumptions & Controls',

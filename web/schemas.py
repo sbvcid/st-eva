@@ -78,6 +78,10 @@ class ReplaySummary(BaseModel):
     replay_fidelity: Optional[str] = None
     stored_document_hash: Optional[str] = None
     rebuilt_document_hash: Optional[str] = None
+    # Structured observation-level diff: which observations the replay considered
+    # and their availability class. Used to explain a DIVERGED outcome with
+    # concrete per-observation detail rather than only a generic reason string.
+    availability_classes: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class ValuationSummary(BaseModel):

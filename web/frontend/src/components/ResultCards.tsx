@@ -198,11 +198,16 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
               <p>
                 <span className="font-semibold text-slate-600">
                   {valuation.implied_fcf_at_reference_multiple != null
-                    ? `${t.results.impliedFcf}: ${(valuation.implied_fcf_at_reference_multiple / 1e9).toFixed(1)}B`
+                    ? `${t.results.impliedFcfReferenceLabel}: ${(valuation.implied_fcf_at_reference_multiple / 1e9).toFixed(1)}B`
                     : t.results.referencePfcf}
                   :
                 </span>{' '}
                 {referencePfcfBasis}
+              </p>
+            )}
+            {valuation.selected_pfcf_basis != null && (
+              <p className="text-[10px] text-slate-400 italic">
+                {t.results.matrixPfcfLimitationNotice}
               </p>
             )}
             <button
@@ -259,7 +264,7 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
                   : t.results.admitted}
               </span>
               <span className="text-xs font-mono font-medium text-slate-600">
-                {t.results.admittedCounts(admission.total_admitted, admission.total_refused)}
+                {`${admission.metrics_admitted.length} metric(s) / ${admission.total_admitted} row(s) admitted · ${(admission.metrics_refused?.length ?? 0)} metric(s) / ${admission.total_refused} row(s) refused`}
               </span>
             </div>
 
@@ -402,6 +407,23 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
             <span>{t.results.obsConsidered(replay.observations_considered)}</span>
             {replay.replay_fidelity && <span>{t.results.fidelity(replay.replay_fidelity)}</span>}
           </div>
+          {replay.outcome === 'DIVERGED' && replay.availability_classes && replay.availability_classes.length > 0 && (
+            <div className="mt-2 text-[10px] text-slate-500">
+              <p className="font-semibold text-slate-700 mb-1">
+                {t.results.replayDiffHeader}
+              </p>
+              <div className="flex flex-wrap gap-2 text-amber-800 font-mono">
+                {replay.availability_classes.map((item, idx) => (
+                  <span key={idx} title={`${item.observation_id}: ${item.class}`}>
+                    {item.observation_id}:{item.class}
+                  </span>
+                ))}
+              </div>
+              <p className="text-slate-500 mt-1">
+                {t.results.replayDiffAvailability}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -83,6 +83,16 @@ export interface Translations {
     fidelity: (fidelity: string) => string
     regressionNotice: string
     regressionNoticeDesc: string
+    // Admission detail: distinct metric count vs observation row count
+    admittedMetricsDetail: (distinct: number, rows: number, names: string) => string
+    refusedMetricsDetail: (distinct: number, rows: number, names: string) => string
+    // P/FCF reference label: inferred, not an actual observation
+    impliedFcfReferenceLabel: string
+    // Matrix limitation: top-level P/FCF single-point vs per-scenario matrix input
+    matrixPfcfLimitationNotice: string
+    // Replay divergence structured diff labels
+    replayDiffHeader: string
+    replayDiffAvailability: string
   }
   assumptions: {
     title: string

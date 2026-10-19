@@ -98,6 +98,20 @@ export const zhTW: Translations = {
     regressionNotice: '回歸測試數據（離線測試資料）',
     regressionNoticeDesc:
       '此估值結果來自靜態離線回歸測試數據，非即時市場行情。請勿視為即時報價。',
+    // Admission detail: distinct metric count vs observation row count
+    admittedMetricsDetail: (distinct: number, rows: number, names: string) =>
+      `${distinct} 種指標 / ${rows} 列觀測：${names}`,
+    refusedMetricsDetail: (distinct: number, rows: number, names: string) =>
+      `${distinct} 種指標 / ${rows} 列觀測：${names}`,
+    // P/FCF reference label: inferred, not an actual observation
+    impliedFcfReferenceLabel:
+      '以歷史 P/FCF 中位數反推的總 FCF 參考值',
+    // Matrix limitation: top-level P/FCF single-point vs per-scenario matrix input
+    matrixPfcfLimitationNotice:
+      '頂層自由現金流數字為單點參考值，由歷史 P/FCF 中位數反推而得。此數字不作為反推需求矩陣中的逐情境退出倍數使用；矩陣的退出倍數僅來自歷史 P/E 分佈或使用者自訂倍數。兩者用途不同，不可互換。',
+    // Replay divergence structured diff labels
+    replayDiffHeader: '重演歧異細節：',
+    replayDiffAvailability: '觀測值可用性：',
   },
   assumptions: {
     title: '情境假設參數設定',

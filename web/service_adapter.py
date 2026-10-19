@@ -282,6 +282,10 @@ class AnalysisServiceAdapter:
                         replay_fidelity=replay_res.replay_fidelity,
                         stored_document_hash=replay_res.stored_document_hash,
                         rebuilt_document_hash=replay_res.rebuilt_document_hash,
+                        availability_classes=[
+                            {"observation_id": ref, "class": klass}
+                            for ref, klass in replay_res.availability_classes
+                        ],
                     )
                 except Exception as replay_err:
                     replay_summary = ReplaySummary(

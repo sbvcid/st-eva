@@ -42,6 +42,10 @@ export interface ReplaySummary {
   replay_fidelity?: string | null
   stored_document_hash?: string | null
   rebuilt_document_hash?: string | null
+  // Structured observation-level diff: which observations the replay considered
+  // and their availability class. Used to explain a DIVERGED outcome with
+  // concrete per-observation detail rather than only a generic reason string.
+  availability_classes?: Array<{ observation_id: string; class: string }> | null
 }
 
 export interface ValuationSummary {
