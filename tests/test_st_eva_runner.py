@@ -532,3 +532,156 @@ class TestMarketImpliedAssumptions(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestMUFGFxRate(unittest.TestCase):
+    """Isolated tests for MUFG FX rate conversion (fx_rates.py)."""
+
+    def test_mufg_fx_rate_is_sourced_not_illustrative(self):
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY
+        self.assertIsNotNone(MUFG_FX_RATE_USD_PER_JPY)
+        self.assertEqual(MUFG_FX_RATE_USD_PER_JPY.provider, "Federal Reserve Board H.10")
+        self.assertEqual(MUFG_FX_RATE_USD_PER_JPY.quote_direction, "USD per JPY")
+        # Rate must be ~0.006316 (1/158.34), not the old illustrative 0.0067.
+        self.assertAlmostEqual(MUFG_FX_RATE_USD_PER_JPY.rate_usd_per_jpy, 0.006316, places=6)
+        # The old 0.0067 implied ~149 JPY/USD; actual H.10 rate is ~158 JPY/USD.
+        self.assertNotEqual(MUFG_FX_RATE_USD_PER_JPY.rate_usd_per_jpy, 0.0067)
+        self.assertIn("158.3400", MUFG_FX_RATE_USD_PER_JPY.original_amounts["note"])
+        self.assertNotIn("illustrative", MUFG_FX_RATE_USD_PER_JPY.original_amounts["note"].lower())
+
+    def test_convert_jpy_to_usd_uses_corrected_rate(self):
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY, convert_jpy_to_usd
+        jpy = 1583400000000.0  # ¥1.5834T
+        usd = convert_jpy_to_usd(jpy, MUFG_FX_RATE_USD_PER_JPY)
+        # ¥1.5834T × 0.006316 USD/JPY = $10,000,754,400
+        self.assertAlmostEqual(usd, 10000754400.0, places=0)
+
+    def test_convert_usd_to_jpy_uses_corrected_rate(self):
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY, convert_usd_to_jpy
+        usd = 10000000000.0  # $10B
+        jpy = convert_usd_to_jpy(usd, MUFG_FX_RATE_USD_PER_JPY)
+        # $10B / 0.006316 USD/JPY ≈ ¥1.5833T
+        self.assertAlmostEqual(jpy, 1583280557314.756, places=0)
+
+
+class TestMUFGAdrRatio(unittest.TestCase):
+    """Isolated tests for MUFG ADR ratio (adr_ratio.py)."""
+
+    def test_mufg_adr_ratio_is_one_to_one_per_nyse(self):
+        from adr_ratio import MUFG_ADR_RATIO
+        self.assertIsNotNone(MUFG_ADR_RATIO)
+        self.assertEqual(MUFG_ADR_RATIO.provider, "NYSE")
+        self.assertEqual(MUFG_ADR_RATIO.exchange, "NYSE")
+        # NYSE listing: "EACH REP 1 ORD SHS" → 1 ADR = 1 ordinary share.
+        self.assertEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 1.0)
+        # The old incorrect 2.0 shares/ADR must not be used.
+        self.assertNotEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 2.0)
+        self.assertIn("EACH REP 1 ORD SHS", MUFG_ADR_RATIO.original_amounts["note"])
+        self.assertNotIn("÷ 2", MUFG_ADR_RATIO.original_amounts["note"])
+
+    def test_adr_price_to_underlying_usd_uses_one_to_one(self):
+        from adr_ratio import MUFG_ADR_RATIO, adr_price_to_underlying_usd
+        # $21.88 ADR price ÷ 1.0 = $21.88 underlying share price (USD)
+        underlying = adr_price_to_underlying_usd(21.88, MUFG_ADR_RATIO)
+        self.assertAlmostEqual(underlying, 21.88, places=4)
+
+    def test_underlying_usd_to_jpy_uses_corrected_fx(self):
+        from adr_ratio import MUFG_ADR_RATIO, underlying_usd_to_jpy
+        from fx_rates import MUFG_FX_RATE_USD_PER_JPY
+        # $21.88 / 0.006316 USD/JPY ≈ ¥3,464
+        jpy = underlying_usd_to_jpy(21.88, MUFG_FX_RATE_USD_PER_JPY)
+        self.assertAlmostEqual(jpy, 3464.22, places=0)
+
+
+class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
+    """End-to-end MUFG cross-currency analysis with corrected FX and ADR."""
+
+    def test_mufg_cross_currency_with_corrected_values(self):
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            adr_underlying_shares_per_adr=1.0,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        cc = result["cross_currency"]
+        self.assertTrue(cc["applicable"])
+
+        # FX rate details must reflect the corrected H.10 rate.
+        self.assertIsNotNone(cc["fx_rate"])
+        self.assertAlmostEqual(cc["fx_rate"]["rate_usd_per_jpy"], 0.006316, places=6)
+        # The runner labels operator-supplied rates as "operator-supplied";
+        # the module-level MUFG_FX_RATE_USD_PER_JPY carries the H.10 provider.
+        self.assertEqual(cc["fx_rate"]["provider"], "operator-supplied")
+
+        # ADR ratio must be 1.0 per NYSE listing.
+        self.assertIsNotNone(cc["adr_ratio"])
+        self.assertEqual(cc["adr_ratio"]["underlying_shares_per_adr"], 1.0)
+        # The runner labels operator-supplied ratios as "operator-supplied";
+        # the module-level MUFG_ADR_RATIO carries the NYSE provider.
+        self.assertEqual(cc["adr_ratio"]["provider"], "operator-supplied")
+
+        # Revenue conversion: JPY revenue → USD using corrected FX rate.
+        self.assertIsNotNone(cc["revenue_conversion"])
+        rev = cc["revenue_conversion"]
+        self.assertAlmostEqual(rev["fx_rate_used"], 0.006316, places=6)
+        # P/S must use USD market cap / USD-converted JPY revenue.
+        self.assertIsNotNone(rev["ps_ratio_usd_converted"])
+        # The raw JPY/USD P/S 0.03x must NOT be reported as valid.
+        self.assertNotAlmostEqual(rev["ps_ratio_usd_converted"], 0.03, places=2)
+
+        # EPS conversion: JPY diluted EPS → USD per share / per ADR.
+        self.assertIsNotNone(cc["eps_conversion"])
+        eps = cc["eps_conversion"]
+        self.assertAlmostEqual(eps["fx_rate_used"], 0.006316, places=6)
+        self.assertEqual(eps["adr_ratio_used"], 1.0)
+        # With 1:1 ADR, EPS per share == EPS per ADR.
+        self.assertAlmostEqual(
+            eps["eps_usd_per_share_converted"],
+            eps["eps_usd_per_adr_converted"],
+            places=4,
+        )
+
+        # Derived EPS labelled annual, not TTM.
+        self.assertIsNotNone(cc["ttm_eps"])
+        self.assertIn("not true TTM", cc["ttm_eps"]["basis"])
+
+        # Corporate targets shown separately from EPS, not converted to growth rate.
+        self.assertIsNotNone(cc["corporate_target_comparison"])
+        tgt = cc["corporate_target_comparison"]
+        self.assertIsNotNone(tgt["net_income_fy2025_actual_usd"])
+        self.assertIsNotNone(tgt["net_income_target_fy2026_usd"])
+        self.assertIn("NOT converted to an EPS growth rate", tgt["note"])
+
+    def test_mufg_historical_pe_insufficient_observations(self):
+        """Historical P/E band has 8 observations (< 20) → UNAVAILABLE."""
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            adr_underlying_shares_per_adr=1.0,
+            include_historical_pe=True,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        ref = result["reference"]
+        self.assertEqual(ref["production_historical_pe_status"], "UNAVAILABLE")
+        self.assertEqual(ref["min_observations_for_reference"], 20)
+
+    def test_mufg_reverse_requirements_not_computed_without_user_multiple(self):
+        """No user-supplied exit multiple → reverse requirements NOT_COMPUTED."""
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="auto",
+            fx_rate_usd_per_jpy=0.006316,
+            adr_underlying_shares_per_adr=1.0,
+            save_snapshot=False,
+        )
+        self.assertIsNotNone(result)
+        rr = result["reverse_requirements"]
+        self.assertEqual(rr["status"], "NOT_COMPUTED")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -34,18 +34,22 @@ class AdrRatio:
     original_amounts: Optional[dict] = None
 
 
-# MUFG ADR ratio: 1 MUFG ADR (NYSE: MUFG) = 2 underlying ordinary shares
-# (TSE: 8309). Source: MUFG ADR deposit agreement / BNY Mellon ADR directory.
+# MUFG ADR ratio: 1 MUFG ADR (NYSE: MUFG) = 1 underlying ordinary share
+# (TSE: 8309). Source: NYSE listing "MITSUBISHI UFJ FINANCIAL GROUP INC
+# SPON ADS EACH REP 1 ORD SHS" (https://www.nyse.com/quote/XNYS:MUFG).
 MUFG_ADR_RATIO = AdrRatio(
-    underlying_shares_per_adr=2.0,
+    underlying_shares_per_adr=1.0,
     as_of="2026-10-16",
-    provider="ST-EVA MUFG Cross-Currency Reference",
-    source_url="https://www.bnymellon.com/us/en/adrs/directory.html",
+    provider="NYSE",
+    source_url="https://www.nyse.com/quote/XNYS:MUFG",
     exchange="NYSE",
     original_amounts={
-        "note": "1 MUFG ADR = 2 underlying ordinary shares. "
-        "ADR price in USD ÷ 2 = underlying share price in USD. "
-        "Then apply USD/JPY FX rate to get JPY share price.",
+        "note": "NYSE listing: 'MITSUBISHI UFJ FINANCIAL GROUP INC SPON ADS "
+        "EACH REP 1 ORD SHS' → 1 MUFG ADR = 1 underlying ordinary share. "
+        "ADR price in USD equals underlying share price in USD (no division "
+        "by 2). Then apply USD/JPY FX rate to get JPY share price. "
+        "The prior 2.0 shares/ADR value was incorrect and has been corrected "
+        "to 1.0 per the NYSE listing.",
     },
 )
 
