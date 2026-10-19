@@ -2036,19 +2036,23 @@ The manifest's recorded production block is still compared against a live `load_
 
 ### CI
 
-The three new failures are gone. Full local backend run of `tests/`: **`41 failed, 2417 passed, 170 skipped, 498 subtests`** — the same 41 failures as before this round plus the 6 new tests, and the three manifest failures resolved:
+The three new failures are gone, confirmed on the CI runner itself (run 39308312152 for `bf08476`): **`42 failed, 2373 passed, 170 skipped, 498 subtests`**.
 
 | comparison | result |
 | --- | --- |
-| CI run of `157e636` (39304225754) | 45 failed, 2364 passed, 170 skipped |
-| local full run after this round | 41 failed, 2417 passed, 170 skipped |
-| `test_main_manifest_digests_match_the_actual_files` | **resolved** (failing in CI, passing locally) |
-| `test_prices_manifest_digest_matches_the_actual_daily_prices_file` | **resolved** (failing in CI, passing locally) |
-| `test_manifest_pipeline_block_matches_the_live_pipeline_output` | **resolved** (failing in CI, passing locally) |
-| new regressions vs the CI run of `157e636` | **none** |
-| new regressions vs baseline 39239093577 | **none** |
+| baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39290402337 (`9cb3610`) | 42 failed, 2353 passed, 170 skipped, 498 subtests |
+| CI 39304225754 (`157e636`) | 45 failed, 2364 passed, 170 skipped, 498 subtests |
+| CI 39308312152 (`bf08476`, this round) | **42 failed, 2373 passed, 170 skipped, 498 subtests** |
+| `test_main_manifest_digests_match_the_actual_files` | **resolved** |
+| `test_prices_manifest_digest_matches_the_actual_daily_prices_file` | **resolved** |
+| `test_manifest_pipeline_block_matches_the_live_pipeline_output` | **resolved** |
+| new regressions vs baseline 39239093577 | **none** — the failure set is identical to the baseline, not merely the same size |
+| failures fixed relative to baseline | **none** |
 
-The local set differs from the CI set by exactly one entry in the other direction: `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes` fails in CI and passes locally, in both the baseline and this round — an environment-dependent pre-existing MUFG failure, untouched by this work.
+The `bf08476` failure set is byte-identical to the baseline's: 42 entries in both, zero only-in-new and zero only-in-pre. The workflow still reports `failure` overall because those 42 pre-existing failures remain; that is the confirmed pre-existing state, not a new regression.
+
+Local full backend run of `tests/`: `41 failed, 2417 passed, 170 skipped, 498 subtests` — the same pre-existing set, with the three manifest failures resolved and 6 more tests passing. The local set differs from the CI set by exactly one entry in the other direction: `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes` fails in CI and passes locally, in the baseline and in this round alike — an environment-dependent pre-existing MUFG failure, untouched by this work.
 
 The designated historical P/E, adapter and reproducibility suites pass locally (`146 passed, 1 skipped, 121 subtests` for `test_historical_pe.py`, `test_aapl_historical_pe.py`, `test_msft_historical_pe.py`, `test_mu_historical_pe.py`, `test_historical_pe_adapter.py` and `test_msft_production_reproducibility.py`).
 
@@ -2058,4 +2062,4 @@ Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
 ## Next task status
 
-The three CI failures introduced by `157e636` are fixed at the root cause: the dataset files now carry canonical LF bytes on every platform, the manifests record forward-slash paths that resolve everywhere, and the recorded `input_set_id` reproduces the value the Linux CI runner computes. The production output is unchanged (130 observations, median 47.299768, snapshot AVAILABLE). The remaining backend CI failures are the pre-existing set confirmed against baseline 39239093577; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
+The three CI failures introduced by `157e636` are fixed at the root cause: the dataset files now carry canonical LF bytes on every platform, the manifests record forward-slash paths that resolve everywhere, and the recorded `input_set_id` reproduces the value the Linux CI runner computes. CI run 39308312152 confirms `42 failed, 2373 passed` with a failure set byte-identical to the pre-SOFI baseline 39239093577 — the three new failures resolved, zero new regressions, zero pre-existing failures fixed. The production output is unchanged (130 observations, median 47.299768, snapshot AVAILABLE). The remaining 42 backend CI failures are the confirmed pre-existing set and are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
