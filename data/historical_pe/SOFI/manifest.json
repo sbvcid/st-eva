@@ -1,0 +1,17 @@
+{
+  "ticker": "SOFI",
+  "ticker_identifier": "SOFI",
+  "role": "production_candidate_checked",
+  "status": "INSUFFICIENT_OBSERVATIONS",
+  "sample_count": 0,
+  "effective_observations": 0,
+  "qualifying_observations": 0,
+  "sources_attempted": [
+    "data/archives/SOFI.sqlite (primary archive)",
+    "SOFI price observation (2 points, 2026-10-19)",
+    "SOFI eps_diluted observations (14 fiscal periods)"
+  ],
+  "archive_observation_summary": 2,
+  "note": "Verified against existing pipeline rules. Not promoted to production reference due to insufficient structured historical evidence.",
+  "derived_at": "2026-10-19 15:41:18.923088+00:00"
+}
