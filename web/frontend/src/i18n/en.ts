@@ -110,8 +110,18 @@ export const en: Translations = {
     matrixPfcfLimitationNotice:
       'The top-level FCF figure is a single-point reference inferred from the historical P/FCF median. It is not used as a per-scenario exit multiple in the reverse-requirements matrix, which draws exit multiples from the historical P/E distribution or user-supplied multiples only. The two references serve different purposes and are not interchangeable.',
     // Replay divergence structured diff labels
-    replayDiffHeader: 'Replay divergence detail:',
-    replayDiffAvailability: 'Observation availability:',
+    // Observation availability classes (all observations, informational only)
+    replayObsAvailabilityHeader: 'Observation availability classes:',
+    replayObsAvailabilityNote:
+      'These are observation availability classifications (SOURCE_DECLARED, ARCHIVE_FIRST_SEEN, UNDECLARED), not field-level differences between the stored and rebuilt contexts.',
+    // Field-level differences between stored and rebuilt contexts
+    replayFieldDiffHeader: 'Field-level differences (stored vs rebuilt):',
+    replayFieldDiffCount: (count: number) => `${count} field(s) differ`,
+    replayFieldDiffToggle: 'Show field differences',
+    replayFieldDiffMore: (remaining: number) => `and ${remaining} more...`,
+    replayDiffStoredLabel: 'stored',
+    replayDiffRebuiltLabel: 'rebuilt',
+    replayDiffNoDetail: 'No field-level differences or observation classifications available.',
   },
   assumptions: {
     title: 'Scenario Assumptions & Controls',

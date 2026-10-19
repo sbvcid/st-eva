@@ -91,8 +91,17 @@ export interface Translations {
     // Matrix limitation: top-level P/FCF single-point vs per-scenario matrix input
     matrixPfcfLimitationNotice: string
     // Replay divergence structured diff labels
-    replayDiffHeader: string
-    replayDiffAvailability: string
+    // Observation availability classes (all observations, informational only)
+    replayObsAvailabilityHeader: string
+    replayObsAvailabilityNote: string
+    // Field-level differences between stored and rebuilt contexts
+    replayFieldDiffHeader: string
+    replayFieldDiffCount: (count: number) => string
+    replayFieldDiffToggle: string
+    replayFieldDiffMore: (remaining: number) => string
+    replayDiffStoredLabel: string
+    replayDiffRebuiltLabel: string
+    replayDiffNoDetail: string
   }
   assumptions: {
     title: string

@@ -46,6 +46,11 @@ export interface ReplaySummary {
   // and their availability class. Used to explain a DIVERGED outcome with
   // concrete per-observation detail rather than only a generic reason string.
   availability_classes?: Array<{ observation_id: string; class: string }> | null
+  // Field-level differences between the stored context and the rebuilt
+  // context. Each entry has `field` (dotted path), `stored` (old value),
+  // and `rebuilt` (new value). Volatile fields (timestamps, hashes,
+  // refc:* reference timestamps) are excluded.
+  field_diffs?: Array<{ field: string; stored: unknown; rebuilt: unknown }> | null
 }
 
 export interface ValuationSummary {

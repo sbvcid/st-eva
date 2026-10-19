@@ -82,6 +82,11 @@ class ReplaySummary(BaseModel):
     # and their availability class. Used to explain a DIVERGED outcome with
     # concrete per-observation detail rather than only a generic reason string.
     availability_classes: List[Dict[str, Any]] = Field(default_factory=list)
+    # Field-level differences between the stored context and the rebuilt
+    # context. Each entry is {"field": dotted_path, "stored": old_value,
+    # "rebuilt": new_value}. Empty when no stored context exists, when the
+    # contexts match, or when every difference is confined to volatile fields.
+    field_diffs: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class ValuationSummary(BaseModel):

@@ -237,6 +237,14 @@ class ReplayResult:
     availability_classes: Tuple[Tuple[str, str], ...] = ()
     availability_from: Dict[str, str] = field(default_factory=dict)
     admissions: Tuple[Any, ...] = ()
+    # Field-level differences between the stored context and the rebuilt
+    # context. Each entry is {"field": dotted_path, "stored": old_value,
+    # "rebuilt": new_value}. Empty when no stored context exists, when the
+    # contexts match, or when every difference is confined to volatile fields
+    # (timestamps, hashes) that are deliberately excluded. This is distinct
+    # from `availability_classes`, which classifies every observation rather
+    # than reporting actual value differences.
+    field_diffs: Tuple[Dict[str, Any], ...] = ()
 
     @property
     def matched(self) -> bool:
@@ -262,6 +270,10 @@ class ReplayResult:
             "availability_classes": [
                 {"observation_id": ref, "class": klass}
                 for ref, klass in self.availability_classes
+            ],
+            "field_diffs": [
+                {"field": d["field"], "stored": d["stored"], "rebuilt": d["rebuilt"]}
+                for d in self.field_diffs
             ],
         }
 
@@ -666,6 +678,11 @@ def replay(
         observations_considered=considered,
         replay_fidelity=fidelity,
         availability_classes=classes,
+        field_diffs=tuple(
+            _dict_diff(stored, rebuilt)
+        )
+        if not matched and stored is not None
+        else (),
         admissions=admissions_recomputed,
     )
 
@@ -693,3 +710,47 @@ def _stored_class(
     if eligibility.get(observation.observation_id):
         return ARCHIVE_FIRST_SEEN
     return UNDECLARED
+
+
+_VOLATILE_FIELD_NAMES = frozenset({"generated_at", "document_hash"})
+_MAX_FIELD_DIFFS = 50
+
+
+def _is_volatile_field(path: str) -> bool:
+    """A field is volatile if its final segment is a timestamp/hash/refc field."""
+    last = path.rsplit(".", 1)[-1]
+    return last in _VOLATILE_FIELD_NAMES or last.startswith("refc:")
+
+
+def _dict_diff(
+    stored: Optional[Dict[str, Any]],
+    rebuilt: Optional[Dict[str, Any]],
+    prefix: str = "",
+) -> List[Dict[str, Any]]:
+    """Recursively compare two documents, returning field-level differences.
+
+    Volatile fields (timestamps, hashes, refc:* reference timestamps) are
+    excluded because they legitimately differ between a stored snapshot and
+    a fresh rebuild without indicating a real divergence.
+    """
+    if stored is None or rebuilt is None:
+        return []
+    diffs: List[Dict[str, Any]] = []
+    keys = set(stored.keys()) | set(rebuilt.keys())
+    for key in sorted(keys):
+        path = f"{prefix}.{key}" if prefix else key
+        if _is_volatile_field(path):
+            continue
+        s_val = stored.get(key)
+        r_val = rebuilt.get(key)
+        if key not in stored:
+            diffs.append({"field": path, "stored": None, "rebuilt": r_val})
+        elif key not in rebuilt:
+            diffs.append({"field": path, "stored": s_val, "rebuilt": None})
+        elif isinstance(s_val, dict) and isinstance(r_val, dict):
+            diffs.extend(_dict_diff(s_val, r_val, path))
+        elif s_val != r_val:
+            diffs.append({"field": path, "stored": s_val, "rebuilt": r_val})
+        if len(diffs) >= _MAX_FIELD_DIFFS:
+            break
+    return diffs

@@ -286,6 +286,10 @@ class AnalysisServiceAdapter:
                             {"observation_id": ref, "class": klass}
                             for ref, klass in replay_res.availability_classes
                         ],
+                        field_diffs=[
+                            {"field": d["field"], "stored": d["stored"], "rebuilt": d["rebuilt"]}
+                            for d in replay_res.field_diffs
+                        ],
                     )
                 except Exception as replay_err:
                     replay_summary = ReplaySummary(

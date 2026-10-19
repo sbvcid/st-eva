@@ -407,21 +407,72 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
             <span>{t.results.obsConsidered(replay.observations_considered)}</span>
             {replay.replay_fidelity && <span>{t.results.fidelity(replay.replay_fidelity)}</span>}
           </div>
-          {replay.outcome === 'DIVERGED' && replay.availability_classes && replay.availability_classes.length > 0 && (
+          {replay.outcome === 'DIVERGED' && (
             <div className="mt-2 text-[10px] text-slate-500">
-              <p className="font-semibold text-slate-700 mb-1">
-                {t.results.replayDiffHeader}
-              </p>
-              <div className="flex flex-wrap gap-2 text-amber-800 font-mono">
-                {replay.availability_classes.map((item, idx) => (
-                  <span key={idx} title={`${item.observation_id}: ${item.class}`}>
-                    {item.observation_id}:{item.class}
-                  </span>
-                ))}
-              </div>
-              <p className="text-slate-500 mt-1">
-                {t.results.replayDiffAvailability}
-              </p>
+              {/* Observation availability classes (informational, not field diffs) */}
+              {replay.availability_classes && replay.availability_classes.length > 0 && (
+                <div className="mb-2">
+                  <p className="font-semibold text-slate-700 mb-1">
+                    {t.results.replayObsAvailabilityHeader}
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-slate-600 font-mono">
+                    {replay.availability_classes.map((item, idx) => (
+                      <span key={idx} title={`${item.observation_id}: ${item.class}`}>
+                        {item.observation_id}:{item.class}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-slate-500 mt-1">
+                    {t.results.replayObsAvailabilityNote}
+                  </p>
+                </div>
+              )}
+              {/* Field-level diffs between stored and rebuilt contexts */}
+              {replay.field_diffs && replay.field_diffs.length > 0 && (
+                <div className="mt-2">
+                  <p className="font-semibold text-amber-900 mb-1">
+                    {t.results.replayFieldDiffHeader}
+                  </p>
+                  <div className="text-xs text-amber-800 mb-1">
+                    {t.results.replayFieldDiffCount(replay.field_diffs.length)}
+                  </div>
+                  <details className="border border-amber-200 rounded p-2 bg-amber-50 text-xs">
+                    <summary className="font-medium cursor-pointer list-item">
+                      {t.results.replayFieldDiffToggle}
+                    </summary>
+                    <div className="mt-2 space-y-1">
+                      {replay.field_diffs.slice(0, 10).map((diff, idx) => (
+                        <div key={idx} className="flex flex-col gap-1 text-slate-700">
+                          <span className="font-mono">{diff.field}</span>
+                          <div className="flex gap-2 pl-2">
+                            <span className="text-red-600 text-[10px]">
+                              {t.results.replayDiffStoredLabel}:
+                            </span>
+                            <span className="truncate max-w-[200px]">{JSON.stringify(diff.stored)}</span>
+                          </div>
+                          <div className="flex gap-2 pl-2">
+                            <span className="text-green-600 text-[10px]">
+                              {t.results.replayDiffRebuiltLabel}:
+                            </span>
+                            <span className="truncate max-w-[200px]">{JSON.stringify(diff.rebuilt)}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {replay.field_diffs.length > 10 && (
+                        <p className="text-slate-500 text-[10px] italic">
+                          {t.results.replayFieldDiffMore(replay.field_diffs.length - 10)}
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                </div>
+              )}
+              {(!replay.availability_classes || replay.availability_classes.length === 0) &&
+               (!replay.field_diffs || replay.field_diffs.length === 0) && (
+                <p className="text-slate-500">
+                  {t.results.replayDiffNoDetail}
+                </p>
+              )}
             </div>
           )}
         </div>

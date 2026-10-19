@@ -110,8 +110,18 @@ export const zhTW: Translations = {
     matrixPfcfLimitationNotice:
       '頂層自由現金流數字為單點參考值，由歷史 P/FCF 中位數反推而得。此數字不作為反推需求矩陣中的逐情境退出倍數使用；矩陣的退出倍數僅來自歷史 P/E 分佈或使用者自訂倍數。兩者用途不同，不可互換。',
     // Replay divergence structured diff labels
-    replayDiffHeader: '重演歧異細節：',
-    replayDiffAvailability: '觀測值可用性：',
+    // Observation availability classes (all observations, informational only)
+    replayObsAvailabilityHeader: '觀測值可用性分類：',
+    replayObsAvailabilityNote:
+      '這些是觀測值可用性分類（SOURCE_DECLARED、ARCHIVE_FIRST_SEEN、UNDECLARED），並非儲存情境與重建情境之間的欄位差異。',
+    // Field-level differences between stored and rebuilt contexts
+    replayFieldDiffHeader: '欄位差異（儲存 vs 重建）：',
+    replayFieldDiffCount: (count: number) => `${count} 個欄位不同`,
+    replayFieldDiffToggle: '顯示欄位差異',
+    replayFieldDiffMore: (remaining: number) => `還有 ${remaining} 個...`,
+    replayDiffStoredLabel: '儲存值',
+    replayDiffRebuiltLabel: '重建值',
+    replayDiffNoDetail: '沒有可用的欄位差異或觀測值可用性分類。',
   },
   assumptions: {
     title: '情境假設參數設定',
