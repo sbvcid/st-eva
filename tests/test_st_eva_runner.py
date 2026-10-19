@@ -689,13 +689,13 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         cc = result["cross_currency"]
         self.assertTrue(cc["applicable"])
 
-        # Fiscal-period FX rate (Fed H.10, 2026-10-09) - reference only.
+        # Historical reference FX rate (Fed H.10, 2026-10-09) - reference only.
         self.assertIsNotNone(cc["fx_rate_fiscal_period"])
         fp = cc["fx_rate_fiscal_period"]
         self.assertAlmostEqual(fp["rate_usd_per_jpy"], 0.006316, places=6)
         self.assertEqual(fp["as_of"], "2026-10-09")
         self.assertEqual(fp["provider"], "operator-supplied")
-        self.assertEqual(fp["scope"], "fiscal_period")
+        self.assertEqual(fp["scope"], "reference_only")
         self.assertNotIn("analysis_date", fp["note"].lower())
 
         # Analysis-date FX rate (ECB, 2026-10-16) - used for conversions.
@@ -767,7 +767,7 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         # Both rates present in output.
         self.assertIsNotNone(cc["fx_rate_fiscal_period"])
         self.assertIsNotNone(cc["fx_rate_analysis_date"])
-        # Conversions use analysis-date rate (0.0063283095), not fiscal-period (0.006316).
+        # Conversions use analysis-date rate (0.0063283095), not historical reference (0.006316).
         self.assertAlmostEqual(
             cc["revenue_conversion"]["fx_rate_used"],
             1.1253 / 177.82,
@@ -779,8 +779,8 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
             places=6,
         )
 
-    def test_mufg_fallback_to_fiscal_period_when_no_analysis_date(self):
-        """When only fiscal-period rate is provided, conversions use it."""
+    def test_mufg_fallback_to_reference_only_when_no_analysis_date(self):
+        """When only historical reference rate is provided, conversions use it."""
         result = run_st_eva(
             ticker="MUFG",
             mode="auto",
@@ -792,13 +792,13 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         cc = result["cross_currency"]
         self.assertIsNotNone(cc["fx_rate_fiscal_period"])
         self.assertIsNone(cc["fx_rate_analysis_date"])
-        # Conversions fall back to fiscal-period rate.
+        # Conversions fall back to historical reference rate.
         self.assertAlmostEqual(
             cc["revenue_conversion"]["fx_rate_used"],
             0.006316,
             places=6,
         )
-        self.assertEqual(cc["revenue_conversion"]["fx_scope"], "fiscal_period")
+        self.assertEqual(cc["revenue_conversion"]["fx_scope"], "reference_only")
 
     def test_mufg_historical_pe_insufficient_observations(self):
         """Historical P/E band has 8 observations (< 20) → UNAVAILABLE."""

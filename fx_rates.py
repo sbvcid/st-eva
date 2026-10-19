@@ -37,12 +37,11 @@ class FxRate:
 
 
 # ---------------------------------------------------------------------------
-# Fiscal-period FX rate: Federal Reserve H.10 observation for 2026-10-09.
+# Historical reference FX rate: Federal Reserve H.10 observation for 2026-10-09.
 #
-# This rate is tied to a specific H.10 publication date (2026-10-09) and is
-# used only when a corresponding fiscal-period source and conversion method
-# are available. It is NOT the analysis-date rate and must not be used as a
-# proxy for 2026-10-16.
+# This rate is a historical reference observation tied to a specific H.10
+# publication date (2026-10-09). It is reference-only and must NOT be used
+# as a fiscal-period conversion rate or as a proxy for the analysis-date rate.
 # ---------------------------------------------------------------------------
 # Source: Federal Reserve H.10 daily bilateral exchange rate, Japanese Yen
 # per U.S. dollar = 158.3400, i.e. 1 JPY = 1/158.3400 = 0.006316 USD.
@@ -55,8 +54,9 @@ MUFG_FX_RATE_USD_PER_JPY = FxRate(
     original_amounts={
         "note": "158.3400 JPY per USD (Federal Reserve H.10, 2026-10-09). "
         "1 JPY = 0.006316 USD. Reciprocal: 1 USD = 158.3400 JPY. "
-        "Fiscal-period FX rate observation date: 2026-10-09. "
-        "Not the analysis-date rate; do not use as a proxy for 2026-10-16.",
+        "Historical reference observation date: 2026-10-09. "
+        "Reference only — not a fiscal-period conversion rate and not an "
+        "analysis-date proxy.",
     },
 )
 
@@ -92,8 +92,8 @@ MUFG_FX_RATE_ANALYSIS_DATE_USD_PER_JPY = FxRate(
 
 
 def mufg_fx_rate() -> Optional[FxRate]:
-    """Return the MUFG fiscal-period FX rate reference (Fed H.10, 2026-10-09),
-    or None if unavailable."""
+    """Return the MUFG historical reference FX rate (Fed H.10, 2026-10-09),
+    or None if unavailable. Reference only — not a fiscal-period rate."""
     return MUFG_FX_RATE_USD_PER_JPY
 
 

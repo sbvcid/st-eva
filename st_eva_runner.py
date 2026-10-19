@@ -2397,7 +2397,8 @@ def run_st_eva(
     fx_analysis_date = None
     adr = None
 
-    # Fiscal-period FX rate (Fed H.10, 2026-10-09)
+    # Historical reference FX rate (Fed H.10, 2026-10-09) - reference only,
+    # not an actual fiscal-period conversion rate.
     if fx_rate_usd_per_jpy is not None:
         try:
             from fx_rates import FxRate, convert_jpy_to_usd, convert_usd_to_jpy
@@ -2444,7 +2445,7 @@ def run_st_eva(
     # Determine which FX rate to use for conversions: analysis-date rate
     # takes precedence; fiscal-period rate is reference-only.
     fx_for_conversion = fx_analysis_date if fx_analysis_date is not None else fx_rate
-    fx_scope = "analysis_date" if fx_analysis_date is not None else "fiscal_period"
+    fx_scope = "analysis_date" if fx_analysis_date is not None else "reference_only"
 
     if fx_for_conversion is not None or adr is not None:
         cross_currency["applicable"] = True
@@ -2456,9 +2457,10 @@ def run_st_eva(
                 "provider": fx_rate.provider,
                 "source_url": fx_rate.source_url,
                 "quote_direction": fx_rate.quote_direction,
-                "scope": "fiscal_period",
-                "note": "Fiscal-period FX reference (Fed H.10, 2026-10-09). "
-                        "Not used as a proxy for the analysis-date rate.",
+                "scope": "reference_only",
+                "note": "Historical reference FX observation (Fed H.10, 2026-10-09). "
+                        "Reference only — not a fiscal-period conversion rate and "
+                        "must not be used for period conversion.",
             }
 
         if fx_analysis_date is not None:
