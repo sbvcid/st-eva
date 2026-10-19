@@ -2112,6 +2112,8 @@ def run_st_eva(
     include_historical_pfcf: bool = False,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
+    fx_rate_usd_per_jpy: Optional[float] = None,
+    adr_underlying_shares_per_adr: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
@@ -2356,6 +2358,244 @@ def run_st_eva(
         if value in (None, UNAVAILABLE, {}):
             missing_data.append(name)
 
+    # ------------------------------------------------------------------
+    # Cross-currency processing for MUFG (USD price/market cap vs JPY
+    # financials). No implicit conversion: every converted figure names the
+    # FX rate, ADR ratio, and original amounts.
+    # ------------------------------------------------------------------
+    cross_currency: Dict[str, Any] = {
+        "applicable": False,
+        "reason": None,
+        "fx_rate": None,
+        "adr_ratio": None,
+        "revenue_conversion": None,
+        "eps_conversion": None,
+        "ps_ratio": None,
+        "ttm_eps": None,
+        "corporate_target_comparison": None,
+    }
+
+    fx_rate = None
+    adr = None
+    if fx_rate_usd_per_jpy is not None:
+        try:
+            from fx_rates import FxRate, convert_jpy_to_usd, convert_usd_to_jpy
+
+            fx_rate = FxRate(
+                rate_usd_per_jpy=fx_rate_usd_per_jpy,
+                as_of=data.price_date,
+                provider="operator-supplied",
+                source_url="operator-supplied",
+                quote_direction="USD per JPY",
+            )
+        except Exception:
+            fx_rate = None
+
+    if adr_underlying_shares_per_adr is not None:
+        try:
+            from adr_ratio import AdrRatio
+
+            adr = AdrRatio(
+                underlying_shares_per_adr=float(adr_underlying_shares_per_adr),
+                as_of=data.price_date,
+                provider="operator-supplied",
+                source_url="operator-supplied",
+                exchange=data.exchange,
+            )
+        except Exception:
+            adr = None
+
+    if fx_rate is not None or adr is not None:
+        cross_currency["applicable"] = True
+
+        if fx_rate is not None:
+            cross_currency["fx_rate"] = {
+                "rate_usd_per_jpy": fx_rate.rate_usd_per_jpy,
+                "as_of": fx_rate.as_of,
+                "provider": fx_rate.provider,
+                "source_url": fx_rate.source_url,
+                "quote_direction": fx_rate.quote_direction,
+                "note": "Explicit FX reference for MUFG cross-currency "
+                        "calculations only. Not a general ST-EVA FX facility.",
+            }
+
+        if adr is not None:
+            cross_currency["adr_ratio"] = {
+                "underlying_shares_per_adr": adr.underlying_shares_per_adr,
+                "as_of": adr.as_of,
+                "provider": adr.provider,
+                "source_url": adr.source_url,
+                "exchange": adr.exchange,
+                "note": "1 MUFG ADR = N underlying ordinary shares.",
+            }
+
+        # Revenue conversion: JPY revenue -> USD using explicit FX rate.
+        # The Yahoo revenue observation is flagged CURRENCY_MISMATCH against
+        # the USD market cap; the SEC revenue observations are also JPY.
+        # Convert each JPY revenue figure explicitly with the named FX rate.
+        revenue_jpy = safe_float(data.current_revenue)
+        if revenue_jpy is not None and fx_rate is not None:
+            revenue_usd = convert_jpy_to_usd(revenue_jpy, fx_rate)
+            market_cap_usd = safe_float(data.current_market_cap)
+            ps_ratio_usd = (
+                market_cap_usd / revenue_usd
+                if market_cap_usd and revenue_usd
+                else None
+            )
+            cross_currency["revenue_conversion"] = {
+                "revenue_jpy": revenue_jpy,
+                "revenue_usd_converted": revenue_usd,
+                "fx_rate_used": fx_rate.rate_usd_per_jpy,
+                "fx_as_of": fx_rate.as_of,
+                "market_cap_usd": market_cap_usd,
+                "ps_ratio_usd_converted": ps_ratio_usd,
+                "note": "P/S computed as USD market cap / USD-converted JPY "
+                        "revenue using the explicit FX rate above. The raw "
+                        "JPY revenue / USD market cap ratio (P/S 0.03x) mixes "
+                        "currencies and is not reported as a valid multiple.",
+            }
+
+        # EPS conversion: JPY diluted EPS -> USD using FX rate + ADR ratio.
+        # Yahoo trailing EPS (1.53 USD) is already USD; SEC diluted EPS
+        # (¥108.18 / ¥151.09) is JPY per underlying share.
+        # Read SEC diluted EPS directly from the per-ticker archive so it is
+        # available even when no SEC context was acquired in this run.
+        sec_diluted_eps_jpy = None
+        sec_diluted_eps_period = None
+        sec_diluted_eps_accession = None
+        sec_diluted_eps_fiscal_year = None
+        try:
+            import sqlite3
+            archive_path = f"data/archives/{data.ticker}.sqlite"
+            conn = sqlite3.connect(archive_path)
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                """
+                SELECT value_json, period_start, period_end, fiscal_year,
+                       accession, source_url, raw_json
+                FROM observations
+                WHERE metric = 'eps_diluted' AND value_json IS NOT NULL
+                  AND value_json != 'null'
+                ORDER BY period_end DESC
+                LIMIT 1
+                """
+            ).fetchone()
+            if row is not None:
+                raw_value = row["value_json"]
+                # value_json may be stored as a JSON string; coerce to number.
+                if isinstance(raw_value, str):
+                    try:
+                        raw_value = json.loads(raw_value)
+                    except Exception:
+                        try:
+                            raw_value = float(raw_value)
+                        except Exception:
+                            raw_value = None
+                sec_diluted_eps_jpy = safe_float(raw_value)
+                sec_diluted_eps_period = (
+                    f"{row['period_start']} to {row['period_end']}"
+                    if row["period_start"] and row["period_end"]
+                    else None
+                )
+                sec_diluted_eps_accession = row["accession"]
+                sec_diluted_eps_fiscal_year = row["fiscal_year"]
+                raw = json.loads(row["raw_json"]) if row["raw_json"] else {}
+                sec_fact = raw.get("sec_fact", {}) if isinstance(raw, dict) else {}
+                if sec_diluted_eps_accession is None:
+                    sec_diluted_eps_accession = sec_fact.get("accession")
+            conn.close()
+        except Exception:
+            sec_diluted_eps_jpy = None
+            sec_diluted_eps_period = None
+            sec_diluted_eps_accession = None
+            sec_diluted_eps_fiscal_year = None
+
+        if fx_rate is not None and sec_diluted_eps_jpy is not None:
+            eps_usd_per_share = convert_jpy_to_usd(
+                sec_diluted_eps_jpy, fx_rate
+            )
+            if adr is not None:
+                eps_usd_per_adr = eps_usd_per_share * adr.underlying_shares_per_adr
+            else:
+                eps_usd_per_adr = None
+            cross_currency["eps_conversion"] = {
+                "eps_jpy_per_share": sec_diluted_eps_jpy,
+                "eps_usd_per_share_converted": eps_usd_per_share,
+                "eps_usd_per_adr_converted": eps_usd_per_adr,
+                "fx_rate_used": fx_rate.rate_usd_per_jpy,
+                "fx_as_of": fx_rate.as_of,
+                "adr_ratio_used": (
+                    adr.underlying_shares_per_adr if adr else None
+                ),
+                "period": sec_diluted_eps_period,
+                "fiscal_year": sec_diluted_eps_fiscal_year,
+                "accession": sec_diluted_eps_accession,
+                "note": "SEC diluted EPS (JPY per underlying share) "
+                        "converted to USD using the explicit FX rate and "
+                        "ADR ratio. Not mixed with Yahoo USD EPS without "
+                        "explicit disclosure.",
+            }
+
+        # TTM EPS derivation from SEC annual diluted EPS.
+        # True TTM requires quarterly data; only annual SEC observations are
+        # available for MUFG. The latest annual diluted EPS is the closest
+        # available figure; it is labelled as annual, not TTM.
+        if fx_rate is not None and sec_diluted_eps_jpy is not None:
+            ttm_eps_usd = convert_jpy_to_usd(sec_diluted_eps_jpy, fx_rate)
+            if adr is not None:
+                ttm_eps_usd_per_adr = ttm_eps_usd * adr.underlying_shares_per_adr
+            else:
+                ttm_eps_usd_per_adr = None
+            cross_currency["ttm_eps"] = {
+                "eps_jpy_per_share": sec_diluted_eps_jpy,
+                "eps_usd_per_share": ttm_eps_usd,
+                "eps_usd_per_adr": ttm_eps_usd_per_adr,
+                "basis": "Latest annual diluted EPS (SEC 20-F), not true TTM "
+                         "(quarterly SEC data not available in archive).",
+                "currency": "JPY (original) / USD (converted)",
+                "fx_rate_used": fx_rate.rate_usd_per_jpy,
+                "fx_as_of": fx_rate.as_of,
+                "adr_ratio_used": (
+                    adr.underlying_shares_per_adr if adr else None
+                ),
+                "period": sec_diluted_eps_period,
+                "accession": sec_diluted_eps_accession,
+                "note": "Derived EPS is the latest annual diluted EPS "
+                        "converted to USD. It is labelled annual, not TTM, "
+                        "because quarterly SEC observations are not available "
+                        "in the archive.",
+            }
+
+        # Corporate target comparison: FY2026 ¥2.7T target vs FY2025 ¥2.427T
+        # actual vs derived TTM EPS. Net income target and EPS back-out
+        # threshold are shown separately; net income target is NOT converted
+        # to EPS growth rate without share count.
+        net_income_fy2025_jpy = 2427000000000.0  # ¥2.427T actual FY2025
+        net_income_target_fy2026_jpy = 2700000000000.0  # ¥2.7T target FY2026
+        if fx_rate is not None:
+            net_income_fy2025_usd = convert_jpy_to_usd(
+                net_income_fy2025_jpy, fx_rate
+            )
+            net_income_target_fy2026_usd = convert_jpy_to_usd(
+                net_income_target_fy2026_jpy, fx_rate
+            )
+            cross_currency["corporate_target_comparison"] = {
+                "net_income_fy2025_actual_jpy": net_income_fy2025_jpy,
+                "net_income_fy2025_actual_usd": net_income_fy2025_usd,
+                "net_income_target_fy2026_jpy": net_income_target_fy2026_jpy,
+                "net_income_target_fy2026_usd": net_income_target_fy2026_usd,
+                "fx_rate_used": fx_rate.rate_usd_per_jpy,
+                "derived_ttm_eps_usd_per_share": (
+                    cross_currency["ttm_eps"]["eps_usd_per_share"]
+                    if cross_currency["ttm_eps"] else None
+                ),
+                "note": "Management FY2026 net income target (¥2.7T) and "
+                        "FY2025 actual (¥2.427T) are shown separately from the "
+                        "derived EPS. The net income target is NOT converted to "
+                        "an EPS growth rate because the share count needed for "
+                        "that conversion is not available in this run.",
+            }
+
     result = {
         "analysis_type": VERSION_METADATA["analysis_type"],
         "research_id": research_id,
@@ -2394,6 +2634,7 @@ def run_st_eva(
         "production_historical_pe": production_historical_pe,
         "production_historical_pfcf": production_historical_pfcf,
         "missing_data": missing_data,
+        "cross_currency": cross_currency,
         "evidence_ids": evidence.ids(),
         "validation": {
             "status": "PASSED",
