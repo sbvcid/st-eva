@@ -3,7 +3,7 @@
 **Status checked:** 2026-10-20 (the production historical P/S and EV/EBITDA reference distributions exist, are qualified, and feed the report's sales and enterprise-value methods)
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 29 valid / 7 rejected, median 22.326 - both `USABLE_FOR_REFERENCE` under the shared `>= 20` gate, with the filed EV bridge required in full) **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `5661383` (the filed trailing revenue and EBITDA enter the valuation chain) verified `backend` and `browser` jobs success in run `39449339747` (checked via the GitHub API on 2026-10-20: backend 2539 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757`; `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
+**Latest verified GitHub Actions:** `4e40c8a` (the production historical P/S and EV/EBITDA references) verified `backend` and `browser` jobs success in run `39480897329` (checked via the GitHub API on 2026-10-20: backend 2574 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `5661383` (the filed trailing revenue and EBITDA enter the valuation chain) verified `backend` and `browser` jobs success in run `39449339747` (checked via the GitHub API on 2026-10-20: backend 2539 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757`; `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
 
 
 
@@ -3234,9 +3234,27 @@ multiple still winning; the valuation methods carrying the production medians
 with their own provenance; the replay request naming the two new bases; and the
 compact summary agreeing with the payload.
 
-Local verification for this round: backend suite **2569 passed, 171 skipped,
+Local verification for this round: backend suite **2574 passed, 171 skipped,
 534 subtests passed**; web API and archive isolation **31 passed**; browser
 smoke **12 passed**; frontend production build produced `dist/index.html`.
+
+### CI
+
+Run **39480897329** for `4e40c8a`:
+<https://github.com/sbvcid/st-eva/actions/runs/39480897329>
+
+```
+Run backend test suite:  2574 passed, 171 skipped, 1 warning, 534 subtests passed
+Run web API tests:         25 passed
+Run archive isolation:      6 passed
+Run browser smoke tests:   12 passed
+conclusion: success
+```
+
+Both jobs (`backend`, `browser`) succeeded for the commit `4e40c8a`
+(`4e40c8aa9fcc5aeb7da8d1133be7bf7ea2bbb60c`). The run's "Assert production
+inputs are self-contained" step passed, so the committed multiples dataset
+checks out with the bytes the manifest pins.
 
 ## Next task status
 
