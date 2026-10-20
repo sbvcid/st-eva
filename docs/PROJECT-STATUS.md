@@ -2932,6 +2932,20 @@ AAPL live run → **`MATCH`**, **0** field differences, 180/180 observations use
 - `VOLATILE_FIELDS` is unchanged — four when-we-asked timestamps. No calculation difference is hidden from the identity by widening it.
 - The `context_id` still covers the whole document's knowledge, so the trailing-figure round changed it (the window and the derivations are knowledge) and this round changed nothing in the document itself.
 
+### An older archive is not rewritten into the new version
+
+The archive this round's live run replaced is preserved at `data/archives/AAPL.sqlite.pre-2026-10-20` (SHA-256 `b7641293a46ff052da4df4f1092a2df2ced9cdc00a1fcdcaaa9228452544ceba`). Its seven snapshots were built before the trailing figures entered the chain, and replaying them with today's code reports the differences rather than forcing a `MATCH`:
+
+| snapshot's data moment | outcome | differing fields | what differs |
+| --- | --- | --- | --- |
+| 2026-10-08 | `DIVERGED` | 71 | the rebuild describes a later data moment (`as_of` 2026-10-19) and carries the trailing figures those documents do not have |
+| 2026-10-09 | `DIVERGED` | 71 | the same |
+| 2026-10-19 (07:00) | `DIVERGED` | 81 | the trailing-figure fields, the provider's consensus series that moved between the run and the rebuild, and the comparable-filing series the older code recorded |
+| 2026-10-19 (07:21, 07:31, 07:43) | `DIVERGED` | 9 | the trailing-figure fields, the provider's consensus series, and the definition text of the comparable filing rows |
+| 2026-10-19 (08:11) | `DIVERGED` | 41 | the definition text of the comparable filing rows, which an earlier code state wrote with a longer sentence |
+
+The stored documents are not rewritten, their schema and references are not migrated, and the diff names each difference. A rebuild of an old snapshot is a statement about what today's code would produce from that archive, not a restatement of what the run said.
+
 ### Tests
 
 `tests/test_replay_production_reference.py` (5 tests): a production-reference run replays as a match; the rebuilt reference is the production median; a reference-free run replays as a match and gains no reference; an operator's multiple is not replaced by the production median; a run without the furnished evidence replays as a match.
