@@ -2227,7 +2227,25 @@ The replay identity and mapping failures are likewise untouched and unrelated to
 
 ### CI
 
-See the comparison table below. The comparison is against the pre-SOFI baseline 39239093577, whose failure set is the reference for "known pre-existing".
+Confirmed on the CI runner: run **39372514397** for `2ce9ee3` reported **`12 failed, 2438 passed, 170 skipped, 519 subtests`**.
+
+| comparison | result |
+| --- | --- |
+| CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39372514397 (`2ce9ee3`, this round) | **12 failed, 2438 passed, 170 skipped, 519 subtests** |
+| the 30 target failures | **all 30 resolved in CI** — the failure count falls by exactly 30 |
+| new regressions vs the CI baseline 39239093577 | **none** — the failure set is a strict subset of the baseline's |
+| pre-existing failures fixed beyond the target set | **none** |
+
+The 12 that remain in CI are the confirmed pre-existing set, and they are not this round's work:
+
+- `tests/test_r6_1_replay_snapshot_identity.py` — 5 (replay identity)
+- `tests/test_r6_replay_divergence.py` — 4 (replay divergence)
+- `tests/test_mapping_relation_kind.py::TestResolverIsolation::test_an_exact_claim_beats_a_measured_partial_one` — 1
+- `tests/test_st_eva_runner.py::TestMarketImpliedAssumptions::test_multi_method_reverse_valuation` — 1 (the MSFT-fixture P/S assertion explained above)
+- `tests/test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes` — 1 (environment-dependent; it fails in CI and passes locally, in the baseline and in this round alike)
+
+Locally the run reports `11 failed, 2482 passed` — the same set without the environment-dependent MUFG test. The workflow still reports `failure` overall because those 12 pre-existing failures remain; that is the confirmed pre-existing state, not a regression from this round.
 
 ### Git
 
@@ -2235,4 +2253,4 @@ Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
 ## Next task status
 
-The formal data contract, the engine and the related regression tests now agree: the engine depends only on the `ValuationInputs` projection, the currency-compatibility rule lives in the contract, and the 30 failures that shared the one root cause are resolved with no new regression. The 11 remaining local failures are the confirmed pre-existing replay, mapping and MSFT-fixture items, and they are listed above rather than claimed as passing. No product blocker; archive cleanup remains deferred per existing decision.
+The formal data contract, the engine and the related regression tests now agree: the engine depends only on the `ValuationInputs` projection, the currency-compatibility rule lives in the contract, and the 30 failures that shared the one root cause are resolved with no new regression. CI run 39372514397 confirms `12 failed, 2438 passed` — the failure count falls by exactly the 30 target failures, and the remaining 12 are the confirmed pre-existing replay, mapping, MSFT-fixture and environment-dependent MUFG items listed above rather than claimed as passing. No product blocker; archive cleanup remains deferred per existing decision.
