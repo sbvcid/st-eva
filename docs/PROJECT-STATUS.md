@@ -2772,11 +2772,11 @@ AAPL, MSFT, MU and SOFI historical valuation, the SOFI 80-row reverse matrix, th
 
 Local full backend run of `tests/`: **2548 passed, 171 skipped, 532 subtests, 0 failed**.
 
-**The workflow is green.** Run **39409786897** for `226c605`:
-<https://github.com/sbvcid/st-eva/actions/runs/39409786897>
+**The workflow is green.** Run **39411403528** for `7a0ca6d`:
+<https://github.com/sbvcid/st-eva/actions/runs/39411403528>
 
 ```
-Run backend test suite: 2502 passed, 171 skipped, 1 warning, 532 subtests passed in 79.28s
+Run backend test suite: 2505 passed, 171 skipped, 1 warning, 532 subtests passed in 84.53s
 Run web API tests:        25 passed, 1 warning
 Run browser smoke tests:  12 passed
 conclusion: success
@@ -2786,11 +2786,14 @@ There is not one `FAILED` line in the run's log.
 
 | comparison | result |
 | --- | --- |
-| CI 39403963927 (`36a0931`, previous round) | 0 failed, 2482 passed, 170 skipped, 524 subtests |
-| CI 39409786897 (`226c605`, this round) | **0 failed, 2502 passed, 171 skipped, 532 subtests** |
+| CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39403963927 (`36a0931`) | 0 failed, 2482 passed, 170 skipped, 524 subtests |
+| CI 39409786897 (`226c605`) | 0 failed, 2502 passed, 171 skipped, 532 subtests |
+| CI 39411403528 (`7a0ca6d`, this round) | **0 failed, 2505 passed, 171 skipped, 532 subtests** |
 | new regressions | **none** |
 
 The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`, unrelated to this work.
+
 
 ### Git
 
