@@ -264,7 +264,7 @@ CONTRACT_VERSION = "2.3-A"
 REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
     "TENCENT": {
         "ticker": "0700.HK",
-        "company_name": "騰訊控股 (Tencent Holdings Limited)",
+        "company_name": "擉啗??扯 (Tencent Holdings Limited)",
         "exchange": "SEHK",
         "currency": "HKD",
         "price": 432.20,
@@ -1648,7 +1648,7 @@ class CompanyResolver:
             aliases = {
                 "0700.HK": "TENCENT",
                 "TENCENT": "TENCENT",
-                "騰訊": "TENCENT",
+                "擉啗?": "TENCENT",
                 "MSFT": "MSFT",
                 "MICROSOFT": "MSFT",
                 "NU": "NU",
@@ -2447,6 +2447,30 @@ def load_production_historical_references(
     return production_historical_pe, production_historical_pfcf
 
 
+def load_production_historical_income(
+    ticker: str,
+) -> Optional[Dict[str, Any]]:
+    """
+    The committed production income-statement dataset for this ticker.
+
+    The dataset holds the issuer's filed quarterly revenue, operating income
+    and depreciation facts, and the trailing windows they make. A ticker with
+    no established dataset gets None: there is no window to qualify, and the
+    engine keeps whatever it had.
+    """
+    try:
+        from historical_income import ISSUER_CONFIGS, load_issuer_historical_income
+    except Exception:
+        return None
+    config = ISSUER_CONFIGS.get(ticker)
+    if config is None:
+        return None
+    try:
+        return load_issuer_historical_income(config).to_dict()
+    except Exception:
+        return None
+
+
 def run_st_eva(
     ticker: str,
     horizon: str = "1-8 weeks",
@@ -2476,6 +2500,7 @@ def run_st_eva(
     include_historical_pe: bool = False,
     enable_furnished_pe: bool = True,
     include_historical_pfcf: bool = False,
+    include_historical_income: bool = False,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
     fx_rate_usd_per_jpy: Optional[float] = None,
@@ -2516,6 +2541,14 @@ def run_st_eva(
             enable_furnished_pe=enable_furnished_pe,
         )
     )
+    # The filed income-statement dataset. It carries no reference
+    # distribution -- only the trailing revenue and EBITDA the multiples are
+    # computed from -- so it is loaded on its own flag.
+    production_historical_income = (
+        load_production_historical_income(data.ticker)
+        if include_historical_income
+        else None
+    )
 
     # The engine's own inputs.
     #
@@ -2531,6 +2564,8 @@ def run_st_eva(
         data=data,
         production_historical_pe=production_historical_pe,
         production_historical_pfcf=production_historical_pfcf,
+        production_historical_income=production_historical_income,
+        ticker=data.ticker,
     )
 
     analysis = MarketImpliedAssumptionsEngine.analyze(
@@ -2782,7 +2817,7 @@ def run_st_eva(
                 "quote_direction": fx_rate.quote_direction,
                 "scope": "reference_only",
                 "note": "Historical reference FX observation (Fed H.10, 2026-10-09). "
-                        "Reference only — not a fiscal-period conversion rate and "
+                        "Reference only ??not a fiscal-period conversion rate and "
                         "must not be used for period conversion.",
             }
 
@@ -2842,7 +2877,7 @@ def run_st_eva(
 
         # EPS conversion: JPY diluted EPS -> USD using FX rate + ADR ratio.
         # Yahoo trailing EPS (1.53 USD) is already USD; SEC diluted EPS
-        # (¥108.18 / ¥151.09) is JPY per underlying share.
+        # (瞼108.18 / 瞼151.09) is JPY per underlying share.
         # Read SEC diluted EPS directly from the per-ticker archive so it is
         # available even when no SEC context was acquired in this run.
         #
@@ -2970,12 +3005,12 @@ def run_st_eva(
                         "in the archive.",
             }
 
-        # Corporate target comparison: FY2026 ¥2.7T target vs FY2025 ¥2.427T
+        # Corporate target comparison: FY2026 瞼2.7T target vs FY2025 瞼2.427T
         # actual vs derived TTM EPS. Net income target and EPS back-out
         # threshold are shown separately; net income target is NOT converted
         # to EPS growth rate without share count.
-        net_income_fy2025_jpy = 2427000000000.0  # ¥2.427T actual FY2025
-        net_income_target_fy2026_jpy = 2700000000000.0  # ¥2.7T target FY2026
+        net_income_fy2025_jpy = 2427000000000.0  # 瞼2.427T actual FY2025
+        net_income_target_fy2026_jpy = 2700000000000.0  # 瞼2.7T target FY2026
         if fx_for_conversion is not None:
             net_income_fy2025_usd = convert_jpy_to_usd(
                 net_income_fy2025_jpy, fx_for_conversion
@@ -2995,8 +3030,8 @@ def run_st_eva(
                     cross_currency["ttm_eps"]["eps_usd_per_share"]
                     if cross_currency["ttm_eps"] else None
                 ),
-                "note": "Management FY2026 net income target (¥2.7T) and "
-                        "FY2025 actual (¥2.427T) are shown separately from the "
+                "note": "Management FY2026 net income target (瞼2.7T) and "
+                        "FY2025 actual (瞼2.427T) are shown separately from the "
                         "derived EPS. The net income target is NOT converted to "
                         "an EPS growth rate because the share count needed for "
                         "that conversion is not available in this run.",
@@ -5231,7 +5266,7 @@ def market_data_from_observations(
 
     # The view is built from the *material* observations only. A second source
     # reports the same metric names, and letting one of those win here would
-    # silently replace the engine's input with another provider's figure —
+    # silently replace the engine's input with another provider's figure ??
     # which would silently replace an engine input with another provider's value.
     material = [
         item for item in observations if not is_comparable_observation(item)
@@ -5409,6 +5444,17 @@ def build_context_from_observations(
             value = ttm_value_from_window(observation)
             if value is not None:
                 window_updates["current_fcf"] = value
+        elif metric == "ttm_revenue_window":
+            value = ttm_value_from_window(observation)
+            if value is not None:
+                window_updates["current_revenue"] = value
+                currency = (observation.value or {}).get("currency")
+                if currency:
+                    window_updates["current_revenue_currency"] = currency
+        elif metric == "ttm_ebitda_window":
+            value = ttm_value_from_window(observation)
+            if value is not None:
+                window_updates["current_ebitda"] = value
     if window_updates:
         engine_inputs = replace(engine_inputs, **window_updates)
     analysis = MarketImpliedAssumptionsEngine.analyze(
@@ -5540,12 +5586,31 @@ def _acquire_sec_evidence(
     }
 
 
+def _ttm_window_period(
+    qualified: Optional[Dict[str, Any]],
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    The period a trailing window covers, as its first and last quarter's ends.
+
+    A window is a trailing twelve months, so the period it covers is the
+    quarters' own boundaries rather than the date the figure was computed on.
+    """
+    if not qualified:
+        return None, None
+    components = qualified.get("components") or []
+    if not components:
+        return None, None
+    return components[0].get("period_end"), components[-1].get("period_end")
+
+
 def _engine_inputs_with_filed_figures(
     inputs: ValuationInputs,
     *,
     data: "MarketData",
     production_historical_pe: Optional[Dict[str, Any]],
     production_historical_pfcf: Optional[Dict[str, Any]],
+    production_historical_income: Optional[Dict[str, Any]] = None,
+    ticker: str = "",
 ) -> Tuple[ValuationInputs, Dict[str, Any], List[Any]]:
     """
     The engine's inputs, and where each of them came from.
@@ -5566,8 +5631,11 @@ def _engine_inputs_with_filed_figures(
         BASIS_TTM,
         SOURCE_SEC_DERIVED,
         SOURCE_VENDOR,
+        income_window_observation,
+        qualified_ttm_ebitda,
         qualified_ttm_eps,
         qualified_ttm_fcf,
+        qualified_ttm_revenue,
         ttm_value_from_window,
         window_observation,
     )
@@ -5686,22 +5754,110 @@ def _engine_inputs_with_filed_figures(
             "the provider's undeclared trailing figure is what the engine used",
         )
 
-    # The filed figures that are on another basis. They are named so a reader
-    # knows they exist, where they are reported, and why they are not the
-    # engine's input.
-    for metric, note in (
-        ("current_ebitda",
-         "the provider's trailing EBITDA carries no declared period; the filed "
-         "annual figure for this metric is in the admission summary with its "
-         "own period, and a fiscal year's EBITDA is not a trailing EBITDA, so "
-         "it is not the figure this multiple is computed from"),
-        ("current_revenue",
-         "the provider's trailing revenue carries no declared period; the filed "
-         "annual figure for this metric is in the admission summary with its "
-         "own period, and a fiscal year's revenue is not a trailing revenue, so "
-         "it is not the figure this multiple is computed from"),
-    ):
-        _vendor(metric, getattr(inputs, metric, None), note)
+    # The trailing revenue and EBITDA, when a filed window qualifies. They are
+    # the denominators of the sales and enterprise-value multiples, and a
+    # vendor figure with no declared period is not one.
+    ttm_revenue = qualified_ttm_revenue(production_historical_income, as_of, ticker)
+    if ttm_revenue is not None:
+        window = income_window_observation(
+            ttm_revenue,
+            metric="ttm_revenue_window",
+            unit=Unit.CURRENCY.value,
+        )
+        ttm_value = ttm_value_from_window(window)
+        if window is not None and ttm_value is not None:
+            windows.append(window)
+            updates["current_revenue"] = ttm_value
+            updates["current_revenue_currency"] = ttm_revenue.get("currency")
+        provenance["current_revenue"] = {
+            "value": updates.get("current_revenue", inputs.current_revenue),
+            "source": SOURCE_SEC_DERIVED,
+            "basis": BASIS_TTM,
+            "used_by_engine": "current_revenue" in updates,
+            "currency": ttm_revenue.get("currency"),
+            "derivation": ttm_revenue.get("derivation"),
+            "usable_from": ttm_revenue.get("usable_from"),
+            "window": ttm_revenue.get("window_anchor"),
+            "period_start": _ttm_window_period(ttm_revenue)[0],
+            "period_end": _ttm_window_period(ttm_revenue)[1],
+            "components": ttm_revenue.get("components"),
+            "provider_figure": {
+                "value": inputs.current_revenue,
+                "source": SOURCE_VENDOR,
+                "basis": "UNDECLARED",
+                "note": (
+                    "the provider's trailing figure carries no declared period; "
+                    "it is recorded as the cross-check it is and is not the "
+                    "figure the sales multiple is computed from"
+                ),
+            },
+            "note": (
+                "four consecutive quarters of filed revenue, the figure the sales "
+                "multiple is computed from, recomputed by the document from the "
+                "quarters it holds; the filed annual revenue stays a separate "
+                "figure in the admission summary with its own period"
+            ),
+        }
+    else:
+        _vendor(
+            "current_revenue",
+            inputs.current_revenue,
+            "no qualified filed trailing revenue is knowable at this cut, so the "
+            "provider's undeclared trailing figure is what the engine used; the "
+            "filed annual figure for this metric is in the admission summary with "
+            "its own period, and a fiscal year's revenue is not a trailing revenue",
+        )
+
+    ttm_ebitda = qualified_ttm_ebitda(production_historical_income, as_of, ticker)
+    if ttm_ebitda is not None:
+        window = income_window_observation(
+            ttm_ebitda,
+            metric="ttm_ebitda_window",
+            unit=Unit.CURRENCY.value,
+        )
+        ttm_value = ttm_value_from_window(window)
+        if window is not None and ttm_value is not None:
+            windows.append(window)
+            updates["current_ebitda"] = ttm_value
+        provenance["current_ebitda"] = {
+            "value": updates.get("current_ebitda", inputs.current_ebitda),
+            "source": SOURCE_SEC_DERIVED,
+            "basis": BASIS_TTM,
+            "used_by_engine": "current_ebitda" in updates,
+            "currency": ttm_ebitda.get("currency"),
+            "derivation": ttm_ebitda.get("derivation"),
+            "usable_from": ttm_ebitda.get("usable_from"),
+            "window": ttm_ebitda.get("window_anchor"),
+            "period_start": _ttm_window_period(ttm_ebitda)[0],
+            "period_end": _ttm_window_period(ttm_ebitda)[1],
+            "components": ttm_ebitda.get("components"),
+            "provider_figure": {
+                "value": inputs.current_ebitda,
+                "source": SOURCE_VENDOR,
+                "basis": "UNDECLARED",
+                "note": (
+                    "the provider's trailing figure carries no declared period; "
+                    "it is recorded as the cross-check it is and is not the "
+                    "figure the enterprise-value multiple is computed from"
+                ),
+            },
+            "note": (
+                "four consecutive quarters of operating income plus depreciation "
+                "and amortization, the figure the enterprise-value multiple is "
+                "computed from, recomputed by the document from the quarters it "
+                "holds; the filed annual EBITDA stays a separate figure in the "
+                "admission summary with its own period"
+            ),
+        }
+    else:
+        _vendor(
+            "current_ebitda",
+            inputs.current_ebitda,
+            "no qualified filed trailing EBITDA is knowable at this cut, so the "
+            "provider's undeclared trailing figure is what the engine used; the "
+            "filed annual figure for this metric is in the admission summary with "
+            "its own period, and a fiscal year's EBITDA is not a trailing EBITDA",
+        )
 
     for metric in ("current_market_cap", "current_enterprise_value", "price"):
         provenance[metric] = {
@@ -5983,6 +6139,16 @@ def main() -> None:
             "series and cover-page shares outstanding."
         ),
     )
+    parser.add_argument(
+        "--historical-income",
+        dest="historical_income",
+        action="store_true",
+        help=(
+            "Opt-in: load the production filed income-statement dataset, so the "
+            "trailing revenue and trailing EBITDA the sales and enterprise-value "
+            "multiples are computed from are the filed four-quarter figures."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -6027,6 +6193,7 @@ def main() -> None:
         include_historical_pe=args.historical_pe,
         enable_furnished_pe=not args.no_furnished_pe,
         include_historical_pfcf=args.historical_pfcf,
+        include_historical_income=args.historical_income,
     )
 
     if result is None:

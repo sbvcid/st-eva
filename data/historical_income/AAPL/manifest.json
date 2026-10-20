@@ -1,0 +1,54 @@
+{
+ "ticker": "AAPL",
+ "issuer_id": "CIK0000320193",
+ "entity_name": "Apple Inc.",
+ "fiscal_year_end": "0926",
+ "role": "production",
+ "metrics": [
+  "TTM_REVENUE",
+  "TTM_EBITDA"
+ ],
+ "provenance": {
+  "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the revenue, operating income and depreciation concepts, plus the canonical price series and acceptance evidence reused by path from data/historical_pe/AAPL. Each concept file is the byte-exact companyconcept API response; its sha256 pins what the reconstruction read.",
+  "promoted_on": "2026-10-20",
+  "concept_fetch": {
+   "fetched_on": "2026-10-20",
+   "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000320193/{taxonomy}/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+   "response_units": "verbatim as returned: USD for all three concepts"
+  },
+  "issuer_facts": {
+   "cik": "0000320193",
+   "fye_month": 9
+  },
+  "files": {
+   "revenue_concept.json": {
+    "bytes": 18356,
+    "content_sha256": "4495f7a16b4ade43dfa8041ac6477074122cbd5b88033e3e0f68b3f919e7ffbf",
+    "source": "SEC EDGAR companyconcept us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (CIK0000320193)",
+    "definition": "The filer's own contract-revenue line, the element the registry maps EXACTLY to the revenue metric from 2017-09-30. The 10-Q states the three-month and the year-to-date duration, so the discrete quarters are directly stated except the fourth, which is the fiscal year less the nine months."
+   },
+   "operating_income_concept.json": {
+    "bytes": 35526,
+    "content_sha256": "de614247dd39d514abcd9b972d46d4dbb7ac3f21f09fe6bb6130081760b2492c",
+    "source": "SEC EDGAR companyconcept us-gaap:OperatingIncomeLoss (CIK0000320193)",
+    "definition": "Operating activities before interest, taxes and non-operating items, as presented. The registry maps the element EXACTLY to the operating income metric. Same period structure as the revenue line: the three-month quarter is stated, the fourth is the fiscal year less the nine months."
+   },
+   "depreciation_concept.json": {
+    "bytes": 11559,
+    "content_sha256": "1392aa467e999502d0d7f7cb622abfef7285d848bd2887bc5576a5bb8380596b",
+    "source": "SEC EDGAR companyconcept us-gaap:DepreciationDepletionAndAmortization (CIK0000320193)",
+    "definition": "Apple's combined 'Depreciation and amortization' cash-flow line. The element's own definition also covers depleting assets, so the registry maps it to the metric for Apple alone and not as a market-wide EXACT mapping. It is a cash-flow line, so every quarter but the first is a cumulative difference."
+   },
+   "daily_prices.json (reused by path)": {
+    "path": "../historical_pe/AAPL/daily_prices.json",
+    "content_sha256": "bc259131ac0168a4f641dda7cadd9c7faa1c13265325f9f547d26a7233122741",
+    "source": "The canonical historical P/E dataset's price series, read by path. The trading calendar decides when a filing's fact becomes knowable under the 16:00 ET cutoff rule, so one calendar serves every reconstruction."
+   },
+   "filing_acceptance_evidence.json (reused by path)": {
+    "path": "../historical_pe/AAPL/filing_acceptance_evidence.json",
+    "content_sha256": "ac74bcdd430efccaa8a0ce33d6fa7b539e46d4cae19e4d8b92b9f0b69f0d0654",
+    "source": "The canonical historical P/E dataset's acceptance index: each filing's acceptance datetime, form and period end. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped."
+   }
+  }
+ }
+}

@@ -682,28 +682,44 @@ class TestTheLiveAaplPath(unittest.TestCase):
             observed = (result.get("raw_analysis") or {}).get("observed_valuation") or {}
 
             # The trailing earnings figure: the engine's own input is the
-            # published figure, and the qualified filed trailing figure is
-            # reported beside it, with its four directly stated quarters and
-            # the furnished fourth quarter.
+            # qualified filed trailing figure, and the provider's figure is
+            # reported beside it as the cross-check it is.
             pe = items["pe"]
             self.assertTrue(pe["used_by_engine"])
-            self.assertEqual(pe["source"], SOURCE_VENDOR)
-            self.assertIsNotNone(pe["filed_trailing"])
-            filed_eps = pe["filed_trailing"]
-            self.assertEqual(filed_eps["source"], SOURCE_SEC_DERIVED)
-            self.assertEqual(filed_eps["basis"], BASIS_TTM)
-            self.assertEqual(len(filed_eps["components"]), 4)
-            self.assertFalse(filed_eps["used_by_engine"])
+            self.assertEqual(pe["source"], SOURCE_SEC_DERIVED)
+            self.assertEqual(pe["basis"], BASIS_TTM)
+            self.assertEqual(len(pe["components"]), 4)
+            for component in pe["components"]:
+                self.assertTrue(component["period_end"])
+                self.assertTrue(component["accession"])
+                self.assertTrue(component["available_at"])
+            self.assertIn("cross-check", pe["note"])
 
-            # The trailing free cash flow: four quarters, reported beside the
-            # engine's input.
+            # The trailing free cash flow: four quarters, and the engine's own
+            # input.
             pfcf = items["pfcf"]
             self.assertTrue(pfcf["used_by_engine"])
-            self.assertIsNotNone(pfcf["filed_trailing"])
-            filed_fcf = pfcf["filed_trailing"]
-            self.assertEqual(filed_fcf["source"], SOURCE_SEC_DERIVED)
-            self.assertEqual(filed_fcf["basis"], BASIS_TTM)
-            self.assertEqual(len(filed_fcf["components"]), 4)
+            self.assertEqual(pfcf["source"], SOURCE_SEC_DERIVED)
+            self.assertEqual(pfcf["basis"], BASIS_TTM)
+            self.assertEqual(len(pfcf["components"]), 4)
+
+            # The trailing revenue and trailing EBITDA: the denominators of
+            # the sales and enterprise-value multiples are the filed
+            # four-quarter figures, not the provider's undeclared ones.
+            for multiple in ("ps", "ev_ebitda"):
+                with self.subTest(multiple=multiple):
+                    item = items[multiple]
+                    self.assertTrue(item["used_by_engine"])
+                    self.assertEqual(item["source"], SOURCE_SEC_DERIVED)
+                    self.assertEqual(item["basis"], BASIS_TTM)
+                    self.assertEqual(item["currency"], "USD")
+                    self.assertIsNotNone(item["period_start"])
+                    self.assertIsNotNone(item["period_end"])
+                    self.assertEqual(len(item["components"]), 4)
+                    for component in item["components"]:
+                        self.assertTrue(component["period_end"])
+                        self.assertTrue(component["accession"])
+                        self.assertTrue(component["available_at"])
 
             # The filed annual figures are reported, on their own basis.
             summary = result.get("admission_summary") or {}
@@ -717,6 +733,18 @@ class TestTheLiveAaplPath(unittest.TestCase):
             )
             derivations = summary.get("derivations") or {}
             self.assertEqual(derivations["ebitda"]["value"], 144_748_000_000.0)
+
+            # And the two multiples whose denominators are now filed figures
+            # divide by them.
+            valuation = result.get("valuation_summary") or {}
+            market_cap = valuation["market_cap"]
+            self.assertAlmostEqual(
+                observed["current_ps"],
+                market_cap / items["ps"]["value"],
+                places=9,
+            )
+            enterprise_value = observed["current_ev_ebitda"] * items["ev_ebitda"]["value"]
+            self.assertGreater(enterprise_value, 0)
 
             # And the API's numbers are the engine's numbers.
             for multiple, item in items.items():

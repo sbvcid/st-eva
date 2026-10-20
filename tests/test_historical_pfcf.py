@@ -47,7 +47,7 @@ from historical_pfcf import (
     STATUS_INSUFFICIENT_OBSERVATIONS,
     STATUS_UNAVAILABLE,
     STATUS_USABLE_FOR_REFERENCE,
-    CashFlowSpanEvidence,
+    DurationSpanEvidence,
     HistoricalPfcfObservation,
     ShareCountEvidence,
     build_historical_pfcf,
@@ -79,7 +79,7 @@ def ocf_span(
     """One operating-cash-flow span version, as one filing stated it."""
     start_d = datetime.date.fromisoformat(start)
     end_d = datetime.date.fromisoformat(end)
-    return CashFlowSpanEvidence(
+    return DurationSpanEvidence(
         evidence_id=f"cf-{next(_SPAN_SEQ)}",
         issuer_id="CIKTEST",
         concept_tag="NetCashProvidedByUsedInOperatingActivities",
@@ -102,7 +102,7 @@ def ocf_span(
 def capex_span(start, end, value, usable_date, accession=None, form="10-Q"):
     start_d = datetime.date.fromisoformat(start)
     end_d = datetime.date.fromisoformat(end)
-    return CashFlowSpanEvidence(
+    return DurationSpanEvidence(
         evidence_id=f"cf-{next(_SPAN_SEQ)}",
         issuer_id="CIKTEST",
         concept_tag="PaymentsToAcquirePropertyPlantAndEquipment",
@@ -398,7 +398,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
     def test_a_fact_outside_the_acceptance_index_is_never_loaded(self):
         # The loader skips a fact whose accession has no acceptance evidence:
         # there is no knowability for it, so it cannot enter the dataset.
-        from historical_pfcf import _concept_spans_from_payload
+        from historical_pfcf import concept_spans_from_payload
 
         payload = {
             "units": {
@@ -414,7 +414,7 @@ class TestPointInTimeKnowability(unittest.TestCase):
                 ]
             }
         }
-        spans = _concept_spans_from_payload(
+        spans = concept_spans_from_payload(
             payload=payload,
             unit="USD",
             role="operating_cash_flow",

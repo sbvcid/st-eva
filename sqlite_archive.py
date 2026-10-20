@@ -1808,7 +1808,9 @@ class SQLiteArchive(ArchiveStore):
         restated after archival, so the canonical per-metric identifier
         collided ??the most recently eligible one is returned. That is the same
         rule `latest_knowable` applies, and the earlier row is still in the
-        archive and still reachable by its own id.
+        archive and still reachable by its own id. Two rows that became
+        eligible at the same instant are ordered by when they were archived,
+        so the later reading of the same fact is the one that is returned.
 
         Each returned observation carries the interpretation effective at that
         cutoff, so a later correction becomes visible without the stored row ever
@@ -1823,7 +1825,7 @@ class SQLiteArchive(ArchiveStore):
             " ON a.asset_id = o.asset_id"
             " WHERE a.ticker = ? AND o.replay_eligible_from IS NOT NULL"
             " AND o.replay_eligible_from <= ?"
-            " ORDER BY o.replay_eligible_from, o.observation_id",
+            " ORDER BY o.replay_eligible_from, o.first_archived_at, o.observation_id",
             (asset.upper(), at),
         ).fetchall()
         newest: Dict[str, sqlite3.Row] = {}

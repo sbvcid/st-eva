@@ -1714,6 +1714,24 @@ class ContextBuilder:
         if ttm_fcf is not None:
             fcf = ttm_fcf
 
+        ttm_revenue = self._register_ttm_derivation(
+            "ttm_revenue",
+            "ttm_revenue_window",
+            Unit.CURRENCY.value,
+            fundamental.get("current_revenue"),
+        )
+        if ttm_revenue is not None:
+            revenue = ttm_revenue
+
+        ttm_ebitda = self._register_ttm_derivation(
+            "ttm_ebitda",
+            "ttm_ebitda_window",
+            Unit.CURRENCY.value,
+            fundamental.get("current_ebitda"),
+        )
+        if ttm_ebitda is not None:
+            ebitda = ttm_ebitda
+
         valuation_ref = reference_refs["valuation_reference"]
         pfcf_ref = reference_refs["pfcf_reference"]
         ev_ebitda_ref = reference_refs["ev_ebitda_reference"]

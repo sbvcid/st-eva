@@ -128,21 +128,25 @@ SHARES_CONCEPT_SOURCE_URL = (
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
-class CashFlowSpanEvidence:
+class DurationSpanEvidence:
     """
-    One version of one cumulative cash-flow duration, as one filing stated it.
+    One version of one cumulative duration, as one filing stated it.
 
     `start`/`end` are the accounting period the fact covers; `usable_date` is
     when the fact became knowable under the 16:00 ET cutoff rule. A value the
     SEC serves for the same span from several filings keeps every version:
     which one is in force at an evaluation date is a point-in-time decision
     the pipeline makes per date, never a load-time deduplication.
+
+    The same shape serves a cash-flow statement and an income statement: the
+    rule that makes a discrete quarter out of a cumulative duration is the
+    rule, not the statement it came from.
     """
 
     evidence_id: str
     issuer_id: str
     concept_tag: str
-    role: str  # "operating_cash_flow" | "capital_expenditure"
+    role: str  # "operating_cash_flow" | "capital_expenditure" | "revenue" | ...
     start: str
     end: str
     duration_days: int
@@ -302,9 +306,9 @@ def _sha256_of(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _in_force(
-    versions: Sequence[CashFlowSpanEvidence], day: str
-) -> Optional[CashFlowSpanEvidence]:
+def in_force_version(
+    versions: Sequence[DurationSpanEvidence], day: str
+) -> Optional[DurationSpanEvidence]:
     """
     The version of one span that is in force at `day` (R-PIT-SUPERSEDE).
 
@@ -322,9 +326,74 @@ def _in_force(
     return in_force
 
 
+def discrete_quarters_for_role(
+    *,
+    spans_in_force: Mapping[Tuple[str, str], DurationSpanEvidence],
+    role: str,
+) -> Dict[datetime.date, Dict[str, Any]]:
+    """
+    Discrete fiscal quarters of one concept, as knowable at the evaluation date.
+
+    A span end is a quarter boundary when the difference to the immediately
+    preceding cumulative span with the same fiscal-year start is itself a
+    quarter-length duration (M-2). The quarter-length case is a directly
+    stated Q1. Both constituents must be in force at the evaluation date, so
+    a derived quarter can never be knowable before its own inputs (M-3).
+
+    The rule is the rule whichever statement the duration came from, so it
+    lives here rather than inside the cash-flow reconstruction: an income
+    statement's cumulative spans are differenced by the same rule.
+    """
+    own = {
+        (span[1], span[2]): version
+        for span, version in spans_in_force.items()
+        if version.role == role
+    }
+    quarters: Dict[datetime.date, Dict[str, Any]] = {}
+    for (start, end), version in own.items():
+        start_d, end_d = _parse_date(start), _parse_date(end)
+        if start_d is None or end_d is None:
+            continue
+        span_days = version.duration_days
+        if QUARTER_MIN_DAYS <= span_days <= QUARTER_MAX_DAYS:
+            quarters[end_d] = {
+                "value": version.value,
+                "knowable_from": version.usable_date,
+                "derivation": "directly stated quarter-length cumulative fact",
+                "inputs": [version.to_dict()],
+            }
+            continue
+        predecessors = [
+            (s2, e2)
+            for (s2, e2) in own
+            if s2 == start and e2 < end
+        ]
+        if not predecessors:
+            continue
+        prior_span = max(predecessors, key=lambda se: _parse_date(se[1]))
+        prior = own[prior_span]
+        quarter_days = (
+            _parse_date(end) - _parse_date(prior_span[1])
+        ).days
+        if not (QUARTER_MIN_DAYS <= quarter_days <= QUARTER_MAX_DAYS):
+            # The span end is not a quarter boundary this derivation can
+            # use; the value stays absent rather than being approximated.
+            continue
+        quarters[end_d] = {
+            "value": version.value - prior.value,
+            "knowable_from": max(version.usable_date, prior.usable_date),
+            "derivation": (
+                f"cumulative difference: {end} minus {prior_span[1]} "
+                f"({quarter_days} days)"
+            ),
+            "inputs": [version.to_dict(), prior.to_dict()],
+        }
+    return quarters
+
+
 def derive_discrete_quarters_at(
     *,
-    spans_in_force: Mapping[Tuple[str, str], CashFlowSpanEvidence],
+    spans_in_force: Mapping[Tuple[str, str], DurationSpanEvidence],
     ocf_role: str,
     capex_role: str,
     fiscal_calendar: "FiscalCalendar",
@@ -347,55 +416,12 @@ def derive_discrete_quarters_at(
     quarter ends drift across month boundaries. A span end with no issuer
     declaration is left out, never assigned to a neighbouring quarter.
     """
-    def _discrete_for(role: str) -> Dict[datetime.date, Dict[str, Any]]:
-        own = {
-            (span[1], span[2]): version
-            for span, version in spans_in_force.items()
-            if version.role == role
-        }
-        quarters: Dict[datetime.date, Dict[str, Any]] = {}
-        for (start, end), version in own.items():
-            start_d, end_d = _parse_date(start), _parse_date(end)
-            if start_d is None or end_d is None:
-                continue
-            span_days = version.duration_days
-            if QUARTER_MIN_DAYS <= span_days <= QUARTER_MAX_DAYS:
-                quarters[end_d] = {
-                    "value": version.value,
-                    "knowable_from": version.usable_date,
-                    "derivation": "directly stated quarter-length cumulative fact",
-                    "inputs": [version.to_dict()],
-                }
-                continue
-            predecessors = [
-                (s2, e2)
-                for (s2, e2) in own
-                if s2 == start and e2 < end
-            ]
-            if not predecessors:
-                continue
-            prior_span = max(predecessors, key=lambda se: _parse_date(se[1]))
-            prior = own[prior_span]
-            quarter_days = (
-                _parse_date(end) - _parse_date(prior_span[1])
-            ).days
-            if not (QUARTER_MIN_DAYS <= quarter_days <= QUARTER_MAX_DAYS):
-                # The span end is not a quarter boundary this derivation can
-                # use; the value stays absent rather than being approximated.
-                continue
-            quarters[end_d] = {
-                "value": version.value - prior.value,
-                "knowable_from": max(version.usable_date, prior.usable_date),
-                "derivation": (
-                    f"cumulative difference: {end} minus {prior_span[1]} "
-                    f"({quarter_days} days)"
-                ),
-                "inputs": [version.to_dict(), prior.to_dict()],
-            }
-        return quarters
-
-    ocf_quarters = _discrete_for(ocf_role)
-    capex_quarters = _discrete_for(capex_role)
+    ocf_quarters = discrete_quarters_for_role(
+        spans_in_force=spans_in_force, role=ocf_role
+    )
+    capex_quarters = discrete_quarters_for_role(
+        spans_in_force=spans_in_force, role=capex_role
+    )
 
     combined: Dict[datetime.date, Dict[str, Any]] = {}
     for end_d in sorted(set(ocf_quarters) | set(capex_quarters)):
@@ -429,13 +455,13 @@ def derive_discrete_quarters_at(
     return combined
 
 
-def ttm_fcf_window_at(
+def ttm_window_at(
     *,
     quarters: Mapping[datetime.date, Dict[str, Any]],
     day: str,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[str]]:
     """
-    The TTM FCF window knowable at `day` (M-4).
+    The four-quarter fiscal window knowable at `day` (M-4).
 
     Anchors on the greatest fiscal-quarter position with knowable evidence
     and walks back four consecutive positions. The anchor's fiscal year and
@@ -443,6 +469,9 @@ def ttm_fcf_window_at(
     the window must contain a Q4 by construction of the anchor walk; a
     missing position refuses the window. There is no rollback to an earlier
     anchor and no synthesis.
+
+    The walk is over fiscal positions, not over the quarters' own contents,
+    so it serves a window of free cash flow and a window of revenue alike.
     """
     known = {
         end: quarter for end, quarter in quarters.items() if quarter["knowable_from"] <= day
@@ -484,7 +513,6 @@ def ttm_fcf_window_at(
             f"is missing positions: {missing}."
         )
 
-    total = sum(quarter["free_cash_flow"] for quarter in window_quarters)
     return {
         "anchor": {
             "fiscal_year": anchor_year,
@@ -496,6 +524,30 @@ def ttm_fcf_window_at(
             for year_, number_ in positions
         ],
         "quarters": window_quarters,
+    }, None, None
+
+
+def ttm_fcf_window_at(
+    *,
+    quarters: Mapping[datetime.date, Dict[str, Any]],
+    day: str,
+) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[str]]:
+    """
+    The TTM FCF window knowable at `day` (M-4).
+
+    Anchors on the greatest fiscal-quarter position with knowable evidence
+    and walks back four consecutive positions. The anchor's fiscal year and
+    quarter are the issuer-declared identity carried by the quarter itself;
+    the window must contain a Q4 by construction of the anchor walk; a
+    missing position refuses the window. There is no rollback to an earlier
+    anchor and no synthesis.
+    """
+    window, reason, detail = ttm_window_at(quarters=quarters, day=day)
+    if window is None:
+        return None, reason, detail
+    total = sum(quarter["free_cash_flow"] for quarter in window["quarters"])
+    return {
+        **window,
         "total_free_cash_flow": total,
     }, None, None
 
@@ -504,7 +556,7 @@ def build_historical_pfcf(
     *,
     issuer_id: str,
     instrument_id: str,
-    cash_flow_spans: Sequence[CashFlowSpanEvidence],
+    cash_flow_spans: Sequence[DurationSpanEvidence],
     share_counts: Sequence[ShareCountEvidence],
     prices: Mapping[str, Dict[str, Any]],
     fiscal_calendar: "FiscalCalendar",
@@ -526,7 +578,7 @@ def build_historical_pfcf(
     # Span identity is (role, start, end): operating cash flow and capital
     # expenditure state the same cumulative periods, and a version of one
     # concept must never stand in for the other.
-    spans_by_key: Dict[Tuple[str, str, str], List[CashFlowSpanEvidence]] = {}
+    spans_by_key: Dict[Tuple[str, str, str], List[DurationSpanEvidence]] = {}
     for span in cash_flow_spans:
         spans_by_key.setdefault((span.role, span.start, span.end), []).append(span)
     for versions in spans_by_key.values():
@@ -555,7 +607,7 @@ def build_historical_pfcf(
 
     def evaluate(day: str, role: Optional[str]) -> HistoricalPfcfObservation:
         spans_in_force = {
-            key: _in_force(versions, day)
+            key: in_force_version(versions, day)
             for key, versions in spans_by_key.items()
         }
         spans_in_force = {
@@ -838,7 +890,7 @@ ISSUER_CONFIGS: Dict[str, HistoricalPfcfConfig] = {
     ),
 }
 
-def _concept_spans_from_payload(
+def concept_spans_from_payload(
     *,
     payload: Mapping[str, Any],
     unit: str,
@@ -847,7 +899,8 @@ def _concept_spans_from_payload(
     issuer_id: str,
     filings_index: Mapping[str, Dict[str, Any]],
     content_sha256: str,
-) -> List[CashFlowSpanEvidence]:
+    source_url: Optional[str] = None,
+) -> List[DurationSpanEvidence]:
     """
     Duration facts of one concept, each carrying its own filing's knowability.
 
@@ -855,8 +908,17 @@ def _concept_spans_from_payload(
     evidence in this dataset and is skipped, never guessed. Duration facts
     outside the quarter/year calendar bounds are still kept: the discrete
     derivation decides span by span whether an end is a quarter boundary.
+
+    `source_url` names the endpoint the payload came from. It defaults to the
+    cash-flow concept URL, which is right for the cash-flow reconstruction and
+    wrong for anything else, so a caller that reads a different concept says
+    which one.
     """
-    spans: List[CashFlowSpanEvidence] = []
+    spans: List[DurationSpanEvidence] = []
+    if source_url is None:
+        source_url = (
+            OCF_CONCEPT_SOURCE_URL if role == "operating_cash_flow" else CAPEX_CONCEPT_SOURCE_URL
+        ).format(issuer_id=issuer_id)
     for fact in payload.get("units", {}).get(unit, []):
         start = fact.get("start")
         end = fact.get("end")
@@ -868,8 +930,8 @@ def _concept_spans_from_payload(
             continue
         start_d, end_d = _parse_date(start), _parse_date(end)
         spans.append(
-            CashFlowSpanEvidence(
-                evidence_id=f"cf-{role}-{accession}-{start}-{end}",
+            DurationSpanEvidence(
+                evidence_id=f"span-{role}-{accession}-{start}-{end}",
                 issuer_id=issuer_id,
                 concept_tag=concept_tag,
                 role=role,
@@ -883,9 +945,7 @@ def _concept_spans_from_payload(
                 usable_date=filing_meta["usable_date"],
                 usable_date_rule=filing_meta["usable_date_rule"],
                 filed_date=str(fact.get("filed") or ""),
-                source_url=(
-                    OCF_CONCEPT_SOURCE_URL if role == "operating_cash_flow" else CAPEX_CONCEPT_SOURCE_URL
-                ).format(issuer_id=issuer_id),
+                source_url=source_url,
                 content_sha256=content_sha256,
             )
         )
@@ -1007,7 +1067,7 @@ def load_issuer_historical_pfcf(
         [ocf_payload, capex_payload], filings_index, units=("USD",)
     )
 
-    cash_flow_spans = _concept_spans_from_payload(
+    cash_flow_spans = concept_spans_from_payload(
         payload=ocf_payload,
         unit="USD",
         role="operating_cash_flow",
@@ -1015,7 +1075,7 @@ def load_issuer_historical_pfcf(
         issuer_id=config.issuer_id,
         filings_index=filings_index,
         content_sha256=ocf_sha,
-    ) + _concept_spans_from_payload(
+    ) + concept_spans_from_payload(
         payload=capex_payload,
         unit="USD",
         role="capital_expenditure",

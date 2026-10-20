@@ -523,6 +523,12 @@ class AnalysisServiceAdapter:
                 # data/historical_pe/{TICKER} and data/historical_pfcf/{TICKER}.
                 include_historical_pe=True,
                 include_historical_pfcf=True,
+                # The filed income-statement dataset carries no reference
+                # distribution: it is what the trailing revenue and trailing
+                # EBITDA the sales and enterprise-value multiples are computed
+                # from are built from, so the denominators are stated periods
+                # rather than the provider's undeclared ones.
+                include_historical_income=True,
             )
 
             if core_result is None:

@@ -1,9 +1,9 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-20 (SEC-derived trailing figures in the formal valuation chain; the replay reproduces the run's production reference)
+**Status checked:** 2026-10-20 (the filed trailing revenue and EBITDA enter the valuation chain; the replay reproduces the run's production reference)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** SEC-derived trailing figures are the valuation's actual inputs (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757` (checked via the GitHub API on 2026-10-20: backend 2513 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
+**Current implementation baseline:** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Latest verified GitHub Actions:** the filed trailing revenue and EBITDA round is verified locally (backend 2539 passed / 171 skipped / 532 subtests, web API and archive isolation groups green) and its CI run is recorded here once it finishes; `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757` (checked via the GitHub API on 2026-10-20: backend 2513 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
 
 
 
@@ -2971,24 +2971,90 @@ conclusion: success
 | CI 39431909757 (`ca07496`, this round) | **0 failed, 2513 passed, 171 skipped, 532 subtests** |
 | new regressions | **none** |
 
+## The Filed Trailing Revenue and EBITDA Enter the Valuation Chain (2026-10-20)
+
+Continued from `ca07496`. The trailing earnings and trailing free cash flow were the valuation's inputs; the sales and enterprise-value multiples still divided by the provider's trailing revenue and trailing EBITDA, whose periods the provider does not declare.
+
+### What was missing
+
+`current_revenue` and `current_ebitda` were the only engine inputs still taken from the provider's undeclared trailing figures. The provider's numbers happened to agree with the filed ones, but nothing in the document said where they came from, what period they covered, or which filing they were built from: a reader had to take them on trust, and a different provider would have produced a different valuation without any visible difference.
+
+### The production dataset
+
+`data/historical_income/AAPL/` holds the issuer's filed quarterly facts, captured verbatim from data.sec.gov and pinned by hash:
+
+| file | concept | sha256 |
+| --- | --- | --- |
+| `revenue_concept.json` | `us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax` | `4495f7a16b4ade43dfa8041ac6477074122cbd5b88033e3e0f68b3f919e7ffbf` |
+| `operating_income_concept.json` | `us-gaap:OperatingIncomeLoss` | `de614247dd39d514abcd9b972d46d4dbb7ac3f21f09fe6bb6130081760b2492c` |
+| `depreciation_concept.json` | `us-gaap:DepreciationDepletionAndAmortization` | `1392aa467e999502d0d7f7cb622abfef7285d848bd2887bc5576a5bb8380596b` |
+
+The canonical price series and the acceptance index are read by path from the historical P/E dataset, so one trading calendar decides every filing's usable date. `historical_income.py` (methodology `historical-income/1.0`) derives the discrete quarters under the historical P/FCF pipeline's rules: a directly stated quarter-length duration, or the difference of two cumulative durations that share one fiscal-year start (Q2 = 6M − Q1, Q3 = 9M − 6M, Q4 = FY − 9M). A derived quarter keeps both of its sources and the formula, and is marked derived rather than directly stated. A quarter's fiscal identity is the issuer's own declaration; a quarter with only operating income, or only depreciation, is absent rather than half a quarter.
+
+The depreciation element is Apple's own presentation, and its own definition also covers depleting assets, so the registry maps it to the metric **for Apple alone**. The qualification checks that scope before the figure is used: for another issuer the same element is not this metric's input, and Microsoft's `DepreciationAmortizationAndOther` and Micro's `DepreciationDepletionAndAmortization` keep the refusal they already had. No mapping gate was relaxed to widen coverage.
+
+### What the qualification refuses
+
+A trailing figure is used only when four consecutive quarters are knowable at the cut, in one currency, each carrying the sources it was arrived at, and each concept mapped to its metric for that issuer. A missing quarter, a gap in the fiscal positions, two currencies in one window, a quarter that is not yet knowable, a quarter without its sources, and a concept the registry does not map to the metric all refuse. When a window refuses, the engine keeps the provider's figure and says so, and the provider's figure is never relabelled as a filed one.
+
+### What the product reports now
+
+Real API output, `POST /api/analyze` with `mode=live` (2026-10-20):
+
+| multiple | the engine's input | source | basis | currency | period | the engine's multiple | the Context's own figure |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P/E | 8.72 | `SEC_DERIVED` | `TTM` | USD | — | 39.00860091743119 | `der:current_pe` |
+| P/FCF | 136,683,000,000 | `SEC_DERIVED` | `TTM` | USD | — | 35.98494723996401 | `der:current_pfcf` |
+| EV/EBITDA | 167,959,000,000 | `SEC_DERIVED` | `TTM` | USD | 2025-09-27 → 2026-06-27 | 29.414771126286773 | `der:current_ev_ebitda` |
+| P/S | 466,823,000,000 | `SEC_DERIVED` | `TTM` | USD | 2025-09-27 → 2026-06-27 | 10.536178687853855 | `der:current_ps` |
+
+The four quarters the document holds, and the filings behind them:
+
+| quarter | revenue | EBITDA | filings |
+| --- | --- | --- | --- |
+| 2025-09-27 (FY2025 Q4) | 102,466,000,000 | 35,554,000,000 | `0000320193-25-000079` (10-K) and `0000320193-26-000020` (10-Q), the fiscal year less the nine months |
+| 2025-12-27 (FY2026 Q1) | 143,756,000,000 | 54,066,000,000 | `0000320193-26-000006` (10-Q) |
+| 2026-03-28 (FY2026 Q2) | 111,184,000,000 | 39,324,000,000 | `0000320193-26-000013` (10-Q) and `0000320193-26-000006` (10-Q), the six months less the three |
+| 2026-06-27 (FY2026 Q3) | 109,417,000,000 | 39,015,000,000 | `0000320193-26-000020` (10-Q) and `0000320193-26-000013` (10-Q), the nine months less the six |
+
+Each quarter's depreciation is itself a difference where the cash-flow statement is cumulative, and each quarterly EBITDA is that quarter's operating income plus that quarter's depreciation. The document holds both windows as observations and registers `der:ttm_revenue` and `der:ttm_ebitda` as `sum_periods` over their `samples`, so the registry recomputes each figure from the document's own quarters; the parity check is not relaxed and the two agree.
+
+### What did not change
+
+- The FY2025 annual EBITDA (144,748,000,000) and the latest quarter's free cash flow (51,552,000,000) are still reported on their own periods in the admission summary, and neither is a trailing figure.
+- A qualified trailing denominator is not a qualified historical exit multiple. The minimum twenty qualifying observations for a reference multiple is unchanged, P/S, EV/EBITDA and P/FCF do not borrow each other's references, and the reverse methods that need a historical P/S or EV/EBITDA distribution remain unavailable rather than being filled with a thin vendor band. The production historical P/S and EV/EBITDA distributions are a separate piece of work.
+- `VOLATILE_FIELDS` is unchanged and the document's schema version stays `2.3-C.2`: the round changed what the valuation is computed from, not the document's shape.
+
+### An archive tie the replay needed
+
+`sqlite_archive.py`'s observation collapse ordered equally eligible rows by their content hash, so two runs on the same trading day could leave the rebuild holding the earlier reading of the same price-and-volume series — the intraday volume moves during the session, so the two runs' values differ. The order now breaks the tie by when the row was archived, so the later reading is the one a rebuild gets. The AAPL live replay went from `DIVERGED` on that observation to `MATCH` with no field difference.
+
+### Tests
+
+`tests/test_historical_income.py` (26 tests): the dataset's concept identity and window structure; the four consecutive quarters and their filings; a derived quarter saying it is derived; the qualification on both figures; the trailing figure being the sum of the quarters; a cut before any window is knowable; an earlier cut using the window that was knowable then; a missing quarter, a gap in the positions, two currencies, a quarter not yet knowable, a quarter without its sources, a quarter without its depreciation, a concept the registry does not map, a mapping scoped to another issuer, and no issuer at all — each refusing; and the document holding both windows, recomputing both figures from them, and the engine's inputs being the filed ones.
+
+`tests/test_engine_input_provenance.py`'s live-gated test now asserts the current behaviour of all four multiples: the filed figure is the engine's input, the provider's figure is the cross-check beside it, and the sales and enterprise-value multiples divide by the filed trailing figures.
+
 ## Next task status
 
 The qualified SEC-derived trailing figures are no longer figures the valuation
 reports beside its inputs: they are its inputs. The trailing diluted EPS of
-8.72 and the trailing free cash flow of 136,683,000,000 are the figures the
-earnings and cash-flow multiples are computed from, and the Investment Context
-holds the windows they were built from, so the registry recomputes each one
-from the four quarters and the document's own parity check confirms the two
-agree. The annual and quarterly figures stay in the admission summary on their
-own bases, and the provider's undeclared-period figures stay labelled as
-what they are.
+8.72, the trailing free cash flow of 136,683,000,000, the trailing revenue of
+466,823,000,000 and the trailing EBITDA of 167,959,000,000 are the figures the
+four multiples are computed from, and the Investment Context holds the windows
+they were built from, so the registry recomputes each one from the four
+quarters it holds and the document's own parity check confirms the two agree.
+The annual and quarterly figures stay in the admission summary on their own
+bases, and the provider's undeclared-period figures stay labelled as what they
+are.
 
-The AAPL live replay now reports **MATCH** with no field difference. The
+The AAPL live replay reports **MATCH** with no field difference: the
 production historical P/E and P/FCF references are read from the same committed
-datasets the live run reads, so a rebuild reproduces the run's reference
-instead of reporting a difference in the reference; an operator's own multiple
-still diverges, because that is an assumption rather than archived knowledge.
-The CI workflow is green: 2513 passed, 0 failed, in run `39431909757`.
+datasets the live run reads, and an equally eligible archived observation is
+resolved by when it was archived, so a second run on the same trading day
+cannot leave the rebuild holding the earlier reading of the same series. An
+operator's own multiple still diverges, because that is an assumption rather
+than archived knowledge.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.
