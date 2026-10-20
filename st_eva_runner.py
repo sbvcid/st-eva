@@ -5029,8 +5029,13 @@ def _archive_run(
     # 3.34: Persist admission decisions by identity if archive supports admissions table.
     # Persistence errors must be visible: returning a completed run without its
     # admission records would make the archive look more complete than it is.
+    crossing_derivations: Optional[Dict[str, Any]] = None
     if getattr(archive, "_has_admissions", lambda: False)():
-        from evidence_valuation_boundary import admit, V1_CROSSING_METRICS
+        from evidence_valuation_boundary import (
+            admit,
+            crossing_derivations as _crossing_derivations,
+            V1_CROSSING_METRICS,
+        )
         from registry_identity import registry_state_identity, resolver_policy_identity
 
         connection = getattr(archive, "connection", None)
@@ -5047,6 +5052,11 @@ def _archive_run(
                     archive.record_admission(
                         asset, as_of_date, adm, reg_id, pol_id, price_obs
                     )
+                # The figures the crossing derived, with the inputs and the rule
+                # each was derived by. They are what the run's own filing
+                # evidence produced, and they are reported so a reader can
+                # check them rather than take them.
+                crossing_derivations = _crossing_derivations(run_admissions)
 
     for evidence_id in evidence.ids():
         entry = evidence.get(evidence_id)

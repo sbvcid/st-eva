@@ -18,7 +18,9 @@ from st_eva_runner import (
 )
 from web.schemas import (
     AdmissionSummary,
+    AdmittedMetric,
     AnalysisResultDTO,
+    CrossingDerivation,
     JobProgressStage,
     ProductionHistoricalPfcfSummaryDTO,
     RefusalItem,
@@ -67,6 +69,131 @@ def _as_number(value: Any) -> Optional[float]:
     if number != number or number in (float("inf"), float("-inf")):
         return None
     return number
+
+
+def _crossing_metric_names() -> List[str]:
+    """
+    The metrics the admission process decides on, in the order it decides them.
+
+    Read from the admission module rather than restated here, so the list the
+    API reports is the list the admission actually walked and cannot drift
+    from it.
+    """
+    from evidence_valuation_boundary import V1_CROSSING_METRICS
+
+    return list(V1_CROSSING_METRICS)
+
+
+def _derivations_from_archive(
+    in_force: List[Dict[str, Any]],
+    observations_by_contract: Dict[str, Any],
+    price_currency: Optional[str],
+) -> Dict[str, Any]:
+    """
+    The figures the crossing derived, read back from the archive.
+
+    The archive holds the decision and the figure each decision admitted, so
+    the derivation can be recomputed from what was recorded rather than from
+    what the run happened to be holding in memory. The rule is the admission
+    module's own, so the two cannot drift: the same function that produced the
+    crossing's figures produces these.
+    """
+    from evidence_valuation_boundary import (
+        CrossingFigure,
+        crossing_derivations_from_figures,
+    )
+
+    figures: Dict[str, CrossingFigure] = {}
+    origins: Dict[str, Any] = {}
+    for row in in_force:
+        if row.get("admitted") != 1:
+            continue
+        observation = observations_by_contract.get(row.get("contract_id"))
+        if observation is None:
+            continue
+        metric = str(row.get("metric") or "")
+        figures[metric] = CrossingFigure(
+            value=observation.value,
+            currency=observation.currency,
+            period_start=observation.period_start,
+            period_end=observation.period_end,
+        )
+        raw = observation.raw if isinstance(observation.raw, dict) else {}
+        fact = raw.get("sec_fact") if isinstance(raw.get("sec_fact"), dict) else {}
+        origins[metric] = _ArchivedOrigin(
+            accession=fact.get("accession"),
+            form=fact.get("form"),
+            concept=(
+                f"{fact.get('taxonomy')}:{fact.get('tag')}"
+                if fact.get("taxonomy") and fact.get("tag")
+                else None
+            ),
+            available_at=observation.available_at,
+            availability_class=row.get("availability_class"),
+            mapping_type=row.get("mapping_type"),
+        )
+    return crossing_derivations_from_figures(figures, price_currency, origins)
+
+
+class _ArchivedOrigin:
+    """The provenance of one admitted figure, as the archive recorded it."""
+
+    def __init__(
+        self,
+        accession=None,
+        form=None,
+        concept=None,
+        available_at=None,
+        availability_class=None,
+        mapping_type=None,
+    ) -> None:
+        self.accession = accession
+        self.form = form
+        self.concept = concept
+        self.available_at = available_at
+        self.availability_class = availability_class
+        self.mapping_type = mapping_type
+        self.duration_days = None
+
+
+def _crossing_derivations_dto(raw: Any) -> Dict[str, CrossingDerivation]:
+    """
+    The derived figures, with the inputs and the rule each was derived by.
+
+    The run computed them; this reports them. Nothing is recomputed here, so
+    the number the reader sees is the number the crossing produced.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    out: Dict[str, CrossingDerivation] = {}
+    for name, entry in raw.items():
+        if not isinstance(entry, dict):
+            continue
+        inputs: List[AdmittedMetric] = []
+        for item in entry.get("inputs") or []:
+            if not isinstance(item, dict):
+                continue
+            inputs.append(
+                AdmittedMetric(
+                    metric=str(item.get("metric") or ""),
+                    value=item.get("value"),
+                    currency=item.get("currency"),
+                    period_start=item.get("period_start"),
+                    period_end=item.get("period_end"),
+                    accession=item.get("accession"),
+                    form=item.get("form"),
+                    source_concept=item.get("concept"),
+                    availability_class=item.get("availability_class"),
+                    mapping_type=item.get("mapping_type"),
+                    available_at=item.get("available_at"),
+                )
+            )
+        out[str(name)] = CrossingDerivation(
+            value=entry.get("value"),
+            formula=entry.get("formula"),
+            inputs=inputs,
+        )
+    return out
 
 
 def _web_visible_analysis(core_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -140,14 +267,24 @@ class AnalysisServiceAdapter:
     @staticmethod
     def ensure_registry_seeded(archive: SQLiteArchive) -> None:
         """
-        Ensures the canonical ST-EVA core registry         baseline is seeded into the archive.
-        Uses registry_seed.seed(CoreRegistry(archive.connection)).
+        Load the canonical ST-EVA core registry into the archive.
+
+        The seed is applied on every run, not only to an empty registry. The
+        seed is the canonical declaration of the metric registry, it is
+        idempotent -- every row is written with INSERT OR REPLACE and nothing
+        is deleted -- and re-seeding an archive is an operation the seed
+        itself anticipates.
+
+        Seeding only an empty registry left an archive that was created before
+        a declaration changed answering with a registry that no longer matched
+        the code. The admission it then decided was a decision about a registry
+        that was not the one in force, and the archive and the product could
+        disagree about the same issuer for as long as the archive existed. A
+        test run against a fresh database would see the new declaration and a
+        real archive would not, which is exactly the difference between a test
+        that passes and a product that works.
         """
-        row = archive.connection.execute(
-            "SELECT COUNT(*) FROM metric_registry"
-        ).fetchone()
-        if row is None or row[0] == 0:
-            seed(CoreRegistry(archive.connection))
+        seed(CoreRegistry(archive.connection))
 
     def run_analysis_pipeline(
         self,
@@ -316,40 +453,107 @@ class AnalysisServiceAdapter:
                 except Exception:
                     pass
 
-            # Extract admissions summary from archive
+            # Extract admissions summary from archive.
+            #
+            # The counts are rows and the lists are unique metric names, which
+            # the contract fixes. The rows counted are the ones in force: a
+            # decision that a later decision supersedes is history, and
+            # counting it would report a metric as both admitted and refused
+            # after the registry changed. A row nothing supersedes is in
+            # force, and two such rows for one metric are two rows.
             admissions_list = archive.admissions_for(clean_ticker)
+            superseded = {
+                row.get("supersedes")
+                for row in admissions_list
+                if row.get("supersedes")
+            }
+            in_force = [
+                row for row in admissions_list
+                if row.get("admission_id") not in superseded
+            ]
+
+            observations_by_contract: Dict[str, Any] = {}
+            try:
+                for observation in archive.all_observations(clean_ticker):
+                    # The archive's contract id is the observation's own
+                    # `observation_id`; the row it was read from is the same
+                    # identity, and the admission names that.
+                    identifier = getattr(observation, "observation_id", None)
+                    if identifier:
+                        observations_by_contract[identifier] = observation
+            except Exception:
+                observations_by_contract = {}
+
             metrics_admitted: List[str] = []
             metrics_refused: List[str] = []
+            admitted_metrics: List[AdmittedMetric] = []
             total_admitted = 0
             total_refused = 0
 
-            for adm in admissions_list:
+            for adm in in_force:
                 if adm.get("admitted") == 1:
                     total_admitted += 1
                     metric_name = adm.get("metric")
                     if metric_name and metric_name not in metrics_admitted:
                         metrics_admitted.append(metric_name)
+                    observation = observations_by_contract.get(adm.get("contract_id"))
+                    fact = {}
+                    if observation is not None:
+                        raw = observation.raw if isinstance(observation.raw, dict) else {}
+                        fact = raw.get("sec_fact") if isinstance(raw.get("sec_fact"), dict) else {}
+                    admitted_metrics.append(
+                        AdmittedMetric(
+                            metric=metric_name or "",
+                            value=(
+                                float(observation.value)
+                                if observation is not None
+                                and isinstance(observation.value, (int, float))
+                                else None
+                            ),
+                            currency=observation.currency if observation is not None else None,
+                            period_start=(
+                                observation.period_start if observation is not None else None
+                            ),
+                            period_end=(
+                                observation.period_end if observation is not None else None
+                            ),
+                            accession=fact.get("accession"),
+                            form=fact.get("form"),
+                            source_concept=(
+                                f"{fact.get('taxonomy')}:{fact.get('tag')}"
+                                if fact.get("taxonomy") and fact.get("tag")
+                                else None
+                            ),
+                            availability_class=adm.get("availability_class"),
+                            mapping_type=adm.get("mapping_type"),
+                            available_at=(
+                                observation.available_at if observation is not None else None
+                            ),
+                            source_url=observation.source_url if observation is not None else None,
+                            decided_at=adm.get("decided_at"),
+                        )
+                    )
                 else:
                     total_refused += 1
                     metric_name = adm.get("metric")
                     if metric_name and metric_name not in metrics_refused:
                         metrics_refused.append(metric_name)
-                    refusals_json = adm.get("refusals_json")
-                    if refusals_json:
-                        try:
-                            parsed_refs = json.loads(refusals_json)
-                            for item in parsed_refs:
-                                reason_str = item.get("reason") or item.get("label") or str(item)
-                                refusal_items.append(
-                                    RefusalItem(
-                                        ref=adm.get("metric"),
-                                        reason=reason_str,
-                                        category=item.get("label"),
-                                    )
+                refusals_json = adm.get("refusals_json")
+                if refusals_json:
+                    try:
+                        parsed_refs = json.loads(refusals_json)
+                        for item in parsed_refs:
+                            reason_str = item.get("reason") or item.get("label") or str(item)
+                            refusal_items.append(
+                                RefusalItem(
+                                    ref=adm.get("metric"),
+                                    reason=reason_str,
+                                    category=item.get("label"),
                                 )
-                                refusal_reasons.append(reason_str)
-                        except Exception:
-                            refusal_reasons.append(str(refusals_json))
+                            )
+                            refusal_reasons.append(reason_str)
+                    except Exception:
+                        refusal_reasons.append(str(refusals_json))
 
             admission_summary = AdmissionSummary(
                 total_admitted=total_admitted,
@@ -357,6 +561,14 @@ class AnalysisServiceAdapter:
                 metrics_admitted=metrics_admitted,
                 metrics_refused=metrics_refused,
                 refusals=refusal_items,
+                admitted_metrics=admitted_metrics,
+                derivations=_crossing_derivations_dto(
+                    _derivations_from_archive(
+                        in_force,
+                        observations_by_contract,
+                        (core_result.get("market_snapshot") or {}).get("currency"),
+                    )
+                ),
             )
 
             # Build ValuationSummary from core_result

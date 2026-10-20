@@ -47,14 +47,18 @@ from data_contract import (
     COMPARABLE_METRICS,
     CurrencyBasis,
     METRIC_ASSETS,
+    METRIC_CAPEX,
     METRIC_CASH,
     METRIC_COMMERCIAL_PAPER,
+    METRIC_DEPRECIATION_AND_AMORTIZATION,
     METRIC_DIVIDENDS_PER_SHARE,
     METRIC_LONG_TERM_DEBT,
     METRIC_MARKETABLE_SECURITIES_CURRENT,
     METRIC_DEFINITIONS,
     METRIC_EPS_DILUTED,
     METRIC_NET_INCOME,
+    METRIC_OPERATING_CASH_FLOW,
+    METRIC_OPERATING_INCOME,
     METRIC_REVENUE,
     METRIC_SHARES_OUTSTANDING,
     Observation,
@@ -191,6 +195,31 @@ SEC_CONCEPTS: Dict[str, Tuple[Concept, ...]] = {
         Concept("us-gaap", "CommonStockDividendsPerShareDeclared"),
         Concept("us-gaap", "CommonStockDividendsPerShareCashDeclared"),
     ),
+    # The four crossing inputs the V1 admission needs and the provider did not
+    # ask for. Each names the element the filer reports the line on, and the
+    # registry decides whether that element expresses the metric.
+    #
+    # Capital expenditure is asked for as the payment element, which the filer
+    # states as a positive spending figure; the free-cash-flow derivation reads
+    # the sign it finds and subtracts a positive figure, so no sign is assumed
+    # here. A filer that states the outflow as a negative number would be
+    # recorded that way, and the derivation handles both.
+    METRIC_OPERATING_INCOME: (
+        Concept("us-gaap", "OperatingIncomeLoss"),
+    ),
+    METRIC_DEPRECIATION_AND_AMORTIZATION: (
+        # The element a filer that reports one combined "Depreciation and
+        # amortization" line uses. Its own definition also covers depletion, so
+        # it is not the pure element and the registry declares it only where
+        # the filer's own presentation supports it.
+        Concept("us-gaap", "DepreciationDepletionAndAmortization"),
+    ),
+    METRIC_OPERATING_CASH_FLOW: (
+        Concept("us-gaap", "NetCashProvidedByUsedInOperatingActivities"),
+    ),
+    METRIC_CAPEX: (
+        Concept("us-gaap", "PaymentsToAcquirePropertyPlantAndEquipment"),
+    ),
 }
 
 # A duration metric needs a trailing-twelve-month view on the SEC side so it can
@@ -204,12 +233,22 @@ TTM_METRICS = (
 
 # Default metrics acquired by SECProvider.fetch: includes cross-source comparable
 # metrics plus capital-structure balance-sheet components and dividend observations.
+#
+# The four crossing inputs are in the default set because a run that admits
+# nothing but revenue cannot derive EBITDA or free cash flow at all, and the
+# admission is what the product's reverse valuation reads. A filer that does
+# not report one of them is simply absent for that metric, which the admission
+# states as a refusal rather than filling in.
 SEC_DEFAULT_METRICS: Tuple[str, ...] = tuple(
     list(COMPARABLE_METRICS)
     + [
         METRIC_MARKETABLE_SECURITIES_CURRENT,
         METRIC_COMMERCIAL_PAPER,
         METRIC_DIVIDENDS_PER_SHARE,
+        METRIC_OPERATING_INCOME,
+        METRIC_DEPRECIATION_AND_AMORTIZATION,
+        METRIC_OPERATING_CASH_FLOW,
+        METRIC_CAPEX,
     ]
 )
 
@@ -1035,6 +1074,27 @@ def _basis_for(fact: SecFact) -> Dict[str, Any]:
     else:
         basis["security_type"] = "UNDECLARED"
     return basis
+
+
+def _metric_definition(metric: str) -> str:
+    """
+    What the figure is, in the registry's own words.
+
+    The contract's `METRIC_DEFINITIONS` covers the cross-source metric set.
+    The four crossing inputs are Core-only -- `capex` in particular is
+    deliberately not in the contract, so that a second contract cannot drift
+    from the registry. Their meaning is the registry's business, so it is read
+    from there rather than restated here.
+    """
+    definition = METRIC_DEFINITIONS.get(metric)
+    if definition:
+        return definition
+    from registry_seed import METRICS
+
+    for entry in METRICS:
+        if entry.metric_id == metric:
+            return entry.semantic_definition
+    return metric
 
 
 def is_discrete_period(fact: SecFact) -> bool:
@@ -2347,7 +2407,7 @@ class SECProvider:
                 taxonomy=fact.taxonomy,
                 tag=fact.tag,
             ),
-            definition=METRIC_DEFINITIONS[fact.metric],
+            definition=_metric_definition(fact.metric),
             methodology=methodology,
             retrieved_at=retrieved_at,
             raw=raw,
@@ -2445,7 +2505,7 @@ class SECProvider:
                 taxonomy=latest.taxonomy,
                 tag=latest.tag,
             ),
-            definition=METRIC_DEFINITIONS[metric],
+            definition=_metric_definition(metric),
             methodology=method,
             retrieved_at=retrieved_at,
             raw={

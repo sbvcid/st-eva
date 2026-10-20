@@ -55,6 +55,47 @@ class RefusalItem(BaseModel):
     category: Optional[str] = None
 
 
+class AdmittedMetric(BaseModel):
+    """
+    One metric the admission process qualified, with the figure and its origin.
+
+    A metric name on its own says that something was admitted and nothing
+    about what was admitted or where it came from. The figure, the period it
+    covers, the currency it is in and the filing that reported it are what
+    make the admission checkable, and they are read from the stored row and
+    the stored observation rather than restated here.
+    """
+
+    metric: str
+    value: Optional[float] = None
+    currency: Optional[str] = None
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    accession: Optional[str] = None
+    form: Optional[str] = None
+    source_concept: Optional[str] = None
+    availability_class: Optional[str] = None
+    mapping_type: Optional[str] = None
+    available_at: Optional[str] = None
+    source_url: Optional[str] = None
+    decided_at: Optional[str] = None
+
+
+class CrossingDerivation(BaseModel):
+    """
+    One figure the filing-evidence crossing derived.
+
+    The value, the rule it was derived by, and the two admitted figures it was
+    derived from with their period, currency and filing. A derived number a
+    reader cannot check is a number they have to take on trust, and this is
+    the part of the product that can be checked.
+    """
+
+    value: Optional[float] = None
+    formula: Optional[str] = None
+    inputs: List[AdmittedMetric] = Field(default_factory=list)
+
+
 class AdmissionSummary(BaseModel):
     total_admitted: int = 0
     total_refused: int = 0
@@ -65,6 +106,12 @@ class AdmissionSummary(BaseModel):
     # unavailability entries that are not admission rows).
     metrics_refused: List[str] = Field(default_factory=list)
     refusals: List[RefusalItem] = Field(default_factory=list)
+    # The qualified figure for each admitted metric, with the period it covers
+    # and the filing that reported it.
+    admitted_metrics: List[AdmittedMetric] = Field(default_factory=list)
+    # The figures the crossing derived from those admitted metrics, with the
+    # rule each was derived by.
+    derivations: Dict[str, CrossingDerivation] = Field(default_factory=dict)
 
 
 class ReplaySummary(BaseModel):

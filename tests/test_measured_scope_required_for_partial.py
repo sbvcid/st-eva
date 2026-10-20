@@ -48,6 +48,7 @@ resolved everything, would fail.
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import sqlite3
@@ -431,17 +432,45 @@ class TestExactClaimsAreUnchanged(unittest.TestCase):
             self.assertFalse(resolution.is_component, concept)
 
     def test_every_exact_claim_in_the_registry_still_resolves(self) -> None:
-        """No enumeration to update: every EXACT IDENTITY row, by name."""
-        for concept in [r["concept_id"] for r in
-                        self.registry.connection.execute(
-                            "SELECT DISTINCT concept_id FROM"
-                            " metric_concept_mapping"
-                            " WHERE mapping_type = 'EXACT'"
-                            " AND relation_kind = 'IDENTITY'"
-                            " ORDER BY concept_id")]:
-            resolution = self.registry.resolve_source_concept(concept)
+        """
+        No enumeration to update: every EXACT IDENTITY row, by name.
+
+        A row scoped to an issuer resolves for that issuer and for no other,
+        so it is resolved here the way the admission resolves it: with the
+        issuer the row names. An unscoped row resolves for any issuer and is
+        resolved without one, which is the stronger statement -- the claim
+        holds everywhere rather than only where it is looked for.
+        """
+        rows = self.registry.connection.execute(
+            "SELECT concept_id, scope_json FROM metric_concept_mapping"
+            " WHERE mapping_type = 'EXACT' AND relation_kind = 'IDENTITY'"
+            " GROUP BY concept_id, scope_json ORDER BY concept_id"
+        ).fetchall()
+        for row in rows:
+            concept = row["concept_id"]
+            scope = json.loads(row["scope_json"]) if row["scope_json"] else None
+            asset_id = scope.get("ticker") if scope else None
+            resolution = self.registry.resolve_source_concept(concept, asset_id=asset_id)
             self.assertTrue(resolution.is_resolved, concept)
             self.assertEqual(resolution.mapping_type, "EXACT", concept)
+            if asset_id is None:
+                # An unscoped claim resolves for any issuer, not only the one
+                # that happens to ask.
+                for other in ("AAPL", "MSFT", "MU"):
+                    self.assertTrue(
+                        self.registry.resolve_source_concept(
+                            concept, asset_id=other
+                        ).is_resolved,
+                        f"{concept} for {other}",
+                    )
+            else:
+                # A scoped claim belongs to its issuer alone.
+                self.assertFalse(
+                    self.registry.resolve_source_concept(
+                        concept, asset_id="MSFT"
+                    ).is_resolved,
+                    f"{concept} must not resolve outside {asset_id}",
+                )
 
 
 class TestLongtermBorrowingsRetrievalIsUnchanged(unittest.TestCase):

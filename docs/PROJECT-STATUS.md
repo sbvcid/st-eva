@@ -2449,6 +2449,247 @@ Every failure the baseline recorded is now resolved, and nothing new was introdu
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## AAPL FY2025 10-K into the Live Reverse Valuation (2026-10-20)
+
+Continued from `524bd09`. This round put AAPL's real filing facts into the live
+crossing. No price data was re-downloaded, no eligibility rule was relaxed, and
+the reverse-valuation engine was not changed.
+
+### The gap, located
+
+The live analysis refused four crossing metrics. The refusal reason was the same
+for all four and named the real cause:
+
+> no observation of this metric is replay-eligible at this instant, so there is
+> no filed figure to consider (no 'capex' row is replay-eligible at this
+> instant)
+
+That is the admission's rule 2 — there is no candidate row — and the cause is
+upstream of it: **the SEC provider never asked for those concepts.** Its
+`SEC_CONCEPTS` covered revenue, net income, diluted EPS, assets, cash, long-term
+debt, shares, securities, commercial paper and dividends, and not the four that
+the crossing consumes. The archive held a `revenue` row and nothing else, so
+revenue crossed and the other four had nothing to cross with.
+
+### The data path
+
+`sec_provider.SEC_CONCEPTS` now names the element each filer reports the line
+on, and the four metrics are in the default set so an ordinary run asks for
+them:
+
+| metric | element |
+| --- | --- |
+| operating income | `us-gaap:OperatingIncomeLoss` |
+| depreciation and amortization | `us-gaap:DepreciationDepletionAndAmortization` |
+| operating cash flow | `us-gaap:NetCashProvidedByUsedInOperatingActivities` |
+| capital expenditure | `us-gaap:PaymentsToAcquirePropertyPlantAndEquipment` |
+
+The provider's own filters are unchanged and still refuse what they refused: a
+nine-month cumulative is not a discrete period, and the fiscal quarters the
+filers do not report discretely (Q2 and Q3 FY2026, where only year-to-date
+stubs exist) do not become quarters. A fiscal Q1 *is* a discrete quarter
+because a Q1 10-Q's year-to-date is the quarter.
+
+### The depreciation mapping, and why it is scoped to Apple
+
+Apple's FY2025 10-K (`0000320193-25-000079`, filed 2025-10-31, accepted
+2025-10-31T14:01:26Z, period 2024-09-29..2025-09-27) reports one cash-flow
+line labelled **"Depreciation and amortization"** of 11,698 million USD, carried
+on `us-gaap:DepreciationDepletionAndAmortization`. Read from the filing's own
+rendered statement (`R8.htm`), that element's definition also covers
+*depleting assets*, and Apple's company facts contain only the `dei` and
+`us-gaap` taxonomies — **Apple has no company-specific element for the line**.
+`us-gaap:DepreciationAndAmortization`, the element the registry already maps
+market-wide, has no Apple rows at all.
+
+So the element is not the pure element, and a market-wide EXACT mapping would
+assert something false for a filer with depleting assets. The registry's own
+`RestrictedIssuerMappingTests` documents both halves of this: the architecture
+"can represent an issuer-restricted EXACT claim", and MU's real
+`us-gaap:DepreciationDepletionAndAmortization` "remains refused because the
+concept's US-GAAP taxonomy definition explicitly includes depletion **and the
+filing's presentation label has not been verified** as limiting to depreciation
+and amortization". For Apple the label *was* verified — from the filing's own
+statement, where the line is labelled "Depreciation and amortization" and is the
+only depreciation line in the reconciliation. So the mapping is declared
+**scoped to Apple**:
+
+```python
+ConceptMapping(
+    metric_id="depreciation_and_amortization",
+    concept_id="us-gaap:DepreciationDepletionAndAmortization",
+    mapping_type=MAPPING_EXACT,
+    relation_kind=MAPPING_IDENTITY,
+    scope={"ticker": "AAPL"},
+)
+```
+
+The scope is what keeps the claim honest: the element means this metric for
+Apple and for no other issuer. A new test asserts that it resolves for Apple
+and does **not** resolve for another issuer, and that the market-wide mapping
+for the pure element is unchanged.
+
+### The product database, not just a test database
+
+A fresh archive was never the problem. `AnalysisServiceAdapter.ensure_registry_seeded`
+seeded the canonical registry only when the registry table was **empty**, so an
+archive created before a declaration changed kept a registry that no longer
+matched the code, and the admission it decided was a decision about a registry
+that was not the one in force. A test against a fresh database would see the new
+declaration and the product's own archive would not.
+
+The seed is now applied on every run. It is idempotent, and making it so exposed
+a latent defect: `metric_concept_mapping`'s primary key is
+`(metric_id, concept_id, effective_from)` and `effective_from` is **nullable**,
+and SQLite treats NULLs in a primary key as distinct from one another. So
+`INSERT OR REPLACE` cannot replace a row whose `effective_from` is NULL — it
+inserts a second one beside it. Re-seeding therefore accumulated rows, and two
+rows claiming one concept read as an *ambiguity*, which refused the very
+admission the seed was there to enable. The seed now removes its own rows
+before writing them, identified by the metric, concept, effective date **and
+scope**, so a global claim and a restricted one for the same concept stay
+distinct.
+
+### What the product now reports
+
+The API's `admission_summary` carries, for every crossing metric, the qualified
+figure and where it came from: value, currency, period, accession, form, XBRL
+concept, availability class, mapping type, availability instant and source URL.
+It also carries the two derived figures with the rule each was derived by and
+the two admitted figures it was derived from.
+
+The derivation is one implementation. `evidence_valuation_boundary` holds it,
+the admission calls it with the figures it admitted, and the web layer calls it
+with the figures it read back from the archive — so the number a reader sees is
+the number the crossing produced, and the two cannot drift.
+
+The derived figures live in the archive's reading, not in the run's output,
+because the run's output must not depend on whether an archive was configured.
+`tests/test_archive_replay.py::TestLegacyCompatibility::test_the_cli_output_is_unchanged_by_the_archive_flag`
+pins that the CLI's JSON is identical with and without `--archive`, and it is
+what caught the first attempt, which put the derivations in the run's result and
+so changed the CLI's output.
+
+### The figures, and the arithmetic behind them
+
+From Apple's FY2025 10-K, admitted under the product's own pipeline:
+
+- **EBITDA = 144,748 million USD** — operating income 133,050 + depreciation
+  and amortization 11,698, one period (2024-09-29..2025-09-27), one currency
+  (USD), one filing (accession `0000320193-25-000079`)
+- **Free cash flow = 98,767 million USD** — operating cash flow 111,482 less
+  capital expenditure 12,715, the same period and currency. The source states
+  capital expenditure as a positive spending figure and the derivation
+  subtracts it; a source that stated it as a negative outflow would add it, and
+  a test covers both.
+
+The 11,698 figure is *not* the SEC's 8,000 `us-gaap:Depreciation` (depreciation
+alone) and not the vendor's trailing figure; it is the filed line.
+
+What is **not** claimed: the vendor's own trailing EBITDA and free cash flow
+still sit in the engine's inputs, and the EV/EBITDA and cash-flow reverse
+methods stay unavailable without a qualified historical exit multiple. The
+supplier's eight-observation band is still not a reference, and the historical
+P/FCF-median-implied 194.1B is still labelled as an implied reference and not
+as a filed current free cash flow.
+
+### The replay differences, classified
+
+The AAPL replay reports DIVERGED with 54 differing fields. They fall into two
+classes, and neither is a defect in the rebuild:
+
+1. **The archive now holds what the run did not have.** The four metrics'
+   `data_quality.series`, `data_quality.freshness` and `glossary` blocks are
+   null in the archived context and populated in the rebuild, because the
+   archived context was written before this round's data path and the rebuild
+   reads the archive, which now holds those facts. The `context_id` difference
+   is the consequence of the rest.
+2. **Runtime assumptions the archive cannot reconstruct.** The consensus series
+   (`consensus_forward_eps_60d_ago` and its siblings) and the derived figures
+   that depend on a reference (`implied_fcf`, `implied_forward_eps`,
+   `required_eps_cagr`, `eps_gap_vs_consensus`, `implied_to_consensus`) are
+   present in the archived context and absent in the rebuild, because a
+   user-supplied or vendor reference is a runtime assumption rather than an
+   archived observation.
+
+The replay's status was left `DIVERGED`. It was not forced to `MATCH`, and no
+difference was hidden: the honest verdict is that the rebuild differs, and the
+diff says why. A run archived with the current code and the current registry
+reduces the first class on its own.
+
+### The product path, verified
+
+Running the live web path (`POST /api/analyze`, `mode=live`, against
+`data/archives/AAPL.sqlite`) now gives:
+
+- admitted: revenue, operating income, depreciation and amortization, operating
+  cash flow, capex — **five admitted, none refused**
+- `operating_income` 133,050,000,000 USD, 2024-09-29..2025-09-27, 10-K,
+  accession `0000320193-25-000079`, `us-gaap:OperatingIncomeLoss`,
+  `SOURCE_DECLARED`, EXACT
+- `depreciation_and_amortization` 11,698,000,000 USD, the same period and
+  filing, `us-gaap:DepreciationDepletionAndAmortization`
+- `operating_cash_flow` 53,925,000,000 USD and `capex` 2,373,000,000 USD, both
+  2025-09-28..2025-12-27, 10-Q accession `0000320193-26-000006` — the latest
+  discrete quarter the SEC reports for Apple
+- derivations: EBITDA 144,748,000,000 with its formula and both inputs;
+  free cash flow 51,552,000,000 over the same quarter
+
+The cash-flow pair is the latest *knowable* discrete period, which is a
+quarter: Apple does not report a discrete Q2 or Q3 for FY2026, only year-to-date
+stubs, and the rule refuses a stub. The FY2025 annual pair (111,482 and 12,715,
+the same 10-K) is admissible and derives 98,767,000,000, and the test proves
+that over the filing's own figures.
+
+### No regression
+
+- **AAPL, MSFT, MU, SOFI** are unchanged: the historical P/E distributions, the
+  53-check SOFI acceptance run (130 observations, median 47.299768, window
+  2024-11-08..2026-09-24, snapshot AVAILABLE at 30.21875, 80-row matrix) and
+  the MUFG cross-currency limit (ADR ratio 1.0, 0.006316 USD/JPY as of
+  2026-10-09, 1.1253/177.82 as of 2026-10-16, the unconverted JPY/USD P/S still
+  refused) all pass.
+- The reference gate is unchanged: the supplier's eight-observation band is
+  still not a reference.
+- Three pinned registry counts moved by one, because the issuer-scoped
+  depreciation mapping is one row: `EXPECTED_TOTAL` 52 → 53, `EXPECTED_IDENTITY`
+  48 → 49, `EXPECTED_IDENTITY_BY_TYPE` EXACT 32 → 33. The reason is recorded at
+  the constant. One contract test was refined rather than weakened: every EXACT
+  IDENTITY row now resolves exactly *for the issuer it is scoped to*, and an
+  unscoped row is additionally asserted to resolve for any issuer.
+- `capex` stays out of the cross-source contract (`data_contract.METRIC_UNITS`
+  and `METRIC_DEFINITIONS`): it is Core-only, and a second contract would be a
+  second thing to drift. The provider takes those descriptions from the
+  registry, which is the authority.
+
+### Tests
+
+New `tests/test_aapl_sec_crossing.py`: 14 tests, 4 subtests. It uses the real
+archive, the real registry and the real admission over Apple's filed FY2025
+figures, and covers the traceability of each fact, the four admissions, the
+scoping of the depreciation mapping, both derivations, the source's own sign,
+a mismatched period, a nine-month cumulative, a currency mismatch, a metric
+with no fact, and the API's own DTO.
+
+### CI
+
+Local full backend run of `tests/`: **2525 passed, 170 skipped, 528 subtests,
+0 failed**. Against the CI baseline 39239093577's 42 failures, all 42 are
+resolved and none is new.
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-Both remaining CI failures are fixed at their cause rather than around their symptoms: the registry no longer treats a measured scope as a restriction, so an EXACT claim is not displaced by a PARTIAL that merely carries more metadata; and MUFG's cross-currency analysis reads its SEC diluted EPS from a tracked, traceable filing dataset and its market data from a fixed fixture, so the analysis is the same on every machine. The CI workflow is green for the first time — run 39379885654, 2468 passed and 0 failed — with no regression against the baseline. No product blocker; archive cleanup remains deferred per existing decision.
+AAPL's real FY2025 filing facts now cross in the live product: the SEC provider
+asks for the four concepts the crossing consumes, the depreciation mapping is
+declared for Apple alone with the filing's own label verified, the product's
+own archive keeps a registry that matches the code, and the API reports each
+qualified figure with its filing, period, currency and the rule each derived
+figure was derived by. The full backend suite is green for the first time:
+2525 passed, 0 failed, all 42 baseline failures resolved and none introduced.
+The replay remains honestly DIVERGED, with its differences classified rather
+than closed. No product blocker; archive cleanup remains deferred per existing
+decision.

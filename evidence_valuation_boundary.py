@@ -62,7 +62,7 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Mapping, NamedTuple, Optional, Sequence, Set, Tuple
 
 from archive import (
     ARCHIVE_FIRST_SEEN,
@@ -1249,8 +1249,8 @@ def _admit_one(
 #   free_cash_flow = operating_cash_flow + capex_reported   (capex <= 0, an outflow)
 #   free_cash_flow = operating_cash_flow - capex_reported   (capex > 0, a spending figure)
 def _derive_free_cash_flow(
-    operating_cash_flow: Optional[Admission],
-    capex: Optional[Admission],
+    operating_cash_flow: Optional[CrossingFigure],
+    capex: Optional[CrossingFigure],
     price_currency: Optional[str],
 ) -> Optional[float]:
     """
@@ -1291,9 +1291,24 @@ def _derive_free_cash_flow(
 # before the non-cash charges. Operating income and D&A must share one period and
 # one currency with each other and with the price; otherwise EBITDA stays
 # UNAVAILABLE and no incompatible periods or currencies are combined.
+class CrossingFigure(NamedTuple):
+    """
+    One admitted figure, as the derivation reads it.
+
+    The derivation needs the value, the currency and the period. It must be
+    readable from a filing's admission record and from an archived observation
+    alike, so the shape is explicit rather than either one's own object.
+    """
+
+    value: Any
+    currency: Optional[str]
+    period_start: Optional[str]
+    period_end: Optional[str]
+
+
 def _derive_ebitda(
-    operating_income: Optional[Admission],
-    depreciation_and_amortization: Optional[Admission],
+    operating_income: Optional[CrossingFigure],
+    depreciation_and_amortization: Optional[CrossingFigure],
     price_currency: Optional[str],
 ) -> Optional[float]:
     """
@@ -1320,6 +1335,143 @@ def _derive_ebitda(
     if price_currency is not None and operating_income.currency != price_currency:
         return None
     return float(operating_income.value) + float(depreciation_and_amortization.value)
+
+
+# The formula each derived figure is computed with, in words. It is stated here
+# rather than at the call site so the reader of the product's own output is
+# told the same rule the code applied.
+DERIVATION_FORMULAS: Dict[str, str] = {
+    "ebitda": (
+        "operating_income + depreciation_and_amortization, over one period and one "
+        "currency"
+    ),
+    "free_cash_flow": (
+        "operating_cash_flow + capex as reported when the source states an outflow "
+        "(a negative number), and operating_cash_flow - capex when the source states "
+        "a positive spending figure, over one period and one currency"
+    ),
+}
+
+
+def _figure_of(admission: Optional[Admission]) -> Optional[CrossingFigure]:
+    """The admitted figure, in the shape the derivation reads."""
+    if admission is None:
+        return None
+    return CrossingFigure(
+        value=admission.value,
+        currency=admission.currency,
+        period_start=admission.period_start,
+        period_end=admission.period_end,
+    )
+
+
+def crossing_derivations(
+    admissions: Sequence[Admission],
+) -> Dict[str, Any]:
+    """
+    The figures the crossing derived, with the inputs each was derived from.
+
+    A derived number is only checkable when the reader can see what it was
+    derived from and the rule it was derived by, so each entry carries both:
+    the two admitted figures, their period, currency and filing, and the
+    formula. The derivation itself is not repeated here -- the values are the
+    ones `_derive_ebitda` and `_derive_free_cash_flow` produced, and the
+    formulas are the ones those functions document.
+    """
+    figures: Dict[str, CrossingFigure] = {}
+    origins: Dict[str, Admission] = {}
+    for admission in admissions:
+        if not admission.admitted:
+            continue
+        figures[admission.metric] = CrossingFigure(
+            value=admission.value,
+            currency=admission.currency,
+            period_start=admission.period_start,
+            period_end=admission.period_end,
+        )
+        origins[admission.metric] = admission
+    price_currency = next(
+        (
+            admission.currency
+            for admission in admissions
+            if admission.metric == METRIC_OPERATING_CASH_FLOW and admission.admitted
+        ),
+        None,
+    )
+    return crossing_derivations_from_figures(figures, price_currency, origins)
+
+
+def crossing_derivations_from_figures(
+    figures: Mapping[str, CrossingFigure],
+    price_currency: Optional[str] = None,
+    origins: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    The derived figures, from the admitted figures.
+
+    The one implementation of the two derivations. The admission calls it with
+    the figures it admitted; a reader that holds the archive calls it with the
+    figures it read back, and gets the same answer because the rule and the
+    inputs are the same.
+    """
+    origins = origins or {}
+
+    def _input(metric: str) -> Optional[Dict[str, Any]]:
+        figure = figures.get(metric)
+        if figure is None:
+            return None
+        origin = origins.get(metric)
+        entry: Dict[str, Any] = {
+            "metric": metric,
+            "value": figure.value if is_number(figure.value) else None,
+            "currency": figure.currency,
+            "period_start": figure.period_start,
+            "period_end": figure.period_end,
+        }
+        if origin is not None:
+            entry.update({
+                "duration_days": getattr(origin, "duration_days", None),
+                "accession": getattr(origin, "accession", None),
+                "form": getattr(origin, "form", None),
+                "concept": getattr(origin, "concept", None),
+                "available_at": getattr(origin, "available_at", None),
+                "availability_class": getattr(origin, "availability_class", None),
+                "mapping_type": getattr(origin, "mapping_type", None),
+            })
+        return entry
+
+    ebitda_inputs = [
+        _input(METRIC_OPERATING_INCOME),
+        _input(METRIC_DEPRECIATION_AND_AMORTIZATION),
+    ]
+    fcf_inputs = [
+        _input(METRIC_OPERATING_CASH_FLOW),
+        _input(METRIC_CAPEX),
+    ]
+
+    ebitda = _derive_ebitda(
+        figures.get(METRIC_OPERATING_INCOME),
+        figures.get(METRIC_DEPRECIATION_AND_AMORTIZATION),
+        price_currency,
+    )
+    free_cash_flow = _derive_free_cash_flow(
+        figures.get(METRIC_OPERATING_CASH_FLOW),
+        figures.get(METRIC_CAPEX),
+        price_currency,
+    )
+
+    return {
+        "ebitda": {
+            "value": ebitda,
+            "formula": DERIVATION_FORMULAS["ebitda"],
+            "inputs": [item for item in ebitda_inputs if item is not None],
+        },
+        "free_cash_flow": {
+            "value": free_cash_flow,
+            "formula": DERIVATION_FORMULAS["free_cash_flow"],
+            "inputs": [item for item in fcf_inputs if item is not None],
+        },
+    }
 
 
 def admit(
@@ -1400,7 +1552,7 @@ def admit(
         None,
     )
     free_cash_flow = _derive_free_cash_flow(
-        operating_cash_flow, capex, checked_price.currency
+        _figure_of(operating_cash_flow), _figure_of(capex), checked_price.currency
     )
     operating_income = next(
         (
@@ -1421,7 +1573,9 @@ def admit(
         None,
     )
     ebitda = _derive_ebitda(
-        operating_income, depreciation_and_amortization, checked_price.currency
+        _figure_of(operating_income),
+        _figure_of(depreciation_and_amortization),
+        checked_price.currency,
     )
     # `current_revenue`, `current_operating_cash_flow`, `current_capex`,
     # `current_operating_income` and `current_depreciation_and_amortization`

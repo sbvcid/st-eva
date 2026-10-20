@@ -611,6 +611,19 @@ CONCEPTS: Tuple[Concept, ...] = (
     ),
     Concept(
         concept_id=concept_id_for(
+            US_GAAP, "DepreciationDepletionAndAmortization"
+        ),
+        taxonomy=US_GAAP,
+        concept="DepreciationDepletionAndAmortization",
+        label="Depreciation, Depletion and Amortization",
+        source_definition=(
+            "The aggregate expense recognized in the current period that "
+            "allocates the cost of tangible assets, intangible assets, or "
+            "depleting assets to periods that benefit from use of the assets."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
             IFRS_FULL, "DepreciationAndAmortizationExpense"
         ),
         taxonomy=IFRS_FULL,
@@ -1863,6 +1876,43 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
     ConceptMapping(
         metric_id="depreciation_and_amortization",
         concept_id=concept_id_for(
+            US_GAAP, "DepreciationDepletionAndAmortization"
+        ),
+        mapping_type=MAPPING_EXACT,
+        relation_kind=MAPPING_IDENTITY,
+        # Scoped to Apple, and only to Apple.
+        #
+        # The element's own definition covers depleting assets as well as
+        # depreciation and amortization, so it is not the pure element and a
+        # market-wide EXACT mapping would assert something false for a filer
+        # with depleting assets. It is also not the element the pure
+        # `us-gaap:DepreciationAndAmortization` mapping above names, and the
+        # two are different elements.
+        #
+        # Apple reports one cash-flow line labelled "Depreciation and
+        # amortization" and carries it on this element: 11,698 million USD for
+        # FY2025 (2024-09-29 to 2025-09-27), in the 10-K filed 2025-10-31,
+        # accession 0000320193-25-000079. Apple has no company-specific
+        # depreciation and amortization element, so this element is the only
+        # one that states the line, and the filer's own presentation is what
+        # makes the value this metric for this issuer.
+        #
+        # The scope is what keeps the claim honest: the element means this
+        # metric for Apple and for no other issuer, so the mapping is declared
+        # for Apple alone rather than as a market-wide EXACT mapping.
+        scope={"ticker": "AAPL"},
+        notes=(
+            "Apple's combined 'Depreciation and amortization' line, carried on "
+            "us-gaap:DepreciationDepletionAndAmortization. The element's "
+            "definition also covers depleting assets, so this mapping is "
+            "scoped to the issuer whose own presentation makes the element "
+            "this metric: Apple reports the line and has no company-specific "
+            "element for it. Not a market-wide EXACT mapping."
+        ),
+    ),
+    ConceptMapping(
+        metric_id="depreciation_and_amortization",
+        concept_id=concept_id_for(
             IFRS_FULL, "DepreciationAndAmortizationExpense"
         ),
         mapping_type=MAPPING_EXACT,
@@ -2130,7 +2180,24 @@ DECLINES: Tuple[DeclinedConcept, ...] = (
 
 
 def seed(registry: CoreRegistry) -> Dict[str, int]:
-    """Load the registry seed. Idempotent."""
+    """
+    Load the registry seed. Idempotent.
+
+    The seed's own rows are removed before it writes them, so re-seeding
+    replaces rather than accumulates. That removal is scoped to the rows the
+    seed itself wrote -- the same metric, concept, effective date and scope --
+    because a global claim and a restricted one for the same concept are both
+    legitimate and the resolver needs to see them apart. A removal that ignored
+    the scope would delete the restricted claim a caller added on purpose.
+    """
+    for mapping in MAPPINGS:
+        registry.remove_mapping(
+            mapping.metric_id, mapping.concept_id, mapping.effective_from, mapping.scope
+        )
+    for decline in DECLINES:
+        registry.remove_decline(
+            decline.concept_id, decline.considered_for_metric
+        )
     for metric in METRICS:
         registry.add_metric(metric)
     for concept in CONCEPTS:

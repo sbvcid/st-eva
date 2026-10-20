@@ -70,9 +70,18 @@ UNRESOLVED = ConceptResolution.UNRESOLVED_NO_APPLICABLE_MAPPING
 
 # The registry counts this promotion is expected to produce. Pinned rather than
 # computed, because a computed expectation is the current value restated.
-EXPECTED_TOTAL = 52
-EXPECTED_IDENTITY = 48
-EXPECTED_IDENTITY_BY_TYPE = {"EXACT": 32, "PARTIAL": 15, "EQUIVALENT": 1}
+#
+# +1 total and +1 EXACT identity row: the issuer-scoped mapping for
+# us-gaap:DepreciationDepletionAndAmortization. The element's own definition
+# also covers depleting assets, so it is not the pure element and a
+# market-wide EXACT mapping would assert something false for a filer with
+# depleting assets. Apple reports its combined "Depreciation and amortization"
+# line on it and has no company-specific element for the line, so the mapping
+# is declared for Apple alone. The scope is what keeps the claim honest, and
+# the count records the row that exists.
+EXPECTED_TOTAL = 53
+EXPECTED_IDENTITY = 49
+EXPECTED_IDENTITY_BY_TYPE = {"EXACT": 33, "PARTIAL": 15, "EQUIVALENT": 1}
 EXPECTED_COMPOSITION = 4
 
 

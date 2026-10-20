@@ -1251,7 +1251,62 @@ class CoreRegistry:
         self.connection.commit()
         return concept.concept_id
 
+    def remove_mapping(
+        self,
+        metric_id: str,
+        concept_id: str,
+        effective_from: Optional[str] = None,
+        scope: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """
+        Remove one mapping, identified by what it declares.
+
+        A mapping is identified by the metric, the concept, the effective date
+        and the scope together, because a global claim and a restricted one for
+        the same concept are both legitimate. Removing by the metric and the
+        concept alone would take the restricted one with the global one.
+        """
+        scope_json = (
+            None if scope is None
+            else json.dumps(scope, sort_keys=True, separators=(",", ":"))
+        )
+        self.connection.execute(
+            "DELETE FROM metric_concept_mapping WHERE metric_id = ?"
+            " AND concept_id = ?"
+            " AND ((effective_from IS NULL AND ? IS NULL) OR effective_from = ?)"
+            " AND ((scope_json IS NULL AND ? IS NULL) OR scope_json = ?)",
+            (
+                metric_id,
+                concept_id,
+                effective_from,
+                effective_from,
+                scope_json,
+                scope_json,
+            ),
+        )
+        self.connection.commit()
+
+    def remove_decline(self, concept_id: str, considered_for_metric: str) -> None:
+        """Remove one declined concept, identified by what it declares."""
+        self.connection.execute(
+            "DELETE FROM declined_concept_mappings WHERE concept_id = ?"
+            " AND considered_for_metric = ?",
+            (concept_id, considered_for_metric),
+        )
+        self.connection.commit()
+
     def add_mapping(self, mapping: ConceptMapping) -> None:
+        # `effective_from` is part of the primary key and it is nullable, and
+        # SQLite treats NULLs in a primary key as distinct from one another.
+        # `INSERT OR REPLACE` therefore cannot replace a row whose
+        # `effective_from` is NULL: it adds a second one beside it. That is
+        # what lets a global claim and a restricted one coexist for the same
+        # concept, which the resolver needs, so the write is left to insert.
+        #
+        # The seed removes its own rows before writing them, so re-seeding
+        # replaces rather than accumulates. The removal is in the seed and not
+        # here, because here it would also remove a differently-scoped claim
+        # that the caller added on purpose.
         self.connection.execute(
             "INSERT OR REPLACE INTO metric_concept_mapping (metric_id,"
             " concept_id, mapping_type, effective_from, effective_to, notes,"
