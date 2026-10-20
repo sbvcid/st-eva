@@ -2743,13 +2743,34 @@ The API's new `calculation_inputs` block carries this per multiple, with the obs
 
 Nothing was relabelled to look better than it is. The provider's trailing earnings figure keeps its "undeclared period" label; the filed trailing figure is a different, separately-labelled quantity; and the latest quarter's free cash flow is never presented as a trailing one. The EV/EBITDA and cash-flow reverse methods stay unavailable without a qualified historical exit multiple, the provider's eight-observation band is still not a reference, and the historical P/FCF-median-implied 194.1B is still an implied reference and not a filed current free cash flow.
 
+### Which trailing figure qualifies, and which does not
+
+The SEC provider builds a trailing earnings view of its own, and for Apple it is a **roll-forward**: its fiscal Q3 is reported inside the annual context rather than as a discrete quarter, so the four most recent quarters have a hole and the provider subtracts — prior fiscal year minus prior-year cumulative plus current cumulative. The provider records that construction on the observation, and for a per-share amount it records the window as **not additive**, because the denominator moves and the result is an approximation rather than a filed figure.
+
+That is exactly the figure the task forbids labelling as a filed trailing EPS, so the qualification rule refuses it. A trailing earnings figure qualifies only when it is a **sum of four directly stated quarterly figures** with the fourth quarter coming from a **furnished earnings release**:
+
+- `SUM_OF_FOUR_DIRECTLY_STATED_QUARTERLY_EPS` → qualifies
+- `ANNUAL_ROLL_FORWARD` (a subtraction) → **refused**
+- a window with no furnished fourth quarter → **refused**
+- a missing quarter, a declared gap, a quarter not knowable at the cut, or a window after the cut → **refused**
+
+The qualified figure is the production historical P/E dataset's own reconstruction (`data/historical_pe/AAPL`): 1.85 (8-K Item 2.02, accession `0000320193-25-000077`, accepted 2025-10-30T16:30:35-04:00) + 2.84 + 2.01 + 2.02, `derived_not_issuer_declared: true` and stated as a sum.
+
+The trailing free cash flow qualifies on the same discipline: four quarters, each declaring the formula it was arrived at (Apple's quarters are the difference of two cumulative filings, so the derivation is declared rather than assumed), each with its own knowable date and SEC accessions.
+
 ### Tests
 
-New `tests/test_engine_input_provenance.py`: 20 tests, 4 subtests, all passing, plus one live test gated on `ST_EVA_LIVE=1` that drives the real AAPL live path. It covers the qualification rules (a missing quarter, a declared gap, a quarter not knowable at the cut, and a window after the cut all refuse the reconstruction), the four-quarter requirement for a trailing free cash flow, the engine's input staying the published figure, the filed figure being reported beside it with its components and the furnished fourth quarter, a filed figure that differs being reported as a difference, a quarter's free cash flow never standing in for a trailing one, the filed annual EBITDA keeping its annual basis and not entering a trailing multiple, one refused input leaving the other methods able to compute, and the API reporting the engine's inputs.
+New `tests/test_engine_input_provenance.py`: 23 tests, 4 subtests, all passing, plus one live test gated on `ST_EVA_LIVE=1` that drives the real AAPL live path. It covers the qualification rules (a missing quarter, a declared gap, a quarter not knowable at the cut, and a window after the cut all refuse the reconstruction; a rolled-forward earnings figure and a window with no furnished fourth quarter are refused; a free-cash-flow quarter without a declared derivation is refused), the four-quarter requirement for a trailing free cash flow, the engine's input staying the published figure, the filed figure being reported beside it with its components and the furnished fourth quarter, a filed figure that differs being reported as a difference, a quarter's free cash flow never standing in for a trailing one, the filed annual EBITDA keeping its annual basis and not entering a trailing multiple, one refused input leaving the other methods able to compute, and the API reporting the engine's inputs.
 
 The live path is verified end to end: the filed trailing earnings figure has four directly stated quarters, the filed trailing free cash flow has four quarters, the filed annual figures and the derived EBITDA of 144,748,000,000 are in the admission summary with their periods, and the API's numbers are the engine's numbers.
 
+### Regressions
+
+AAPL, MSFT, MU and SOFI historical valuation, the SOFI 80-row reverse matrix, the MUFG cross-currency limit and the CLI's output-with-and-without-`--archive` equality all pass: **191 passed, 2 skipped, 61 subtests** across the historical P/E, AAPL/MSFT/MU/SOFI integration, adapter, SEC-crossing and input-provenance suites; **24 passed** for the MUFG runner tests; **1 passed, 3 subtests** for the CLI archive-flag equality.
+
 ### CI
+
+Local full backend run of `tests/`: **2548 passed, 171 skipped, 532 subtests, 0 failed**.
 
 **The workflow is green.** Run **39409786897** for `226c605`:
 <https://github.com/sbvcid/st-eva/actions/runs/39409786897>

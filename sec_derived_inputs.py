@@ -83,9 +83,24 @@ def qualified_ttm_eps(
         if denominator is None:
             continue
         derivation = state.get("quarter_denominator_derivation") or {}
+        # Only a sum of directly stated quarterly figures qualifies. A trailing
+        # figure rolled forward from a fiscal year and two cumulative periods
+        # is a subtraction, and for a per-share amount the subtrahend's
+        # denominator moves, so the result is an approximation rather than a
+        # filed figure. The SEC provider's own trailing earnings view says so
+        # on its face -- it records the window as not additive -- and such a
+        # figure is not a filed fact and is not labelled as one.
+        method = str(derivation.get("method") or "")
+        if "SUM" not in method.upper():
+            continue
         furnished = [
             c for c in components if c.get("evidence_class") == "furnished"
         ]
+        # The fourth quarter is the one a fiscal year does not report on its
+        # own. It has to come from a furnished earnings release, or the window
+        # is not four directly stated quarterly figures.
+        if not furnished:
+            continue
         return {
             "value": float(denominator),
             "basis": BASIS_TTM,
@@ -148,6 +163,11 @@ def qualified_ttm_fcf(
         window = record.get("ttm_window") or {}
         quarters = [q for q in (window.get("quarters") or []) if isinstance(q, dict)]
         if len(quarters) != 4:
+            continue
+        # Each quarter has to say how it was arrived at. A quarter that is the
+        # difference of two cumulative filings is a legitimate quarter, but it
+        # is a derived one and has to declare itself as such.
+        if not all(q.get("formula") for q in quarters):
             continue
         knowable = [str(q.get("knowable_from") or "") for q in quarters]
         if not all(knowable) or max(knowable) > str(as_of):

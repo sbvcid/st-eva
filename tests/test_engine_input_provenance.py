@@ -249,6 +249,42 @@ class TestTheTrailingFiguresAreQualified(unittest.TestCase):
         result_earlier = qualified_ttm_eps(_pe_payload([late, early]), "2026-01-30")
         self.assertEqual(result_earlier["value"], 7.46)
 
+    def test_a_rolled_forward_earnings_figure_is_not_a_filed_fact(self):
+        """A trailing figure rolled forward by subtraction is not a filed fact.
+
+        The SEC provider's own trailing earnings view is built that way for
+        Apple, because its fiscal Q3 is reported inside the annual context
+        rather than as a discrete quarter. It records the window as not
+        additive, and a per-share amount whose denominator moves is an
+        approximation. Labelling it a filed trailing figure would be passing a
+        subtraction off as a filing.
+        """
+        record = _eps_record("2026-10-06")
+        record["eps_state"]["quarter_denominator_derivation"] = {
+            "method": "ANNUAL_ROLL_FORWARD",
+            "derived_not_issuer_declared": True,
+        }
+        self.assertIsNone(
+            qualified_ttm_eps(_pe_payload([record]), "2026-10-19")
+        )
+
+    def test_a_trailing_window_without_a_furnished_fourth_quarter_is_refused(self):
+        """The fourth quarter has to come from a furnished earnings release."""
+        record = _eps_record("2026-10-06")
+        components = record["eps_state"]["components"]
+        for component in components:
+            component["evidence_class"] = "filed"
+        self.assertIsNone(
+            qualified_ttm_eps(_pe_payload([record]), "2026-10-19")
+        )
+
+    def test_a_free_cash_flow_quarter_without_a_declared_derivation_is_refused(self):
+        record = _fcf_record("2026-10-06")
+        record["ttm_window"]["quarters"][1]["formula"] = None
+        self.assertIsNone(
+            qualified_ttm_fcf({"observations": [record]}, "2026-10-19")
+        )
+
     def test_the_four_quarter_free_cash_flow_qualifies(self):
         result = qualified_ttm_fcf(
             {"observations": [_fcf_record("2026-10-06")]}, "2026-10-19"
