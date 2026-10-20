@@ -2364,6 +2364,67 @@ Locally the run reports `1 failed, 2503 passed, 170 skipped, 519 subtests` — t
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## The Last Two CI Failures (2026-10-20)
+
+Continued from `7869541`. The SOFI integration, the data-contract work and the replay-identity work were not redone. This round closes the two failures CI run `39376082727` still reported.
+
+### A. The mapping resolver chose a measured PARTIAL over an EXACT claim
+
+`tests/test_mapping_relation_kind.py::TestResolverIsolation::test_an_exact_claim_beats_a_measured_partial_one` asserted that a metric declaring the concept **exactly** wins over another metric that calls the same concept one of its components. It resolved to `sbc` (the measured PARTIAL) instead of `sga` (the EXACT).
+
+**The conflation.** `core_registry.resolve_source_concept()` applies two scope rules, and they were answering two different questions with one test:
+
+- `_scope_matches()` decides **applicability**: a scope naming a `ticker` or an `accession` applies only to that issuer or filing; a scope with no such key matches everything.
+- the `restricted_kept` filter decided **priority**: *any* mapping with a non-`None` scope displaced every unscoped claim.
+
+Those are different questions. `MEASURED_SCOPE` — `{variation, measured, unmeasured_holders}` — records **how** a metric was measured. It qualifies a PARTIAL, which is what makes the narrower scope a measurement rather than an assumption, and it says nothing about **where** the claim applies. Treating it as a restriction meant a measured component statement could suppress a global EXACT claim about the same concept: the weaker claim won because it carried more metadata rather than because it was stronger.
+
+**The fix.** `core_registry._scope_restricts()` now says what restricts *where* a mapping applies — a scope that names a `ticker` or an `accession` — and the `restricted_kept` filter uses it. A measured scope no longer displaces a global claim; an issuer- or filing-restricted scope still does.
+
+**What is preserved.** The existing suite already pinned the rest of the contract, and all of it still holds:
+
+- a valid EXACT claim beats a weaker measured PARTIAL claim;
+- two genuinely competing EXACT claims stay `AMBIGUOUS_MAPPING`, and the ambiguity names both claimants;
+- two qualifying PARTIAL claims stay ambiguous rather than being ordered;
+- a PARTIAL with no measured scope does not compete at all;
+- the resolution does not depend on the database row order.
+
+Three tests were added for the distinction the fix introduces: an issuer-restricted mapping still restricts and does not widen to another issuer, a filing-restricted mapping still restricts to that filing, and a measured scope is not a restriction for any asset.
+
+### B. The MUFG cross-currency test read a gitignored file
+
+`tests/test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes` failed in CI with `AssertionError: unexpectedly None` and passed locally. The traceback pointed at the assertion, not the cause, so the cause was located by reproducing the CI environment.
+
+**The cause.** `data/archives/` is **gitignored** (`.gitignore:24`), so `data/archives/MUFG.sqlite` exists on a developer machine and does not exist in a CI checkout. `st_eva_runner` reads MUFG's SEC diluted EPS from exactly that file (`data/archives/{ticker}.sqlite`, the `eps_diluted` observation), and the read was wrapped in a bare `except Exception` that set the value to `None` and carried on.
+
+Reproducing the CI condition — the archive path made to fail, exactly as a checkout without it does — identified the failing assertion precisely: **`line 728`, `assertIsNotNone(cc["eps_conversion"])`**. `revenue_conversion` was present (the revenue comes from the provider), `eps_conversion` and `ttm_eps` were `None` (the SEC diluted EPS comes from the archive), and the `corporate_target_comparison` was present (it is not read from the archive). This was not a network failure.
+
+So a *product fact* — MUFG's FY2026 diluted EPS — was being read from a file that is not in the repository. The cross-currency output was therefore reproducible on one machine and silently incomplete on another.
+
+**The fix, in two parts.**
+
+1. **The filing fact is now a tracked dataset.** `data/cross_currency/MUFG/sec_filing_facts.json` holds the SEC facts the analysis converts, each with the filing that reported it: the value (151.09 JPY per share), the accession (`0001628280-26-047095`), the form (20-F), the fiscal year and period (FY2026, 2025-04-01 to 2026-03-31), the acceptance instant (2026-07-06T11:13:02.000Z), the concept, the source URL, the filing's document hashes and the observation content hash. The runner reads it first, and the per-ticker archive remains only a fallback for a ticker that has no packaged dataset. The selection rule is unchanged: the latest fact by period end, the same one the archive query chose. The derived TTM aliases are not packaged: they are not separate filing facts, and the vendor figure for the same metric is not a filing fact either.
+2. **The test's market data is now a fixed, traceable input.** A MUFG regression fixture holds the captured values — the ADR's USD price (21.86), market cap (258,756,499,250 USD), trailing/forward/consensus EPS, the P/E and P/S bands, and the price and volume history — with each observation carrying the source identity it was captured from. The revenue is declared in **JPY** on purpose: the unconverted ratio of a USD market cap to a JPY revenue is not a same-currency ratio, and it has to be refused rather than computed. The seven MUFG tests now run against the fixture instead of a live provider call, so a provider price move can no longer change a number the test is about the *conversion*.
+
+**No assertion was weakened and nothing was skipped.** Every assertion stands, including the ones that carry the constraints: the fiscal-period reference rate `0.006316 USD/JPY` as of `2026-10-09` with `scope: reference_only`, the analysis-date rate `1.1253 / 177.82` as of `2026-10-16` with `scope: analysis_date`, the ADR ratio `1.0`, the converted P/S of 5.20 against the raw JPY/USD 0.03x, the refusal of the unconverted ratio, the single "P/S not reported" limitation naming the currency, the `not true TTM` labelling of the derived EPS, and the "no EPS in the archive" reason. Four tests were added for the packaged facts: the dataset exists, every fact names the filing that reported it, the runner reads it, and the conversion names the accession and period it converted.
+
+The MUFG tests now pass under the CI condition as well: with the archive path made to fail, all 20 MUFG tests pass.
+
+### Results
+
+| | |
+| --- | --- |
+| the two target failures | **both resolved** |
+| full local backend run of `tests/` | **2511 passed, 170 skipped, 524 subtests, 0 failed** |
+| new regressions vs baseline 39239093577 | **none** — the local failure set is empty, and the baseline's 42 are all resolved |
+| SOFI | 53/53 acceptance checks: 130 observations, median 47.299768, 2024-11-08..2026-09-24, snapshot AVAILABLE at 30.21875, 80-row matrix, five production exit multiples |
+| AAPL / MSFT / MU | unchanged: 36 / 28.44563, 24 / 33.195873, 454 / 20.552342 |
+| MUFG | 24 runner tests pass; ADR ratio 1.0; 0.006316 USD/JPY as of 2026-10-09; 1.1253 / 177.82 as of 2026-10-16; the unconverted JPY/USD P/S still refused |
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-The replay flow now rebuilds a run against its own snapshot, at the knowledge instant the archive actually holds, and it resolves a figure's currency the same way the archive did, so a faithful rebuild reproduces the run instead of differing from it for a reason neither had any doubt about. Nine target failures and one related pre-existing failure are resolved with no new regression; CI run 39375763097 confirms `2 failed, 2459 passed` — 40 of the baseline's 42 failures now pass and the two that remain are the mapping-relation failure and the environment-dependent MUFG test listed above rather than claimed as passing. SOFI, AAPL, MSFT, MU and the MUFG cross-currency limit are unchanged. No product blocker; archive cleanup remains deferred per existing decision.
+Both remaining CI failures are fixed at their cause rather than around their symptoms: the registry no longer treats a measured scope as a restriction, so an EXACT claim is not displaced by a PARTIAL that merely carries more metadata; and MUFG's cross-currency analysis reads its SEC diluted EPS from a tracked, traceable filing dataset and its market data from a fixed fixture, so the analysis is the same on every machine. The full local backend suite is green for the first time, with no regression against the baseline. No product blocker; archive cleanup remains deferred per existing decision.

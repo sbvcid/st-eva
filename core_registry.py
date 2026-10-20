@@ -217,6 +217,28 @@ def _scope_matches(
     return True
 
 
+def _scope_restricts(scope: Optional[Dict[str, Any]]) -> bool:
+    """
+    Whether a scope restricts *where* a mapping applies.
+
+    A scope that names a ticker or an accession restricts the mapping to that
+    issuer or filing, and such a mapping is the only one that may answer for
+    that issuer.
+
+    A scope that only records how a metric was measured -- `variation`,
+    `measured`, `unmeasured_holders` -- says nothing about where the claim
+    applies. It qualifies a PARTIAL, and it is what makes the narrower scope
+    a measurement rather than an assumption, but it does not restrict the
+    mapping to any issuer or filing. Treating it as a restriction would let a
+    measured component statement suppress a global EXACT claim about the same
+    concept, which inverts the strength order: the weaker claim would win
+    because it carried more metadata, not because it was stronger.
+    """
+    if not scope:
+        return False
+    return "ticker" in scope or "accession" in scope
+
+
 class RegistryError(Exception):
     """The registry was asked for something it does not hold."""
 
@@ -1730,11 +1752,17 @@ class CoreRegistry:
             (mapping, metric) for mapping, metric in pairs
             if _scope_matches(mapping.scope, asset_id, as_of, accession)
         ]
-        # When a restricted (scoped) mapping applies to this asset, do not also
+        # When a mapping restricted to this issuer or filing applies, do not also
         # allow an unscoped global claim for the same concept — that would
         # create ambiguity between global and restricted for the same ticker.
+        #
+        # Only a scope that names a ticker or an accession restricts. A scope
+        # that merely records a measured narrower scope qualifies a PARTIAL and
+        # does not restrict where it applies, so it must not suppress a
+        # competing global claim.
         restricted_kept = [
-            (m, metric) for m, metric in pairs if m.scope is not None
+            (m, metric) for m, metric in pairs
+            if _scope_restricts(m.scope)
         ]
         if restricted_kept:
             pairs = restricted_kept

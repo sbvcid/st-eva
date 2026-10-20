@@ -453,6 +453,133 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
             },
         ],
     },
+    # MUFG is a frozen sample of the values the live run observed, so the
+    # cross-currency analysis is reproducible without a provider call. The
+    # price, the market cap and the EPS are the ADR's USD figures; the revenue
+    # is the issuer's JPY figure, and it is declared in JPY on purpose: the
+    # unconverted ratio of a USD market cap to a JPY revenue is not a
+    # same-currency ratio and must be refused rather than computed. The
+    # SEC diluted EPS the analysis converts is a filing fact, and it is
+    # packaged under data/cross_currency/MUFG/ with the filing that reported
+    # it.
+    "MUFG": {
+        "ticker": "MUFG",
+        "company_name": "Mitsubishi UFJ Financial Group, Inc.",
+        "exchange": "NYQ",
+        "currency": "USD",
+        "price": 21.86,
+        "price_date": "2026-10-19",
+        "price_source": "Yahoo Finance chart API (captured live)",
+        "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MUFG",
+        "current_eps": 1.53,
+        "forward_eps": 1.03,
+        "consensus_forward_eps": 1.73994,
+        "next_event": UNAVAILABLE,
+        "next_event_status": "Unconfirmed",
+        "historical_pe_band": {
+            "10th": 12.1810018,
+            "25th": 13.0091245,
+            "75th": 15.22507525,
+            "90th": 15.3911782,
+            "median": 14.349626,
+            "observations": 8,
+        },
+        "historical_ps_band": {
+            "10th": 3.2336862,
+            "25th": 3.363264,
+            "75th": 5.177896,
+            "90th": 5.2410038000000005,
+            "median": 3.917369,
+            "observations": 9,
+        },
+        "current_revenue": 7863006000000.0,
+        "current_market_cap": 258756499250.0,
+        "price_history": [22.35, 22.4, 21.88, 21.86, 21.88, 21.86],
+        "volume_history": [2407600.0, 3452000.0, 3197000.0, 2998500.0, 2755500.0, 38314.0],
+        "source_type": "REGRESSION_FIXTURE",
+        "provider": "RegressionFixture",
+        "retrieved_at": "2026-10-19",
+        "observations": [
+            {
+                "metric": "trailing_eps",
+                "value": 1.53,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/MUFG",
+                "definition": "Current/trailing EPS. Never synthesized.",
+                "methodology": "Yahoo quoteSummary defaultKeyStatistics.trailingEps",
+                "currency": "USD",
+                "currency_basis": "INSTRUMENT_DEFAULT",
+                "available_at_basis": "UNDECLARED",
+                "raw": {"module": "defaultKeyStatistics", "field": "trailingEps", "asOfDate": None},
+            },
+            {
+                "metric": "forward_eps",
+                "value": 1.03,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/MUFG",
+                "definition": "Forward EPS. Used only when explicitly supplied.",
+                "methodology": "Yahoo quoteSummary defaultKeyStatistics.forwardEps",
+                "currency": "USD",
+                "currency_basis": "INSTRUMENT_DEFAULT",
+                "available_at_basis": "UNDECLARED",
+                "raw": {"module": "defaultKeyStatistics", "field": "forwardEps", "asOfDate": None},
+            },
+            {
+                "metric": "consensus_forward_eps",
+                "value": 1.73994,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/MUFG",
+                "definition": "Consensus forward EPS. Never synthesized.",
+                "methodology": "Yahoo quoteSummary earningsTrend trend[period].earningsEstimate.avg",
+                "currency": "USD",
+                "currency_basis": "INSTRUMENT_DEFAULT",
+                "available_at_basis": "UNDECLARED",
+                "period_end": "2028-03-31",
+                "raw": {
+                    "module": "earningsTrend",
+                    "field": "trend[].earningsEstimate.avg",
+                    "period": "+1y",
+                    "period_end": "2028-03-31",
+                },
+            },
+            {
+                "metric": "revenue",
+                "value": 7863006000000.0,
+                "unit": "currency",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/MUFG",
+                "definition": "Observed trailing revenue. Never synthesized.",
+                "methodology": "Yahoo fundamentals-timeseries trailingTotalRevenue",
+                "currency": "JPY",
+                "currency_basis": "REPORTED",
+                "available_at_basis": "UNDECLARED",
+                "period_end": "2026-06-30",
+                "raw": {"module": "fundamentals-timeseries", "field": "trailingTotalRevenue"},
+            },
+            {
+                "metric": "market_cap",
+                "value": 258756499250.0,
+                "unit": "currency",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/MUFG",
+                "definition": "Observed market capitalisation.",
+                "methodology": "Yahoo fundamentals-timeseries trailingMarketCap",
+                "currency": "USD",
+                "currency_basis": "REPORTED",
+                "available_at_basis": "UNDECLARED",
+                "period_end": "2026-09-23",
+                "raw": {"module": "fundamentals-timeseries", "field": "trailingMarketCap"},
+            },
+        ],
+    },
 }
 
 
@@ -742,6 +869,39 @@ def _acquisition_status(data: "MarketData") -> ValidationStatus:
         if data.source_type == SourceType.API_LIVE.value
         else ValidationStatus.SINGLE_SOURCE
     )
+
+
+def _packaged_sec_diluted_eps(ticker: str) -> Optional[Dict[str, Any]]:
+    """
+    The ticker's packaged SEC diluted-EPS fact, if it has one.
+
+    The per-ticker archive under `data/archives/` is a local, gitignored
+    directory. A CI checkout does not have one, so a product fact read from
+    there is present on one machine and missing on another, and the analysis
+    that needs it is silently incomplete rather than loudly wrong. The
+    packaged dataset is the tracked copy of the same facts: the value, the
+    filing that reported it, the fiscal period and the acceptance instant.
+
+    The selection is the same one the archive query made: the latest fact by
+    period end. A missing dataset is not an error here; the caller falls back
+    to the archive.
+    """
+    path = Path("data/cross_currency") / ticker.upper() / "sec_filing_facts.json"
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    facts = payload.get("facts") or []
+    if not facts:
+        return None
+    ordered = sorted(
+        facts,
+        key=lambda f: (f.get("period_end") or "", f.get("accession") or ""),
+        reverse=True,
+    )
+    return ordered[0]
 
 
 def _observed_currency(
@@ -1496,6 +1656,7 @@ class CompanyResolver:
                 "AAPL": "AAPL",
                 "APPLE": "AAPL",
                 "SOFI": "SOFI",
+                "MUFG": "MUFG",
             }
             fixture_key = aliases.get(key)
             if fixture_key:
@@ -2625,55 +2786,72 @@ def run_st_eva(
         # (¥108.18 / ¥151.09) is JPY per underlying share.
         # Read SEC diluted EPS directly from the per-ticker archive so it is
         # available even when no SEC context was acquired in this run.
+        #
+        # The archive is a local, gitignored directory, so a CI checkout does
+        # not have one and the read below would fail and silently leave the
+        # conversion empty. The packaged filing facts are the tracked copy of
+        # the same facts, so they are consulted first and the archive is only a
+        # fallback for a ticker that has no packaged dataset.
         sec_diluted_eps_jpy = None
         sec_diluted_eps_period = None
         sec_diluted_eps_accession = None
         sec_diluted_eps_fiscal_year = None
-        try:
-            import sqlite3
-            archive_path = f"data/archives/{data.ticker}.sqlite"
-            conn = sqlite3.connect(archive_path)
-            conn.row_factory = sqlite3.Row
-            row = conn.execute(
-                """
-                SELECT value_json, period_start, period_end, fiscal_year,
-                       accession, source_url, raw_json
-                FROM observations
-                WHERE metric = 'eps_diluted' AND value_json IS NOT NULL
-                  AND value_json != 'null'
-                ORDER BY period_end DESC
-                LIMIT 1
-                """
-            ).fetchone()
-            if row is not None:
-                raw_value = row["value_json"]
-                # value_json may be stored as a JSON string; coerce to number.
-                if isinstance(raw_value, str):
-                    try:
-                        raw_value = json.loads(raw_value)
-                    except Exception:
+        packaged = _packaged_sec_diluted_eps(data.ticker)
+        if packaged is not None:
+            sec_diluted_eps_jpy = safe_float(packaged.get("value"))
+            sec_diluted_eps_period = (
+                f"{packaged['period_start']} to {packaged['period_end']}"
+                if packaged.get("period_start") and packaged.get("period_end")
+                else None
+            )
+            sec_diluted_eps_accession = packaged.get("accession")
+            sec_diluted_eps_fiscal_year = packaged.get("fiscal_year")
+        else:
+            try:
+                import sqlite3
+                archive_path = f"data/archives/{data.ticker}.sqlite"
+                conn = sqlite3.connect(archive_path)
+                conn.row_factory = sqlite3.Row
+                row = conn.execute(
+                    """
+                    SELECT value_json, period_start, period_end, fiscal_year,
+                           accession, source_url, raw_json
+                    FROM observations
+                    WHERE metric = 'eps_diluted' AND value_json IS NOT NULL
+                      AND value_json != 'null'
+                    ORDER BY period_end DESC
+                    LIMIT 1
+                    """
+                ).fetchone()
+                if row is not None:
+                    raw_value = row["value_json"]
+                    # value_json may be stored as a JSON string; coerce to number.
+                    if isinstance(raw_value, str):
                         try:
-                            raw_value = float(raw_value)
+                            raw_value = json.loads(raw_value)
                         except Exception:
-                            raw_value = None
-                sec_diluted_eps_jpy = safe_float(raw_value)
-                sec_diluted_eps_period = (
-                    f"{row['period_start']} to {row['period_end']}"
-                    if row["period_start"] and row["period_end"]
-                    else None
-                )
-                sec_diluted_eps_accession = row["accession"]
-                sec_diluted_eps_fiscal_year = row["fiscal_year"]
-                raw = json.loads(row["raw_json"]) if row["raw_json"] else {}
-                sec_fact = raw.get("sec_fact", {}) if isinstance(raw, dict) else {}
-                if sec_diluted_eps_accession is None:
-                    sec_diluted_eps_accession = sec_fact.get("accession")
-            conn.close()
-        except Exception:
-            sec_diluted_eps_jpy = None
-            sec_diluted_eps_period = None
-            sec_diluted_eps_accession = None
-            sec_diluted_eps_fiscal_year = None
+                            try:
+                                raw_value = float(raw_value)
+                            except Exception:
+                                raw_value = None
+                    sec_diluted_eps_jpy = safe_float(raw_value)
+                    sec_diluted_eps_period = (
+                        f"{row['period_start']} to {row['period_end']}"
+                        if row["period_start"] and row["period_end"]
+                        else None
+                    )
+                    sec_diluted_eps_accession = row["accession"]
+                    sec_diluted_eps_fiscal_year = row["fiscal_year"]
+                    raw = json.loads(row["raw_json"]) if row["raw_json"] else {}
+                    sec_fact = raw.get("sec_fact", {}) if isinstance(raw, dict) else {}
+                    if sec_diluted_eps_accession is None:
+                        sec_diluted_eps_accession = sec_fact.get("accession")
+                conn.close()
+            except Exception:
+                sec_diluted_eps_jpy = None
+                sec_diluted_eps_period = None
+                sec_diluted_eps_accession = None
+                sec_diluted_eps_fiscal_year = None
 
         if fx_for_conversion is not None and sec_diluted_eps_jpy is not None:
             eps_usd_per_share = convert_jpy_to_usd(

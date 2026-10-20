@@ -1,5 +1,7 @@
 import io
+import json
 import unittest
+from pathlib import Path
 
 from st_eva_runner import (
     CompanyResolver,
@@ -674,12 +676,28 @@ class TestMUFGAdrRatio(unittest.TestCase):
 
 
 class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
-    """End-to-end MUFG cross-currency analysis with two FX scopes."""
+    """
+    End-to-end MUFG cross-currency analysis with two FX scopes.
+
+    The run uses the MUFG regression fixture rather than a live provider
+    call, so the input is a fixed, traceable sample: the ADR's USD price,
+    market cap and EPS, and the issuer's JPY revenue. That matters for two
+    reasons. A live call makes the assertions depend on whatever the provider
+    returned on the day, so a price move would change a number the test is
+    about the *conversion* and not the *price*. And the SEC diluted EPS the
+    analysis converts is a filing fact read from the packaged dataset under
+    data/cross_currency/MUFG/, because the per-ticker archive it came from is
+    gitignored and is absent from a CI checkout.
+
+    The FX rates and the ADR ratio stay operator-supplied, so the two scopes
+    remain what is under test: a fiscal-period reference rate that must not
+    be used for a conversion, and an analysis-date rate that is.
+    """
 
     def test_mufg_cross_currency_two_fx_scopes(self):
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
@@ -756,7 +774,7 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         rate, not the fiscal-period rate."""
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
@@ -783,7 +801,7 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         """When only historical reference rate is provided, conversions use it."""
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             adr_underlying_shares_per_adr=1.0,
             save_snapshot=False,
@@ -804,7 +822,7 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         """Historical P/E band has 8 observations (< 20) → UNAVAILABLE."""
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
@@ -820,7 +838,7 @@ class TestMUFGCrossCurrencyAnalysis(unittest.TestCase):
         """No user-supplied exit multiple → reverse requirements NOT_COMPUTED."""
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
             adr_underlying_shares_per_adr=1.0,
@@ -870,6 +888,73 @@ class TestMUFGRegressionDatesAndPrecision(unittest.TestCase):
         self.assertNotEqual(MUFG_ADR_RATIO.underlying_shares_per_adr, 2.0)
 
 
+class TestMUFGSecFilingFacts(unittest.TestCase):
+    """
+    The packaged SEC facts the cross-currency analysis converts.
+
+    They used to be read from `data/archives/MUFG.sqlite`, which is
+    gitignored: a CI checkout has no such file, the read failed, and the EPS
+    conversion came back empty. The facts are now a tracked dataset, and these
+    tests pin that it exists, that every fact names the filing that reported
+    it, and that the runner reads it.
+    """
+
+    PATH = Path("data/cross_currency/MUFG/sec_filing_facts.json")
+
+    def test_the_packaged_dataset_is_present(self):
+        self.assertTrue(
+            self.PATH.is_file(),
+            f"the packaged SEC facts must exist: {self.PATH}",
+        )
+        data = json.loads(self.PATH.read_text(encoding="utf-8"))
+        self.assertEqual(data["ticker"], "MUFG")
+        self.assertEqual(data["cik"], "0000067088")
+        self.assertEqual(data["metric"], "eps_diluted")
+        self.assertGreaterEqual(len(data["facts"]), 1)
+
+    def test_every_packaged_fact_names_the_filing_that_reported_it(self):
+        data = json.loads(self.PATH.read_text(encoding="utf-8"))
+        for fact in data["facts"]:
+            with self.subTest(accession=fact.get("accession")):
+                self.assertEqual(fact["metric"], "eps_diluted")
+                self.assertEqual(fact["currency"], "JPY")
+                self.assertEqual(fact["source_type"], "REGULATORY_FILING")
+                self.assertIsNotNone(fact["accession"])
+                self.assertIsNotNone(fact["form"])
+                self.assertIsNotNone(fact["period_start"])
+                self.assertIsNotNone(fact["period_end"])
+                self.assertIsNotNone(fact["acceptance_datetime"])
+                self.assertIsNotNone(fact["source_url"])
+                self.assertTrue(fact["content_hash"])
+
+    def test_the_runner_reads_the_packaged_fact(self):
+        from st_eva_runner import _packaged_sec_diluted_eps
+
+        fact = _packaged_sec_diluted_eps("MUFG")
+        self.assertIsNotNone(fact)
+        self.assertEqual(fact["value"], 151.09)
+        self.assertEqual(fact["currency"], "JPY")
+        self.assertEqual(fact["accession"], "0001628280-26-047095")
+        # A ticker with no packaged dataset is not an error.
+        self.assertIsNone(_packaged_sec_diluted_eps("NOSUCHTICKER"))
+
+    def test_the_conversion_names_the_filing_it_converted(self):
+        """The converted EPS has to say which filing reported it."""
+        result = run_st_eva(
+            ticker="MUFG",
+            mode="regression",
+            fx_rate_usd_per_jpy=0.006316,
+            fx_analysis_date_usd_per_jpy=1.1253 / 177.82,
+            adr_underlying_shares_per_adr=1.0,
+            save_snapshot=False,
+        )
+        eps = result["cross_currency"]["eps_conversion"]
+        self.assertEqual(eps["eps_jpy_per_share"], 151.09)
+        self.assertEqual(eps["accession"], "0001628280-26-047095")
+        self.assertEqual(eps["period"], "2025-04-01 to 2026-03-31")
+        self.assertEqual(eps["fiscal_year"], 2026)
+
+
 class TestMUFGCrossCurrencyPsRejection(unittest.TestCase):
     """Regression tests: cross-currency P/S must be refused, not computed."""
 
@@ -883,7 +968,7 @@ class TestMUFGCrossCurrencyPsRejection(unittest.TestCase):
 
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             fx_analysis_date_usd_per_jpy=fx.rate_usd_per_jpy,
             adr_underlying_shares_per_adr=adr.underlying_shares_per_adr,
@@ -910,7 +995,7 @@ class TestMUFGCrossCurrencyPsRejection(unittest.TestCase):
 
         result = run_st_eva(
             ticker="MUFG",
-            mode="auto",
+            mode="regression",
             fx_rate_usd_per_jpy=0.006316,
             fx_analysis_date_usd_per_jpy=fx.rate_usd_per_jpy,
             adr_underlying_shares_per_adr=adr.underlying_shares_per_adr,

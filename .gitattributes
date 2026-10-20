@@ -5,3 +5,9 @@
 # out on another. Force LF for the dataset directory so the working tree, the
 # git blob and every checkout platform agree byte for byte.
 data/historical_pe/**/*.json text eol=lf
+
+# The packaged filing facts are a tracked input the product reads, so their
+# bytes are as much a part of the contract as the dataset files above: a
+# checkout that rewrote them would change what the cross-currency analysis
+# reads.
+data/cross_currency/**/*.json text eol=lf

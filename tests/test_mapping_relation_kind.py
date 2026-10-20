@@ -242,6 +242,71 @@ class TestResolverIsolation(unittest.TestCase):
         self.assertEqual(resolution.destination_metric, "sga")
         self.assertNotIn("sbc", resolution.candidates)
 
+    def test_an_issuer_restricted_mapping_still_restricts(self) -> None:
+        """
+        A scope that names an issuer does restrict, and does not widen.
+
+        A restricted mapping is the only one that may answer for that issuer,
+        so it wins there. Another issuer's question is a different question and
+        is answered by the global claim alone. The measured scope in the test
+        above is not a restriction and must not behave like one; this one is,
+        and must.
+        """
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sga", concept_id=UNDECLARED,
+            mapping_type="EXACT", relation_kind="IDENTITY"))
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sbc", concept_id=UNDECLARED,
+            mapping_type="EXACT", relation_kind="IDENTITY",
+            scope={"ticker": "AAA"}))
+
+        restricted = self.registry.resolve_source_concept(UNDECLARED, asset_id="AAA")
+        self.assertEqual(restricted.destination_metric, "sbc")
+
+        other = self.registry.resolve_source_concept(UNDECLARED, asset_id="BBB")
+        self.assertEqual(other.destination_metric, "sga")
+
+    def test_a_filing_restricted_mapping_still_restricts(self) -> None:
+        """A scope that names a filing restricts to that filing, and no other."""
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sga", concept_id=UNDECLARED,
+            mapping_type="EXACT", relation_kind="IDENTITY"))
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sbc", concept_id=UNDECLARED,
+            mapping_type="EXACT", relation_kind="IDENTITY",
+            scope={"accession": "0001234567-26-000001"}))
+
+        restricted = self.registry.resolve_source_concept(
+            UNDECLARED, accession="0001234567-26-000001")
+        self.assertEqual(restricted.destination_metric, "sbc")
+
+        other = self.registry.resolve_source_concept(
+            UNDECLARED, accession="0001234567-26-000002")
+        self.assertEqual(other.destination_metric, "sga")
+
+    def test_a_measured_scope_is_not_a_restriction(self) -> None:
+        """
+        The counterpart, stated directly.
+
+        A measured scope records how a metric was measured. It qualifies a
+        PARTIAL and it does not restrict where the mapping applies, so a
+        global claim about the same concept is not suppressed by it.
+        """
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sga", concept_id=UNDECLARED,
+            mapping_type="EXACT", relation_kind="IDENTITY"))
+        self.registry.add_mapping(_ConceptMapping(
+            metric_id="sbc", concept_id=UNDECLARED,
+            mapping_type="PARTIAL", relation_kind="IDENTITY",
+            effective_from="2020-12-31", scope=MEASURED_SCOPE))
+
+        for asset_id in ("AAA", "BBB", None):
+            with self.subTest(asset_id=asset_id):
+                resolution = self.registry.resolve_source_concept(
+                    UNDECLARED, asset_id=asset_id)
+                self.assertEqual(resolution.destination_metric, "sga")
+                self.assertEqual(resolution.mapping_type, "EXACT")
+
     def test_an_empty_candidate_set_stays_unresolved(self) -> None:
         resolution = self.registry.resolve_source_concept(
             "us-gaap:NeverDeclared")
