@@ -2109,19 +2109,23 @@ New `tests/test_sofi_production_integration.py`: **28 tests, 19 subtests, all pa
 
 ### CI
 
-Local full backend run of `tests/`: **`41 failed, 2445 passed, 170 skipped, 517 subtests`** — the same pre-existing failure set as the previous round, plus the 28 new integration tests.
+Confirmed on the CI runner: run **39366918042** for `ee5e227` reported **`42 failed, 2401 passed, 170 skipped, 517 subtests`**.
 
 | comparison | result |
 | --- | --- |
 | CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
 | CI 39308312152 (`bf08476`, previous round) | 42 failed, 2373 passed, 170 skipped, 498 subtests |
-| local full run after this round | 41 failed, 2445 passed, 170 skipped, 517 subtests |
-| new regressions vs the CI baseline 39239093577 | **none** — the local failure set is a strict subset of the baseline's |
+| CI 39366918042 (`ee5e227`, this round) | **42 failed, 2401 passed, 170 skipped, 517 subtests** |
+| new regressions vs the CI baseline 39239093577 | **none** — the failure set is byte-identical, not merely the same size |
+| new regressions vs the previous round | **none** |
 | pre-existing failures fixed | **none** |
+| failures mentioning SOFI | **none** |
 
-The one entry in the baseline that does not fail locally is `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes`, which fails in CI and passes locally in the baseline and in this round alike — an environment-dependent pre-existing MUFG failure, untouched by this work. The workflow still reports `failure` overall because those pre-existing failures remain; that is the confirmed pre-existing state, not a regression from this integration.
+The +28 passing tests and +19 subtests are the new integration suite. The workflow still reports `failure` overall because those 42 pre-existing failures remain; that is the confirmed pre-existing state, not a regression from this integration.
 
-The designated suites pass locally: `test_historical_pe.py`, `test_aapl_historical_pe.py`, `test_msft_historical_pe.py`, `test_mu_historical_pe.py`, `test_historical_pe_adapter.py`, `test_sofi_production_integration.py` and `test_msft_production_reproducibility.py` — 174 passed, 1 skipped, 140 subtests.
+Local full backend run of `tests/`: `41 failed, 2445 passed, 170 skipped, 517 subtests`. The local set is a strict subset of the CI set by exactly one entry — `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes`, which fails in CI and passes locally in the baseline and in this round alike, an environment-dependent pre-existing MUFG failure untouched by this work.
+
+The designated suites pass locally: `test_historical_pe.py`, `test_aapl_historical_pe.py`, `test_msft_historical_pe.py`, `test_mu_historical_pe.py`, `test_historical_pe_adapter.py`, `test_sofi_production_integration.py` and `test_msft_production_reproducibility.py` — 174 passed, 1 skipped, 140 subtests. The MUFG runner tests pass locally (18 tests).
 
 ### Git
 
@@ -2129,4 +2133,4 @@ Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
 ## Next task status
 
-SOFI is no longer a qualified candidate sitting in a data directory: it is a configured issuer whose historical P/E reference is retrieved through the product's own path and is actually consumed by the reverse valuation — 130 qualifying observations, median 47.299768, snapshot AVAILABLE at 30.21875 — with every result stating its inputs, formula, period and conditional assumptions. The 42 pre-existing backend CI failures remain red and are unrelated; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
+SOFI is no longer a qualified candidate sitting in a data directory: it is a configured issuer whose historical P/E reference is retrieved through the product's own path and is actually consumed by the reverse valuation — 130 qualifying observations, median 47.299768, snapshot AVAILABLE at 30.21875 — with every result stating its inputs, formula, period and conditional assumptions. CI run 39366918042 confirms `42 failed, 2401 passed` with a failure set byte-identical to the pre-SOFI baseline 39239093577: zero new regressions, zero pre-existing failures fixed, no SOFI-related failure. The 42 pre-existing backend CI failures remain red and are unrelated; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
