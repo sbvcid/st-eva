@@ -1,9 +1,10 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-17 (third round: unified historical P/E reference eligibility)
+**Status checked:** 2026-10-20 (SEC-derived trailing figures in the formal valuation chain; the replay reproduces the run's production reference)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66611ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** `1fc53ae` (fail-closed identity-conflict status record) verified `backend` and `browser` jobs success, backend run `39013776391` (checked via the GitHub API on 2026-10-17); `c972a05` (fiscal quarter identity round) verified `backend` and `browser` jobs success in run `39009039107`; `985ba22` verified in run `38971097167`; the earlier baseline `6c66550` in run `38955389118` (checked via the GitHub API on 2026-10-17). Each later commit is verified in its own run.
+**Current implementation baseline:** SEC-derived trailing figures are the valuation's actual inputs (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Latest verified GitHub Actions:** `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757` (checked via the GitHub API on 2026-10-20: backend 2513 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
+
 
 
 This is the live, changeable implementation/status record. The root [README](../README.md) contains the enduring product definition and rules. This file records what is implemented, wired, not wired, failing, or not yet verified. Historical files under `docs/archive/` are not current status or instructions.
@@ -13,6 +14,8 @@ This is the live, changeable implementation/status record. The root [README](../
 This section is the hand-off checkpoint for future conversations and coding agents. Use the current status below; do not restart prior audits just because a new conversation begins.
 
 **Completed and should not be repeated without a concrete reason**
+
+- **The replay reproduces the run's production reference (2026-10-20, commit `ca07496`, CI run `39431909757`).** The production historical P/E and P/FCF distributions are committed frozen data, so a rebuild reads the same dataset the live run read: `st_eva_runner.load_production_historical_references` is the single loader for both paths, `archive.replay` names the sources the archived run had in force (read from the document's own reference basis) and `web.service_adapter.default_replay_doc_builder` loads them. The archive names the source and never the number, so a dataset that changed since archival produces an honest divergence. The AAPL live replay went from `DIVERGED` with 37 differing fields to `MATCH` with 0. Three boundaries are kept and tested: a reference-free run still matches and gains no reference; an operator's own multiple still diverges (an assumption is not archived knowledge); a run that built its distribution without the furnished evidence still matches, because the archived observation count says which load the run used. Do not re-derive the production reference inside the archive, do not copy the archived number, and do not let a rebuild invent a reference the run did not have.
 
 - **Historical P/E reference eligibility is one rule across every matrix path (2026-10-17 third round).** `reverse_requirements.band_reference_eligibility` (positive median + declared non-negative integer sample count >= 20) is now the single gate: `exit_multiples_from_band` no longer turns an undeclared-count band into matrix scenarios (`OBSERVATION_COUNT_UNVERIFIED` refusal instead), `exit_multiples_from_production_distribution` no longer admits a distribution whose declared eligibility is not usable merely because its raw count clears the threshold (`INELIGIBLE_STATUS`), and `st_eva_runner.band_is_usable_for_reference` delegates to the same rule. Eligible distributions (`ELIGIBLE_PRODUCTION_DISTRIBUTION` / `ELIGIBLE_HISTORICAL_BAND`), descriptive-only historical data (explicit unavailable reasons, never scenario rows) and user multiples (`USER_SPECIFIED`, never labelled historical) stay three distinct kinds. Production P/E outputs unchanged for AAPL (36 obs, matrix 80), MSFT (24 obs; web matrix 160→80, the five unverified band rows dropped with the exclusion stated) and MU (454 obs). The CLI `run_regression_tests()` helper, which had been failing at `1fc53ae` because the fixtures' undeclared-count bands can no longer serve as the summary reference, now asserts the fail-closed state and the implied EPS from an explicit multiple. Do not reintroduce the "missing count is usable" band branch or a count-based override of the distribution's own eligibility status. See the section at the end of this file.
 - **Fiscal quarter identity is issuer-declared, not a month grid (2026-10-17 second round, commit `c972a05`, CI run `39009039107`).** The month-grid fiscal_year_of/quarter_number mislabelled 11 of MU's 38 and 4 of AAPL's 42 quarter ends (52/53-week calendars drift quarter ends across month boundaries) and blocked MU's FY2026 TTM. `fiscal_calendar.py` derives identity from the issuer's own declarations (filing focus fields, prior-year comparatives, annual span positions), refuses unidentifiable periods, and both engines consume it; the TTM denominator is marked a derived sum with the audited annual carried beside it. MU snapshot now AVAILABLE (P/E 12.11171 on derived TTM EPS 74.21 vs audited 74.33, both preserved); AAPL P/E restored to 36/36 (median 28.44563, the pre-refactor value); MSFT unchanged. Do not re-derive the misclassification inventory or reintroduce month-grid identity. The `a9a6630` fail-closed round adds: equal-authority primary, comparative and annual-span declarations that disagree on a period's fiscal year/quarter leave the period unresolved (recorded in `FiscalCalendar.warnings`/`unresolved`) instead of being collapsed into an arbitrary pick; annual primary declarations still win over comparatives; production notes now surface unresolved quarter periods including cumulative-only span ends and annual identity conflicts. `tests/test_fiscal_calendar.py` now requires contradictory comparative/span, primary-conflict and annual-FY-conflict cases to stay unresolved. See the section at the end of this file.
@@ -2848,6 +2851,8 @@ The AAPL live replay reports `DIVERGED` with **37** differing fields — down fr
 
 That is a **pre-existing gap, not this round's**: the rebuild does not re-derive the production historical reference, so a rebuild has no reference where the archived run had one. The differences this round introduced — the trailing figures' own series, freshness and glossary entries, and their derivations — are now identical on both sides, which is why the count fell from 54 to 37. The reference gap is recorded as a separate item and was not expanded into this round's scope.
 
+**Superseded by the next section**: the reference gap this round left open was closed in "The Replay Reproduces the Run's Reference (2026-10-20)", and the AAPL live replay now reports `MATCH` with 0 field differences.
+
 ### Tests
 
 `tests/test_engine_input_provenance.py` was rewritten for the new semantics: the qualified filed trailing figure **is** the engine's input; the provider's figure is recorded beside it as the cross-check it is; the window carries the four quarters with their filings; a window without a furnished fourth quarter is not used; a quarterly free cash flow is never the trailing one; the filed annual EBITDA is not used for a trailing multiple; and one refused input leaves the other methods able to compute.
@@ -2878,6 +2883,80 @@ The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`, un
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## The Replay Reproduces the Run's Reference (2026-10-20)
+
+Continued from `82ad6b6`. That round made the qualified SEC-derived trailing figures the valuation's **actual** inputs. The AAPL live replay still reported `DIVERGED` with 37 differing fields, and every one of them was the valuation reference and the figures derived from it.
+
+### The defect
+
+The production historical P/E and P/FCF distributions were loaded inside the live run and nowhere else. `build_context_from_observations` called the engine without them, so a rebuild selected **no reference at all** where the archived run had one: `valuation_reference.multiple`, `basis`, `provenance_kind` and `selection_method` differed, every figure conditional on the reference was absent from the rebuild (`derived.implied_forward_eps`, `derived.implied_fcf`, `derived.required_eps_cagr`, `derived.eps_gap_vs_consensus`, `derived.implied_to_consensus`), and the provenance, limitation and unavailable entries that name the reference differed with them. The diff reported a difference in the *reference*, not in the observations.
+
+### The correction
+
+The distributions are committed, frozen data — the same kind of input the trailing figures' windows come from. The same loader now serves both paths:
+
+- `st_eva_runner.load_production_historical_references(ticker, include_historical_pe, include_historical_pfcf, enable_furnished_pe)` is what the live run calls and what a rebuild calls.
+- `archive.replay` reads the archived document's own reference basis (`PRODUCTION_PE_MEDIAN`, `PRODUCTION_PFCF_MEDIAN`) and names the sources the run had in force.
+- `web.service_adapter.default_replay_doc_builder` loads them with the live path's loader and hands them to `build_context_from_observations`, which passes them to the engine.
+
+The archive names the **source** and never the number: the median is read from the committed dataset at replay time, not copied from the document being replayed. A dataset that changed since archival therefore produces a divergence, which is the honest result.
+
+Three boundaries are kept, and each is tested:
+
+- A run that asked for **no** production reference still replays as a match, and the rebuild invents no reference the run did not have.
+- A run conditioned on an **operator's own multiple** still diverges. That multiple is an assumption rather than archived knowledge, and the rebuild must not substitute the production median for it.
+- A run that built its distribution **without the furnished evidence** replays as a match too: the archived document records how many observations stood behind its reference, and that count says which load of the dataset the run used.
+
+### What the product reports now
+
+Real API output, `POST /api/analyze` with `mode=live` (2026-10-20), and the figures the archived Investment Context holds for the same run:
+
+| ticker | multiple | the engine's input | source | basis | the engine's multiple | the Context's own figure |
+| --- | --- | --- | --- | --- | --- | --- |
+| AAPL | P/E | 8.72 | `SEC_DERIVED` | `TTM` | 39.1651376146789 | `der:current_pe` 39.1651376146789 |
+| AAPL | P/FCF | 136,683,000,000 | `SEC_DERIVED` | `TTM` | 35.98494723996401 | `der:current_pfcf` 35.98494723996401 |
+| AAPL | EV/EBITDA | 167,959,000,000 | `VENDOR_REPORTED` | `UNDECLARED` | 29.414771126286773 | `der:current_ev_ebitda` |
+| AAPL | P/S | 466,823,000,000 | `VENDOR_REPORTED` | `UNDECLARED` | 10.536178687853855 | `der:current_ps` |
+| MSFT | P/E | 17.96 | `SEC_DERIVED` | `TTM` | 29.420935412026722 | `der:current_pe` 29.420935412026722 |
+| MSFT | P/FCF | 66,987,000,000 | `SEC_DERIVED` | `TTM` | 55.490674568782005 | `der:current_pfcf` 55.490674568782005 |
+
+The engine's multiple and the Context's own figure are the **same number** in every row: the delivered API and the archived document agree because the document recomputes the trailing figure from the four quarters it holds and divides by that. MSFT's earnings figure is 17.96 against the provider's 18.09, so the substitution is not a no-op; EV/EBITDA and P/S remain the provider's undeclared-period figures and were not substituted.
+
+### The replay
+
+AAPL live run → **`MATCH`**, **0** field differences, 180/180 observations used, `OBSERVATIONAL` replay fidelity.
+
+### What did not change
+
+- The document's schema version stays `2.3-C.2`: this round changed what a rebuild can reproduce, not the document's shape.
+- `VOLATILE_FIELDS` is unchanged — four when-we-asked timestamps. No calculation difference is hidden from the identity by widening it.
+- The `context_id` still covers the whole document's knowledge, so the trailing-figure round changed it (the window and the derivations are knowledge) and this round changed nothing in the document itself.
+
+### Tests
+
+`tests/test_replay_production_reference.py` (5 tests): a production-reference run replays as a match; the rebuilt reference is the production median; a reference-free run replays as a match and gains no reference; an operator's multiple is not replaced by the production median; a run without the furnished evidence replays as a match.
+
+`tests/test_r4_web_historical_pe.py` was updated for the second load: the web request reaches the production path, and the replay's rebuild reads the same committed dataset.
+
+### CI
+
+Run **39431909757** for `ca07496`:
+<https://github.com/sbvcid/st-eva/actions/runs/39431909757>
+
+```
+Run backend test suite:  2513 passed, 171 skipped, 1 warning, 532 subtests passed
+Run web API tests:        25 passed
+Run archive isolation:     6 passed
+Run browser smoke tests:  12 passed
+conclusion: success
+```
+
+| comparison | result |
+| --- | --- |
+| CI 39424919643 (`82ad6b6`, previous round) | 0 failed, 2508 passed, 171 skipped, 532 subtests |
+| CI 39431909757 (`ca07496`, this round) | **0 failed, 2513 passed, 171 skipped, 532 subtests** |
+| new regressions | **none** |
+
 ## Next task status
 
 The qualified SEC-derived trailing figures are no longer figures the valuation
@@ -2888,10 +2967,14 @@ holds the windows they were built from, so the registry recomputes each one
 from the four quarters and the document's own parity check confirms the two
 agree. The annual and quarterly figures stay in the admission summary on their
 own bases, and the provider's undeclared-period figures stay labelled as
-what they are. The CI workflow is green: 2547 passed, 0 failed.
+what they are.
 
-The replay still reports DIVERGED for the AAPL live run, and every remaining
-difference is the valuation reference, which a rebuild does not re-derive. That
-gap predates this round and is recorded as a separate item rather than folded
-into it. No product blocker; archive cleanup remains deferred per existing
+The AAPL live replay now reports **MATCH** with no field difference. The
+production historical P/E and P/FCF references are read from the same committed
+datasets the live run reads, so a rebuild reproduces the run's reference
+instead of reporting a difference in the reference; an operator's own multiple
+still diverges, because that is an assumption rather than archived knowledge.
+The CI workflow is green: 2513 passed, 0 failed, in run `39431909757`.
+
+No product blocker. Archive cleanup remains deferred per the existing
 decision.
