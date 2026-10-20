@@ -2673,9 +2673,28 @@ with no fact, and the API's own DTO.
 
 ### CI
 
-Local full backend run of `tests/`: **2525 passed, 170 skipped, 528 subtests,
-0 failed**. Against the CI baseline 39239093577's 42 failures, all 42 are
-resolved and none is new.
+**The workflow is green.** Run **39403422457** for `31f2cc0`:
+<https://github.com/sbvcid/st-eva/actions/runs/39403422457>
+
+```
+Run backend test suite: 2482 passed, 170 skipped, 1 warning, 528 subtests passed in 116.51s
+Run web API tests:        25 passed, 1 warning
+Run browser smoke tests:  12 passed
+conclusion: success
+```
+
+There is not one `FAILED` line in the run's log.
+
+| comparison | result |
+| --- | --- |
+| CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39380241485 (`524bd09`, previous round) | 0 failed, 2468 passed, 170 skipped, 524 subtests |
+| CI 39403422457 (`31f2cc0`, this round) | **0 failed, 2482 passed, 170 skipped, 528 subtests** |
+| the 42 baseline failures | **all 42 resolved** |
+| new regressions | **none** |
+
+The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`,
+unrelated to this work.
 
 ### Git
 
@@ -2688,8 +2707,9 @@ asks for the four concepts the crossing consumes, the depreciation mapping is
 declared for Apple alone with the filing's own label verified, the product's
 own archive keeps a registry that matches the code, and the API reports each
 qualified figure with its filing, period, currency and the rule each derived
-figure was derived by. The full backend suite is green for the first time:
-2525 passed, 0 failed, all 42 baseline failures resolved and none introduced.
-The replay remains honestly DIVERGED, with its differences classified rather
-than closed. No product blocker; archive cleanup remains deferred per existing
+figure was derived by. The CI workflow is green for the first time — run
+39403422457, 2482 passed and 0 failed, with not one `FAILED` line in the log —
+and all 42 of the baseline's failures are resolved with none introduced. The
+replay remains honestly DIVERGED, with its differences classified rather than
+closed. No product blocker; archive cleanup remains deferred per existing
 decision.
