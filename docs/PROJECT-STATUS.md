@@ -2342,7 +2342,23 @@ One local failure remains, and it is the pre-existing one, unchanged:
 
 ### CI
 
-See the comparison table below.
+Confirmed on the CI runner: run **39375763097** for `cd25e7a` reported **`2 failed, 2459 passed, 170 skipped, 519 subtests`**.
+
+| comparison | result |
+| --- | --- |
+| CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39372859907 (`efc76a7`, previous round) | 12 failed, 2438 passed, 170 skipped, 519 subtests |
+| CI 39375763097 (`cd25e7a`, this round) | **2 failed, 2459 passed, 170 skipped, 519 subtests** |
+| the 9 target failures | **all 9 resolved in CI** |
+| new regressions vs the CI baseline 39239093577 | **none** — the failure set is a strict subset of the baseline's |
+| pre-existing failures fixed beyond the target set | **1** (the MSFT-fixture P/S assertion, which shared the cause) |
+
+The two that remain in CI are the confirmed pre-existing ones, and they are not this round's work:
+
+- `tests/test_mapping_relation_kind.py::TestResolverIsolation::test_an_exact_claim_beats_a_measured_partial_one` — the mapping-relation question described above
+- `tests/test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes` — environment-dependent; it fails in CI and passes locally, in the baseline and in this round alike
+
+Locally the run reports `1 failed, 2503 passed, 170 skipped, 519 subtests` — the same set without the environment-dependent MUFG test. The workflow still reports `failure` overall because those two pre-existing failures remain; that is the confirmed pre-existing state, not a regression from this round.
 
 ### Git
 
@@ -2350,4 +2366,4 @@ Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
 ## Next task status
 
-The replay flow now rebuilds a run against its own snapshot, at the knowledge instant the archive actually holds, and it resolves a figure's currency the same way the archive did, so a faithful rebuild reproduces the run instead of differing from it for a reason neither had any doubt about. Nine target failures and one related pre-existing failure are resolved with no new regression; the mapping-relation failure remains and is listed above rather than claimed as passing. SOFI, AAPL, MSFT, MU and the MUFG cross-currency limit are unchanged. No product blocker; archive cleanup remains deferred per existing decision.
+The replay flow now rebuilds a run against its own snapshot, at the knowledge instant the archive actually holds, and it resolves a figure's currency the same way the archive did, so a faithful rebuild reproduces the run instead of differing from it for a reason neither had any doubt about. Nine target failures and one related pre-existing failure are resolved with no new regression; CI run 39375763097 confirms `2 failed, 2459 passed` — 40 of the baseline's 42 failures now pass and the two that remain are the mapping-relation failure and the environment-dependent MUFG test listed above rather than claimed as passing. SOFI, AAPL, MSFT, MU and the MUFG cross-currency limit are unchanged. No product blocker; archive cleanup remains deferred per existing decision.
