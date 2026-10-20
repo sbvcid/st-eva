@@ -3,7 +3,7 @@
 **Status checked:** 2026-10-20 (the filed trailing revenue and EBITDA enter the valuation chain; the replay reproduces the run's production reference)
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
-**Latest verified GitHub Actions:** the filed trailing revenue and EBITDA round is verified locally (backend 2539 passed / 171 skipped / 532 subtests, web API and archive isolation groups green) and its CI run is recorded here once it finishes; `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757` (checked via the GitHub API on 2026-10-20: backend 2513 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
+**Latest verified GitHub Actions:** `5661383` (the filed trailing revenue and EBITDA enter the valuation chain) verified `backend` and `browser` jobs success in run `39449339747` (checked via the GitHub API on 2026-10-20: backend 2539 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757`; `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
 
 
 
@@ -3034,6 +3034,23 @@ Each quarter's depreciation is itself a difference where the cash-flow statement
 `tests/test_historical_income.py` (26 tests): the dataset's concept identity and window structure; the four consecutive quarters and their filings; a derived quarter saying it is derived; the qualification on both figures; the trailing figure being the sum of the quarters; a cut before any window is knowable; an earlier cut using the window that was knowable then; a missing quarter, a gap in the positions, two currencies, a quarter not yet knowable, a quarter without its sources, a quarter without its depreciation, a concept the registry does not map, a mapping scoped to another issuer, and no issuer at all — each refusing; and the document holding both windows, recomputing both figures from them, and the engine's inputs being the filed ones.
 
 `tests/test_engine_input_provenance.py`'s live-gated test now asserts the current behaviour of all four multiples: the filed figure is the engine's input, the provider's figure is the cross-check beside it, and the sales and enterprise-value multiples divide by the filed trailing figures.
+
+### What other issuers show
+
+Microsoft has no income-statement dataset, so its sales and enterprise-value multiples keep the provider's trailing figures and their labels: `VENDOR_REPORTED` on an `UNDECLARED` basis, with the reason recorded beside them. Its trailing EPS (17.96) and trailing free cash flow (66,987,000,000) are the filed ones, as before. Its live replay reports `MATCH` with no field difference.
+
+### CI
+
+Run **39449339747** for `5661383`:
+<https://github.com/sbvcid/st-eva/actions/runs/39449339747>
+
+```
+Run backend test suite:  2539 passed, 171 skipped, 1 warning, 532 subtests passed
+Run web API tests:         25 passed
+Run archive isolation:      6 passed
+Run browser smoke tests:   12 passed
+conclusion: success
+```
 
 ## Next task status
 
