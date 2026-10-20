@@ -400,7 +400,13 @@ class TestWebPathUsesProductionDistribution(unittest.TestCase):
             dto = self.adapter.run_analysis_pipeline(
                 ticker="MSFT", mode="live"
             )
-        self.assertEqual(calls, [("MSFT", True)])
+        # The run loads the production distribution, and the replay that
+        # reconciles the archived run against the archive loads it again: the
+        # rebuild reads the same committed dataset the run read, so the
+        # reference the rebuild selects is the reference the run selected.
+        # Every call is the same issuer under the same furnished-quarter rule.
+        self.assertTrue(calls, "the web request must reach the production path")
+        self.assertEqual(set(calls), {("MSFT", True)})
         self.assertIsNotNone(
             dto.production_historical_pe,
             "the API must report the distribution state from the production path",

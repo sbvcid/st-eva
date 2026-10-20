@@ -4,16 +4,17 @@ Does NOT modify or duplicate financial logic or validation rules.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 import json
 
 from sqlite_archive import SQLiteArchive
 from core_registry import CoreRegistry
 from registry_seed import seed
-from archive import replay
+from archive import PRODUCTION_REFERENCE_REQUEST_KEY, replay
 from st_eva_runner import (
     run_st_eva,
     build_context_from_observations,
+    load_production_historical_references,
     SnapshotManager,
 )
 from web.schemas import (
@@ -32,6 +33,48 @@ from web.schemas import (
 )
 
 
+def _production_reference_payloads(
+    ticker: str,
+    request: Dict[str, Optional[int]],
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """
+    The production distributions the archived run's references came from.
+
+    The archive names the sources and the number of observations behind each
+    reference. The count says which load of the dataset the run used: a
+    distribution built with the furnished evidence and one built without it
+    hold different numbers of observations, so a rebuild that reads the other
+    load would report a reference the run did not select.
+    """
+    production_historical_pe = None
+    production_historical_pfcf = None
+    if "pe" in request:
+        production_historical_pe, _ = load_production_historical_references(
+            ticker,
+            include_historical_pe=True,
+        )
+        expected = request.get("pe")
+        observed = ((production_historical_pe or {}).get("distribution") or {}).get(
+            "sample_count"
+        )
+        if (
+            expected is not None
+            and observed is not None
+            and int(observed) != int(expected)
+        ):
+            production_historical_pe, _ = load_production_historical_references(
+                ticker,
+                include_historical_pe=True,
+                enable_furnished_pe=False,
+            )
+    if "pfcf" in request:
+        _, production_historical_pfcf = load_production_historical_references(
+            ticker,
+            include_historical_pfcf=True,
+        )
+    return production_historical_pe, production_historical_pfcf
+
+
 def default_replay_doc_builder(
     observation_set: Any,
     as_of: str,
@@ -39,6 +82,15 @@ def default_replay_doc_builder(
     asset_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Helper adapting archive.replay observation set to build_context_from_observations."""
+    metadata = asset_metadata or {}
+    # The archive names the production reference sources the archived run had in
+    # force. They are read here with the same loader a live run uses, so the
+    # rebuild cannot select a reference the run did not use, nor miss the one
+    # it did.
+    request = metadata.get(PRODUCTION_REFERENCE_REQUEST_KEY) or {}
+    production_historical_pe, production_historical_pfcf = (
+        _production_reference_payloads(observation_set.ticker, request)
+    )
     return build_context_from_observations(
         [
             observation_set.get(identifier)
@@ -48,6 +100,8 @@ def default_replay_doc_builder(
         as_of=as_of,
         generated_at=generated_at,
         asset_metadata=asset_metadata,
+        production_historical_pe=production_historical_pe,
+        production_historical_pfcf=production_historical_pfcf,
     )
 
 

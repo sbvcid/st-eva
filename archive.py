@@ -425,6 +425,53 @@ class NullArchive(ArchiveStore):
 # document is about, and inventing one is the single worst failure here.
 REQUIRED_REPLAY_METRIC = METRIC_PRICE
 
+# The key under which the archive tells the document builder which production
+# reference sources the archived run had in force. The archive records the
+# choice; the builder loads the source with the same loader a live run uses.
+# The archive names the source and never the number, so the number is read
+# from the committed dataset at replay time rather than copied from the
+# document being replayed.
+PRODUCTION_REFERENCE_REQUEST_KEY = "production_reference_request"
+
+# The reference sources a rebuild can reproduce, named by the basis the
+# archived document recorded for them. A run that conditioned its figures on a
+# reference the archive cannot reproduce -- an operator's own multiple -- is
+# not in this table, and its rebuild honestly diverges from it.
+PRODUCTION_REFERENCE_BASES: Tuple[Tuple[str, str, str], ...] = (
+    ("valuation_reference", "PRODUCTION_PE_MEDIAN", "pe"),
+    ("pfcf_reference", "PRODUCTION_PFCF_MEDIAN", "pfcf"),
+)
+
+
+def production_reference_request(
+    stored: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Optional[int]]]:
+    """
+    The production reference sources the archived run had in force.
+
+    Read from the archived document's own record of the reference it selected:
+    the basis names where the number came from, and the rebuild reproduces
+    that source. The observation count behind the reference comes with it,
+    because the count says which load of the dataset the run used -- a
+    distribution built with the furnished evidence and one built without it
+    hold different numbers of observations.
+
+    A stored document that selected no production reference -- because the run
+    asked for none, or because the distribution was not eligible -- yields
+    None, and the rebuild selects no production reference either.
+    """
+    if not stored:
+        return None
+    refs = ((stored.get("provenance") or {}).get("refs") or {})
+    request: Dict[str, Optional[int]] = {}
+    for name, basis, source in PRODUCTION_REFERENCE_BASES:
+        entry = stored.get(name) or refs.get(f"refc:{name}") or {}
+        if entry.get("basis") != basis:
+            continue
+        count = entry.get("source_observation_count")
+        request[source] = count if isinstance(count, int) else None
+    return request or None
+
 
 def replay(
     store: ArchiveStore,
@@ -612,26 +659,57 @@ def replay(
         else FIDELITY_SOURCE_DECLARED
     )
 
-    rebuilt = build_document(
-        observation_set,
-        as_of,
-        utc_now(),
-        store.asset_metadata(asset),
-    )
-    rebuilt_hash = document_hash(rebuilt)
-
-    # The rebuilt document's own `as_of` is the moment it is about, which is not
-    # the same axis as the replay cutoff. The cutoff is a knowledge boundary;
-    # `as_of` is a data moment. The snapshot to compare against is the one for
-    # the moment the rebuild turned out to describe -- or, when the caller named
-    # it, the exact snapshot it intends to reconcile, so an asset with several
-    # snapshots sharing an `as_of` is never reconciled against the wrong one.
-    stored: Optional[Dict[str, Any]]
+    # The archived document says which reference sources the run had in force.
+    # When the caller named the snapshot, it is known before the rebuild, so
+    # the rebuild is made with those sources in force and reads the same
+    # committed dataset the run read. When the caller did not name it, the
+    # snapshot is only known once the rebuild has said which data moment it
+    # describes, so the rebuild is made first and repeated with the run's own
+    # sources if the archived document names any.
+    stored: Optional[Dict[str, Any]] = None
     if context_id is not None:
+        # A named snapshot is the only snapshot this replay reconciles. An
+        # identity the archive does not hold is absent, not a reason to
+        # reconcile against some other snapshot that happens to share the
+        # `as_of`.
         selector = getattr(store, "context_by_id", None)
         stored = selector(asset, context_id) if callable(selector) else None
+        rebuilt = build_document(
+            observation_set,
+            as_of,
+            utc_now(),
+            _rebuild_metadata(store, asset, stored),
+        )
     else:
+        rebuilt = build_document(
+            observation_set,
+            as_of,
+            utc_now(),
+            store.asset_metadata(asset),
+        )
+        # The rebuilt document's own `as_of` is the moment it is about, which is
+        # not the same axis as the replay cutoff. The cutoff is a knowledge
+        # boundary; `as_of` is a data moment. The snapshot to compare against
+        # is the one for the moment the rebuild turned out to describe, so an
+        # asset with several snapshots sharing an `as_of` is never reconciled
+        # against the wrong one.
         stored = store.context_at(asset, rebuilt.get("as_of") or as_of)
+        if stored is not None:
+            requested = production_reference_request(stored)
+            if requested:
+                # The archived run conditioned its figures on a production
+                # reference the first rebuild could not reproduce. Rebuilding
+                # with that source in force is the difference between
+                # reproducing the run and reporting a difference that is not
+                # one.
+                rebuilt = build_document(
+                    observation_set,
+                    as_of,
+                    utc_now(),
+                    _rebuild_metadata(store, asset, stored),
+                )
+    rebuilt_hash = document_hash(rebuilt)
+
     if stored is None:
         return ReplayResult(
             asset=asset,
@@ -692,6 +770,27 @@ def replay(
         else (),
         admissions=admissions_recomputed,
     )
+
+
+def _rebuild_metadata(
+    store: ArchiveStore,
+    asset: str,
+    stored: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    What the archive tells the document builder about the instrument.
+
+    The instrument's own facts come from the archive, so a rebuilt context
+    does not diverge from the archived one over a company name. The reference
+    sources the archived run had in force come with them, so the rebuild
+    reproduces the run's reference rather than reporting a difference that is
+    not one.
+    """
+    metadata = dict(store.asset_metadata(asset))
+    requested = production_reference_request(stored)
+    if requested:
+        metadata[PRODUCTION_REFERENCE_REQUEST_KEY] = requested
+    return metadata
 
 
 def _stored_class(

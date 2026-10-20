@@ -2349,6 +2349,104 @@ class SnapshotManager:
         return True
 
 
+def load_production_historical_references(
+    ticker: str,
+    include_historical_pe: bool = False,
+    include_historical_pfcf: bool = False,
+    enable_furnished_pe: bool = True,
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """
+    The committed production historical P/E and P/FCF distributions.
+
+    Both are read from the frozen datasets under `data/historical_pe` and
+    `data/historical_pfcf`. Nothing is fetched and nothing is written, so the
+    load is pure and can happen before the engine runs -- the engine's
+    reference precedence reads the distribution's own eligibility.
+
+    A ticker with no established dataset gets an explicit unavailable payload
+    rather than a silent absence, so a caller can tell "not established" from
+    "not asked for".
+
+    The same function serves a live run and a rebuild. A replay that has to
+    reproduce a run's reference reads the same committed dataset the run read,
+    so the reference the rebuild selects is the reference the run selected.
+    """
+    production_historical_pe = None
+    if include_historical_pe:
+        try:
+            from historical_pe import ISSUER_CONFIGS, load_issuer_historical_pe
+
+            if ticker in ISSUER_CONFIGS:
+                config = ISSUER_CONFIGS[ticker]
+                pe_result = load_issuer_historical_pe(
+                    config,
+                    enable_furnished=enable_furnished_pe,
+                )
+                production_historical_pe = pe_result.to_dict()
+            else:
+                production_historical_pe = {
+                    "distribution": {
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_detail": f"Production historical P/E dataset is not yet established for {ticker}.",
+                    }
+                }
+        except Exception as exc:
+            production_historical_pe = {
+                "distribution": {
+                    "status": "UNAVAILABLE",
+                    "usable_for_reference": False,
+                    "sample_count": 0,
+                    "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                    "reason_detail": str(exc),
+                }
+            }
+
+    # The point-in-time historical P/FCF reconstruction, gated and loaded the
+    # same way as the P/E distribution. It is opt-in on its own flag, so a run
+    # that does not ask for it is computed exactly as before; when the
+    # reconstruction is not established for the ticker, the payload states
+    # that instead of inventing a band.
+    production_historical_pfcf = None
+    if include_historical_pfcf:
+        try:
+            from historical_pfcf import ISSUER_CONFIGS as PFCF_ISSUER_CONFIGS
+            from historical_pfcf import load_issuer_historical_pfcf
+
+            if ticker in PFCF_ISSUER_CONFIGS:
+                pfcf_result = load_issuer_historical_pfcf(
+                    PFCF_ISSUER_CONFIGS[ticker]
+                )
+                production_historical_pfcf = pfcf_result.to_dict()
+            else:
+                production_historical_pfcf = {
+                    "distribution": {
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_detail": (
+                            f"Production historical P/FCF dataset is not yet established "
+                            f"for {ticker}."
+                        ),
+                    }
+                }
+        except Exception as exc:
+            production_historical_pfcf = {
+                "distribution": {
+                    "status": "UNAVAILABLE",
+                    "usable_for_reference": False,
+                    "sample_count": 0,
+                    "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                    "reason_detail": str(exc),
+                }
+            }
+
+    return production_historical_pe, production_historical_pfcf
+
+
 def run_st_eva(
     ticker: str,
     horizon: str = "1-8 weeks",
@@ -2410,74 +2508,14 @@ def run_st_eva(
     # precedence reads the distribution's eligibility. The load is pure -- it
     # reads the committed dataset and writes nothing -- so hoisting it above the
     # engine changes no other ordering.
-    production_historical_pe = None
-    if include_historical_pe:
-        try:
-            from historical_pe import ISSUER_CONFIGS, load_issuer_historical_pe
-            if data.ticker in ISSUER_CONFIGS:
-                config = ISSUER_CONFIGS[data.ticker]
-                pe_result = load_issuer_historical_pe(config, enable_furnished=enable_furnished_pe)
-                production_historical_pe = pe_result.to_dict()
-            else:
-                production_historical_pe = {
-                    "distribution": {
-                        "status": "UNAVAILABLE",
-                        "usable_for_reference": False,
-                        "sample_count": 0,
-                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
-                        "reason_detail": f"Production historical P/E dataset is not yet established for {data.ticker}.",
-                    }
-                }
-        except Exception as exc:
-            production_historical_pe = {
-                "distribution": {
-                    "status": "UNAVAILABLE",
-                    "usable_for_reference": False,
-                    "sample_count": 0,
-                    "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
-                    "reason_detail": str(exc),
-                }
-            }
-
-    # The point-in-time historical P/FCF reconstruction, gated and loaded the
-    # same way as the P/E distribution. It is opt-in on its own flag, so a run
-    # that does not ask for it is computed exactly as before; when the
-    # reconstruction is not established for the ticker, the payload states
-    # that instead of inventing a band.
-    production_historical_pfcf = None
-    if include_historical_pfcf:
-        try:
-            from historical_pfcf import ISSUER_CONFIGS as PFCF_ISSUER_CONFIGS
-            from historical_pfcf import load_issuer_historical_pfcf
-
-            if data.ticker in PFCF_ISSUER_CONFIGS:
-                pfcf_result = load_issuer_historical_pfcf(
-                    PFCF_ISSUER_CONFIGS[data.ticker]
-                )
-                production_historical_pfcf = pfcf_result.to_dict()
-            else:
-                production_historical_pfcf = {
-                    "distribution": {
-                        "status": "UNAVAILABLE",
-                        "usable_for_reference": False,
-                        "sample_count": 0,
-                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
-                        "reason_detail": (
-                            f"Production historical P/FCF dataset is not yet established "
-                            f"for {data.ticker}."
-                        ),
-                    }
-                }
-        except Exception as exc:
-            production_historical_pfcf = {
-                "distribution": {
-                    "status": "UNAVAILABLE",
-                    "usable_for_reference": False,
-                    "sample_count": 0,
-                    "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
-                    "reason_detail": str(exc),
-                }
-            }
+    production_historical_pe, production_historical_pfcf = (
+        load_production_historical_references(
+            data.ticker,
+            include_historical_pe=include_historical_pe,
+            include_historical_pfcf=include_historical_pfcf,
+            enable_furnished_pe=enable_furnished_pe,
+        )
+    )
 
     # The engine's own inputs.
     #
@@ -5305,6 +5343,8 @@ def build_context_from_observations(
     company_name: str = "",
     exchange: str = "",
     asset_metadata: Optional[Dict[str, Any]] = None,
+    production_historical_pe: Optional[Dict[str, Any]] = None,
+    production_historical_pfcf: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Build an Investment Context over an archived observation set.
@@ -5316,6 +5356,12 @@ def build_context_from_observations(
     `asset_metadata` carries what the archive knows about the instrument, so a
     replayed context does not diverge from the archived one over a company
     name.
+
+    `production_historical_pe` and `production_historical_pfcf` are the
+    committed production historical distributions, read by the caller with the
+    same loader a live run uses. A run that selected one of them as its
+    reference is rebuilt with it in force, so the rebuild cannot report a
+    reference the archived run did not use, nor miss the one it did.
     """
     from investment_context import build_investment_context
 
@@ -5365,7 +5411,11 @@ def build_context_from_observations(
                 window_updates["current_fcf"] = value
     if window_updates:
         engine_inputs = replace(engine_inputs, **window_updates)
-    analysis = MarketImpliedAssumptionsEngine.analyze(data=engine_inputs)
+    analysis = MarketImpliedAssumptionsEngine.analyze(
+        data=engine_inputs,
+        production_historical_pe=production_historical_pe,
+        production_historical_pfcf=production_historical_pfcf,
+    )
 
     # The cross-source verdicts are recomputed from whichever comparable
     # observations were eligible, so a replay reaches the same verdict the
