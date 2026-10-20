@@ -6,6 +6,12 @@
 # git blob and every checkout platform agree byte for byte.
 data/historical_pe/**/*.json text eol=lf
 
+# The historical P/S and EV/EBITDA dataset is a tracked production input the
+# same way, and its manifest pins the byte count and SHA-256 of its own files.
+# The production loader derives input_set_id from the same bytes, so a checkout
+# that rewrote line endings would change those digests.
+data/historical_multiples/**/*.json text eol=lf
+
 # The packaged filing facts are a tracked input the product reads, so their
 # bytes are as much a part of the contract as the dataset files above: a
 # checkout that rewrote them would change what the cross-currency analysis

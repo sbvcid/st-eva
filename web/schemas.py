@@ -503,6 +503,57 @@ class ProductionHistoricalPfcfSummaryDTO(BaseModel):
     reason_detail: Optional[str] = None
 
 
+class ProductionHistoricalMultiplesDistributionDTO(BaseModel):
+    """State of one production historical multiples distribution (P/S or EV/EBITDA).
+
+    Each distribution qualifies only through its own eligibility gate; an
+    ineligible or missing distribution is stated as such rather than being
+    replaced by a vendor band or a user multiple.
+    """
+
+    metric_id: Optional[str] = None
+    status: Optional[str] = None
+    usable_for_reference: Optional[bool] = None
+    sample_count: Optional[int] = None
+    total_evaluations: Optional[int] = None
+    min_observations_required: Optional[int] = None
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    mean: Optional[float] = None
+    std: Optional[float] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    percentiles: Optional[Dict[str, float]] = None
+    sampling_cadence: Optional[str] = None
+    evaluation_schedule_description: Optional[str] = None
+    excluded_observation_count: Optional[int] = None
+    reason_code: Optional[str] = None
+    reason_detail: Optional[str] = None
+
+
+class ProductionHistoricalMultiplesSummaryDTO(BaseModel):
+    """State of the production point-in-time historical P/S and EV/EBITDA
+    reference distributions.
+
+    The sales and enterprise-value counterparts of the P/E and P/FCF
+    summaries, with the same discipline: one dataset identity, each
+    distribution gated by its own eligibility, and an ineligible or
+    unsupported distribution stated as such rather than filled from anything
+    else.
+    """
+
+    issuer_id: Optional[str] = None
+    instrument_id: Optional[str] = None
+    input_set_id: Optional[str] = None
+    content_hash: Optional[str] = None
+    methodology: Optional[str] = None
+    logic_version: Optional[str] = None
+    formula_version: Optional[str] = None
+    distributions: Dict[str, ProductionHistoricalMultiplesDistributionDTO] = Field(
+        default_factory=dict
+    )
+
+
 class ReverseRequirementsReportDTO(BaseModel):
     formula_version: str = "reverse-requirements/1.1"
     fingerprint: Optional[str] = None
@@ -523,6 +574,12 @@ class ReverseRequirementsReportDTO(BaseModel):
     # vendor band. Absent when the reconstruction is not established for the
     # ticker, which the summary itself states.
     production_historical_pfcf_summary: Optional[ProductionHistoricalPfcfSummaryDTO] = None
+    # The sales and enterprise-value counterparts, carried with the same
+    # separation from the vendor bands. Absent when the reconstruction is not
+    # established for the ticker, which the summary itself states.
+    production_historical_multiples_summary: Optional[
+        ProductionHistoricalMultiplesSummaryDTO
+    ] = None
     # The consensus the gap column is differenced against, with the period the
     # source declared for it. An eligible gap can be checked against these
     # facts, and a missing gap is explained by them rather than read as a zero.
@@ -549,6 +606,9 @@ class AnalysisResultDTO(BaseModel):
     reverse_requirements: Optional[ReverseRequirementsReportDTO] = None
     production_historical_pe: Optional[ProductionHistoricalPeSummaryDTO] = None
     production_historical_pfcf: Optional[ProductionHistoricalPfcfSummaryDTO] = None
+    production_historical_multiples: Optional[
+        ProductionHistoricalMultiplesSummaryDTO
+    ] = None
     # What each reported multiple was computed from, and on what basis.
     calculation_inputs: List[CalculationInput] = Field(default_factory=list)
     raw_analysis: Optional[Dict[str, Any]] = None

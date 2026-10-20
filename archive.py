@@ -440,6 +440,8 @@ PRODUCTION_REFERENCE_REQUEST_KEY = "production_reference_request"
 PRODUCTION_REFERENCE_BASES: Tuple[Tuple[str, str, str], ...] = (
     ("valuation_reference", "PRODUCTION_PE_MEDIAN", "pe"),
     ("pfcf_reference", "PRODUCTION_PFCF_MEDIAN", "pfcf"),
+    ("ps_reference", "PRODUCTION_PS_MEDIAN", "multiples_ps"),
+    ("ev_ebitda_reference", "PRODUCTION_EV_EBITDA_MEDIAN", "multiples_ev_ebitda"),
 )
 
 

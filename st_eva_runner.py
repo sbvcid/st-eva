@@ -1812,6 +1812,61 @@ def production_pfcf_for_reference(
     return median, status
 
 
+def _production_multiples_median_for_reference(
+    production_historical_multiples: Optional[Dict[str, Any]],
+    metric_id: str,
+) -> Tuple[Optional[float], str]:
+    """
+    One production historical multiples distribution as a summary reference.
+
+    The same gate and the same median rule as `production_pe_for_reference`,
+    applied to the P/S and EV/EBITDA distributions the point-in-time
+    reconstruction builds: the distribution's own `usable_for_reference` flag
+    decides, the median is read from the distribution's own percentiles, and a
+    descriptive-only distribution keeps (None, status) everywhere.
+    """
+    distribution = ((production_historical_multiples or {}).get("distributions") or {}).get(
+        metric_id
+    ) or {}
+    status = str(distribution.get("status") or "UNAVAILABLE")
+    if distribution.get("usable_for_reference") is not True:
+        return None, status
+    median = safe_float((distribution.get("percentiles") or {}).get("median"))
+    if median is None or median <= 0:
+        return None, status
+    return median, status
+
+
+def production_ps_for_reference(
+    production_historical_multiples: Optional[Dict[str, Any]],
+) -> Tuple[Optional[float], str]:
+    """
+    The production historical P/S distribution as a summary reference.
+
+    The same gate and median rule as every other production reference: the
+    distribution's own `usable_for_reference` flag decides and the median is
+    read from the distribution's own percentiles, never recomputed from the
+    vendor band or from today's price.
+    """
+    return _production_multiples_median_for_reference(
+        production_historical_multiples, "P_S_RATIO_REFERENCE"
+    )
+
+
+def production_ev_ebitda_for_reference(
+    production_historical_multiples: Optional[Dict[str, Any]],
+) -> Tuple[Optional[float], str]:
+    """
+    The production historical EV/EBITDA distribution as a summary reference.
+
+    The same gate and median rule as the P/S reference above, applied to the
+    EV/EBITDA distribution whose bridge evidence the dataset requires.
+    """
+    return _production_multiples_median_for_reference(
+        production_historical_multiples, "EV_EBITDA_RATIO_REFERENCE"
+    )
+
+
 def band_status(
     band: Optional[Dict[str, Any]],
 ) -> str:
@@ -1880,6 +1935,7 @@ class MarketImpliedAssumptionsEngine:
         ps_multiple: Optional[float] = None,
         production_historical_pe: Optional[Dict[str, Any]] = None,
         production_historical_pfcf: Optional[Dict[str, Any]] = None,
+        production_historical_multiples: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Reverse-engineer the assumptions implied by the observed price.
@@ -1900,6 +1956,13 @@ class MarketImpliedAssumptionsEngine:
         point-in-time market-cap-to-free-cash-flow reconstruction's own
         distribution, gated by its own >= 20 observation rule. It competes for
         the cash-flow reference only when the operator supplied none.
+
+        `production_historical_multiples` is the same thing for P/S and
+        EV/EBITDA: the point-in-time sales and enterprise-value
+        reconstruction's own distributions, each gated by the shared
+        >= 20 observation rule, the EV/EBITDA one additionally requiring the
+        complete filed bridge evidence. They compete for their references only
+        when the operator supplied none.
         """
         inputs = (
             data
@@ -1955,6 +2018,12 @@ class MarketImpliedAssumptionsEngine:
         )
         production_pfcf_median, production_pfcf_status = production_pfcf_for_reference(
             production_historical_pfcf
+        )
+        production_ps_median, production_ps_status = production_ps_for_reference(
+            production_historical_multiples
+        )
+        production_ev_ebitda_median, production_ev_ebitda_status = (
+            production_ev_ebitda_for_reference(production_historical_multiples)
         )
 
         if reference_multiple is not None:
@@ -2016,8 +2085,66 @@ class MarketImpliedAssumptionsEngine:
                 int(raw_pfcf_sample_count) if raw_pfcf_sample_count is not None else None
             )
 
-        selected_ev_ebitda = ev_ebitda_multiple if ev_ebitda_multiple is not None else historical_ev_ebitda_median
-        selected_ps = ps_multiple if ps_multiple is not None else historical_ps_median
+        # The sales and enterprise-value references follow the same
+        # precedence: an operator's multiple first, then the eligible
+        # production historical P/S / EV/EBITDA distribution's median, then
+        # the vendor band's median. Each rung is labelled with its own method
+        # so the context layer never records a production median as a
+        # vendor-band figure.
+        if ps_multiple is not None:
+            selected_ps = ps_multiple
+            selected_ps_method = "user_supplied_multiple"
+        elif production_ps_median is not None:
+            selected_ps = production_ps_median
+            selected_ps_method = "production_historical_ps_median"
+        elif historical_ps_median is not None:
+            selected_ps = historical_ps_median
+            selected_ps_method = "historical_ps_median"
+        else:
+            selected_ps = None
+            selected_ps_method = "none"
+
+        if ev_ebitda_multiple is not None:
+            selected_ev_ebitda = ev_ebitda_multiple
+            selected_ev_ebitda_method = "user_supplied_multiple"
+        elif production_ev_ebitda_median is not None:
+            selected_ev_ebitda = production_ev_ebitda_median
+            selected_ev_ebitda_method = "production_historical_ev_ebitda_median"
+        elif historical_ev_ebitda_median is not None:
+            selected_ev_ebitda = historical_ev_ebitda_median
+            selected_ev_ebitda_method = "historical_ev_ebitda_median"
+        else:
+            selected_ev_ebitda = None
+            selected_ev_ebitda_method = "none"
+
+        # The observation count behind the selected sales and enterprise-value
+        # references, read only from the distribution when the distribution
+        # *is* the reference -- the same rule the P/E and P/FCF references
+        # follow.
+        production_ps_sample_count = None
+        production_ev_ebitda_sample_count = None
+        if selected_ps_method == "production_historical_ps_median":
+            raw_ps_sample_count = safe_float(
+                (
+                    ((production_historical_multiples or {}).get("distributions") or {})
+                    .get("P_S_RATIO_REFERENCE")
+                    or {}
+                ).get("sample_count")
+            )
+            production_ps_sample_count = (
+                int(raw_ps_sample_count) if raw_ps_sample_count is not None else None
+            )
+        if selected_ev_ebitda_method == "production_historical_ev_ebitda_median":
+            raw_ev_sample_count = safe_float(
+                (
+                    ((production_historical_multiples or {}).get("distributions") or {})
+                    .get("EV_EBITDA_RATIO_REFERENCE")
+                    or {}
+                ).get("sample_count")
+            )
+            production_ev_ebitda_sample_count = (
+                int(raw_ev_sample_count) if raw_ev_sample_count is not None else None
+            )
 
         current_pe = inputs.price / current_eps if current_eps and current_eps > 0 else None
         forward_pe = inputs.price / forward_eps if forward_eps and forward_eps > 0 else None
@@ -2097,6 +2224,17 @@ class MarketImpliedAssumptionsEngine:
                 "pfcf_multiple": selected_pfcf,
                 "production_historical_pfcf_status": production_pfcf_status,
                 "production_historical_pfcf_sample_count": production_pfcf_sample_count,
+                # The sales and enterprise-value references' own bases and
+                # statuses, so the context records where each number came from
+                # the same way it does for the P/E and P/FCF references.
+                "ps_method": selected_ps_method,
+                "ps_multiple": selected_ps,
+                "production_historical_ps_status": production_ps_status,
+                "production_historical_ps_sample_count": production_ps_sample_count,
+                "ev_ebitda_method": selected_ev_ebitda_method,
+                "ev_ebitda_multiple": selected_ev_ebitda,
+                "production_historical_ev_ebitda_status": production_ev_ebitda_status,
+                "production_historical_ev_ebitda_sample_count": production_ev_ebitda_sample_count,
                 "historical_band_status": {
                     "pe": band_status(pe_band),
                     "ps": band_status(ps_band),
@@ -2353,15 +2491,18 @@ def load_production_historical_references(
     ticker: str,
     include_historical_pe: bool = False,
     include_historical_pfcf: bool = False,
+    include_historical_multiples: bool = False,
     enable_furnished_pe: bool = True,
-) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """
-    The committed production historical P/E and P/FCF distributions.
+    The committed production historical P/E, P/FCF and multiples
+    distributions.
 
-    Both are read from the frozen datasets under `data/historical_pe` and
-    `data/historical_pfcf`. Nothing is fetched and nothing is written, so the
-    load is pure and can happen before the engine runs -- the engine's
-    reference precedence reads the distribution's own eligibility.
+    All are read from the frozen datasets under `data/historical_pe`,
+    `data/historical_pfcf` and `data/historical_multiples`. Nothing is fetched
+    and nothing is written, so the load is pure and can happen before the
+    engine runs -- the engine's reference precedence reads the distribution's
+    own eligibility.
 
     A ticker with no established dataset gets an explicit unavailable payload
     rather than a silent absence, so a caller can tell "not established" from
@@ -2444,7 +2585,77 @@ def load_production_historical_references(
                 }
             }
 
-    return production_historical_pe, production_historical_pfcf
+    # The point-in-time historical P/S and EV/EBITDA reconstructions, gated
+    # and loaded the same way as the P/E and P/FCF distributions. They are
+    # opt-in on their own flag, so a run that does not ask for them is
+    # computed exactly as before; when the reconstruction is not established
+    # for the ticker, the payload states that instead of inventing a
+    # distribution.
+    production_historical_multiples = None
+    if include_historical_multiples:
+        try:
+            from historical_multiples import ISSUER_CONFIGS as MULTIPLES_ISSUER_CONFIGS
+            from historical_multiples import load_issuer_historical_multiples
+
+            if ticker in MULTIPLES_ISSUER_CONFIGS:
+                multiples_result = load_issuer_historical_multiples(
+                    MULTIPLES_ISSUER_CONFIGS[ticker]
+                )
+                production_historical_multiples = multiples_result.to_dict()
+            else:
+                production_historical_multiples = {
+                    "distributions": {
+                        "P_S_RATIO_REFERENCE": {
+                            "metric_id": "P_S_RATIO_REFERENCE",
+                            "status": "UNAVAILABLE",
+                            "usable_for_reference": False,
+                            "sample_count": 0,
+                            "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                            "reason_detail": (
+                                f"Production historical P/S dataset is not yet established "
+                                f"for {ticker}."
+                            ),
+                        },
+                        "EV_EBITDA_RATIO_REFERENCE": {
+                            "metric_id": "EV_EBITDA_RATIO_REFERENCE",
+                            "status": "UNAVAILABLE",
+                            "usable_for_reference": False,
+                            "sample_count": 0,
+                            "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                            "reason_detail": (
+                                f"Production historical EV/EBITDA dataset is not yet "
+                                f"established for {ticker}."
+                            ),
+                        },
+                    }
+                }
+        except Exception as exc:
+            production_historical_multiples = {
+                "distributions": {
+                    "P_S_RATIO_REFERENCE": {
+                        "metric_id": "P_S_RATIO_REFERENCE",
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_detail": str(exc),
+                    },
+                    "EV_EBITDA_RATIO_REFERENCE": {
+                        "metric_id": "EV_EBITDA_RATIO_REFERENCE",
+                        "status": "UNAVAILABLE",
+                        "usable_for_reference": False,
+                        "sample_count": 0,
+                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_detail": str(exc),
+                    },
+                }
+            }
+
+    return (
+        production_historical_pe,
+        production_historical_pfcf,
+        production_historical_multiples,
+    )
 
 
 def load_production_historical_income(
@@ -2500,6 +2711,7 @@ def run_st_eva(
     include_historical_pe: bool = False,
     enable_furnished_pe: bool = True,
     include_historical_pfcf: bool = False,
+    include_historical_multiples: bool = False,
     include_historical_income: bool = False,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
@@ -2533,11 +2745,12 @@ def run_st_eva(
     # precedence reads the distribution's eligibility. The load is pure -- it
     # reads the committed dataset and writes nothing -- so hoisting it above the
     # engine changes no other ordering.
-    production_historical_pe, production_historical_pfcf = (
+    production_historical_pe, production_historical_pfcf, production_historical_multiples = (
         load_production_historical_references(
             data.ticker,
             include_historical_pe=include_historical_pe,
             include_historical_pfcf=include_historical_pfcf,
+            include_historical_multiples=include_historical_multiples,
             enable_furnished_pe=enable_furnished_pe,
         )
     )
@@ -2577,6 +2790,7 @@ def run_st_eva(
         ps_multiple=ps_multiple,
         production_historical_pe=production_historical_pe,
         production_historical_pfcf=production_historical_pfcf,
+        production_historical_multiples=production_historical_multiples,
     )
 
     analysis_errors = Validator.validate_analysis(analysis)
@@ -2644,6 +2858,7 @@ def run_st_eva(
         cross_validation=sec_evidence.get("cross_validation") if wants_sec else None,
         production_historical_pe=production_historical_pe,
         production_historical_pfcf=production_historical_pfcf,
+        production_historical_multiples=production_historical_multiples,
         prefer_eps_anchor=prefer_eps_anchor,
         user_eps=user_eps,
     )
@@ -3080,6 +3295,7 @@ def run_st_eva(
         "reverse_requirements": reverse_requirements,
         "production_historical_pe": production_historical_pe,
         "production_historical_pfcf": production_historical_pfcf,
+        "production_historical_multiples": production_historical_multiples,
         "missing_data": missing_data,
         "cross_currency": cross_currency,
         "evidence_ids": evidence.ids(),
@@ -3242,6 +3458,7 @@ def _build_valuation_multiples(
     historical_band: Optional[Dict[str, Any]],
     min_observations: int,
     production_historical_pe: Optional[Dict[str, Any]] = None,
+    production_historical_multiples: Optional[Dict[str, Any]] = None,
     representative: Optional[Any] = None,
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """
@@ -3262,6 +3479,7 @@ def _build_valuation_multiples(
         ReferenceMultiple,
         exit_multiples_from_band,
         exit_multiples_from_production_distribution,
+        reference_multiple_from_production_distribution,
     )
 
     multiples: Dict[str, Any] = {}
@@ -3332,6 +3550,17 @@ def _build_valuation_multiples(
             }
         )
 
+    # The production historical P/S and EV/EBITDA distributions, when the run
+    # loaded them, supply the sales and enterprise-value methods' own
+    # reference multiple in the same way the production historical P/E
+    # distribution supplies the earnings method's: the operator's own multiple
+    # first, then the eligible distribution's median, and never a number from
+    # another method. Each keeps its own labels, so a production median is
+    # never recorded as a user assumption.
+    multiples_distributions = (
+        (production_historical_multiples or {}).get("distributions") or {}
+    )
+
     for key, value, label in (
         ("cash_flow", pfcf_multiple, "P/FCF"),
         ("enterprise_value", ev_ebitda_multiple, "EV/EBITDA"),
@@ -3346,19 +3575,45 @@ def _build_valuation_multiples(
                 eligibility_state="USER_SPECIFIED",
                 usable_for_reference=True,
             )
-        else:
-            unavailable.append(
-                {
-                    "item": "valuation_method.%s" % key,
-                    "reason": (
-                        "No %s reference multiple was supplied, so this method produces no "
-                        "implied figure. It is not filled from another method's multiple."
-                        % label
-                    ),
-                    "reason_kind": "NO_REFERENCE_MULTIPLE",
-                    "blocks": ["valuation_methods.%s" % key],
-                }
+            continue
+
+        distribution = None
+        source = None
+        if label == "EV/EBITDA":
+            distribution = multiples_distributions.get("EV_EBITDA_RATIO_REFERENCE")
+            source = "production_historical_ev_ebitda_median"
+        elif label == "P/S":
+            distribution = multiples_distributions.get("P_S_RATIO_REFERENCE")
+            source = "production_historical_ps_median"
+
+        if distribution:
+            production_multiple, refusal = (
+                reference_multiple_from_production_distribution(
+                    distribution,
+                    source=source,
+                    metric_label=label,
+                    min_observations=min_observations,
+                )
             )
+            if production_multiple is not None:
+                multiples[key] = production_multiple
+                continue
+            if refusal is not None:
+                unavailable.append(refusal)
+                continue
+
+        unavailable.append(
+            {
+                "item": "valuation_method.%s" % key,
+                "reason": (
+                    "No %s reference multiple was supplied, so this method produces no "
+                    "implied figure. It is not filled from another method's multiple."
+                    % label
+                ),
+                "reason_kind": "NO_REFERENCE_MULTIPLE",
+                "blocks": ["valuation_methods.%s" % key],
+            }
+        )
 
     return multiples, unavailable
 
@@ -4033,6 +4288,7 @@ def _build_reverse_requirements(
     cross_validation: Optional[Dict[str, Any]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
     production_historical_pfcf: Optional[Dict[str, Any]] = None,
+    production_historical_multiples: Optional[Dict[str, Any]] = None,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
 ) -> Dict[str, Any]:
@@ -4335,6 +4591,7 @@ def _build_reverse_requirements(
         historical_band=data.historical_pe_band,
         min_observations=MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
         production_historical_pe=production_historical_pe,
+        production_historical_multiples=production_historical_multiples,
     )
     unavailable.extend(method_unavailable)
 
@@ -4641,6 +4898,7 @@ def _build_reverse_requirements(
         unavailable=unavailable,
         production_historical_pe=production_historical_pe,
         production_historical_pfcf=production_historical_pfcf,
+        production_historical_multiples=production_historical_multiples,
         price_evidence=price_evidence,
         eps_anchor_catalogue=eps_anchor_catalogue,
         eps_anchor_selection=eps_anchor_selection,
@@ -5380,6 +5638,7 @@ def build_context_from_observations(
     asset_metadata: Optional[Dict[str, Any]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
     production_historical_pfcf: Optional[Dict[str, Any]] = None,
+    production_historical_multiples: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Build an Investment Context over an archived observation set.
@@ -5392,11 +5651,12 @@ def build_context_from_observations(
     replayed context does not diverge from the archived one over a company
     name.
 
-    `production_historical_pe` and `production_historical_pfcf` are the
-    committed production historical distributions, read by the caller with the
-    same loader a live run uses. A run that selected one of them as its
-    reference is rebuilt with it in force, so the rebuild cannot report a
-    reference the archived run did not use, nor miss the one it did.
+    `production_historical_pe`, `production_historical_pfcf` and
+    `production_historical_multiples` are the committed production historical
+    distributions, read by the caller with the same loader a live run uses. A
+    run that selected one of them as its reference is rebuilt with it in
+    force, so the rebuild cannot report a reference the archived run did not
+    use, nor miss the one it did.
     """
     from investment_context import build_investment_context
 
@@ -5461,6 +5721,7 @@ def build_context_from_observations(
         data=engine_inputs,
         production_historical_pe=production_historical_pe,
         production_historical_pfcf=production_historical_pfcf,
+        production_historical_multiples=production_historical_multiples,
     )
 
     # The cross-source verdicts are recomputed from whichever comparable
@@ -6140,6 +6401,17 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--historical-multiples",
+        dest="historical_multiples",
+        action="store_true",
+        help=(
+            "Opt-in: build the production point-in-time historical P/S and "
+            "EV/EBITDA reference distributions from the filed trailing "
+            "revenue and EBITDA windows, the canonical daily price series, "
+            "cover-page shares outstanding and filed balance-sheet components."
+        ),
+    )
+    parser.add_argument(
         "--historical-income",
         dest="historical_income",
         action="store_true",
@@ -6193,6 +6465,7 @@ def main() -> None:
         include_historical_pe=args.historical_pe,
         enable_furnished_pe=not args.no_furnished_pe,
         include_historical_pfcf=args.historical_pfcf,
+        include_historical_multiples=args.historical_multiples,
         include_historical_income=args.historical_income,
     )
 

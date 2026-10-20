@@ -36,7 +36,7 @@ from web.schemas import (
 def _production_reference_payloads(
     ticker: str,
     request: Dict[str, Optional[int]],
-) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """
     The production distributions the archived run's references came from.
 
@@ -48,8 +48,9 @@ def _production_reference_payloads(
     """
     production_historical_pe = None
     production_historical_pfcf = None
+    production_historical_multiples = None
     if "pe" in request:
-        production_historical_pe, _ = load_production_historical_references(
+        production_historical_pe, _, _ = load_production_historical_references(
             ticker,
             include_historical_pe=True,
         )
@@ -62,17 +63,22 @@ def _production_reference_payloads(
             and observed is not None
             and int(observed) != int(expected)
         ):
-            production_historical_pe, _ = load_production_historical_references(
+            production_historical_pe, _, _ = load_production_historical_references(
                 ticker,
                 include_historical_pe=True,
                 enable_furnished_pe=False,
             )
     if "pfcf" in request:
-        _, production_historical_pfcf = load_production_historical_references(
+        _, production_historical_pfcf, _ = load_production_historical_references(
             ticker,
             include_historical_pfcf=True,
         )
-    return production_historical_pe, production_historical_pfcf
+    if "multiples_ps" in request or "multiples_ev_ebitda" in request:
+        _, _, production_historical_multiples = load_production_historical_references(
+            ticker,
+            include_historical_multiples=True,
+        )
+    return production_historical_pe, production_historical_pfcf, production_historical_multiples
 
 
 def default_replay_doc_builder(
@@ -88,7 +94,7 @@ def default_replay_doc_builder(
     # rebuild cannot select a reference the run did not use, nor miss the one
     # it did.
     request = metadata.get(PRODUCTION_REFERENCE_REQUEST_KEY) or {}
-    production_historical_pe, production_historical_pfcf = (
+    production_historical_pe, production_historical_pfcf, production_historical_multiples = (
         _production_reference_payloads(observation_set.ticker, request)
     )
     return build_context_from_observations(
@@ -102,6 +108,7 @@ def default_replay_doc_builder(
         asset_metadata=asset_metadata,
         production_historical_pe=production_historical_pe,
         production_historical_pfcf=production_historical_pfcf,
+        production_historical_multiples=production_historical_multiples,
     )
 
 
@@ -390,10 +397,15 @@ def _web_visible_analysis(core_result: Dict[str, Any]) -> Dict[str, Any]:
             if key in {"formula_version", "fingerprint", "status", "status_reason", "matrix_size"}
         }
 
-    # The production dataset's per-observation detail is not part of the API
-    # contract; its eligibility state, identity and provenance are, and they are
-    # in `production_historical_pe` and the report's own summary field.
-    for key in ("production_historical_pe", "production_historical_pfcf"):
+    # The production datasets' per-observation detail is not part of the API
+    # contract; their eligibility state, identity and provenance are, and they
+    # are in the `production_historical_*` payloads and the report's own
+    # summary fields.
+    for key in (
+        "production_historical_pe",
+        "production_historical_pfcf",
+        "production_historical_multiples",
+    ):
         production = visible.get(key)
         if isinstance(production, dict):
             slim = dict(production)
@@ -403,6 +415,17 @@ def _web_visible_analysis(core_result: Dict[str, Any]) -> Dict[str, Any]:
             if isinstance(distribution, dict):
                 slim["distribution"] = {
                     key: value for key, value in distribution.items() if key != "observations"
+                }
+            distributions = slim.get("distributions")
+            if isinstance(distributions, dict):
+                slim["distributions"] = {
+                    metric: {
+                        dkey: dvalue
+                        for dkey, dvalue in dist.items()
+                        if dkey != "observations"
+                    }
+                    for metric, dist in distributions.items()
+                    if isinstance(dist, dict)
                 }
             visible[key] = slim
 
@@ -523,6 +546,11 @@ class AnalysisServiceAdapter:
                 # data/historical_pe/{TICKER} and data/historical_pfcf/{TICKER}.
                 include_historical_pe=True,
                 include_historical_pfcf=True,
+                # The P/S and EV/EBITDA reconstructions are enabled for the
+                # same reason: the sales and enterprise-value references and
+                # their implied figures come from the committed point-in-time
+                # datasets, stated as unavailable where none is established.
+                include_historical_multiples=True,
                 # The filed income-statement dataset carries no reference
                 # distribution: it is what the trailing revenue and trailing
                 # EBITDA the sales and enterprise-value multiples are computed
@@ -852,6 +880,19 @@ class AnalysisServiceAdapter:
                     }
                 )
 
+            # The sales and enterprise-value references' compact statement,
+            # built the same way from the run's own payload: each
+            # distribution's identity and eligibility. Absent when the payload
+            # is absent entirely.
+            production_multiples_summary: Optional[Dict[str, Any]] = None
+            raw_multiples = core_result.get("production_historical_multiples")
+            if isinstance(raw_multiples, dict):
+                from historical_multiples import production_multiples_summary
+
+                production_multiples_summary = production_multiples_summary(
+                    raw_multiples
+                )
+
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),
                 company_name=core_result.get("company_name", ""),
@@ -866,6 +907,7 @@ class AnalysisServiceAdapter:
                 reverse_requirements=reverse_reqs_dto,
                 production_historical_pe=production_pe_summary,
                 production_historical_pfcf=production_pfcf_summary,
+                production_historical_multiples=production_multiples_summary,
                 calculation_inputs=_calculation_inputs(core_result),
                 raw_analysis=_web_visible_analysis(core_result),
             )

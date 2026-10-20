@@ -952,8 +952,10 @@ class TestUnsupportedReferenceBasis(unittest.TestCase):
             [
                 "HISTORICAL_MEDIAN",
                 "NONE",
+                "PRODUCTION_EV_EBITDA_MEDIAN",
                 "PRODUCTION_PE_MEDIAN",
                 "PRODUCTION_PFCF_MEDIAN",
+                "PRODUCTION_PS_MEDIAN",
                 "USER_SUPPLIED",
             ],
             "the closed set changed; a new basis is a provenance decision, so this "

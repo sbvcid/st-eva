@@ -142,6 +142,16 @@ REFERENCE_SOURCES: Dict[str, Dict[str, Any]] = {
         "source_statistic": "median",
         "selection_method": "production_historical_pfcf_median",
     },
+    "PRODUCTION_PS_MEDIAN": {
+        "observed": True,
+        "source_statistic": "median",
+        "selection_method": "production_historical_ps_median",
+    },
+    "PRODUCTION_EV_EBITDA_MEDIAN": {
+        "observed": True,
+        "source_statistic": "median",
+        "selection_method": "production_historical_ev_ebitda_median",
+    },
     "HISTORICAL_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
@@ -1175,6 +1185,22 @@ class ContextBuilder:
                 # point-in-time reconstruction at the band would be a false
                 # claim about where the number came from.
                 secondary_basis = "PRODUCTION_PFCF_MEDIAN"
+            elif metric == "ps" and (
+                analysis_reference.get("ps_method")
+                == "production_historical_ps_median"
+            ):
+                # The sales reference reads its basis the same way: the
+                # production historical P/S distribution's own method label,
+                # never the vendor band the reconstruction does not use.
+                secondary_basis = "PRODUCTION_PS_MEDIAN"
+            elif metric == "ev_ebitda" and (
+                analysis_reference.get("ev_ebitda_method")
+                == "production_historical_ev_ebitda_median"
+            ):
+                # The enterprise-value reference reads its basis the same way:
+                # the production historical EV/EBITDA distribution's own
+                # method label, never the vendor band.
+                secondary_basis = "PRODUCTION_EV_EBITDA_MEDIAN"
             elif engine_value is not None:
                 secondary_basis = "HISTORICAL_MEDIAN"
             # The same rule the valuation reference follows: only a band median
@@ -1187,28 +1213,48 @@ class ContextBuilder:
                 if band and secondary_basis == "HISTORICAL_MEDIAN"
                 else None
             )
-            pfcf_eligibility = None
-            if secondary_basis == "PRODUCTION_PFCF_MEDIAN":
-                pfcf_status = analysis_reference.get(
-                    "production_historical_pfcf_status"
-                )
-                pfcf_sample_count = analysis_reference.get(
+            production_eligibility = None
+            production_status_key = {
+                "PRODUCTION_PFCF_MEDIAN": "production_historical_pfcf_status",
+                "PRODUCTION_PS_MEDIAN": "production_historical_ps_status",
+                "PRODUCTION_EV_EBITDA_MEDIAN": (
+                    "production_historical_ev_ebitda_status"
+                ),
+            }.get(secondary_basis)
+            production_count_key = {
+                "PRODUCTION_PFCF_MEDIAN": (
                     "production_historical_pfcf_sample_count"
-                )
-                pfcf_eligibility = {
+                ),
+                "PRODUCTION_PS_MEDIAN": "production_historical_ps_sample_count",
+                "PRODUCTION_EV_EBITDA_MEDIAN": (
+                    "production_historical_ev_ebitda_sample_count"
+                ),
+            }.get(secondary_basis)
+            if production_status_key is not None:
+                metric_status = analysis_reference.get(production_status_key)
+                metric_sample_count = analysis_reference.get(production_count_key)
+                distribution_label = {
+                    "PRODUCTION_PFCF_MEDIAN": "P/FCF",
+                    "PRODUCTION_PS_MEDIAN": "P/S",
+                    "PRODUCTION_EV_EBITDA_MEDIAN": "EV/EBITDA",
+                }[secondary_basis]
+                production_eligibility = {
                     "eligible_as_reference": True,
                     "eligibility_rule": (
-                        "the production historical P/FCF distribution must report "
-                        "usable_for_reference"
+                        f"the production historical {distribution_label} "
+                        "distribution must report usable_for_reference"
                     ),
                     "eligibility_reason": (
-                        f"the production historical P/FCF distribution is "
-                        f"{pfcf_status}, so its median is a qualified reference"
-                        if pfcf_status
-                        else "the production historical P/FCF distribution is a "
+                        f"the production historical {distribution_label} "
+                        f"distribution is {metric_status}, so its median is a "
                         "qualified reference"
+                        if metric_status
+                        else (
+                            f"the production historical {distribution_label} "
+                            "distribution is a qualified reference"
+                        )
                     ),
-                    "observation_count": pfcf_sample_count,
+                    "observation_count": metric_sample_count,
                 }
             refs[name] = self._register_reference(
                 name=name,
@@ -1216,10 +1262,10 @@ class ContextBuilder:
                 source_metric=metric,
                 source_ref=secondary_source_ref,
                 basis=secondary_basis,
-                eligibility=pfcf_eligibility,
+                eligibility=production_eligibility,
                 source_observation_count=(
-                    analysis_reference.get("production_historical_pfcf_sample_count")
-                    if secondary_basis == "PRODUCTION_PFCF_MEDIAN"
+                    analysis_reference.get(production_count_key)
+                    if production_count_key is not None
                     else None
                 ),
             )
@@ -2008,6 +2054,11 @@ class ContextBuilder:
                         f"{implied_eps_ref} / "
                         f"{derived_ref('implied_revenue_per_share')}"
                     ),
+                    # The numerator is conditional on the valuation reference
+                    # and the denominator on the sales reference, so the
+                    # margin inherits both conditions and names them.
+                    conditional_on=(valuation_ref, ps_ref),
+                    provenance_kind=PROVENANCE_CONDITIONAL,
                 )
 
         # Percentile positions. These need a usable band, which is a policy

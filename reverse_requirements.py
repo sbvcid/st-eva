@@ -1769,6 +1769,96 @@ def exit_multiples_from_band(
     return multiples, unavailable
 
 
+def reference_multiple_from_production_distribution(
+    distribution: Optional[Dict[str, Any]],
+    *,
+    source: str,
+    metric_label: str,
+    min_observations: int = 20,
+) -> Tuple[Optional["ReferenceMultiple"], Optional[Dict[str, Any]]]:
+    """
+    The single reference multiple a valuation method uses, taken from a
+    production point-in-time historical distribution's own median.
+
+    The same gate the exit multiples are admitted under: the distribution's own
+    declared eligibility decides, its declared observation count is checked
+    against the threshold, and a distribution that fails either check produces
+    no reference and an explicit reason. The number is the distribution's own
+    median, never recomputed from a band or from today's price.
+    """
+    if not distribution:
+        return None, None
+
+    median = _safe_float((distribution.get("percentiles") or {}).get("median"))
+    if median is None or median <= 0:
+        return None, None
+
+    declared_count = _declared_sample_count(distribution.get("sample_count"))
+    if declared_count is None:
+        return None, {
+            "item": f"valuation_method.{metric_label}",
+            "reason": (
+                f"The production historical {metric_label} distribution does not "
+                "declare a valid non-negative integer sample count, so it cannot "
+                "be verified against the %d required to establish an "
+                "authoritative reference distribution." % min_observations
+            ),
+            "reason_kind": "OBSERVATION_COUNT_UNVERIFIED",
+            "blocks": ["valuation_methods"],
+        }
+
+    usable = (
+        distribution.get("usable_for_reference") is True
+        or distribution.get("status") == "USABLE_FOR_REFERENCE"
+    )
+    if not usable:
+        if declared_count >= min_observations:
+            reason_kind = "INELIGIBLE_STATUS"
+            reason = (
+                f"The production historical {metric_label} distribution holds "
+                f"{declared_count} observations but declares the eligibility "
+                f"status {distribution.get('status')}, so it is not an "
+                "authoritative reference distribution."
+            )
+        else:
+            reason_kind = "INSUFFICIENT_OBSERVATIONS"
+            reason = (
+                f"The production historical {metric_label} distribution holds "
+                f"{declared_count} observations, below the {min_observations} "
+                "required to establish an authoritative reference distribution."
+            )
+        return None, {
+            "item": f"valuation_method.{metric_label}",
+            "reason": reason,
+            "reason_kind": reason_kind,
+            "blocks": ["valuation_methods"],
+        }
+
+    period_start = distribution.get("period_start")
+    period_end = distribution.get("period_end")
+    period_label = (
+        f"{period_start} to {period_end}" if period_start and period_end else ""
+    )
+    return (
+        ReferenceMultiple(
+            value=median,
+            source=source,
+            period_label=(
+                f"median ({period_label})" if period_label else "median"
+            ),
+            sample_size=declared_count,
+            sample_period=(
+                f"production historical {metric_label} median from "
+                f"{declared_count} observations ({period_label})"
+            ),
+            is_user_assumption=False,
+            eligibility_state="ELIGIBLE_PRODUCTION_DISTRIBUTION",
+            usable_for_reference=True,
+        ),
+        None,
+    )
+
+
 def exit_multiples_from_production_distribution(
     distribution: Optional[Dict[str, Any]],
     *,
@@ -2276,6 +2366,7 @@ def build_reverse_requirements_report(
     unavailable: Optional[Iterable[Dict[str, Any]]] = None,
     production_historical_pe: Optional[Dict[str, Any]] = None,
     production_historical_pfcf: Optional[Dict[str, Any]] = None,
+    production_historical_multiples: Optional[Dict[str, Any]] = None,
     price_evidence: Optional[Dict[str, Any]] = None,
     eps_anchor_catalogue: Optional[Dict[str, Any]] = None,
     eps_anchor_selection: Optional[Dict[str, Any]] = None,
@@ -2514,6 +2605,21 @@ def build_reverse_requirements_report(
             production_historical_pfcf
         )
 
+    # The compact statement of the production historical P/S and EV/EBITDA
+    # distributions, built by the same helper the API layer uses so the report
+    # and the run cannot disagree about those references' eligibility.
+    # Imported lazily to keep this module free of a load-time dependency on
+    # the multiples reconstruction. Absent when the run acquired no multiples
+    # payload.
+    if production_historical_multiples is None:
+        production_historical_multiples_summary = None
+    else:
+        from historical_multiples import production_multiples_summary
+
+        production_historical_multiples_summary = production_multiples_summary(
+            production_historical_multiples
+        )
+
     return {
         "report": "reverse_requirements_v1",
         "formula_version": FORMULA_VERSION,
@@ -2540,6 +2646,13 @@ def build_reverse_requirements_report(
         # reported by the valuation summary; this states whether a qualified
         # P/FCF reference exists at all, so a refusal is readable as one.
         "production_historical_pfcf_summary": production_historical_pfcf_summary,
+        # The sales and enterprise-value counterparts, carried beside the
+        # other summaries with the same separation from the vendor bands and
+        # from user assumptions. This states whether a qualified P/S or
+        # EV/EBITDA reference exists at all, so a refusal is readable as one.
+        "production_historical_multiples_summary": (
+            production_historical_multiples_summary
+        ),
         # The consensus the gap column is differenced against, with the period
         # the source declared for it, so an eligible gap can be checked and a
         # missing one explained rather than read as a zero.

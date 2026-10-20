@@ -1,0 +1,83 @@
+{
+  "ticker": "AAPL",
+  "issuer_id": "CIK0000320193",
+  "entity_name": "Apple Inc.",
+  "fye_month": 9,
+  "role": "production",
+  "metrics": [
+    "P_S_RATIO_REFERENCE",
+    "EV_EBITDA_RATIO_REFERENCE"
+  ],
+  "methodology": "historical-multiples/1.0",
+  "provenance": {
+    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the balance-sheet concepts (cash and cash equivalents, current marketable securities, commercial paper, long-term debt non-current and long-term debt current), plus the canonical daily price series and filing acceptance index reused by path from data/historical_pe/AAPL and the cover-page shares outstanding series reused by path from data/historical_pfcf/AAPL. The trailing revenue and EBITDA denominators are the data/historical_income/AAPL dataset own windows, executed from its config, never recomputed here.",
+    "promoted_on": "2026-10-20",
+    "concept_fetch": {
+      "fetched_on": "2026-10-20",
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000320193/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+      "response_units": "verbatim as returned: USD for all five balance-sheet concepts"
+    },
+    "issuer_facts": {
+      "cik": "0000320193",
+      "fye_month": 9
+    },
+    "files": {
+      "cash_concept.json": {
+        "bytes": 30428,
+        "content_sha256": "0d7146e8db9c12ecb46e6c5e4caee0a21f6e0a469bfb66fbdaab8dc9ed27e7bb",
+        "source": "SEC EDGAR companyconcept us-gaap:CashAndCashEquivalentsAtCarryingValue (CIK0000320193)",
+        "definition": "Cash and cash equivalents at carrying value, the liquid-funds component of the filed EV bridge."
+      },
+      "marketable_securities_current_concept.json": {
+        "bytes": 8568,
+        "content_sha256": "fc20dc98b7f45215167312565e81a68b0d07188dea0c98aac06d1af54e57164b",
+        "source": "SEC EDGAR companyconcept us-gaap:MarketableSecuritiesCurrent (CIK0000320193)",
+        "definition": "Current marketable securities, the second liquid-funds component of the filed EV bridge. First carried from FY2018 filings, so earlier evaluation dates have an incomplete bridge and no EV."
+      },
+      "commercial_paper_concept.json": {
+        "bytes": 13147,
+        "content_sha256": "f29592058366f7a5d9f37ad0cfafe09febb30bb933276190c80314792ec3a981",
+        "source": "SEC EDGAR companyconcept us-gaap:CommercialPaper (CIK0000320193)",
+        "definition": "Commercial paper, a total-debt component of the filed EV bridge alongside the two long-term debt concepts."
+      },
+      "long_term_debt_noncurrent_concept.json": {
+        "bytes": 12621,
+        "content_sha256": "54da82bf4310e57768c27e50848e5fabfd0c3b6317cd4456d64cce31e7345619",
+        "source": "SEC EDGAR companyconcept us-gaap:LongTermDebtNoncurrent (CIK0000320193)",
+        "definition": "Non-current long-term debt, a total-debt component of the filed EV bridge."
+      },
+      "long_term_debt_current_concept.json": {
+        "bytes": 12430,
+        "content_sha256": "e3dbc15eac1b3a839afea8f996325a7dc767bc47653320b8a6c47ab865d9acb9",
+        "source": "SEC EDGAR companyconcept us-gaap:LongTermDebtCurrent (CIK0000320193)",
+        "definition": "Current long-term debt, a total-debt component of the filed EV bridge. First carried from FY2014 filings."
+      },
+      "daily_prices.json (reused by path)": {
+        "path": "data/historical_pe/AAPL/daily_prices.json",
+        "content_sha256": "bc259131ac0168a4f641dda7cadd9c7faa1c13265325f9f547d26a7233122741",
+        "source": "The canonical production historical P/E price series, read by path. The trading calendar decides when a filing's fact becomes knowable under the 16:00 ET cutoff rule, so one calendar serves every reconstruction."
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "data/historical_pe/AAPL/filing_acceptance_evidence.json",
+        "content_sha256": "ac74bcdd430efccaa8a0ce33d6fa7b539e46d4cae19e4d8b92b9f0b69f0d0654",
+        "source": "The canonical SGML-header acceptance index, read by path. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped."
+      },
+      "shares_outstanding_concept.json (reused by path)": {
+        "path": "data/historical_pfcf/AAPL/shares_outstanding_concept.json",
+        "content_sha256": "7f82d86420d0ff08ca3618a7bdce02902a21f54f7d1d98166fd6e6ef61b71e0e",
+        "source": "The canonical cover-page shares outstanding series from the historical P/FCF dataset, read by path so one share series serves every market-cap reconstruction. Counts are never split-adjusted and pair with the as-traded close."
+      }
+    },
+    "point_in_time_rule": "usable_date is derived from acceptance_datetime_header_et using the 16:00 ET cutoff rule at load time, identical to the historical P/E, P/FCF and income pipelines. The value in force at an evaluation date is the latest knowable version of each component; no fact is used before its filing usable date.",
+    "multiple_rules": {
+      "ps": "P/S = (as-traded close on the evaluation date x latest knowable cover-page shares outstanding) / TTM revenue, where the TTM revenue window is the income dataset own four-consecutive-fiscal-quarter window. A non-positive denominator produces no multiple.",
+      "ev_ebitda": "EV/EBITDA = (market capitalization + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash + current marketable securities]) / TTM EBITDA. Every bridge component must be knowable at the evaluation date; a date with any component missing has no EV and the bridge is never completed by omission, substitution or zero-fill. The bridge remains a partial statement of enterprise value (it omits leases, non-current investments and off-balance sheet claims) and every observation says so."
+    },
+    "reference_gate": "The same >= 20 qualifying observations rule as every other production distribution. A thinner sample stays descriptive and is never a scenario exit multiple.",
+    "known_limitations": [
+      "The bridge components start at different dates (long-term debt FY2014, current marketable securities FY2018), so early evaluation dates have an incomplete bridge and no EV/EBITDA while P/S may still compute.",
+      "The reconstructed enterprise value omits operating leases under ASC 842, non-current investments and off-balance sheet commitments; it is labelled partial on every observation.",
+      "The evaluation dates are the income dataset filing usable dates, not a continuous daily trading history."
+    ]
+  }
+}
