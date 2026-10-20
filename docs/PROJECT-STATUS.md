@@ -2854,7 +2854,25 @@ That is a **pre-existing gap, not this round's**: the rebuild does not re-derive
 
 ### CI
 
-Local full backend run of `tests/`: **2547 passed, 171 skipped, 532 subtests, 0 failed**.
+**The workflow is green.** Run **39424919643** for `82ad6b6`:
+<https://github.com/sbvcid/st-eva/actions/runs/39424919643>
+
+```
+Run backend test suite: 2508 passed, 171 skipped, 1 warning, 532 subtests passed in 105.80s
+Run web API tests:        25 passed
+Run browser smoke tests:  12 passed
+conclusion: success
+```
+
+There is not one `FAILED` line in the run's log.
+
+| comparison | result |
+| --- | --- |
+| CI 39411729148 (`eb84b63`, previous round) | 0 failed, 2502 passed, 171 skipped, 524 subtests |
+| CI 39424919643 (`82ad6b6`, this round) | **0 failed, 2508 passed, 171 skipped, 532 subtests** |
+| new regressions | **none** |
+
+The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`, unrelated to this work.
 
 ### Git
 
