@@ -29,7 +29,7 @@ import sys
 import tempfile
 import urllib.request
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -2159,6 +2159,10 @@ class MarketImpliedAssumptionsEngine:
                 "historical_ps_band": ps_band,
                 "historical_ev_ebitda_band": ev_band,
             },
+            # Where each of those inputs came from and on what basis, so a
+            # reader can tell a filed figure from a provider's, and a trailing
+            # figure from a year's or a quarter's.
+            "input_provenance": inputs.input_provenance or {},
         }
 
 
@@ -2475,8 +2479,24 @@ def run_st_eva(
                 }
             }
 
-    analysis = MarketImpliedAssumptionsEngine.analyze(
+    # The engine's own inputs.
+    #
+    # The view carries what the market data provider reported. Where a filed,
+    # qualified figure on the basis the multiple needs exists, it is the
+    # engine's input, and the vendor's figure is recorded beside it as the
+    # cross-check it is. Where no such figure exists, the engine keeps the
+    # provider's and says so -- a fiscal year's figure and a quarter's figure
+    # are different quantities and neither may stand in for a trailing one.
+    engine_inputs = ValuationInputs.from_legacy_view(data)
+    engine_inputs, input_provenance = _engine_inputs_with_filed_figures(
+        engine_inputs,
         data=data,
+        production_historical_pe=production_historical_pe,
+        production_historical_pfcf=production_historical_pfcf,
+    )
+
+    analysis = MarketImpliedAssumptionsEngine.analyze(
+        data=engine_inputs,
         reference_multiple=reference_multiple,
         horizon_years=horizon_years,
         pfcf_multiple=pfcf_multiple,
@@ -2977,6 +2997,7 @@ def run_st_eva(
             ),
         },
         "observed_valuation": analysis["observed_valuation"],
+        "input_provenance": analysis.get("input_provenance") or {},
         "market_implied_assumptions": analysis["implied_assumptions"],
         "consensus_cross_check": analysis["consensus_cross_check"],
         "fundamental_snapshot": analysis["fundamental_snapshot"],
@@ -5417,6 +5438,159 @@ def _acquire_sec_evidence(
         "cross_validation": cross_validate_all(vendor, acquisition.observations),
         "acquired": True,
     }
+
+
+def _engine_inputs_with_filed_figures(
+    inputs: ValuationInputs,
+    *,
+    data: "MarketData",
+    production_historical_pe: Optional[Dict[str, Any]],
+    production_historical_pfcf: Optional[Dict[str, Any]],
+) -> Tuple[ValuationInputs, Dict[str, Any]]:
+    """
+    The engine's inputs, and where each of them came from.
+
+    The engine's figures are the ones the document publishes, and the document
+    recomputes every derived number from itself. A figure that is filed, on a
+    different basis, or simply a different quantity cannot be put in their
+    place without the document's published formula ceasing to reproduce the
+    published number -- and the document's own parity check refuses exactly
+    that. So the filed figures are reported *beside* the engine's, on their own
+    basis, with their period and their provenance, and whether they agree.
+
+    That is the distinction the product has to make: a figure the engine used,
+    a filed figure that corroborates it, and a filed figure that is on another
+    basis and is therefore not the engine's input at all.
+    """
+    from sec_derived_inputs import (
+        BASIS_ANNUAL,
+        BASIS_TTM,
+        SOURCE_SEC_DERIVED,
+        SOURCE_VENDOR,
+        qualified_ttm_eps,
+        qualified_ttm_fcf,
+    )
+
+    as_of = data.price_date
+    provenance: Dict[str, Any] = {}
+
+    def _vendor(metric, value, note):
+        provenance[metric] = {
+            "value": value,
+            "source": SOURCE_VENDOR,
+            "basis": "UNDECLARED",
+            "used_by_engine": True,
+            "note": note,
+        }
+
+    ttm_eps = qualified_ttm_eps(production_historical_pe, as_of)
+    if ttm_eps is not None:
+        provenance["current_eps"] = {
+            "value": inputs.current_eps,
+            "source": SOURCE_VENDOR,
+            "basis": "UNDECLARED",
+            "used_by_engine": True,
+            "note": (
+                "the provider's trailing figure carries no declared period; the "
+                "filed trailing figure below is the qualified one"
+            ),
+            "filed_trailing": {
+                "value": ttm_eps["value"],
+                "source": SOURCE_SEC_DERIVED,
+                "basis": BASIS_TTM,
+                "currency": ttm_eps.get("currency"),
+                "derivation": ttm_eps.get("derivation"),
+                "usable_from": ttm_eps.get("usable_from"),
+                "window": ttm_eps.get("window_anchor"),
+                "components": ttm_eps.get("components"),
+                "q4_evidence": ttm_eps.get("q4_evidence"),
+                "agrees_with_engine_input": (
+                    ttm_eps["value"] == inputs.current_eps
+                ),
+                "used_by_engine": False,
+                "note": (
+                    "a sum of four directly stated quarterly figures, reported "
+                    "beside the engine's input and not in place of it: the "
+                    "document publishes the engine's figure and recomputes "
+                    "every derived number from itself"
+                ),
+            },
+        }
+    else:
+        _vendor(
+            "current_eps",
+            inputs.current_eps,
+            "no qualified filed trailing diluted EPS is knowable at this cut, so "
+            "the provider's undeclared trailing figure is what the engine used",
+        )
+
+    ttm_fcf = qualified_ttm_fcf(production_historical_pfcf, as_of)
+    if ttm_fcf is not None:
+        provenance["current_fcf"] = {
+            "value": inputs.current_fcf,
+            "source": SOURCE_VENDOR,
+            "basis": "UNDECLARED",
+            "used_by_engine": True,
+            "note": (
+                "the provider's trailing figure carries no declared window; the "
+                "filed trailing figure below is the qualified one"
+            ),
+            "filed_trailing": {
+                "value": ttm_fcf["value"],
+                "source": SOURCE_SEC_DERIVED,
+                "basis": BASIS_TTM,
+                "currency": ttm_fcf.get("currency"),
+                "derivation": ttm_fcf.get("derivation"),
+                "usable_from": ttm_fcf.get("usable_from"),
+                "window": ttm_fcf.get("window_anchor"),
+                "components": ttm_fcf.get("components"),
+                "agrees_with_engine_input": (
+                    ttm_fcf["value"] == inputs.current_fcf
+                ),
+                "used_by_engine": False,
+                "note": (
+                    "four consecutive quarters, reported beside the engine's "
+                    "input and not in place of it; the latest quarter's free "
+                    "cash flow is a different quantity and is reported on its "
+                    "own in the admission summary"
+                ),
+            },
+        }
+    else:
+        _vendor(
+            "current_fcf",
+            inputs.current_fcf,
+            "no qualified filed trailing free cash flow is knowable at this cut, so "
+            "the provider's undeclared trailing figure is what the engine used",
+        )
+
+    # The filed figures that are on another basis. They are named so a reader
+    # knows they exist, where they are reported, and why they are not the
+    # engine's input.
+    for metric, note in (
+        ("current_ebitda",
+         "the provider's trailing EBITDA carries no declared period; the filed "
+         "annual figure for this metric is in the admission summary with its "
+         "own period, and a fiscal year's EBITDA is not a trailing EBITDA, so "
+         "it is not the figure this multiple is computed from"),
+        ("current_revenue",
+         "the provider's trailing revenue carries no declared period; the filed "
+         "annual figure for this metric is in the admission summary with its "
+         "own period, and a fiscal year's revenue is not a trailing revenue, so "
+         "it is not the figure this multiple is computed from"),
+    ):
+        _vendor(metric, getattr(inputs, metric, None), note)
+
+    for metric in ("current_market_cap", "current_enterprise_value", "price"):
+        provenance[metric] = {
+            "value": getattr(inputs, metric, None),
+            "source": SOURCE_VENDOR,
+            "basis": "POINT_IN_TIME",
+            "used_by_engine": True,
+        }
+
+    inputs = replace(inputs, input_provenance=provenance)
+    return inputs, provenance
 
 
 def _build_context_if_requested(

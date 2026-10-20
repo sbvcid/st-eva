@@ -81,6 +81,62 @@ class AdmittedMetric(BaseModel):
     decided_at: Optional[str] = None
 
 
+class FiledFigure(BaseModel):
+    """
+    A filed figure, reported beside the one the engine used.
+
+    It is a different quantity from the engine's figure -- a trailing figure
+    where the engine's is undeclared, or a fiscal year's where the engine's is
+    a provider's -- so it is shown on its own basis, with its period, and a
+    reader is told plainly that it was not the engine's input.
+    """
+
+    value: Optional[float] = None
+    source: Optional[str] = None
+    basis: Optional[str] = None
+    currency: Optional[str] = None
+    derivation: Optional[str] = None
+    usable_from: Optional[str] = None
+    window: Optional[Dict[str, Any]] = None
+    used_by_engine: bool = False
+    agrees_with_engine_input: Optional[bool] = None
+    note: Optional[str] = None
+    components: List[AdmittedMetric] = Field(default_factory=list)
+    q4_evidence: List[AdmittedMetric] = Field(default_factory=list)
+
+
+class CalculationInput(BaseModel):
+    """
+    One input a reported multiple is computed from, and where it came from.
+
+    A reader who sees "P/FCF 35.98" has to be able to answer three questions
+    without leaving the response: which figure it was divided by, whether that
+    figure is trailing, annual or a quarter's, and whether it was filed or
+    reported by a provider. This carries all three, with the period and the
+    currency, and says plainly whether the engine used the figure.
+    """
+
+    multiple: str
+    input_metric: str
+    value: Optional[float] = None
+    # Whether the input carries a figure at all. A figure that is not there is
+    # not a zero, and a reader must be able to tell the two apart.
+    value_state: str = "AVAILABLE"
+    source: Optional[str] = None
+    basis: Optional[str] = None
+    currency: Optional[str] = None
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    formula: Optional[str] = None
+    used_by_engine: bool = False
+    observed_multiple: Optional[float] = None
+    observed_multiple_formula: Optional[str] = None
+    note: Optional[str] = None
+    components: List[AdmittedMetric] = Field(default_factory=list)
+    # The filed figure on the same or another basis, when one qualifies.
+    filed_trailing: Optional[FiledFigure] = None
+
+
 class CrossingDerivation(BaseModel):
     """
     One figure the filing-evidence crossing derived.
@@ -493,6 +549,8 @@ class AnalysisResultDTO(BaseModel):
     reverse_requirements: Optional[ReverseRequirementsReportDTO] = None
     production_historical_pe: Optional[ProductionHistoricalPeSummaryDTO] = None
     production_historical_pfcf: Optional[ProductionHistoricalPfcfSummaryDTO] = None
+    # What each reported multiple was computed from, and on what basis.
+    calculation_inputs: List[CalculationInput] = Field(default_factory=list)
     raw_analysis: Optional[Dict[str, Any]] = None
 
 

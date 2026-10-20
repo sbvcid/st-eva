@@ -2700,16 +2700,63 @@ unrelated to this work.
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## Making the Evidence and the Valuation Input Agree (2026-10-20)
+
+Continued from `36a0931`. This round asked one question about every input of the reverse valuation: is it only *shown* as admitted, is it actually *used* by the engine, or is it on a different basis and therefore to be kept apart?
+
+### What the engine was actually using
+
+Traced from `POST /api/analyze` through the V1 admission, the `ValuationInputs` projection and into `MarketImpliedAssumptionsEngine.analyze()`:
+
+| multiple | the engine's input | its source | its period |
+| --- | --- | --- | --- |
+| P/E | 8.72 | provider trailing EPS | **undeclared** |
+| P/FCF | 136,683,000,000 | provider trailing FCF | **undeclared** |
+| EV/EBITDA | 167,959,000,000 | provider trailing EBITDA | **undeclared** |
+| P/S | 466,823,000,000 | provider trailing revenue | **undeclared** |
+
+The engine read `inputs.current_eps`, `inputs.current_fcf`, `inputs.current_ebitda` and `inputs.current_revenue` — the provider's figures. **None of the SEC-admitted figures reached the arithmetic.** The admission was reported in the API and the valuation used the provider's, which is exactly the confusion to close.
+
+### The filed figures that exist, and on what basis
+
+The qualified trailing figures are reconstructible, and the machinery already existed:
+
+- **Trailing diluted EPS = 8.72**, a sum of four *directly stated* quarterly figures — Q4 FY2025 **1.85** from the furnished 8-K Item 2.02 exhibit (accession `0000320193-25-000077`, accepted 2025-10-30T16:30:35-04:00, usable 2025-10-31), Q1 FY2026 2.84, Q2 FY2026 2.01 and Q3 FY2026 2.02 from the 10-Qs. The window ends 2026-06-27 and is knowable from 2026-07-31, before the cut. This is the production historical P/E dataset's own reconstruction (`data/historical_pe/AAPL`).
+- **Trailing free cash flow = 136,683,000,000**, four consecutive quarters (Q4 FY2025 26,486,000,000; Q1 51,552,000,000; Q2 26,731,000,000; Q3 25,139,000,000), each with its own operating cash flow, capital expenditure, formula, knowable date and SEC accessions. This is the production historical P/FCF dataset's own point-in-time pipeline (`data/historical_pfcf/AAPL`).
+- **The filed annual figures**: operating income 133,050,000,000 and D&A 11,698,000,000 for FY2025 (2024-09-29..2025-09-27, 10-K `0000320193-25-000079`), deriving **EBITDA 144,748,000,000**; operating cash flow 53,925,000,000 and capex 2,373,000,000 for Q1 FY2026 (2025-09-28..2025-12-27, 10-Q `0000320193-26-000006`), deriving **free cash flow 51,552,000,000** — a *quarter*, not a year.
+
+### The correction: report them apart, and say which is which
+
+The first attempt substituted the filed figures into the engine's inputs. It broke fifteen tests, and the break was the architecture speaking:
+
+> `der:current_pe: the registry recomputed 29.476243093922648 but the engine produced 29.70601336302895 ... The published formula does not reproduce the published number.`
+
+The Investment Context recomputes every derived figure from the document itself and refuses a document whose published formula does not reproduce the published number. The engine's inputs are the document's published figures, so a substituted figure would make the document internally inconsistent — and for MSFT the two genuinely differ (the filed trailing EPS is 17.96, the provider's 18.09), so the substitution was not a no-op.
+
+**The engine's arithmetic therefore keeps the document's published figure, and the filed figure is reported beside it**, on its own basis, with its window, its constituents and whether the two agree. That is the distinction the product has to make, and it is now explicit:
+
+- the figure the engine used, its source and its basis (`VENDOR_REPORTED` / `UNDECLARED` for the provider's trailing figures; `POINT_IN_TIME` for the price, the market capitalisation and the enterprise value);
+- the **qualified filed trailing figure** beside it (`SEC_DERIVED` / `TTM`), with its four constituents, the furnished fourth quarter, the derivation, the instant it became knowable, and `agrees_with_engine_input` — true for AAPL's earnings and cash flow, false for MSFT's earnings;
+- the **filed figures on another basis**, named with the reason they are not the input: a fiscal year's EBITDA is not a trailing EBITDA, and a fiscal year's revenue is not a trailing revenue, so neither enters a trailing multiple; the filed annual figures stay in the admission summary with their own periods.
+
+The API's new `calculation_inputs` block carries this per multiple, with the observed multiple and the formula that produced it, so a reader can see what was divided into what.
+
+Nothing was relabelled to look better than it is. The provider's trailing earnings figure keeps its "undeclared period" label; the filed trailing figure is a different, separately-labelled quantity; and the latest quarter's free cash flow is never presented as a trailing one. The EV/EBITDA and cash-flow reverse methods stay unavailable without a qualified historical exit multiple, the provider's eight-observation band is still not a reference, and the historical P/FCF-median-implied 194.1B is still an implied reference and not a filed current free cash flow.
+
+### Tests
+
+New `tests/test_engine_input_provenance.py`: 20 tests, 4 subtests, all passing, plus one live test gated on `ST_EVA_LIVE=1` that drives the real AAPL live path. It covers the qualification rules (a missing quarter, a declared gap, a quarter not knowable at the cut, and a window after the cut all refuse the reconstruction), the four-quarter requirement for a trailing free cash flow, the engine's input staying the published figure, the filed figure being reported beside it with its components and the furnished fourth quarter, a filed figure that differs being reported as a difference, a quarter's free cash flow never standing in for a trailing one, the filed annual EBITDA keeping its annual basis and not entering a trailing multiple, one refused input leaving the other methods able to compute, and the API reporting the engine's inputs.
+
+The live path is verified end to end: the filed trailing earnings figure has four directly stated quarters, the filed trailing free cash flow has four quarters, the filed annual figures and the derived EBITDA of 144,748,000,000 are in the admission summary with their periods, and the API's numbers are the engine's numbers.
+
+### CI
+
+Local full backend run of `tests/`: **2545 passed, 171 skipped, 532 subtests, 0 failed**.
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-AAPL's real FY2025 filing facts now cross in the live product: the SEC provider
-asks for the four concepts the crossing consumes, the depreciation mapping is
-declared for Apple alone with the filing's own label verified, the product's
-own archive keeps a registry that matches the code, and the API reports each
-qualified figure with its filing, period, currency and the rule each derived
-figure was derived by. The CI workflow is green for the first time — run
-39403422457, 2482 passed and 0 failed, with not one `FAILED` line in the log —
-and all 42 of the baseline's failures are resolved with none introduced. The
-replay remains honestly DIVERGED, with its differences classified rather than
-closed. No product blocker; archive cleanup remains deferred per existing
-decision.
+The product no longer confuses "there is evidence" with "the valuation used it": every input of the reverse valuation now states its source, its period basis, its period and its currency, the filed trailing figures are reported beside the engine's with their windows, their constituents and whether they agree, and the filed figures on another basis are named with the reason they are not the input. The engine's arithmetic stays anchored to the document's published figures, which is what keeps every derived number independently recomputable — a substitution would have made the document's published formula stop reproducing the published number, and the document's own parity check correctly refused it. The full backend suite is green with 0 failures. No product blocker; archive cleanup remains deferred per existing decision.

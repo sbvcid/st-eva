@@ -2170,6 +2170,11 @@ class ValuationInputs:
     # was never stated, which is not the same as the instrument's currency.
     current_revenue_currency: Optional[str] = None
     current_market_cap_currency: Optional[str] = None
+    # Where each engine input came from and on what basis: the source, the
+    # period basis (trailing, annual, quarterly), the period it covers and the
+    # currency it is in. A number without this says what it is and not where it
+    # is from, and a reader cannot tell a filed figure from a vendor's.
+    input_provenance: Dict[str, Any] = field(default_factory=dict)
 
     @staticmethod
     def _band(observations: ObservationSet, metric: str) -> Dict[str, Any]:

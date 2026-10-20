@@ -20,7 +20,9 @@ from web.schemas import (
     AdmissionSummary,
     AdmittedMetric,
     AnalysisResultDTO,
+    CalculationInput,
     CrossingDerivation,
+    FiledFigure,
     JobProgressStage,
     ProductionHistoricalPfcfSummaryDTO,
     RefusalItem,
@@ -192,6 +194,118 @@ def _crossing_derivations_dto(raw: Any) -> Dict[str, CrossingDerivation]:
             value=entry.get("value"),
             formula=entry.get("formula"),
             inputs=inputs,
+        )
+    return out
+
+
+def _calculation_inputs(
+    core_result: Dict[str, Any],
+) -> List[CalculationInput]:
+    """
+    What each reported multiple was computed from, and on what basis.
+
+    The engine's own input provenance is the source: the runner recorded, for
+    every figure the engine was given, where it came from and on what basis.
+    The observed multiple and the formula that produced it are read from the
+    analysis, so the two cannot disagree.
+
+    The figures the engine did *not* use are reported too, in their own basis,
+    so a reader can see what was filed and why it did not become the input.
+    """
+    provenance = core_result.get("input_provenance") or {}
+    observed = core_result.get("observed_valuation") or {}
+
+    # The multiple, the input it divides by, and how the two combine.
+    plan = (
+        ("pe", "current_eps", "current_pe", "price / trailing diluted EPS"),
+        ("pfcf", "current_fcf", "current_pfcf", "market capitalisation / trailing free cash flow"),
+        ("ev_ebitda", "current_ebitda", "current_ev_ebitda",
+         "enterprise value / trailing EBITDA"),
+        ("ps", "current_revenue", "current_ps", "market capitalisation / trailing revenue"),
+    )
+    out: List[CalculationInput] = []
+    for multiple, metric, observed_key, formula in plan:
+        entry = provenance.get(metric) or {}
+        raw_value = entry.get("value")
+        is_number = isinstance(raw_value, (int, float)) and not isinstance(raw_value, bool)
+        filed = entry.get("filed_trailing") or {}
+        filed_raw = filed.get("value")
+        filed_is_number = isinstance(filed_raw, (int, float)) and not isinstance(
+            filed_raw, bool
+        )
+        out.append(
+            CalculationInput(
+                multiple=multiple,
+                input_metric=metric,
+                value=float(raw_value) if is_number else None,
+                value_state="AVAILABLE" if is_number else "UNAVAILABLE",
+                source=entry.get("source"),
+                basis=entry.get("basis"),
+                currency=entry.get("currency"),
+                period_start=entry.get("period_start"),
+                period_end=entry.get("period_end"),
+                formula=entry.get("formula") or formula,
+                used_by_engine=bool(entry.get("used_by_engine")),
+                observed_multiple=observed.get(observed_key),
+                observed_multiple_formula=formula,
+                note=entry.get("note"),
+                components=[
+                    AdmittedMetric(
+                        metric=str(item.get("metric") or item.get("evidence_class") or ""),
+                        value=item.get("value"),
+                        currency=item.get("currency"),
+                        period_start=item.get("period_start"),
+                        period_end=item.get("period_end"),
+                        accession=item.get("accession"),
+                        form=item.get("form"),
+                        available_at=item.get("usable_date") or item.get("knowable_from"),
+                    )
+                    for item in (entry.get("components") or [])
+                    if isinstance(item, dict)
+                ],
+                filed_trailing=(
+                    FiledFigure(
+                        value=float(filed_raw) if filed_is_number else None,
+                        source=filed.get("source"),
+                        basis=filed.get("basis"),
+                        currency=filed.get("currency"),
+                        derivation=filed.get("derivation"),
+                        usable_from=filed.get("usable_from"),
+                        window=filed.get("window"),
+                        used_by_engine=bool(filed.get("used_by_engine")),
+                        agrees_with_engine_input=filed.get("agrees_with_engine_input"),
+                        note=filed.get("note"),
+                        components=[
+                            AdmittedMetric(
+                                metric=str(item.get("metric") or ""),
+                                value=item.get("value"),
+                                currency=item.get("currency"),
+                                period_end=item.get("period_end"),
+                                accession=item.get("accession"),
+                                form=item.get("form"),
+                                available_at=item.get("usable_date") or item.get("knowable_from"),
+                            )
+                            for item in (filed.get("components") or [])
+                            if isinstance(item, dict)
+                        ],
+                        q4_evidence=[
+                            AdmittedMetric(
+                                metric=str(item.get("form") or ""),
+                                value=item.get("value"),
+                                currency=item.get("currency"),
+                                period_end=item.get("period_end"),
+                                accession=item.get("accession"),
+                                form=item.get("form"),
+                                available_at=item.get("usable_date"),
+                            )
+                            for item in (filed.get("q4_evidence") or [])
+                            if isinstance(item, dict)
+                        ],
+                    )
+                    if filed
+                    else None
+                ),
+            )
         )
     return out
 
@@ -692,6 +806,7 @@ class AnalysisServiceAdapter:
                 reverse_requirements=reverse_reqs_dto,
                 production_historical_pe=production_pe_summary,
                 production_historical_pfcf=production_pfcf_summary,
+                calculation_inputs=_calculation_inputs(core_result),
                 raw_analysis=_web_visible_analysis(core_result),
             )
 
