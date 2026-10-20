@@ -365,6 +365,93 @@ REGRESSION_TEST_FIXTURES: Dict[str, Dict[str, Any]] = {
             }
         ],
     },
+    # SOFI is a frozen sample of the values the live run observed, so the
+    # offline research flow reproduces the same market-implied assumptions
+    # without a provider call. The price is the canonical historical P/E
+    # dataset's last daily close (verifiable and tracked); the EPS values
+    # carry the source identity of the observations they were captured from,
+    # not the fixture's. The vendor historical P/E band is carried exactly as
+    # captured: at five observations it is below the reference threshold, so
+    # the exit multiples must come from the production historical P/E
+    # distribution rather than from the band.
+    "SOFI": {
+        "ticker": "SOFI",
+        "company_name": "SoFi Technologies, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "price": 14.505,
+        "price_date": "2026-10-19",
+        "price_source": "YahooFinance chart API daily close (canonical SOFI historical P/E dataset)",
+        "price_source_url": "https://query1.finance.yahoo.com/v8/finance/chart/SOFI",
+        "current_eps": 0.49,
+        "forward_eps": 0.82459,
+        "consensus_forward_eps": 0.82459,
+        "next_event": UNAVAILABLE,
+        "next_event_status": "Unconfirmed",
+        "historical_pe_band": {
+            "10th": 34.012244800000005,
+            "25th": 34.367347,
+            "median": 37.183673,
+            "75th": 45.04,
+            "90th": 49.17999999999999,
+            "observations": 5,
+        },
+        "price_history": [15.23, 15.24, 14.22, 15.09, 14.55, 14.505],
+        "volume_history": [40615900, 31007100, 92173600, 62946600, 59576000, 39614900],
+        "source_type": "REGRESSION_FIXTURE",
+        "provider": "RegressionFixture",
+        "retrieved_at": "2026-10-20",
+        "observations": [
+            {
+                "metric": "trailing_eps",
+                "value": 0.49,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/SOFI",
+                "definition": "Current/trailing EPS. Never synthesized.",
+                "methodology": "Yahoo quoteSummary defaultKeyStatistics.trailingEps",
+                "currency": "USD",
+                "currency_basis": "INSTRUMENT_DEFAULT",
+                "available_at_basis": "UNDECLARED",
+                "raw": {"module": "defaultKeyStatistics", "field": "trailingEps", "asOfDate": None},
+            },
+            {
+                "metric": "forward_eps",
+                "value": 0.82459,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/SOFI",
+                "definition": "Forward EPS. Used only when explicitly supplied.",
+                "methodology": "Yahoo quoteSummary defaultKeyStatistics.forwardEps",
+                "currency": "USD",
+                "currency_basis": "INSTRUMENT_DEFAULT",
+                "available_at_basis": "UNDECLARED",
+                "raw": {"module": "defaultKeyStatistics", "field": "forwardEps", "asOfDate": None},
+            },
+            {
+                "metric": "consensus_forward_eps",
+                "value": 0.82459,
+                "unit": "per_share",
+                "provider": "YahooFinanceFundamentals",
+                "source_type": "API_LIVE",
+                "source_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/SOFI",
+                "definition": "Consensus forward EPS. Never synthesized.",
+                "methodology": "Yahoo quoteSummary earningsTrend trend[period].earningsEstimate.avg",
+                "currency": "USD",
+                "currency_basis": "INSTRUMENT_DEFAULT",
+                "available_at_basis": "UNDECLARED",
+                "period_end": "2027-12-31",
+                "raw": {
+                    "module": "earningsTrend",
+                    "field": "trend[].earningsEstimate.avg",
+                    "period": "+1y",
+                    "period_end": "2027-12-31",
+                },
+            },
+        ],
+    },
 }
 
 
@@ -1406,6 +1493,7 @@ class CompanyResolver:
                 "NU HOLDINGS": "NU",
                 "AAPL": "AAPL",
                 "APPLE": "AAPL",
+                "SOFI": "SOFI",
             }
             fixture_key = aliases.get(key)
             if fixture_key:

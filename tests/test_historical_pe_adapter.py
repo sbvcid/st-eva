@@ -831,35 +831,27 @@ class TestSofiHistoricalPePipeline(unittest.TestCase):
 
     def _run(self):
         from historical_pe import (
-            IssuerHistoricalPeConfig,
+            ISSUER_CONFIGS,
             load_issuer_historical_pe,
             MIN_OBSERVATIONS_FOR_REFERENCE,
         )
-        config = IssuerHistoricalPeConfig(
-            ticker="SOFI",
-            issuer_id="0001818874",
-            fye_month=12,
-            data_dir=Path("data/historical_pe/SOFI"),
-            canonical_path=None,
-        )
+        # Use the production issuer configuration, not a hand-built one: the
+        # input set identity digests issuer_config, so a manifest recorded
+        # against the registered configuration must be checked against that
+        # same configuration.
+        config = ISSUER_CONFIGS["SOFI"]
         return load_issuer_historical_pe(
             config, enable_furnished=True, min_observations=MIN_OBSERVATIONS_FOR_REFERENCE
         )
 
     def test_sofi_pipeline_produces_usable_reference(self):
         from historical_pe import (
-            IssuerHistoricalPeConfig,
+            ISSUER_CONFIGS,
             load_issuer_historical_pe,
             MIN_OBSERVATIONS_FOR_REFERENCE,
             STATUS_USABLE_FOR_REFERENCE,
         )
-        config = IssuerHistoricalPeConfig(
-            ticker="SOFI",
-            issuer_id="0001818874",
-            fye_month=12,
-            data_dir=Path("data/historical_pe/SOFI"),
-            canonical_path=None,
-        )
+        config = ISSUER_CONFIGS["SOFI"]
         res = load_issuer_historical_pe(
             config, enable_furnished=True, min_observations=MIN_OBSERVATIONS_FOR_REFERENCE
         )
@@ -914,18 +906,12 @@ class TestSofiHistoricalPePipeline(unittest.TestCase):
 
     def test_sofi_pipeline_price_basis_is_as_traded(self):
         from historical_pe import (
-            IssuerHistoricalPeConfig,
+            ISSUER_CONFIGS,
             load_issuer_historical_pe,
             MIN_OBSERVATIONS_FOR_REFERENCE,
             STATUS_AVAILABLE,
         )
-        config = IssuerHistoricalPeConfig(
-            ticker="SOFI",
-            issuer_id="0001818874",
-            fye_month=12,
-            data_dir=Path("data/historical_pe/SOFI"),
-            canonical_path=None,
-        )
+        config = ISSUER_CONFIGS["SOFI"]
         res = load_issuer_historical_pe(
             config, enable_furnished=True, min_observations=MIN_OBSERVATIONS_FOR_REFERENCE
         )
@@ -936,18 +922,12 @@ class TestSofiHistoricalPePipeline(unittest.TestCase):
 
     def test_sofi_pipeline_pit_monotonicity(self):
         from historical_pe import (
-            IssuerHistoricalPeConfig,
+            ISSUER_CONFIGS,
             load_issuer_historical_pe,
             MIN_OBSERVATIONS_FOR_REFERENCE,
             STATUS_AVAILABLE,
         )
-        config = IssuerHistoricalPeConfig(
-            ticker="SOFI",
-            issuer_id="0001818874",
-            fye_month=12,
-            data_dir=Path("data/historical_pe/SOFI"),
-            canonical_path=None,
-        )
+        config = ISSUER_CONFIGS["SOFI"]
         res = load_issuer_historical_pe(
             config, enable_furnished=True, min_observations=MIN_OBSERVATIONS_FOR_REFERENCE
         )
@@ -961,18 +941,12 @@ class TestSofiHistoricalPePipeline(unittest.TestCase):
 
     def test_sofi_unavailable_reasons_are_explicit(self):
         from historical_pe import (
-            IssuerHistoricalPeConfig,
+            ISSUER_CONFIGS,
             load_issuer_historical_pe,
             MIN_OBSERVATIONS_FOR_REFERENCE,
             STATUS_UNAVAILABLE,
         )
-        config = IssuerHistoricalPeConfig(
-            ticker="SOFI",
-            issuer_id="0001818874",
-            fye_month=12,
-            data_dir=Path("data/historical_pe/SOFI"),
-            canonical_path=None,
-        )
+        config = ISSUER_CONFIGS["SOFI"]
         res = load_issuer_historical_pe(
             config, enable_furnished=True, min_observations=MIN_OBSERVATIONS_FOR_REFERENCE
         )

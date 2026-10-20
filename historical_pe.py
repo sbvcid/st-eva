@@ -1144,6 +1144,13 @@ ISSUER_CONFIGS = {
         data_dir=Path("data/historical_pe/MU"),
         canonical_path=None,
     ),
+    "SOFI": IssuerHistoricalPeConfig(
+        ticker="SOFI",
+        issuer_id="CIK0001818874",
+        fye_month=12,
+        data_dir=Path("data/historical_pe/SOFI"),
+        canonical_path=None,
+    ),
 }
 
 

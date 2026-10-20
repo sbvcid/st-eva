@@ -2,7 +2,7 @@
   "ticker": "SOFI",
   "ticker_identifier": "SOFI",
   "entity_name": "SoFi Technologies, Inc.",
-  "issuer_id": "0001818874",
+  "issuer_id": "CIK0001818874",
   "fiscal_year_end": "1231",
   "role": "production_candidate_qualified",
   "status": "USABLE_FOR_REFERENCE",
@@ -67,8 +67,8 @@
     "current_snapshot_date": "2026-10-19",
     "current_snapshot_status": "AVAILABLE",
     "current_snapshot_value": 30.21875,
-    "input_set_id": "c71f89d587d0dadcc8743f5b81991cc7e3abd3a600fcc481a6103bc020d1bc54",
-    "content_hash": "d6c9cc88f8308628ffd7c2ef9c6bf816596431032198777256cfe0135d81af55"
+    "input_set_id": "4b69c139ddbfea489bf751745f9aece6babaa21e569438c8a5c9a23d17fff114",
+    "content_hash": "aef00dfa5372eaf215878df32dc1a16e9859a549d712cf7e387915bc999e348c"
   },
   "files": {
     "daily_prices.json": {

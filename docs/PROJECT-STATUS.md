@@ -2060,6 +2060,73 @@ The designated historical P/E, adapter and reproducibility suites pass locally (
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## SOFI Reverse Valuation Production Integration (2026-10-20)
+
+Continued from `543ca08`. SOFI was a qualified candidate in a data directory; it is now a configured issuer whose historical P/E reference actually reaches the reverse valuation through the product's own call path. No data was re-collected, no SEC evidence was re-researched, and no reverse-valuation rule was duplicated or bypassed.
+
+### How the product path was found
+
+`historical_pe.ISSUER_CONFIGS` is the single issuer registry, and `st_eva_runner.run_st_eva()` already consults it: `if data.ticker in ISSUER_CONFIGS: load_issuer_historical_pe(config, enable_furnished=...)` produces `production_historical_pe`, which is then passed to `MarketImpliedAssumptionsEngine.analyze(..., production_historical_pe=...)` for the reference selection and to `build_reverse_requirements(..., production_historical_pe=...)` for the matrix. The web adapter sets `include_historical_pe=True`, so `POST /api/analyze` is the path that exercises the whole chain. The integration therefore required no new calculation code.
+
+### Changes
+
+1. **`historical_pe.ISSUER_CONFIGS`** — added SOFI: `issuer_id="CIK0001818874"`, `fye_month=12`, `data_dir=Path("data/historical_pe/SOFI")`, `canonical_path=None`, matching the AAPL/MSFT/MU entries' shape.
+2. **`st_eva_runner.REGRESSION_TEST_FIXTURES`** — added a SOFI fixture, a frozen capture of the live run's own values, so the offline product path reproduces the same result without a provider call. The price is the canonical historical P/E dataset's last daily close (14.505 at 2026-10-19, verifiable and tracked); the trailing, forward and consensus EPS observations carry the source identity of the observations they were captured from (`YahooFinanceFundamentals`, `query2.finance.yahoo.com/v10/finance/quoteSummary/SOFI`, each with its own definition, methodology and raw field). The captured vendor historical P/E band is carried exactly as observed — at **five** observations it is below the reference threshold, so the exit multiples must come from the production distribution.
+3. **`st_eva_runner.CompanyResolver.resolve`** — added the `"SOFI": "SOFI"` alias so regression mode resolves the fixture instead of falling through to the live provider.
+4. **`data/historical_pe/SOFI/manifest.json`** — regenerated through the *registered* configuration. The input-set identity digests `issuer_config`, and the registered issuer id is `CIK0001818874` (the ST-EVA identifier form) while the SEC's own CIK is `0001818874`; the manifest had been generated against the bare CIK, so its recorded `input_set_id` did not match the product path's. The manifest now records `input_set_id 4b69c139ddbfea489bf751745f9aece6babaa21e569438c8a5c9a23d17fff114` and `content_hash aef00dfa5372eaf215878df32dc1a16e9859a549d712cf7e387915bc999e348c`, the values the product path actually computes.
+5. **`tests/test_historical_pe_adapter.py`** — the SOFI pipeline tests now load through `ISSUER_CONFIGS["SOFI"]` instead of a hand-built configuration, so the manifest comparison exercises the registered issuer.
+
+### Verified end-to-end results
+
+Through the product's own web API (`POST /api/analyze`, `mode=regression`):
+
+- `production_historical_pe_summary.status` = `USABLE_FOR_REFERENCE`, `usable_for_reference` = true, `issuer_id` = `CIK0001818874`
+- `sample_count` = **130**, `percentiles.median` = **47.299768**, `period_start`/`period_end` = **2024-11-08** / **2026-09-24**
+- `current_pe` = **30.21875** at `2026-10-19` (the current snapshot, `AVAILABLE`)
+- `valuation_summary.selected_pe_basis` = `production_historical_pe_median`, `selected_pe` = 47.299768 — the reference the summary names is the distribution's own median
+- `forward_eps_at_reference_multiple` = `current_price / selected_pe` — the reference reaches the arithmetic, not only the response
+- reverse requirements `status` = `COMPUTED`, **80** matrix rows; every row's exit multiple is `source: production_historical_pe_percentile`, `eligibility_state: ELIGIBLE_PRODUCTION_DISTRIBUTION`, `sample_size: 130`, `is_user_assumption: false`, and the five exit multiples are exactly the distribution's percentiles (34.40145, 37.502967, 47.299768, 54.025914, 136.74)
+- a row's own arithmetic recomputes from the reference it names: `required_exit_price` = `price × (1 + required_return)^horizon`, `required_terminal_eps` = `required_exit_price / exit_multiple`, `required_eps_cagr` = the CAGR between the starting and terminal EPS
+- the vendor band is refused, not used: the `unavailable` block still carries `exit_multiple.band_scenarios` with `reason_kind: INSUFFICIENT_OBSERVATIONS` for the five-observation band, and no matrix row uses a band source
+
+**Live path, real market data.** The same chain was also run with `mode=live`, so the price and EPS come from the live Yahoo Finance provider rather than the frozen capture: `selected_pe_basis` = `production_historical_pe_median`, `selected_pe` = 47.299768, `current_price` = 14.3 USD as of 2026-10-19, `forward_eps_at_reference_multiple` = 0.30232706426805306 (= 14.3 / 47.299768), reverse requirements `COMPUTED` with 80 rows, and the same five production exit multiples. The frozen fixture's 14.505 is the canonical dataset's last daily close; the live run's 14.3 is the provider's price at run time. Both feed the same qualified distribution.
+
+### Assumptions and refusals
+
+Each matrix row states its inputs (`price_evidence`, `eps_evidence`, `multiple_evidence` with provider, observation id and source type), its formula (`formula_version`, `required_return_basis`, `dividend` basis), its period (`as_of`, `period_label`, `sample_period`) and its conditionality ("The implied figure is the fundamental this multiple corresponds to. It is not a statement of what the market expects."). The `missing_or_unvalidated` block names what the sources did not declare. The summary's limitations include "This output is descriptive valuation analysis, not a buy/sell signal." and "ST-EVA does not invent EPS, consensus, probabilities, or target prices." No output describes a forecast, a fair value or a recommendation: the words "forecast", "target price" and "price target" appear only inside explicit denials.
+
+Nothing was padded. The 200 excluded windows keep their reasons — 98 `REASON_MISSING_Q4_EPS` and 102 `REASON_NON_POSITIVE_EPS` — and every excluded row carries a `reason_code` with no value. The ≥ 20 qualifying-observation gate is unchanged: a distribution built from 19 real observations is refused with `INSUFFICIENT_OBSERVATIONS` and yields no exit multiple.
+
+### No regression
+
+- AAPL, MSFT and MU are unchanged: AAPL 36 observations / median 28.44563, MSFT 24 / 33.195873, MU 454 / 20.552342, all `USABLE_FOR_REFERENCE`, each reproducible with an identical `input_set_id` and `content_hash` across runs.
+- `ISSUER_CONFIGS` now holds exactly `AAPL, MSFT, MU, SOFI`; no other issuer was registered.
+- MUFG's cross-currency inputs are untouched: it has no production historical P/E dataset, the ADR ratio stays 1.0, and the reference FX rate stays 0.006316 USD/JPY as of 2026-10-09, provider Federal Reserve Board H.10, scope reference-only. The MUFG runner tests pass locally (18 tests).
+
+### Tests
+
+New `tests/test_sofi_production_integration.py`: **28 tests, 19 subtests, all passing**. It drives the web API, not the loader alone, and covers the issuer registration, the qualified distribution and its agreement with the manifest, the summary's reference selection, the derived figure, the matrix's construction and recomputability, the refusal of the ineligible vendor band, the assumption/period/conditionality disclosures, the disclaimer-only usage of forecast language, the unchanged reference gate, and the non-regression of the other issuers and of MUFG.
+
+### CI
+
+Local full backend run of `tests/`: **`41 failed, 2445 passed, 170 skipped, 517 subtests`** — the same pre-existing failure set as the previous round, plus the 28 new integration tests.
+
+| comparison | result |
+| --- | --- |
+| CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39308312152 (`bf08476`, previous round) | 42 failed, 2373 passed, 170 skipped, 498 subtests |
+| local full run after this round | 41 failed, 2445 passed, 170 skipped, 517 subtests |
+| new regressions vs the CI baseline 39239093577 | **none** — the local failure set is a strict subset of the baseline's |
+| pre-existing failures fixed | **none** |
+
+The one entry in the baseline that does not fail locally is `test_st_eva_runner.py::TestMUFGCrossCurrencyAnalysis::test_mufg_cross_currency_two_fx_scopes`, which fails in CI and passes locally in the baseline and in this round alike — an environment-dependent pre-existing MUFG failure, untouched by this work. The workflow still reports `failure` overall because those pre-existing failures remain; that is the confirmed pre-existing state, not a regression from this integration.
+
+The designated suites pass locally: `test_historical_pe.py`, `test_aapl_historical_pe.py`, `test_msft_historical_pe.py`, `test_mu_historical_pe.py`, `test_historical_pe_adapter.py`, `test_sofi_production_integration.py` and `test_msft_production_reproducibility.py` — 174 passed, 1 skipped, 140 subtests.
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-The three CI failures introduced by `157e636` are fixed at the root cause: the dataset files now carry canonical LF bytes on every platform, the manifests record forward-slash paths that resolve everywhere, and the recorded `input_set_id` reproduces the value the Linux CI runner computes. CI run 39308312152 confirms `42 failed, 2373 passed` with a failure set byte-identical to the pre-SOFI baseline 39239093577 — the three new failures resolved, zero new regressions, zero pre-existing failures fixed. The production output is unchanged (130 observations, median 47.299768, snapshot AVAILABLE). The remaining 42 backend CI failures are the confirmed pre-existing set and are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
+SOFI is no longer a qualified candidate sitting in a data directory: it is a configured issuer whose historical P/E reference is retrieved through the product's own path and is actually consumed by the reverse valuation — 130 qualifying observations, median 47.299768, snapshot AVAILABLE at 30.21875 — with every result stating its inputs, formula, period and conditional assumptions. The 42 pre-existing backend CI failures remain red and are unrelated; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
