@@ -43,8 +43,7 @@ from data_contract import (
     EVIDENCE_METRICS,
     Evidence,
     EvidenceStore,
-    LegacyEvidenceRow,
-    MATERIAL_METRICS,
+    LegacyEvidenceRow,    MATERIAL_METRICS,
     METRIC_CONSENSUS_FORWARD_EPS,
     METRIC_CONSENSUS_FORWARD_EPS_30D_AGO,
     METRIC_CONSENSUS_FORWARD_EPS_60D_AGO,
@@ -104,6 +103,7 @@ from data_contract import (
 )
 from fundamental_provider import YahooFundamentalProvider
 from reverse_requirements import ANCHOR_FORWARD, ANCHOR_TTM
+from sec_derived_inputs import TTM_WINDOW_METRICS
 from report_formatter import (
     normalize_ticker,
     print_report,
@@ -632,11 +632,11 @@ VIEW_FIELD_FOR_METRIC: Dict[str, str] = {
     METRIC_CONSENSUS_REVISION_AMOUNT_30D: "consensus_forward_eps_change_30d",
     METRIC_CONSENSUS_REVISION_AMOUNT_60D: "consensus_forward_eps_change_60d",
     METRIC_CONSENSUS_REVISION_AMOUNT_90D: "consensus_forward_eps_change_90d",
-    METRIC_PE_BAND: "historical_pe_band",
-    METRIC_PFCF_BAND: "historical_pfcf_band",
-    METRIC_PS_BAND: "historical_ps_band",
-    METRIC_EV_EBITDA_BAND: "historical_ev_ebitda_band",
-    METRIC_FREE_CASH_FLOW: "current_fcf",
+METRIC_PE_BAND: "historical_pe_band",
+METRIC_PFCF_BAND: "historical_pfcf_band",
+METRIC_PS_BAND: "historical_ps_band",
+METRIC_EV_EBITDA_BAND: "historical_ev_ebitda_band",
+METRIC_FREE_CASH_FLOW: "current_fcf",
     METRIC_EBITDA: "current_ebitda",
     METRIC_REVENUE: "current_revenue",
     METRIC_ENTERPRISE_VALUE: "current_enterprise_value",
@@ -2488,7 +2488,7 @@ def run_st_eva(
     # provider's and says so -- a fiscal year's figure and a quarter's figure
     # are different quantities and neither may stand in for a trailing one.
     engine_inputs = ValuationInputs.from_legacy_view(data)
-    engine_inputs, input_provenance = _engine_inputs_with_filed_figures(
+    engine_inputs, input_provenance, ttm_windows = _engine_inputs_with_filed_figures(
         engine_inputs,
         data=data,
         production_historical_pe=production_historical_pe,
@@ -2593,6 +2593,7 @@ def run_st_eva(
             ev_ebitda_multiple=ev_ebitda_multiple,
             ps_multiple=ps_multiple,
             sec_evidence=sec_evidence,
+            ttm_windows=ttm_windows,
         )
         if context_path == "-":
             print(json.dumps(investment_context, ensure_ascii=False, indent=2))
@@ -5254,6 +5255,26 @@ def market_data_from_observations(
     return projected
 
 
+def ttm_window_observations(
+    observations: Iterable[Observation],
+) -> List[Observation]:
+    """
+    The trailing figures' source windows, as observations.
+
+    A trailing figure the valuation used is the sum of the quarters its window
+    holds, and the document recomputes that sum from the window rather than
+    taking the engine's number on trust. So the window has to travel with the
+    context, and a rebuild has to find it in the archive -- the same rule every
+    other context observation obeys.
+    """
+    return [
+        observation
+        for observation in observations
+        if observation is not None
+        and observation.metric in TTM_WINDOW_METRICS
+    ]
+
+
 def consensus_sample_observations(
     observations: Iterable[Observation],
 ) -> List[Observation]:
@@ -5321,7 +5342,30 @@ def build_context_from_observations(
         data.volume_history,
     )
     evidence = build_evidence(data, metrics)
-    analysis = MarketImpliedAssumptionsEngine.analyze(data=data)
+
+    # A trailing figure the archived run used travels with the archive as its
+    # source window, and the rebuild takes the figure from that window rather
+    # than from the provider. The live path and the rebuild read it the same
+    # way, so they cannot disagree about what the valuation used.
+    from sec_derived_inputs import (
+        ttm_value_from_window,
+    )
+
+    engine_inputs = ValuationInputs.from_legacy_view(data)
+    window_updates: Dict[str, Any] = {}
+    for observation in observations:
+        metric = getattr(observation, "metric", None)
+        if metric == "ttm_eps_window":
+            value = ttm_value_from_window(observation)
+            if value is not None:
+                window_updates["current_eps"] = value
+        elif metric == "ttm_fcf_window":
+            value = ttm_value_from_window(observation)
+            if value is not None:
+                window_updates["current_fcf"] = value
+    if window_updates:
+        engine_inputs = replace(engine_inputs, **window_updates)
+    analysis = MarketImpliedAssumptionsEngine.analyze(data=engine_inputs)
 
     # The cross-source verdicts are recomputed from whichever comparable
     # observations were eligible, so a replay reaches the same verdict the
@@ -5354,8 +5398,14 @@ def build_context_from_observations(
     # The consensus sample travels with the estimate it belongs to, exactly as
     # it does on the live path: the rebuild must register the same
     # non-material observations the archived run did, or the two documents
-    # cannot describe the same knowledge.
-    extra_observations = filing + consensus_sample_observations(observations)
+    # cannot describe the same knowledge. The trailing figures' source windows
+    # travel the same way, for the same reason: the document recomputes a
+    # trailing figure from the window it holds.
+    extra_observations = (
+        filing
+        + consensus_sample_observations(observations)
+        + ttm_window_observations(observations)
+    )
 
     return build_investment_context(
         data=data,
@@ -5446,21 +5496,20 @@ def _engine_inputs_with_filed_figures(
     data: "MarketData",
     production_historical_pe: Optional[Dict[str, Any]],
     production_historical_pfcf: Optional[Dict[str, Any]],
-) -> Tuple[ValuationInputs, Dict[str, Any]]:
+) -> Tuple[ValuationInputs, Dict[str, Any], List[Any]]:
     """
     The engine's inputs, and where each of them came from.
 
-    The engine's figures are the ones the document publishes, and the document
-    recomputes every derived number from itself. A figure that is filed, on a
-    different basis, or simply a different quantity cannot be put in their
-    place without the document's published formula ceasing to reproduce the
-    published number -- and the document's own parity check refuses exactly
-    that. So the filed figures are reported *beside* the engine's, on their own
-    basis, with their period and their provenance, and whether they agree.
+    Where a filed, qualified figure exists on the basis the multiple needs, it
+    is the engine's input, and the provider's figure is recorded beside it as
+    the cross-check it is. Where no such figure exists, the engine keeps the
+    provider's and says so -- a fiscal year's figure and a quarter's figure
+    are different quantities and neither may stand in for a trailing one.
 
-    That is the distinction the product has to make: a figure the engine used,
-    a filed figure that corroborates it, and a filed figure that is on another
-    basis and is therefore not the engine's input at all.
+    The returned windows are the trailing figures' source windows, as
+    observations. They are handed to the document so it holds the quarters a
+    trailing figure was built from and can recompute the sum itself, rather
+    than taking the engine's number on trust.
     """
     from sec_derived_inputs import (
         BASIS_ANNUAL,
@@ -5469,10 +5518,14 @@ def _engine_inputs_with_filed_figures(
         SOURCE_VENDOR,
         qualified_ttm_eps,
         qualified_ttm_fcf,
+        ttm_value_from_window,
+        window_observation,
     )
 
     as_of = data.price_date
     provenance: Dict[str, Any] = {}
+    updates: Dict[str, Any] = {}
+    windows: List[Any] = []
 
     def _vendor(metric, value, note):
         provenance[metric] = {
@@ -5485,36 +5538,44 @@ def _engine_inputs_with_filed_figures(
 
     ttm_eps = qualified_ttm_eps(production_historical_pe, as_of)
     if ttm_eps is not None:
+        # The qualified filed trailing figure becomes the engine's earnings
+        # anchor. It is the same quantity the provider reported, on a basis
+        # that is now stated, and the document recomputes it from the four
+        # quarters it holds.
+        window = window_observation(ttm_eps, metric="ttm_eps_window")
+        ttm_value = ttm_value_from_window(window)
+        if window is not None and ttm_value is not None:
+            windows.append(window)
+            updates["current_eps"] = ttm_value
         provenance["current_eps"] = {
-            "value": inputs.current_eps,
-            "source": SOURCE_VENDOR,
-            "basis": "UNDECLARED",
-            "used_by_engine": True,
-            "note": (
-                "the provider's trailing figure carries no declared period; the "
-                "filed trailing figure below is the qualified one"
+            "value": updates.get("current_eps", inputs.current_eps),
+            "source": SOURCE_SEC_DERIVED,
+            "basis": BASIS_TTM,
+            "used_by_engine": "current_eps" in updates,
+            "currency": ttm_eps.get("currency"),
+            "derivation": ttm_eps.get("derivation"),
+            "usable_from": ttm_eps.get("usable_from"),
+            "window": ttm_eps.get("window_anchor"),
+            "components": ttm_eps.get("components"),
+            "q4_evidence": ttm_eps.get("q4_evidence"),
+            "derived_not_issuer_declared": bool(
+                ttm_eps.get("derived_not_issuer_declared")
             ),
-            "filed_trailing": {
-                "value": ttm_eps["value"],
-                "source": SOURCE_SEC_DERIVED,
-                "basis": BASIS_TTM,
-                "currency": ttm_eps.get("currency"),
-                "derivation": ttm_eps.get("derivation"),
-                "usable_from": ttm_eps.get("usable_from"),
-                "window": ttm_eps.get("window_anchor"),
-                "components": ttm_eps.get("components"),
-                "q4_evidence": ttm_eps.get("q4_evidence"),
-                "agrees_with_engine_input": (
-                    ttm_eps["value"] == inputs.current_eps
-                ),
-                "used_by_engine": False,
+            "provider_figure": {
+                "value": inputs.current_eps,
+                "source": SOURCE_VENDOR,
+                "basis": "UNDECLARED",
                 "note": (
-                    "a sum of four directly stated quarterly figures, reported "
-                    "beside the engine's input and not in place of it: the "
-                    "document publishes the engine's figure and recomputes "
-                    "every derived number from itself"
+                    "the provider's trailing figure carries no declared period; "
+                    "it is recorded as the cross-check it is and is not the "
+                    "figure the multiple is computed from"
                 ),
             },
+            "note": (
+                "a sum of four directly stated quarterly figures, the figure the "
+                "earnings multiple is computed from, recomputed by the document "
+                "from the quarters it holds"
+            ),
         }
     else:
         _vendor(
@@ -5526,35 +5587,46 @@ def _engine_inputs_with_filed_figures(
 
     ttm_fcf = qualified_ttm_fcf(production_historical_pfcf, as_of)
     if ttm_fcf is not None:
+        # The qualified filed trailing free cash flow becomes the engine's cash
+        # flow input, on the same trailing basis the historical P/FCF reference
+        # is computed on. The latest quarter's free cash flow stays a separate,
+        # separately-labelled figure in the admission summary.
+        window = window_observation(
+            ttm_fcf,
+            metric="ttm_fcf_window",
+            requires_furnished_quarter=False,
+            unit=Unit.CURRENCY.value,
+        )
+        ttm_value = ttm_value_from_window(window)
+        if window is not None and ttm_value is not None:
+            windows.append(window)
+            updates["current_fcf"] = ttm_value
         provenance["current_fcf"] = {
-            "value": inputs.current_fcf,
-            "source": SOURCE_VENDOR,
-            "basis": "UNDECLARED",
-            "used_by_engine": True,
-            "note": (
-                "the provider's trailing figure carries no declared window; the "
-                "filed trailing figure below is the qualified one"
-            ),
-            "filed_trailing": {
-                "value": ttm_fcf["value"],
-                "source": SOURCE_SEC_DERIVED,
-                "basis": BASIS_TTM,
-                "currency": ttm_fcf.get("currency"),
-                "derivation": ttm_fcf.get("derivation"),
-                "usable_from": ttm_fcf.get("usable_from"),
-                "window": ttm_fcf.get("window_anchor"),
-                "components": ttm_fcf.get("components"),
-                "agrees_with_engine_input": (
-                    ttm_fcf["value"] == inputs.current_fcf
-                ),
-                "used_by_engine": False,
+            "value": updates.get("current_fcf", inputs.current_fcf),
+            "source": SOURCE_SEC_DERIVED,
+            "basis": BASIS_TTM,
+            "used_by_engine": "current_fcf" in updates,
+            "currency": ttm_fcf.get("currency"),
+            "derivation": ttm_fcf.get("derivation"),
+            "usable_from": ttm_fcf.get("usable_from"),
+            "window": ttm_fcf.get("window_anchor"),
+            "components": ttm_fcf.get("components"),
+            "provider_figure": {
+                "value": inputs.current_fcf,
+                "source": SOURCE_VENDOR,
+                "basis": "UNDECLARED",
                 "note": (
-                    "four consecutive quarters, reported beside the engine's "
-                    "input and not in place of it; the latest quarter's free "
-                    "cash flow is a different quantity and is reported on its "
-                    "own in the admission summary"
+                    "the provider's trailing figure carries no declared window; "
+                    "it is recorded as the cross-check it is and is not the "
+                    "figure the multiple is computed from"
                 ),
             },
+            "note": (
+                "four consecutive quarters, the figure the cash-flow multiple is "
+                "computed from, recomputed by the document from the quarters it "
+                "holds; the latest quarter's free cash flow is a different "
+                "quantity and is reported on its own in the admission summary"
+            ),
         }
     else:
         _vendor(
@@ -5589,8 +5661,10 @@ def _engine_inputs_with_filed_figures(
             "used_by_engine": True,
         }
 
+    if updates:
+        inputs = replace(inputs, **updates)
     inputs = replace(inputs, input_provenance=provenance)
-    return inputs, provenance
+    return inputs, provenance, windows
 
 
 def _build_context_if_requested(
@@ -5604,15 +5678,17 @@ def _build_context_if_requested(
     ev_ebitda_multiple: Optional[float],
     ps_multiple: Optional[float],
     sec_evidence: Dict[str, Any],
+    ttm_windows: Sequence[Any] = (),
 ) -> Any:
     """
     Assemble an Investment Context from evidence already acquired.
 
     Returns the document, every observation the context registered beyond the
-    material set (the second source's facts and the consensus sample), and the
-    source documents fetched. All go to the archive: a snapshot that references
-    facts the archive never saw cannot be replayed, and an observation that does
-    not name the document it came from is a number with an unverifiable origin.
+    material set (the second source's facts, the consensus sample and the
+    trailing figures' source windows), and the source documents fetched. All go
+    to the archive: a snapshot that references facts the archive never saw
+    cannot be replayed, and an observation that does not name the document it
+    came from is a number with an unverifiable origin.
     """
     from investment_context import build_investment_context
 
@@ -5627,7 +5703,12 @@ def _build_context_if_requested(
         data.observations.get(identifier)
         for identifier in data.observations.ids()
     )
-    context_extra_observations = sec_observations + consensus_sample
+    # The trailing figures' source windows travel the same way. The document
+    # recomputes a trailing figure from the quarters it holds, so it has to
+    # hold them.
+    context_extra_observations = (
+        list(sec_observations) + list(consensus_sample) + list(ttm_windows)
+    )
 
     return build_investment_context(
         data=data,

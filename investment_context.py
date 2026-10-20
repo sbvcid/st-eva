@@ -1561,6 +1561,69 @@ class ContextBuilder:
 
     # -- the derivation table --------------------------------------------
 
+    def _register_ttm_derivation(
+        self,
+        name: str,
+        metric: str,
+        unit: str,
+        engine_value: Any,
+    ) -> Optional[str]:
+        """
+        Register a trailing figure as the sum of the quarters the document holds.
+
+        A trailing figure built from four directly stated quarters is derived
+        from them, so the document registers it as a derivation over that
+        window rather than as an observation. The registry then recomputes the
+        sum from the document's own figures, and a multiple that divides by
+        the trailing figure names that derivation -- so the published formula
+        reproduces the published number, and the quarters the sum was built
+        from stay visible with their filings.
+
+        Returns the derivation's ref, or None when the document holds no
+        qualifying window. A window that does not qualify is never
+        substituted: the caller keeps the figure it had.
+        """
+        windows: Dict[str, List[Observation]] = {}
+        for observation in self.extra_observations:
+            if observation.metric != metric:
+                continue
+            value = observation.value
+            if not isinstance(value, dict):
+                continue
+            window_end = value.get("window_end")
+            if not window_end:
+                continue
+            windows.setdefault(str(window_end), []).append(observation)
+
+        for window_end, candidates in sorted(windows.items()):
+            observation = candidates[0]
+            value = observation.value if isinstance(observation.value, dict) else {}
+            quarters = value.get("quarters") or []
+            if len(quarters) != 4:
+                continue
+            if value.get("requires_furnished_quarter", True) and not any(
+                quarter.get("evidence_class") == "furnished" for quarter in quarters
+            ):
+                # The fourth quarter is the one a fiscal year does not report
+                # on its own, so it has to come from a furnished release. A
+                # window without one is not a window of directly stated
+                # quarters.
+                continue
+            if engine_value is None:
+                continue
+            return self._add_derivation(
+                name=name,
+                op="sum_periods",
+                operands=[f"{observation_ref(observation.observation_id)}#samples"],
+                engine_value=engine_value,
+                unit=unit,
+                expression=(
+                    f"sum of the four directly stated quarters ending {window_end}"
+                ),
+                extra_operation={"parameters": {}},
+            )
+        return None
+
     def _observations_for_metric(self, metric: str) -> List[Observation]:
         """
         Every observation the document knows for a metric.
@@ -1608,6 +1671,8 @@ class ContextBuilder:
         observed = self.analysis.get("observed_valuation") or {}
         implied = self.analysis.get("implied_assumptions") or {}
         cross_check = self.analysis.get("consensus_cross_check") or {}
+        source_inputs = self.analysis.get("source_inputs") or {}
+        fundamental = self.analysis.get("fundamental_snapshot") or {}
 
         price = self._obs_ref("price")
         current_eps = self._obs_ref("trailing_eps")
@@ -1621,6 +1686,33 @@ class ContextBuilder:
         pe_band = self._band_ref("pe_band")
         ps_band = self._band_ref("ps_band")
         ev_band = self._band_ref("ev_ebitda_band")
+
+        # A trailing earnings figure built from four directly stated quarters
+        # is a derived figure, not an observation, and the document has to be
+        # able to recompute it from the quarters it holds. When the quarters
+        # are present, the trailing figure is their sum and the multiples that
+        # divide by it name that derivation rather than the provider's figure.
+        #
+        # The engine's value is the authority: the registry recomputes the sum
+        # from the document's own window and the two must agree, or the
+        # document's parity check refuses it.
+        ttm_eps = self._register_ttm_derivation(
+            "ttm_eps",
+            "ttm_eps_window",
+            Unit.PER_SHARE.value,
+            source_inputs.get("current_eps"),
+        )
+        if ttm_eps is not None:
+            current_eps = ttm_eps
+
+        ttm_fcf = self._register_ttm_derivation(
+            "ttm_fcf",
+            "ttm_fcf_window",
+            Unit.CURRENCY.value,
+            fundamental.get("current_fcf"),
+        )
+        if ttm_fcf is not None:
+            fcf = ttm_fcf
 
         valuation_ref = reference_refs["valuation_reference"]
         pfcf_ref = reference_refs["pfcf_reference"]

@@ -959,6 +959,13 @@ def result_unit(spec: OperationSpec, operand_units: Sequence[Optional[str]]) -> 
     is caught while the document is being built rather than after a consumer
     has read a number.
     """
+    if spec.output_unit == "the operand's unit":
+        # The singular rule, honoured before the plural one. The two read
+        # alike and the plural spelling is the one the shared-unit branch
+        # tests for, so checking the singular rule inside that branch left it
+        # unreachable and a figure that declares this rule was published with
+        # the rule's wording as its unit.
+        return operand_units[0] if operand_units else None
     if spec.output_unit in (None, "the operands' shared unit"):
         if spec.operation_id in ("add", "subtract"):
             if (

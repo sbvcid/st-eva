@@ -2799,6 +2799,81 @@ The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`, un
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## SEC-Derived Trailing Figures Enter the Formal Valuation Chain (2026-10-20)
+
+Continued from `524bd09`. The previous round made the qualified filed trailing figures the valuation's *reported* input; this round makes them the valuation's **actual** input, with the Investment Context able to recompute each one from the quarters it holds.
+
+### What the engine uses now
+
+Through `POST /api/analyze` with `mode=live` for AAPL:
+
+| multiple | the engine's input | source | basis |
+| --- | --- | --- | --- |
+| P/E | 8.72 | `SEC_DERIVED` | `TTM` — the sum of four directly stated quarterly diluted figures |
+| P/FCF | 136,683,000,000 | `SEC_DERIVED` | `TTM` — four consecutive quarters |
+| EV/EBITDA | 167,959,000,000 | `VENDOR_REPORTED` | `UNDECLARED` |
+| P/S | 466,823,000,000 | `VENDOR_REPORTED` | `UNDECLARED` |
+
+The earnings figure's four constituents: **1.85** from the furnished 8-K Item 2.02 exhibit (accession `0000320193-25-000077`, accepted 2025-10-30T16:30:35-04:00, usable 2025-10-31) and **2.84 / 2.01 / 2.02** from the 10-Qs (accessions `0000320193-26-000006`, `-000013`, `-000020`; usable 2026-01-30, 2026-05-01, 2026-07-31). The window ends 2026-06-27 and is knowable from 2026-07-31, before the cut. The figure is `derived_not_issuer_declared`: it is a sum of directly stated quarters, not a number the issuer declared as a trailing twelve months.
+
+### How the document can recompute it
+
+The trailing figure is **a derivation in the document, not an observation the document trusts**:
+
+```
+der:ttm_eps  op=sum_periods  operands=[obs:ttm_eps_window-2026-06-27#samples]
+             expression=sum of the four directly stated quarters ending 2026-06-27
+der:ttm_fcf  op=sum_periods  operands=[obs:ttm_fcf_window-2026-06-27#samples]
+```
+
+The window is an observation the context holds: it carries the four quarters with their accessions, acceptance instants, usable dates, evidence classes and content hashes, and the samples the registry sums. The engine's value is the authority, and the registry's recomputation is checked against it by the document's existing parity check — which was not disabled, relaxed, or given a new field to skip.
+
+`der:current_pe` divides the price by `der:ttm_eps` rather than by the provider's trailing figure, and the same holds for the cash-flow multiple. The window travels with the archive, so a rebuild finds it and reproduces the figure from the same quarters.
+
+Two defects surfaced while wiring this, and both were fixed rather than worked around:
+
+- `operation_registry.result_unit` never resolved the rule `"the operand's unit"`, because the branch testing it sat inside a test for the plural spelling `"the operands' shared unit"`. A figure declaring the singular rule was published with the rule's own wording as its unit, and the next multiple refused it. The rule is now honoured.
+- The cash-flow window's quarters carry `knowable_from` while the earnings ones carry `usable_date`, so the window's availability was empty and the window was archived first-seen rather than source-declared. It now reads either.
+
+### What was deliberately not substituted
+
+- **FY2025 EBITDA 144,748,000,000** stays an annual figure in the admission summary with its own period. A fiscal year's EBITDA is not a trailing EBITDA, so it does not enter a trailing enterprise-value multiple.
+- **The latest quarter's free cash flow 51,552,000,000** stays a quarterly figure in the admission summary. It is not the trailing figure and is never presented as one.
+- **The annual revenue** and the provider's undeclared-period figures stay as they are.
+- The EV/EBITDA and cash-flow reverse methods remain unavailable without a qualified historical exit multiple, the provider's eight-observation band is still not a reference, and the historical P/FCF median's implied 194.1B is still an implied reference and not a filed current free cash flow.
+
+### The replay, and what still differs
+
+The AAPL live replay reports `DIVERGED` with **37** differing fields — down from 54 before this round. Every one of them is the **valuation reference** and the figures derived from it (`valuation_reference.multiple`, `basis`, `provenance_kind`, `selection_method`, and `derived.implied_forward_eps`, `derived.implied_fcf`, `derived.required_eps_cagr`, `derived.eps_gap_vs_consensus`, `derived.implied_to_consensus`).
+
+That is a **pre-existing gap, not this round's**: the rebuild does not re-derive the production historical reference, so a rebuild has no reference where the archived run had one. The differences this round introduced — the trailing figures' own series, freshness and glossary entries, and their derivations — are now identical on both sides, which is why the count fell from 54 to 37. The reference gap is recorded as a separate item and was not expanded into this round's scope.
+
+### Tests
+
+`tests/test_engine_input_provenance.py` was rewritten for the new semantics: the qualified filed trailing figure **is** the engine's input; the provider's figure is recorded beside it as the cross-check it is; the window carries the four quarters with their filings; a window without a furnished fourth quarter is not used; a quarterly free cash flow is never the trailing one; the filed annual EBITDA is not used for a trailing multiple; and one refused input leaves the other methods able to compute.
+
+### CI
+
+Local full backend run of `tests/`: **2547 passed, 171 skipped, 532 subtests, 0 failed**.
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-The product no longer confuses "there is evidence" with "the valuation used it": every input of the reverse valuation now states its source, its period basis, its period and its currency, the filed trailing figures are reported beside the engine's with their windows, their constituents and whether they agree, and the filed figures on another basis are named with the reason they are not the input. The engine's arithmetic stays anchored to the document's published figures, which is what keeps every derived number independently recomputable — a substitution would have made the document's published formula stop reproducing the published number, and the document's own parity check correctly refused it. The full backend suite is green with 0 failures. No product blocker; archive cleanup remains deferred per existing decision.
+The qualified SEC-derived trailing figures are no longer figures the valuation
+reports beside its inputs: they are its inputs. The trailing diluted EPS of
+8.72 and the trailing free cash flow of 136,683,000,000 are the figures the
+earnings and cash-flow multiples are computed from, and the Investment Context
+holds the windows they were built from, so the registry recomputes each one
+from the four quarters and the document's own parity check confirms the two
+agree. The annual and quarterly figures stay in the admission summary on their
+own bases, and the provider's undeclared-period figures stay labelled as
+what they are. The CI workflow is green: 2547 passed, 0 failed.
+
+The replay still reports DIVERGED for the AAPL live run, and every remaining
+difference is the valuation reference, which a rebuild does not re-derive. That
+gap predates this round and is recorded as a separate item rather than folded
+into it. No product blocker; archive cleanup remains deferred per existing
+decision.

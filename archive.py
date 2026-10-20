@@ -39,6 +39,7 @@ from data_contract import (
     parse_iso_date,
     utc_now,
 )
+from sec_derived_inputs import TTM_WINDOW_METRICS
 # Availability classes (spec section 5.2). The archive never invents one.
 SOURCE_DECLARED = "SOURCE_DECLARED"
 UNDECLARED = "UNDECLARED"
@@ -541,6 +542,11 @@ def replay(
                     )
                 )
                 or obs.observation_id in admitted_sec_ids
+                # A trailing figure's source window travels with the archive
+                # and the document recomputes the trailing figure from it, so a
+                # rebuild has to hold the window or it cannot reproduce the
+                # figure the archived run used.
+                or obs.metric in TTM_WINDOW_METRICS
             ]
             observation_set = ObservationSet(ticker=asset, observations=used)
 

@@ -161,9 +161,9 @@ def _fcf_record(
                 "period_end": "2026-06-27",
                 "fiscal_year": 2026,
                 "fiscal_quarter": 3,
-                "operating_cash_flow": 27_440_000_000.0,
-                "capital_expenditure": 2_301_000_000.0,
-                "free_cash_flow": 25_139_000_000.0,
+                "operating_cash_flow": 34_369_000_000.0,
+                "capital_expenditure": 2_455_000_000.0,
+                "free_cash_flow": 31_914_000_000.0,
                 "currency": "USD",
                 "formula": "operating cash flow - capital expenditure",
                 "knowable_from": "2026-07-31",
@@ -313,11 +313,12 @@ class TestTheEngineTakesTheTrailingFigure(unittest.TestCase):
     """
     What the engine used, and what corroborates it.
 
-    The engine's figure is the one the document publishes, because the
-    document recomputes every derived number from itself and refuses a
-    document whose published formula does not reproduce the published number.
-    The filed figure on the same basis is reported beside it, with its window
-    and its constituents, and whether the two agree.
+    A qualified filed trailing figure *is* the engine's input: the same
+    quantity the provider reported, on a basis that is now stated, with the
+    four quarters it was built from held by the document so the sum can be
+    recomputed. The provider's figure is recorded beside it as the cross-check
+    it is. Where no qualified figure exists, the provider's is used and is
+    labelled as having no declared period.
     """
 
     def _inputs(self, **overrides):
@@ -344,121 +345,92 @@ class TestTheEngineTakesTheTrailingFigure(unittest.TestCase):
             production_historical_pfcf=pfcf,
         )
 
-    def test_the_engines_input_stays_the_published_figure(self):
-        """The engine's number is the document's figure, not a substitute."""
-        inputs, provenance = self._apply(
-            pe=_pe_payload([_eps_record("2026-10-06", value=9.99)])
-        )
-        self.assertEqual(inputs.current_eps, 8.72)
-        self.assertEqual(provenance["current_eps"]["source"], SOURCE_VENDOR)
-        self.assertEqual(provenance["current_eps"]["basis"], "UNDECLARED")
-        self.assertTrue(provenance["current_eps"]["used_by_engine"])
-
-    def test_a_qualified_filed_trailing_eps_is_reported_beside_it(self):
-        _, provenance = self._apply(
+    def test_a_qualified_trailing_eps_is_the_engines_input(self):
+        inputs, provenance, windows = self._apply(
             pe=_pe_payload([_eps_record("2026-10-06")])
         )
-        filed = provenance["current_eps"]["filed_trailing"]
-        self.assertIsNotNone(filed)
-        self.assertEqual(filed["value"], 8.72)
-        self.assertEqual(filed["source"], SOURCE_SEC_DERIVED)
-        self.assertEqual(filed["basis"], BASIS_TTM)
-        self.assertFalse(filed["used_by_engine"])
-        self.assertTrue(filed["agrees_with_engine_input"])
-        self.assertEqual(len(filed["components"]), 4)
+        self.assertEqual(inputs.current_eps, 8.72)
+        self.assertEqual(provenance["current_eps"]["source"], SOURCE_SEC_DERIVED)
+        self.assertEqual(provenance["current_eps"]["basis"], BASIS_TTM)
+        self.assertTrue(provenance["current_eps"]["used_by_engine"])
+        # The provider's figure is recorded as the cross-check it is.
+        self.assertEqual(provenance["current_eps"]["provider_figure"]["source"], SOURCE_VENDOR)
+        self.assertEqual(provenance["current_eps"]["provider_figure"]["basis"], "UNDECLARED")
+        # The window travels with the context so the document can recompute it.
+        self.assertEqual(len(windows), 1)
+        self.assertEqual(windows[0].metric, "ttm_eps_window")
+
+    def test_a_qualified_trailing_eps_keeps_its_four_quarter_provenance(self):
+        _, provenance, windows = self._apply(
+            pe=_pe_payload([_eps_record("2026-10-06")])
+        )
+        entry = provenance["current_eps"]
+        self.assertEqual(len(entry["components"]), 4)
+        self.assertEqual(entry["derived_not_issuer_declared"], True)
         # The fourth quarter is the furnished one, and it is named.
-        self.assertEqual(len(filed["q4_evidence"]), 1)
+        self.assertEqual(len(entry["q4_evidence"]), 1)
         self.assertEqual(
-            filed["q4_evidence"][0]["accession"], "0000320193-25-000077"
+            entry["q4_evidence"][0]["accession"], "0000320193-25-000077"
         )
+        # The window carries the same four quarters, with their filings.
+        value = windows[0].value
+        self.assertEqual(len(value["samples"]), 4)
+        self.assertAlmostEqual(sum(value["samples"]), 8.72, places=9)
+        accessions = {q["accession"] for q in value["quarters"]}
+        self.assertIn("0000320193-25-000077", accessions)
 
-    def test_a_filed_figure_that_differs_is_reported_as_a_difference(self):
-        _, provenance = self._apply(
-            pe=_pe_payload([_eps_record("2026-10-06", value=9.99)])
+    def test_a_qualified_trailing_free_cash_flow_is_the_engines_input(self):
+        inputs, provenance, windows = self._apply(
+            pfcf={"observations": [_fcf_record("2026-10-06")]}
         )
-        filed = provenance["current_eps"]["filed_trailing"]
-        self.assertEqual(filed["value"], 9.99)
-        self.assertFalse(filed["agrees_with_engine_input"])
+        self.assertEqual(inputs.current_fcf, 136_683_000_000.0)
+        self.assertEqual(provenance["current_fcf"]["source"], SOURCE_SEC_DERIVED)
+        self.assertEqual(provenance["current_fcf"]["basis"], BASIS_TTM)
+        self.assertTrue(provenance["current_fcf"]["used_by_engine"])
+        self.assertEqual(len(windows), 1)
+        self.assertEqual(windows[0].metric, "ttm_fcf_window")
+        self.assertAlmostEqual(sum(windows[0].value["samples"]), 136_683_000_000.0, places=3)
 
-    def test_without_a_qualified_figure_the_provider_figure_is_kept_and_labelled(self):
-        inputs, provenance = self._apply(pe=_pe_payload([]))
+    def test_a_quarterly_free_cash_flow_is_never_the_trailing_one(self):
+        """The admitted quarter is a quarter; it may not stand in for a year."""
+        _, provenance, windows = self._apply(
+            pfcf={"observations": [_fcf_record("2026-10-06", value=51_552_000_000.0)]}
+        )
+        # The trailing figure is a four-quarter window, and the quarter is one
+        # of its four -- reported as itself, not as the trailing figure.
+        value = windows[0].value
+        self.assertEqual(len(value["samples"]), 4)
+        self.assertIn(51_552_000_000.0, value["samples"])
+        self.assertEqual(sum(value["samples"]), 136_683_000_000.0)
+
+    def test_a_window_without_a_furnished_fourth_quarter_is_not_used(self):
+        record = _eps_record("2026-10-06")
+        for component in record["eps_state"]["components"]:
+            component["evidence_class"] = "filed"
+        inputs, provenance, windows = self._apply(pe=_pe_payload([record]))
+        # The engine keeps the provider's figure and the window is not built.
         self.assertEqual(inputs.current_eps, 8.72)
         self.assertEqual(provenance["current_eps"]["source"], SOURCE_VENDOR)
         self.assertEqual(provenance["current_eps"]["basis"], "UNDECLARED")
-        self.assertNotIn("filed_trailing", provenance["current_eps"])
+        self.assertEqual(windows, [])
+
+    def test_without_a_qualified_figure_the_provider_figure_is_kept_and_labelled(self):
+        inputs, provenance, windows = self._apply(pe=_pe_payload([]))
+        self.assertEqual(inputs.current_eps, 8.72)
+        self.assertEqual(provenance["current_eps"]["source"], SOURCE_VENDOR)
+        self.assertEqual(provenance["current_eps"]["basis"], "UNDECLARED")
         self.assertIn(
             "no qualified filed trailing diluted EPS",
             provenance["current_eps"]["note"],
         )
-
-    def test_a_qualified_filed_trailing_free_cash_flow_is_reported_beside_it(self):
-        inputs, provenance = self._apply(
-            pfcf={"observations": [_fcf_record("2026-10-06")]}
-        )
-        self.assertEqual(inputs.current_fcf, 136_683_000_000.0)
-        filed = provenance["current_fcf"]["filed_trailing"]
-        self.assertIsNotNone(filed)
-        self.assertEqual(filed["value"], 136_683_000_000.0)
-        self.assertEqual(filed["source"], SOURCE_SEC_DERIVED)
-        self.assertEqual(filed["basis"], BASIS_TTM)
-        self.assertFalse(filed["used_by_engine"])
-        self.assertEqual(len(filed["components"]), 4)
-
-    def test_a_quarterly_free_cash_flow_is_never_the_trailing_one(self):
-        """The admitted quarter is a quarter; it may not stand in for a year."""
-        _, provenance = self._apply(
-            pfcf={"observations": [_fcf_record("2026-10-06", value=51_552_000_000.0)]}
-        )
-        filed = provenance["current_fcf"]["filed_trailing"]
-        # The trailing figure is a four-quarter window, and the quarter is one
-        # of its four -- reported as itself, not as the trailing figure.
-        self.assertEqual(len(filed["components"]), 4)
-        self.assertIn(
-            51_552_000_000.0,
-            [c["value"] for c in filed["components"]],
-        )
-        self.assertIn(
-            "latest quarter's free cash flow is a different quantity",
-            filed["note"],
-        )
-
-    def test_the_qualified_filing_changes_what_is_reported_not_the_arithmetic(self):
-        """The source decides what is reported; the arithmetic is the document's.
-
-        The engine's number cannot move with the source: the document
-        publishes the figure and recomputes the multiple from it, so a
-        substituted figure would make the published formula stop reproducing
-        the published number. What the source decides is whether a qualified
-        filed figure is reported beside it, and whether it agrees.
-        """
-        market_cap = 4_918_530_543_600.0
-        without = self._apply(pfcf={"observations": []})
-        with_filed = self._apply(
-            pfcf={"observations": [_fcf_record("2026-10-06", value=100_000_000_000.0)]}
-        )
-        # The engine's arithmetic is unchanged.
-        self.assertEqual(
-            without[0].current_fcf, with_filed[0].current_fcf
-        )
-        self.assertAlmostEqual(
-            market_cap / without[0].current_fcf,
-            market_cap / with_filed[0].current_fcf,
-            places=9,
-        )
-        # What the source decides: whether a qualified filed figure is reported,
-        # and whether it agrees.
-        self.assertNotIn("filed_trailing", without[1]["current_fcf"])
-        filed = with_filed[1]["current_fcf"]["filed_trailing"]
-        self.assertIsNotNone(filed)
-        self.assertFalse(filed["agrees_with_engine_input"])
+        self.assertEqual(windows, [])
 
     def test_the_filed_annual_ebitda_is_not_used_for_a_trailing_multiple(self):
         """A year's EBITDA is a different quantity from a trailing one."""
-        inputs, provenance = self._apply()
+        inputs, provenance, _ = self._apply()
         self.assertEqual(inputs.current_ebitda, 167_959_000_000.0)
         self.assertEqual(provenance["current_ebitda"]["source"], SOURCE_VENDOR)
         self.assertIn("not a trailing EBITDA", provenance["current_ebitda"]["note"])
-        self.assertNotIn("filed_trailing", provenance["current_ebitda"])
 
     def test_a_refused_input_leaves_the_other_methods_able_to_compute(self):
         """One missing input must not take the others down with it."""
@@ -477,9 +449,144 @@ class TestTheEngineTakesTheTrailingFigure(unittest.TestCase):
         self.assertIsNotNone(observed["current_pe"])
         self.assertIsNone(observed["current_pfcf"])
         self.assertIsNotNone(observed["current_ps"])
-        # The cash-flow method is unavailable; the earnings method is not.
         methods = analysis["implied_assumptions"]
         self.assertIsNotNone(methods["forward_eps_at_reference_multiple"])
+
+
+class TestTheDocumentRecomputesTheTrailingFigure(unittest.TestCase):
+    """
+    The document holds the quarters and recomputes the sum itself.
+
+    The point of the round is that the trailing figure is not a number the
+    document takes on trust: the registry sums the quarters the window holds
+    and the document's own parity check compares the sum with the engine's
+    value. A window that does not qualify is not registered, so nothing is
+    published that the document cannot reproduce.
+    """
+
+    def _document(self, ticker="AAPL"):
+        from investment_context import build_investment_context
+        from sec_derived_inputs import (
+            qualified_ttm_eps,
+            window_observation,
+        )
+        from st_eva_runner import (
+            CompanyResolver,
+            DeterministicMetricsEngine,
+            MarketImpliedAssumptionsEngine,
+            build_evidence,
+        )
+        from historical_pe import ISSUER_CONFIGS as PE_CONFIGS
+        from historical_pe import load_issuer_historical_pe
+
+        data = CompanyResolver.resolve(ticker, mode="regression")
+        metrics = DeterministicMetricsEngine.compute(
+            data.price_history, data.volume_history
+        )
+        evidence = build_evidence(data, metrics)
+        pe = load_issuer_historical_pe(PE_CONFIGS[ticker]).to_dict()
+        filed = qualified_ttm_eps(pe, data.price_date)
+        window = window_observation(filed, metric="ttm_eps_window")
+        inputs = ValuationInputs.from_legacy_view(data)
+        if window is not None:
+            inputs = replace(
+                inputs, current_eps=filed["value"]
+            )
+        analysis = MarketImpliedAssumptionsEngine.analyze(data=inputs)
+        return build_investment_context(
+            data=data,
+            analysis=analysis,
+            evidence=evidence,
+            metrics=metrics,
+            horizon_years=3.0,
+            material_observations=list(
+                __import__("st_eva_runner").material_observations(data).values()
+            )
+            + [__import__("st_eva_runner").metrics_observation(data, metrics)],
+            extra_observations=[window] if window is not None else [],
+        )
+
+    def test_the_window_is_registered_and_the_sum_is_the_figure(self):
+        from investment_context import recompute_derivation
+
+        document = self._document()
+        derivations = document["provenance"]["derivations"]
+        self.assertIn("der:ttm_eps", derivations)
+        self.assertEqual(derivations["der:ttm_eps"]["operation"]["op"], "sum_periods")
+        self.assertTrue(derivations["der:ttm_eps"]["deterministic"])
+        # The registry recomputes it from the document's own figures.
+        recomputed = recompute_derivation(document, "der:ttm_eps")
+        self.assertIsNotNone(recomputed)
+        self.assertAlmostEqual(recomputed, 8.72, places=9)
+
+    def test_the_window_carries_the_four_quarters_with_their_filings(self):
+        document = self._document()
+        refs = document["provenance"]["refs"]
+        window_ref = "obs:ttm_eps_window-2026-06-27"
+        self.assertIn(window_ref, refs)
+        quarters = refs[window_ref]["value"]["quarters"]
+        self.assertEqual(len(quarters), 4)
+        accessions = {quarter["accession"] for quarter in quarters}
+        self.assertIn("0000320193-25-000077", accessions)
+        furnished = [
+            quarter for quarter in quarters
+            if quarter.get("evidence_class") == "furnished"
+        ]
+        self.assertEqual(len(furnished), 1)
+        self.assertEqual(furnished[0]["value"], 1.85)
+        self.assertTrue(furnished[0]["acceptance_datetime"])
+        self.assertTrue(furnished[0]["usable_date"])
+
+
+class TestTheFiledFigureWinsOverTheProviders(unittest.TestCase):
+    """
+    Where the two differ, the filed figure is the one the valuation uses.
+
+    For MSFT the filed trailing diluted EPS is 17.96 and the provider's
+    trailing figure is 18.09. The valuation uses the filed one, because it is
+    the one with a stated period and a stated construction.
+    """
+
+    def test_the_filed_trailing_eps_is_used_where_they_differ(self):
+        from historical_pe import ISSUER_CONFIGS as PE_CONFIGS
+        from historical_pe import load_issuer_historical_pe
+        from sec_derived_inputs import qualified_ttm_eps
+
+        payload = load_issuer_historical_pe(PE_CONFIGS["MSFT"]).to_dict()
+        filed = qualified_ttm_eps(payload, "2026-10-19")
+        self.assertIsNotNone(filed)
+        self.assertEqual(filed["value"], 17.96)
+        # And the provider's trailing figure for MSFT is a different number,
+        # which is why substituting the filed one is not a no-op.
+        provider = payload.get("current_snapshot") or {}
+        self.assertNotEqual(
+            provider.get("quarter_denominator"), 8.72
+        )
+
+    def test_the_valuation_uses_the_filed_figure(self):
+        from historical_pe import ISSUER_CONFIGS as PE_CONFIGS
+        from historical_pe import load_issuer_historical_pe
+        from sec_derived_inputs import (
+            qualified_ttm_eps,
+            window_observation,
+        )
+        from st_eva_runner import _engine_inputs_with_filed_figures
+
+        payload = load_issuer_historical_pe(PE_CONFIGS["MSFT"]).to_dict()
+        filed = qualified_ttm_eps(payload, "2026-10-19")
+        window = window_observation(filed, metric="ttm_eps_window")
+        self.assertIsNotNone(window)
+
+        inputs, provenance, windows = _engine_inputs_with_filed_figures(
+            _StubView() and ValuationInputs(price=425.50, currency="USD"),
+            data=_StubView(),
+            production_historical_pe=payload,
+            production_historical_pfcf=None,
+        )
+        self.assertEqual(inputs.current_eps, 17.96)
+        self.assertEqual(provenance["current_eps"]["source"], SOURCE_SEC_DERIVED)
+        self.assertEqual(provenance["current_eps"]["basis"], BASIS_TTM)
+        self.assertEqual(len(windows), 1)
 
 
 class TestTheApiReportsWhatTheEngineUsed(unittest.TestCase):
