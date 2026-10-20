@@ -2751,7 +2751,25 @@ The live path is verified end to end: the filed trailing earnings figure has fou
 
 ### CI
 
-Local full backend run of `tests/`: **2545 passed, 171 skipped, 532 subtests, 0 failed**.
+**The workflow is green.** Run **39409786897** for `226c605`:
+<https://github.com/sbvcid/st-eva/actions/runs/39409786897>
+
+```
+Run backend test suite: 2502 passed, 171 skipped, 1 warning, 532 subtests passed in 79.28s
+Run web API tests:        25 passed, 1 warning
+Run browser smoke tests:  12 passed
+conclusion: success
+```
+
+There is not one `FAILED` line in the run's log.
+
+| comparison | result |
+| --- | --- |
+| CI 39403963927 (`36a0931`, previous round) | 0 failed, 2482 passed, 170 skipped, 524 subtests |
+| CI 39409786897 (`226c605`, this round) | **0 failed, 2502 passed, 171 skipped, 532 subtests** |
+| new regressions | **none** |
+
+The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`, unrelated to this work.
 
 ### Git
 
