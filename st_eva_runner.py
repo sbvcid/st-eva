@@ -1886,15 +1886,11 @@ class MarketImpliedAssumptionsEngine:
         # cross-currency ratio (e.g. USD market cap / JPY revenue) is refused,
         # not computed, and the converted figure is reported separately in
         # cross_currency.revenue_conversion instead.
-        _mc_obs = data.observations.latest("market_cap")
-        _rev_obs = data.observations.latest("revenue")
-        _mc_currency = _mc_obs.currency if _mc_obs else data.currency
-        _rev_currency = _rev_obs.currency if _rev_obs else None
-        _currencies_compatible = (
-            _rev_currency is not None
-            and _mc_currency is not None
-            and _rev_currency == _mc_currency
-        )
+        #
+        # The two currencies are contract data, read from the projection, so
+        # the engine reaches the same verdict whether it was handed a
+        # `ValuationInputs` or a 2.2.3 view.
+        _currencies_compatible = inputs.ratio_currencies_compatible()
         current_ps = (
             market_cap / current_revenue
             if market_cap and current_revenue and current_revenue > 0 and _currencies_compatible
@@ -2767,17 +2763,10 @@ def run_st_eva(
                         "that conversion is not available in this run.",
             }
 
-        # Currency-compatibility check for P/S: market cap currency vs revenue
-        # currency. Determines whether current_ps is computed or refused.
-        _mc_cur_lim = data.currency
-        _rev_cur_lim = None
-        try:
-            _mc_obs_lim = data.observations.latest("market_cap")
-            _rev_obs_lim = data.observations.latest("revenue")
-            _mc_cur_lim = _mc_obs_lim.currency if _mc_obs_lim else data.currency
-            _rev_cur_lim = _rev_obs_lim.currency if _rev_obs_lim else None
-        except Exception:
-            pass
+    # The currency-compatibility rule for the P/S ratio lives on the contract,
+    # so the reason reported here and the engine's own verdict are the same
+    # rule applied to the same projection.
+    _valuation_inputs = ValuationInputs.from_legacy_view(data)
 
     result = {
         "analysis_type": VERSION_METADATA["analysis_type"],
@@ -2835,14 +2824,7 @@ def run_st_eva(
                 "(cross-currency ratio is not a valid valuation multiple). "
                 "A currency-converted P/S is shown separately in the cross-currency section."
             ]
-            if (
-                lambda _mc_o, _rev_o: (
-                    (_rev_o.currency if _rev_o else None) is not None
-                    and (_mc_o.currency if _mc_o else data.currency) is not None
-                    and (_rev_o.currency if _rev_o else None)
-                    != (_mc_o.currency if _mc_o else data.currency)
-                )
-            )(data.observations.latest("market_cap"), data.observations.latest("revenue"))
+            if _valuation_inputs.ratio_currencies_differ()
             else []
         ),
         "version_metadata": VERSION_METADATA,

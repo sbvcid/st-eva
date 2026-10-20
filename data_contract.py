@@ -2117,6 +2117,13 @@ class ValuationInputs:
     historical_ps_band: Dict[str, Any] = field(default_factory=dict)
     historical_pfcf_band: Dict[str, Any] = field(default_factory=dict)
     historical_ev_ebitda_band: Dict[str, Any] = field(default_factory=dict)
+    # The currency the two currency-sensitive figures are denominated in. A
+    # ratio between them may only be computed when the two agree, so the
+    # engine needs these as contract data rather than reaching back into
+    # whichever view the caller handed it. `None` means the figure's currency
+    # was never stated, which is not the same as the instrument's currency.
+    current_revenue_currency: Optional[str] = None
+    current_market_cap_currency: Optional[str] = None
 
     @staticmethod
     def _band(observations: ObservationSet, metric: str) -> Dict[str, Any]:
@@ -2126,6 +2133,57 @@ class ValuationInputs:
     @staticmethod
     def _scalar(observations: ObservationSet, metric: str) -> Any:
         return observations.value_for(metric, default=UNAVAILABLE)
+
+    @staticmethod
+    def _effective_currency(
+        observations: Optional[ObservationSet],
+        metric: str,
+        fallback: Optional[str],
+    ) -> Optional[str]:
+        """
+        The currency a figure is denominated in, as the engine has to judge it.
+
+        An observation that states no currency states no currency: the fallback
+        applies only when the metric has no observation at all. That keeps
+        "this figure is in the instrument's currency" distinguishable from
+        "this figure's currency was never declared", which is the difference
+        between a ratio that may be computed and one that must be refused.
+        """
+        if observations is None:
+            return fallback
+        observation = observations.latest(metric)
+        if observation is None:
+            return fallback
+        return observation.currency
+
+    def ratio_currencies_compatible(self) -> bool:
+        """
+        Whether the market cap and the revenue are denominated in one currency.
+
+        A ratio between them may only be computed when the two agree and both
+        are stated; a cross-currency ratio is refused, not converted. This is
+        the one place that rule lives, so the engine's arithmetic and the
+        reason the runner reports cannot drift apart.
+        """
+        return (
+            self.current_revenue_currency is not None
+            and self.current_market_cap_currency is not None
+            and self.current_revenue_currency == self.current_market_cap_currency
+        )
+
+    def ratio_currencies_differ(self) -> bool:
+        """
+        Whether the two figures are stated and are in different currencies.
+
+        This is the case the runner reports a P/S refusal for. An unstated
+        currency is not a mismatch: the ratio is refused for want of a
+        currency, which is a different reason.
+        """
+        return (
+            self.current_revenue_currency is not None
+            and self.current_market_cap_currency is not None
+            and self.current_revenue_currency != self.current_market_cap_currency
+        )
 
     @classmethod
     def from_observations(
@@ -2179,6 +2237,12 @@ class ValuationInputs:
             historical_ev_ebitda_band=cls._band(
                 observations, METRIC_EV_EBITDA_BAND
             ),
+            current_revenue_currency=cls._effective_currency(
+                observations, METRIC_REVENUE, None
+            ),
+            current_market_cap_currency=cls._effective_currency(
+                observations, METRIC_MARKET_CAP, currency
+            ),
         )
 
     @classmethod
@@ -2195,9 +2259,16 @@ class ValuationInputs:
             value = getattr(view, name, None)
             return value if isinstance(value, dict) else {}
 
+        # The view's own observation set carries the per-figure currencies the
+        # engine needs for the currency-sensitive ratio. Reading it by name
+        # keeps this a plain compatibility shim: the contract still imports
+        # nothing from the engine module.
+        view_observations = getattr(view, "observations", None)
+        view_currency = getattr(view, "currency", None)
+
         return cls(
             price=getattr(view, "price", 0.0),
-            currency=getattr(view, "currency", None),
+            currency=view_currency,
             current_eps=getattr(view, "current_eps", UNAVAILABLE),
             forward_eps=getattr(view, "forward_eps", UNAVAILABLE),
             consensus_forward_eps=getattr(
@@ -2224,4 +2295,10 @@ class ValuationInputs:
             historical_ps_band=band("historical_ps_band"),
             historical_pfcf_band=band("historical_pfcf_band"),
             historical_ev_ebitda_band=band("historical_ev_ebitda_band"),
+            current_revenue_currency=cls._effective_currency(
+                view_observations, METRIC_REVENUE, None
+            ),
+            current_market_cap_currency=cls._effective_currency(
+                view_observations, METRIC_MARKET_CAP, view_currency
+            ),
         )

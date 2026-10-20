@@ -1458,6 +1458,16 @@ def admit(
         current_ebitda=(
             ebitda if ebitda is not None else UNAVAILABLE
         ),
+        # The revenue's own currency travels with the admitted figure, so the
+        # engine can refuse a revenue/market-cap ratio that crosses currencies
+        # without having to look the currency up again. The market cap is
+        # valuation-side and is not supplied by V1, so it is denominated in the
+        # price's currency, which is the same fallback the engine applies when
+        # no market-cap observation exists.
+        current_revenue_currency=(
+            revenue.currency if revenue is not None else None
+        ),
+        current_market_cap_currency=checked_price.currency,
     )
     return inputs, admissions
 

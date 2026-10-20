@@ -2131,6 +2131,108 @@ The designated suites pass locally: `test_historical_pe.py`, `test_aapl_historic
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## ValuationInputs Contract and the Engine Boundary (2026-10-20)
+
+Continued from `d5c7040`. This round fixed the `ValuationInputs` / engine-interface failures and did not touch the SOFI integration.
+
+### The target failures, measured
+
+The task brief named 28 failures across four files. Re-running the suites on the current code measured **30**, because `tests/test_summary_reference_precedence.py` contributes 17 rather than 15:
+
+| file | brief | measured |
+| --- | --- | --- |
+| `tests/test_data_contract.py` | 3 | 3 |
+| `tests/test_evidence_valuation_boundary.py` | 6 | 6 |
+| `tests/test_historical_pfcf.py` | 4 | 4 |
+| `tests/test_summary_reference_precedence.py` | 15 | **17** |
+| total | 28 | **30** |
+
+All 30 failed with the same error, and the traceback pointed at the implementation, not the test:
+
+```
+st_eva_runner.py:1889: AttributeError: 'ValuationInputs' object has no attribute 'observations'.
+Did you mean: 'from_observations'?
+```
+
+### Root cause: the implementation violated its own documented contract
+
+`MarketImpliedAssumptionsEngine.analyze()` documents its own input contract:
+
+> `data` is either a `ValuationInputs`, which is the provider-agnostic contract projection, or a 2.2.3 `MarketData` view, which is converted.
+
+It then did this:
+
+```python
+_mc_obs = data.observations.latest("market_cap")
+_rev_obs = data.observations.latest("revenue")
+_mc_currency = _mc_obs.currency if _mc_obs else data.currency
+_rev_currency = _rev_obs.currency if _rev_obs else None
+```
+
+`ValuationInputs` is a frozen dataclass of metric/value fields with a single `currency`; it has no `observations` and never had. So every call that took the contract path raised `AttributeError` before producing any output. The production path happened to survive only because `run_st_eva` hands the engine a `MarketData` view, which does carry `observations`.
+
+**The tests were not stale.** They are the contract: `test_engine_matches_from_observations_and_from_the_view` requires the engine to produce *identical* output from a `ValuationInputs` and from a view, and `test_engine_runs_on_a_non_yahoo_provider` requires it to run on another provider's observations. The implementation was the thing that had to change.
+
+The rule the engine was reaching for — "P/S may only be computed when the market cap and the revenue are denominated in the same currency" — is not view data. It is contract data. `ValuationInputs` carried no way to express it, which is why the engine had to reach past its own projection.
+
+### The fix
+
+1. **`data_contract.ValuationInputs`** gained two fields, `current_revenue_currency` and `current_market_cap_currency`, holding the currency each of the two currency-sensitive figures is denominated in. `None` means the currency was never stated, which is deliberately *not* the same as the instrument's currency.
+2. **`ValuationInputs._effective_currency()`** resolves them by one rule, shared by both builders: an observation that states no currency states no currency, and the fallback (the instrument's currency for the market cap, none for the revenue) applies only when the metric has no observation at all. `from_observations()` reads the observation set; `from_legacy_view()` reads the view's own observation set by name, so the contract still imports nothing from the engine module.
+3. **`ValuationInputs.ratio_currencies_compatible()` / `ratio_currencies_differ()`** now hold the rule in one place, so the engine's arithmetic and the reason the runner reports cannot drift apart.
+4. **`st_eva_runner.MarketImpliedAssumptionsEngine.analyze()`** reads the two currencies from the projection and calls the shared rule. It no longer touches `data.observations` at all, so the contract path and the view path are the same code.
+5. **`evidence_valuation_boundary.admit()`** puts the admitted revenue's own currency on the contract, and states that the valuation-side market cap is denominated in the price's currency — the same fallback the engine applies when no market-cap observation exists.
+6. **The runner's two copies of the rule were removed.** The block at the old lines 2772-2782 assigned `_mc_cur_lim` and `_rev_cur_lim` and then used neither — dead code that computed a rule's inputs and decided nothing. The P/S-refusal limitation, which re-implemented the comparison inline, now calls the same contract method. The runner therefore reports a refusal for exactly the condition under which the engine refuses the ratio.
+
+### What each of the 30 failures was, and what resolved it
+
+All 30 shared the one root cause: the engine raised `AttributeError` before reaching any assertion, so none of them could observe a wrong number. They are grouped by what each asserts:
+
+| assertion group | count | what it pins down |
+| --- | --- | --- |
+| `test_data_contract.py` — absent observation reaches the engine as unavailable; the engine matches from observations and from the view; the engine runs on a non-Yahoo provider | 3 | the provider-agnostic contract, and that a missing observation stays unavailable rather than becoming a zero |
+| `test_evidence_valuation_boundary.py` — the engine accepts the constructed inputs; a refused SEC revenue leaves the engine output unchanged; injecting SEC revenue makes no reverse output SEC-derived; the conventional P/S uses the filed revenue; free cash flow and EBITDA enter the reverse valuation | 6 | that admitted evidence reaches the engine, that refused evidence changes nothing, and that the P/S uses the filed revenue |
+| `test_historical_pfcf.py` — the P/FCF reference precedence: a user-supplied multiple keeps precedence, the production median is the cash-flow reference, no reference stays none, the band fallback is unchanged | 4 | the cash-flow reference precedence and the no-fabrication rule |
+| `test_summary_reference_precedence.py` — the P/E reference precedence, the band fallback, the ineligible-distribution fallback, the reference's own sample count, and that the summary and the matrix agree on the production median | 17 | the reference precedence, the eligibility gate, and that the summary and the matrix cannot disagree |
+
+Every one of them now passes. The 4 files go from **30 failed / 155 passed** to **185 passed, 86 subtests**.
+
+### Behaviours preserved, each checked
+
+- **A missing observation stays unavailable.** `ValuationInputs._scalar` is unchanged, so an absent observation and a present-but-null observation still both reach the engine as `UNAVAILABLE`; nothing is zero-filled. The contract's own test for this is one of the three that now passes.
+- **A refused SEC revenue changes nothing.** `admit()` still leaves every unadmitted field at the dataclass default. The revenue's currency is set only when a revenue was actually admitted (`revenue.currency if revenue is not None else None`), so a refusal leaves it `None` and the P/S stays refused.
+- **Admitted revenue, EBITDA and free cash flow reach the reverse valuation.** `current_revenue`, `current_ebitda` and `current_fcf` are unchanged, and the two free-cash-flow crossing tests now pass.
+- **The P/E reference precedence, the eligibility gate and the source identity are unchanged.** The engine's selection order — a user-supplied multiple, then the production distribution's median, then the vendor band's median, then nothing — is untouched; only the currency lookup moved. The 17 summary-precedence tests pin it and now pass.
+- **A user-supplied multiple is not displaced.** Unchanged, and asserted by `test_a_user_supplied_multiple_keeps_precedence` and the P/FCF equivalent.
+- **The currency rule itself is unchanged in effect.** The engine's original expression was moved into the contract verbatim: the market cap's currency is its observation's currency, falling back to the instrument's currency only when no market-cap observation exists; the revenue's currency is its observation's currency or `None`. A cross-currency ratio is still refused, never converted, and the converted figure is still reported separately in `cross_currency.revenue_conversion`.
+- **SOFI, AAPL, MSFT and MU are not degraded.** The 53-check acceptance run still passes end to end: SOFI's 130 observations, median 47.299768, window 2024-11-08..2026-09-24, snapshot AVAILABLE at 30.21875, the 80-row reverse requirements matrix and the five production exit multiples; AAPL 36 / 28.44563, MSFT 24 / 33.195873, MU 454 / 20.552342.
+- **The MUFG cross-currency limit is not degraded.** The MUFG runner tests pass (20), the ADR ratio stays 1.0 and the reference FX rate stays 0.006316 USD/JPY as of 2026-10-09, and a cross-currency P/S is still refused rather than computed.
+
+### New tests
+
+`tests/test_data_contract.py` gained `TestCurrencyCompatibilityContract` — 7 tests covering the bare `ValuationInputs` path, the same-currency ratio, the cross-currency refusal, an undeclared currency being refused rather than assumed, the projection resolving the currencies from observations, the instrument currency applying only when no observation exists, and the currencies carrying no provider structure.
+
+### The failures that remain, and why
+
+The full local run of `tests/` reports **11 failed, 2482 passed, 170 skipped, 519 subtests**. All 11 are in the CI baseline and none was introduced here:
+
+- `tests/test_mapping_relation_kind.py::TestResolverIsolation::test_an_exact_claim_beats_a_measured_partial_one` — 1
+- `tests/test_r6_1_replay_snapshot_identity.py` — 5 (replay identity)
+- `tests/test_r6_replay_divergence.py` — 4 (replay divergence)
+- `tests/test_st_eva_runner.py::TestMarketImpliedAssumptions::test_multi_method_reverse_valuation` — 1
+
+The last one is the P/S assertion in the MSFT regression view. Its cause is unchanged from the baseline and is **not** the contract fix: the MSFT regression view carries no revenue observation and no market-cap observation, so the revenue's currency is unstated and the P/S is refused — the same refusal the baseline produced, from the same rule, with the same `TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'`. The test mutates the view's attributes *after* its observation set was built, so the currency the engine needs is not there. Fixing it means giving the MSFT regression fixture a revenue observation, which is a separate item.
+
+The replay identity and mapping failures are likewise untouched and unrelated to this round.
+
+### CI
+
+See the comparison table below. The comparison is against the pre-SOFI baseline 39239093577, whose failure set is the reference for "known pre-existing".
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-SOFI is no longer a qualified candidate sitting in a data directory: it is a configured issuer whose historical P/E reference is retrieved through the product's own path and is actually consumed by the reverse valuation — 130 qualifying observations, median 47.299768, snapshot AVAILABLE at 30.21875 — with every result stating its inputs, formula, period and conditional assumptions. CI run 39366918042 confirms `42 failed, 2401 passed` with a failure set byte-identical to the pre-SOFI baseline 39239093577: zero new regressions, zero pre-existing failures fixed, no SOFI-related failure. The 42 pre-existing backend CI failures remain red and are unrelated; they are a separate remediation item. No product blocker; archive cleanup remains deferred per existing decision.
+The formal data contract, the engine and the related regression tests now agree: the engine depends only on the `ValuationInputs` projection, the currency-compatibility rule lives in the contract, and the 30 failures that shared the one root cause are resolved with no new regression. The 11 remaining local failures are the confirmed pre-existing replay, mapping and MSFT-fixture items, and they are listed above rather than claimed as passing. No product blocker; archive cleanup remains deferred per existing decision.

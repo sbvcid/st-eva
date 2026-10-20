@@ -27,9 +27,11 @@ from data_contract import (
     MATERIAL_METRICS,
     METRIC_CONSENSUS_FORWARD_EPS,
     METRIC_DEFINITIONS,
+    METRIC_MARKET_CAP,
     METRIC_PE_BAND,
     METRIC_PRICE,
     METRIC_PRICE_VOLUME_METRICS,
+    METRIC_REVENUE,
     METRIC_TRAILING_EPS,
     METRIC_UNITS,
     MIN_BAND_OBSERVATIONS_FOR_REFERENCE,
@@ -855,6 +857,140 @@ class TestScopeGuard(unittest.TestCase):
         self.assertNotIn(METRIC_PRICE_VOLUME_METRICS, MATERIAL_METRICS)
         self.assertIn(METRIC_PRICE_VOLUME_METRICS, DERIVED_METRICS)
         self.assertIn(METRIC_PRICE_VOLUME_METRICS, EVIDENCE_METRICS)
+
+
+class TestCurrencyCompatibilityContract(unittest.TestCase):
+    """
+    The currencies the engine compares are contract data, not view data.
+
+    The engine accepts either a `ValuationInputs` or a legacy view, so it
+    cannot read the per-figure currencies out of whichever object it was
+    handed. The projection carries them, and the rule is applied once.
+    """
+
+    def _figure(self, metric, value, currency, observation_id):
+        return build_observation(
+            metric=metric,
+            observation_id=observation_id,
+            value=value,
+            unit=Unit.CURRENCY.value,
+            provider="StubProvider",
+            source_type=SourceType.API_LIVE.value,
+            definition="A figure.",
+            methodology="stub source field",
+            retrieved_at=RETRIEVED,
+            currency=currency,
+            currency_basis=CurrencyBasis.REPORTED.value,
+            period_start=None,
+            period_end="2026-09-30",
+            as_of="2026-09-30",
+            available_at=None,
+            source_url="https://example.invalid/figure",
+        )
+
+    def test_the_engine_accepts_a_bare_valuation_inputs(self):
+        """The contract path must not reach for a view's observations."""
+        inputs = ValuationInputs(
+            price=100.0,
+            currency="USD",
+            current_eps=5.0,
+            historical_pe_band={"median": 20.0, "observations": 30},
+        )
+        analysis = MarketImpliedAssumptionsEngine.analyze(inputs)
+        self.assertEqual(analysis["reference"]["method"], "historical_pe_median")
+        self.assertEqual(analysis["reference"]["multiple"], 20.0)
+        self.assertIsNone(analysis["observed_valuation"]["current_ps"])
+
+    def test_a_same_currency_ratio_is_computed(self):
+        inputs = ValuationInputs(
+            price=100.0,
+            currency="USD",
+            current_revenue=250.0,
+            current_market_cap=2000.0,
+            current_revenue_currency="USD",
+            current_market_cap_currency="USD",
+        )
+        analysis = MarketImpliedAssumptionsEngine.analyze(inputs, ps_multiple=8.0)
+        self.assertEqual(analysis["observed_valuation"]["current_ps"], 2000.0 / 250.0)
+
+    def test_a_cross_currency_ratio_is_refused_not_computed(self):
+        inputs = ValuationInputs(
+            price=100.0,
+            currency="USD",
+            current_revenue=25000.0,
+            current_market_cap=2000.0,
+            current_revenue_currency="JPY",
+            current_market_cap_currency="USD",
+        )
+        analysis = MarketImpliedAssumptionsEngine.analyze(inputs, ps_multiple=8.0)
+        self.assertIsNone(analysis["observed_valuation"]["current_ps"])
+
+    def test_an_undeclared_currency_is_refused_not_assumed(self):
+        """An unstated currency is not the instrument's currency."""
+        for revenue_currency, market_cap_currency in ((None, "USD"), ("USD", None)):
+            with self.subTest(
+                revenue_currency=revenue_currency,
+                market_cap_currency=market_cap_currency,
+            ):
+                inputs = ValuationInputs(
+                    price=100.0,
+                    currency="USD",
+                    current_revenue=250.0,
+                    current_market_cap=2000.0,
+                    current_revenue_currency=revenue_currency,
+                    current_market_cap_currency=market_cap_currency,
+                )
+                analysis = MarketImpliedAssumptionsEngine.analyze(
+                    inputs, ps_multiple=8.0
+                )
+                self.assertIsNone(analysis["observed_valuation"]["current_ps"])
+
+    def test_the_projection_resolves_the_currencies_from_observations(self):
+        observations = ObservationSet(
+            ticker="STUB",
+            observations=[
+                self._figure(METRIC_PRICE, 100.0, "USD", "ev-price-001"),
+                self._figure(METRIC_REVENUE, 250.0, "JPY", "ev-revenue-001"),
+                self._figure(METRIC_MARKET_CAP, 2000.0, "USD", "ev-mc-001"),
+            ],
+        )
+        inputs = ValuationInputs.from_observations(
+            observations, price=100.0, currency="USD"
+        )
+        self.assertEqual(inputs.current_revenue_currency, "JPY")
+        self.assertEqual(inputs.current_market_cap_currency, "USD")
+        analysis = MarketImpliedAssumptionsEngine.analyze(inputs, ps_multiple=8.0)
+        self.assertIsNone(analysis["observed_valuation"]["current_ps"])
+
+    def test_the_instrument_currency_is_the_fallback_only_when_no_observation_exists(self):
+        observations = ObservationSet(
+            ticker="STUB",
+            observations=[
+                self._figure(METRIC_PRICE, 100.0, "USD", "ev-price-001"),
+                self._figure(METRIC_REVENUE, 250.0, "USD", "ev-revenue-001"),
+            ],
+        )
+        inputs = ValuationInputs.from_observations(
+            observations, price=100.0, currency="USD"
+        )
+        self.assertEqual(inputs.current_market_cap_currency, "USD")
+        self.assertEqual(inputs.current_revenue_currency, "USD")
+        self.assertEqual(inputs.current_market_cap, UNAVAILABLE)
+        # The valuation-side market cap arrives with the caller; the contract's
+        # currency still governs the ratio.
+        priced = dataclasses.replace(inputs, current_market_cap=2000.0)
+        analysis = MarketImpliedAssumptionsEngine.analyze(priced, ps_multiple=8.0)
+        self.assertEqual(analysis["observed_valuation"]["current_ps"], 2000.0 / 250.0)
+
+    def test_the_currencies_carry_no_provider_structure(self):
+        inputs = ValuationInputs(
+            price=100.0,
+            current_revenue_currency="USD",
+            current_market_cap_currency="JPY",
+        )
+        serialized = str(inputs).lower()
+        for forbidden in ("yahoo", "trailingeps", "quotesummary", "http"):
+            self.assertNotIn(forbidden, serialized)
 
 
 if __name__ == "__main__":
