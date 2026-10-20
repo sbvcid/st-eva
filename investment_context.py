@@ -46,6 +46,7 @@ from data_contract import (
     Observation,
     Unit,
     ValidationStatus,
+    VOLATILE_FIELDS as _CONTRACT_VOLATILE_FIELDS,
     duration_days,
     is_comparable_observation,
     is_number,
@@ -2688,12 +2689,11 @@ class ContextBuilder:
 # found it would not compare. Stripping only `generated_at` would leave the
 # identity unstable, which is how a "deterministic" guarantee turns out to be
 # untested. `selected_at` is the same class: when the reference was selected.
-VOLATILE_FIELDS = (
-    "generated_at",
-    "retrieved_at",
-    "checked_at",
-    "selected_at",
-)
+#
+# The set lives in the contract, because the replay's field-difference report
+# has to use the same one: a reader must never be shown a difference the
+# identity deliberately ignores.
+VOLATILE_FIELDS = _CONTRACT_VOLATILE_FIELDS
 
 
 def _strip_volatile(node: Any) -> Any:

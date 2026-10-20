@@ -92,6 +92,7 @@ from data_contract import (
     ValuationInputs,
     build_observation,
     compute_price_volume_metrics,
+    effective_currency,
     is_comparable_observation,
     is_number,
     observation_id_for,
@@ -747,15 +748,16 @@ def _observed_currency(
     data: "MarketData",
     source: Optional[Observation],
 ) -> Tuple[Optional[str], str]:
-    """The currency a value is denominated in, and how that was determined."""
-    if source is not None:
-        if source.currency:
-            return source.currency, source.currency_basis
-        if source.currency_basis == CurrencyBasis.INSTRUMENT_DEFAULT.value:
-            return (source.currency, source.currency_basis)
-    if data.currency:
-        return data.currency, CurrencyBasis.REPORTED.value
-    return None, CurrencyBasis.UNDECLARED.value
+    """
+    The currency a value is denominated in, and how that was determined.
+
+    The rule is the contract's `effective_currency`, the one the engine also
+    uses to judge a ratio between two figures. The archive and the engine
+    therefore cannot mint a currency for a figure and then judge a different
+    one for it, which is what would let a faithful rebuild differ from the run
+    it is rebuilding.
+    """
+    return effective_currency(source, data.currency)
 
 
 def _observation_raw(

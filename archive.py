@@ -33,6 +33,7 @@ from data_contract import (
     Observation,
     ObservationSet,
     SourceType,
+    VOLATILE_FIELDS,
     is_comparable_observation,
     is_number,
     parse_iso_date,
@@ -712,7 +713,10 @@ def _stored_class(
     return UNDECLARED
 
 
-_VOLATILE_FIELD_NAMES = frozenset({"generated_at", "document_hash"})
+# The fields the identity deliberately ignores are the fields the difference
+# report must not show either. They are the same set, taken from the contract,
+# so a reader is never shown a difference the identity does not act on.
+_VOLATILE_FIELD_NAMES = frozenset(VOLATILE_FIELDS) | {"document_hash"}
 _MAX_FIELD_DIFFS = 50
 
 

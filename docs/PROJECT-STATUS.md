@@ -2251,6 +2251,103 @@ Locally the run reports `11 failed, 2482 passed` — the same set without the en
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
+## Replay Identity and Replay Consistency (2026-10-20)
+
+Continued from `efc76a7`. This round fixed the nine replay failures. The `ValuationInputs` currency work and the SOFI integration were not redone.
+
+### The nine failures, and the single cause behind them
+
+Re-running the two files on the current code gave the same nine failures the task named, all of them an identity that would not reproduce itself:
+
+| file | failures |
+| --- | --- |
+| `tests/test_r6_1_replay_snapshot_identity.py` | 5 |
+| `tests/test_r6_replay_divergence.py` | 4 |
+
+They were **not** nine different errors. Every one of them came out of the same comparison, and the `field_diffs` the replay already reports named it: replaying at the archival watermark produced a rebuilt context whose `context_id` differed from the stored one, and the only substantive difference was one derived figure.
+
+```
+derived.current_ps.figure.provenance_kind   stored: "UNAVAILABLE"   rebuilt: "DERIVED"
+derived.current_ps.figure.value            stored: null            rebuilt: 9.436304941643904
+```
+
+The other six diffs were consequences: the `context_id` itself, the `provenance` reference to that figure, the `unavailable` list (the figure was no longer in it) and `valuation_reference.selected_at`, a volatile timestamp.
+
+**The mechanism.** The engine judges a market-cap/revenue ratio only when the two are in one currency, and it resolves those currencies from the view's observation set. But the two paths do not carry the same set:
+
+- the **live run**'s view carries the acquisition's own observations — in the live path, the price and the provider's stated fundamentals. A revenue that the provider reported as a bare view *attribute* has no observation of its own, so the engine could not confirm its currency and **refused** the ratio;
+- the **replay** rebuilds the view from the *archived* material set, which contains a revenue observation minted from that very attribute, so the currency was confirmable and the **replay computed** the ratio.
+
+The rebuild was therefore strictly more informed than the run it was rebuilding, and the honest verdict was DIVERGED — for the wrong reason. A figure the run refused came back as one it had computed.
+
+The same asymmetry exists in production, not only in the tests: `material_observations()` mints the archived revenue observation from the view's attribute, and the live view's own set does not contain it.
+
+**This is not a defect the previous round introduced.** Running the same diagnostic against `d5c7040` (before the `ValuationInputs` currency work) produced the *identical* seven diffs and the *identical* rebuilt `context_id` `ctx_68eb431adb4861a2b52a946cf774ca47`. The currency expression was moved verbatim last round, so the asymmetry was preserved exactly.
+
+### The fix: one rule decides a figure's currency
+
+The codebase already had the rule — in `st_eva_runner._observed_currency`, which is what the archive uses when it mints an observation for a figure no adapter reported:
+
+> a figure an adapter stated carries the currency the adapter stated; a figure it did not state carries the instrument's currency, because that is the only currency the acquisition named.
+
+The engine was not using it. It looked for an observation and, finding none, concluded the currency was unknown. The archive, using the rule, had concluded the figure was in the instrument's currency and recorded that. **The archive and the engine were answering the same question two different ways**, and the replay inherited the disagreement.
+
+1. **`data_contract.effective_currency(source, instrument_currency)`** is now that rule, in the contract, where both sides can reach it.
+2. **`ValuationInputs._effective_currency`** resolves a figure's currency through it, so the contract projection and the archive mint an observation the same way.
+3. **`st_eva_runner._observed_currency`** delegates to it, so there is one implementation rather than two that can drift.
+4. **`data_contract.VOLATILE_FIELDS`** moved into the contract, and the replay's difference report now uses it. The report was showing `valuation_reference.selected_at` as a difference the identity deliberately ignores; a reader is no longer shown a difference the identity does not act on.
+
+The live run and its rebuild now resolve the same figure's currency the same way, so the rebuild reproduces the run instead of improving on it.
+
+### What was *not* changed
+
+The replay contract was already implemented and correct, and none of it was touched:
+
+- `replay()` already accepted `context_id` and already selected the snapshot by identity through `context_by_id`, so a stored context reconciles against *its own* snapshot and not against another context that happens to share its `as_of`.
+- `context_at` still resolves the earliest snapshot, so the default by-`as_of` selection is unchanged.
+- The identity is still the hash of the knowledge with the volatile fields stripped; no identity field was removed or excluded to force a result.
+- The comparison is still on `context_id`, not on `document_hash`, and the document hashes still differ, because `generated_at` is part of the bytes.
+- The web adapter already replayed at the archival watermark and already passed the context id the run had just archived. Neither was changed.
+- The data-date cutoff and the archival watermark are still distinguished by the availability rules, not by substituting one for the other: replaying at the data date still sees strictly fewer observations and still reports DIVERGED, and replaying at the watermark still sees the whole eligible set and now MATCHes.
+
+Nothing was forced to MATCH. The reference-conditioned case still reports DIVERGED, because a user-supplied reference multiple is a runtime assumption the archive does not hold and the rebuild cannot reconstruct — that difference is preserved rather than smoothed over.
+
+### Behaviours preserved, each checked
+
+- **A genuine input difference is still detected.** A reference-conditioned run still reports DIVERGED against its own snapshot, and the test that pins it passes.
+- **A cross-currency ratio is still refused, in the run *and* in its rebuild.** A new boundary test gives the revenue a provider observation in a different currency from the market cap and asserts that the live run refuses the ratio *and* that the rebuild refuses it too. The rebuild must not be more informed than the record.
+- **The MUFG cross-currency limit is not degraded.** MUFG's revenue observation states JPY against a USD market cap, so the observation wins over the instrument's currency and the ratio is still refused. The MUFG runner tests pass (20), the ADR ratio stays 1.0 and the reference FX rate stays 0.006316 USD/JPY as of 2026-10-09.
+- **SOFI, AAPL, MSFT and MU are not degraded.** The 53-check acceptance run still passes end to end: SOFI's 130 observations, median 47.299768, window 2024-11-08..2026-09-24, snapshot AVAILABLE at 30.21875, the 80-row reverse requirements matrix and the five production exit multiples; AAPL 36 / 28.44563, MSFT 24 / 33.195873, MU 454 / 20.552342.
+
+### A tenth failure fell out
+
+`tests/test_st_eva_runner.py::TestMarketImpliedAssumptions::test_multi_method_reverse_valuation` was failing in the baseline with `TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'` on `current_ps`. Its cause was the same asymmetry: the test mutates the MSFT regression view's attributes after its observation set was built, so the revenue and market cap had no observations, the currency could not be confirmed, and the ratio was refused. Under the shared rule both figures carry the view's USD, the ratio is computed, and the test's expectation of 20.0 is met. This was a genuine pre-existing failure, now resolved by the same fix, and it is reported here rather than folded into the nine.
+
+### New tests
+
+`tests/test_replay_identity_boundary.py` — 11 tests, all passing:
+
+- the archive's minted observation and the contract's projection resolve the same currency for the same figure; a figure with no observation carries the instrument's currency; a stated currency wins over the instrument's; with no currency anywhere it stays undeclared
+- a provider-reported ratio is reproduced by its own replay
+- a run that refused a cross-currency ratio still refuses it in the rebuild
+- the data date sees fewer observations than the watermark, and the data-date rebuild is not the watermark rebuild
+- a reference-conditioned run still diverges from its own snapshot, and two runs that differ report their difference
+- a volatile field is not reported as a difference
+
+### The failure that remains
+
+One local failure remains, and it is the pre-existing one, unchanged:
+
+- `tests/test_mapping_relation_kind.py::TestResolverIsolation::test_an_exact_claim_beats_a_measured_partial_one` — `AssertionError: 'sbc' != 'sga'`, the same assertion and the same message as in the baseline. The registry resolves an exact claim to `sbc` where the test expects `sga`. It is a mapping-relation question with nothing to do with the replay or the currency contract, and it is a separate item.
+
+### CI
+
+See the comparison table below.
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
 ## Next task status
 
-The formal data contract, the engine and the related regression tests now agree: the engine depends only on the `ValuationInputs` projection, the currency-compatibility rule lives in the contract, and the 30 failures that shared the one root cause are resolved with no new regression. CI run 39372514397 confirms `12 failed, 2438 passed` — the failure count falls by exactly the 30 target failures, and the remaining 12 are the confirmed pre-existing replay, mapping, MSFT-fixture and environment-dependent MUFG items listed above rather than claimed as passing. No product blocker; archive cleanup remains deferred per existing decision.
+The replay flow now rebuilds a run against its own snapshot, at the knowledge instant the archive actually holds, and it resolves a figure's currency the same way the archive did, so a faithful rebuild reproduces the run instead of differing from it for a reason neither had any doubt about. Nine target failures and one related pre-existing failure are resolved with no new regression; the mapping-relation failure remains and is listed above rather than claimed as passing. SOFI, AAPL, MSFT, MU and the MUFG cross-currency limit are unchanged. No product blocker; archive cleanup remains deferred per existing decision.

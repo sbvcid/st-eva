@@ -33,6 +33,24 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 UNAVAILABLE = "UNAVAILABLE"
 
+# Fields that record *when this process asked* rather than what it learned.
+#
+# They are excluded from a context's identity, because a context's identity is
+# a function of its knowledge, not of when the file was written. The list grew
+# when 2.4 replayed a context built at a different moment and found it would
+# not compare. Stripping only `generated_at` would leave the identity
+# unstable, which is how a "deterministic" guarantee turns out to be untested.
+# `selected_at` is the same class: when the reference was selected.
+#
+# The same set decides which field differences a replay reports, so a reader is
+# never shown a difference the identity deliberately ignores.
+VOLATILE_FIELDS = (
+    "generated_at",
+    "retrieved_at",
+    "checked_at",
+    "selected_at",
+)
+
 # Kept here so the contract, the adapters, and the engine cannot drift apart on
 # the observation count below which a band stops being a usable reference.
 MIN_BAND_OBSERVATIONS_FOR_REFERENCE = 20
@@ -2089,6 +2107,34 @@ def recompute_price_volume_metrics(observation: Observation) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def effective_currency(
+    source: Optional[Observation],
+    instrument_currency: Optional[str],
+) -> Tuple[Optional[str], str]:
+    """
+    The currency a value is denominated in, and how that was determined.
+
+    One rule, used in two places that must not disagree: when the archive
+    mints an observation for a figure an adapter did not report, and when the
+    engine judges a ratio between two figures.
+
+    A figure an adapter stated carries the currency the adapter stated. A
+    figure it did not state carries the instrument's currency, because that is
+    the only currency the acquisition named. Reading it any other way would
+    make the same figure mean one thing to the archive and another to the
+    engine, which is how a faithful rebuild comes to differ from the run it
+    is rebuilding.
+    """
+    if source is not None:
+        if source.currency:
+            return source.currency, source.currency_basis
+        if source.currency_basis == CurrencyBasis.INSTRUMENT_DEFAULT.value:
+            return source.currency, source.currency_basis
+    if instrument_currency:
+        return instrument_currency, CurrencyBasis.REPORTED.value
+    return None, CurrencyBasis.UNDECLARED.value
+
+
 @dataclass(frozen=True)
 class ValuationInputs:
     """
@@ -2138,23 +2184,25 @@ class ValuationInputs:
     def _effective_currency(
         observations: Optional[ObservationSet],
         metric: str,
-        fallback: Optional[str],
+        instrument_currency: Optional[str],
     ) -> Optional[str]:
         """
         The currency a figure is denominated in, as the engine has to judge it.
 
-        An observation that states no currency states no currency: the fallback
-        applies only when the metric has no observation at all. That keeps
-        "this figure is in the instrument's currency" distinguishable from
-        "this figure's currency was never declared", which is the difference
-        between a ratio that may be computed and one that must be refused.
+        The rule is `effective_currency`, the same one the archive uses when it
+        mints an observation for a figure no adapter reported. A figure with no
+        observation of its own therefore carries the instrument's currency,
+        which is what a provider-reported figure means. Resolving it any
+        other way would let the live run and its own rebuild disagree about a
+        ratio that neither of them had any reason to doubt.
         """
         if observations is None:
-            return fallback
+            return instrument_currency
         observation = observations.latest(metric)
         if observation is None:
-            return fallback
-        return observation.currency
+            return instrument_currency
+        currency, _basis = effective_currency(observation, instrument_currency)
+        return currency
 
     def ratio_currencies_compatible(self) -> bool:
         """
@@ -2238,7 +2286,7 @@ class ValuationInputs:
                 observations, METRIC_EV_EBITDA_BAND
             ),
             current_revenue_currency=cls._effective_currency(
-                observations, METRIC_REVENUE, None
+                observations, METRIC_REVENUE, currency
             ),
             current_market_cap_currency=cls._effective_currency(
                 observations, METRIC_MARKET_CAP, currency
@@ -2296,7 +2344,7 @@ class ValuationInputs:
             historical_pfcf_band=band("historical_pfcf_band"),
             historical_ev_ebitda_band=band("historical_ev_ebitda_band"),
             current_revenue_currency=cls._effective_currency(
-                view_observations, METRIC_REVENUE, None
+                view_observations, METRIC_REVENUE, view_currency
             ),
             current_market_cap_currency=cls._effective_currency(
                 view_observations, METRIC_MARKET_CAP, view_currency
