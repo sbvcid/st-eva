@@ -2421,10 +2421,34 @@ The MUFG tests now pass under the CI condition as well: with the archive path ma
 | AAPL / MSFT / MU | unchanged: 36 / 28.44563, 24 / 33.195873, 454 / 20.552342 |
 | MUFG | 24 runner tests pass; ADR ratio 1.0; 0.006316 USD/JPY as of 2026-10-09; 1.1253 / 177.82 as of 2026-10-16; the unconverted JPY/USD P/S still refused |
 
+### CI
+
+**The workflow is green.** Run **39379885654** for `0f2edaf`:
+<https://github.com/sbvcid/st-eva/actions/runs/39379885654>
+
+```
+Run backend test suite: 2468 passed, 170 skipped, 1 warning, 524 subtests passed in 106.52s
+Run web API tests:       25 passed, 1 warning in 5.81s
+conclusion: success
+```
+
+The 1 warning is the Starlette deprecation notice about `httpx`/`TestClient`, unrelated to this work.
+
+| comparison | result |
+| --- | --- |
+| CI baseline 39239093577 (pre-SOFI MUFG) | 42 failed, 2323 passed, 169 skipped, 498 subtests |
+| CI 39376082727 (`7869541`, previous round) | 2 failed, 2459 passed, 170 skipped, 519 subtests |
+| CI 39379885654 (`0f2edaf`, this round) | **0 failed, 2468 passed, 170 skipped, 524 subtests** |
+| the two target failures | **both resolved** |
+| new regressions vs the CI baseline | **none** |
+| pre-existing failures still outstanding | **none** |
+
+Every failure the baseline recorded is now resolved, and nothing new was introduced. The local full run reports 2511 passed against the CI's 2468 because the browser-smoke, archive-isolation and web-API suites are separate steps in the workflow and the browser tests need a browser the runner does not install.
+
 ### Git
 
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
 ## Next task status
 
-Both remaining CI failures are fixed at their cause rather than around their symptoms: the registry no longer treats a measured scope as a restriction, so an EXACT claim is not displaced by a PARTIAL that merely carries more metadata; and MUFG's cross-currency analysis reads its SEC diluted EPS from a tracked, traceable filing dataset and its market data from a fixed fixture, so the analysis is the same on every machine. The full local backend suite is green for the first time, with no regression against the baseline. No product blocker; archive cleanup remains deferred per existing decision.
+Both remaining CI failures are fixed at their cause rather than around their symptoms: the registry no longer treats a measured scope as a restriction, so an EXACT claim is not displaced by a PARTIAL that merely carries more metadata; and MUFG's cross-currency analysis reads its SEC diluted EPS from a tracked, traceable filing dataset and its market data from a fixed fixture, so the analysis is the same on every machine. The CI workflow is green for the first time — run 39379885654, 2468 passed and 0 failed — with no regression against the baseline. No product blocker; archive cleanup remains deferred per existing decision.
