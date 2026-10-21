@@ -1,0 +1,2209 @@
+{
+  "basis_breaks": {
+    "The long_term_debt_current line changed element at 2024-06-28: us-gaap:LongTermDebtCurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2024-07-29"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2024-06-28; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2024-07-29"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2024-09-27; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2024-10-24"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2024-12-31; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-02-20"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-03-28; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-05-01"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-06-27; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-07-24"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-09-26; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-10-23"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-12-31; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2026-02-20"
+    ],
+    "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2026-04-03; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2026-04-30",
+      "2026-07-29"
+    ],
+    "The long_term_debt_noncurrent line changed element at 2024-06-28: us-gaap:LongTermDebtNoncurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligations. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2024-07-29"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2024-06-28; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2024-07-29"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2024-09-27; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2024-10-24"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2024-12-31; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-02-20"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-03-28; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-05-01"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-06-27; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-07-24"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-09-26; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2025-10-23"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-12-31; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2026-02-20"
+    ],
+    "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2026-04-03; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+      "2026-04-30",
+      "2026-07-29"
+    ],
+    "The marketable_securities_current line changed element at 2010-07-02: us-gaap:MarketableSecurities -> us-gaap:MarketableSecuritiesCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2010-08-02"
+    ],
+    "The marketable_securities_current line changed element at 2020-03-27: us-gaap:MarketableSecuritiesCurrent -> us-gaap:MarketableSecurities. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2020-04-24"
+    ],
+    "The marketable_securities_current line changed element at 2020-12-31: us-gaap:MarketableSecurities -> us-gaap:MarketableSecuritiesCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2021-02-25"
+    ],
+    "The marketable_securities_current line changed element at 2021-04-02: us-gaap:MarketableSecuritiesCurrent -> us-gaap:MarketableSecurities. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2021-04-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2020-03-27; MarketableSecuritiesCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2020-04-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2020-06-26; MarketableSecuritiesCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2020-07-22"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2020-09-25; MarketableSecuritiesCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2020-10-22"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2021-04-02; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2021-04-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2021-07-02; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2021-07-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2021-10-01; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2021-10-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2021-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2022-02-22"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2022-04-01; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2022-04-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2022-07-01; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2022-07-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2022-09-30; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2022-10-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2022-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2023-02-21"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2023-03-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2023-04-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2023-06-30; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2023-07-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2023-09-29; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2023-10-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2023-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2024-02-20"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2024-03-29; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2024-05-02"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2024-06-28; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2024-07-29"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2024-09-27; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2024-10-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2024-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2025-02-20"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2025-03-28; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2025-05-01"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2025-06-27; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2025-07-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2025-09-26; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2025-10-23"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2025-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2026-02-20"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecurities as of 2026-04-03; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+      "2026-04-30",
+      "2026-07-29"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2010-07-02; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2010-08-02"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2010-10-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2010-10-29"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2010-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2011-02-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-04-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2011-05-02"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-07-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2011-08-01"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-09-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2011-10-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2012-02-23"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-03-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2012-04-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-06-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2012-07-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-09-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2012-10-25"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2013-02-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-03-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2013-04-25"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-06-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2013-07-25"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-09-27; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2013-10-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2014-02-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-03-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2014-04-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-06-27; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2014-07-30"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-09-26; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2014-10-29"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2015-02-25"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-04-03; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2015-04-30"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-07-03; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2015-07-29"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-10-02; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2015-10-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2016-02-25"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-04-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2016-04-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-07-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2016-07-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-09-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2016-10-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2017-02-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-03-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2017-04-28"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-06-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2017-07-27"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-09-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2017-10-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2018-02-23"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-03-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2018-05-01"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-06-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2018-07-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-09-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2018-10-30"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2019-02-21"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-03-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2019-04-25"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-06-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2019-07-26"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-09-27; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2019-10-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+      "2020-02-24"
+    ],
+    "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2020-12-31; MarketableSecurities as of 2020-09-25 describes an earlier balance sheet and is not carried forward.": [
+      "2021-02-25"
+    ],
+    "The quarter ending 2011-12-31 is derived from spans that are not all on the same basis: us-gaap:OperatingIncomeLoss 2011-01-01..2011-12-31 (accession 0000021344-12-000007, not revised), us-gaap:OperatingIncomeLoss 2011-01-01..2011-09-30 (accession 0000021344-12-000051, revised), us-gaap:DepreciationDepletionAndAmortization 2011-01-01..2011-12-31 (accession 0000021344-12-000007, not revised), us-gaap:DepreciationDepletionAndAmortization 2011-01-01..2011-09-30 (accession 0000021344-12-000051, not revised). The quarter is made of a pre-revision figure and a post-revision figure and is on neither basis.": [
+      "2012-10-25"
+    ],
+    "The quarter ending 2017-12-31 is derived from spans that are not all on the same basis: us-gaap:OperatingIncomeLoss 2017-01-01..2017-12-31 (accession 0000021344-18-000008, not revised), us-gaap:OperatingIncomeLoss 2017-01-01..2017-09-29 (accession 0000021344-18-000042, revised), us-gaap:DepreciationDepletionAndAmortization 2017-01-01..2017-12-31 (accession 0000021344-18-000008, not revised), us-gaap:DepreciationDepletionAndAmortization 2017-01-01..2017-09-29 (accession 0000021344-18-000042, not revised). The quarter is made of a pre-revision figure and a post-revision figure and is on neither basis.": [
+      "2018-10-30"
+    ],
+    "The quarter ending 2018-12-31 is derived from spans that are not all on the same basis: us-gaap:OperatingIncomeLoss 2018-01-01..2018-12-31 (accession 0000021344-19-000014, not revised), us-gaap:OperatingIncomeLoss 2018-01-01..2018-09-28 (accession 0000021344-19-000042, revised), us-gaap:DepreciationDepletionAndAmortization 2018-01-01..2018-12-31 (accession 0000021344-19-000014, not revised), us-gaap:DepreciationDepletionAndAmortization 2018-01-01..2018-09-28 (accession 0000021344-19-000042, not revised). The quarter is made of a pre-revision figure and a post-revision figure and is on neither basis.": [
+      "2019-10-24"
+    ]
+  },
+  "candidate_metric": true,
+  "capture_manifest": {
+    "capture_dir": "C:\\git\\st-eva\\data\\research_multiples\\KO",
+    "captured_at": "2026-10-21",
+    "files": {
+      "cash_concept.json": {
+        "role": "cash",
+        "sha256": "b8f85898c1ff15addef67455fd59b1d89b89a1e9d69e136e2ed05ba2a4ad1778",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "commercial_paper_concept.json": {
+        "role": "commercial_paper",
+        "sha256": "20ee3ffb95c2111178b061adeed7a2aeb18b07e1378f66f57b0ae59c4ef225c7",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "daily_prices.json": {
+        "role": "prices",
+        "sha256": "8b663557447256909898b162f06de62e333ca0a37db273904caa6e896c51c93a",
+        "source": {
+          "note": "The provider's close series reflects later split events. The lane restores the as-traded close from the split events in this payload before it pairs a price with a share count.",
+          "retrieval": "one daily-granularity chart request for the issuer's ticker; the payload is stored verbatim, including its split events",
+          "source_document_sha256": "8b663557447256909898b162f06de62e333ca0a37db273904caa6e896c51c93a",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/KO?period1=1262304000&period2=1790000000&interval=1d&events=div%2Csplit"
+        }
+      },
+      "depreciation_concept.json": {
+        "role": "depreciation",
+        "sha256": "64a574b033ae71f7cf9a92484d31b7c4eff41318e92e761cac63fbab05ff2c3a",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "filing_acceptance_evidence.json": {
+        "role": "acceptance index",
+        "sha256": "62af147718050f2c763d1b2de9ff1fb0f4d597dc187602a3d16a069618c13215",
+        "source": {
+          "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
+          "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time",
+          "source_document_sha256": null,
+          "url": "https://www.sec.gov/Archives/edgar/data/0000021344/<accession>/<accession>-index-headers.html"
+        }
+      },
+      "long_term_debt_current_concept.json": {
+        "role": "long_term_debt_current",
+        "sha256": "30460462e6a28c496719f53d7234c664d4fbb549e7f050f6420dadf6a5bc7275",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "long_term_debt_noncurrent_concept.json": {
+        "role": "long_term_debt_noncurrent",
+        "sha256": "00279b79fdc09cd3db36d8125301b107319f6f1070aa13369500691c6363f2e4",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "marketable_securities_current_concept.json": {
+        "role": "marketable_securities_current",
+        "sha256": "af366bad4f2b4df8f32e3eeec65316f873f8343d4583ef5c5be8c126fd12b106",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "notes_and_loans_payable_concept.json": {
+        "role": "notes_and_loans_payable",
+        "sha256": "03605269337280d090206830ad483a874e40a042b8e02a4d9e412009ae93389a",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "operating_income_concept.json": {
+        "role": "operating_income",
+        "sha256": "e48fa7e67d50134ae33852bfbd8e6ed4af4289268c8f7db8eae50f0bbe8475ac",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "revenue_concept.json": {
+        "role": "revenue",
+        "sha256": "10f0bb4cdd306c47a5b5de921a6070da2ed84e588627420eee5820300c27c3a8",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      },
+      "shares_outstanding_concept.json": {
+        "role": "shares_outstanding",
+        "sha256": "6e67a48c13bdc2ba02115ba6b138eff6856a99fe16433525acb530194a7d0499",
+        "source": {
+          "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+          "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+          "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+        }
+      }
+    },
+    "isolation": {
+      "checked": "against archive.PRODUCTION_REFERENCE_BASES and investment_context.REFERENCE_SOURCES as they are in this repository, at run time",
+      "collisions": [],
+      "production_metric_ids": [
+        "EV_EBITDA_RATIO_REFERENCE",
+        "P_S_RATIO_REFERENCE",
+        "TTM_EBITDA",
+        "TTM_REVENUE"
+      ],
+      "production_reference_bases": [
+        "HISTORICAL_MEDIAN",
+        "NONE",
+        "PRODUCTION_EV_EBITDA_MEDIAN",
+        "PRODUCTION_PE_MEDIAN",
+        "PRODUCTION_PFCF_MEDIAN",
+        "PRODUCTION_PS_MEDIAN",
+        "USER_SUPPLIED"
+      ],
+      "research_metric_ids": [
+        "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
+      ]
+    },
+    "issuer": {
+      "cik": "CIK0000021344",
+      "entity_name": "The Coca-Cola Company",
+      "fiscal_year_end": "12-31",
+      "ticker": "KO"
+    }
+  },
+  "content_hash": "689a88abc1d7d54646da01e91cca009e9d51fc7189d9b831001be30aca8c2757",
+  "distribution": {
+    "basis_breaks": {
+      "The long_term_debt_current line changed element at 2024-06-28: us-gaap:LongTermDebtCurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2024-07-29"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2024-06-28; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2024-07-29"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2024-09-27; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2024-10-24"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2024-12-31; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-02-20"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-03-28; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-05-01"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-06-27; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-07-24"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-09-26; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-10-23"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2025-12-31; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2026-02-20"
+      ],
+      "The long_term_debt_current line is carried by LongTermDebtAndCapitalLeaseObligationsCurrent as of 2026-04-03; LongTermDebtCurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2026-04-30",
+        "2026-07-29"
+      ],
+      "The long_term_debt_noncurrent line changed element at 2024-06-28: us-gaap:LongTermDebtNoncurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligations. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2024-07-29"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2024-06-28; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2024-07-29"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2024-09-27; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2024-10-24"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2024-12-31; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-02-20"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-03-28; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-05-01"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-06-27; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-07-24"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-09-26; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2025-10-23"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2025-12-31; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2026-02-20"
+      ],
+      "The long_term_debt_noncurrent line is carried by LongTermDebtAndCapitalLeaseObligations as of 2026-04-03; LongTermDebtNoncurrent as of 2024-03-29 describes an earlier balance sheet and is not carried forward. The role declares this element change to be a scope change: the successor element measures a different quantity that arrives at the same line.": [
+        "2026-04-30",
+        "2026-07-29"
+      ],
+      "The marketable_securities_current line changed element at 2010-07-02: us-gaap:MarketableSecurities -> us-gaap:MarketableSecuritiesCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2010-08-02"
+      ],
+      "The marketable_securities_current line changed element at 2020-03-27: us-gaap:MarketableSecuritiesCurrent -> us-gaap:MarketableSecurities. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2020-04-24"
+      ],
+      "The marketable_securities_current line changed element at 2020-12-31: us-gaap:MarketableSecurities -> us-gaap:MarketableSecuritiesCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2021-02-25"
+      ],
+      "The marketable_securities_current line changed element at 2021-04-02: us-gaap:MarketableSecuritiesCurrent -> us-gaap:MarketableSecurities. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2021-04-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2020-03-27; MarketableSecuritiesCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2020-04-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2020-06-26; MarketableSecuritiesCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2020-07-22"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2020-09-25; MarketableSecuritiesCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2020-10-22"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2021-04-02; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2021-04-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2021-07-02; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2021-07-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2021-10-01; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2021-10-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2021-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2022-02-22"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2022-04-01; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2022-04-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2022-07-01; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2022-07-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2022-09-30; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2022-10-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2022-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2023-02-21"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2023-03-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2023-04-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2023-06-30; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2023-07-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2023-09-29; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2023-10-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2023-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2024-02-20"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2024-03-29; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2024-05-02"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2024-06-28; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2024-07-29"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2024-09-27; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2024-10-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2024-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2025-02-20"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2025-03-28; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2025-05-01"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2025-06-27; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2025-07-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2025-09-26; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2025-10-23"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2025-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2026-02-20"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecurities as of 2026-04-03; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
+        "2026-04-30",
+        "2026-07-29"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2010-07-02; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2010-08-02"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2010-10-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2010-10-29"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2010-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2011-02-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-04-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2011-05-02"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-07-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2011-08-01"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-09-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2011-10-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2011-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2012-02-23"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-03-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2012-04-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-06-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2012-07-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-09-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2012-10-25"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2012-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2013-02-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-03-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2013-04-25"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-06-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2013-07-25"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-09-27; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2013-10-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2013-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2014-02-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-03-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2014-04-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-06-27; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2014-07-30"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-09-26; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2014-10-29"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2014-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2015-02-25"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-04-03; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2015-04-30"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-07-03; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2015-07-29"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-10-02; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2015-10-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2015-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2016-02-25"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-04-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2016-04-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-07-01; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2016-07-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-09-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2016-10-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2016-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2017-02-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-03-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2017-04-28"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-06-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2017-07-27"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-09-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2017-10-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2017-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2018-02-23"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-03-30; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2018-05-01"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-06-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2018-07-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-09-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2018-10-30"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2019-02-21"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-03-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2019-04-25"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-06-28; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2019-07-26"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-09-27; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2019-10-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
+        "2020-02-24"
+      ],
+      "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2020-12-31; MarketableSecurities as of 2020-09-25 describes an earlier balance sheet and is not carried forward.": [
+        "2021-02-25"
+      ],
+      "The quarter ending 2011-12-31 is derived from spans that are not all on the same basis: us-gaap:OperatingIncomeLoss 2011-01-01..2011-12-31 (accession 0000021344-12-000007, not revised), us-gaap:OperatingIncomeLoss 2011-01-01..2011-09-30 (accession 0000021344-12-000051, revised), us-gaap:DepreciationDepletionAndAmortization 2011-01-01..2011-12-31 (accession 0000021344-12-000007, not revised), us-gaap:DepreciationDepletionAndAmortization 2011-01-01..2011-09-30 (accession 0000021344-12-000051, not revised). The quarter is made of a pre-revision figure and a post-revision figure and is on neither basis.": [
+        "2012-10-25"
+      ],
+      "The quarter ending 2017-12-31 is derived from spans that are not all on the same basis: us-gaap:OperatingIncomeLoss 2017-01-01..2017-12-31 (accession 0000021344-18-000008, not revised), us-gaap:OperatingIncomeLoss 2017-01-01..2017-09-29 (accession 0000021344-18-000042, revised), us-gaap:DepreciationDepletionAndAmortization 2017-01-01..2017-12-31 (accession 0000021344-18-000008, not revised), us-gaap:DepreciationDepletionAndAmortization 2017-01-01..2017-09-29 (accession 0000021344-18-000042, not revised). The quarter is made of a pre-revision figure and a post-revision figure and is on neither basis.": [
+        "2018-10-30"
+      ],
+      "The quarter ending 2018-12-31 is derived from spans that are not all on the same basis: us-gaap:OperatingIncomeLoss 2018-01-01..2018-12-31 (accession 0000021344-19-000014, not revised), us-gaap:OperatingIncomeLoss 2018-01-01..2018-09-28 (accession 0000021344-19-000042, revised), us-gaap:DepreciationDepletionAndAmortization 2018-01-01..2018-12-31 (accession 0000021344-19-000014, not revised), us-gaap:DepreciationDepletionAndAmortization 2018-01-01..2018-09-28 (accession 0000021344-19-000042, not revised). The quarter is made of a pre-revision figure and a post-revision figure and is on neither basis.": [
+        "2019-10-24"
+      ]
+    },
+    "candidate_metric": true,
+    "data_limitations": [
+      "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer, so this role is registry-qualified. The role's values were re-presented by KO for the consolidation of Coca-Cola Beverages Africa; see the prior-period value revisions the lane records.",
+      "KO's cash-flow line 'Depreciation and amortization' is carried on us-gaap:DepreciationDepletionAndAmortization. The registry maps that element to the `depreciation_and_amortization` metric for Apple and Nike alone, so for KO the standing is SCOPE_NOT_APPLICABLE and the role is not registry-qualified. The filed values are still evidence and a research lane may read them; the figure they produce is not the registry's EBITDA and is not named EBITDA. KO's separate us-gaap:Depreciation element is disclosed only annually and cannot carry a quarterly trailing window at all.",
+      "us-gaap:CashAndCashEquivalentsAtCarryingValue is registry-qualified for KO.",
+      "The registry declares no `marketable_securities_current` metric, so it has no standing to rule on this component and the filed-bridge specification governs it. KO's 'Marketable securities' line is carried on us-gaap:MarketableSecuritiesCurrent through 2020-12-31 and on us-gaap:MarketableSecurities afterwards; the two carry the same filed value on the dates at which both are reported, so the change is a re-tagging of the same quantity and is disclosed as a basis break. KO's separate 'Short-term investments' line is not part of this component.",
+      "The registry declares no `commercial_paper` metric, so it has no standing to rule on this component. KO does not carry a commercial paper line on the face of its balance sheet: KO's balance sheet carries 'Loans and notes payable' as the total of its short-term borrowings, and KO discloses commercial paper as a component of that line in its debt note. KO files this element annually only until 2023, so a bridge that holds it is incomplete at most quarterly dates.",
+      "us-gaap:LongTermDebtNoncurrent is registry-qualified for KO and is filed through 2024-03-29. From 2023-12-31 KO carries the same line on us-gaap:LongTermDebtAndCapitalLeaseObligations, whose definition includes the lease obligation where the earlier element excluded it, so the element change is also a scope change and is disclosed as a basis break.",
+      "us-gaap:LongTermDebtCurrent is registry-qualified for KO and is filed through 2024-03-29. Its successor carries the current maturities of long-term debt from 2023-12-31 and, like its noncurrent counterpart, includes the lease obligation.",
+      "Cover-page shares outstanding, taken as filed and never adjusted for a split, paired with the as-traded close. The registry declares no metric for it; the production rule for pairing it with the as-traded close governs the role.",
+      "The capture's acceptance index covers the issuer's periodic filings only, so a fact first published in another form becomes knowable in this lane at the next periodic filing that carries it. The lane therefore never uses a value before it was public, and it may use a value later than it first became public."
+    ],
+    "excluded_observations": [
+      {
+        "evaluation_date": "2010-02-26",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the operating_income role is knowable at 2010-02-26, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2010-04-29",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter operating_income window is not knowable at 2010-04-29: The four-quarter fiscal window ending at FY2010 Q1 is missing positions: [{'fiscal_year': 2009, 'fiscal_quarter': 2}, {'fiscal_year': 2009, 'fiscal_quarter': 3}, {'fiscal_year': 2009, 'fiscal_quarter': 4}]."
+      },
+      {
+        "evaluation_date": "2010-08-02",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter operating_income window is not knowable at 2010-08-02: The four-quarter fiscal window ending at FY2010 Q2 is missing positions: [{'fiscal_year': 2009, 'fiscal_quarter': 3}, {'fiscal_year': 2009, 'fiscal_quarter': 4}]."
+      }
+    ],
+    "formula": {
+      "denominator": "the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization, each a discrete fiscal quarter, summed over four consecutive quarters; a quarter missing either role is absent, not half a quarter",
+      "expression": "(as-traded close x cover-page shares outstanding) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+      "formula_version": "research-multiples/1.0",
+      "numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding"
+    },
+    "formula_version": "research-multiples/1.0",
+    "input_set_id": "9e266bcfded94a61ddf25955eb98a90060d39bd296b3032c7d37500df328d113",
+    "instrument_id": "KO",
+    "issuer_id": "CIK0000021344",
+    "lane_id": "ko_reported_operating_denominator_multiple",
+    "logic_version": "research-multiples/1.0.0",
+    "max": 27.283526,
+    "mean": 19.092492,
+    "methodology": "research-multiples/1.0",
+    "metric_id": "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+    "metric_label": "KO reported operating profit plus reported depreciation and amortization multiple (research): market capitalization over the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization",
+    "min": 12.930993,
+    "min_observations_for_description": 20,
+    "percentiles": {
+      "10th": 13.92113,
+      "25th": 15.13968,
+      "75th": 21.819049,
+      "90th": 23.306588,
+      "median": 19.775345
+    },
+    "period_end": "2026-07-29",
+    "period_start": "2010-10-29",
+    "prior_period_revisions": [
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2012-04-26",
+        "difference": 5000000.0,
+        "difference_ratio": 0.002193944712593243,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-12-000023",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2012-04-26",
+        "new_value": 2284000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0001047469-11-004348",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2011-05-02",
+        "old_value": 2279000000.0,
+        "period_end": "2011-04-01",
+        "period_start": "2011-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2012-07-26",
+        "difference": 10000000.0,
+        "difference_ratio": 0.0018338529249954153,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-12-000037",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2012-07-26",
+        "new_value": 5463000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0001047469-11-006790",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2011-08-01",
+        "old_value": 5453000000.0,
+        "period_end": "2011-07-01",
+        "period_start": "2011-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 1,
+        "affected_observation_dates": [
+          "2012-10-25"
+        ],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2012-10-25",
+        "difference": 14000000.0,
+        "difference_ratio": 0.0017066926734121662,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-12-000051",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2012-10-25",
+        "new_value": 8217000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-11-000011",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2011-10-27",
+        "old_value": 8203000000.0,
+        "period_end": "2011-09-30",
+        "period_start": "2011-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2012-10-25",
+        "difference": 4000000.0,
+        "difference_ratio": 0.0014545454545454545,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-12-000051",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2012-10-25",
+        "new_value": 2754000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-11-000011",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2011-10-27",
+        "old_value": 2750000000.0,
+        "period_end": "2011-09-30",
+        "period_start": "2011-07-02",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2013-02-27",
+        "difference": -36000000.0,
+        "difference_ratio": -0.004260859273286779,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-13-000007",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2013-02-27",
+        "new_value": 8413000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-12-000007",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2012-02-23",
+        "old_value": 8449000000.0,
+        "period_end": "2010-12-31",
+        "period_start": "2010-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2013-02-27",
+        "difference": 19000000.0,
+        "difference_ratio": 0.0018711837699428796,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-13-000007",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2013-02-27",
+        "new_value": 10173000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-12-000007",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2012-02-23",
+        "old_value": 10154000000.0,
+        "period_end": "2011-12-31",
+        "period_start": "2011-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-05-01",
+        "difference": -19000000.0,
+        "difference_ratio": -0.00958627648839556,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-18-000023",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2018-05-01",
+        "new_value": 1963000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-17-000019",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2017-04-28",
+        "old_value": 1982000000.0,
+        "period_end": "2017-03-31",
+        "period_start": "2017-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-07-26",
+        "difference": -60000000.0,
+        "difference_ratio": -0.014778325123152709,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-18-000032",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2018-07-26",
+        "new_value": 4000000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-17-000026",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2017-07-27",
+        "old_value": 4060000000.0,
+        "period_end": "2017-06-30",
+        "period_start": "2017-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-07-26",
+        "difference": -41000000.0,
+        "difference_ratio": -0.01973051010587103,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-18-000032",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2018-07-26",
+        "new_value": 2037000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-17-000026",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2017-07-27",
+        "old_value": 2078000000.0,
+        "period_end": "2017-06-30",
+        "period_start": "2017-04-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 1,
+        "affected_observation_dates": [
+          "2018-10-30"
+        ],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-10-30",
+        "difference": 65000000.0,
+        "difference_ratio": 0.010517799352750809,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-18-000042",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2018-10-30",
+        "new_value": 6245000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-17-000032",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2017-10-26",
+        "old_value": 6180000000.0,
+        "period_end": "2017-09-29",
+        "period_start": "2017-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-10-30",
+        "difference": 125000000.0,
+        "difference_ratio": 0.0589622641509434,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-18-000042",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2018-10-30",
+        "new_value": 2245000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-17-000032",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2017-10-26",
+        "old_value": 2120000000.0,
+        "period_end": "2017-09-29",
+        "period_start": "2017-07-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2019-02-21",
+        "difference": 31000000.0,
+        "difference_ratio": 0.0035937862276837467,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-19-000014",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2019-02-21",
+        "new_value": 8657000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-18-000008",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2018-02-23",
+        "old_value": 8626000000.0,
+        "period_end": "2016-12-31",
+        "period_start": "2016-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2019-02-21",
+        "difference": 98000000.0,
+        "difference_ratio": 0.013064924676709772,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-19-000014",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2019-02-21",
+        "new_value": 7599000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-18-000008",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2018-02-23",
+        "old_value": 7501000000.0,
+        "period_end": "2017-12-31",
+        "period_start": "2017-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2019-07-26",
+        "difference": 175000000.0,
+        "difference_ratio": 0.03856324371970031,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-19-000034",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2019-07-26",
+        "new_value": 4713000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-18-000032",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2018-07-26",
+        "old_value": 4538000000.0,
+        "period_end": "2018-06-29",
+        "period_start": "2018-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2019-07-26",
+        "difference": 39000000.0,
+        "difference_ratio": 0.014301430143014302,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-19-000034",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2019-07-26",
+        "new_value": 2766000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-18-000032",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2018-07-26",
+        "old_value": 2727000000.0,
+        "period_end": "2018-06-29",
+        "period_start": "2018-03-31",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 1,
+        "affected_observation_dates": [
+          "2019-10-24"
+        ],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2019-10-24",
+        "difference": 263000000.0,
+        "difference_ratio": 0.03723103057757644,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-19-000042",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2019-10-24",
+        "new_value": 7327000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-18-000042",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2018-10-30",
+        "old_value": 7064000000.0,
+        "period_end": "2018-09-28",
+        "period_start": "2018-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2019-10-24",
+        "difference": 88000000.0,
+        "difference_ratio": 0.03483768804433888,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-19-000042",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2019-10-24",
+        "new_value": 2614000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-18-000042",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2018-10-30",
+        "old_value": 2526000000.0,
+        "period_end": "2018-09-28",
+        "period_start": "2018-06-30",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2020-02-24",
+        "difference": 156000000.0,
+        "difference_ratio": 0.020529016975917885,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-20-000006",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2020-02-24",
+        "new_value": 7755000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-19-000014",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2019-02-21",
+        "old_value": 7599000000.0,
+        "period_end": "2017-12-31",
+        "period_start": "2017-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2020-02-24",
+        "difference": 452000000.0,
+        "difference_ratio": 0.051954022988505745,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-20-000006",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2020-02-24",
+        "new_value": 9152000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-19-000014",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2019-02-21",
+        "old_value": 8700000000.0,
+        "period_end": "2018-12-31",
+        "period_start": "2018-01-01",
+        "role": "operating_income"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2020-04-24",
+        "difference": 99000000.0,
+        "difference_ratio": 0.04238013698630137,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000021344-20-000014",
+        "new_element": "us-gaap:OperatingIncomeLoss",
+        "new_usable_date": "2020-04-24",
+        "new_value": 2435000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000021344-19-000028",
+        "old_element": "us-gaap:OperatingIncomeLoss",
+        "old_usable_date": "2019-04-25",
+        "old_value": 2336000000.0,
+        "period_end": "2019-03-29",
+        "period_start": "2019-01-01",
+        "role": "operating_income"
+      }
+    ],
+    "production_eligible": false,
+    "production_refusal": {
+      "production_eligible": false,
+      "statement": "No production reference is created from this distribution, and none may be created from it."
+    },
+    "reason_code": null,
+    "reason_detail": null,
+    "registry_standing": {
+      "cash": {
+        "CashAndCashEquivalentsAtCarryingValue": {
+          "basis": "The core registry maps us-gaap:CashAndCashEquivalentsAtCarryingValue to 'cash' for KO as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "cash",
+          "relation_kind": "IDENTITY",
+          "role": "cash",
+          "scope": null
+        }
+      },
+      "commercial_paper": {
+        "CommercialPaper": {
+          "basis": "The core registry declares no metric 'commercial_paper', so it cannot recognise us-gaap:CommercialPaper as a source of it. The role is governed by the calculation specification that names it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:CommercialPaper",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": "commercial_paper",
+          "relation_kind": null,
+          "role": "commercial_paper",
+          "scope": null
+        }
+      },
+      "depreciation": {
+        "DepreciationDepletionAndAmortization": {
+          "basis": "The core registry maps us-gaap:DepreciationDepletionAndAmortization only with a scope that names another filer (AAPL), so the element is not 'depreciation_and_amortization' for KO. An element the registry recognises for another filer is not this filer's metric.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:DepreciationDepletionAndAmortization",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "SCOPE_NOT_APPLICABLE",
+          "registry_decision": "NOT_QUALIFIED",
+          "registry_metric_id": "depreciation_and_amortization",
+          "relation_kind": null,
+          "role": "depreciation",
+          "scope": null
+        }
+      },
+      "long_term_debt_current": {
+        "LongTermDebtAndCapitalLeaseObligationsCurrent": {
+          "basis": "The core registry holds no mapping for us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent at all, so it does not recognise the element as 'long_term_debt_current' for any filer. The element may still be filed and traceable; it is not this metric's source, and its values produce no figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_MAPPING_FOR_METRIC",
+          "registry_decision": "NOT_QUALIFIED",
+          "registry_metric_id": "long_term_debt_current",
+          "relation_kind": null,
+          "role": "long_term_debt_current",
+          "scope": null
+        },
+        "LongTermDebtCurrent": {
+          "basis": "The core registry maps us-gaap:LongTermDebtCurrent to 'long_term_debt_current' for KO as an EXACT IDENTITY mapping, without a filer restriction, in force from 2014-09-27. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": "2014-09-27",
+          "effective_to": null,
+          "element": "us-gaap:LongTermDebtCurrent",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "long_term_debt_current",
+          "relation_kind": "IDENTITY",
+          "role": "long_term_debt_current",
+          "scope": null
+        }
+      },
+      "long_term_debt_noncurrent": {
+        "LongTermDebtAndCapitalLeaseObligations": {
+          "basis": "The core registry holds no mapping for us-gaap:LongTermDebtAndCapitalLeaseObligations at all, so it does not recognise the element as 'long_term_debt_noncurrent' for any filer. The element may still be filed and traceable; it is not this metric's source, and its values produce no figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:LongTermDebtAndCapitalLeaseObligations",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_MAPPING_FOR_METRIC",
+          "registry_decision": "NOT_QUALIFIED",
+          "registry_metric_id": "long_term_debt_noncurrent",
+          "relation_kind": null,
+          "role": "long_term_debt_noncurrent",
+          "scope": null
+        },
+        "LongTermDebtNoncurrent": {
+          "basis": "The core registry maps us-gaap:LongTermDebtNoncurrent to 'long_term_debt_noncurrent' for KO as an EXACT IDENTITY mapping, without a filer restriction, in force from 2014-09-27. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": "2014-09-27",
+          "effective_to": null,
+          "element": "us-gaap:LongTermDebtNoncurrent",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "long_term_debt_noncurrent",
+          "relation_kind": "IDENTITY",
+          "role": "long_term_debt_noncurrent",
+          "scope": null
+        }
+      },
+      "marketable_securities_current": {
+        "MarketableSecurities": {
+          "basis": "The core registry declares no metric 'marketable_securities_current', so it cannot recognise us-gaap:MarketableSecurities as a source of it. The role is governed by the calculation specification that names it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:MarketableSecurities",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": "marketable_securities_current",
+          "relation_kind": null,
+          "role": "marketable_securities_current",
+          "scope": null
+        },
+        "MarketableSecuritiesCurrent": {
+          "basis": "The core registry declares no metric 'marketable_securities_current', so it cannot recognise us-gaap:MarketableSecuritiesCurrent as a source of it. The role is governed by the calculation specification that names it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:MarketableSecuritiesCurrent",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": "marketable_securities_current",
+          "relation_kind": null,
+          "role": "marketable_securities_current",
+          "scope": null
+        }
+      },
+      "operating_income": {
+        "OperatingIncomeLoss": {
+          "basis": "The core registry maps us-gaap:OperatingIncomeLoss to 'operating_income' for KO as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:OperatingIncomeLoss",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "operating_income",
+          "relation_kind": "IDENTITY",
+          "role": "operating_income",
+          "scope": null
+        }
+      },
+      "shares_outstanding": {
+        "EntityCommonStockSharesOutstanding": {
+          "basis": "The role names no registry metric, so the registry has no standing to rule on the element. The lane's own specification governs the role, and the element is read under it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "dei:EntityCommonStockSharesOutstanding",
+          "mapping_type": null,
+          "qualified": null,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": null,
+          "relation_kind": null,
+          "role": "shares_outstanding",
+          "scope": null
+        }
+      }
+    },
+    "research_use_label": "RESEARCH USE ONLY. This distribution is computed from filed evidence that the production qualification regime does not admit. It is not a valuation reference, it is not a production reference chain input, and it must not be presented as one.",
+    "sample_count": 64,
+    "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
+    "status": "RESEARCH_DISTRIBUTION",
+    "std": 3.835147,
+    "total_evaluations": 67
+  },
+  "formula_version": "research-multiples/1.0",
+  "input_set_id": "9e266bcfded94a61ddf25955eb98a90060d39bd296b3032c7d37500df328d113",
+  "instrument_id": "KO",
+  "issuer_id": "CIK0000021344",
+  "lane_id": "ko_reported_operating_denominator_multiple",
+  "logic_version": "research-multiples/1.0.0",
+  "methodology": "research-multiples/1.0",
+  "metric_id": "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+  "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",
+  "observations": [
+    {
+      "content_hash": "94fec143a014ec5d47c6c784a7e45e7ab2dac531e06673fbe52685857a464c72",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-02-26",
+      "market_cap": 121526134011.36,
+      "price": 52.72,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 2305123938.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "f7795485b42b03f6207e92a2dd79aeba8c4fbf30bcf25b55a51ed12e87db4be0",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-04-29",
+      "market_cap": 123980900265.06,
+      "price": 53.74,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 2307050619.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "492742edbcd34e130a91a639bf3c85c1483a097654176a52d1c4fdf614481c38",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-08-02",
+      "market_cap": 130276775337.84,
+      "price": 56.41,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 2309462424.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "e41228cfc787c4903a12c9a536a81832d237b875340ed997232d3d2c3a833003",
+      "denominator": 10335000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2010-10-29",
+      "market_cap": 142387107833.04,
+      "price": 61.32,
+      "reason_code": null,
+      "shares_outstanding": 2322033722.0,
+      "status": "AVAILABLE",
+      "value": 13.777175
+    },
+    {
+      "content_hash": "5a1e2896ae27319a93a2b5a75314360c7e6bcb116cf5dc2c6975af6cd345a94f",
+      "denominator": 9892000000.0,
+      "enterprise_value": 160849731837.52,
+      "evaluation_date": "2011-02-28",
+      "market_cap": 146652731837.52,
+      "price": 63.92,
+      "reason_code": null,
+      "shares_outstanding": 2294316831.0,
+      "status": "AVAILABLE",
+      "value": 14.825387
+    },
+    {
+      "content_hash": "1f128989450b1251e475e292412fb687353e68cf8938881fc8518a6bce0b0138",
+      "denominator": 10179000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2011-05-02",
+      "market_cap": 155028313114.72,
+      "price": 67.72,
+      "reason_code": null,
+      "shares_outstanding": 2289254476.0,
+      "status": "AVAILABLE",
+      "value": 15.230211
+    },
+    {
+      "content_hash": "e1a3a34559c5ca74bc4c9a0a58f91ec8c2d5e3ea936afa2852d8ec7c02fa706b",
+      "denominator": 10745000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2011-08-01",
+      "market_cap": 155514592239.5,
+      "price": 67.73,
+      "reason_code": null,
+      "shares_outstanding": 2296096150.0,
+      "status": "AVAILABLE",
+      "value": 14.473205
+    },
+    {
+      "content_hash": "8247101cb3203d04d89c8b820414562b60174676d686eb735c1f929aff8de45f",
+      "denominator": 11294000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2011-10-27",
+      "market_cap": 155738392296.85,
+      "price": 68.57,
+      "reason_code": null,
+      "shares_outstanding": 2271232205.0,
+      "status": "AVAILABLE",
+      "value": 13.78948
+    },
+    {
+      "content_hash": "5a0e7bc12219d9d1419bf39abbea4d35ea542063efb657cfeae91da18de471ab",
+      "denominator": 12108000000.0,
+      "enterprise_value": 171453468008.78,
+      "evaluation_date": "2012-02-23",
+      "market_cap": 156568468008.78,
+      "price": 69.18,
+      "reason_code": null,
+      "shares_outstanding": 2263204221.0,
+      "status": "AVAILABLE",
+      "value": 12.930993
+    },
+    {
+      "content_hash": "fcbc8a94b35681b259aa996064f7ea8e0d86266235a7ddf9e57ba38cba7ff684",
+      "denominator": 12299000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2012-04-26",
+      "market_cap": 170948203733.12,
+      "price": 75.71,
+      "reason_code": null,
+      "shares_outstanding": 2257934272.0,
+      "status": "AVAILABLE",
+      "value": 13.899358
+    },
+    {
+      "content_hash": "ad81ccf51f103825c49ed1cf00f7ee735b548a03834212e68036aafc70b15a50",
+      "denominator": 12456000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2012-07-26",
+      "market_cap": 177488321923.45,
+      "price": 78.85,
+      "reason_code": null,
+      "shares_outstanding": 2250961597.0,
+      "status": "AVAILABLE",
+      "value": 14.249223
+    },
+    {
+      "content_hash": "04c441117c7f50386ebe899b1c088f0591d471ccaba028b5d9099a03274e18c3",
+      "denominator": 12533000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2012-10-25",
+      "market_cap": 166354640257.54,
+      "price": 37.09,
+      "reason_code": null,
+      "shares_outstanding": 4485161506.0,
+      "status": "AVAILABLE",
+      "value": 13.27333
+    },
+    {
+      "content_hash": "68fd3c4e27f6f02b44c86d89330a330aeca6b7226c7b83faa797fade1a4a6c7c",
+      "denominator": 12761000000.0,
+      "enterprise_value": 192343806946.2,
+      "evaluation_date": "2013-02-27",
+      "market_cap": 171360806946.2,
+      "price": 38.45,
+      "reason_code": null,
+      "shares_outstanding": 4456717996.0,
+      "status": "AVAILABLE",
+      "value": 13.428478
+    },
+    {
+      "content_hash": "9b4a2420b35306954080a9e985b9ed9bf42918fba7683330094bf0958452b8d3",
+      "denominator": 12686000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2013-04-25",
+      "market_cap": 188616536743.25,
+      "price": 42.35,
+      "reason_code": null,
+      "shares_outstanding": 4453755295.0,
+      "status": "AVAILABLE",
+      "value": 14.868086
+    },
+    {
+      "content_hash": "58739e31de5532d30d080528edc206957b529f1bb2066bf21700e1358eba3c1e",
+      "denominator": 12601000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2013-07-25",
+      "market_cap": 181049991962.16,
+      "price": 40.84,
+      "reason_code": null,
+      "shares_outstanding": 4433153574.0,
+      "status": "AVAILABLE",
+      "value": 14.367907
+    },
+    {
+      "content_hash": "ff55e9f5d719c2d0896521c546549539e88bb7a2d15520ed199f706ee99760f5",
+      "denominator": 12263000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2013-10-24",
+      "market_cap": 171337802040.4,
+      "price": 38.8,
+      "reason_code": null,
+      "shares_outstanding": 4415922733.0,
+      "status": "AVAILABLE",
+      "value": 13.971932
+    },
+    {
+      "content_hash": "622a9e44fc63097851f61a7160f532f29f008438545a68ed9e0ea2b661f3e9c2",
+      "denominator": 12205000000.0,
+      "enterprise_value": 191202352220.5,
+      "evaluation_date": "2014-02-27",
+      "market_cap": 167732352220.5,
+      "price": 38.07,
+      "reason_code": null,
+      "shares_outstanding": 4405893150.0,
+      "status": "AVAILABLE",
+      "value": 13.742921
+    },
+    {
+      "content_hash": "5d40c9bb7a51626240ef3318b9feef7b39ead86f67d6923e746204cf4f54f2f6",
+      "denominator": 12173000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2014-04-24",
+      "market_cap": 178883942279.9,
+      "price": 40.7,
+      "reason_code": null,
+      "shares_outstanding": 4395182857.0,
+      "status": "AVAILABLE",
+      "value": 14.69514
+    },
+    {
+      "content_hash": "79a36c52e96b5e837c10d10124d04d8e6fd1bba676eafecdf77a83da2a2effad",
+      "denominator": 12120000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2014-07-30",
+      "market_cap": 173770302699.28,
+      "price": 39.62,
+      "reason_code": null,
+      "shares_outstanding": 4385923844.0,
+      "status": "AVAILABLE",
+      "value": 14.337484
+    },
+    {
+      "content_hash": "5762073fe6b8703558764d0465190fcd4a6a5cf76112e75a8fc12518753eb164",
+      "denominator": 12372000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2014-10-29",
+      "market_cap": 179409422376.96,
+      "price": 40.96,
+      "reason_code": null,
+      "shares_outstanding": 4380112851.0,
+      "status": "AVAILABLE",
+      "value": 14.501247
+    },
+    {
+      "content_hash": "01bad91b96d497d9c9ea15694b00c5ef491af060f008841a4a6fde07f60aed18",
+      "denominator": 11684000000.0,
+      "enterprise_value": 212602544052.8,
+      "evaluation_date": "2015-02-25",
+      "market_cap": 183600544052.8,
+      "price": 42.05,
+      "reason_code": null,
+      "shares_outstanding": 4366243616.0,
+      "status": "AVAILABLE",
+      "value": 15.713843
+    },
+    {
+      "content_hash": "65d8d9b6632b2e6cb119e3e7298bbc05f1f0d50f9304dbbfc97d118934f1bd29",
+      "denominator": 11604000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2015-04-30",
+      "market_cap": 176788905299.76,
+      "price": 40.56,
+      "reason_code": null,
+      "shares_outstanding": 4358700821.0,
+      "status": "AVAILABLE",
+      "value": 15.235169
+    },
+    {
+      "content_hash": "d52c624776c3324d97d420f3dfffd07386d43923c2bf0e9c0e7216c8537108c9",
+      "denominator": 10963000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2015-07-29",
+      "market_cap": 176566648397.04,
+      "price": 40.59,
+      "reason_code": null,
+      "shares_outstanding": 4350003656.0,
+      "status": "AVAILABLE",
+      "value": 16.105687
+    },
+    {
+      "content_hash": "83c1b129d8329d81cf1f142769195b99d0078b84bb1d103026ef907f772da0bd",
+      "denominator": 10603000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2015-10-28",
+      "market_cap": 185832135715.88,
+      "price": 42.73,
+      "reason_code": null,
+      "shares_outstanding": 4348985156.0,
+      "status": "AVAILABLE",
+      "value": 17.526373
+    },
+    {
+      "content_hash": "a476c920a9d97188d1685eb9e7d3184c10c5a2482d051315b1494f8502745fea",
+      "denominator": 10698000000.0,
+      "enterprise_value": 223731621876.48,
+      "evaluation_date": "2016-02-25",
+      "market_cap": 191190621876.48,
+      "price": 44.16,
+      "reason_code": null,
+      "shares_outstanding": 4329497778.0,
+      "status": "AVAILABLE",
+      "value": 17.871623
+    },
+    {
+      "content_hash": "1c04e686a4b75948fa8faee8626c075d6fed755fd896f00a1ede861d72e73329",
+      "denominator": 10528000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2016-04-28",
+      "market_cap": 193078249007.49,
+      "price": 44.63,
+      "reason_code": null,
+      "shares_outstanding": 4326198723.0,
+      "status": "AVAILABLE",
+      "value": 18.339499
+    },
+    {
+      "content_hash": "3a03dd4b552070ae90f19479b734ada6e4bc5c7c0076436b0451c043b0438b4c",
+      "denominator": 10809000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2016-07-28",
+      "market_cap": 188394685492.5,
+      "price": 43.65,
+      "reason_code": null,
+      "shares_outstanding": 4316029450.0,
+      "status": "AVAILABLE",
+      "value": 17.429428
+    },
+    {
+      "content_hash": "18b22851707811c47be1a3ffeb4db91ff93c40b1c1bf40f432cd003c09fc221c",
+      "denominator": 10639000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2016-10-27",
+      "market_cap": 181661850601.92,
+      "price": 42.12,
+      "reason_code": null,
+      "shares_outstanding": 4312959416.0,
+      "status": "AVAILABLE",
+      "value": 17.075087
+    },
+    {
+      "content_hash": "ff9261aa09b11e7b32996f9fc688cc921bae02858e60060e49b483262fdcc146",
+      "denominator": 10413000000.0,
+      "enterprise_value": 212315829909.56,
+      "evaluation_date": "2017-02-24",
+      "market_cap": 179380829909.56,
+      "price": 41.78,
+      "reason_code": null,
+      "shares_outstanding": 4293461702.0,
+      "status": "AVAILABLE",
+      "value": 17.226623
+    },
+    {
+      "content_hash": "99917361bb9f1b83b9c48a2adc1802fec95daa651a340c2c78dbaf6c8cabcb18",
+      "denominator": 10124000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2017-04-28",
+      "market_cap": 184360932543.65,
+      "price": 43.15,
+      "reason_code": null,
+      "shares_outstanding": 4272559271.0,
+      "status": "AVAILABLE",
+      "value": 18.210286
+    },
+    {
+      "content_hash": "7d8b479eb17e3fc55e9fe30e504837cc6d6c0f970655a5d18290e3c5e59ae5cb",
+      "denominator": 9199000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2017-07-27",
+      "market_cap": 196715828827.72,
+      "price": 46.12,
+      "reason_code": null,
+      "shares_outstanding": 4265304181.0,
+      "status": "AVAILABLE",
+      "value": 21.38448
+    },
+    {
+      "content_hash": "683631213e61d4e84b073afca2c628b14bdb7775770a0f4e77663a81f98d2d29",
+      "denominator": 8925000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2017-10-26",
+      "market_cap": 196970650018.68,
+      "price": 46.23,
+      "reason_code": null,
+      "shares_outstanding": 4260667316.0,
+      "status": "AVAILABLE",
+      "value": 22.069541
+    },
+    {
+      "content_hash": "37e148bb532110c3421a405388b7cf6d96da1ad7a659ce773a5349364414f379",
+      "denominator": 8761000000.0,
+      "enterprise_value": 223958523713.32,
+      "evaluation_date": "2018-02-23",
+      "market_cap": 187870523713.32,
+      "price": 44.04,
+      "reason_code": null,
+      "shares_outstanding": 4265906533.0,
+      "status": "AVAILABLE",
+      "value": 21.443959
+    },
+    {
+      "content_hash": "0e7b1720312a1491703703d7b8c0c6f864c9ad631bc3b616a131c175ba23aa62",
+      "denominator": 8532000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2018-05-01",
+      "market_cap": 181231634304.36,
+      "price": 42.59,
+      "reason_code": null,
+      "shares_outstanding": 4255262604.0,
+      "status": "AVAILABLE",
+      "value": 21.241401
+    },
+    {
+      "content_hash": "590502e098c64ce6fcf38cb8c530fdb027fce3902b0111ee288e927211ed1905",
+      "denominator": 9163000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2018-07-26",
+      "market_cap": 196655133949.28,
+      "price": 46.24,
+      "reason_code": null,
+      "shares_outstanding": 4252922447.0,
+      "status": "AVAILABLE",
+      "value": 21.461872
+    },
+    {
+      "content_hash": "d2c2aebbc391b9020d7a695421d1edd86ad1a3787430d917ab37a66fec20d747",
+      "denominator": 9461000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2018-10-30",
+      "market_cap": 202737756961.74,
+      "price": 47.63,
+      "reason_code": null,
+      "shares_outstanding": 4256513898.0,
+      "status": "AVAILABLE",
+      "value": 21.428787
+    },
+    {
+      "content_hash": "4e445eeb6cf8ea3ec2f154e3f713db3b4809d54e3ef45eeaa56677d813ea8ff6",
+      "denominator": 9786000000.0,
+      "enterprise_value": 225552093821.66,
+      "evaluation_date": "2019-02-21",
+      "market_cap": 196067093821.66,
+      "price": 45.86,
+      "reason_code": null,
+      "shares_outstanding": 4275340031.0,
+      "status": "AVAILABLE",
+      "value": 20.035468
+    },
+    {
+      "content_hash": "82c3b9aea32fca302b593b61dda192ea5654a2016b8964430e09634bf5efacd3",
+      "denominator": 10316000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2019-04-25",
+      "market_cap": 204090946910.24,
+      "price": 47.84,
+      "reason_code": null,
+      "shares_outstanding": 4266115111.0,
+      "status": "AVAILABLE",
+      "value": 19.783923
+    },
+    {
+      "content_hash": "560ba8b3bca0b60c8a0351488fc6f8e547282615958fb49b8e1e3ae8ba43f55d",
+      "denominator": 10621000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2019-07-26",
+      "market_cap": 231632406262.29,
+      "price": 54.17,
+      "reason_code": null,
+      "shares_outstanding": 4276027437.0,
+      "status": "AVAILABLE",
+      "value": 21.808907
+    },
+    {
+      "content_hash": "ed8821185424d4ad18b3a0a4b7a3d039ee1097b172f5f64796a7b83198c77da2",
+      "denominator": 10440000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2019-10-24",
+      "market_cap": 233976074097.97,
+      "price": 54.61,
+      "reason_code": null,
+      "shares_outstanding": 4284491377.0,
+      "status": "AVAILABLE",
+      "value": 22.411501
+    },
+    {
+      "content_hash": "588d10a56cd939ed46ad8f6b0b45785637154061cc76a170eb922bfca9fdbe33",
+      "denominator": 11352000000.0,
+      "enterprise_value": 283692691329.55,
+      "evaluation_date": "2020-02-24",
+      "market_cap": 251624691329.55,
+      "price": 58.65,
+      "reason_code": null,
+      "shares_outstanding": 4290276067.0,
+      "status": "AVAILABLE",
+      "value": 22.16567
+    },
+    {
+      "content_hash": "73680a7402d0dcd8e8e8e91acbf9c7ee256d1d4fc6b3059127b32320c31d45d1",
+      "denominator": 11488000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2020-04-24",
+      "market_cap": 195116914166.79,
+      "price": 45.43,
+      "reason_code": null,
+      "shares_outstanding": 4294891353.0,
+      "status": "AVAILABLE",
+      "value": 16.984411
+    },
+    {
+      "content_hash": "78cbcb3c235023e6142f9ebbc095d8c410bfcab168d3175dbb2fddbdee2a4d8d",
+      "denominator": 10535000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2020-07-22",
+      "market_cap": 208242878793.12,
+      "price": 48.48,
+      "reason_code": null,
+      "shares_outstanding": 4295438919.0,
+      "status": "AVAILABLE",
+      "value": 19.766766
+    },
+    {
+      "content_hash": "accb78a1ff314f028b4109676af567a5a2d05635ab9f43b5aad04beec7649f6f",
+      "denominator": 10329000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2020-10-22",
+      "market_cap": 217793986136.16,
+      "price": 50.68,
+      "reason_code": null,
+      "shares_outstanding": 4297434612.0,
+      "status": "AVAILABLE",
+      "value": 21.08568
+    },
+    {
+      "content_hash": "90e80c9147c10d39d32d24fa9ae2510eb9cbd8d03a98753708581cac8ef106d7",
+      "denominator": 10533000000.0,
+      "enterprise_value": 248994166784.92,
+      "evaluation_date": "2021-02-25",
+      "market_cap": 216198166784.92,
+      "price": 50.17,
+      "reason_code": null,
+      "shares_outstanding": 4309311676.0,
+      "status": "AVAILABLE",
+      "value": 20.525792
+    },
+    {
+      "content_hash": "a404bca726afd13d59562ba98e669f397d99e34ba59c401e3ae84b63824bbe82",
+      "denominator": 10874000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2021-04-27",
+      "market_cap": 231019850137.86,
+      "price": 53.58,
+      "reason_code": null,
+      "shares_outstanding": 4311680667.0,
+      "status": "AVAILABLE",
+      "value": 21.245158
+    },
+    {
+      "content_hash": "6f01709fdf7ca172e6cfefcbf78869884fcc0803bbede4f3a10918e8b0a23f7a",
+      "denominator": 11911000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2021-07-27",
+      "market_cap": 247169586933.78,
+      "price": 57.26,
+      "reason_code": null,
+      "shares_outstanding": 4316618703.0,
+      "status": "AVAILABLE",
+      "value": 20.751372
+    },
+    {
+      "content_hash": "2f2926a85447e90829acd5f6b057cfd01d737116de19555f2b1a4aec1e0af725",
+      "denominator": 12515000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2021-10-28",
+      "market_cap": 242060310025.44,
+      "price": 56.04,
+      "reason_code": null,
+      "shares_outstanding": 4319420236.0,
+      "status": "AVAILABLE",
+      "value": 19.341615
+    },
+    {
+      "content_hash": "595a0b7e5aa45331e6d09ea099d3608401761e301e0b12fe6dba983fce7b2e24",
+      "denominator": 11760000000.0,
+      "enterprise_value": 300546277622.24,
+      "evaluation_date": "2022-02-22",
+      "market_cap": 270013277622.24,
+      "price": 62.28,
+      "reason_code": null,
+      "shares_outstanding": 4335473308.0,
+      "status": "AVAILABLE",
+      "value": 22.960313
+    },
+    {
+      "content_hash": "1d24064fd619a8499739780d814e54b3d08effa0e141480a9e00c56cf3d55dc9",
+      "denominator": 12401000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2022-04-28",
+      "market_cap": 286935551440.13,
+      "price": 66.19,
+      "reason_code": null,
+      "shares_outstanding": 4335028727.0,
+      "status": "AVAILABLE",
+      "value": 23.138098
+    },
+    {
+      "content_hash": "93ac0cbf6ab4a1be25d470b12c0474dacaa9c5f74bcd5a79892a631ef87a8625",
+      "denominator": 11665000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2022-07-27",
+      "market_cap": 272494884253.74,
+      "price": 63.01,
+      "reason_code": null,
+      "shares_outstanding": 4324629174.0,
+      "status": "AVAILABLE",
+      "value": 23.360042
+    },
+    {
+      "content_hash": "11497a626b7ab7272a847a344e91fe45fa51c2aabc4ed81e05f692e7d92eae2d",
+      "denominator": 11800000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2022-10-26",
+      "market_cap": 256832842748.96,
+      "price": 59.39,
+      "reason_code": null,
+      "shares_outstanding": 4324513264.0,
+      "status": "AVAILABLE",
+      "value": 21.765495
+    },
+    {
+      "content_hash": "b8c4ca270380a5401091e737c56befff066cbb121a15c59eb9917129e87b634f",
+      "denominator": 12169000000.0,
+      "enterprise_value": 287070168623.4,
+      "evaluation_date": "2023-02-21",
+      "market_cap": 258736168623.4,
+      "price": 59.8,
+      "reason_code": null,
+      "shares_outstanding": 4326691783.0,
+      "status": "AVAILABLE",
+      "value": 21.261909
+    },
+    {
+      "content_hash": "69b75a3ffc478d7f8426f5cdd749e6ee67f36ae208ecfed7ff513a7cb9b2822e",
+      "denominator": 12093000000.0,
+      "enterprise_value": 303924943910.95,
+      "evaluation_date": "2023-04-26",
+      "market_cap": 274826943910.95,
+      "price": 63.55,
+      "reason_code": null,
+      "shares_outstanding": 4324578189.0,
+      "status": "AVAILABLE",
+      "value": 22.726118
+    },
+    {
+      "content_hash": "4e6b3a54c710e7b188dec45b344557e1614bfee0700f006f09c04ac921c749b5",
+      "denominator": 12112000000.0,
+      "enterprise_value": 297625090061.28,
+      "evaluation_date": "2023-07-27",
+      "market_cap": 270012090061.28,
+      "price": 62.44,
+      "reason_code": null,
+      "shares_outstanding": 4324344812.0,
+      "status": "AVAILABLE",
+      "value": 22.29294
+    },
+    {
+      "content_hash": "7a46e8d8375f44e7b309f2d82d445740f919b670c602a54fcdc1e5e230d9a5a9",
+      "denominator": 12277000000.0,
+      "enterprise_value": 267405744388.4,
+      "evaluation_date": "2023-10-24",
+      "market_cap": 240554744388.4,
+      "price": 55.64,
+      "reason_code": null,
+      "shares_outstanding": 4323413810.0,
+      "status": "AVAILABLE",
+      "value": 19.593935
+    },
+    {
+      "content_hash": "f4d8d9dbca8f5b8f8fccbaa307213d6636abcd0dead76dfbcfb7f61c541bb5b1",
+      "denominator": 12439000000.0,
+      "enterprise_value": 292816089397.6,
+      "evaluation_date": "2024-02-20",
+      "market_cap": 261766089397.6,
+      "price": 60.7,
+      "reason_code": null,
+      "shares_outstanding": 4312456168.0,
+      "status": "AVAILABLE",
+      "value": 21.043982
+    },
+    {
+      "content_hash": "aa6d2812752e2a48360c314c814a12abe176e7500a9e02c41024c09b07be5da5",
+      "denominator": 11189000000.0,
+      "enterprise_value": 297109149480.93,
+      "evaluation_date": "2024-05-02",
+      "market_cap": 267050149480.93,
+      "price": 61.99,
+      "reason_code": null,
+      "shares_outstanding": 4307955307.0,
+      "status": "AVAILABLE",
+      "value": 23.867204
+    },
+    {
+      "content_hash": "45961d930dc0f29a422dd823b643e2480167bd1cc8b5dc3c221d70e0d4c21cb5",
+      "denominator": 11408000000.0,
+      "enterprise_value": 316252488464.5,
+      "evaluation_date": "2024-07-29",
+      "market_cap": 288028488464.5,
+      "price": 66.83,
+      "reason_code": null,
+      "shares_outstanding": 4309868150.0,
+      "status": "AVAILABLE",
+      "value": 25.247939
+    },
+    {
+      "content_hash": "478f4ccb4bd1ec8b6b9c3d8de8ae55dbb3840f340fb158df2d214e730a84c86f",
+      "denominator": 10626000000.0,
+      "enterprise_value": 320067747387.4,
+      "evaluation_date": "2024-10-24",
+      "market_cap": 289914747387.4,
+      "price": 67.3,
+      "reason_code": null,
+      "shares_outstanding": 4307797138.0,
+      "status": "AVAILABLE",
+      "value": 27.283526
+    },
+    {
+      "content_hash": "bcb3b0b254a4f1615d626c698a0730d35f7b6aa75a50e9382b75243f961f5d14",
+      "denominator": 11067000000.0,
+      "enterprise_value": 332853067665.8,
+      "evaluation_date": "2025-02-20",
+      "market_cap": 301242067665.8,
+      "price": 70.04,
+      "reason_code": null,
+      "shares_outstanding": 4301000395.0,
+      "status": "AVAILABLE",
+      "value": 27.219849
+    },
+    {
+      "content_hash": "0ea2046f179fc253b348c260748ea3a41a63e457ba5eea45b5cf3c2f1ac7dec7",
+      "denominator": 12590000000.0,
+      "enterprise_value": 345381175752.02,
+      "evaluation_date": "2025-05-01",
+      "market_cap": 306851175752.02,
+      "price": 71.29,
+      "reason_code": null,
+      "shares_outstanding": 4304266738.0,
+      "status": "AVAILABLE",
+      "value": 24.372611
+    },
+    {
+      "content_hash": "b6267d4978bcbd4b8e248d22788ebd2639643eba9adad24fdfb0bb2bd64dd512",
+      "denominator": 14248000000.0,
+      "enterprise_value": 334851407113.2,
+      "evaluation_date": "2025-07-24",
+      "market_cap": 297383407113.2,
+      "price": 69.1,
+      "reason_code": null,
+      "shares_outstanding": 4303667252.0,
+      "status": "AVAILABLE",
+      "value": 20.87194
+    },
+    {
+      "content_hash": "2c637fac8526752b7922667eb42bbe3c9a8efe729017d9e564bfafdfb000935d",
+      "denominator": 15720000000.0,
+      "enterprise_value": 333304522619.3,
+      "evaluation_date": "2025-10-23",
+      "market_cap": 300854522619.3,
+      "price": 69.94,
+      "reason_code": null,
+      "shares_outstanding": 4301608845.0,
+      "status": "AVAILABLE",
+      "value": 19.138328
+    },
+    {
+      "content_hash": "93e496b9a1000cb2bad07a1f3ce8dc22d984d8ad28ba3cc9eed92278b4f03a2e",
+      "denominator": 14812000000.0,
+      "enterprise_value": 376601729828.96,
+      "evaluation_date": "2026-02-20",
+      "market_cap": 343369729828.96,
+      "price": 79.84,
+      "reason_code": null,
+      "shares_outstanding": 4300723069.0,
+      "status": "AVAILABLE",
+      "value": 23.181861
+    },
+    {
+      "content_hash": "69797c643d509f9159ddc62c1d6c03f4e0ac5b4921e9c7c97ffc5eaf2adaed99",
+      "denominator": 15509000000.0,
+      "enterprise_value": 369360515241.68,
+      "evaluation_date": "2026-04-30",
+      "market_cap": 338863515241.68,
+      "price": 78.76,
+      "reason_code": null,
+      "shares_outstanding": 4302482418.0,
+      "status": "AVAILABLE",
+      "value": 21.849475
+    },
+    {
+      "content_hash": "3a90ac93787c95e2c482e477ded439cd5beae84657e8e2a1c9cc0af99806437c",
+      "denominator": 15509000000.0,
+      "enterprise_value": 413762133795.44,
+      "evaluation_date": "2026-07-29",
+      "market_cap": 383265133795.44,
+      "price": 89.08,
+      "reason_code": null,
+      "shares_outstanding": 4302482418.0,
+      "status": "AVAILABLE",
+      "value": 24.712434
+    }
+  ]
+}

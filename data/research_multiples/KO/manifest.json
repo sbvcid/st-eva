@@ -1,0 +1,159 @@
+{
+  "capture_policy": {
+    "companyconcept_substitutions": {
+      "us-gaap:Revenues": "The companyconcept endpoint serves this element with empty units for this filer, so the rows come from the issuer's XBRL fact set in the companyfacts payload instead."
+    },
+    "context_policy": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+    "dimensions": "The SEC facts payloads publish only facts with no dimensional qualifiers, so every row here is a consolidated fact and the capture carries no segment or member variants.",
+    "earliest_filed_date": "2010-01-01",
+    "facts_endpoint": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json",
+    "facts_endpoint_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+    "periodic_filings": [
+      "10-K",
+      "10-Q"
+    ]
+  },
+  "captured_at": "2026-10-21",
+  "dataset": "KO research capture",
+  "files": {
+    "cash_concept.json": {
+      "bytes": 85405,
+      "role": "cash",
+      "sha256": "b8f85898c1ff15addef67455fd59b1d89b89a1e9d69e136e2ed05ba2a4ad1778",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "commercial_paper_concept.json": {
+      "bytes": 19635,
+      "role": "commercial_paper",
+      "sha256": "20ee3ffb95c2111178b061adeed7a2aeb18b07e1378f66f57b0ae59c4ef225c7",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "daily_prices.json": {
+      "bytes": 460793,
+      "role": "prices",
+      "sha256": "8b663557447256909898b162f06de62e333ca0a37db273904caa6e896c51c93a",
+      "source": {
+        "note": "The provider's close series reflects later split events. The lane restores the as-traded close from the split events in this payload before it pairs a price with a share count.",
+        "retrieval": "one daily-granularity chart request for the issuer's ticker; the payload is stored verbatim, including its split events",
+        "source_document_sha256": "8b663557447256909898b162f06de62e333ca0a37db273904caa6e896c51c93a",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/KO?period1=1262304000&period2=1790000000&interval=1d&events=div%2Csplit"
+      }
+    },
+    "depreciation_concept.json": {
+      "bytes": 53293,
+      "role": "depreciation",
+      "sha256": "64a574b033ae71f7cf9a92484d31b7c4eff41318e92e761cac63fbab05ff2c3a",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "filing_acceptance_evidence.json": {
+      "bytes": 58214,
+      "role": "acceptance index",
+      "sha256": "62af147718050f2c763d1b2de9ff1fb0f4d597dc187602a3d16a069618c13215",
+      "source": {
+        "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
+        "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time",
+        "source_document_sha256": null,
+        "url": "https://www.sec.gov/Archives/edgar/data/0000021344/<accession>/<accession>-index-headers.html"
+      }
+    },
+    "long_term_debt_current_concept.json": {
+      "bytes": 45934,
+      "role": "long_term_debt_current",
+      "sha256": "30460462e6a28c496719f53d7234c664d4fbb549e7f050f6420dadf6a5bc7275",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "long_term_debt_noncurrent_concept.json": {
+      "bytes": 46199,
+      "role": "long_term_debt_noncurrent",
+      "sha256": "00279b79fdc09cd3db36d8125301b107319f6f1070aa13369500691c6363f2e4",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "marketable_securities_current_concept.json": {
+      "bytes": 45675,
+      "role": "marketable_securities_current",
+      "sha256": "af366bad4f2b4df8f32e3eeec65316f873f8343d4583ef5c5be8c126fd12b106",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "notes_and_loans_payable_concept.json": {
+      "bytes": 20767,
+      "role": "notes_and_loans_payable",
+      "sha256": "03605269337280d090206830ad483a874e40a042b8e02a4d9e412009ae93389a",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "operating_income_concept.json": {
+      "bytes": 72964,
+      "role": "operating_income",
+      "sha256": "e48fa7e67d50134ae33852bfbd8e6ed4af4289268c8f7db8eae50f0bbe8475ac",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "revenue_concept.json": {
+      "bytes": 34422,
+      "role": "revenue",
+      "sha256": "10f0bb4cdd306c47a5b5de921a6070da2ed84e588627420eee5820300c27c3a8",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    },
+    "shares_outstanding_concept.json": {
+      "bytes": 23321,
+      "role": "shares_outstanding",
+      "sha256": "6e67a48c13bdc2ba02115ba6b138eff6856a99fe16433525acb530194a7d0499",
+      "source": {
+        "note": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+        "retrieval": "one request for the issuer's XBRL fact set; the rows of each element are taken verbatim and re-keyed to the companyconcept shape the production loaders read",
+        "source_document_sha256": "53d363a9aa3071406cda9857654358f4dca42e174a1defb8cc1ce9ad2a4c9e40",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000021344.json"
+      }
+    }
+  },
+  "issuer": {
+    "cik": "CIK0000021344",
+    "entity_name": "The Coca-Cola Company",
+    "fiscal_year_end": "12-31",
+    "ticker": "KO"
+  },
+  "purpose": "Research calculation lane inputs for The Coca-Cola Company. Research use only: these files are not production inputs, they are not read by the production runner, and no figure computed from them is a production reference."
+}

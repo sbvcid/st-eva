@@ -1,0 +1,123 @@
+{
+  "candidate_lane_ids": [
+    "ko_reported_revenue_multiple",
+    "ko_reported_operating_denominator_multiple",
+    "ko_filed_ev_bridge_multiple_production_shape",
+    "ko_filed_ev_bridge_multiple_short_term_borrowings"
+  ],
+  "dataset": "KO research lane results",
+  "diagnostic_lane_ids": [
+    "ko_filed_ev_bridge_multiple_double_counted_diagnostic"
+  ],
+  "issuer": {
+    "cik": "CIK0000021344",
+    "entity_name": "The Coca-Cola Company",
+    "ticker": "KO"
+  },
+  "lanes": {
+    "ko_filed_ev_bridge_multiple_double_counted_diagnostic": {
+      "candidate_metric": false,
+      "content_hash": "aa3a143a482389d00fb7621a4b4bea5231b0bffeb30bbea5625f8b838dfd50a9",
+      "file": "ko_filed_ev_bridge_multiple_double_counted_diagnostic.json",
+      "input_set_id": "3b468fc81e32e14b02387a8c0a0207caa8aa78cb3f7742fc06a7f065e8cc540f",
+      "mean": 25.731022,
+      "median": 25.556776,
+      "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC",
+      "period_end": "2026-07-29",
+      "period_start": "2019-02-21",
+      "prior_period_revisions": 20,
+      "rejection_counts": {
+        "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE": 32,
+        "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 16,
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 3
+      },
+      "sample_count": 16,
+      "status": "RESEARCH_THIN_SAMPLE",
+      "std": 2.574429,
+      "total_evaluations": 67
+    },
+    "ko_filed_ev_bridge_multiple_production_shape": {
+      "candidate_metric": true,
+      "content_hash": "b7060f27d924497c7219f04e0740d19191f435018f22c5d91a3424e630402c1b",
+      "file": "ko_filed_ev_bridge_multiple_production_shape.json",
+      "input_set_id": "59aa9aea13dff1ce9e23e68b991b4904c2fe244a4d9d6f3e2afbce5e1b7a9426",
+      "mean": 23.133471,
+      "median": 23.639435,
+      "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+      "period_end": "2026-07-29",
+      "period_start": "2011-02-28",
+      "prior_period_revisions": 20,
+      "rejection_counts": {
+        "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE": 1,
+        "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 36,
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 3
+      },
+      "sample_count": 27,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 4.294477,
+      "total_evaluations": 67
+    },
+    "ko_filed_ev_bridge_multiple_short_term_borrowings": {
+      "candidate_metric": true,
+      "content_hash": "642fafbad92ee6e7347000a72db17036417642ec358a87dd43f8b2443a984b11",
+      "file": "ko_filed_ev_bridge_multiple_short_term_borrowings.json",
+      "input_set_id": "5431d3e9192735f837c07ad74b686a340d92470bd8817c7333c4e5352c0c2555",
+      "mean": 24.753179,
+      "median": 24.675484,
+      "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS",
+      "period_end": "2026-07-29",
+      "period_start": "2018-10-30",
+      "prior_period_revisions": 20,
+      "rejection_counts": {
+        "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE": 32,
+        "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 3,
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 3
+      },
+      "sample_count": 29,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 2.331508,
+      "total_evaluations": 67
+    },
+    "ko_reported_operating_denominator_multiple": {
+      "candidate_metric": true,
+      "content_hash": "689a88abc1d7d54646da01e91cca009e9d51fc7189d9b831001be30aca8c2757",
+      "file": "ko_reported_operating_denominator_multiple.json",
+      "input_set_id": "9e266bcfded94a61ddf25955eb98a90060d39bd296b3032c7d37500df328d113",
+      "mean": 19.092492,
+      "median": 19.775345,
+      "metric_id": "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+      "period_end": "2026-07-29",
+      "period_start": "2010-10-29",
+      "prior_period_revisions": 20,
+      "rejection_counts": {
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 3
+      },
+      "sample_count": 64,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 3.835147,
+      "total_evaluations": 67
+    },
+    "ko_reported_revenue_multiple": {
+      "candidate_metric": true,
+      "content_hash": "40d0a7a2747eb86c1545744ee73b4a5eedf66d5fb1504826268289bda3388e3a",
+      "file": "ko_reported_revenue_multiple.json",
+      "input_set_id": "fc48f7e21d8d510ef1bef3fa0d49d383731e92ca3e0e907a472a90016ed580ce",
+      "mean": 6.460903,
+      "median": 6.403373,
+      "metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+      "period_end": "2026-07-29",
+      "period_start": "2019-07-26",
+      "prior_period_revisions": 5,
+      "rejection_counts": {
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 38
+      },
+      "sample_count": 29,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 0.56218,
+      "total_evaluations": 67
+    }
+  },
+  "logic_version": "research-multiples/1.0.0",
+  "methodology": "research-multiples/1.0",
+  "purpose": "Research use only. No figure here is a production reference, and nothing here is read by the production runner, the Investment Context or the Archive."
+}

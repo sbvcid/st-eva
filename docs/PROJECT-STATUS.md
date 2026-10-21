@@ -1,8 +1,8 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role; and every role of every historical valuation dataset is now qualified against the core registry before it produces a figure, so an element the registry does not accept cannot obtain `USABLE_FOR_REFERENCE` however many complete, point-in-time observations it carries -- Phase 8, `semantic_qualification.py`)
+**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role; and every role of every historical valuation dataset is now qualified against the core registry before it produces a figure, so an element the registry does not accept cannot obtain `USABLE_FOR_REFERENCE` however many complete, point-in-time observations it carries -- Phase 8, `semantic_qualification.py`) -- Phase 9.3, `research_lane.py` (the isolated research calculation lane: a named research metric is computed from filed evidence the production qualification regime does not admit, under its own `RESEARCH_*` id and its own formula, with the registry's standing recorded on every observation and never enforced, the point-in-time, fiscal-window and filed-bridge rules unchanged, and the result held out of the Archive, the Investment Context, the production Summary and the production reference chain; KO is the first case, and KO remains without a production P/S and without a production EV/EBITDA)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented for three issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; AEP: EV/EBITDA 24 valid / 9 rejected over 33 evaluations, median 13.221693, `USABLE_FOR_REFERENCE`, and P/S 4 valid / 29 rejected, `INSUFFICIENT_OBSERVATIONS`, because the registry-accepted revenue element's coverage reaches four windows; MSFT: P/S 23 valid / 4 rejected, median 11.783822, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role; the filed EV bridge requires every component to describe the same balance-sheet date, and a window's quarters must be four consecutive periods of the issuer's own cycle **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions **+ every historical dataset's source role is qualified against the core registry before it produces a figure** (Phase 8; `semantic_qualification.py` asks the registry's own resolver whether an element is a metric for a filer, and `historical_income.py` / `historical_multiples.py` refuse a role the registry does not qualify, with the refusal naming the registry's decision rather than a shortage of quarters; the datasets, the six manifests, the summary, the Investment Context and the archive all carry the basis, and the replay compares it)
+**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented for three issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; AEP: EV/EBITDA 24 valid / 9 rejected over 33 evaluations, median 13.221693, `USABLE_FOR_REFERENCE`, and P/S 4 valid / 29 rejected, `INSUFFICIENT_OBSERVATIONS`, because the registry-accepted revenue element's coverage reaches four windows; MSFT: P/S 23 valid / 4 rejected, median 11.783822, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role; the filed EV bridge requires every component to describe the same balance-sheet date, and a window's quarters must be four consecutive periods of the issuer's own cycle **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions **+ every historical dataset's source role is qualified against the core registry before it produces a figure** (Phase 8; `semantic_qualification.py` asks the registry's own resolver whether an element is a metric for a filer, and `historical_income.py` / `historical_multiples.py` refuse a role the registry does not qualify, with the refusal naming the registry's decision rather than a shortage of quarters; the datasets, the six manifests, the summary, the Investment Context and the archive all carry the basis, and the replay compares it) **+ the isolated research calculation lane** (Phase 9.3; `research_lane.py` and `research_lane_ko.py`, `data/research_multiples/KO/` and `data/research_lanes/KO/`; four candidate research metrics and one diagnostic over KO's filed facts, medians 6.403373, 19.775345, 23.639435 and 24.675484 on 29, 64, 27 and 29 valid observations; the production pipeline refuses both of KO's production figures over the same capture, and the two agree on the price, the share count, the market capitalisation and the enterprise value date by date)
 **Latest verified GitHub Actions:** `9f2911f` (Phase 8, the registry-backed semantic qualification) verified `backend` and `browser` jobs success in run `39616759679` (checked via the GitHub API on 2026-10-21: backend 2706 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39598786653` verified `d85cfc1` (the phase 7.3 CI record: backend 2706 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39598264148` verified `bc36384` (the phase and documentation reconciliation: backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39591871200` verified the American Electric Power correction `0aadc8a` (backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding runs `39578452809` (Microsoft's dataset `d3cec3b`: backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success) and `39562741308` (Microsoft's D&A role left empty, `3ec78b7`: backend 2643 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);
 
 
@@ -4384,6 +4384,151 @@ CI for this round: commit `9f2911f`, run `39616759679`, `backend` and
 `browser` jobs success (backend 2706 passed / 171 skipped / 534 subtests, web
 API 25 passed, archive isolation 6 passed, browser smoke 12 passed).
 
+## Phase 9.3 (2026-10-21): the isolated research calculation lane
+
+The production regime refuses a figure for two different reasons and treats
+them alike: the figure cannot be published. The evidence may not support it --
+the window is not continuous, the fact was not knowable at the evaluation
+date, the balance-sheet components do not describe one balance sheet, the
+sample is too thin -- and those refusals are correct. Or the registry may not
+accept the element, and the filed values are sound while what is missing is
+a name that is true of them.
+
+Phase 9.2 designed the separation. This phase implements it, with KO as the
+first case. It adds no production issuer, changes no registry decision,
+extends no registry scope, and changes no production dataset, valuation result
+or Archive.
+
+### What was added
+
+| Artifact | What it is |
+|---|---|
+| `research_lane.py` | The lane engine: the five data objects, the closed research refusal set, the isolation guard, the point-in-time and window machinery borrowed from the production modules, and the R-9 revision detection. |
+| `research_lane_ko.py` | The KO case: the role declarations, the four candidate lanes, the one diagnostic lane, and the research-tree writer. |
+| `data/research_multiples/KO/` | The KO capture: the price series, the filing acceptance index, the cover-page share counts and ten filed elements, 1,410 facts, every file with its source URL, its retrieval note and its SHA-256. |
+| `data/research_lanes/KO/` | The committed research tree: one summary per lane and an index. |
+| `tools/build_ko_research_capture.py` | The capture builder, so the capture can be rebuilt from its sources. |
+| `docs/RESEARCH-LANE.md`, `docs/RESEARCH-LANE-KO.md` | The methodology and the case. |
+| `tests/test_research_lane.py` | 42 tests over the isolation, the capture, the arithmetic agreement with production, the refusals, the basis breaks and the run identity. |
+
+### The four mechanisms that keep a lane out of production
+
+1. **The names.** `assert_research_isolation()` reads
+   `archive.PRODUCTION_REFERENCE_BASES` and
+   `investment_context.REFERENCE_SOURCES` and refuses to run on a collision.
+   It is checked against the production vocabularies as they are in the
+   repository, at run time, rather than against a restatement of them.
+2. **The flag.** `ResearchDistribution.production_eligible` is fixed to
+   `False` by the type -- declared `init=False` on a frozen dataclass -- so
+   it cannot be set at construction and cannot be changed afterwards. No code
+   path can turn a research distribution into a production reference by
+   forgetting a check.
+3. **The gate.** The registry's standing on every element the lane reads is
+   recorded on every observation and never decides the arithmetic. A
+   registry refusal is a fact about the element.
+4. **The destination.** A lane reads a capture and returns a result; the
+   caller decides where the result goes, and the only destination the
+   repository supports is the research tree. No lane writes an Archive,
+   produces a `refc:*` row, reaches an Investment Context, or is read by the
+   production runner. `tests/test_research_lane.py` asserts that no
+   production module imports the lane and that the research outputs carry no
+   production reference.
+
+### The KO case
+
+The production pipeline, run over the same capture, refuses both of KO's
+production figures: `P_S_RATIO_REFERENCE` and `EV_EBITDA_RATIO_REFERENCE` are
+both `UNAVAILABLE` with zero observations, on all 67 evaluation dates, with
+`REASON_NO_QUALIFIED_REVENUE_ELEMENT` and `REASON_NO_QUALIFIED_DA_ELEMENT`.
+The registry accepts `us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax`
+for revenue, and KO files no fact on it; it scopes
+`us-gaap:DepreciationDepletionAndAmortization` to Apple and Nike alone.
+
+The research lanes read the same filed facts with the same arithmetic and
+publish under their own names:
+
+| Lane | Research metric id | Valid | Refused | Median |
+|---|---|---:|---:|---:|
+| A | `RESEARCH_KO_REPORTED_REVENUE_MULTIPLE` | 29 | 38 | 6.403373 |
+| B | `RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE` | 64 | 3 | 19.775345 |
+| C1 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE` | 27 | 40 | 23.639435 |
+| C2 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS` | 29 | 38 | 24.675484 |
+| C3 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC` | 16 | 51 | 25.556776 |
+
+C3 is a diagnostic and not a candidate metric: its `candidate_metric` flag is
+false, it is absent from the selectable research metrics, and its formula is
+written so that it cannot be read as an acceptable enterprise-value
+definition. It measures what a bridge holding both commercial paper and loans
+and notes payable would overstate: +0.0161 to +1.3349, that is +0.06% to
++5.79%, on the sixteen dates where it and C2 both publish.
+
+The arithmetic agreement is measured, not asserted: over the same capture the
+research lane and the production pipeline produce the same price, the same
+share count and the same market capitalisation on all 67 dates, and the same
+enterprise value on all 11 dates at which the production bridge is complete.
+
+### What the evidence turned out to say
+
+- KO's balance-sheet line **loans and notes payable is its total short-term
+  borrowings**. The FY2025 10-K carries no commercial paper line on the face
+  of the balance sheet, the debt note says loans and notes payable consist
+  primarily of commercial paper, and the filed values satisfy
+  `NotesAndLoansPayable = CommercialPaper + OtherShortTermBorrowings` at
+  every date at which both are reported. A bridge holding both counts
+  commercial paper twice, which is what C3 measures and what C2 exists to
+  avoid.
+- The two bridge lanes' medians differ by 1.036049, and the lanes do not
+  offer that as a measure of anything: the two sample different dates against
+  different balance-sheet compositions, and C1's sample is constrained by
+  commercial paper's annual-only reporting.
+- KO's consolidation of Coca-Cola Beverages Africa re-presented FY2017
+  revenue from 35,410,000,000 to 36,212,000,000 and FY2018 from
+  31,856,000,000 to 34,300,000,000, and re-presented operating income in
+  twenty revisions across the sample. R-9 detects each of them as a
+  `PRIOR_PERIOD_VALUE_REVISION` -- the lane's evidence shows a value it
+  already knew was replaced by a different value; it does not show that the
+  issuer formally restated, and it does not say so.
+- KO's marketable securities line changed element at the end of 2020 with the
+  same filed value, a re-tagging; its long-term debt changed element at
+  2023-12-31 with a different scope, because the successor element includes
+  the lease obligation. Both are recorded as basis breaks on the observation.
+- Three observations per lane carry a mixed-basis note, where a derived
+  quarter subtracts a pre-revision cumulative span from a post-revision one.
+  The lane records the condition rather than absorbing it.
+
+### The reconciliation with the phase 9.2 audit
+
+The four phase 9.2 cross-check figures are reproduced exactly from the
+committed capture: 29/64/27/29 valid observations and medians
+6.403373/19.775345/23.639435/24.675484. The phase 9.2 report's acceptance
+criteria listed the exclusion counts as `38 + 3 + 37 + 35 + 19`; the counts
+the observation records carry are `38 + 3 + 40 + 38 + 51`. The two bridge
+lanes' counts in that list omitted the three window refusals each of them
+carries, and the diagnostic lane's count of nineteen was neither its valid
+count nor its refusal count. The records are the record.
+
+One number from the phase 9.1 audit could not be reproduced from the filed
+inputs under any of the bridge, denominator, element or sample variants that
+were tested. It is not carried forward as an expectation anywhere: the test
+suite asserts that it appears in no research output, no source file and no
+document.
+
+### What this phase does not do
+
+It does not qualify KO for production, and it does not make KO closer to
+production qualification. It changes no registry decision, extends no
+registry scope, adds no registry metric, changes no production bridge,
+window, point-in-time rule or sample gate, adds no production issuer, and
+touches no production dataset, valuation result or Archive. KO remains
+without a production P/S and without a production EV/EBITDA.
+
+What it adds is a traceable, reproducible capacity to state a figure about
+filed evidence the production regime does not admit, and to say exactly what
+that figure is and exactly what it is not.
+
+Local verification for this round: research lane suite **42 passed**; the
+production payload digests for AAPL, AEP and MSFT are unchanged.
+
 ## Next task status
 
 The Phase 5 round is complete and verified: the production historical P/S and
@@ -4426,6 +4571,20 @@ resolved by when it was archived, so a second run on the same trading day
 cannot leave the rebuild holding the earlier reading of the same series. An
 operator's own multiple still diverges, because that is an assumption rather
 than archived knowledge.
+
+The research calculation lane is now implemented and separate from all of the
+above. It computes named research metrics from filed evidence that the
+production qualification regime does not admit, under its own `RESEARCH_*`
+ids and its own formulas, and it is held out of production by four checked
+mechanisms: the isolation guard that refuses a research id colliding with a
+production name, the `production_eligible` flag that the type fixes to
+`False`, the registry standing that is recorded and never enforced, and the
+research tree as the only destination. KO is the first case: the production
+pipeline refuses both of KO's production figures over the same capture, and
+the four research lanes publish 29, 64, 27 and 29 valid observations with
+medians 6.403373, 19.775345, 23.639435 and 24.675484. The lane's arithmetic
+and the production pipeline's agree on the same capture, date by date. KO is
+not qualified for production and is not closer to being qualified.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.

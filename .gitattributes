@@ -23,3 +23,11 @@ data/historical_income/**/*.json text eol=lf
 # checkout that rewrote them would change what the cross-currency analysis
 # reads.
 data/cross_currency/**/*.json text eol=lf
+
+# The research capture pins its own files' SHA-256 in its manifest, and the
+# research lane refuses to run against a capture whose bytes do not match
+# that manifest. A checkout that rewrote the line endings would change the
+# bytes the digest names, so the rule is the same as the dataset directories
+# above.
+data/research_multiples/**/*.json text eol=lf
+data/research_lanes/**/*.json text eol=lf
