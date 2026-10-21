@@ -131,36 +131,48 @@ REASON_NOT_AVAILABLE = "NOT_AVAILABLE"
 # was never passed through any statistic, and an unavailable reference is not a
 # statistic at all. `selection_method` is the engine's own name for the rung it
 # was chosen on.
+#
+# `observation_count_source` says where the reference's own observation count
+# comes from, so a basis never borrows a count that describes a different
+# object. A production distribution carries its own count; a historical
+# median's count is the band's; an operator's multiple and an unavailable
+# reference have no source that holds observations at all.
 REFERENCE_SOURCES: Dict[str, Dict[str, Any]] = {
     "PRODUCTION_PE_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
         "selection_method": "production_historical_pe_median",
+        "observation_count_source": "production_distribution",
     },
     "PRODUCTION_PFCF_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
         "selection_method": "production_historical_pfcf_median",
+        "observation_count_source": "production_distribution",
     },
     "PRODUCTION_PS_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
         "selection_method": "production_historical_ps_median",
+        "observation_count_source": "production_distribution",
     },
     "PRODUCTION_EV_EBITDA_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
         "selection_method": "production_historical_ev_ebitda_median",
+        "observation_count_source": "production_distribution",
     },
     "HISTORICAL_MEDIAN": {
         "observed": True,
         "source_statistic": "median",
         "selection_method": "historical_pe_median",
+        "observation_count_source": "band",
     },
     "USER_SUPPLIED": {
         "observed": False,
         "source_statistic": None,
         "selection_method": "user_supplied_multiple",
+        "observation_count_source": None,
     },
     "NONE": {
         "observed": False,
@@ -974,13 +986,17 @@ class ContextBuilder:
         if eligibility is not None:
             eligible = bool(eligibility.get("eligible_as_reference"))
 
-        # The count follows the basis. Only the two observed bases have a source
-        # that holds observations; the other two have none, so they report none
-        # rather than borrowing the band's number. The production distribution
-        # carries its own count in; the historical band is the count's source.
-        if basis in ("PRODUCTION_PE_MEDIAN", "PRODUCTION_PFCF_MEDIAN"):
+        # The count follows the basis. Only the observed bases have a source
+        # that holds observations; the other two have none, so they report
+        # none rather than borrowing the band's number. The production
+        # distribution carries its own count in; the historical band is the
+        # count's source. Which of the two applies is a property of the
+        # basis, so a new production basis reports its own count without
+        # this list having to be extended to name it.
+        count_source = source.get("observation_count_source")
+        if count_source == "production_distribution":
             source_declared = safe_float(source_observation_count)
-        elif basis == "HISTORICAL_MEDIAN":
+        elif count_source == "band":
             source_declared = declared
         else:
             source_declared = None
@@ -1008,6 +1024,15 @@ class ContextBuilder:
                 "source_statistic": source["source_statistic"],
                 "source_observation_count": observation_count,
                 "eligible_as_reference": eligible,
+                # The eligibility's own observation count, kept beside the
+                # reference's: they are the same number for a production
+                # basis, and the eligibility is where a reader looks for the
+                # rule a reference was admitted under.
+                "eligibility_observation_count": (
+                    eligibility.get("observation_count")
+                    if eligibility is not None
+                    else None
+                ),
                 "eligibility_rule": (
                     eligibility["eligibility_rule"]
                     if eligibility is not None
@@ -1121,6 +1146,9 @@ class ContextBuilder:
                     f"{production_status}, so its median is a qualified reference"
                     if production_status
                     else "the production historical P/E distribution is a qualified reference"
+                ),
+                "observation_count": analysis_reference.get(
+                    "production_historical_pe_sample_count"
                 ),
             }
             if basis == "PRODUCTION_PE_MEDIAN"

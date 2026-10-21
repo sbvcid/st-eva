@@ -27,11 +27,16 @@ Methodology (historical-multiples/1.0):
        plus total debt (long-term debt non-current + long-term debt current +
        commercial paper) minus liquid funds (cash and cash equivalents +
        current marketable securities). Every component must be knowable at the
-       evaluation date; a date with any component missing has no EV, and the
-       bridge is never completed by omission, substitution or zero-fill. The
-       bridge remains a partial statement of enterprise value even when
-       complete (it omits leases, non-current investments and off-balance
-       sheet claims), and every observation says so.
+       evaluation date, and every one of them must describe the SAME
+       balance-sheet date: a bridge that mixes a stale instant with a current
+       one is not a balance sheet, so such a date publishes no enterprise
+       value at all. The bridge is never completed by omission, substitution
+       or zero-fill, and a component that was not reported is not carried
+       forward as zero. The bridge remains a partial statement of enterprise
+       value even when complete (it omits leases, non-current investments and
+       off-balance sheet claims), and every observation says so. Market
+       capitalization is not a balance-sheet component and is not part of the
+       same-date rule.
   X-5: P/S = market capitalization / TTM revenue. EV/EBITDA = enterprise
        value / TTM EBITDA. A non-positive denominator produces no multiple.
        All figures are USD as filed; a mixed-currency figure is refused, never
@@ -57,8 +62,9 @@ import json
 import math
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
+from fiscal_calendar import build_fiscal_calendar
 from historical_income import (
     ISSUER_CONFIGS as INCOME_ISSUER_CONFIGS,
     HistoricalIncomeConfig,
@@ -101,9 +107,30 @@ REASON_MISSING_PRICE = "REASON_MISSING_PRICE"
 REASON_MISSING_SHARES = "REASON_MISSING_SHARES"
 REASON_MISSING_REVENUE_WINDOW = "REASON_MISSING_REVENUE_WINDOW"
 REASON_MISSING_EBITDA_WINDOW = "REASON_MISSING_EBITDA_WINDOW"
+REASON_SOURCE_CONCEPT_COVERAGE_GAP = "REASON_SOURCE_CONCEPT_COVERAGE_GAP"
 REASON_INCOMPLETE_EV_BRIDGE = "REASON_INCOMPLETE_EV_BRIDGE"
+REASON_MIXED_BALANCE_SHEET_PERIODS = "REASON_MIXED_BALANCE_SHEET_PERIODS"
 REASON_NON_POSITIVE_DENOMINATOR = "REASON_NON_POSITIVE_DENOMINATOR"
 REASON_INSUFFICIENT_OBSERVATIONS = "REASON_INSUFFICIENT_OBSERVATIONS"
+# The dataset itself does not exist for this issuer. It is a different
+# condition from a dataset that exists and holds too few observations, and it
+# is never reported as one: an absent dataset is not a thin sample.
+REASON_DATASET_NOT_ESTABLISHED = "REASON_DATASET_NOT_ESTABLISHED"
+# The dataset exists but could not be read. Its own condition again: a load
+# failure is neither an absent dataset nor a thin sample, and reporting it as
+# either would send a reader to the wrong place.
+REASON_DATASET_LOAD_FAILED = "REASON_DATASET_LOAD_FAILED"
+
+# The EV bridge's date rule, stated once and carried by every observation,
+# the manifest and the summary: the filed balance-sheet components must
+# describe one balance sheet, not several. Market capitalization is not a
+# balance-sheet component and is not part of this rule.
+EV_BRIDGE_PERIOD_POLICY = (
+    "Every filed balance-sheet component of the enterprise-value bridge must "
+    "describe the same balance-sheet date. A date whose components span more "
+    "than one balance sheet publishes no enterprise value; the stale component "
+    "is not carried forward and is never treated as zero."
+)
 
 CLOSED_REASON_CODES = frozenset(
     {
@@ -111,9 +138,13 @@ CLOSED_REASON_CODES = frozenset(
         REASON_MISSING_SHARES,
         REASON_MISSING_REVENUE_WINDOW,
         REASON_MISSING_EBITDA_WINDOW,
+        REASON_SOURCE_CONCEPT_COVERAGE_GAP,
         REASON_INCOMPLETE_EV_BRIDGE,
+        REASON_MIXED_BALANCE_SHEET_PERIODS,
         REASON_NON_POSITIVE_DENOMINATOR,
         REASON_INSUFFICIENT_OBSERVATIONS,
+        REASON_DATASET_NOT_ESTABLISHED,
+        REASON_DATASET_LOAD_FAILED,
     }
 )
 
@@ -337,6 +368,10 @@ class HistoricalMultiplesResult:
             "logic_version": LOGIC_VERSION,
             "formula_version": FORMULA_VERSION,
             "concept_tags": dict(self.concept_tags),
+            # The enterprise-value bridge's date rule, carried by the package
+            # as well as by every observation, so a reader of the summary
+            # knows what "complete" means for an enterprise value.
+            "ev_bridge_policy": EV_BRIDGE_PERIOD_POLICY,
             "distributions": {
                 metric: dist.to_dict()
                 for metric, dist in self.distributions.items()
@@ -398,8 +433,124 @@ def production_multiples_summary(
         "methodology": payload.get("methodology"),
         "logic_version": payload.get("logic_version"),
         "formula_version": payload.get("formula_version"),
+        # The enterprise-value bridge's date rule, so the summary states what
+        # a complete enterprise value is, and does not leave a reader to infer
+        # it from the word "complete".
+        "ev_bridge_policy": payload.get("ev_bridge_policy"),
         "distributions": summaries,
     }
+
+
+def _format_positions(positions: Sequence[Mapping[str, Any]]) -> str:
+    """The fiscal positions a window could not fill, named as FY and quarter."""
+    return ", ".join(
+        f"FY{position['fiscal_year']} Q{position['fiscal_quarter']}"
+        for position in positions
+    )
+
+
+def classify_window_refusal(
+    *,
+    rejection: Optional[Mapping[str, Any]],
+    metric_label: str,
+    day: str,
+    position_coverage: Mapping[Tuple[int, int], Mapping[str, Any]],
+    capture_facts_knowable: int,
+    filings_knowable: int,
+) -> Tuple[Optional[str], str]:
+    """
+    Why a trailing window could not be built, and the words that say so.
+
+    Two causes are told apart, and only one of them is a gap in the source:
+
+    * the captured concept does not cover the fiscal positions the window
+      needed -- it carries no fact for a position's own period end in any
+      filing, so no window could ever have been built from it;
+    * the capture does cover them, and the window could not be completed from
+      what was knowable at the date.
+
+    The first is a property of the capture and is named as such; the second
+    is a statement about timing. Neither is inferred from a single missing
+    value: the coverage test is made over the capture's own facts for every
+    fiscal position the window needed, so a position the capture carries from
+    a later filing is a timing refusal and a position it never carries is a
+    coverage gap.
+
+    `position_coverage` says, per fiscal position, whether the capture
+    carries it and when it first could know it. `capture_facts_knowable` is
+    how many facts of the captured concept were knowable at the evaluation
+    date, and `filings_knowable` is how many filings the acceptance index
+    records as knowable by then.
+    """
+    if rejection is None:
+        return None, ""
+
+    missing = list(rejection.get("positions_missing") or [])
+    covered_positions = sum(
+        1
+        for entry in position_coverage.values()
+        if entry.get("covered_by_capture")
+    )
+
+    if rejection.get("no_quarter_knowable"):
+        if capture_facts_knowable == 0 and filings_knowable > 0:
+            return REASON_SOURCE_CONCEPT_COVERAGE_GAP, (
+                f"The captured {metric_label} concept carries no fact from any "
+                f"of the {filings_knowable} filing(s) the acceptance index "
+                f"records as knowable at {day}. The trailing {metric_label} "
+                "window cannot exist because the capture does not carry what "
+                "those filings reported. This is a property of the capture, "
+                "not a statement about what the issuer had reported."
+            )
+        return None, (
+            f"The captured {metric_label} concept carries "
+            f"{capture_facts_knowable} fact(s) knowable at {day} and covers "
+            f"{covered_positions} fiscal position(s) in total, but no four "
+            f"consecutive positions were knowable at that date, so the "
+            f"trailing {metric_label} window is not available at this date."
+        )
+
+    uncovered = [
+        position
+        for position in missing
+        if not position_coverage.get(
+            (position["fiscal_year"], position["fiscal_quarter"]), {}
+        ).get("covered_by_capture")
+    ]
+    if uncovered:
+        return REASON_SOURCE_CONCEPT_COVERAGE_GAP, (
+            f"The captured {metric_label} concept carries no fact for "
+            f"{_format_positions(uncovered)} in any filing, so no trailing "
+            f"{metric_label} window could have been built for it. This is a "
+            "property of the capture, not a statement about what the issuer "
+            "had reported."
+        )
+
+    later = [
+        position
+        for position in missing
+        if position_coverage.get(
+            (position["fiscal_year"], position["fiscal_quarter"]), {}
+        ).get("covered_by_capture")
+    ]
+    first_dates = sorted(
+        {
+            position_coverage[(position["fiscal_year"], position["fiscal_quarter"])][
+                "first_knowable_date"
+            ]
+            for position in later
+            if position_coverage[(position["fiscal_year"], position["fiscal_quarter"])][
+                "first_knowable_date"
+            ]
+        }
+    )
+    return None, (
+        f"The captured {metric_label} concept covers the fiscal positions the "
+        f"trailing {metric_label} window needed, but not all of them were "
+        f"knowable at {day}: {_format_positions(later)} was first knowable "
+        f"from {', '.join(first_dates)}. The window is refused rather than "
+        "backfilled with a later filing's comparative."
+    )
 
 
 def compute_multiples_distribution(
@@ -677,6 +828,119 @@ def load_issuer_historical_multiples(
     # -- denominators: the income dataset's own trailing windows (X-1) --
     income_result = load_issuer_historical_income(config.income_config)
 
+    # -- the captured concepts, for the coverage test (X-1a) --
+    # The refusal of a trailing window has two possible causes, and the
+    # capture is what tells them apart. A fiscal position the capture carries
+    # no fact for -- in any filing, however late -- is a gap in the source: no
+    # window could ever have been built from it. A position the capture does
+    # carry, but only from a filing that was not yet public at the evaluation
+    # date, is a matter of timing. The distinction is made against the
+    # source payloads themselves, by path, and never inferred from a single
+    # missing value.
+    income_dir = config.income_config.data_dir
+    income_payloads: Dict[str, Dict[str, Any]] = {}
+    income_concept_shas: Dict[str, str] = {}
+    for role, filename in (
+        ("revenue", "revenue_concept.json"),
+        ("operating_income", "operating_income_concept.json"),
+        ("depreciation", "depreciation_concept.json"),
+    ):
+        path = income_dir / filename
+        if not path.exists():
+            raise FileNotFoundError(f"Missing required file: {path}")
+        income_payloads[role] = json.loads(path.read_text(encoding="utf-8"))
+        income_concept_shas[role] = _sha256_of(path)
+
+    # The fiscal calendar the income dataset itself derives its windows on, so
+    # the positions here are the positions there.
+    fiscal_calendar = build_fiscal_calendar(
+        [
+            income_payloads["revenue"],
+            income_payloads["operating_income"],
+            income_payloads["depreciation"],
+        ],
+        filings_index,
+        units=("USD",),
+    )
+    position_period_ends: Dict[Tuple[int, int], List[str]] = {}
+    for period_end, identity in fiscal_calendar.to_dict()["quarter_identity"].items():
+        position_period_ends.setdefault(
+            (identity["fiscal_year"], identity["fiscal_quarter"]), []
+        ).append(period_end)
+
+    # The facts each captured concept carries, and the filings that reported
+    # them, so a date's knowable set and a position's coverage are both read
+    # from the source.
+    role_facts: Dict[str, List[Dict[str, Any]]] = {}
+    for role, payload in income_payloads.items():
+        facts: List[Dict[str, Any]] = []
+        for unit, rows in (payload.get("units") or {}).items():
+            for row in rows:
+                accession = row.get("accn")
+                if accession in filings_index:
+                    facts.append(
+                        {
+                            "end": row.get("end"),
+                            "accession": accession,
+                            "usable_date": filings_index[accession]["usable_date"],
+                        }
+                    )
+        role_facts[role] = facts
+
+    # The EBITDA role is served by two captured concepts: a quarter's EBITDA
+    # needs both the operating income and the depreciation fact of that
+    # quarter, so the role's fact set is the two of them.
+    role_facts["ebitda"] = role_facts["operating_income"] + role_facts["depreciation"]
+
+    # The fiscal positions each role's capture can serve, and the first date
+    # the capture could know each of them. A position needs a fact of the
+    # concept that ends on the position's own period end: the quarterly fact
+    # for a Q1-Q3 position, and the annual fact for the Q4 position, whose
+    # discrete quarter is derived from it.
+    position_coverage: Dict[str, Dict[Tuple[int, int], Dict[str, Any]]] = {
+        "revenue": {},
+        "ebitda": {},
+    }
+    for role, required_roles in (
+        ("revenue", ("revenue",)),
+        ("ebitda", ("operating_income", "depreciation")),
+    ):
+        ends_by_role = {
+            required: {
+                fact["end"]
+                for fact in role_facts[required]
+                if fact["end"]
+            }
+            for required in required_roles
+        }
+        usable_by_end: Dict[str, str] = {}
+        for required in required_roles:
+            for fact in role_facts[required]:
+                end = fact["end"]
+                if not end:
+                    continue
+                current = usable_by_end.get(end)
+                if current is None or fact["usable_date"] < current:
+                    usable_by_end[end] = fact["usable_date"]
+        for position, period_ends in position_period_ends.items():
+            covered = any(
+                all(end in ends_by_role[required] for required in required_roles)
+                for end in period_ends
+            )
+            first_dates = sorted(
+                {
+                    usable_by_end[end]
+                    for end in period_ends
+                    if end in usable_by_end
+                    and all(end in ends_by_role[required] for required in required_roles)
+                }
+            )
+            position_coverage[role][position] = {
+                "covered_by_capture": covered,
+                "first_knowable_date": first_dates[0] if first_dates else None,
+                "period_ends": sorted(period_ends),
+            }
+
     # -- identity: digest every result-affecting input (X-8) --
     input_manifest = {
         "issuer_config": {
@@ -688,6 +952,7 @@ def load_issuer_historical_multiples(
         "acceptances": _sha256_of(config.acceptance_path),
         "shares_outstanding_concept": shares_sha,
         "balance_sheet_concepts": concept_shas,
+        "income_concepts": income_concept_shas,
         "income_dataset": {
             "input_set_id": income_result.input_set_id,
             "content_hash": income_result.content_hash,
@@ -721,6 +986,20 @@ def load_issuer_historical_multiples(
         # refused stays refused here.
         revenue_window = income_obs.ttm_revenue
         ebitda_window = income_obs.ttm_ebitda
+        rejection = income_obs.window_rejection or {}
+        capture_facts_knowable = {
+            role: sum(
+                1
+                for fact in role_facts[role]
+                if fact["usable_date"] <= day
+            )
+            for role in ("revenue", "ebitda")
+        }
+        filings_knowable = sum(
+            1
+            for filing in filings_index.values()
+            if filing["usable_date"] <= day
+        )
         ttm_revenue = (
             float(revenue_window["value"]) if revenue_window is not None else None
         )
@@ -729,15 +1008,31 @@ def load_issuer_historical_multiples(
         )
 
         if revenue_window is None:
-            ps_reason = REASON_MISSING_REVENUE_WINDOW
-            ps_detail = (
+            code, detail = classify_window_refusal(
+                rejection=rejection.get("revenue"),
+                metric_label="revenue",
+                day=day,
+                position_coverage=position_coverage["revenue"],
+                capture_facts_knowable=capture_facts_knowable["revenue"],
+                filings_knowable=filings_knowable,
+            )
+            ps_reason = code or REASON_MISSING_REVENUE_WINDOW
+            ps_detail = detail or (
                 "The income-statement dataset carries no TTM revenue window "
                 f"at {day} ({income_obs.reason_code or 'refused'}); this "
                 "dataset never recomputes or repairs a denominator."
             )
         if ebitda_window is None:
-            ev_reason = REASON_MISSING_EBITDA_WINDOW
-            ev_detail = (
+            code, detail = classify_window_refusal(
+                rejection=rejection.get("ebitda"),
+                metric_label="EBITDA",
+                day=day,
+                position_coverage=position_coverage["ebitda"],
+                capture_facts_knowable=capture_facts_knowable["ebitda"],
+                filings_knowable=filings_knowable,
+            )
+            ev_reason = code or REASON_MISSING_EBITDA_WINDOW
+            ev_detail = detail or (
                 "The income-statement dataset carries no TTM EBITDA window "
                 f"at {day} ({income_obs.reason_code or 'refused'}); this "
                 "dataset never recomputes or repairs a denominator."
@@ -774,13 +1069,25 @@ def load_issuer_historical_multiples(
                 else:
                     ps_ratio = round(market_cap / ttm_revenue, 6)
 
-            # ---- EV bridge (X-4): every component knowable, or no EV ----
+            # ---- EV bridge (X-4): every component knowable, and every
+            # component from the same balance-sheet date ----
             present = sorted(components_in_force)
             absent = [c for c in EV_BRIDGE_COMPONENTS if c not in components_in_force]
-            bridge_complete = not absent
+            all_present = not absent
+            component_periods = {
+                component: fact.period_end
+                for component, fact in components_in_force.items()
+            }
+            distinct_periods = sorted(set(component_periods.values()))
+            single_period = len(distinct_periods) == 1
+            # A bridge is complete only when every filed component is
+            # knowable AND all of them describe the same balance sheet. A
+            # bridge that mixes a stale instant with a current one is not a
+            # balance sheet, and no EV is published from it.
+            bridge_complete = all_present and single_period
             total_debt: Optional[float] = None
             liquid_funds: Optional[float] = None
-            if bridge_complete:
+            if all_present:
                 total_debt = sum(
                     components_in_force[c].value
                     for c in (
@@ -793,6 +1100,7 @@ def load_issuer_historical_multiples(
                     components_in_force[c].value
                     for c in ("cash", "marketable_securities_current")
                 )
+            if bridge_complete:
                 ev_value = round(market_cap + total_debt - liquid_funds, 2)
 
             ev_bridge = {
@@ -811,22 +1119,49 @@ def load_issuer_historical_multiples(
                     "- liquid funds (cash and cash equivalents + current "
                     "marketable securities)"
                 ),
+                "period_alignment": {
+                    "policy": EV_BRIDGE_PERIOD_POLICY,
+                    "required": True,
+                    "all_components_present": all_present,
+                    "single_balance_sheet_date": single_period,
+                    "balance_sheet_date": (
+                        distinct_periods[0] if single_period else None
+                    ),
+                    "component_period_ends": component_periods,
+                    "distinct_period_ends": distinct_periods,
+                },
                 "completeness_note": (
                     "Every filed component this bridge names is knowable at "
-                    "the evaluation date. The bridge remains a partial "
+                    "the evaluation date, and every one of them describes the "
+                    "same balance sheet date. The bridge remains a partial "
                     "statement of enterprise value: it omits operating leases "
                     "under ASC 842, non-current investments and off-balance "
                     "sheet commitments, and is never presented as the whole "
-                    "of enterprise value."
+                    "of enterprise value. Market capitalization is not a "
+                    "balance-sheet component and is not part of this rule."
                 ),
             }
 
-            if ev_reason is None and not bridge_complete:
+            if ev_reason is None and not all_present:
                 ev_reason = REASON_INCOMPLETE_EV_BRIDGE
                 ev_detail = (
                     "The filed EV bridge is incomplete at "
                     f"{day}: missing {', '.join(absent)}. Enterprise value is "
                     "never completed by omission, substitution or zero-fill."
+                )
+            elif ev_reason is None and not single_period:
+                ev_reason = REASON_MIXED_BALANCE_SHEET_PERIODS
+                ev_detail = (
+                    "The filed EV bridge at "
+                    f"{day} spans more than one balance sheet date: "
+                    + ", ".join(
+                        f"{component} as of {period}"
+                        for component, period in sorted(component_periods.items())
+                    )
+                    + ". Every component must describe the same balance sheet, "
+                    "so no enterprise value is published from this date. The "
+                    "stale component is not carried forward and is never "
+                    "treated as zero."
                 )
             elif ev_reason is None:
                 if ttm_ebitda is None or ttm_ebitda <= 0:

@@ -2593,16 +2593,25 @@ def load_production_historical_references(
     # distribution.
     production_historical_multiples = None
     if include_historical_multiples:
-        try:
-            from historical_multiples import ISSUER_CONFIGS as MULTIPLES_ISSUER_CONFIGS
-            from historical_multiples import load_issuer_historical_multiples
+        from historical_multiples import (
+            ISSUER_CONFIGS as MULTIPLES_ISSUER_CONFIGS,
+            REASON_DATASET_LOAD_FAILED,
+            REASON_DATASET_NOT_ESTABLISHED,
+            load_issuer_historical_multiples,
+        )
 
+        try:
             if ticker in MULTIPLES_ISSUER_CONFIGS:
                 multiples_result = load_issuer_historical_multiples(
                     MULTIPLES_ISSUER_CONFIGS[ticker]
                 )
                 production_historical_multiples = multiples_result.to_dict()
             else:
+                # The dataset does not exist for this issuer. That is a
+                # different condition from a dataset that exists and holds
+                # too few observations, and it is reported as the condition it
+                # is: an absent dataset is not a thin sample, and it never
+                # becomes a reference by way of another source.
                 production_historical_multiples = {
                     "distributions": {
                         "P_S_RATIO_REFERENCE": {
@@ -2610,7 +2619,7 @@ def load_production_historical_references(
                             "status": "UNAVAILABLE",
                             "usable_for_reference": False,
                             "sample_count": 0,
-                            "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                            "reason_code": REASON_DATASET_NOT_ESTABLISHED,
                             "reason_detail": (
                                 f"Production historical P/S dataset is not yet established "
                                 f"for {ticker}."
@@ -2621,7 +2630,7 @@ def load_production_historical_references(
                             "status": "UNAVAILABLE",
                             "usable_for_reference": False,
                             "sample_count": 0,
-                            "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                            "reason_code": REASON_DATASET_NOT_ESTABLISHED,
                             "reason_detail": (
                                 f"Production historical EV/EBITDA dataset is not yet "
                                 f"established for {ticker}."
@@ -2630,6 +2639,8 @@ def load_production_historical_references(
                     }
                 }
         except Exception as exc:
+            # The dataset exists but could not be read. It is reported as the
+            # condition it is, and it never becomes a reference.
             production_historical_multiples = {
                 "distributions": {
                     "P_S_RATIO_REFERENCE": {
@@ -2637,7 +2648,7 @@ def load_production_historical_references(
                         "status": "UNAVAILABLE",
                         "usable_for_reference": False,
                         "sample_count": 0,
-                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_code": REASON_DATASET_LOAD_FAILED,
                         "reason_detail": str(exc),
                     },
                     "EV_EBITDA_RATIO_REFERENCE": {
@@ -2645,7 +2656,7 @@ def load_production_historical_references(
                         "status": "UNAVAILABLE",
                         "usable_for_reference": False,
                         "sample_count": 0,
-                        "reason_code": "REASON_INSUFFICIENT_OBSERVATIONS",
+                        "reason_code": REASON_DATASET_LOAD_FAILED,
                         "reason_detail": str(exc),
                     },
                 }

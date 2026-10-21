@@ -71,13 +71,22 @@
     "point_in_time_rule": "usable_date is derived from acceptance_datetime_header_et using the 16:00 ET cutoff rule at load time, identical to the historical P/E, P/FCF and income pipelines. The value in force at an evaluation date is the latest knowable version of each component; no fact is used before its filing usable date.",
     "multiple_rules": {
       "ps": "P/S = (as-traded close on the evaluation date x latest knowable cover-page shares outstanding) / TTM revenue, where the TTM revenue window is the income dataset own four-consecutive-fiscal-quarter window. A non-positive denominator produces no multiple.",
-      "ev_ebitda": "EV/EBITDA = (market capitalization + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash + current marketable securities]) / TTM EBITDA. Every bridge component must be knowable at the evaluation date; a date with any component missing has no EV and the bridge is never completed by omission, substitution or zero-fill. The bridge remains a partial statement of enterprise value (it omits leases, non-current investments and off-balance sheet claims) and every observation says so."
+      "ev_ebitda": "EV/EBITDA = (market capitalization + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM EBITDA. Every bridge component must be knowable at the evaluation date, and every one of them must describe the SAME balance-sheet date: a date whose components span more than one balance sheet publishes no enterprise value, with the reason REASON_MIXED_BALANCE_SHEET_PERIODS. The bridge is never completed by omission, substitution or zero-fill, and a component that was not reported is not carried forward as zero. Market capitalization is not a balance-sheet component and is not part of the same-date rule. The bridge remains a partial statement of enterprise value even when complete (it omits leases, non-current investments and off-balance sheet claims) and every observation says so."
     },
     "reference_gate": "The same >= 20 qualifying observations rule as every other production distribution. A thinner sample stays descriptive and is never a scenario exit multiple.",
     "known_limitations": [
-      "The bridge components start at different dates (long-term debt FY2014, current marketable securities FY2018), so early evaluation dates have an incomplete bridge and no EV/EBITDA while P/S may still compute.",
+      "The bridge components start at different dates (long-term debt FY2014, current marketable securities FY2018), so early evaluation dates have an incomplete bridge and no EV while P/S may still compute.",
       "The reconstructed enterprise value omits operating leases under ASC 842, non-current investments and off-balance sheet commitments; it is labelled partial on every observation.",
-      "The evaluation dates are the income dataset filing usable dates, not a continuous daily trading history."
-    ]
+      "The evaluation dates are the income dataset's filing usable dates, not a continuous daily trading history.",
+      "The filed components are not always carried on the same balance sheet: where a later filing does not report a component (Apple's 10-Qs after FY2019 Q4 report no commercial paper), the component in force is the older one and the date publishes no enterprise value at all. Two evaluation dates (2020-05-01 and 2020-07-31) are refused on this ground, so the EV/EBITDA sample holds 27 qualifying observations rather than 29.",
+      "The captured revenue concept (us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax) carries no fact from any filing accepted before 2019-01-30, so the trailing revenue window cannot exist at the five evaluation dates before it; those refusals are reported as REASON_SOURCE_CONCEPT_COVERAGE_GAP, which is a property of the capture and not a statement about what the issuer had reported."
+    ],
+    "rejection_vocabulary": {
+      "REASON_SOURCE_CONCEPT_COVERAGE_GAP": "The captured concept carries no fact for the fiscal position the window needed, in any filing, so no window could ever have been built from it. A property of the capture, not of the issuer's reporting.",
+      "REASON_MISSING_REVENUE_WINDOW": "The capture covers the fiscal positions the window needed, but not all of them were knowable at the evaluation date.",
+      "REASON_MISSING_EBITDA_WINDOW": "The capture covers the fiscal positions the window needed, but not all of them were knowable at the evaluation date.",
+      "REASON_INCOMPLETE_EV_BRIDGE": "A required filed component is not knowable at the evaluation date.",
+      "REASON_MIXED_BALANCE_SHEET_PERIODS": "The required filed components do not all describe the same balance-sheet date."
+    }
   }
 }

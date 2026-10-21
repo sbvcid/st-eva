@@ -459,7 +459,7 @@ def ttm_window_at(
     *,
     quarters: Mapping[datetime.date, Dict[str, Any]],
     day: str,
-) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[str]]:
+) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[str], Optional[Dict[str, Any]]]:
     """
     The four-quarter fiscal window knowable at `day` (M-4).
 
@@ -472,6 +472,12 @@ def ttm_window_at(
 
     The walk is over fiscal positions, not over the quarters' own contents,
     so it serves a window of free cash flow and a window of revenue alike.
+
+    The fourth element is the refusal in structured form: the reason code, the
+    fiscal positions the window required, the ones it could not fill, and
+    whether no quarter was knowable at all. It states the same refusal the
+    prose states, in a form a caller can reason about without parsing text,
+    and it names no metric -- the caller knows which quantity it asked for.
     """
     known = {
         end: quarter for end, quarter in quarters.items() if quarter["knowable_from"] <= day
@@ -479,7 +485,13 @@ def ttm_window_at(
     if not known:
         return None, REASON_INSUFFICIENT_QUARTERS, (
             f"No discrete quarter free cash flow is knowable at evaluation date {day}."
-        )
+        ), {
+            "reason_code": REASON_INSUFFICIENT_QUARTERS,
+            "no_quarter_knowable": True,
+            "anchor": None,
+            "positions_required": [],
+            "positions_missing": [],
+        }
     anchor = max(known)
     anchor_year = known[anchor]["fiscal_year"]
     anchor_number = known[anchor]["fiscal_quarter"]
@@ -511,7 +523,20 @@ def ttm_window_at(
         return None, REASON_INSUFFICIENT_QUARTERS, (
             f"The four-quarter fiscal window ending at FY{anchor_year} Q{anchor_number} "
             f"is missing positions: {missing}."
-        )
+        ), {
+            "reason_code": REASON_INSUFFICIENT_QUARTERS,
+            "no_quarter_knowable": False,
+            "anchor": {
+                "fiscal_year": anchor_year,
+                "fiscal_quarter": anchor_number,
+                "period_end": anchor.isoformat(),
+            },
+            "positions_required": [
+                {"fiscal_year": year_, "fiscal_quarter": number_}
+                for year_, number_ in positions
+            ],
+            "positions_missing": missing,
+        }
 
     return {
         "anchor": {
@@ -524,7 +549,7 @@ def ttm_window_at(
             for year_, number_ in positions
         ],
         "quarters": window_quarters,
-    }, None, None
+    }, None, None, None
 
 
 def ttm_fcf_window_at(
@@ -542,7 +567,7 @@ def ttm_fcf_window_at(
     missing position refuses the window. There is no rollback to an earlier
     anchor and no synthesis.
     """
-    window, reason, detail = ttm_window_at(quarters=quarters, day=day)
+    window, reason, detail, _refusal = ttm_window_at(quarters=quarters, day=day)
     if window is None:
         return None, reason, detail
     total = sum(quarter["free_cash_flow"] for quarter in window["quarters"])

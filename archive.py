@@ -475,6 +475,53 @@ def production_reference_request(
     return request or None
 
 
+def production_reference_count_divergence(
+    stored: Optional[Dict[str, Any]],
+    rebuilt: Optional[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """
+    The production references whose archived and rebuilt observation counts
+    differ.
+
+    A count is compared only when both sides record one. A count recorded on
+    one side and absent on the other is not a difference in the count: the
+    side that does not record it does not know the number, and the other
+    side's number is not evidence against an unknown. Such an archive is
+    left to the document comparison, which sees the difference in what each
+    side recorded -- the count is never filled in for a side that has none.
+
+    A difference that IS found is a real one: the dataset the reference was
+    taken from holds a different number of observations than it did when the
+    run was archived, so the rebuild did not reproduce the archived run's
+    reference even when the median happens to be the same.
+    """
+    if not stored or not rebuilt:
+        return []
+    stored_refs = ((stored.get("provenance") or {}).get("refs") or {})
+    rebuilt_refs = ((rebuilt.get("provenance") or {}).get("refs") or {})
+    differences: List[Dict[str, Any]] = []
+    for name, basis, source in PRODUCTION_REFERENCE_BASES:
+        stored_entry = stored_refs.get(f"refc:{name}") or {}
+        rebuilt_entry = rebuilt_refs.get(f"refc:{name}") or {}
+        if stored_entry.get("basis") != basis or rebuilt_entry.get("basis") != basis:
+            continue
+        stored_count = stored_entry.get("source_observation_count")
+        rebuilt_count = rebuilt_entry.get("source_observation_count")
+        if not isinstance(stored_count, int) or not isinstance(rebuilt_count, int):
+            continue
+        if stored_count != rebuilt_count:
+            differences.append(
+                {
+                    "reference": name,
+                    "basis": basis,
+                    "source": source,
+                    "archived_observation_count": stored_count,
+                    "rebuilt_observation_count": rebuilt_count,
+                }
+            )
+    return differences
+
+
 def replay(
     store: ArchiveStore,
     asset: str,
@@ -739,7 +786,31 @@ def replay(
     # when-we-asked fields, so a rebuild is comparable to the original at all.
     # `document_hash` covers the stored bytes and exists for tamper detection.
     stored_hash = document_hash(stored)
-    matched = (stored.get("context_id") == rebuilt.get("context_id")) and not admissions_diverged
+    # The production references' own observation counts are compared apart
+    # from the document: a dataset that changed since archival can leave the
+    # median untouched and still mean the rebuild did not reproduce the run.
+    # A count only one side records is not a difference -- that side does not
+    # know the number -- so the comparison is skipped rather than guessed.
+    count_divergences = production_reference_count_divergence(stored, rebuilt)
+    matched = (
+        (stored.get("context_id") == rebuilt.get("context_id"))
+        and not admissions_diverged
+        and not count_divergences
+    )
+    count_divergence_reason = (
+        "the production historical dataset behind "
+        + ", ".join(
+            f"{difference['source']} (archived "
+            f"{difference['archived_observation_count']} observations, rebuilt "
+            f"{difference['rebuilt_observation_count']})"
+            for difference in count_divergences
+        )
+        + " holds a different number of observations than it did when the run "
+        "was archived, so the rebuild did not reproduce the archived run's "
+        "reference even where the median is the same."
+        if count_divergences
+        else None
+    )
     return ReplayResult(
         asset=asset,
         as_of=as_of,
@@ -748,13 +819,17 @@ def replay(
             None
             if matched
             else (
-                admission_divergence_reason
-                if admissions_diverged
+                count_divergence_reason
+                if count_divergence_reason
                 else (
-                    "the stored context and the rebuilt context differ. Either the "
-                    "code changed since archival, which is legitimate and the diff "
-                    "is informative, or the replay is not faithful, which is a "
-                    "defect. The document is reported rather than smoothed over."
+                    admission_divergence_reason
+                    if admissions_diverged
+                    else (
+                        "the stored context and the rebuilt context differ. Either the "
+                        "code changed since archival, which is legitimate and the diff "
+                        "is informative, or the replay is not faithful, which is a "
+                        "defect. The document is reported rather than smoothed over."
+                    )
                 )
             )
         ),

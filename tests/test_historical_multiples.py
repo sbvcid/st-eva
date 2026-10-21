@@ -14,6 +14,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from archive import (
+    production_reference_count_divergence,
+    production_reference_request,
+    replay,
+)
 from historical_multiples import (
     EV_BRIDGE_COMPONENTS,
     ISSUER_CONFIGS,
@@ -26,10 +31,13 @@ from historical_multiples import (
     load_issuer_historical_multiples,
     production_multiples_summary,
 )
+from investment_context import compute_content_hash
+from sqlite_archive import SQLiteArchive
 from st_eva_runner import (
     load_production_historical_references,
     production_ev_ebitda_for_reference,
     production_ps_for_reference,
+    run_st_eva,
 )
 
 TICKER = "AAPL"
@@ -162,13 +170,23 @@ class TheQualification(unittest.TestCase):
         for observation in self.payload["observations"]:
             if observation["ttm_revenue"] is None:
                 self.assertIsNone(observation["ps_ratio"], observation)
-                self.assertEqual(
-                    observation["ps_reason_code"], "REASON_MISSING_REVENUE_WINDOW"
+                self.assertIn(
+                    observation["ps_reason_code"],
+                    (
+                        "REASON_MISSING_REVENUE_WINDOW",
+                        "REASON_SOURCE_CONCEPT_COVERAGE_GAP",
+                    ),
+                    observation,
                 )
             if observation["ttm_ebitda"] is None:
                 self.assertIsNone(observation["ev_ebitda_ratio"], observation)
-                self.assertEqual(
-                    observation["ev_reason_code"], "REASON_MISSING_EBITDA_WINDOW"
+                self.assertIn(
+                    observation["ev_reason_code"],
+                    (
+                        "REASON_MISSING_EBITDA_WINDOW",
+                        "REASON_SOURCE_CONCEPT_COVERAGE_GAP",
+                    ),
+                    observation,
                 )
 
 
@@ -615,6 +633,354 @@ class TheCompactSummary(unittest.TestCase):
 
     def test_an_absent_payload_summarizes_to_none(self):
         self.assertIsNone(production_multiples_summary(None))
+
+
+class TheBridgeDateRule(unittest.TestCase):
+    """Every filed balance-sheet component must describe one balance sheet."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.payload = _payload()
+
+    def test_a_published_enterprise_value_uses_one_balance_sheet_date(self):
+        published = 0
+        for observation in self.payload["observations"]:
+            bridge = observation["ev_bridge"]
+            if observation["ev_ebitda_ratio"] is None:
+                continue
+            published += 1
+            alignment = bridge["period_alignment"]
+            self.assertTrue(alignment["required"], observation["evaluation_date"])
+            self.assertIs(alignment["single_balance_sheet_date"], True)
+            self.assertIs(alignment["all_components_present"], True)
+            self.assertEqual(len(alignment["distinct_period_ends"]), 1)
+            self.assertIsNotNone(alignment["balance_sheet_date"])
+            for component, fact in bridge["components"].items():
+                self.assertEqual(
+                    fact["period_end"],
+                    alignment["balance_sheet_date"],
+                    (observation["evaluation_date"], component),
+                )
+        self.assertGreater(published, 0)
+
+    def test_a_mixed_period_bridge_publishes_no_enterprise_value(self):
+        mixed = [
+            observation
+            for observation in self.payload["observations"]
+            if observation["ev_reason_code"] == "REASON_MIXED_BALANCE_SHEET_PERIODS"
+        ]
+        self.assertTrue(mixed, "the mixed-period dates must be refused, not published")
+        for observation in mixed:
+            self.assertIsNone(observation["ev_ebitda_ratio"], observation)
+            self.assertIsNone(observation["enterprise_value"], observation)
+            self.assertIs(observation["ev_bridge"]["complete"], False)
+            alignment = observation["ev_bridge"]["period_alignment"]
+            self.assertIs(alignment["single_balance_sheet_date"], False)
+            self.assertGreater(len(alignment["distinct_period_ends"]), 1)
+            # The refusal names the periods, so a reader can see which
+            # component was stale.
+            for period_end in alignment["distinct_period_ends"]:
+                self.assertIn(period_end, observation["ev_reason_detail"])
+
+    def test_the_stale_component_is_never_zero_filled(self):
+        for observation in self.payload["observations"]:
+            if observation["ev_reason_code"] != "REASON_MIXED_BALANCE_SHEET_PERIODS":
+                continue
+            components = observation["ev_bridge"]["components"]
+            self.assertTrue(components, observation)
+            for fact in components.values():
+                self.assertNotEqual(fact["value"], 0.0, observation)
+
+    def test_the_sample_excludes_the_mixed_period_dates(self):
+        distribution = self.payload["distributions"][METRIC_EV_EBITDA_RATIO]
+        self.assertEqual(distribution["sample_count"], 27)
+        self.assertEqual(distribution["total_evaluations"], 36)
+        self.assertEqual(len(distribution["excluded_observations"]), 9)
+
+    def test_the_median_is_recomputed_from_the_surviving_observations(self):
+        distribution = self.payload["distributions"][METRIC_EV_EBITDA_RATIO]
+        values = sorted(
+            observation["value"] for observation in distribution["observations"]
+        )
+        self.assertEqual(len(values), 27)
+        self.assertEqual(distribution["percentiles"]["median"], values[13])
+
+    def test_the_ps_distribution_is_unchanged_by_the_bridge_rule(self):
+        distribution = self.payload["distributions"][METRIC_PS_RATIO]
+        self.assertEqual(distribution["sample_count"], 28)
+        self.assertEqual(distribution["percentiles"]["median"], 7.257709)
+
+    def test_the_policy_is_recorded_on_every_bridge(self):
+        for observation in self.payload["observations"]:
+            alignment = observation["ev_bridge"]["period_alignment"]
+            self.assertIn("same balance-sheet date", alignment["policy"])
+
+
+class TheRefusalReasons(unittest.TestCase):
+    """A refusal says which cause it is, and says it from the evidence."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.payload = _payload()
+
+    def test_every_rejection_uses_a_code_from_the_closed_set(self):
+        from historical_multiples import CLOSED_REASON_CODES
+
+        codes = set()
+        for observation in self.payload["observations"]:
+            for code in (
+                observation["ps_reason_code"],
+                observation["ev_reason_code"],
+            ):
+                if code:
+                    codes.add(code)
+                    self.assertIn(code, CLOSED_REASON_CODES)
+        self.assertIn("REASON_SOURCE_CONCEPT_COVERAGE_GAP", codes)
+
+    def test_the_ps_rejections_tell_a_coverage_gap_from_a_timing_refusal(self):
+        reasons = {
+            observation["evaluation_date"]: observation["ps_reason_code"]
+            for observation in self.payload["observations"]
+            if observation["ps_ratio"] is None
+        }
+        self.assertEqual(len(reasons), 8)
+        coverage = sorted(
+            day for day, code in reasons.items()
+            if code == "REASON_SOURCE_CONCEPT_COVERAGE_GAP"
+        )
+        timing = sorted(
+            day for day, code in reasons.items()
+            if code == "REASON_MISSING_REVENUE_WINDOW"
+        )
+        # The capture carries no revenue from any filing knowable before
+        # 2019-01-31, so the five earliest evaluations are a gap in the
+        # source; the three later ones are positions the capture carries from
+        # a filing that was not yet public.
+        self.assertEqual(
+            coverage,
+            ["2018-01-02", "2018-02-02", "2018-05-03", "2018-08-02", "2018-11-05"],
+        )
+        self.assertEqual(timing, ["2019-01-31", "2019-05-02", "2019-08-01"])
+
+    def test_a_coverage_gap_says_it_is_a_property_of_the_capture(self):
+        for observation in self.payload["observations"]:
+            if observation["ps_reason_code"] != "REASON_SOURCE_CONCEPT_COVERAGE_GAP":
+                continue
+            detail = observation["ps_reason_detail"]
+            self.assertIn("capture", detail)
+            self.assertIn("not a statement about what the issuer had reported", detail)
+
+    def test_a_timing_refusal_names_the_positions_and_when_they_arrived(self):
+        refusals = [
+            observation
+            for observation in self.payload["observations"]
+            if observation["ps_reason_code"] == "REASON_MISSING_REVENUE_WINDOW"
+        ]
+        self.assertTrue(refusals)
+        for observation in refusals:
+            detail = observation["ps_reason_detail"]
+            self.assertIn("first knowable from", detail)
+            self.assertIn("refused rather than backfilled", detail)
+
+    def test_the_upstream_free_cash_flow_wording_is_not_propagated(self):
+        # The shared window helper's prose names the quantity it was written
+        # for. This dataset writes its own reason, and the wrong wording must
+        # not reach the sales reference.
+        for observation in self.payload["observations"]:
+            for detail in (
+                observation["ps_reason_detail"],
+                observation["ev_reason_detail"],
+            ):
+                if detail:
+                    self.assertNotIn("free cash flow", detail.lower())
+
+
+class TheArchiveCountChain(unittest.TestCase):
+    """The reference's own observation count survives the archive round trip."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.archive_path = str(Path(cls.tmp.name) / "audit.sqlite")
+        cls.context_path = str(Path(cls.tmp.name) / "ctx.json")
+        store = SQLiteArchive(cls.archive_path)
+        try:
+            run_st_eva(
+                TICKER,
+                mode="regression",
+                include_historical_pe=True,
+                include_historical_multiples=True,
+                save_snapshot=False,
+                context_path=cls.context_path,
+                archive=store,
+            )
+        finally:
+            store.close()
+        cls.document = json.loads(Path(cls.context_path).read_text(encoding="utf-8"))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_the_archived_document_saves_the_sample_counts(self):
+        refs = self.document["provenance"]["refs"]
+        self.assertEqual(
+            refs["refc:ps_reference"]["source_observation_count"],
+            _payload()["distributions"][METRIC_PS_RATIO]["sample_count"],
+        )
+        self.assertEqual(
+            refs["refc:ev_ebitda_reference"]["source_observation_count"],
+            _payload()["distributions"][METRIC_EV_EBITDA_RATIO]["sample_count"],
+        )
+
+    def test_the_eligibility_carries_the_same_count(self):
+        refs = self.document["provenance"]["refs"]
+        for name in ("ps_reference", "ev_ebitda_reference"):
+            entry = refs[f"refc:{name}"]
+            self.assertEqual(
+                entry["eligibility_observation_count"],
+                entry["source_observation_count"],
+                name,
+            )
+
+    def test_the_replay_request_carries_both_counts(self):
+        request = production_reference_request(self.document)
+        self.assertEqual(
+            request["multiples_ps"],
+            _payload()["distributions"][METRIC_PS_RATIO]["sample_count"],
+        )
+        self.assertEqual(
+            request["multiples_ev_ebitda"],
+            _payload()["distributions"][METRIC_EV_EBITDA_RATIO]["sample_count"],
+        )
+
+    def test_an_archive_without_the_count_is_not_given_one(self):
+        # An archive written before the count was preserved records no count.
+        # The rebuild's number is not evidence against an unknown, so the
+        # count is not filled in for it.
+        legacy = copy.deepcopy(self.document)
+        for name in ("ps_reference", "ev_ebitda_reference"):
+            legacy["provenance"]["refs"][f"refc:{name}"][
+                "source_observation_count"
+            ] = None
+        request = production_reference_request(legacy)
+        self.assertIsNone(request["multiples_ps"])
+        self.assertIsNone(request["multiples_ev_ebitda"])
+        self.assertEqual(production_reference_count_divergence(legacy, self.document), [])
+
+    def test_a_count_difference_is_found(self):
+        changed = copy.deepcopy(self.document)
+        changed["provenance"]["refs"]["refc:ps_reference"][
+            "source_observation_count"
+        ] = 26
+        differences = production_reference_count_divergence(changed, self.document)
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0]["source"], "multiples_ps")
+        self.assertEqual(differences[0]["archived_observation_count"], 26)
+        self.assertEqual(
+            differences[0]["rebuilt_observation_count"],
+            _payload()["distributions"][METRIC_PS_RATIO]["sample_count"],
+        )
+
+    def test_a_replay_over_a_changed_count_diverges_and_says_why(self):
+        # The dataset behind the reference has changed since the run was
+        # archived: the rebuild reads a distribution holding a different number
+        # of observations. The median is left alone, so nothing but the count
+        # tells the two apart, and the replay must diverge and name the
+        # difference rather than report a match.
+        from unittest import mock
+
+        import web.service_adapter as service_adapter
+
+        real_loader = service_adapter.load_production_historical_references
+
+        def loader_with_a_changed_count(*args, **kwargs):
+            pe, pfcf, multiples = real_loader(*args, **kwargs)
+            if multiples:
+                multiples = copy.deepcopy(multiples)
+                multiples["distributions"]["P_S_RATIO_REFERENCE"][
+                    "sample_count"
+                ] = 26
+            return pe, pfcf, multiples
+
+        store = SQLiteArchive(self.archive_path)
+        try:
+            from web.service_adapter import default_replay_doc_builder
+
+            with mock.patch.object(
+                service_adapter,
+                "load_production_historical_references",
+                loader_with_a_changed_count,
+            ):
+                result = replay(
+                    store, TICKER, "2026-12-31", default_replay_doc_builder
+                )
+        finally:
+            store.close()
+        self.assertEqual(result.outcome, "DIVERGED")
+        self.assertIn("different number of observations", result.reason)
+        self.assertIn("multiples_ps", result.reason)
+
+    def test_a_replay_over_an_unchanged_archive_matches(self):
+        store = SQLiteArchive(self.archive_path)
+        try:
+            from web.service_adapter import default_replay_doc_builder
+
+            result = replay(store, TICKER, "2026-12-31", default_replay_doc_builder)
+        finally:
+            store.close()
+        self.assertEqual(result.outcome, "MATCH")
+
+
+class TheDatasetAvailability(unittest.TestCase):
+    """An absent dataset, a thin dataset and a qualified dataset are three
+    different conditions, and each is reported as the condition it is."""
+
+    def test_a_ticker_without_the_dataset_reports_that_the_dataset_is_absent(self):
+        for ticker in ("MSFT", "TSM"):
+            _, _, multiples = load_production_historical_references(
+                ticker, include_historical_multiples=True
+            )
+            for distribution in multiples["distributions"].values():
+                self.assertEqual(distribution["status"], "UNAVAILABLE")
+                self.assertIs(distribution["usable_for_reference"], False)
+                self.assertEqual(
+                    distribution["reason_code"], "REASON_DATASET_NOT_ESTABLISHED"
+                )
+                self.assertIn("not yet established", distribution["reason_detail"])
+
+    def test_an_absent_dataset_contributes_no_reference(self):
+        _, _, multiples = load_production_historical_references(
+            "MSFT", include_historical_multiples=True
+        )
+        median, status = production_ps_for_reference(multiples)
+        self.assertIsNone(median)
+        self.assertEqual(status, "UNAVAILABLE")
+
+    def test_a_thin_dataset_reports_insufficient_observations(self):
+        distribution = compute_multiples_distribution(
+            [],
+            metric=METRIC_PS_RATIO,
+            values=[(f"2026-01-{day:02d}", 1.0 + day * 0.01) for day in range(1, 12)],
+        )
+        self.assertEqual(distribution.status, "INSUFFICIENT_OBSERVATIONS")
+        self.assertEqual(distribution.reason_code, "REASON_INSUFFICIENT_OBSERVATIONS")
+
+    def test_a_qualified_dataset_is_eligible(self):
+        distribution = _payload()["distributions"][METRIC_PS_RATIO]
+        self.assertEqual(distribution["status"], "USABLE_FOR_REFERENCE")
+        self.assertIs(distribution["usable_for_reference"], True)
+        self.assertIsNone(distribution["reason_code"])
+
+    def test_the_three_conditions_use_three_different_codes(self):
+        from historical_multiples import (
+            REASON_DATASET_NOT_ESTABLISHED,
+            REASON_INSUFFICIENT_OBSERVATIONS,
+        )
+
+        self.assertNotEqual(
+            REASON_DATASET_NOT_ESTABLISHED, REASON_INSUFFICIENT_OBSERVATIONS
+        )
 
 
 if __name__ == "__main__":

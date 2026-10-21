@@ -163,6 +163,12 @@ class HistoricalIncomeObservation:
     reason_detail: Optional[str] = None
     ttm_revenue: Optional[Dict[str, Any]] = None
     ttm_ebitda: Optional[Dict[str, Any]] = None
+    # The structured refusal of a trailing window, per role. The reason code,
+    # the fiscal positions the window required, and the ones it could not
+    # fill, so a consumer can tell a window that had no knowable quarter from
+    # a window that had some and could not complete one -- without parsing
+    # the prose.
+    window_rejection: Optional[Dict[str, Any]] = None
     currency: str = "USD"
     methodology: str = METHODOLOGY
     logic_version: str = LOGIC_VERSION
@@ -210,6 +216,55 @@ class HistoricalIncomeResult:
             ),
             "summary_notes": list(self.summary_notes),
         }
+
+
+def _format_positions(positions: Sequence[Mapping[str, Any]]) -> str:
+    """The fiscal positions a window could not fill, named as FY and quarter."""
+    return ", ".join(
+        f"FY{position['fiscal_year']} Q{position['fiscal_quarter']}"
+        for position in positions
+    )
+
+
+def _window_rejection(
+    refusal: Optional[Mapping[str, Any]],
+    *,
+    metric_label: str,
+    day: str,
+) -> Optional[Dict[str, Any]]:
+    """
+    One refused trailing window, described in this dataset's own words.
+
+    The shared window helper is metric-agnostic and its prose names the
+    quantity it was first written for. A consumer of this dataset needs the
+    refusal to name the quantity it asked about, and needs the refusal's
+    parts in a form it can reason about, so the prose is written here, per
+    role, and the parts are carried alongside it.
+    """
+    if refusal is None:
+        return None
+    missing = list(refusal.get("positions_missing") or [])
+    anchor = refusal.get("anchor")
+    if refusal.get("no_quarter_knowable"):
+        detail = (
+            f"No discrete quarterly {metric_label} is knowable at evaluation "
+            f"date {day}."
+        )
+    else:
+        detail = (
+            f"The four-quarter {metric_label} window ending at "
+            f"FY{anchor['fiscal_year']} Q{anchor['fiscal_quarter']} is missing "
+            f"positions: {_format_positions(missing)}."
+        )
+    return {
+        "reason_code": refusal.get("reason_code"),
+        "metric": metric_label,
+        "no_quarter_knowable": bool(refusal.get("no_quarter_knowable")),
+        "anchor": anchor,
+        "positions_required": list(refusal.get("positions_required") or []),
+        "positions_missing": missing,
+        "detail": detail,
+    }
 
 
 def _quarter_payload(
@@ -485,10 +540,10 @@ def load_issuer_historical_income(
             operating_income_quarters, depreciation_quarters, fiscal_calendar, "USD"
         )
 
-        revenue_window, revenue_reason, revenue_detail = ttm_window_at(
+        revenue_window, revenue_reason, revenue_detail, revenue_refusal = ttm_window_at(
             quarters=revenue_quarters, day=day
         )
-        ebitda_window, ebitda_reason, ebitda_detail = ttm_window_at(
+        ebitda_window, ebitda_reason, ebitda_detail, ebitda_refusal = ttm_window_at(
             quarters=ebitda_quarters, day=day
         )
 
@@ -519,14 +574,35 @@ def load_issuer_historical_income(
         status = STATUS_AVAILABLE
         reason_code: Optional[str] = None
         reason_detail: Optional[str] = None
+        window_rejection: Optional[Dict[str, Any]] = None
+        revenue_rejection = _window_rejection(
+            revenue_refusal, metric_label="revenue", day=day
+        )
+        ebitda_rejection = _window_rejection(
+            ebitda_refusal, metric_label="EBITDA", day=day
+        )
         if revenue_window is None:
             status = STATUS_UNAVAILABLE
             reason_code = REASON_NO_REVENUE_WINDOW
-            reason_detail = revenue_detail
+            reason_detail = (
+                revenue_rejection["detail"] if revenue_rejection else revenue_detail
+            )
         elif ebitda_window is None:
             status = STATUS_UNAVAILABLE
             reason_code = REASON_NO_EBITDA_WINDOW
-            reason_detail = ebitda_detail
+            reason_detail = (
+                ebitda_rejection["detail"] if ebitda_rejection else ebitda_detail
+            )
+        refused = {
+            role: rejection
+            for role, rejection in (
+                ("revenue", revenue_rejection),
+                ("ebitda", ebitda_rejection),
+            )
+            if rejection is not None
+        }
+        if refused:
+            window_rejection = refused
 
         observation = HistoricalIncomeObservation(
             observation_id=f"income-{config.ticker}-{day}",
@@ -538,6 +614,7 @@ def load_issuer_historical_income(
             reason_detail=reason_detail,
             ttm_revenue=revenue_payload_out,
             ttm_ebitda=ebitda_payload_out,
+            window_rejection=window_rejection,
             currency="USD",
             input_set_id=input_set_id,
         )

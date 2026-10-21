@@ -1,8 +1,8 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-20 (the production historical P/S and EV/EBITDA reference distributions exist, are qualified, and feed the report's sales and enterprise-value methods)
+**Status checked:** 2026-10-21 (the production historical P/S and EV/EBITDA reference distributions exist, are qualified, and feed the report's sales and enterprise-value methods; the enterprise-value bridge requires one balance-sheet date, and the archive preserves each reference's observation count)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 29 valid / 7 rejected, median 22.326 - both `USABLE_FOR_REFERENCE` under the shared `>= 20` gate, with the filed EV bridge required in full) **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE` under the shared `>= 20` gate, with the filed EV bridge required in full and every one of its components required to describe the same balance-sheet date) **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
 **Latest verified GitHub Actions:** `4e40c8a` (the production historical P/S and EV/EBITDA references) verified `backend` and `browser` jobs success in run `39480897329` (checked via the GitHub API on 2026-10-20: backend 2574 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `5661383` (the filed trailing revenue and EBITDA enter the valuation chain) verified `backend` and `browser` jobs success in run `39449339747` (checked via the GitHub API on 2026-10-20: backend 2539 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757`; `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
 
 
@@ -3092,11 +3092,16 @@ their committed production input.
 - **Numerator for EV/EBITDA** is a filed-component enterprise-value bridge:
   market capitalization + (long-term debt non-current + long-term debt current
   + commercial paper) − (cash and cash equivalents + current marketable
-  securities). **Every component must be knowable at the evaluation date.** A
-  date missing any component has no EV, and the bridge is never completed by
-  omission, substitution or zero-fill. The bridge stays a partial statement of
-  enterprise value even when complete (it omits leases, non-current
-  investments and off-balance sheet claims), and every observation says so.
+  securities). **Every component must be knowable at the evaluation date, and
+  every one of them must describe the same balance-sheet date.** A date
+  missing any component has no EV, and a date whose components span more than
+  one balance sheet has no EV either: the bridge is never completed by
+  omission, substitution or zero-fill, and a component that was not reported
+  is not carried forward as zero. Market capitalization is not a
+  balance-sheet component and is not part of the same-date rule. The bridge
+  stays a partial statement of enterprise value even when complete (it omits
+  leases, non-current investments and off-balance sheet claims), and every
+  observation says so.
 - **Point-in-time rule** is the shared 16:00 ET acceptance cutoff: a fact is
   knowable from its filing's usable date, and the value in force at an
   evaluation date is the latest knowable version of each component.
@@ -3125,30 +3130,37 @@ counts from `data/historical_pfcf/AAPL`, so one trading calendar and one share
 series govern every reconstruction and the datasets cannot drift apart.
 
 Dataset identity: `input_set_id`
-`969860c7c45ddced394f9149fc8bbad086ce7189d5f04515d2e591d834e90a65`, package
+`77402a13b164324323ab08341cfca35408b489232a4066f0a9e61b479c78a540`, package
 `content_hash`
-`7287143e4c2d533cd2adeded3648250cbdf747fce206bda0acc40cc72fb52920`.
+`321e8b165bfc7ef30e4c178934a122e5bc2f41fd639ab7ad0767d0ce595b59b0`.
 
 ### Measured counts and eligibility (AAPL)
 
 | distribution | valid | rejected | total evaluations | period | median | status | eligible as a reference |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `P_S_RATIO_REFERENCE` | **28** | 8 | 36 | 2019-10-31 → 2026-07-31 | **7.257709** | `USABLE_FOR_REFERENCE` | **yes** (28 ≥ 20) |
-| `EV_EBITDA_RATIO_REFERENCE` | **29** | 7 | 36 | 2019-08-01 → 2026-07-31 | **22.326** | `USABLE_FOR_REFERENCE` | **yes** (29 ≥ 20) |
+| `EV_EBITDA_RATIO_REFERENCE` | **27** | 9 | 36 | 2019-08-01 → 2026-07-31 | **22.326** | `USABLE_FOR_REFERENCE` | **yes** (27 ≥ 20) |
 
 P/S percentiles: 10th `5.988517`, 25th `6.697746`, median `7.257709`, 75th
 `8.022627`, 90th `9.004834`; mean `7.286787`, std `1.327004`, min `4.248336`,
 max `9.657382`. EV/EBITDA percentiles: 10th `17.812807`, 25th `20.709942`,
-median `22.326`, 75th `25.068764`, 90th `26.29394`; mean `22.208469`, std
-`3.647756`, min `12.485945`, max `27.903961`.
+median `22.326`, 75th `25.068764`, 90th `26.29394`; mean `22.38634`, std
+`3.595801`, min `12.485945`, max `27.903961`.
 
-**Every rejection is stated, none is silent.** All 8 P/S rejections are
-`REASON_MISSING_REVENUE_WINDOW` and all 7 EV/EBITDA rejections are
-`REASON_MISSING_EBITDA_WINDOW`: those are the evaluation dates where the
-income dataset's four-quarter window was not yet knowable, and this dataset
-reports the refusal instead of backfilling a denominator. The two distributions
-differ by one observation because each stands on its own denominator — the
-EV/EBITDA window is knowable at one date where the revenue window is not.
+**Every rejection is stated, none is silent, and each says which cause it is.**
+The P/S rejections split by cause, and the split is made from the captured
+source rather than from prose:
+
+| evaluation date | P/S refusal | why |
+| --- | --- | --- |
+| 2018-01-02, 2018-02-02, 2018-05-03, 2018-08-02, 2018-11-05 | `REASON_SOURCE_CONCEPT_COVERAGE_GAP` | the captured revenue concept carries no fact from any of the filings the acceptance index records as knowable by then, so no trailing revenue window could exist from the capture |
+| 2019-01-31, 2019-05-02, 2019-08-01 | `REASON_MISSING_REVENUE_WINDOW` | the capture covers the fiscal positions the window needed (FY2018 Q2, Q3, Q4), but not all of them were knowable at the date; the reason names each position and the date it first became knowable (2019-05-02, 2019-08-01, 2019-10-31) |
+
+The EV/EBITDA rejections are seven `REASON_MISSING_EBITDA_WINDOW` (the
+positions were covered by the capture but were not knowable at the date) and
+two `REASON_MIXED_BALANCE_SHEET_PERIODS` (2020-05-01 and 2020-07-31, below).
+A refusal never carries the upstream's prose: the shared window helper names
+the quantity it was first written for, and that wording is not propagated.
 
 ### How the qualified references reach the product
 
@@ -3169,7 +3181,7 @@ EV/EBITDA window is knowable at one date where the revenue window is not.
   `production_historical_ps_median`, eligibility
   `ELIGIBLE_PRODUCTION_DISTRIBUTION`, `is_user_assumption: false`, 28
   observations; `enterprise_value_multiple` → `22.326`, source
-  `production_historical_ev_ebitda_median`, same eligibility, 29 observations.
+  `production_historical_ev_ebitda_median`, same eligibility, 27 observations.
   A user's own multiple still wins and is still labelled `user_supplied` /
   `USER_SPECIFIED`; an ineligible or under-qualified distribution leaves the
   method **unavailable with its own reason** and is never filled from a band
@@ -3188,22 +3200,43 @@ EV/EBITDA window is knowable at one date where the revenue window is not.
 
 ### Replay and dataset identity
 
-The archive names the source, never the number: `PRODUCTION_REFERENCE_BASES`
-now carries `("ps_reference", "PRODUCTION_PS_MEDIAN", "multiples_ps")` and
+The archive names the source and, since the corrective round, the count
+behind it: `PRODUCTION_REFERENCE_BASES` carries
+`("ps_reference", "PRODUCTION_PS_MEDIAN", "multiples_ps")` and
 `("ev_ebitda_reference", "PRODUCTION_EV_EBITDA_MEDIAN", "multiples_ev_ebitda")`,
-and the replay's document builder loads the dataset with the **same loader a
-live run uses**. Measured: a rebuild asked for the archived multiples
-references reads `input_set_id`
-`969860c7c45ddced394f9149fc8bbad086ce7189d5f04515d2e591d834e90a65` — the
-same identity the live run reads — and reproduces the archived observation
-counts exactly (P/S 28, EV/EBITDA 29). A dataset that changed since archival
-therefore produces an honest divergence rather than a silent match.
+the reference payload carries the distribution's own
+`source_observation_count`, and the replay's document builder loads the
+dataset with the **same loader a live run uses**. Measured: a rebuild asked
+for the archived multiples references reads `input_set_id`
+`77402a13b164324323ab08341cfca35408b489232a4066f0a9e61b479c78a540` — the
+same identity the live run reads — and the archived document's request
+carries the counts (P/S 28, EV/EBITDA 27).
+
+**What the comparison actually depends on, stated exactly:**
+
+- A **new** archive records the count in `source_observation_count`, and the
+  replay compares it with the count the rebuild read. A difference is a
+  divergence with the count named, even when the median is unchanged.
+- An **older** archive — one written before the count was preserved —
+  records no count for these two references. The count is *not* filled in for
+  it: the archived side does not know the number, so there is nothing to
+  compare, and the rebuild's number is not evidence against an unknown. Such
+  an archive is decided by the document comparison, which sees the difference
+  in what each side recorded, and its diff shows the count as the thing that
+  differs.
+- The `context_id` of a document digests the whole document, so a change in
+  any recorded field — the count included — changes the identity. A replay
+  over an archive written before the count was preserved therefore reports a
+  divergence, with the count visible in the field diff. That is the honest
+  outcome, and the older archive is not rewritten to hide it.
 
 ### What is not established
 
 - Only **AAPL** has a production multiples dataset. Any other ticker is
   reported `UNAVAILABLE` with the explicit reason "Production historical P/S
-  dataset is not yet established for {TICKER}." and contributes no reference.
+  dataset is not yet established for {TICKER}." and the reason code
+  `REASON_DATASET_NOT_ESTABLISHED` — a condition of its own, never reported
+  as a thin sample — and contributes no reference.
 - The evaluation dates are the filing usable dates shared with the income
   reconstruction, not a continuous daily trading history, and the distributions
   do not extend past the frozen dataset's last evaluation date.
@@ -3213,10 +3246,15 @@ therefore produces an honest divergence rather than a silent match.
 - The reconstructed enterprise value omits operating leases, non-current
   investments and off-balance sheet commitments. It is labelled partial on
   every observation.
+- The filed components are not always carried on the same balance sheet.
+  Apple's 10-Qs after FY2019 Q4 report no commercial paper, so at 2020-05-01
+  and 2020-07-31 the component in force is the older one and those dates
+  publish no enterprise value at all. This is the same-date rule doing its
+  work, and it costs the EV/EBITDA sample two observations (29 → 27).
 
 ### Tests
 
-`tests/test_historical_multiples.py` (35 tests): the dataset's concept
+`tests/test_historical_multiples.py` (59 tests): the dataset's concept
 identity; every observation carrying a reason for every refusal; every
 published multiple recomputing from its own stated operands; market cap
 recomputing from price and shares; the EV bridge summing the components it
@@ -3234,9 +3272,58 @@ multiple still winning; the valuation methods carrying the production medians
 with their own provenance; the replay request naming the two new bases; and the
 compact summary agreeing with the payload.
 
+Added for the corrective round: a published enterprise value uses one
+balance-sheet date; a mixed-period bridge publishes no enterprise value and
+names the periods; the stale component is never zero-filled; the EV/EBITDA
+sample excludes the mixed-period dates and its median is recomputed from the
+survivors; the P/S distribution is unchanged by the bridge rule; the policy is
+recorded on every bridge; every rejection uses a code from the closed set; the
+P/S rejections tell a coverage gap from a timing refusal, date by date; a
+coverage gap says it is a property of the capture; a timing refusal names the
+positions and when they arrived; the upstream's free-cash-flow wording is not
+propagated; **the archived document saves the counts, the replay request
+carries them, a count difference is found, a replay over a changed count
+diverges and says why, and an archive without the count is not given one**;
+and the three availability conditions — an absent dataset, a thin dataset and
+a qualified dataset — report three different reasons.
+
 Local verification for this round: backend suite **2574 passed, 171 skipped,
 534 subtests passed**; web API and archive isolation **31 passed**; browser
 smoke **12 passed**; frontend production build produced `dist/index.html`.
+
+### Corrective round (2026-10-21): what the independent audit found, and
+### what this round changed
+
+An independent read-only audit of `4e40c8a` and `3cfef08` found five
+defects. Each is recorded here with what it was, what changed, and what the
+change did to the numbers.
+
+| finding | what was wrong | what changed |
+| --- | --- | --- |
+| F1 | the two new bases saved no `source_observation_count`: the archived document recorded `null` for both, and the replay's request carried `null` where the P/E carried 36 | the count now follows the basis — `REFERENCE_SOURCES` says where each basis's count comes from, so every production basis carries its own — and the count reaches the payload and the replay request (P/S 28, EV/EBITDA 27) |
+| F2 | the EV bridge published a value whose components described **two** balance sheets (2 of 29 dates) while calling the bridge "complete" | the same-date rule: every required component must describe one balance sheet, or no enterprise value is published (`REASON_MIXED_BALANCE_SHEET_PERIODS`). The EV/EBITDA sample is **27**, not 29 |
+| F3 | all 8 P/S refusals were `REASON_MISSING_REVENUE_WINDOW`, which did not say that the captured revenue concept carries no fact from any filing knowable before 2019-01-30 | the refusal is classified from the capture's own facts: `REASON_SOURCE_CONCEPT_COVERAGE_GAP` where the capture carries no fact for the fiscal positions the window needed, `REASON_MISSING_REVENUE_WINDOW` where it carries them but they were not yet knowable — 5 coverage gaps and 3 timing refusals for P/S |
+| F4 | a ticker with no multiples dataset reported `REASON_INSUFFICIENT_OBSERVATIONS` | `REASON_DATASET_NOT_ESTABLISHED`, and a load failure reports `REASON_DATASET_LOAD_FAILED`. An absent dataset is not a thin sample |
+| F5 | the status document described the archive as holding observation counts it did not hold | the archive section now states exactly which fields the comparison depends on, and what an older archive's `null` means |
+
+**The history is preserved, not rewritten.** The first Phase 5 commit
+(`4e40c8a`) really did publish an EV/EBITDA distribution of 29 observations
+with the median 22.326, and its EV bridge really did mix balance-sheet dates
+on two dates. That is what the code did, and the audit found it. The
+corrected rule refuses those two dates, so the distribution now holds **27**
+qualifying observations with the **same median** (22.326) and a recomputed
+mean (22.208469 → 22.38634). The P/S distribution is unaffected by the bridge
+rule and remains 28 observations with median 7.257709.
+
+The upstream income dataset gained a structured, per-role statement of a
+refused window (`window_rejection`: the reason code, the fiscal positions the
+window required, the ones it could not fill, and whether no quarter was
+knowable at all). Its calculations are unchanged; its `input_set_id` is
+unchanged (`401a14e73b53e6b1434be23b2c27c4ea6a0a10db0025b23cbf3740419c58e4b4`);
+its `content_hash` changed because the payload now carries the structured
+refusal. The income dataset's own reason prose no longer names free cash flow
+for a revenue refusal, and the multiples dataset writes its own reason text
+rather than propagating the upstream's.
 
 ### CI
 
@@ -3260,17 +3347,22 @@ checks out with the bytes the manifest pins.
 
 The Phase 5 round is complete and verified: the production historical P/S and
 EV/EBITDA reference distributions exist for AAPL, both pass the shared `>= 20`
-qualification gate (28 and 29 qualifying observations), the EV/EBITDA one only
-where the filed EV bridge is complete in full, and their qualified medians
+qualification gate (28 and 27 qualifying observations), the EV/EBITDA one only
+where the filed EV bridge is complete in full **and** every one of its
+components describes the same balance-sheet date, and their qualified medians
 reach the summary references, the reverse-requirements report's sales and
 enterprise-value methods, and the Investment Context under their own bases.
-Replay reads the same committed dataset identity the live run reads.
+Replay reads the same committed dataset identity the live run reads, and each
+reference's own observation count is preserved in the archive, so a dataset
+that changed since archival produces a divergence that names the count rather
+than a silent match.
 
 The claim that Phase 5 was already complete was checked against the repository
 rather than accepted: the work was an untracked, incomplete stub and the
 remote `master` was still at `2024f05`. That stub is preserved outside the
 repository with its SHA-256; the implementation and its committed inputs are
-now on `master`.
+now on `master`. The implementation was then audited independently, and the
+five defects that audit found are corrected in the record above.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.

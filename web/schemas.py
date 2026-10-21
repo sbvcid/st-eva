@@ -549,6 +549,9 @@ class ProductionHistoricalMultiplesSummaryDTO(BaseModel):
     methodology: Optional[str] = None
     logic_version: Optional[str] = None
     formula_version: Optional[str] = None
+    # The enterprise-value bridge's date rule: what "complete" means for an
+    # enterprise value, stated by the API rather than left to be inferred.
+    ev_bridge_policy: Optional[str] = None
     distributions: Dict[str, ProductionHistoricalMultiplesDistributionDTO] = Field(
         default_factory=dict
     )
