@@ -3504,6 +3504,28 @@ document already records. The trailing EBITDA in the historical dataset is a
 reconstruction from the filer's own cash-flow line, declared as such in both
 manifests, and it is used only as a historical denominator.
 
+### The identity contract, checked
+
+The corrective round added a structured refusal to the income dataset's
+payload, and the question that raises is whether the identifiers still mean
+what they mean. They do, and the direction is the safe one:
+
+- The income dataset's `input_set_id` digests its **input files** only. The
+  structured refusal is payload, so it moved the income dataset's
+  `content_hash` and not its identity. A dataset is identified by what it
+  was built from, and its content hash says what it produced.
+- The multiples dataset's `input_set_id` digests the income dataset's identity
+  **and** its content hash, so a change anywhere in the income output moves
+  it even where the numbers did not change. That is over-sensitive, and
+  over-sensitivity in this direction cannot reuse a stale result: the
+  identity never fails to move when the numbers move.
+- A stale reuse was checked and is not reachable: a change that moves the
+  numbers moves both the identity and the content hash, and the replay
+  compares the document and the reference counts, so an archive that no
+  longer matches is a divergence rather than a match.
+
+No defect was found here, so nothing was changed.
+
 ### Cross-company isolation
 
 The two issuers share no source data and no identity: Apple's
