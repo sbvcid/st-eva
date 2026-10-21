@@ -1,8 +1,8 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-21 (Microsoft is the second production issuer: its P/S distribution qualifies on 23 observations, and its EV/EBITDA distribution is reported unavailable because Microsoft has no element that qualifies for the depreciation-and-amortization role; Apple's are unchanged)
+**Status checked:** 2026-10-21 (two issuers hold qualified historical P/S and EV/EBITDA references: Apple on 28 and 27 observations, and American Electric Power on 29 and 25; Microsoft holds a qualified P/S reference and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified for two issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; MSFT: P/S 23 valid / 4 rejected over 27 evaluations, median 11.783822 - `USABLE_FOR_REFERENCE`, and EV/EBITDA 0 valid / 27 rejected - `UNAVAILABLE`, because Microsoft has no element that qualifies for the depreciation-and-amortization role and because only 8 of its 27 evaluation dates have a complete filed EV bridge; the filed EV bridge requires every component to describe the same balance-sheet date) **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified for two issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`) -- AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326; AEP: P/S 29 valid / 4 rejected over 33 evaluations, median 2.728945, and EV/EBITDA 25 valid / 8 rejected, median 13.224119 -- all four `USABLE_FOR_REFERENCE` under the shared `>= 20` gate, with the filed EV bridge required in full and every one of its components required to describe the same balance-sheet date; MSFT: P/S 23 valid / 4 rejected, median 11.783822, `USABLE_FOR_REFERENCE`, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role and only 8 of its 27 evaluation dates have a complete filed EV bridge **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
 **Latest verified GitHub Actions:** `3ec78b7` (Microsoft's D&A role left empty) verified `backend` and `browser` jobs success in run `39562293886` (checked via the GitHub API on 2026-10-21: backend 2643 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding run `39552263859` verified the Microsoft dataset `784d721` (backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);  (checked via the GitHub API on 2026-10-21: backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding run `39544896687` verified the corrective round `7b6e159` (backend 2574 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);  (checked via the GitHub API on 2026-10-21: backend 2598 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding run `39480897329` verified the first phase 5 commit `4e40c8a` (backend 2574 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); `5661383` (the filed trailing revenue and EBITDA enter the valuation chain) verified `backend` and `browser` jobs success in run `39449339747` (checked via the GitHub API on 2026-10-20: backend 2539 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757`; `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
 
 
@@ -3727,6 +3727,181 @@ provider's) are unchanged, its P/S reference is still
 `production_historical_ps_median` 11.783822 from 23 observations, its
 enterprise-value reference is still unavailable, and Apple's references are
 unchanged.
+
+## Phase 7 (2026-10-21): a second issuer with a qualified EV/EBITDA reference
+
+### The candidates, and why American Electric Power
+
+The task was a second issuer whose *enterprise-value* reference qualifies, so
+the candidates were assessed on the evidence before any dataset was built. The
+assessment read each candidate's own company facts: the period ends where all
+five bridge roles have a fact (the bridge's evidence ceiling) and the
+depreciation and amortization element each candidate actually uses.
+
+| candidate | five roles aligned at the same period end | the D&A element the issuer uses | verdict |
+| --- | --- | --- | --- |
+| **PEP** (PepsiCo) | 2 | `us-gaap:DepreciationAndAmortization` (9 quarterly spans) | the cash-flow line is on a company element the registry refuses; the balance sheet aggregates short-term debt, and the commercial paper is not reported at the fiscal year ends |
+| **TXN** (Texas Instruments) | 58 (44 interim) | none: the cash flow states "Depreciation" 1,918 and "Amortization of capitalized software" 81 separately | the bridge is the best measured of any candidate, but no single element carries a combined D&A, and the element it does carry is the pure-depreciation one the Microsoft audit refused |
+| **NKE** (Nike) | 1 | `us-gaap:DepreciationDepletionAndAmortization` (8 quarterly spans) | the five roles do not align: the current marketable securities and the long-term debt are not reported at the same balance-sheet dates |
+| **AEP** (American Electric Power) | **66 (49 interim)** | `us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization` (90 quarterly spans) | **selected** |
+
+Roughly 145 issuers were screened for the two conditions together. Only three
+had an AAPL-shaped balance sheet at all -- the five roles all reported at the
+same balance-sheet date -- and of those only AEP's depreciation line is a
+single combined D&A line the registry can accept.
+
+AEP's evidence, read from its own filings:
+
+- The cash-flow line "Depreciation and Amortization" is 3,380 million USD for
+  fiscal 2025, carried on `us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization`.
+  The amortization of nuclear fuel is a **separate** cash-flow line (109
+  million), so the line is depreciation and amortization and nothing else.
+  The element is a utility-sector element, so the registry maps it to the
+  metric **for AEP alone** -- the same treatment Apple's own element receives.
+- All five bridge components are reported at the same balance-sheet date:
+  cash 197, short-term investments 1,656, commercial paper, long-term debt
+  due within one year 3,194 and long-term debt 44,128, all as of 2025-12-31.
+- The income statement presents "Depreciation and Amortization" as an
+  operating expense, so operating income is after it and adding it back gives
+  EBITDA.
+
+### What was built
+
+`data/historical_pe/AEP/` (the shared price series and acceptance evidence),
+`data/historical_income/AEP/` (three concept payloads) and
+`data/historical_multiples/AEP/` (five balance-sheet concepts and the
+cover-page share counts), each with a manifest that pins every file's byte
+count and SHA-256, the company-concept URL it came from, and the issuer's own
+line behind each role. The acceptance index holds 62 filings accepted between
+2019-01-24 and 2026-07-30, each read from its own SGML header with the
+header's URL and digest recorded, drawn from the submissions' recent list and
+from the additional submissions files for the older filings.
+
+| distribution | valid | rejected | total evaluations | period | median | status | eligible as a reference |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `P_S_RATIO_REFERENCE` | **29** | 4 | 33 | 2019-02-22 → 2026-07-30 | **2.728945** | `USABLE_FOR_REFERENCE` | **yes** (29 ≥ 20) |
+| `EV_EBITDA_RATIO_REFERENCE` | **25** | 8 | 33 | 2019-10-24 → 2026-07-30 | **13.224119** | `USABLE_FOR_REFERENCE` | **yes** (25 ≥ 20) |
+
+### The rejections, each with its cause
+
+- **Four dates carry `REASON_SOURCE_CONCEPT_COVERAGE_GAP`** (2019-01-24 and
+  2021-07-22, 2021-10-28, 2022-02-24). At the first, the capture carries no
+  fact from the one filing the index records as knowable. At the other three,
+  the captured revenue concept carries no fact for **fiscal 2021 Q1 in any
+  filing**: the issuer reported that quarter on the contract-revenue element
+  instead, and the two elements are the same quantity on different elements
+  rather than two quantities to add. The reason says exactly that, and the
+  window is refused rather than backfilled.
+- **Four dates carry `REASON_MISSING_EBITDA_WINDOW`** (2019-02-22, 2019-04-25,
+  2019-04-26, 2019-07-25): the capture carries the D&A facts, but no four
+  consecutive fiscal positions were knowable yet, and the reason names the
+  positions and the date each became knowable.
+
+### The revenue element, and the decision that stands
+
+AEP's revenue is carried on `us-gaap:Revenues`, and the core registry retired
+that element as a mapping to the revenue metric in decision 2.99: the
+element's own definition is broader than the metric (it allows investment and
+interest income before taxes), and the seeded mapping had described the
+relationship in the wrong direction. The tests pin that retirement, and they
+pin the three ways it could quietly come back -- as an EXACT mapping, with an
+invented scope, or with an unaudited destination.
+
+**This round did not overturn it.** The first attempt at this work added a
+scope-limited mapping for AEP; the registry's own regression tests rejected it,
+and the mapping was removed rather than the tests. AEP's historical dataset
+reads the filer's own "TOTAL REVENUES" line, and the manifest states what
+that means and what it does not: the trailing revenue the dataset builds is the
+filer's own total revenue, and the issuer's **current** figures in the
+valuation chain remain the provider's, because the registry does not accept
+this element as the metric. That is the same boundary Microsoft's dataset has.
+
+The enterprise-value reference's denominators are unaffected by that boundary:
+its operating income and its depreciation and amortization are both elements
+the registry accepts for this issuer.
+
+### The registry, and what it did not change
+
+One mapping was added: `depreciation_and_amortization` for
+`us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization`, scoped to
+AEP, on the same evidence discipline as Apple's. The registry's own
+inventory tests, which track the seed, were updated with it (54 mappings, 50
+identity rows, 34 of them EXACT). Nothing else moved: the pure-depreciation
+element and Microsoft's company-custom element are still refused, and the
+retired revenue mapping is still retired with no scope invented.
+
+### Independent verification
+
+Recomputed from the raw sources, not from the builder's output: the as-traded
+close from the price file, the cover-page share count from the share file, the
+trailing revenue from the income dataset's own quarters, and the trailing
+EBITDA as the sum of the operating income and depreciation of the same
+quarters. All 29 published P/S values, all 25 enterprise-value bridges and
+their multiples reproduce exactly, and the medians recompute exactly
+(2.728945 and 13.224119). No operand is knowable after its evaluation date;
+there is no split in the covered period, so the close and the cover-page count
+pair without adjustment; and the market capitalization is continuous across
+the sample.
+
+### The product wiring
+
+The same generic code carries AEP's distribution into the same places, with
+no issuer-specific branch anywhere: the summary reference selects
+`production_historical_ps_median` 2.728945 (29 observations) and
+`production_historical_ev_ebitda_median` 13.224119 (25); the report carries
+the compact summary and the sales and enterprise-value valuation methods read
+the production medians with `is_user_assumption: false`; the Investment
+Context registers `refc:ps_reference` and `refc:ev_ebitda_reference` under
+their own bases with the counts 29 and 25; the archive saves both counts, the
+replay request carries them, and the replay reproduces the document
+(`MATCH`). The live run computes `implied_revenue` 23,619,620,943.62 and
+`implied_ebitda` 8,874,061,589.74 from the production medians.
+
+The first two issuers are untouched: Apple's identities are still
+`77402a13b164…` / `321e8b16…` with 28 and 27 observations and the medians
+7.257709 and 22.326, and Microsoft's are still `ba4b639c…` / `d80b2d3d…`
+with 23 P/S observations and no qualified enterprise-value reference. The
+three issuers' dataset identities are distinct, each reads its own price
+series, and no issuer's median is offered for another.
+
+### Two defects this round found and fixed
+
+The first attempt at AEP exposed two latent faults in the multiples builder,
+which the first two issuers never reached because every one of their
+evaluation dates had a price and a cover-page share count:
+
+- the enterprise-value bridge, the total debt and the liquid funds were bound
+  only where a price and a share count existed, so a date without either
+  raised `UnboundLocalError` instead of refusing;
+- the bridge was likewise undefined at such a date, and the formulas below it
+  could not state what the bridge would have been.
+
+Both are fixed: the bridge is now stated empty, with its reason, at a date
+that cannot build one, and the debt and liquid-funds figures are bound
+outside the branch that computes them.
+
+### Tests
+
+`tests/test_historical_multiples_aep.py` (34 tests): the manifest pinning
+every file and every source; the concepts being the elements this issuer
+uses; the core registry accepting this issuer's depreciation and operating
+income elements; the retired revenue mapping staying retired with no scope
+invented; the other issuers' decisions standing; every observation carrying
+its lineage; no operand knowable after its evaluation date; the price being
+the as-traded close; no split in the covered period; the market cap's
+continuity; every P/S recomputing from the raw price, share count and revenue
+window; every trailing EBITDA being the sum of its quarters' operating income
+and depreciation; every enterprise value recomputing from its components; the
+medians recomputing from the published observations; no enterprise value
+published from a mixed or an incomplete bridge; both distributions qualifying
+on their own samples with the measured counts and medians; every rejection
+stating its cause; the references being the distributions' own medians; the
+three issuers' identities, distributions and price series being distinct; the
+run selecting both production medians; the report carrying the summary; a
+user multiple still winning; the cash-flow method still reading no production
+reference; the archive saving both counts; the replay request carrying them;
+the replay reproducing the document; and an archive without a count not being
+given one.
 
 ## Next task status
 

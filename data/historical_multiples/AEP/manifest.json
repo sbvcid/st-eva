@@ -1,0 +1,127 @@
+{
+  "ticker": "AEP",
+  "issuer_id": "CIK0000004904",
+  "entity_name": "American Electric Power Company",
+  "fiscal_year_end": "1231",
+  "role": "production",
+  "metrics": [
+    "P_S_RATIO_REFERENCE",
+    "EV_EBITDA_RATIO_REFERENCE"
+  ],
+  "methodology": "historical-multiples/1.0",
+  "provenance": {
+    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the balance-sheet concepts and for the cover-page share counts, plus the canonical price series and acceptance evidence reused by path from data/historical_pe/AEP. The trailing revenue and EBITDA denominators are the data/historical_income/AEP dataset's own windows, executed from its config, never recomputed here.",
+    "promoted_on": "2026-10-21",
+    "concept_fetch": {
+      "fetched_on": "2026-10-21",
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+      "response_units": "verbatim as returned: USD for every concept"
+    },
+    "issuer_facts": {
+      "cik": "0000004904",
+      "fye_month": 12
+    },
+    "files": {
+      "cash_concept.json": {
+        "bytes": 27337,
+        "content_sha256": "82ccbd0fb66815954043f6329d9e0630d6b834d0737be961b48fe87871f47810",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/CashAndCashEquivalentsAtCarryingValue.json",
+        "definition": "Cash and cash equivalents at carrying value, the liquid-funds component of the filed EV bridge.",
+        "tag": "CashAndCashEquivalentsAtCarryingValue",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 206,
+        "period_start": "2006-12-31",
+        "period_end": "2026-03-31"
+      },
+      "marketable_securities_current_concept.json": {
+        "bytes": 18568,
+        "content_sha256": "395a2054e660c41369579dcbf30926ab1724188f2fa58d0a6c4af6f8fd6b73d4",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/ShortTermInvestments.json",
+        "definition": "American Electric Power's current marketable securities. It reports the line as 'Short-term investments' and carries it on us-gaap:ShortTermInvestments; it does not use us-gaap:MarketableSecuritiesCurrent at all, so the bridge's role is filled by the element the issuer uses.",
+        "tag": "ShortTermInvestments",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 138,
+        "period_start": "2008-12-31",
+        "period_end": "2026-03-31"
+      },
+      "commercial_paper_concept.json": {
+        "bytes": 17892,
+        "content_sha256": "f9a427683ee1bbeda4f78ef7f177e3cad0bf257740e706792ea051679d232a84",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/CommercialPaper.json",
+        "definition": "Commercial paper, a total-debt component of the filed EV bridge alongside the two long-term debt components.",
+        "tag": "CommercialPaper",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 132,
+        "period_start": "2009-12-31",
+        "period_end": "2026-03-31"
+      },
+      "long_term_debt_current_concept.json": {
+        "bytes": 18922,
+        "content_sha256": "bec6513ce1f63f4390bd88035ecdc4b860f2d3e83fb0a897283fd6ddb175199a",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/LongTermDebtCurrent.json",
+        "definition": "Long-term debt due within one year, a total-debt component of the filed EV bridge.",
+        "tag": "LongTermDebtCurrent",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 139,
+        "period_start": "2008-12-31",
+        "period_end": "2026-03-31"
+      },
+      "long_term_debt_noncurrent_concept.json": {
+        "bytes": 19169,
+        "content_sha256": "2bf1057d4c57684c6ebd27aa04ff4b308d88218450e5282321cafc2c4a1bf67a",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/LongTermDebtNoncurrent.json",
+        "definition": "Long-term debt, non-current, a total-debt component of the filed EV bridge.",
+        "tag": "LongTermDebtNoncurrent",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 139,
+        "period_start": "2008-12-31",
+        "period_end": "2026-03-31"
+      },
+      "shares_outstanding_concept.json": {
+        "bytes": 10333,
+        "content_sha256": "8feb00c46109ee31e405339c78ff682d0ae707693d1b7ab6b631230291322a14",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/dei/EntityCommonStockSharesOutstanding.json",
+        "definition": "The cover-page share counts (dei:EntityCommonStockSharesOutstanding). American Electric Power has no historical P/FCF dataset, so this is the dataset's own input. The counts are never split-adjusted and pair with the as-traded close.",
+        "tag": "EntityCommonStockSharesOutstanding",
+        "units": [
+          "shares"
+        ],
+        "fact_count": 68,
+        "period_start": "2009-06-30",
+        "period_end": "2026-05-05"
+      },
+      "daily_prices.json (reused by path)": {
+        "path": "data/historical_pe/AEP/daily_prices.json",
+        "content_sha256": "e28e7520324435c5c3e0821738f403fc25440281101da91e0ac083b3ffd292a1",
+        "source": "The canonical daily price series, read by path. There is no split in the covered period, so the close and the cover-page count pair without adjustment."
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "data/historical_pe/AEP/filing_acceptance_evidence.json",
+        "content_sha256": "5ad9cc26a97540e490d816e6916b5b26a112d7d91f43c616e43a4db269ce010e",
+        "source": "The canonical acceptance index, read by path. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped."
+      }
+    },
+    "point_in_time_rule": "usable_date is derived from acceptance_datetime_header_et using the 16:00 ET cutoff rule at load time, identical to the historical P/E, P/FCF and income pipelines. The value in force at an evaluation date is the latest knowable version of each component; no fact is used before its filing's usable date.",
+    "multiple_rules": {
+      "ps": "P/S = (as-traded close on the evaluation date x latest knowable cover-page shares outstanding) / TTM revenue, where the TTM revenue window is the income dataset's own four-consecutive-fiscal-quarter window. A non-positive denominator produces no multiple.",
+      "ev_ebitda": "EV/EBITDA = (market capitalization + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM EBITDA. Every bridge component must be knowable at the evaluation date, and every one of them must describe the SAME balance-sheet date: a date whose components span more than one balance sheet publishes no enterprise value, with the reason REASON_MIXED_BALANCE_SHEET_PERIODS. The bridge is never completed by omission, substitution or zero-fill, and a component that was not reported is not carried forward as zero. Market capitalization is not a balance-sheet component and is not part of the same-date rule. The bridge remains a partial statement of enterprise value even when complete (it omits leases, non-current investments and off-balance sheet claims) and every observation says so."
+    },
+    "reference_gate": "The same >= 20 qualifying observations rule as every other production distribution. A thinner sample stays descriptive and is never a scenario exit multiple. The two distributions are qualified independently: one qualifying does not qualify the other.",
+    "known_limitations": [
+      "The captured revenue concept carries no fact for fiscal 2021 Q1 in any filing, so the trailing window that needs that position is refused with REASON_SOURCE_CONCEPT_COVERAGE_GAP. The issuer reported that quarter on the contract-revenue element instead.",
+      "The trailing depreciation and amortization window is unavailable at four of the earliest evaluation dates, and those dates are refused with REASON_MISSING_EBITDA_WINDOW.",
+      "The reconstructed enterprise value omits operating leases, non-current investments and off-balance sheet commitments. It is labelled partial on every observation.",
+      "The evaluation dates are the filing usable dates shared with the income reconstruction, not a continuous daily trading history."
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "ticker": "AEP",
+  "issuer_id": "CIK0000004904",
+  "entity_name": "American Electric Power Company",
+  "fiscal_year_end": "1231",
+  "role": "production",
+  "metrics": [
+    "TTM_REVENUE",
+    "TTM_EBITDA"
+  ],
+  "provenance": {
+    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the revenue, operating income and depreciation and amortization concepts, plus the canonical price series and acceptance evidence reused by path from data/historical_pe/AEP. The trailing revenue and EBITDA windows are the ones the data/historical_multiples/AEP dataset divides by.",
+    "promoted_on": "2026-10-21",
+    "concept_fetch": {
+      "fetched_on": "2026-10-21",
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+      "response_units": "verbatim as returned: USD for every concept"
+    },
+    "issuer_facts": {
+      "cik": "0000004904",
+      "fye_month": 12
+    },
+    "files": {
+      "revenue_concept.json": {
+        "bytes": 45896,
+        "content_sha256": "a1de58e66ef8299cc403c9bdc34c4daab81a49a74b53bb5586e69417d07c4534",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/Revenues.json",
+        "definition": "AEP's 'TOTAL REVENUES' line: the revenues of its operating segments, 21,876 million USD for fiscal 2025, with 'Other Income' of 48 million presented below operating income and therefore not part of it. The element is us-gaap:Revenues, whose own definition is broader than the revenue metric: it allows investment and interest income before taxes. The core registry retired that element as a mapping to the revenue metric (decision 2.99) and that decision stands -- no scope was invented to rescue it, for this issuer or any other. This dataset reads the filer's own line and the manifest states what that means: the trailing revenue it builds is the filer's own total revenue, and the issuer's CURRENT figures in the valuation chain remain the provider's, because the registry does not accept this element as the metric. That is the same boundary Microsoft's dataset has.",
+        "tag": "Revenues",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 304,
+        "period_start": "2007-12-31",
+        "period_end": "2026-03-31"
+      },
+      "operating_income_concept.json": {
+        "bytes": 45455,
+        "content_sha256": "acda5b5d1aaa80d077a044f44da90990ae36eafe9d9aafa75f7f1ae7a8e3b421",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/OperatingIncomeLoss.json",
+        "definition": "Operating income as presented, after the operating expenses that include depreciation and amortization.",
+        "tag": "OperatingIncomeLoss",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 304,
+        "period_start": "2007-12-31",
+        "period_end": "2026-03-31"
+      },
+      "depreciation_concept.json": {
+        "bytes": 29944,
+        "content_sha256": "e1ba5e6746056cfbe6eab3deb41f06729807f6e5314a8755ad31aad1e57cf9a2",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/UtilitiesOperatingExpenseDepreciationAndAmortization.json",
+        "definition": "AEP's cash-flow line 'Depreciation and Amortization', 3,380 million USD for fiscal 2025, carried on us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization. The amortization of nuclear fuel is a separate cash-flow line (109 million USD for fiscal 2025), so this line is depreciation and amortization and nothing else. The element is a utility-sector element, so the registry maps it to the metric for AEP alone and not as a market-wide EXACT mapping -- the same treatment Apple's own element receives.",
+        "tag": "UtilitiesOperatingExpenseDepreciationAndAmortization",
+        "units": [
+          "USD"
+        ],
+        "fact_count": 198,
+        "period_start": "2009-12-31",
+        "period_end": "2026-03-31"
+      },
+      "daily_prices.json (reused by path)": {
+        "path": "data/historical_pe/AEP/daily_prices.json",
+        "content_sha256": "e28e7520324435c5c3e0821738f403fc25440281101da91e0ac083b3ffd292a1",
+        "source": "The canonical daily price series, read by path. The trading calendar decides when a filing's fact becomes knowable under the 16:00 ET cutoff rule, so one calendar serves every reconstruction of this issuer."
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "data/historical_pe/AEP/filing_acceptance_evidence.json",
+        "content_sha256": "5ad9cc26a97540e490d816e6916b5b26a112d7d91f43c616e43a4db269ce010e",
+        "source": "The canonical acceptance index, read by path. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped."
+      }
+    },
+    "known_limitations": [
+      "The captured revenue concept carries no fact for fiscal 2021 Q1 in any filing: the issuer reported that quarter on the contract-revenue element instead, and the two elements are the same quantity reported on different elements rather than two quantities to add. The trailing window that needs that position is refused with REASON_SOURCE_CONCEPT_COVERAGE_GAP, and the reason says so. Combining the two elements would be a change to the dataset's role design, not a repair of this one.",
+      "The captured revenue concept's coverage begins later than the acceptance index does, so the earliest evaluation dates are refused as a coverage gap of the captured source rather than for want of an acceptance record.",
+      "The trailing depreciation and amortization window is unavailable at four of the earliest evaluation dates, and those dates are refused with REASON_MISSING_EBITDA_WINDOW, naming the fiscal positions and the dates they became knowable.",
+      "The registry declines this issuer's revenue element, so the issuer's current figures in the valuation chain stay the provider's. The historical distributions here are unaffected: they are built from the filer's own filed line under this dataset's own methodology."
+    ]
+  }
+}

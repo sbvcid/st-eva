@@ -79,9 +79,9 @@ UNRESOLVED = ConceptResolution.UNRESOLVED_NO_APPLICABLE_MAPPING
 # line on it and has no company-specific element for the line, so the mapping
 # is declared for Apple alone. The scope is what keeps the claim honest, and
 # the count records the row that exists.
-EXPECTED_TOTAL = 53
-EXPECTED_IDENTITY = 49
-EXPECTED_IDENTITY_BY_TYPE = {"EXACT": 33, "PARTIAL": 15, "EQUIVALENT": 1}
+EXPECTED_TOTAL = 54
+EXPECTED_IDENTITY = 50
+EXPECTED_IDENTITY_BY_TYPE = {"EXACT": 34, "PARTIAL": 15, "EQUIVALENT": 1}
 EXPECTED_COMPOSITION = 4
 
 

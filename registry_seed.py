@@ -624,6 +624,19 @@ CONCEPTS: Tuple[Concept, ...] = (
     ),
     Concept(
         concept_id=concept_id_for(
+            US_GAAP,
+            "UtilitiesOperatingExpenseDepreciationAndAmortization"
+        ),
+        taxonomy=US_GAAP,
+        concept="UtilitiesOperatingExpenseDepreciationAndAmortization",
+        label="Utilities Operating Expense, Depreciation and Amortization",
+        source_definition=(
+            "Amount of operating expense for depreciation and amortization of "
+            "regulated operation."
+        ),
+    ),
+    Concept(
+        concept_id=concept_id_for(
             IFRS_FULL, "DepreciationAndAmortizationExpense"
         ),
         taxonomy=IFRS_FULL,
@@ -1908,6 +1921,41 @@ MAPPINGS: Tuple[ConceptMapping, ...] = (
             "scoped to the issuer whose own presentation makes the element "
             "this metric: Apple reports the line and has no company-specific "
             "element for it. Not a market-wide EXACT mapping."
+        ),
+    ),
+    ConceptMapping(
+        metric_id="depreciation_and_amortization",
+        concept_id=concept_id_for(
+            US_GAAP, "UtilitiesOperatingExpenseDepreciationAndAmortization"
+        ),
+        mapping_type=MAPPING_EXACT,
+        relation_kind=MAPPING_IDENTITY,
+        # Scoped to AEP, and only to AEP.
+        #
+        # The element is a utility-sector element: it states depreciation and
+        # amortization of regulated operations, so it is not a market-wide
+        # statement about the construct.
+        #
+        # AEP reports one cash-flow line labelled "Depreciation and
+        # Amortization" and carries it on this element: 3,380 million USD for
+        # FY2025 (2025-01-01 to 2025-12-31), in the 10-K filed 2026-02-12,
+        # accession 0000004904-26-000013. The amortization of nuclear fuel is
+        # a separate cash-flow line (109 million USD for FY2025), so the line
+        # this element carries is depreciation and amortization and nothing
+        # else -- it is not a line that aggregates undefined "other" items.
+        #
+        # The scope is what keeps the claim honest: the element means this
+        # metric for AEP and for no other issuer, so the mapping is declared
+        # for AEP alone rather than as a market-wide EXACT mapping. The same
+        # treatment Apple's own element receives.
+        scope={"ticker": "AEP"},
+        notes=(
+            "AEP's combined 'Depreciation and Amortization' line, carried on "
+            "us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization. The "
+            "element is a utility-sector element, so this mapping is scoped to "
+            "the issuer whose own presentation makes the element this metric: "
+            "AEP reports the line and has no company-specific element for it. "
+            "Not a market-wide EXACT mapping."
         ),
     ),
     ConceptMapping(

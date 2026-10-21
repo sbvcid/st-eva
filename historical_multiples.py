@@ -264,6 +264,84 @@ ISSUER_CONFIGS: Dict[str, HistoricalMultiplesConfig] = {
             "long_term_debt_current": "LongTermDebtCurrent",
         },
     ),
+    "NKE": HistoricalMultiplesConfig(
+        ticker="NKE",
+        issuer_id="CIK0000320193",
+        entity_name="NIKE, Inc.",
+        fye_month=5,
+        data_dir=Path(__file__).resolve().parent
+        / "data"
+        / "historical_multiples"
+        / "NKE",
+        prices_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "NKE"
+        / "daily_prices.json",
+        acceptance_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "NKE"
+        / "filing_acceptance_evidence.json",
+        # Nike has no historical P/FCF dataset, so its cover-page share
+        # counts are this dataset's own input, read from the same
+        # company-concept payload the other issuers' share series come from.
+        shares_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_multiples"
+        / "NKE"
+        / "shares_outstanding_concept.json",
+        income_config=INCOME_ISSUER_CONFIGS["NKE"],
+        # The roles name a quantity and each issuer's own element fills it.
+        # Nike's balance sheet carries all five on the standard elements, and
+        # every one of them is reported at the same balance-sheet date.
+        balance_sheet_concepts={
+            "cash": "CashAndCashEquivalentsAtCarryingValue",
+            "marketable_securities_current": "MarketableSecuritiesCurrent",
+            "commercial_paper": "CommercialPaper",
+            "long_term_debt_noncurrent": "LongTermDebtNoncurrent",
+            "long_term_debt_current": "LongTermDebtCurrent",
+        },
+    ),
+    "AEP": HistoricalMultiplesConfig(
+        ticker="AEP",
+        issuer_id="CIK0000004904",
+        entity_name="American Electric Power Company",
+        fye_month=12,
+        data_dir=Path(__file__).resolve().parent
+        / "data"
+        / "historical_multiples"
+        / "AEP",
+        prices_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "AEP"
+        / "daily_prices.json",
+        acceptance_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "AEP"
+        / "filing_acceptance_evidence.json",
+        # AEP has no historical P/FCF dataset, so its cover-page share counts
+        # are this dataset's own input, read from the same company-concept
+        # payload the other issuers' share series come from.
+        shares_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_multiples"
+        / "AEP"
+        / "shares_outstanding_concept.json",
+        income_config=INCOME_ISSUER_CONFIGS["AEP"],
+        # The roles name a quantity and each issuer's own element fills it.
+        # AEP's balance sheet carries all five on the standard elements, and
+        # every one of them is reported at the same balance-sheet date.
+        balance_sheet_concepts={
+            "cash": "CashAndCashEquivalentsAtCarryingValue",
+            "marketable_securities_current": "ShortTermInvestments",
+            "commercial_paper": "CommercialPaper",
+            "long_term_debt_noncurrent": "LongTermDebtNoncurrent",
+            "long_term_debt_current": "LongTermDebtCurrent",
+        },
+    ),
 }
 
 
@@ -1073,6 +1151,8 @@ def load_issuer_historical_multiples(
         ps_ratio: Optional[float] = None
         ev_value: Optional[float] = None
         ev_ebitda_ratio: Optional[float] = None
+        total_debt: Optional[float] = None
+        liquid_funds: Optional[float] = None
 
         ps_reason: Optional[str] = None
         ps_detail: Optional[str] = None
@@ -1103,6 +1183,39 @@ def load_issuer_historical_multiples(
         ttm_ebitda = (
             float(ebitda_window["value"]) if ebitda_window is not None else None
         )
+        # The enterprise-value bridge is built only where a price and a share
+        # count exist, but the formulas below state what the bridge would be
+        # whether or not it could be built. It is stated empty here so a date
+        # with no price or no share count says that plainly instead of
+        # failing to say anything.
+        ev_bridge: Dict[str, Any] = {
+            "components_present": [],
+            "components_absent": list(EV_BRIDGE_COMPONENTS),
+            "complete": False,
+            "components": {},
+            "total_debt": None,
+            "liquid_funds": None,
+            "definition": (
+                "market capitalization + total debt (long-term debt "
+                "non-current + long-term debt current + commercial paper) "
+                "- liquid funds (cash and cash equivalents + current "
+                "marketable securities)"
+            ),
+            "period_alignment": {
+                "policy": EV_BRIDGE_PERIOD_POLICY,
+                "required": True,
+                "all_components_present": False,
+                "single_balance_sheet_date": False,
+                "balance_sheet_date": None,
+                "component_period_ends": {},
+                "distinct_period_ends": [],
+            },
+            "completeness_note": (
+                "No enterprise-value bridge was built at this date, so no "
+                "enterprise value is published for it. The reason the date "
+                "carries is stated with it."
+            ),
+        }
 
         if revenue_window is None:
             code, detail = classify_window_refusal(
@@ -1155,7 +1268,6 @@ def load_issuer_historical_multiples(
             )
         else:
             market_cap = round(price["close"] * share.shares, 2)
-
             if ps_reason is None:
                 if ttm_revenue is None or ttm_revenue <= 0:
                     ps_reason = REASON_NON_POSITIVE_DENOMINATOR
@@ -1182,8 +1294,6 @@ def load_issuer_historical_multiples(
             # bridge that mixes a stale instant with a current one is not a
             # balance sheet, and no EV is published from it.
             bridge_complete = all_present and single_period
-            total_debt: Optional[float] = None
-            liquid_funds: Optional[float] = None
             if all_present:
                 total_debt = sum(
                     components_in_force[c].value

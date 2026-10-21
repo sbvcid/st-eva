@@ -82,12 +82,15 @@ class TestRegistryClassification(unittest.TestCase):
         for row in self.rows():
             self.assertIn(row["relation_kind"], ("IDENTITY", "COMPOSITION"),
                           row)
-        # 53 rows: the issuer-scoped mapping for
-        # us-gaap:DepreciationDepletionAndAmortization is one of them. The
-        # element's definition also covers depleting assets, so it is not the
-        # pure element; Apple's own presentation of the line is what makes it
-        # that metric for Apple, and the scope says so.
-        self.assertEqual(len(self.rows()), 53)
+        # 54 rows: the issuer-scoped mapping for
+        # us-gaap:DepreciationDepletionAndAmortization is one of them, and so
+        # is the issuer-scoped mapping for
+        # us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization. The
+        # elements' definitions are both broader than the pure
+        # depreciation-and-amortization metric; each issuer's own
+        # presentation of the line is what makes it that metric for that
+        # issuer, and the scope says so.
+        self.assertEqual(len(self.rows()), 54)
 
     def test_exactly_four_mappings_are_composition(self) -> None:
         composition = {(r["metric_id"], r["concept_id"]) for r in self.rows()
@@ -96,8 +99,8 @@ class TestRegistryClassification(unittest.TestCase):
 
     def test_every_other_mapping_is_identity(self) -> None:
         identity = [r for r in self.rows() if r["relation_kind"] == "IDENTITY"]
-        # 49: the issuer-scoped depreciation mapping is the extra one.
-        self.assertEqual(len(identity), 49)
+        # 50: the two issuer-scoped depreciation mappings are the extra ones.
+        self.assertEqual(len(identity), 50)
 
     def test_the_composition_rows_were_stored_not_defaulted(self) -> None:
         """

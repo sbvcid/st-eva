@@ -223,6 +223,64 @@ ISSUER_CONFIGS: Dict[str, HistoricalIncomeConfig] = {
             "depreciation."
         ),
     ),
+    "NKE": HistoricalIncomeConfig(
+        ticker="NKE",
+        issuer_id="CIK0000320193",
+        entity_name="NIKE, Inc.",
+        fye_month=5,
+        data_dir=Path(__file__).resolve().parent / "data" / "historical_income" / "NKE",
+        prices_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "NKE"
+        / "daily_prices.json",
+        acceptance_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "NKE"
+        / "filing_acceptance_evidence.json",
+        revenue_concept="RevenueFromContractWithCustomerExcludingAssessedTax",
+        operating_income_concept="OperatingIncomeLoss",
+        # Nike reports one cash-flow line labelled "Depreciation and
+        # amortization" and carries it on this element. The element's own
+        # definition also covers depletion, so the registry maps it to the
+        # metric for Nike alone and not as a market-wide EXACT mapping --
+        # the same treatment Apple's own element receives. Nike reports no
+        # depletable assets, so for this issuer the line is depreciation and
+        # amortization.
+        depreciation_concept="DepreciationDepletionAndAmortization",
+    ),
+    "AEP": HistoricalIncomeConfig(
+        ticker="AEP",
+        issuer_id="CIK0000004904",
+        entity_name="American Electric Power Company",
+        fye_month=12,
+        data_dir=Path(__file__).resolve().parent / "data" / "historical_income" / "AEP",
+        prices_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "AEP"
+        / "daily_prices.json",
+        acceptance_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "AEP"
+        / "filing_acceptance_evidence.json",
+        # AEP's revenue and operating income are on the standard elements, and
+        # its revenue element is the one the registry already accepts for the
+        # revenue metric.
+        revenue_concept="Revenues",
+        operating_income_concept="OperatingIncomeLoss",
+        # AEP's cash-flow line "Depreciation and Amortization" is carried on
+        # us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization, a
+        # utility-sector element: the amortization of nuclear fuel is a
+        # separate cash-flow line, so the line itself is depreciation and
+        # amortization and nothing else. The element's name says utilities
+        # operating expense, so the registry maps it to the metric for AEP
+        # alone and not as a market-wide EXACT mapping -- the same treatment
+        # Apple's own element receives.
+        depreciation_concept="UtilitiesOperatingExpenseDepreciationAndAmortization",
+    ),
 }
 
 
