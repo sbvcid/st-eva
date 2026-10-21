@@ -70,6 +70,21 @@ def _sha256_of(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# The trees the research lane could plausibly write to: the research capture,
+# the research results, and the versioned production datasets. The live
+# archive directory is not among them: it holds SQLite databases that other
+# tests open, and a file locked by another process is not a write by the
+# lane.
+VERSIONED_DATA_TREES = (
+    "data/research_multiples",
+    "data/research_lanes",
+    "data/historical_pe",
+    "data/historical_multiples",
+    "data/historical_income",
+    "data/historical_pfcf",
+)
+
+
 def _tree_digest(root: Path) -> str:
     """A digest over every file under a directory, path and content."""
     entries = []
@@ -78,6 +93,21 @@ def _tree_digest(root: Path) -> str:
             entries.append(
                 f"{path.relative_to(root).as_posix()}:{_sha256_of(path)}"
             )
+    return hashlib.sha256("\n".join(entries).encode("utf-8")).hexdigest()
+
+
+def _versioned_data_digest() -> str:
+    """A digest over the versioned data trees."""
+    entries = []
+    for name in VERSIONED_DATA_TREES:
+        directory = ROOT / name
+        if not directory.exists():
+            continue
+        for path in sorted(directory.rglob("*")):
+            if path.is_file():
+                entries.append(
+                    f"{path.relative_to(ROOT).as_posix()}:{_sha256_of(path)}"
+                )
     return hashlib.sha256("\n".join(entries).encode("utf-8")).hexdigest()
 
 
@@ -317,12 +347,12 @@ class TheCapture(unittest.TestCase):
         self.assertEqual(_tree_digest(CAPTURE_DIR), before)
 
     def test_the_lane_writes_nothing_outside_the_directory_it_is_given(self):
-        repo_before = _tree_digest(ROOT / "data")
+        repo_before = _versioned_data_digest()
         with tempfile.TemporaryDirectory() as directory:
             write_ko_research_outputs(Path(directory))
             written = sorted(path.name for path in Path(directory).iterdir())
             self.assertEqual(len(written), len(LANE_CONFIGS) + 1)
-        self.assertEqual(_tree_digest(ROOT / "data"), repo_before)
+        self.assertEqual(_versioned_data_digest(), repo_before)
 
 
 class TheProductionArithmetic(unittest.TestCase):

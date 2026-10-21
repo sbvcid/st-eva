@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from web.job_manager import JobManager
+from web.research_api import research_router
 from web.service_adapter import AnalysisServiceAdapter
 from web.schemas import (
     AnalyzeRequest,
@@ -65,6 +66,12 @@ def create_app(
 
     manager = job_manager or JobManager(adapter=AnalysisServiceAdapter(archives_dir))
     app.state.job_manager = manager
+
+    # The research path is mounted before the single-page-application
+    # catch-all below, so its routes are matched on their own terms. It
+    # starts no analysis job, writes no Archive and produces no production
+    # reference: every figure under it is a research figure.
+    app.include_router(research_router)
 
     @app.get("/api/health", response_model=HealthResponse)
     def health_check() -> HealthResponse:

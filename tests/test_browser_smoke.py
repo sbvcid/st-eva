@@ -69,6 +69,67 @@ class TestBrowserSmoke(unittest.TestCase):
         if cls._archive_tmp is not None:
             cls._archive_tmp.cleanup()
 
+    def test_research_surface_reads_the_research_api_end_to_end(self):
+        """
+        The research surface against the real research API.
+
+        The research path is served by the same application, on its own
+        route, with no route interception: what the browser reads here is
+        what a user would read. A research metric is not chosen for the
+        user, the refused dates carry their reasons, the calculation runs,
+        and the result says it is not a valuation reference.
+        """
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale="en-US", viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            # The valuation surface is what the application opens on.
+            page.wait_for_selector("button:has-text('Analyze')")
+
+            # The research surface is entered from the header.
+            page.click("[data-testid='mode-research']")
+            page.wait_for_selector("[data-testid='research-notice']")
+            page.wait_for_selector("[data-testid='research-metric-select']")
+
+            # The research-only standing is stated before any figure.
+            page.wait_for_selector("text=not a valuation reference")
+
+            # No research metric is chosen for the user.
+            selected = page.eval_on_selector(
+                "[data-testid='research-metric-select']", "e => e.value"
+            )
+            self.assertEqual(selected, "")
+            self.assertIsNone(
+                page.query_selector("[data-testid='research-metric-card']")
+            )
+
+            # The user chooses one, and the metric's own figures arrive.
+            page.select_option(
+                "[data-testid='research-metric-select']",
+                "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+            )
+            page.wait_for_selector("[data-testid='research-metric-card']")
+            page.wait_for_selector("text=us-gaap:Revenues")
+            page.wait_for_selector("[data-testid='research-valid-count']")
+
+            # The refused dates are shown with the reason they were refused.
+            page.wait_for_selector("text=RESEARCH_REASON_NO_DENOMINATOR_WINDOW")
+
+            # The calculation runs and produces a figure.
+            page.click("[data-testid='research-calculate']")
+            page.wait_for_selector("[data-testid='research-result']")
+            page.wait_for_selector("[data-testid='research-implied-denominator']")
+            page.wait_for_selector("text=not a valuation reference")
+
+            # The evidence of one evaluation date can be opened.
+            page.click("[data-testid='research-open-2026-07-29']")
+            page.wait_for_selector("[data-testid='research-evidence']")
+
+            context.close()
+            browser.close()
+
     def test_desktop_aapl_full_flow(self):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)

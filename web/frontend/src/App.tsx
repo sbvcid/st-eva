@@ -14,11 +14,13 @@ import { ProgressStepper } from './components/ProgressStepper'
 import { ResultCards } from './components/ResultCards'
 import { ReverseRequirementsMatrix } from './components/ReverseRequirementsMatrix'
 import { EvidenceAccordion } from './components/EvidenceAccordion'
+import { ResearchPanel } from './components/ResearchPanel'
 import {
   AlertTriangle,
   ArrowRight,
   Compass,
   Download,
+  FlaskConical,
   Languages,
   RotateCcw,
   Search,
@@ -27,6 +29,8 @@ import {
 } from 'lucide-react'
 
 const QUICK_EXAMPLES = ['AAPL', 'MSFT', 'MU', 'TSM']
+
+type AppMode = 'valuation' | 'research'
 
 const MainApp: React.FC = () => {
   const { language, setLanguage, t } = useI18n()
@@ -45,6 +49,10 @@ const MainApp: React.FC = () => {
   )
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [isStandalone, setIsStandalone] = useState<boolean>(false)
+  // The two modes are separate surfaces with separate state. A research
+  // calculation never touches the analysis path, and an analysis never
+  // touches a research figure.
+  const [appMode, setAppMode] = useState<AppMode>('valuation')
 
   // Scenario assumption controls
   // Live-first by default: a normal analysis must observe real market data, not
@@ -228,6 +236,18 @@ const MainApp: React.FC = () => {
     setCustomUserEps('')
   }
 
+  const handleModeChange = (next: AppMode) => {
+    setAppMode(next)
+    // The analysis surface is cleared when it is left, so a research figure
+    // is never shown beside a valuation result and vice versa.
+    if (next === 'research') {
+      setCurrentJob(null)
+      setLastSubmittedRequest(null)
+      setErrorMessage(null)
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       {/* Offline Status Banner */}
@@ -306,8 +326,52 @@ const MainApp: React.FC = () => {
         </div>
       </header>
 
+      {/* Mode switch: the valuation surface and the research surface are
+          separate. It sits in its own bar rather than in the header, so a
+          narrow screen does not have to give up the header's controls. */}
+      <div className="w-full border-b border-slate-200 bg-white">
+        <div
+          className="max-w-2xl mx-auto px-4 py-2 flex items-center gap-1.5"
+          role="group"
+          aria-label={t.mode.label}
+        >
+          <button
+            type="button"
+            data-testid="mode-valuation"
+            onClick={() => handleModeChange('valuation')}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              appMode === 'valuation'
+                ? 'bg-blue-50 text-blue-700 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+            aria-pressed={appMode === 'valuation'}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            {t.mode.valuation}
+          </button>
+          <button
+            type="button"
+            data-testid="mode-research"
+            onClick={() => handleModeChange('research')}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              appMode === 'research'
+                ? 'bg-amber-100 text-amber-800 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+            aria-pressed={appMode === 'research'}
+          >
+            <FlaskConical className="w-3.5 h-3.5" />
+            {t.mode.research}
+          </button>
+        </div>
+      </div>
+
       {/* Main Content Area */}
       <main className="w-full max-w-2xl px-4 py-6 sm:py-8 flex-1 flex flex-col">
+        {appMode === 'research' ? (
+          <ResearchPanel />
+        ) : (
+          <>
         {/* Hero & Search (Always accessible or prominent when no result) */}
         {!currentJob?.result && (
           <div className="mb-6 text-center sm:text-left">
@@ -617,6 +681,8 @@ const MainApp: React.FC = () => {
               sourceIdentifiers={currentJob.result.source_identifiers}
             />
           </div>
+        )}
+          </>
         )}
       </main>
 

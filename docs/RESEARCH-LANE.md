@@ -220,3 +220,89 @@ python tools/build_ko_research_capture.py --as-of YYYY-MM-DD
   metric is a different quantity with its own name and formula, and the
   difference between the two lanes' medians is a difference of scope and
   sample, not a measure of anything the production regime declined to say.
+
+## The research calculation
+
+`research_calculator.py` is the service a user works with. It puts a user
+in front of a lane: the user chooses a research metric, states a multiple
+and a market value, and reads the figure that pair implies together with the
+evidence behind it.
+
+### Choosing a metric
+
+The four candidate research metrics are the selectable ones. The diagnostic
+lane is not a metric and cannot be selected: asking for it by name is a
+refusal, not an empty result.
+
+Every metric carries its own name and formula, its valid and refused
+observation counts, its sample period, its statistics, the registry's
+standing on each element it reads, the reasons it does not have production
+standing, its element chronology, its basis breaks and its known
+limitations. None of them is presented as a price-to-sales or an EV/EBITDA
+reference, because none of them is one.
+
+### The reverse calculation
+
+The service computes what a research multiple and a market value imply about
+the financial denominator underneath them.
+
+| Input | Where it comes from |
+|---|---|
+| The research metric | The user. There is no default, and a research result is never used as a valuation reference. |
+| The multiple | The metric's own median, one of the metric's own observations, or a number the user supplies. |
+| The market value | The lane's own market capitalisation or its own enterprise value on a named evaluation date, or a number the user supplies. |
+
+The numerator is the lane's own. Lanes A and B divide a market
+capitalisation; lanes C1 and C2 divide an enterprise value built from that
+lane's own filed balance-sheet bridge. A calculation never mixes one lane's
+numerator with another lane's denominator or sample.
+
+A user-supplied multiple or market value is labelled
+`user_supplied_research_assumption` and is kept apart from the observed
+facts. The service does not offer a live market value: a live price cannot
+be paired with the capture's historical share count or with a historical
+bridge without splicing two different dates, so the traceable market value
+is the lane's own, with its date and its data identity, or the user's own.
+
+A calculation that cannot be made is refused with its own reason code, and
+never falls back to a test figure or a stale one: a multiple that does not
+exist, an observation the lane refused, a market value the lane does not
+have, a non-positive operand, and a capture that does not match its own
+manifest are each their own refusal.
+
+### The evidence
+
+Every result can be followed back to the filing it came from. The service
+returns the operands, the formula and its version, the lane's input-set
+identity and content hash, the calculation's own content hash, the accessions,
+elements, periods, units, knowability and source-file digests behind the
+numerator, the four denominator quarters with the accessions each was built
+from, the balance-sheet components with their digests, the registry's
+standing, the basis breaks and the value revisions, and the statement that
+the result is not a production reference.
+
+The same inputs and the same formula version give the same result. A change
+of input or of data version changes the calculation's content hash, so the
+difference is visible.
+
+### The interface
+
+`web/research_api.py` serves the research path at `/api/research`, mounted
+before the single-page-application catch-all so its routes are matched on
+their own terms. It starts no analysis job, writes no Archive, produces no
+production reference and reaches no Investment Context.
+
+| Route | What it serves |
+|---|---|
+| `GET /api/research/metrics` | The selectable research metrics and the notice that governs them. |
+| `GET /api/research/metrics/{metric_id}` | A metric and every evaluation date behind it, published and refused. |
+| `GET /api/research/metrics/{metric_id}/observations/{evaluation_date}` | The full evidence of one evaluation date. |
+| `POST /api/research/calculate` | One research reverse calculation, with its evidence. |
+
+The interface offers the metric selection, the metric's own figures, the
+calculation, the result, and the evidence explorer: the table of every
+evaluation date the lane made, with the refused dates and their reasons,
+and the source chain behind any one of them. The research-only notice is on
+the surface from the first moment, and it is not a warning line that can be
+dismissed: the figure is structurally ineligible, and the surface says what
+makes it so.

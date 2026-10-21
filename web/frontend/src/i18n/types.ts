@@ -279,6 +279,66 @@ export interface Translations {
     noEvidence: string
     discrepancyStatus: string
   }
+  mode: {
+    label: string
+    valuation: string
+    research: string
+  }
+  research: {
+    bannerTitle: string
+    bannerBody: string
+    errorTitle: string
+    metricLabel: string
+    selectMetricPrompt: string
+    validObservations: string
+    refusedObservations: string
+    medianLabel: string
+    meanLabel: string
+    stdLabel: string
+    minLabel: string
+    maxLabel: string
+    samplePeriod: string
+    numeratorLabel: string
+    formulaVersion: string
+    notProductionTitle: string
+    limitationsTitle: string
+    basisBreaksTitle: string
+    datesLabel: string
+    revisionsTitle: string
+    periodLabel: string
+    detectedLabel: string
+    calculatorTitle: string
+    multipleLabel: string
+    multipleMedian: string
+    multipleObservation: string
+    multipleUser: string
+    numeratorObservation: string
+    numeratorUser: string
+    latestValidDate: string
+    calculate: string
+    calculating: string
+    resultTitle: string
+    impliedDenominator: string
+    multipleUsed: string
+    numeratorUsed: string
+    userAssumptionNote: string
+    formulaLabel: string
+    identityLabel: string
+    evidenceTitle: string
+    observationsTitle: string
+    observationsNote: string
+    dateLabel: string
+    valueLabel: string
+    reasonLabel: string
+    viewEvidence: string
+    observationsValid: string
+    observationsRefused: string
+    priceLabel: string
+    sharesLabel: string
+    marketValueLabel: string
+    fullEvidence: string
+    closeEvidence: string
+  }
   footer: {
     text: string
   }
