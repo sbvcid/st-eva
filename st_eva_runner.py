@@ -2025,6 +2025,15 @@ class MarketImpliedAssumptionsEngine:
         production_ev_ebitda_median, production_ev_ebitda_status = (
             production_ev_ebitda_for_reference(production_historical_multiples)
         )
+        # The registry's basis for the multiples the references may come from.
+        # It travels with the reference so that an archive keeps the standing
+        # under which the denominator was read, and so that a later change to
+        # the registry's decisions is visible rather than silent.
+        from historical_multiples import multiples_qualification_basis
+
+        production_multiples_qualification = multiples_qualification_basis(
+            production_historical_multiples
+        )
 
         if reference_multiple is not None:
             selected_pe = reference_multiple
@@ -2235,6 +2244,14 @@ class MarketImpliedAssumptionsEngine:
                 "ev_ebitda_multiple": selected_ev_ebitda,
                 "production_historical_ev_ebitda_status": production_ev_ebitda_status,
                 "production_historical_ev_ebitda_sample_count": production_ev_ebitda_sample_count,
+                # The registry's basis for the production multiples, per
+                # metric. It is the standing under which the denominator was
+                # read, and it is kept with the reference so that the archive
+                # holds it and a later change to the registry's decisions is
+                # visible rather than silent.
+                "production_historical_multiples_qualification": (
+                    production_multiples_qualification
+                ),
                 "historical_band_status": {
                     "pe": band_status(pe_band),
                     "ps": band_status(ps_band),

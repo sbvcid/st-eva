@@ -50,5 +50,36 @@
     "source": "The canonical historical P/E dataset's acceptance index: each filing's acceptance datetime, form and period end. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped."
    }
   }
+ },
+ "semantic_qualification": {
+  "policy": "A source element is qualified for a metric only when the core registry resolves it to that metric for that filer: an EXACT IDENTITY mapping, in force at the date read, whose scope covers the filer. An element the registry declines, retires, maps only partially, maps to another metric or scopes to another filer is not qualified, and its filed values produce no figure and no production reference. Holding a filed element as traceable evidence is not the same as admitting it to a valuation.",
+  "read_by": "the core registry, as seeded from registry_seed",
+  "subject": "AAPL income dataset",
+  "roles": {
+   "revenue": {
+    "metric_id": "revenue",
+    "element": "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "concept_id": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+    "registry_decision": "QUALIFIED",
+    "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+    "basis": "The core registry maps us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax to 'revenue' for AAPL as an EXACT IDENTITY mapping, without a filer restriction, in force from 2017-09-30. The element is this metric for this filer, and its filed values may produce a figure."
+   },
+   "operating_income": {
+    "metric_id": "operating_income",
+    "element": "OperatingIncomeLoss",
+    "concept_id": "us-gaap:OperatingIncomeLoss",
+    "registry_decision": "QUALIFIED",
+    "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+    "basis": "The core registry maps us-gaap:OperatingIncomeLoss to 'operating_income' for AAPL as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure."
+   },
+   "depreciation_and_amortization": {
+    "metric_id": "depreciation_and_amortization",
+    "element": "DepreciationDepletionAndAmortization",
+    "concept_id": "us-gaap:DepreciationDepletionAndAmortization",
+    "registry_decision": "QUALIFIED",
+    "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+    "basis": "The core registry maps us-gaap:DepreciationDepletionAndAmortization to 'depreciation_and_amortization' for AAPL as an EXACT IDENTITY mapping, scoped to AAPL. The element is this metric for this filer, and its filed values may produce a figure."
+   }
+  }
  }
 }

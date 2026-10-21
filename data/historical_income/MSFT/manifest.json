@@ -68,5 +68,44 @@
       },
       "not_a_substitute": "The pure depreciation expense and the intangible amortization expense are not added together to stand in for the cash-flow line: for fiscal 2026 they sum to 39,000,000,000 against the 38,534,000,000 the line reports, because the line is a net figure that also aggregates accretion and other operating adjustments. A sum of note elements is not this metric and is not used as one."
     }
+  },
+  "semantic_qualification": {
+    "policy": "A source element is qualified for a metric only when the core registry resolves it to that metric for that filer: an EXACT IDENTITY mapping, in force at the date read, whose scope covers the filer. An element the registry declines, retires, maps only partially, maps to another metric or scopes to another filer is not qualified, and its filed values produce no figure and no production reference. Holding a filed element as traceable evidence is not the same as admitting it to a valuation.",
+    "read_by": "the core registry, as seeded from registry_seed",
+    "subject": "MSFT income dataset",
+    "roles": {
+      "revenue": {
+        "metric_id": "revenue",
+        "element": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "concept_id": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+        "registry_decision": "QUALIFIED",
+        "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+        "basis": "The core registry maps us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax to 'revenue' for MSFT as an EXACT IDENTITY mapping, without a filer restriction, in force from 2017-09-30. The element is this metric for this filer, and its filed values may produce a figure."
+      },
+      "operating_income": {
+        "metric_id": "operating_income",
+        "element": "OperatingIncomeLoss",
+        "concept_id": "us-gaap:OperatingIncomeLoss",
+        "registry_decision": "QUALIFIED",
+        "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+        "basis": "The core registry maps us-gaap:OperatingIncomeLoss to 'operating_income' for MSFT as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure."
+      },
+      "depreciation_and_amortization": {
+        "metric_id": "depreciation_and_amortization",
+        "element": "",
+        "concept_id": "",
+        "registry_decision": "NOT_QUALIFIED",
+        "reason_code": "NO_ELEMENT_FOR_ROLE",
+        "basis": "No element fills the depreciation-and-amortization role for MSFT. The role is empty, so the metric has no source for this filer and no trailing EBITDA window can exist at any date."
+      },
+      "depreciation_evidence": {
+        "metric_id": "depreciation_and_amortization",
+        "element": "Depreciation",
+        "concept_id": "us-gaap:Depreciation",
+        "registry_decision": "NOT_QUALIFIED",
+        "reason_code": "NO_MAPPING_FOR_METRIC",
+        "basis": "The core registry holds no mapping for us-gaap:Depreciation at all, so it does not recognise the element as 'depreciation_and_amortization' for any filer. The element may still be filed and traceable; it is not this metric's source, and its values produce no figure."
+      }
+    }
   }
 }

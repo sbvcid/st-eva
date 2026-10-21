@@ -1033,6 +1033,16 @@ class ContextBuilder:
                     if eligibility is not None
                     else None
                 ),
+                # The registry's standing on the element the reference's
+                # denominator was read from. It is kept beside the other
+                # eligibility fields so an archive holds the standing the
+                # reference was admitted under, and so a later change to the
+                # registry's decisions is visible rather than silent.
+                "eligibility_semantic_qualification": (
+                    eligibility.get("semantic_qualification")
+                    if eligibility is not None
+                    else None
+                ),
                 "eligibility_rule": (
                     eligibility["eligibility_rule"]
                     if eligibility is not None
@@ -1284,6 +1294,37 @@ class ContextBuilder:
                     ),
                     "observation_count": metric_sample_count,
                 }
+                # The registry's basis for the distribution the reference comes
+                # from: the element its denominator was read from, the metric
+                # that element was read for, and the registry's decision on
+                # it. An archive keeps it, so the reference it holds carries
+                # the standing under which it was built, and a later change to
+                # the registry's decisions is visible rather than silent.
+                qualification = (
+                    analysis_reference.get(
+                        "production_historical_multiples_qualification"
+                    )
+                    or {}
+                )
+                # The metric ids are the multiples dataset's own, so the two
+                # cannot drift apart. The import is local because the
+                # multiples loader is not needed to build a context that has
+                # no multiples reference.
+                from historical_multiples import (
+                    METRIC_EV_EBITDA_RATIO,
+                    METRIC_PS_RATIO,
+                )
+
+                metric_qualification = qualification.get(
+                    {
+                        "PRODUCTION_PS_MEDIAN": METRIC_PS_RATIO,
+                        "PRODUCTION_EV_EBITDA_MEDIAN": METRIC_EV_EBITDA_RATIO,
+                    }.get(secondary_basis)
+                )
+                if metric_qualification:
+                    production_eligibility["semantic_qualification"] = (
+                        metric_qualification
+                    )
             refs[name] = self._register_reference(
                 name=name,
                 multiple=multiple,

@@ -522,6 +522,54 @@ def production_reference_count_divergence(
     return differences
 
 
+def production_reference_qualification_divergence(
+    stored: Optional[Dict[str, Any]],
+    rebuilt: Optional[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """
+    The production references whose archived and rebuilt semantic
+    qualification bases differ.
+
+    The basis is the registry's standing on the element the reference's
+    denominator was read from. A difference found here is a real one: the
+    registry's decision about that element is not the decision the archived
+    run read, so the rebuild did not reproduce the archived run's standing --
+    even where the median and the observation count happen to be the same.
+
+    A basis recorded on one side and absent on the other is not a difference:
+    the side that does not record it does not know it, and the other side's
+    basis is not evidence against an unknown. An archive taken before the
+    qualification was recorded keeps its own state, and the field is never
+    filled in for it or read as an answer it did not give.
+    """
+    if not stored or not rebuilt:
+        return []
+    stored_refs = ((stored.get("provenance") or {}).get("refs") or {})
+    rebuilt_refs = ((rebuilt.get("provenance") or {}).get("refs") or {})
+    differences: List[Dict[str, Any]] = []
+    for name, basis, source in PRODUCTION_REFERENCE_BASES:
+        stored_entry = stored_refs.get(f"refc:{name}") or {}
+        rebuilt_entry = rebuilt_refs.get(f"refc:{name}") or {}
+        if stored_entry.get("basis") != basis or rebuilt_entry.get("basis") != basis:
+            continue
+        stored_basis = stored_entry.get("eligibility_semantic_qualification")
+        rebuilt_basis = rebuilt_entry.get("eligibility_semantic_qualification")
+        if not stored_basis or not rebuilt_basis:
+            continue
+        if stored_basis == rebuilt_basis:
+            continue
+        differences.append(
+            {
+                "reference": name,
+                "basis": basis,
+                "source": source,
+                "archived_semantic_qualification": stored_basis,
+                "rebuilt_semantic_qualification": rebuilt_basis,
+            }
+        )
+    return differences
+
+
 def replay(
     store: ArchiveStore,
     asset: str,
@@ -792,10 +840,18 @@ def replay(
     # A count only one side records is not a difference -- that side does not
     # know the number -- so the comparison is skipped rather than guessed.
     count_divergences = production_reference_count_divergence(stored, rebuilt)
+    # The registry's standing on the denominators is compared apart from the
+    # document as well. A decision the registry has since changed leaves the
+    # median and the count untouched and still means the rebuild did not
+    # reproduce the archived run's standing.
+    qualification_divergences = production_reference_qualification_divergence(
+        stored, rebuilt
+    )
     matched = (
         (stored.get("context_id") == rebuilt.get("context_id"))
         and not admissions_diverged
         and not count_divergences
+        and not qualification_divergences
     )
     count_divergence_reason = (
         "the production historical dataset behind "
@@ -811,6 +867,19 @@ def replay(
         if count_divergences
         else None
     )
+    qualification_divergence_reason = (
+        "the registry's standing on the production historical denominator "
+        "behind "
+        + ", ".join(
+            f"{difference['source']}"
+            for difference in qualification_divergences
+        )
+        + " is not the standing the archived run read, so the rebuild did not "
+        "reproduce the archived run's reference even where the median and the "
+        "observation count are the same."
+        if qualification_divergences
+        else None
+    )
     return ReplayResult(
         asset=asset,
         as_of=as_of,
@@ -822,13 +891,17 @@ def replay(
                 count_divergence_reason
                 if count_divergence_reason
                 else (
-                    admission_divergence_reason
-                    if admissions_diverged
+                    qualification_divergence_reason
+                    if qualification_divergence_reason
                     else (
-                        "the stored context and the rebuilt context differ. Either the "
-                        "code changed since archival, which is legitimate and the diff "
-                        "is informative, or the replay is not faithful, which is a "
-                        "defect. The document is reported rather than smoothed over."
+                        admission_divergence_reason
+                        if admissions_diverged
+                        else (
+                            "the stored context and the rebuilt context differ. Either the "
+                            "code changed since archival, which is legitimate and the diff "
+                            "is informative, or the replay is not faithful, which is a "
+                            "defect. The document is reported rather than smoothed over."
+                        )
                     )
                 )
             )

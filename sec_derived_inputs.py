@@ -188,27 +188,25 @@ def _concept_is_exact_for(metric_id: str, concept_tag: str, ticker: str) -> bool
     """
     Whether the registry maps this concept to this metric for this issuer.
 
-    An EXACT mapping with no scope applies to every filer; a scoped one
-    applies to the issuer it names and to no other. A concept that is not
-    mapped to the metric at all, or that is mapped to it only partially, is
-    not this metric's input, and a figure built on it is not a filed figure
-    of that metric.
-    """
-    from core_registry import MAPPING_EXACT, concept_id_for
-    from registry_seed import MAPPINGS, US_GAAP
+    The question is the registry's, and it is asked through the registry's
+    own resolver: an EXACT, IDENTITY mapping whose scope covers the filer.
+    A concept that is not mapped to the metric at all, or that is mapped to
+    it only partially, is not this metric's input, and a figure built on it
+    is not a filed figure of that metric.
 
-    wanted = concept_id_for(US_GAAP, concept_tag)
-    for mapping in MAPPINGS:
-        if mapping.metric_id != metric_id or mapping.concept_id != wanted:
-            continue
-        if mapping.mapping_type != MAPPING_EXACT:
-            continue
-        scope = mapping.scope or {}
-        scoped_to = scope.get("ticker")
-        if scoped_to is not None and scoped_to != ticker:
-            continue
-        return True
-    return False
+    The same gate the historical income and multiples datasets read decides
+    it, so the repository holds one answer to "is this concept this metric
+    for this filer" rather than two that may disagree.
+    """
+    from semantic_qualification import qualify_element
+
+    qualification = qualify_element(
+        metric_id=metric_id,
+        taxonomy="us-gaap",
+        element=concept_tag,
+        ticker=ticker,
+    )
+    return qualification.qualified
 
 
 def _window_quarters(

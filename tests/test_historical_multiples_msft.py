@@ -314,9 +314,16 @@ class TheEligibility(unittest.TestCase):
         self.assertEqual(distribution["sample_count"], 0)
         self.assertEqual(distribution["status"], "UNAVAILABLE")
         self.assertIs(distribution["usable_for_reference"], False)
-        self.assertEqual(distribution["reason_code"], REASON_INSUFFICIENT_OBSERVATIONS)
         # The reason names the cause: the denominator does not exist, because
-        # no element qualifies for the depreciation-and-amortization role.
+        # no element qualifies for the depreciation-and-amortization role. The
+        # distribution's own code says so. A shortage of observations would
+        # send a reader looking for more of the very evidence that cannot
+        # exist: the registry does not accept this issuer's depreciation
+        # element as the metric, so no count of quarters would help.
+        self.assertEqual(distribution["reason_code"], REASON_NO_QUALIFIED_DA_EVIDENCE)
+        self.assertNotEqual(
+            distribution["reason_code"], REASON_INSUFFICIENT_OBSERVATIONS
+        )
         detail = distribution["reason_detail"]
         self.assertIn(REASON_NO_QUALIFIED_DA_EVIDENCE, detail)
         self.assertNotIn(REASON_MISSING_EBITDA_WINDOW, detail)

@@ -165,5 +165,84 @@
       "The reconstructed enterprise value omits operating leases, non-current investments and off-balance sheet commitments. It is labelled partial on every observation.",
       "The evaluation dates are the filing usable dates shared with the income reconstruction, not a continuous daily trading history."
     ]
+  },
+  "semantic_qualification": {
+    "policy": "A source element is qualified for a metric only when the core registry resolves it to that metric for that filer: an EXACT IDENTITY mapping, in force at the date read, whose scope covers the filer. An element the registry declines, retires, maps only partially, maps to another metric or scopes to another filer is not qualified, and its filed values produce no figure and no production reference. Holding a filed element as traceable evidence is not the same as admitting it to a valuation.",
+    "read_by": "the core registry, as seeded from registry_seed",
+    "subject": "AEP multiples dataset",
+    "denominators": {
+      "revenue": {
+        "metric_id": "revenue",
+        "element": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "concept_id": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+        "registry_decision": "QUALIFIED",
+        "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+        "basis": "The core registry maps us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax to 'revenue' for AEP as an EXACT IDENTITY mapping, without a filer restriction, in force from 2017-09-30. The element is this metric for this filer, and its filed values may produce a figure."
+      },
+      "ebitda": {
+        "registry_decision": "QUALIFIED",
+        "reason_code": null,
+        "roles": {
+          "operating_income": {
+            "metric_id": "operating_income",
+            "element": "OperatingIncomeLoss",
+            "concept_id": "us-gaap:OperatingIncomeLoss",
+            "registry_decision": "QUALIFIED",
+            "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+            "basis": "The core registry maps us-gaap:OperatingIncomeLoss to 'operating_income' for AEP as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure."
+          },
+          "depreciation_and_amortization": {
+            "metric_id": "depreciation_and_amortization",
+            "element": "UtilitiesOperatingExpenseDepreciationAndAmortization",
+            "concept_id": "us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization",
+            "registry_decision": "QUALIFIED",
+            "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+            "basis": "The core registry maps us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization to 'depreciation_and_amortization' for AEP as an EXACT IDENTITY mapping, scoped to AEP. The element is this metric for this filer, and its filed values may produce a figure."
+          }
+        }
+      }
+    },
+    "ev_bridge_components": {
+      "cash": {
+        "metric_id": "cash",
+        "element": "CashAndCashEquivalentsAtCarryingValue",
+        "concept_id": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+        "registry_decision": "QUALIFIED",
+        "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+        "basis": "The core registry maps us-gaap:CashAndCashEquivalentsAtCarryingValue to 'cash' for AEP as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure."
+      },
+      "marketable_securities_current": {
+        "metric_id": "marketable_securities_current",
+        "element": "ShortTermInvestments",
+        "concept_id": "us-gaap:ShortTermInvestments",
+        "registry_decision": "NOT_APPLICABLE",
+        "reason_code": "NO_SUCH_REGISTRY_METRIC",
+        "basis": "The registry declares no marketable_securities_current metric, so it cannot rule on the element this component is read from. The filed-bridge specification governs this component, and the element is read under it."
+      },
+      "commercial_paper": {
+        "metric_id": "commercial_paper",
+        "element": "CommercialPaper",
+        "concept_id": "us-gaap:CommercialPaper",
+        "registry_decision": "NOT_APPLICABLE",
+        "reason_code": "NO_SUCH_REGISTRY_METRIC",
+        "basis": "The registry declares no commercial_paper metric, so it cannot rule on the element this component is read from. The filed-bridge specification governs this component, and the element is read under it."
+      },
+      "long_term_debt_noncurrent": {
+        "metric_id": "long_term_debt_noncurrent",
+        "element": "LongTermDebtNoncurrent",
+        "concept_id": "us-gaap:LongTermDebtNoncurrent",
+        "registry_decision": "QUALIFIED",
+        "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+        "basis": "The core registry maps us-gaap:LongTermDebtNoncurrent to 'long_term_debt_noncurrent' for AEP as an EXACT IDENTITY mapping, without a filer restriction, in force from 2014-09-27. The element is this metric for this filer, and its filed values may produce a figure."
+      },
+      "long_term_debt_current": {
+        "metric_id": "long_term_debt_current",
+        "element": "LongTermDebtCurrent",
+        "concept_id": "us-gaap:LongTermDebtCurrent",
+        "registry_decision": "QUALIFIED",
+        "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+        "basis": "The core registry maps us-gaap:LongTermDebtCurrent to 'long_term_debt_current' for AEP as an EXACT IDENTITY mapping, without a filer restriction, in force from 2014-09-27. The element is this metric for this filer, and its filed values may produce a figure."
+      }
+    }
   }
 }

@@ -61,6 +61,13 @@ from historical_pfcf import (
     in_force_version,
     ttm_window_at,
 )
+from semantic_qualification import (
+    SemanticQualification,
+    manifest_section,
+    no_element_for_role,
+    qualify_element,
+    qualify_roles,
+)
 
 METHODOLOGY = "historical-income/1.0"
 LOGIC_VERSION = "historical-income/1.0.0"
@@ -92,6 +99,21 @@ REASON_NO_QUALIFIED_DA_EVIDENCE = "REASON_NO_QUALIFIED_DA_EVIDENCE"
 # own condition: the facts are there, but nothing may say which fiscal quarter
 # they are, and a window is never published on a guess.
 REASON_FISCAL_POSITION_UNRESOLVED = "REASON_FISCAL_POSITION_UNRESOLVED"
+# The registry does not recognise the element that fills the role as this
+# metric for this filer, so the role contributes to no figure at all. The
+# filed values may be complete, knowable and contiguous; they are not this
+# metric's source, and the refusal says so instead of reporting a shortage
+# of quarters. The three conditions are told apart because a semantic
+# refusal and a timing refusal are different findings.
+REASON_NO_QUALIFIED_REVENUE_ELEMENT = "REASON_NO_QUALIFIED_REVENUE_ELEMENT"
+REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT = (
+    "REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT"
+)
+# The role has an element, and the registry does not accept that element as
+# this metric for this filer. It is its own condition, and it is not the
+# empty role above: the issuer does report something, and the registry has
+# ruled that what it reports is not this metric.
+REASON_NO_QUALIFIED_DA_ELEMENT = "REASON_NO_QUALIFIED_DA_ELEMENT"
 
 CLOSED_REASON_CODES = frozenset(
     {
@@ -100,6 +122,9 @@ CLOSED_REASON_CODES = frozenset(
         REASON_NO_EBITDA_WINDOW,
         REASON_NO_QUALIFIED_DA_EVIDENCE,
         REASON_FISCAL_POSITION_UNRESOLVED,
+        REASON_NO_QUALIFIED_REVENUE_ELEMENT,
+        REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT,
+        REASON_NO_QUALIFIED_DA_ELEMENT,
     }
 )
 
@@ -132,6 +157,11 @@ class HistoricalIncomeConfig:
     the file is kept as source evidence, digested so the dataset's identity
     covers it, and named with what it actually is. It never contributes to
     an EBITDA figure.
+
+    `taxonomy` names the taxonomy the elements are read from. It is stated
+    because the registry keys its concepts by taxonomy as well as by tag, and
+    an element read from one taxonomy is not the concept the registry
+    recorded for another.
     """
 
     ticker: str
@@ -147,6 +177,7 @@ class HistoricalIncomeConfig:
     depreciation_evidence_path: Optional[Path] = None
     depreciation_evidence_concept: Optional[str] = None
     depreciation_evidence_note: Optional[str] = None
+    taxonomy: str = "us-gaap"
 
 
 ISSUER_CONFIGS: Dict[str, HistoricalIncomeConfig] = {
@@ -347,6 +378,11 @@ class HistoricalIncomeResult:
     current_snapshot: Optional[HistoricalIncomeObservation] = None
     content_hash: str = ""
     summary_notes: List[str] = field(default_factory=list)
+    # The registry's basis for the elements this dataset read. It is carried
+    # beside the figures and outside the dataset's identity: the figures are
+    # the data, this is the standing under which the data was read, and the
+    # two are not the same thing.
+    semantic_qualification: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -360,6 +396,7 @@ class HistoricalIncomeResult:
                 self.current_snapshot.to_dict() if self.current_snapshot else None
             ),
             "summary_notes": list(self.summary_notes),
+            "semantic_qualification": dict(self.semantic_qualification),
         }
 
 
@@ -423,10 +460,78 @@ def _window_rejection(
         "contiguity_breaks",
         "unresolved_position",
         "contested_positions",
+        "semantic_qualification",
     ):
         if refusal.get(optional) is not None:
             rejection[optional] = refusal[optional]
     return rejection
+
+
+def _semantic_refusal_detail(
+    *,
+    role_label: str,
+    metric_id: str,
+    element: str,
+    ticker: str,
+    qualification: SemanticQualification,
+) -> str:
+    """
+    Why a role produced no figure, in the registry's terms.
+
+    The refusal names the element, the metric, the filer and the registry's
+    own reason, so a reader can tell a semantic refusal from a shortage of
+    quarters or a timing refusal without reading the registry.
+    """
+    return (
+        f"The registry does not accept {element} as the {metric_id} metric for "
+        f"{ticker}, so the {role_label} role contributes to no figure. "
+        f"{qualification.reason_detail} The filed values are kept as "
+        "evidence; they are not this metric's input, and no figure is built "
+        "from them."
+    )
+
+
+def _semantic_qualification_record(
+    *,
+    config: HistoricalIncomeConfig,
+    qualifications: Mapping[str, SemanticQualification],
+    qualifications_by_day: Mapping[str, Mapping[str, SemanticQualification]],
+    evaluation_dates: Sequence[str],
+) -> Dict[str, Any]:
+    """
+    The registry's basis for the elements this dataset read.
+
+    The record names the policy, the elements, the metrics they were read
+    for, the registry's own decision for each of them and the dates on which
+    each role was qualified. It is carried beside the figures and outside the
+    dataset's identity: the figures are the data, this is the standing under
+    which the data was read, and the two are not the same thing.
+    """
+    roles: Dict[str, Any] = {}
+    for name, qualification in qualifications.items():
+        record = qualification.to_dict()
+        record["evaluation_dates_total"] = len(evaluation_dates)
+        record["evaluation_dates_qualified"] = sum(
+            1
+            for day in evaluation_dates
+            if qualifications_by_day.get(day, {}).get(name, qualification).qualified
+        )
+        roles[name] = record
+    if config.depreciation_evidence_concept:
+        # The element the issuer does report about depreciation, when that
+        # element is not the role. It is held as evidence, and the registry's
+        # standing on it is recorded so a reader can see that the evidence is
+        # not a source.
+        evidence_taxonomy, _, evidence_element = (
+            config.depreciation_evidence_concept.partition(":")
+        )
+        roles["depreciation_evidence"] = qualify_element(
+            metric_id="depreciation_and_amortization",
+            taxonomy=evidence_taxonomy or config.taxonomy,
+            element=evidence_element or config.depreciation_evidence_concept,
+            ticker=config.ticker,
+        ).to_dict()
+    return qualify_roles(roles)
 
 
 def _quarter_period(
@@ -743,6 +848,22 @@ def _ebitda_quarters(
     return combined
 
 
+def semantic_qualification_manifest_section(
+    config: HistoricalIncomeConfig,
+) -> Dict[str, Any]:
+    """
+    The manifest's statement of the elements, their roles and the basis.
+
+    A manifest says what a dataset holds and where it came from. This part
+    says which elements the dataset read, the metric each was read for, and
+    the registry's decision on it, so the recognition basis travels with the
+    data rather than living only in the code that produced it.
+    """
+    result = load_issuer_historical_income(config)
+    roles = (result.semantic_qualification or {}).get("roles") or {}
+    return manifest_section(roles, subject=f"{config.ticker} income dataset")
+
+
 def load_issuer_historical_income(
     config: HistoricalIncomeConfig,
 ) -> HistoricalIncomeResult:
@@ -843,6 +964,46 @@ def load_issuer_historical_income(
     # declarations, and the positions it needs cannot be determined.
     contested_positions = _contested_positions(fiscal_calendar)
 
+    # -- semantic qualification -------------------------------------------
+    # The registry decides whether an element is this metric for this filer,
+    # and the decision is read before a single quarter is built from the
+    # element. A role the registry does not qualify contributes to no figure
+    # at all: a filed element the registry does not accept stays held as
+    # evidence, and its values produce nothing. The elements' own values are
+    # never the reason a role is refused, so the refusal names the registry's
+    # decision rather than a shortage of quarters.
+    revenue_qualification = qualify_element(
+        metric_id="revenue",
+        taxonomy=config.taxonomy,
+        element=config.revenue_concept,
+        ticker=config.ticker,
+    )
+    operating_income_qualification = qualify_element(
+        metric_id="operating_income",
+        taxonomy=config.taxonomy,
+        element=config.operating_income_concept,
+        ticker=config.ticker,
+    )
+    if has_depreciation_role:
+        depreciation_qualification = qualify_element(
+            metric_id="depreciation_and_amortization",
+            taxonomy=config.taxonomy,
+            element=config.depreciation_concept,
+            ticker=config.ticker,
+        )
+    else:
+        depreciation_qualification = no_element_for_role(
+            metric_id="depreciation_and_amortization",
+            taxonomy=config.taxonomy,
+            ticker=config.ticker,
+            detail=(
+                "No element fills the depreciation-and-amortization role for "
+                f"{config.ticker}. The role is empty, so the metric has no "
+                "source for this filer and no trailing EBITDA window can "
+                "exist at any date."
+            ),
+        )
+
     spans: List[DurationSpanEvidence] = (
         concept_spans_from_payload(
             payload=revenue_payload,
@@ -914,8 +1075,49 @@ def load_issuer_historical_income(
 
     evaluation_dates = sorted({filing["usable_date"] for filing in filings_index.values()})
 
+    # The registry's answer at each date the dataset reports on. A mapping
+    # that was not in force on a date does not qualify on that date, so a
+    # role the registry recognises only from a later date contributes to no
+    # figure before it. The question is asked of the registry rather than
+    # re-derived from a window, so the answer is the registry's own.
+    qualifications_by_day: Dict[str, Dict[str, SemanticQualification]] = {}
+    for day in evaluation_dates:
+        qualifications_by_day[day] = {
+            "revenue": qualify_element(
+                metric_id="revenue",
+                taxonomy=config.taxonomy,
+                element=config.revenue_concept,
+                ticker=config.ticker,
+                as_of=day,
+            ),
+            "operating_income": qualify_element(
+                metric_id="operating_income",
+                taxonomy=config.taxonomy,
+                element=config.operating_income_concept,
+                ticker=config.ticker,
+                as_of=day,
+            ),
+            "depreciation_and_amortization": (
+                qualify_element(
+                    metric_id="depreciation_and_amortization",
+                    taxonomy=config.taxonomy,
+                    element=config.depreciation_concept,
+                    ticker=config.ticker,
+                    as_of=day,
+                )
+                if has_depreciation_role
+                else depreciation_qualification
+            ),
+        }
+
     observations: List[HistoricalIncomeObservation] = []
     for day in evaluation_dates:
+        day_qualifications = qualifications_by_day[day]
+        revenue_qualified = day_qualifications["revenue"].qualified
+        operating_income_qualified = day_qualifications["operating_income"].qualified
+        depreciation_qualified = day_qualifications[
+            "depreciation_and_amortization"
+        ].qualified
         spans_in_force = {
             key: in_force_version(versions, day)
             for key, versions in spans_by_key.items()
@@ -924,18 +1126,33 @@ def load_issuer_historical_income(
             key: version for key, version in spans_in_force.items() if version is not None
         }
 
-        revenue_quarters = _with_fiscal_identity(
+        # A role the registry does not qualify at this date holds no quarter.
+        # The facts stay in the capture and stay traceable; they are not read
+        # into a figure.
+        revenue_quarters = (
+            _with_fiscal_identity(
+                discrete_quarters_for_role(
+                    spans_in_force=spans_in_force, role=ROLE_REVENUE
+                ),
+                fiscal_calendar,
+                "revenue for the fiscal quarter, as the filer stated it",
+            )
+            if revenue_qualified
+            else {}
+        )
+        operating_income_quarters = (
             discrete_quarters_for_role(
-                spans_in_force=spans_in_force, role=ROLE_REVENUE
-            ),
-            fiscal_calendar,
-            "revenue for the fiscal quarter, as the filer stated it",
+                spans_in_force=spans_in_force, role=ROLE_OPERATING_INCOME
+            )
+            if operating_income_qualified
+            else {}
         )
-        operating_income_quarters = discrete_quarters_for_role(
-            spans_in_force=spans_in_force, role=ROLE_OPERATING_INCOME
-        )
-        depreciation_quarters = discrete_quarters_for_role(
-            spans_in_force=spans_in_force, role=ROLE_DEPRECIATION
+        depreciation_quarters = (
+            discrete_quarters_for_role(
+                spans_in_force=spans_in_force, role=ROLE_DEPRECIATION
+            )
+            if depreciation_qualified
+            else {}
         )
         ebitda_quarters = _ebitda_quarters(
             operating_income_quarters, depreciation_quarters, fiscal_calendar, "USD"
@@ -947,6 +1164,73 @@ def load_issuer_historical_income(
         ebitda_window, ebitda_reason, ebitda_detail, ebitda_refusal = ttm_window_at(
             quarters=ebitda_quarters, day=day
         )
+
+        # The registry's refusal replaces the window refusal it caused. A
+        # shortage of quarters and a semantic refusal are different findings,
+        # and the semantic one is the true one: the element the role reads is
+        # not this metric for this filer, so no window of it exists however
+        # many quarters the capture holds.
+        if not revenue_qualified:
+            revenue_window = None
+            revenue_reason = REASON_NO_QUALIFIED_REVENUE_ELEMENT
+            revenue_detail = _semantic_refusal_detail(
+                role_label="revenue",
+                metric_id="revenue",
+                element=config.revenue_concept,
+                ticker=config.ticker,
+                qualification=day_qualifications["revenue"],
+            )
+            revenue_refusal = {
+                "reason_code": REASON_NO_QUALIFIED_REVENUE_ELEMENT,
+                "no_quarter_knowable": False,
+                "anchor": None,
+                "positions_required": [],
+                "positions_missing": [],
+                "semantic_qualification": day_qualifications["revenue"].to_dict(),
+                "detail": revenue_detail,
+            }
+        if not operating_income_qualified:
+            ebitda_window = None
+            ebitda_reason = REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT
+            ebitda_detail = _semantic_refusal_detail(
+                role_label="operating income",
+                metric_id="operating_income",
+                element=config.operating_income_concept,
+                ticker=config.ticker,
+                qualification=day_qualifications["operating_income"],
+            )
+            ebitda_refusal = {
+                "reason_code": REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT,
+                "no_quarter_knowable": False,
+                "anchor": None,
+                "positions_required": [],
+                "positions_missing": [],
+                "semantic_qualification": day_qualifications[
+                    "operating_income"
+                ].to_dict(),
+                "detail": ebitda_detail,
+            }
+        elif has_depreciation_role and not depreciation_qualified:
+            ebitda_window = None
+            ebitda_reason = REASON_NO_QUALIFIED_DA_ELEMENT
+            ebitda_detail = _semantic_refusal_detail(
+                role_label="depreciation and amortization",
+                metric_id="depreciation_and_amortization",
+                element=config.depreciation_concept,
+                ticker=config.ticker,
+                qualification=day_qualifications["depreciation_and_amortization"],
+            )
+            ebitda_refusal = {
+                "reason_code": REASON_NO_QUALIFIED_DA_ELEMENT,
+                "no_quarter_knowable": False,
+                "anchor": None,
+                "positions_required": [],
+                "positions_missing": [],
+                "semantic_qualification": day_qualifications[
+                    "depreciation_and_amortization"
+                ].to_dict(),
+                "detail": ebitda_detail,
+            }
 
         # A window whose quarters do not form a contiguous span of the
         # issuer's periods is not a trailing twelve months, whatever fiscal
@@ -1113,7 +1397,11 @@ def load_issuer_historical_income(
         )
         if revenue_window is None:
             status = STATUS_UNAVAILABLE
-            reason_code = REASON_NO_REVENUE_WINDOW
+            reason_code = (
+                REASON_NO_QUALIFIED_REVENUE_ELEMENT
+                if not revenue_qualified
+                else REASON_NO_REVENUE_WINDOW
+            )
             reason_detail = (
                 revenue_rejection["detail"] if revenue_rejection else revenue_detail
             )
@@ -1122,7 +1410,15 @@ def load_issuer_historical_income(
             reason_code = (
                 REASON_NO_QUALIFIED_DA_EVIDENCE
                 if not has_depreciation_role
-                else REASON_NO_EBITDA_WINDOW
+                else (
+                    REASON_NO_QUALIFIED_DA_ELEMENT
+                    if not depreciation_qualified
+                    else (
+                        REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT
+                        if not operating_income_qualified
+                        else REASON_NO_EBITDA_WINDOW
+                    )
+                )
             )
             reason_detail = (
                 ebitda_rejection["detail"] if ebitda_rejection else ebitda_detail
@@ -1166,6 +1462,16 @@ def load_issuer_historical_income(
         },
         observations=observations,
         current_snapshot=observations[-1] if observations else None,
+        semantic_qualification=_semantic_qualification_record(
+            config=config,
+            qualifications={
+                "revenue": revenue_qualification,
+                "operating_income": operating_income_qualification,
+                "depreciation_and_amortization": depreciation_qualification,
+            },
+            qualifications_by_day=qualifications_by_day,
+            evaluation_dates=evaluation_dates,
+        ),
     )
     result.content_hash = canonical_json_hash(
         {

@@ -1,8 +1,8 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role)
+**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role; and every role of every historical valuation dataset is now qualified against the core registry before it produces a figure, so an element the registry does not accept cannot obtain `USABLE_FOR_REFERENCE` however many complete, point-in-time observations it carries -- Phase 8, `semantic_qualification.py`)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented for three issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; AEP: EV/EBITDA 24 valid / 9 rejected over 33 evaluations, median 13.221693, `USABLE_FOR_REFERENCE`, and P/S 4 valid / 29 rejected, `INSUFFICIENT_OBSERVATIONS`, because the registry-accepted revenue element's coverage reaches four windows; MSFT: P/S 23 valid / 4 rejected, median 11.783822, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role; the filed EV bridge requires every component to describe the same balance-sheet date, and a window's quarters must be four consecutive periods of the issuer's own cycle **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented for three issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; AEP: EV/EBITDA 24 valid / 9 rejected over 33 evaluations, median 13.221693, `USABLE_FOR_REFERENCE`, and P/S 4 valid / 29 rejected, `INSUFFICIENT_OBSERVATIONS`, because the registry-accepted revenue element's coverage reaches four windows; MSFT: P/S 23 valid / 4 rejected, median 11.783822, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role; the filed EV bridge requires every component to describe the same balance-sheet date, and a window's quarters must be four consecutive periods of the issuer's own cycle **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions **+ every historical dataset's source role is qualified against the core registry before it produces a figure** (Phase 8; `semantic_qualification.py` asks the registry's own resolver whether an element is a metric for a filer, and `historical_income.py` / `historical_multiples.py` refuse a role the registry does not qualify, with the refusal naming the registry's decision rather than a shortage of quarters; the datasets, the six manifests, the summary, the Investment Context and the archive all carry the basis, and the replay compares it)
 **Latest verified GitHub Actions:** `bc36384` (the phase and documentation reconciliation) verified `backend` and `browser` jobs success in run `39598264148` (checked via the GitHub API on 2026-10-21: backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding run `39591871200` verified the American Electric Power correction `0aadc8a` (backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);  verified `backend` and `browser` jobs success in run `39591871200` (checked via the GitHub API on 2026-10-21: backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding runs `39578452809` (Microsoft's dataset `d3cec3b`: backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success) and `39562741308` (Microsoft's D&A role left empty, `3ec78b7`: backend 2643 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);
 
 
@@ -4219,6 +4219,166 @@ Local verification for this round: backend suite **2681 passed, 171 skipped,
 534 subtests passed**; web API **25 passed** and archive isolation **6
 passed**; browser smoke **12 passed**; frontend production build produced
 `dist/index.html`.
+
+## Phase 8 (2026-10-21): registry-backed semantic qualification
+
+The historical income and multiples datasets reconstruct trailing revenue and
+trailing EBITDA out of filed SEC facts. A reconstruction can be arithmetically
+perfect, point-in-time correct, contiguous and long enough, and still be
+built on an element the registry does not accept as this metric for this
+filer. Decision 2.99 retired `us-gaap:Revenues` as a source of `revenue`
+because it is broader than the target metric, and nothing in the
+reconstruction pipeline would have noticed: the retired element's filed values
+are complete, knowable and contiguous, so enough of them would have produced
+a perfectly computable price-to-sales distribution and, past the threshold, a
+production reference.
+
+This phase adds the gate that notices. It does not add a company, a valuation
+method, or a threshold, and it does not change any registry decision.
+
+### The gate, and where it runs
+
+`semantic_qualification.py` asks the core registry one question -- is this
+element this metric for this filer -- and it answers only one way: the
+registry resolves the concept to that metric, as an EXACT IDENTITY mapping, in
+force at the date read, whose scope covers the filer. It reads the registry
+through `CoreRegistry.resolve_source_concept`, the resolver the
+evidence-admission boundary uses, so the repository holds one answer to "is
+this concept this metric" rather than two that may disagree. The registry is
+materialised in memory from `registry_seed` -- the seed being the
+authoritative statement of the registry's decisions -- and is built once per
+thread, because a SQLite connection belongs to the thread that opened it and
+the gate is called from worker threads as well as from the main one.
+
+It runs in three places, in this order:
+
+1. **`historical_income.py`, before a quarter is built.** The revenue,
+   operating-income and depreciation-and-amortization roles are qualified
+   against the registry first. A role the registry does not qualify holds no
+   quarter at all, so it contributes to no figure, and the refusal names the
+   registry's decision rather than a shortage of quarters. The question is
+   asked at each evaluation date as well as once for the dataset, so a mapping
+   that was not in force on a date does not qualify on that date. Three new
+   reason codes carry it: `REASON_NO_QUALIFIED_REVENUE_ELEMENT`,
+   `REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT` and
+   `REASON_NO_QUALIFIED_DA_ELEMENT`.
+2. **`historical_multiples.py`, on the denominators and the filed bridge.**
+   The income dataset's semantic refusals are carried through unchanged
+   rather than restated as coverage or timing problems, and a filed EV bridge
+   component the registry does not accept contributes to no bridge
+   (`REASON_NO_QUALIFIED_EV_COMPONENT`). A distribution whose denominator the
+   registry does not accept is `UNAVAILABLE` for that reason, not
+   `INSUFFICIENT_OBSERVATIONS`: a denominator that does not exist cannot be
+   sampled more.
+3. **`sec_derived_inputs._concept_is_exact_for`**, which now delegates to the
+   same gate instead of holding its own copy of the acceptance rule.
+
+Holding a filed element as traceable evidence is not the same as admitting it
+to a figure. Microsoft keeps `us-gaap:Depreciation` as evidence, the
+registry's standing on it is recorded, and it still contributes to no
+EBITDA.
+
+### What the three issuers now hold
+
+| issuer | P/S | EV/EBITDA |
+| --- | --- | --- |
+| AAPL | 28 observations, median 7.257709, `USABLE_FOR_REFERENCE` | 27 observations, median 22.326, `USABLE_FOR_REFERENCE` |
+| MSFT | 23 observations, median 11.783822, `USABLE_FOR_REFERENCE` | unavailable -- the role is empty |
+| AEP | 4 observations, `INSUFFICIENT_OBSERVATIONS` | 24 observations, median 13.221693, `USABLE_FOR_REFERENCE` |
+
+Nothing in the figures moved. One thing in the reporting did: Microsoft's
+EV/EBITDA distribution now reports
+`REASON_NO_QUALIFIED_DA_EVIDENCE` instead of
+`REASON_INSUFFICIENT_OBSERVATIONS`. The distribution was never a short sample
+-- no count of quarters would produce the denominator the registry says does
+not exist -- and a reader sent to look for more observations would have been
+sent after the wrong thing. The existing regression test that pinned the old
+code was updated to the new one, with the reason stated in the test.
+
+The identities follow the existing contract rather than the change:
+
+| issuer | dataset | `input_set_id` | `content_hash` | observations |
+| --- | --- | --- | --- | --- |
+| AAPL | income | `401a14e73b53…` unchanged | `568d33fac2c2…` unchanged | unchanged |
+| AAPL | multiples | `77402a13b164…` unchanged | `321e8b165bfc…` unchanged | unchanged |
+| MSFT | income | `39302572afa7…` unchanged | `d57ea0aeb4db…` unchanged | unchanged |
+| MSFT | multiples | `ba4b639cc4ca…` unchanged | `d80b2d3d…` → `3aa6e87b2498…` | unchanged |
+| AEP | income | `fc2b06c1559c…` unchanged | `15ff76e92893…` unchanged | unchanged |
+| AEP | multiples | `eb3371bbe1ca…` unchanged | `8b9c45966aa2…` unchanged | unchanged |
+
+The raw inputs did not change, so `input_set_id` did not change, and no
+observation changed, so no observation hash changed. Microsoft's multiples
+`content_hash` moved because the derived distribution's own reason code
+moved; that is the derived content, and the distinction the brief asks for --
+a registry change is not a data change, and the data identity contract is
+untouched.
+
+### The basis travels with the data
+
+- **The datasets** carry a `semantic_qualification` block: the policy, the
+  elements, the metric each was read for, the registry's decision, and the
+  mapping's own terms.
+- **The manifests** (`data/historical_income/{TICKER}/manifest.json` and
+  `data/historical_multiples/{TICKER}/manifest.json`, all six) carry the same
+  statement in prose, including the components the registry has no standing
+  to rule on.
+- **The summary** (`production_multiples_summary`) carries it, and the web
+  API passes it through as part of the multiples summary.
+- **The Investment Context** records it on the production reference itself, as
+  `eligibility_semantic_qualification` beside the other eligibility fields.
+- **The archive** keeps it in the archived document, and
+  `archive.production_reference_qualification_divergence` compares the
+  archived standing with the rebuilt one on replay. A difference is reported
+  as a divergence that names the standing rather than being smoothed over. A
+  basis recorded on one side and absent on the other is not a difference: the
+  side that does not record it does not know it, and the field is never
+  filled in for it.
+
+A rejected reference does not re-enter the valuation chain. The distribution's
+own `usable_for_reference` flag is what the summary reference, the matrix and
+the Investment Context read, and a distribution the registry refuses is
+`UNAVAILABLE`, so no median is read from it.
+
+### The limitation the registry cannot express
+
+The registry declares no `marketable_securities_current` metric and no
+`commercial_paper` metric, so two of the five filed EV bridge components
+cannot be qualified by it. The registry has no standing to rule on a metric
+it does not model, so the filed-bridge specification governs those two
+components and the dataset says so rather than inventing a metric for them.
+The other three components -- cash, long-term debt non-current and long-term
+debt current -- are registry-expressible and are qualified.
+
+Adding either metric to the registry would widen the registry's accepted
+scope, which this phase does not do. It is named here as the work that would
+close the gap.
+
+### One consequence worth recording
+
+`archive.py` changed, and the resolver policy identity is a digest of that
+file's text. An archive taken before this commit therefore replays as
+`DIVERGED` with the policy-identity reason -- the system's designed signal
+that the replay policy changed since archival. The AAPL live replay, taken
+after the change, reports `MATCH`. The operator's archives under
+`data/archives` were read only, never rebuilt, deleted or overwritten.
+
+### Verification
+
+`tests/test_semantic_qualification.py` (25 tests) pins the gate's decisions,
+the three issuers' standing and figures, the negative case, and the archive's
+handling. The negative case is the decisive one: Apple's own capture -- the
+same filed values, the same filings, the same knowability, more than the
+twenty complete observations a reference needs -- is re-pointed at the
+retired `us-gaap:Revenues`, and the price-to-sales distribution becomes
+`UNAVAILABLE` with `REASON_NO_QUALIFIED_REVENUE_ELEMENT` and no production
+reference, while the enterprise-value multiple, read from other elements, is
+unaffected. The gate is also checked against the registry's own resolver for
+every mapping the registry records and each of the three filers, so the two
+cannot drift apart.
+
+Local verification for this round: backend suite **2749 passed, 171 skipped,
+534 subtests passed**; the six dataset, context and archive suites the change
+touches were run on their own and pass.
 
 ## Next task status
 

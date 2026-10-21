@@ -82,6 +82,13 @@ from historical_pe import (
     restore_as_traded_close,
     resolve_usable_date,
 )
+from semantic_qualification import (
+    QUALIFICATION_POLICY,
+    REASON_NO_ELEMENT,
+    REASON_NO_SUCH_METRIC,
+    manifest_section,
+    qualify_element,
+)
 
 METHODOLOGY = "historical-multiples/1.0"
 LOGIC_VERSION = "historical-multiples/1.0.0"
@@ -122,6 +129,22 @@ REASON_INCOMPLETE_EV_BRIDGE = "REASON_INCOMPLETE_EV_BRIDGE"
 REASON_MIXED_BALANCE_SHEET_PERIODS = "REASON_MIXED_BALANCE_SHEET_PERIODS"
 REASON_NON_POSITIVE_DENOMINATOR = "REASON_NON_POSITIVE_DENOMINATOR"
 REASON_INSUFFICIENT_OBSERVATIONS = "REASON_INSUFFICIENT_OBSERVATIONS"
+# The registry does not recognise the element the denominator is read from as
+# this metric for this filer, so the denominator does not exist and the
+# multiple is never computed. It is a different condition from a thin sample
+# and from a missing window, and it is reported as its own thing: a
+# distribution that is long, correct and point-in-time but semantically
+# unqualified is not a short sample.
+REASON_NO_QUALIFIED_REVENUE_ELEMENT = "REASON_NO_QUALIFIED_REVENUE_ELEMENT"
+REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT = (
+    "REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT"
+)
+REASON_NO_QUALIFIED_DA_ELEMENT = "REASON_NO_QUALIFIED_DA_ELEMENT"
+# A filed bridge component the registry does not accept as this metric for
+# this filer contributes to no bridge, so the date publishes no enterprise
+# value. It is the bridge's own condition, and it is not the same as a
+# component the issuer did not report at that date.
+REASON_NO_QUALIFIED_EV_COMPONENT = "REASON_NO_QUALIFIED_EV_COMPONENT"
 # The dataset itself does not exist for this issuer. It is a different
 # condition from a dataset that exists and holds too few observations, and it
 # is never reported as one: an absent dataset is not a thin sample.
@@ -130,6 +153,19 @@ REASON_DATASET_NOT_ESTABLISHED = "REASON_DATASET_NOT_ESTABLISHED"
 # failure is neither an absent dataset nor a thin sample, and reporting it as
 # either would send a reader to the wrong place.
 REASON_DATASET_LOAD_FAILED = "REASON_DATASET_LOAD_FAILED"
+
+# The registry metric each filed bridge component is read under. A component
+# the registry does not declare cannot be qualified by the registry, and the
+# filed-bridge specification governs it instead; the dataset says which of the
+# two a component is, so a reader can tell a component the registry has ruled
+# on from one the registry has never modelled.
+EV_BRIDGE_COMPONENT_METRICS: Dict[str, str] = {
+    "cash": "cash",
+    "marketable_securities_current": "marketable_securities_current",
+    "commercial_paper": "commercial_paper",
+    "long_term_debt_noncurrent": "long_term_debt_noncurrent",
+    "long_term_debt_current": "long_term_debt_current",
+}
 
 # The EV bridge's date rule, stated once and carried by every observation,
 # the manifest and the summary: the filed balance-sheet components must
@@ -155,8 +191,23 @@ CLOSED_REASON_CODES = frozenset(
         REASON_MIXED_BALANCE_SHEET_PERIODS,
         REASON_NON_POSITIVE_DENOMINATOR,
         REASON_INSUFFICIENT_OBSERVATIONS,
+        REASON_NO_QUALIFIED_REVENUE_ELEMENT,
+        REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT,
+        REASON_NO_QUALIFIED_DA_ELEMENT,
+        REASON_NO_QUALIFIED_EV_COMPONENT,
         REASON_DATASET_NOT_ESTABLISHED,
         REASON_DATASET_LOAD_FAILED,
+    }
+)
+
+# The refusals the income dataset states in the registry's own terms. They
+# name a semantic condition, and this dataset carries them through unchanged
+# rather than restating them as a shortage or a timing problem.
+SEMANTIC_WINDOW_REFUSALS = frozenset(
+    {
+        REASON_NO_QUALIFIED_REVENUE_ELEMENT,
+        REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT,
+        REASON_NO_QUALIFIED_DA_ELEMENT,
     }
 )
 
@@ -196,6 +247,11 @@ class HistoricalMultiplesConfig:
     income_config: HistoricalIncomeConfig
     # role -> concept tag, in EV_BRIDGE_COMPONENTS order
     balance_sheet_concepts: Dict[str, str]
+    # The taxonomy the bridge components are read from. It is stated because
+    # the registry keys its concepts by taxonomy as well as by tag, and an
+    # element read from one taxonomy is not the concept the registry recorded
+    # for another.
+    taxonomy: str = "us-gaap"
 
 
 ISSUER_CONFIGS: Dict[str, HistoricalMultiplesConfig] = {
@@ -484,6 +540,12 @@ class HistoricalMultiplesResult:
     concept_tags: Dict[str, str] = field(default_factory=dict)
     content_hash: str = ""
     summary_notes: List[str] = field(default_factory=list)
+    # The registry's basis for the elements this dataset read: the
+    # denominators' own elements and the filed bridge's components. It is
+    # carried beside the figures and outside the dataset's identity, because
+    # the figures are the data and this is the standing under which the data
+    # was read.
+    semantic_qualification: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -505,6 +567,7 @@ class HistoricalMultiplesResult:
             },
             "observations": [obs.to_dict() for obs in self.observations],
             "summary_notes": list(self.summary_notes),
+            "semantic_qualification": dict(self.semantic_qualification),
         }
 
 
@@ -564,8 +627,179 @@ def production_multiples_summary(
         # a complete enterprise value is, and does not leave a reader to infer
         # it from the word "complete".
         "ev_bridge_policy": payload.get("ev_bridge_policy"),
+        # The registry's standing on the elements the denominators and the
+        # filed bridge were read from. The summary states it so a reader can
+        # see that a distribution was built on elements the registry
+        # accepted, and which of the filed bridge's components the registry
+        # has no standing to rule on.
+        "semantic_qualification": payload.get("semantic_qualification"),
         "distributions": summaries,
     }
+
+
+def semantic_qualification_manifest_section(
+    config: HistoricalMultiplesConfig,
+) -> Dict[str, Any]:
+    """
+    The manifest's statement of the elements, their roles and the basis.
+
+    A manifest says what a dataset holds and where it came from. This part
+    says which elements the denominators and the filed bridge were read
+    from, the metric each was read for, and the registry's decision on it.
+
+    A bridge component the registry does not declare is named as such: the
+    registry has no metric for it, so it has no standing to rule on it, and
+    the filed-bridge specification governs it instead. That is a limitation
+    of the registry's coverage, and a manifest that hid it would be
+    misleading.
+    """
+    result = load_issuer_historical_multiples(config)
+    qualification = result.semantic_qualification or {}
+    denominators = qualification.get("denominators") or {}
+    components = qualification.get("ev_bridge_components") or {}
+    ebitda = denominators.get("ebitda") or {}
+    ebitda_roles = ebitda.get("roles") or {}
+    return {
+        "policy": qualification.get("policy"),
+        "read_by": "the core registry, as seeded from registry_seed",
+        "subject": f"{config.ticker} multiples dataset",
+        "denominators": {
+            "revenue": manifest_section(
+                {"revenue": denominators.get("revenue") or {}},
+                subject=f"{config.ticker} price-to-sales denominator",
+            )["roles"]["revenue"],
+            "ebitda": {
+                "registry_decision": (
+                    "QUALIFIED" if ebitda.get("qualified") else "NOT_QUALIFIED"
+                ),
+                "reason_code": ebitda.get("reason_code"),
+                "roles": manifest_section(
+                    dict(ebitda_roles),
+                    subject=f"{config.ticker} enterprise-value denominator",
+                )["roles"],
+            },
+        },
+        "ev_bridge_components": manifest_section(
+            {
+                component: record
+                for component, record in components.items()
+            },
+            subject=f"{config.ticker} filed enterprise-value bridge",
+        )["roles"],
+    }
+
+
+def multiples_qualification_basis(
+    payload: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    """
+    The registry's basis for a multiples payload, in compact form.
+
+    For each metric it names the element the denominator was read from, the
+    metric that element was read for, the registry's decision on it, and the
+    filed bridge's components with their own decisions. It is what an archive
+    keeps, so a later reader can tell that the reference it holds was built
+    on elements the registry accepted, and a later change to those decisions
+    is visible rather than silent.
+
+    The prose of each decision is left behind: the codes and the identities
+    are what a comparison needs, and the prose is read from the dataset.
+    """
+    if not payload:
+        return None
+    qualification = payload.get("semantic_qualification") or {}
+    denominators = qualification.get("denominators") or {}
+    components = qualification.get("ev_bridge_components") or {}
+
+    def _basis(record: Mapping[str, Any]) -> Dict[str, Any]:
+        return {
+            "metric_id": record.get("metric_id"),
+            "concept_id": record.get("concept_id"),
+            "element": record.get("element"),
+            "qualified": record.get("qualified"),
+            "reason_code": record.get("reason_code"),
+        }
+
+    revenue = denominators.get("revenue") or {}
+    ebitda = denominators.get("ebitda") or {}
+    ebitda_roles = ebitda.get("roles") or {}
+    component_basis = {
+        component: {
+            "metric_id": record.get("metric_id"),
+            "concept_id": record.get("concept_id"),
+            "element": record.get("element"),
+            "qualified": record.get("qualified"),
+            "reason_code": record.get("reason_code"),
+            "registry_metric_exists": record.get("registry_metric_exists"),
+        }
+        for component, record in components.items()
+    }
+    return {
+        "policy": qualification.get("policy"),
+        METRIC_PS_RATIO: {
+            "denominator": _basis(revenue),
+            "ev_bridge_components": component_basis,
+        },
+        METRIC_EV_EBITDA_RATIO: {
+            "denominator": {
+                "metric_id": "ebitda",
+                "roles": {
+                    name: _basis(record)
+                    for name, record in ebitda_roles.items()
+                },
+                "qualified": ebitda.get("qualified"),
+                "reason_code": ebitda.get("reason_code"),
+            },
+            "ev_bridge_components": component_basis,
+        },
+    }
+
+
+def _semantic_refusal(
+    *,
+    metric_id: str,
+    metric_label: str,
+    role_label: str,
+    record: Mapping[str, Any],
+    ticker: str,
+    reason_code: str,
+) -> Optional[Dict[str, str]]:
+    """
+    The registry's refusal of a denominator, or None when it accepts it.
+
+    The refusal is the dataset's own statement that the denominator does not
+    exist for this filer, and it is a different condition from a thin sample:
+    the distribution is unavailable because the element is not this metric's
+    source, not because there were too few observations of it.
+
+    An empty role and a role whose element the registry declined are both
+    refusals, and they are named differently: the first says the issuer has
+    no element for the role, the second says the issuer's element is not this
+    metric.
+    """
+    if not record:
+        return None
+    if record.get("qualified") is not False:
+        return None
+    stated = str(record.get("reason_code") or "")
+    if stated == REASON_NO_ELEMENT:
+        # The role is empty. The issuer reports no element for it, so the
+        # metric has no source for this filer.
+        code = (
+            REASON_NO_QUALIFIED_DA_EVIDENCE
+            if metric_id == "depreciation_and_amortization"
+            else reason_code
+        )
+    else:
+        code = reason_code
+    detail = (
+        f"{code}: the registry does not accept the element this dataset reads "
+        f"for the {role_label} role as the {metric_id} metric for {ticker}, so "
+        f"no trailing {metric_label} denominator exists and no multiple is "
+        f"computed at any date. {record.get('reason_detail') or ''} The filed "
+        "values are kept as evidence; they are not this metric's input."
+    ).strip()
+    return {"reason_code": code, "detail": detail}
 
 
 def _format_positions(positions: Sequence[Mapping[str, Any]]) -> str:
@@ -625,6 +859,17 @@ def classify_window_refusal(
             "for the depreciation-and-amortization role, so no trailing "
             "EBITDA denominator exists and no enterprise-value multiple is "
             "published."
+        )
+    # The registry's own refusal of an element is the cause too, and it is
+    # carried through unchanged: the capture may hold the filed values in
+    # full, and they are still not this metric's input. No coverage test
+    # restates it, because coverage is not the question.
+    if stated in SEMANTIC_WINDOW_REFUSALS:
+        return stated, (
+            rejection.get("detail")
+            or "The income-statement dataset holds no element the registry "
+            "accepts as this metric for this filer, so the denominator does "
+            "not exist and no multiple is published."
         )
     if stated == REASON_FISCAL_POSITION_UNRESOLVED:
         return REASON_FISCAL_POSITION_UNRESOLVED, (
@@ -710,6 +955,7 @@ def compute_multiples_distribution(
     values: Sequence[Tuple[str, Optional[float]]],
     min_observations: int = MIN_OBSERVATIONS_FOR_REFERENCE,
     exclusion_reasons: Optional[Mapping[str, str]] = None,
+    semantic_refusal: Optional[Mapping[str, str]] = None,
 ) -> MultiplesDistribution:
     """
     One metric's distribution over its qualifying dated values, with the
@@ -720,6 +966,13 @@ def compute_multiples_distribution(
     values -- but when no value qualifies at all, the reasons are what
     explain the emptiness, and a distribution that says only "zero
     observations" would leave the reader to find out why.
+
+    `semantic_refusal` is the registry's own refusal of the denominator, and
+    it is a separate condition from every technical one. A denominator the
+    registry does not accept does not exist, so the distribution is
+    unavailable for that reason and not for want of observations: a
+    distribution that is long, correct and point-in-time but built on an
+    element the registry has ruled out is still not a reference.
     """
     valid = [(day, value) for day, value in values if value is not None and value > 0]
     excluded = [
@@ -730,6 +983,19 @@ def compute_multiples_distribution(
         for day, value in values
         if value is None or value <= 0
     ]
+
+    if semantic_refusal is not None:
+        return MultiplesDistribution(
+            metric_id=metric,
+            status=STATUS_UNAVAILABLE,
+            usable_for_reference=False,
+            sample_count=len(valid),
+            total_evaluations=len(values),
+            min_observations_required=min_observations,
+            reason_code=semantic_refusal.get("reason_code"),
+            reason_detail=semantic_refusal.get("detail"),
+            excluded_observations=excluded,
+        )
 
     sample_count = len(valid)
     if sample_count == 0:
@@ -1003,6 +1269,65 @@ def load_issuer_historical_multiples(
     # -- denominators: the income dataset's own trailing windows (X-1) --
     income_result = load_issuer_historical_income(config.income_config)
 
+    # -- semantic qualification -------------------------------------------
+    # The registry decides whether an element is this metric for this filer.
+    # The income dataset reads that decision for the denominators, and this
+    # dataset reads the bridge components' own. A denominator the registry
+    # does not accept does not exist, and a bridge component the registry
+    # does not accept contributes to no bridge: the filed values stay held as
+    # evidence, and no figure is built from them.
+    income_roles = (income_result.semantic_qualification or {}).get("roles") or {}
+    revenue_role = income_roles.get("revenue") or {}
+    operating_income_role = income_roles.get("operating_income") or {}
+    depreciation_role = income_roles.get("depreciation_and_amortization") or {}
+
+    component_qualification: Dict[str, Dict[str, Any]] = {}
+    for component, tag in config.balance_sheet_concepts.items():
+        metric_id = EV_BRIDGE_COMPONENT_METRICS.get(component)
+        if metric_id is None:
+            component_qualification[component] = {
+                "component": component,
+                "metric_id": None,
+                "concept_id": f"{config.taxonomy}:{concept_tags[component]}",
+                "element": concept_tags[component],
+                "registry_metric_exists": False,
+                "qualified": None,
+                "reason_code": REASON_NO_SUCH_METRIC,
+                "reason_detail": (
+                    f"The registry declares no {component} metric, so it "
+                    "cannot rule on the element this component is read from. "
+                    "The filed-bridge specification governs this component, "
+                    "and the element is read under it."
+                ),
+            }
+            continue
+        qualification = qualify_element(
+            metric_id=metric_id,
+            taxonomy=config.taxonomy,
+            element=concept_tags[component],
+            ticker=config.ticker,
+        )
+        record = qualification.to_dict()
+        record["component"] = component
+        if not record.get("registry_metric_exists", True):
+            # The registry declares no metric for this component, so it has no
+            # opinion on the element. The filed-bridge specification governs
+            # the component and the element is read under it; the limitation is
+            # recorded rather than resolved by inventing a metric.
+            record["qualified"] = None
+            record["reason_detail"] = (
+                f"The registry declares no {component} metric, so it cannot "
+                "rule on the element this component is read from. The "
+                "filed-bridge specification governs this component, and the "
+                "element is read under it."
+            )
+        component_qualification[component] = record
+    unqualified_components = sorted(
+        component
+        for component, record in component_qualification.items()
+        if record.get("qualified") is False
+    )
+
     # -- the captured concepts, for the coverage test (X-1a) --
     # The refusal of a trailing window has two possible causes, and the
     # capture is what tells them apart. A fiscal position the capture carries
@@ -1156,6 +1481,12 @@ def load_issuer_historical_multiples(
         share = _in_force_share(share_facts, day)
         components_in_force: Dict[str, BalanceSheetFact] = {}
         for component, facts in component_facts.items():
+            if component in unqualified_components:
+                # The registry does not accept this element as this metric for
+                # this filer, so it contributes to no bridge. The fact stays in
+                # the capture and stays traceable; it is not read into an
+                # enterprise value.
+                continue
             fact = _in_force_fact(facts, day)
             if fact is not None:
                 components_in_force[component] = fact
@@ -1362,7 +1693,22 @@ def load_issuer_historical_multiples(
                 ),
             }
 
-            if ev_reason is None and not all_present:
+            if ev_reason is None and unqualified_components:
+                ev_reason = REASON_NO_QUALIFIED_EV_COMPONENT
+                ev_detail = (
+                    "The filed EV bridge at "
+                    f"{day} carries a component the registry does not accept "
+                    "as this metric for this filer: "
+                    + ", ".join(
+                        component
+                        for component in unqualified_components
+                    )
+                    + ". The component contributes to no bridge, so no "
+                    "enterprise value is published from this date. The filed "
+                    "values are kept as evidence; they are not this metric's "
+                    "input."
+                )
+            elif ev_reason is None and not all_present:
                 ev_reason = REASON_INCOMPLETE_EV_BRIDGE
                 ev_detail = (
                     "The filed EV bridge is incomplete at "
@@ -1487,6 +1833,32 @@ def load_issuer_historical_multiples(
         observation.content_hash = observation.compute_content_hash()
         observations.append(observation)
 
+    ps_semantic_refusal = _semantic_refusal(
+        metric_id="revenue",
+        metric_label="revenue",
+        role_label="revenue",
+        record=revenue_role,
+        ticker=config.ticker,
+        reason_code=REASON_NO_QUALIFIED_REVENUE_ELEMENT,
+    )
+    ev_semantic_refusal = _semantic_refusal(
+        metric_id="ebitda",
+        metric_label="EBITDA",
+        role_label="operating income",
+        record=operating_income_role,
+        ticker=config.ticker,
+        reason_code=REASON_NO_QUALIFIED_OPERATING_INCOME_ELEMENT,
+    )
+    if ev_semantic_refusal is None:
+        ev_semantic_refusal = _semantic_refusal(
+            metric_id="depreciation_and_amortization",
+            metric_label="EBITDA",
+            role_label="depreciation and amortization",
+            record=depreciation_role,
+            ticker=config.ticker,
+            reason_code=REASON_NO_QUALIFIED_DA_ELEMENT,
+        )
+
     ps_distribution = compute_multiples_distribution(
         observations,
         metric=METRIC_PS_RATIO,
@@ -1497,6 +1869,7 @@ def load_issuer_historical_multiples(
             for o in observations
             if o.ps_reason_code
         },
+        semantic_refusal=ps_semantic_refusal,
     )
     ev_distribution = compute_multiples_distribution(
         observations,
@@ -1508,6 +1881,7 @@ def load_issuer_historical_multiples(
             for o in observations
             if o.ev_reason_code
         },
+        semantic_refusal=ev_semantic_refusal,
     )
 
     result = HistoricalMultiplesResult(
@@ -1520,6 +1894,28 @@ def load_issuer_historical_multiples(
         },
         observations=observations,
         concept_tags=concept_tags,
+        semantic_qualification={
+            "policy": QUALIFICATION_POLICY,
+            "denominators": {
+                "revenue": dict(revenue_role),
+                "ebitda": {
+                    "roles": {
+                        "operating_income": dict(operating_income_role),
+                        "depreciation_and_amortization": dict(depreciation_role),
+                    },
+                    "qualified": ev_semantic_refusal is None,
+                    "reason_code": (
+                        ev_semantic_refusal.get("reason_code")
+                        if ev_semantic_refusal
+                        else None
+                    ),
+                },
+            },
+            "ev_bridge_components": {
+                component: dict(record)
+                for component, record in component_qualification.items()
+            },
+        },
     )
     result.content_hash = canonical_json_hash(
         {
