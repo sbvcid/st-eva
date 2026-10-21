@@ -147,6 +147,36 @@ ISSUER_CONFIGS: Dict[str, HistoricalIncomeConfig] = {
         # before the figure is used.
         depreciation_concept="DepreciationDepletionAndAmortization",
     ),
+    "MSFT": HistoricalIncomeConfig(
+        ticker="MSFT",
+        issuer_id="CIK0000789019",
+        entity_name="Microsoft Corporation",
+        fye_month=6,
+        data_dir=Path(__file__).resolve().parent / "data" / "historical_income" / "MSFT",
+        prices_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "MSFT"
+        / "daily_prices.json",
+        acceptance_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "MSFT"
+        / "filing_acceptance_evidence.json",
+        revenue_concept="RevenueFromContractWithCustomerExcludingAssessedTax",
+        operating_income_concept="OperatingIncomeLoss",
+        # Microsoft reports one cash-flow line labelled "Depreciation,
+        # amortization, and other" and carries it on this element. The
+        # element's own name says depreciation alone, and the line bundles
+        # "other" items, so the core registry does not map this element to the
+        # pure depreciation-and-amortization metric for Microsoft or for
+        # anyone else: Microsoft's current EBITDA therefore stays the
+        # provider's figure, and this dataset's trailing EBITDA is a
+        # reconstruction from the filer's own line, declared per issuer here
+        # and in the dataset manifest. Microsoft's company-custom element
+        # msft:DepreciationAmortizationAndOther stays refused.
+        depreciation_concept="Depreciation",
+    ),
 }
 
 

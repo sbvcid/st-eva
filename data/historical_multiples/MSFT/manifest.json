@@ -1,0 +1,85 @@
+{
+  "ticker": "MSFT",
+  "issuer_id": "CIK0000789019",
+  "entity_name": "Microsoft Corporation",
+  "fiscal_year_end": "0630",
+  "role": "production",
+  "metrics": [
+    "P_S_RATIO_REFERENCE",
+    "EV_EBITDA_RATIO_REFERENCE"
+  ],
+  "methodology": "historical-multiples/1.0",
+  "provenance": {
+    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the balance-sheet concepts, plus the canonical daily price series and filing acceptance index reused by path from data/historical_pe/MSFT, and the cover-page shares outstanding series reused by path from data/historical_pfcf/MSFT. The trailing revenue and EBITDA denominators are the data/historical_income/MSFT dataset's own windows, executed from its config, never recomputed here.",
+    "promoted_on": "2026-10-21",
+    "concept_fetch": {
+      "fetched_on": "2026-10-21",
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+      "response_units": "verbatim as returned: USD for all five concepts"
+    },
+    "issuer_facts": {
+      "cik": "0000789019",
+      "fye_month": 6
+    },
+    "files": {
+      "cash_concept.json": {
+        "bytes": 35001,
+        "content_sha256": "b59add157eee7192d8232874086fada9da40d54aec50848559703b1d5bacde4f",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/CashAndCashEquivalentsAtCarryingValue.json",
+        "definition": "Cash and cash equivalents at carrying value, the liquid-funds component of the filed EV bridge."
+      },
+      "marketable_securities_current_concept.json": {
+        "bytes": 9212,
+        "content_sha256": "a1183fce5e307daf01e1b5d77ebc5f1a7f2eb95f8d1bad9873972dbf81427c8c",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/ShortTermInvestments.json",
+        "definition": "Microsoft's current marketable securities. It reports the line as 'Short-term investments' and carries it on us-gaap:ShortTermInvestments; it does not use us-gaap:MarketableSecuritiesCurrent at all, so the bridge's role is filled by the element the issuer uses. First carried from FY2018 filings."
+      },
+      "commercial_paper_concept.json": {
+        "bytes": 9200,
+        "content_sha256": "759ee1c23779f4572df988c726da15026d55dab85e641a686931e20bdaa41a8f",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/CommercialPaper.json",
+        "definition": "Commercial paper, a total-debt component of the filed EV bridge alongside the two long-term debt concepts. Microsoft stopped tagging the line after the FY2025 10-K, which is why the last evaluation dates carry a stale component and publish no enterprise value."
+      },
+      "long_term_debt_current_concept.json": {
+        "bytes": 15715,
+        "content_sha256": "327200506e0a0340b990df9b010a34c9d4d4abe0d45a1a07af6213ae18b85a64",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/LongTermDebtCurrent.json",
+        "definition": "Current portion of long-term debt, a total-debt component of the filed EV bridge."
+      },
+      "long_term_debt_noncurrent_concept.json": {
+        "bytes": 19512,
+        "content_sha256": "db4e0c929e3a6849000ff5041025b9321e52e83424f22af2335d4875682c996b",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/LongTermDebtNoncurrent.json",
+        "definition": "Long-term debt, non-current, a total-debt component of the filed EV bridge."
+      },
+      "daily_prices.json (reused by path)": {
+        "path": "data/historical_pe/MSFT/daily_prices.json",
+        "content_sha256": "f7a13cf36b57aa9dcc338466a1f492d480bcba86c8404819e75f7c820c87a172",
+        "source": "The canonical production historical P/E dataset's price series, read by path. Microsoft has had no stock split since 2003, so the series needs no split adjustment and the as-traded close pairs with the cover-page share count as it stands."
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "data/historical_pe/MSFT/filing_acceptance_evidence.json",
+        "content_sha256": "7f03d60d0ad009ff66de48210085457d38229f7defb7fe0e7e96786fa6e32692",
+        "source": "The canonical historical P/E dataset's acceptance index: each filing's acceptance datetime, form and period end. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped."
+      },
+      "shares_outstanding_concept.json (reused by path)": {
+        "path": "data/historical_pfcf/MSFT/shares_outstanding_concept.json",
+        "content_sha256": "ea579a816b4fd5adfdae805b04f029f923929d18431cdb3515723caf0c52c749",
+        "source": "The canonical cover-page shares outstanding series from the historical P/FCF dataset, read by path so one share series serves every market-cap reconstruction. Counts are never split-adjusted and pair with the as-traded close."
+      }
+    },
+    "point_in_time_rule": "usable_date is derived from acceptance_datetime_header_et using the 16:00 ET cutoff rule at load time, identical to the historical P/E, P/FCF and income pipelines. The value in force at an evaluation date is the latest knowable version of each component; no fact is used before its filing's usable date.",
+    "multiple_rules": {
+      "ps": "P/S = (as-traded close on the evaluation date x latest knowable cover-page shares outstanding) / TTM revenue, where the TTM revenue window is the income dataset's own four-consecutive-fiscal-quarter window. A non-positive denominator produces no multiple.",
+      "ev_ebitda": "EV/EBITDA = (market capitalization + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM EBITDA. Every bridge component must be knowable at the evaluation date, and every one of them must describe the SAME balance-sheet date: a date whose components span more than one balance sheet publishes no enterprise value, with the reason REASON_MIXED_BALANCE_SHEET_PERIODS. The bridge is never completed by omission, substitution or zero-fill, and a component that was not reported is not carried forward as zero. Market capitalization is not a balance-sheet component and is not part of the same-date rule. The bridge remains a partial statement of enterprise value even when complete (it omits leases, non-current investments and off-balance sheet claims) and every observation says so."
+    },
+    "reference_gate": "The same >= 20 qualifying observations rule as every other production distribution. A thinner sample stays descriptive and is never a scenario exit multiple. The two distributions are qualified independently: one qualifying does not qualify the other.",
+    "known_limitations": [
+      "The trailing EBITDA window can be built for two evaluation dates only: Microsoft tags the interim 'Depreciation, amortization, and other' cash-flow line on us-gaap:Depreciation from the FY2026 filings, and the earlier 10-Qs carry the line annually only. The EV/EBITDA distribution therefore holds no qualifying observation and is reported unavailable, while the P/S distribution qualifies on 23.",
+      "Microsoft stopped tagging us-gaap:CommercialPaper after the FY2025 10-K, so the component in force at the last evaluation dates is the FY2025 one and those dates publish no enterprise value under the same-date rule. The stale component is not carried forward as zero.",
+      "The acceptance index starts at 2020-10-27, so the first four evaluation dates have no trailing revenue window: the fiscal positions the window needs are carried by filings outside the index, and the window is refused rather than backfilled.",
+      "The reconstructed enterprise value omits operating leases, non-current investments and off-balance sheet commitments. It is labelled partial on every observation.",
+      "The evaluation dates are the filing usable dates shared with the income reconstruction, not a continuous daily trading history."
+    ]
+  }
+}

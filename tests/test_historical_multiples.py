@@ -937,7 +937,9 @@ class TheDatasetAvailability(unittest.TestCase):
     different conditions, and each is reported as the condition it is."""
 
     def test_a_ticker_without_the_dataset_reports_that_the_dataset_is_absent(self):
-        for ticker in ("MSFT", "TSM"):
+        # TSM and NVDA have no production multiples dataset. MSFT has one now,
+        # so it is not an example of an absent dataset.
+        for ticker in ("TSM", "NVDA"):
             _, _, multiples = load_production_historical_references(
                 ticker, include_historical_multiples=True
             )
@@ -951,7 +953,7 @@ class TheDatasetAvailability(unittest.TestCase):
 
     def test_an_absent_dataset_contributes_no_reference(self):
         _, _, multiples = load_production_historical_references(
-            "MSFT", include_historical_multiples=True
+            "TSM", include_historical_multiples=True
         )
         median, status = production_ps_for_reference(multiples)
         self.assertIsNone(median)

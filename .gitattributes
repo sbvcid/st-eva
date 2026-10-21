@@ -12,6 +12,12 @@ data/historical_pe/**/*.json text eol=lf
 # that rewrote line endings would change those digests.
 data/historical_multiples/**/*.json text eol=lf
 
+# The income-statement dataset is a tracked production input too, and its
+# manifest pins the same way. The concept payloads are single-line responses
+# with no newline to rewrite; the rule says so once rather than leaving it to
+# be re-established.
+data/historical_income/**/*.json text eol=lf
+
 # The packaged filing facts are a tracked input the product reads, so their
 # bytes are as much a part of the contract as the dataset files above: a
 # checkout that rewrote them would change what the cross-currency analysis

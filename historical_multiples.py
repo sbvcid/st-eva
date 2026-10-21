@@ -220,6 +220,43 @@ ISSUER_CONFIGS: Dict[str, HistoricalMultiplesConfig] = {
             "long_term_debt_current": "LongTermDebtCurrent",
         },
     ),
+    "MSFT": HistoricalMultiplesConfig(
+        ticker="MSFT",
+        issuer_id="CIK0000789019",
+        entity_name="Microsoft Corporation",
+        fye_month=6,
+        data_dir=Path(__file__).resolve().parent
+        / "data"
+        / "historical_multiples"
+        / "MSFT",
+        prices_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "MSFT"
+        / "daily_prices.json",
+        acceptance_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pe"
+        / "MSFT"
+        / "filing_acceptance_evidence.json",
+        shares_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_pfcf"
+        / "MSFT"
+        / "shares_outstanding_concept.json",
+        income_config=INCOME_ISSUER_CONFIGS["MSFT"],
+        # The roles name a quantity and each issuer's own element fills it.
+        # Microsoft reports current marketable securities as "Short-term
+        # investments" and carries them on us-gaap:ShortTermInvestments; it
+        # does not use us-gaap:MarketableSecuritiesCurrent at all.
+        balance_sheet_concepts={
+            "cash": "CashAndCashEquivalentsAtCarryingValue",
+            "marketable_securities_current": "ShortTermInvestments",
+            "commercial_paper": "CommercialPaper",
+            "long_term_debt_noncurrent": "LongTermDebtNoncurrent",
+            "long_term_debt_current": "LongTermDebtCurrent",
+        },
+    ),
 }
 
 
@@ -559,10 +596,17 @@ def compute_multiples_distribution(
     metric: str,
     values: Sequence[Tuple[str, Optional[float]]],
     min_observations: int = MIN_OBSERVATIONS_FOR_REFERENCE,
+    exclusion_reasons: Optional[Mapping[str, str]] = None,
 ) -> MultiplesDistribution:
     """
     One metric's distribution over its qualifying dated values, with the
     shared sufficiency gate.
+
+    `exclusion_reasons` maps an evaluation date to the reason its value was
+    not usable. It is not part of the gate -- the gate counts the qualifying
+    values -- but when no value qualifies at all, the reasons are what
+    explain the emptiness, and a distribution that says only "zero
+    observations" would leave the reader to find out why.
     """
     valid = [(day, value) for day, value in values if value is not None and value > 0]
     excluded = [
@@ -576,6 +620,26 @@ def compute_multiples_distribution(
 
     sample_count = len(valid)
     if sample_count == 0:
+        tally: Dict[str, int] = {}
+        for day, _value in values:
+            reason = (exclusion_reasons or {}).get(day)
+            if reason:
+                tally[reason] = tally.get(reason, 0) + 1
+        if tally:
+            reason_detail = (
+                "Zero valid point-in-time observations could be constructed. "
+                "Every evaluation date was excluded, and the exclusions were: "
+                + ", ".join(
+                    f"{count} x {reason}" for reason, count in sorted(tally.items())
+                )
+                + ". The sample is too thin to establish a reference, and the "
+                "reasons are the filer's own evidence, not a rule relaxed to "
+                "reach a number."
+            )
+        else:
+            reason_detail = (
+                "Zero valid point-in-time observations could be constructed."
+            )
         return MultiplesDistribution(
             metric_id=metric,
             status=STATUS_UNAVAILABLE,
@@ -584,9 +648,7 @@ def compute_multiples_distribution(
             total_evaluations=len(values),
             min_observations_required=min_observations,
             reason_code=REASON_INSUFFICIENT_OBSERVATIONS,
-            reason_detail=(
-                "Zero valid point-in-time observations could be constructed."
-            ),
+            reason_detail=reason_detail,
             excluded_observations=excluded,
         )
 
@@ -1272,12 +1334,22 @@ def load_issuer_historical_multiples(
         metric=METRIC_PS_RATIO,
         values=[(o.evaluation_date, o.ps_ratio) for o in observations],
         min_observations=min_observations,
+        exclusion_reasons={
+            o.evaluation_date: o.ps_reason_code
+            for o in observations
+            if o.ps_reason_code
+        },
     )
     ev_distribution = compute_multiples_distribution(
         observations,
         metric=METRIC_EV_EBITDA_RATIO,
         values=[(o.evaluation_date, o.ev_ebitda_ratio) for o in observations],
         min_observations=min_observations,
+        exclusion_reasons={
+            o.evaluation_date: o.ev_reason_code
+            for o in observations
+            if o.ev_reason_code
+        },
     )
 
     result = HistoricalMultiplesResult(

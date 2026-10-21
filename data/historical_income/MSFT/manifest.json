@@ -1,0 +1,58 @@
+{
+  "ticker": "MSFT",
+  "issuer_id": "CIK0000789019",
+  "entity_name": "Microsoft Corporation",
+  "fiscal_year_end": "0630",
+  "role": "production",
+  "metrics": [
+    "TTM_REVENUE",
+    "TTM_EBITDA"
+  ],
+  "provenance": {
+    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the revenue, operating income and depreciation concepts, plus the canonical price series and acceptance evidence reused by path from data/historical_pe/MSFT. Each concept file is the byte-exact companyconcept API response; its sha256 pins what the reconstruction read. The trailing revenue and EBITDA windows are the ones the data/historical_multiples/MSFT dataset divides by.",
+    "promoted_on": "2026-10-21",
+    "concept_fetch": {
+      "fetched_on": "2026-10-21",
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
+      "response_units": "verbatim as returned: USD for all three concepts"
+    },
+    "issuer_facts": {
+      "cik": "0000789019",
+      "fye_month": 6
+    },
+    "files": {
+      "revenue_concept.json": {
+        "bytes": 20920,
+        "content_sha256": "5d82a226a193327e8ab7b39abc9a0950b1b3d72ca705fb4a0f8829cd1372d4dd",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax.json",
+        "definition": "Microsoft's contract-revenue line, the same element Apple uses: the 10-Q states the three-month and the year-to-date duration, so the discrete quarters are directly stated except the fourth, which is the fiscal year less the nine months."
+      },
+      "operating_income_concept.json": {
+        "bytes": 41953,
+        "content_sha256": "9934b6a73013326e449358d8ec406826318715e45a2c635e3da2fee2d507c201",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/OperatingIncomeLoss.json",
+        "definition": "Operating activities before interest, taxes and non-operating items, as presented."
+      },
+      "depreciation_concept.json": {
+        "bytes": 10886,
+        "content_sha256": "add92340a2019634a1f3593efab8f7a1b4459a64165e7ec6bcec62d166836814",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/Depreciation.json",
+        "definition": "Microsoft reports one cash-flow line labelled 'Depreciation, amortization, and other' and carries it on us-gaap:Depreciation. The element's own name says depreciation alone and the line bundles 'other' items, so this element is not the pure depreciation-and-amortization metric and the core registry does not map it to that metric for any issuer. The trailing EBITDA this dataset builds is therefore a reconstruction from the filer's own line, declared here and in the dataset manifest, and it is not the core registry's filed pure-D&A figure. Microsoft's own company-custom element msft:DepreciationAmortizationAndOther stays refused: the company-concept API does not serve it, it is company-custom, and it bundles 'other' items."
+      },
+      "daily_prices.json (reused by path)": {
+        "path": "data/historical_pe/MSFT/daily_prices.json",
+        "content_sha256": "f7a13cf36b57aa9dcc338466a1f492d480bcba86c8404819e75f7c820c87a172",
+        "source": "The canonical production historical P/E dataset's price series, read by path. The trading calendar decides when a filing's fact becomes knowable under the 16:00 ET cutoff rule, so one calendar serves every reconstruction."
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "data/historical_pe/MSFT/filing_acceptance_evidence.json",
+        "content_sha256": "7f03d60d0ad009ff66de48210085457d38229f7defb7fe0e7e96786fa6e32692",
+        "source": "The canonical historical P/E dataset's acceptance index: each filing's acceptance datetime, form and period end. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped. The index covers 47 filings accepted between 2020-10-27 and 2026-07-29: 18 10-Q, 6 10-K and 23 8-K Item 2.02 earnings releases, the furnished evidence class this issuer's production dataset already uses."
+      }
+    },
+    "known_limitations": [
+      "The acceptance index starts at 2020-10-27, so the first four evaluation dates have no trailing revenue window: the fiscal positions the window needs are carried by filings outside the index, and the window is refused rather than backfilled.",
+      "Microsoft tags the interim 'Depreciation, amortization, and other' line on us-gaap:Depreciation only from the FY2026 filings. The 10-Qs before that report the line annually only, so the trailing EBITDA window can be built for two evaluation dates only, and the EV/EBITDA reference has no qualifying observation."
+    ]
+  }
+}
