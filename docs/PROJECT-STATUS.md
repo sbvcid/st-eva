@@ -1,6 +1,6 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-21 (two issuers hold qualified historical P/S and EV/EBITDA references: Apple on 28 and 27 observations, and American Electric Power on 29 and 25; Microsoft holds a qualified P/S reference and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role)
+**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role)
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented for three issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; AEP: EV/EBITDA 24 valid / 9 rejected over 33 evaluations, median 13.221693, `USABLE_FOR_REFERENCE`, and P/S 4 valid / 29 rejected, `INSUFFICIENT_OBSERVATIONS`, because the registry-accepted revenue element's coverage reaches four windows; MSFT: P/S 23 valid / 4 rejected, median 11.783822, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role; the filed EV bridge requires every component to describe the same balance-sheet date, and a window's quarters must be four consecutive periods of the issuer's own cycle **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
 **Latest verified GitHub Actions:** `0aadc8a` (Microsoft's revenue element, the window rule and the capture corrected) verified `backend` and `browser` jobs success in run `39591871200` (checked via the GitHub API on 2026-10-21: backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding runs `39578452809` (Microsoft's dataset `d3cec3b`: backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success) and `39562741308` (Microsoft's D&A role left empty, `3ec78b7`: backend 2643 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);
@@ -3650,15 +3650,15 @@ line's own figure would make 193,771 million.
   bridges against a gate of 20 -- means the verdict does not depend on the
   denominator.
 
-### Superseded in part by Phase 6.2
+### Superseded in part by Phase 7.2
 
 The figures in this section are what Phase 7 published, and they are left
-here as the record of that round. Phase 6.2 withdrew one of the two
+here as the record of that round. Phase 7.2 withdrew one of the two
 production qualifications: the P/S denominator's element had been retired by
 registry decision 2.99 and was never qualified, so the P/S distribution is
 now reported as a short sample of four observations. The EV/EBITDA median
 moved from 13.224119 to 13.221693 because the one non-contiguous window is
-now refused. See "Phase 6.2" below.
+now refused. See "Phase 7.2" below.
 
 ### The identities, before and after
 
@@ -3939,6 +3939,150 @@ both production medians are selected, `implied_revenue` 23,619,620,943.62 and
 `implied_ebitda` 8,874,061,589.74 are computed from them, and the first two
 issuers' references are unchanged.
 
+## Phase 7.2 (2026-10-21): American Electric Power's data corrected
+
+This is the round the commits `0aadc8a`, `a669135` and `77ec324` performed.
+An independent read-only audit had found three defects in what Phase 7
+published for American Electric Power.
+
+### The three defects the audit found
+
+1. **The P/S denominator's element was never qualified.** The revenue role
+   read `us-gaap:Revenues`, the element registry decision 2.99 retired
+   because its own definition is broader than the revenue metric -- it allows
+   investment and interest income -- and no scope was invented to rescue it.
+   The number was the issuer's own "TOTAL REVENUES" line and was in substance
+   right, but the qualification the project requires for a metric claim was
+   never established: the production gate checks the sample size, the
+   point-in-time rule, the data's completeness and the bridge's date rule,
+   and it never asks whether the element is the metric.
+2. **A fiscal label contradicted the periods the facts cover, and a
+   non-contiguous window was published.** American Electric Power's fiscal
+   2021 first-quarter 10-Q declares `dei:DocumentFiscalYearFocus = 2020` and
+   `DocumentFiscalPeriodFocus = Q3` for the period ended 2021-03-31, a
+   position its own fourth-quarter 10-Q already holds. The calendar
+   reproduces the issuer's declaration, so two period ends claimed one fiscal
+   position, and the window published at 2021-04-22 summed December 2019,
+   March 2020, June 2020 and **March 2021** -- fifteen months with a gap.
+3. **The capture was one filing behind the issuer.** The company-concept API
+   still ended at 2026-03-31 for every element, although the FY2026
+   second-quarter 10-Q (`0000004904-26-000059`, accepted 2026-07-30, period
+   2026-06-30) reports the same elements the capture already held.
+
+### What changed
+
+**The revenue role.** The role now names
+`us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax`, the
+registry's own EXACT source for the revenue metric. The retired element is
+not used for anything, and no mapping, scope or test was changed to revive
+it. That element's own coverage begins with the fiscal 2023 annual figure, so
+the trailing revenue window exists for four evaluation dates only: **the P/S
+distribution now holds 4 valid observations and is reported
+`INSUFFICIENT_OBSERVATIONS`**, with the statistics stated for review and the
+production qualification withdrawn. The 29-observation P/S and its median
+2.728945 are gone.
+
+**The window rule.** Two generic checks were added, and neither assumes a
+calendar quarter or ninety days -- the issuer's own periods decide:
+
+- *Contiguity.* A window's four quarters must begin the day after the
+  previous one ends. The window published at 2021-04-22 is refused, and the
+  refusal names the break: "2020-04-01..2020-06-30 is followed by
+  2021-01-01..2021-03-31".
+- *An unresolved position.* Where the walk cannot fill a position and the
+  capture holds the period that position would cover under a different
+  label, the position cannot be determined, and the reason is
+  `REASON_FISCAL_POSITION_UNRESOLVED` -- not a source-coverage gap, which
+  says the facts are not there. The dates 2021-07-22, 2021-10-28 and
+  2022-02-24 report it with the period, the period end and the label the
+  issuer's own declarations give.
+
+**The capture.** The facts the company-concept API does not yet carry were
+read from the FY2026 second-quarter 10-Q's own inline XBRL instance:
+consolidated facts only, no dimensional qualifiers, each keeping its
+accession, acceptance datetime, context, period, unit and source URL. The
+concept payloads carry the company's own response and the instance's facts
+together, and the manifest records both sources and the count each
+contributed.
+
+### The corrected results
+
+| distribution | valid | rejected | total evaluations | period | median | status |
+| --- | --- | --- | --- | --- | --- | --- |
+| `P_S_RATIO_REFERENCE` | **4** | 29 | 33 | 2025-10-29 → 2026-07-30 | 3.126102 (descriptive only) | `INSUFFICIENT_OBSERVATIONS` |
+| `EV_EBITDA_RATIO_REFERENCE` | **24** | 9 | 33 | 2019-10-24 → 2026-07-30 | **13.221693** | `USABLE_FOR_REFERENCE` |
+
+The EV/EBITDA reference qualifies on 24 qualifying observations, and its
+median is the value the audit predicted before the fix -- 13.221693 is what
+the sample gives once the one defective observation is out of it. The nine
+refusals are four `REASON_FISCAL_POSITION_UNRESOLVED` (the windows that walk
+through the position two period ends claim), four
+`REASON_MISSING_EBITDA_WINDOW` and one `REASON_SOURCE_CONCEPT_COVERAGE_GAP`.
+
+### The identities, before and after
+
+| dataset | before (Phase 7) | after (Phase 7.2) |
+| --- | --- | --- |
+| AEP income `input_set_id` | `eed2b0f18e719278f602c78233a3133757ce3f9feaa5f99c2c092b03f2bef341` | `fc2b06c1559ced2bcbb5623466f81bacff2387706c84f424ba007888012dcdcc` |
+| AEP income `content_hash` | `fe36b4fb7cd288fa1d3627f22b2004d63bb673a8af9a5f2befe5c4a5030f44fb` | `15ff76e928937f0972afaeb9885ce85b703af4feca91f7131b83c3fe8234f8f8` |
+| AEP multiples `input_set_id` | `334501040f1f19659be7114a050ef2cb7ffe58175e8512ab7ae0a434a30ddb00` | `eb3371bbe1ca007e0f60266c37f43c17dacda6f986d6766b00e83b176b4f965b` |
+| AEP multiples `content_hash` | `d13c8a7d6a51cfd31ae4a6269428037f2176a81ff10852a190dca84d18082ec2` | `8b9c45966aa26d725ea11c012682d1fbf1cff357f5c054c2e9b7c8af7161e38e` |
+
+The identities moved because the content moved, and they are measured from the
+commits themselves rather than quoted: the "before" column is the identity the
+Phase 7 build produced, and the "after" column is what the corrected build
+produces.
+
+**Apple and Microsoft are untouched.** Apple's income dataset is still
+`401a14e73b53…` / `568d33fac2c2…` and its multiples dataset
+`77402a13b164…` / `321e8b165bfc…`, with 28 and 27 qualifying observations
+and the medians 7.257709 and 22.326. Microsoft's are still
+`39302572afa7…` / `d57ea0aeb4db…` and `ba4b639cc4ca…` / `d80b2d3d163…`,
+with 23 P/S observations and no qualified enterprise-value reference. The
+window rule fires for neither of them, because neither has a contested
+position.
+
+**American Electric Power's current figures.** With the revenue role now
+naming the element the registry accepts, its current revenue in the valuation
+chain becomes a filed figure rather than the provider's; its current EBITDA is
+unchanged, because the depreciation role still names an element the registry
+does not accept, so the current record is refused as before. Microsoft's
+current figures are untouched by this round: its revenue role already named
+the registry's own source, and its depreciation role is still empty.
+
+### The history
+
+The Phase 7 distributions were published and are recorded above as they were:
+a P/S of 29 observations with a median of 2.728945 and an EV/EBITDA of 25
+observations with a median of 13.224119, the latter resting on one
+non-contiguous window and on a revenue element the registry had retired. This
+round withdrew that production qualification, corrected the window rule, and
+rebuilt the datasets. The earlier numbers are not written back as correct.
+
+### Tests
+
+`tests/test_historical_multiples_aep.py` (38 tests): the manifest pinning
+every file and every source; the revenue role naming the registry-accepted
+element; the retired element carrying no mapping in the registry; the
+concepts being the elements this issuer uses; the latest filed quarter being
+in the capture; every observation carrying its lineage; no operand knowable
+after its evaluation date; the price being the as-traded close; no split in
+the covered period; every P/S recomputing from the raw price, share count and
+revenue window; every trailing EBITDA being the sum of its quarters'
+operating income and depreciation; every enterprise value recomputing from its
+components; the medians recomputing from the published observations; no
+enterprise value published from a mixed or an incomplete bridge; the
+non-contiguous window being refused and the refusal naming the break; a
+position the issuer labels inconsistently being reported as unresolved while a
+missing fact is still reported as a missing fact; each distribution qualified
+on its own evidence; the three issuers' identities, distributions and price
+series being distinct, and the first issuer's identities pinned by value; the
+run selecting the qualified enterprise-value median and not the unqualified
+sales one; a user multiple still winning; the cash-flow method still reading
+no production reference; the archive saving the count; the replay request
+carrying it; the replay reproducing the document; and an archive without a
+count not being given one.
+
 ### CI
 
 Run **39591871200** for `0aadc8a`:
@@ -3954,13 +4098,104 @@ conclusion: success
 
 Both jobs (`backend`, `browser`) succeeded for the commit `0aadc8a`
 (`0aadc8a919a4fdc3d08e3ddba75194abb45ca386`). The run's "Assert production
-inputs are self-contained" step passed, so the corrected Microsoft datasets
-check out with the bytes their manifests pin.
+inputs are self-contained" step passed, so the corrected American Electric
+Power datasets check out with the bytes their manifests pin.
+
+The two commits that followed carried this document only: `a669135` recorded
+this CI run, and `77ec324` removed a trailing space from the status header.
 
 Local verification for this round: backend suite **2681 passed, 171 skipped,
 534 subtests passed**; web API **25 passed** and archive isolation **6
 passed**; browser smoke **12 passed**; frontend production build produced
 `dist/index.html`.
+
+## Phase 7.3 (2026-10-21): phase and documentation reconciliation
+
+A reconciliation against the commits themselves -- their diffs, the manifests,
+the tests, the dataset identities and this document -- was carried out to
+establish what each of the three preceding commits had actually changed and
+whether the two corrections had landed on the right issuer.
+
+### What the commits changed
+
+`0aadc8a` touched only American Electric Power's data files -- the four
+under `data/historical_income/AEP/` and the seven under
+`data/historical_multiples/AEP/` -- together with the shared code, the
+issuer's test file and this document. **No Microsoft or Apple data file was
+modified.** The accession `0000004904-26-000059` appears in exactly the nine
+American Electric Power payloads, and in no other issuer's files.
+`tests/test_historical_multiples_aep.py` is scoped to that issuer
+(`TICKER = "AEP"`); its references to the other two issuers are the
+cross-company isolation assertions.
+
+### What the identities show
+
+Each issuer's identities were measured from the commits by extracting a
+revision into a temporary directory and rebuilding the datasets there:
+
+| issuer | dataset | before the correction | after |
+| --- | --- | --- | --- |
+| AAPL | income | `401a14e73b53…` / `568d33fa…` | unchanged |
+| AAPL | multiples | `77402a13b164…` / `321e8b16…` | unchanged |
+| MSFT | income | `39302572afa7…` / `d57ea0ae…` | unchanged |
+| MSFT | multiples | `ba4b639cc4ca…` / `d80b2d3d…` | unchanged |
+| AEP | income | `eed2b0f18e71…` / `fe36b4fb…` | `fc2b06c1559c…` / `15ff76e9…` |
+| AEP | multiples | `334501040f1f…` / `d13c8a7d…` | `eb3371bbe1ca…` / `8b9c4596…` |
+
+No issuer's identity was recorded as another's. The Phase 6.2 section's
+Microsoft table is correct: `2593d2b0…` and `b98c4d94…` are the identities
+Microsoft's datasets held **before** its depreciation role was emptied, which is
+what that table says they are.
+
+### What was wrong, and where
+
+Three things were wrong, and none of them was the data:
+
+1. **This document's Phase 7 section had carried the Phase 6 (Microsoft)
+   material in one place.** The subsection "The two committed production
+   datasets" named `data/historical_income/MSFT/` and
+   `data/historical_multiples/MSFT/`, and its identity table held Microsoft's
+   pre-fix hashes in rows that describe American Electric Power's datasets. It
+   now names the American Electric Power directories, that round's own
+   identities, and the share-count payload an issuer without a P/FCF dataset
+   carries of its own.
+2. **The section that recorded the correction was never written.** The script
+   that was to add it stopped on an error before it wrote the file, so the
+   document carried the correction's cross-reference without the correction
+   itself, and the "Status checked" line still held the withdrawn Phase 7
+   figures. The correction is now in the document as "Phase 7.2" above, and
+   the status line states the current result.
+3. **The commit messages of the correction named the wrong issuer and the
+   wrong phase.** `0aadc8a` read "Correct Microsoft's revenue element, the
+   window rule and the capture" and its body repeated "Microsoft" where the
+   correction was to American Electric Power's datasets; `a669135` read
+   "Record the phase 6.2 CI run in the project status". The commits are
+   published and are not rewritten; the correction is recorded here, and in the
+   commit that follows it.
+
+### The phase numbering, as it now stands
+
+| phase | what it did |
+| --- | --- |
+| 5 | the production historical P/S and EV/EBITDA references for Apple, and the corrective hardening of their gate and archive |
+| 6 | Microsoft as a second production issuer: a qualified P/S reference, and no qualified enterprise-value reference because no element qualifies for its depreciation role |
+| 6.2 | the audit that emptied Microsoft's depreciation role, and the correction of its identity chain |
+| 7 | American Electric Power as a second issuer with a qualified enterprise-value reference |
+| 7.1 | the audit of American Electric Power's revenue semantics, the fiscal labels and its capture |
+| **7.2** | **the correction of American Electric Power's revenue element, the window rule and its capture -- the commits `0aadc8a`, `a669135` and `77ec324`** |
+| **7.3** | **this reconciliation of the phase numbering and this document** |
+
+The numbers are the ones the work was done under, and no section is
+renumbered: the sections above keep the numbers their rounds used, and the
+cross-references between them are now correct.
+
+### Nothing else was touched
+
+The reconciliation confirmed the code, the data, the manifests and the
+identities to be correct, so no program, dataset, manifest or identifier was
+changed in this round. The two issuers that hold qualified references are
+unchanged, and the third holds a qualified enterprise-value reference with its
+sales reference reported as a short sample.
 
 ## Next task status
 
