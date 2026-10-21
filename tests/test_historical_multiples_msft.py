@@ -25,6 +25,7 @@ from historical_multiples import (
     REASON_MIXED_BALANCE_SHEET_PERIODS,
     REASON_MISSING_EBITDA_WINDOW,
     REASON_MISSING_REVENUE_WINDOW,
+    REASON_NO_QUALIFIED_DA_EVIDENCE,
     load_issuer_historical_multiples,
     production_multiples_summary,
 )
@@ -267,24 +268,17 @@ class TheFormulas(unittest.TestCase):
             periods = {fact["period_end"] for fact in bridge["components"].values()}
             if len(periods) > 1:
                 # A bridge that mixes two balance sheets publishes no
-                # enterprise value, whichever refusal the date carries. Where
-                # the trailing EBITDA window is also unavailable, that is the
-                # reason named; where it is available, the mixed bridge is.
+                # enterprise value. The reason the date carries is the
+                # denominator, which does not exist at all for Microsoft, so
+                # the bridge is never the binding cause -- but the bridge's
+                # own state is still recorded and still refuses.
                 self.assertIsNone(observation["enterprise_value"], observation)
                 self.assertIsNone(observation["ev_ebitda_ratio"], observation)
                 self.assertIs(bridge["complete"], False)
-                self.assertIn(
-                    observation["ev_reason_code"],
-                    (
-                        REASON_MIXED_BALANCE_SHEET_PERIODS,
-                        REASON_MISSING_EBITDA_WINDOW,
-                    ),
+                self.assertEqual(
+                    observation["ev_reason_code"], REASON_NO_QUALIFIED_DA_EVIDENCE
                 )
-                if observation["ttm_ebitda"] is not None:
-                    self.assertEqual(
-                        observation["ev_reason_code"],
-                        REASON_MIXED_BALANCE_SHEET_PERIODS,
-                    )
+                self.assertGreater(len(bridge["period_alignment"]["distinct_period_ends"]), 1)
 
     def test_no_enterprise_value_is_published_from_an_incomplete_bridge(self):
         for observation in self.payload["observations"]:
@@ -321,11 +315,11 @@ class TheEligibility(unittest.TestCase):
         self.assertEqual(distribution["status"], "UNAVAILABLE")
         self.assertIs(distribution["usable_for_reference"], False)
         self.assertEqual(distribution["reason_code"], REASON_INSUFFICIENT_OBSERVATIONS)
-        # The reason names both causes, so a reader knows the sample is thin
-        # because of the evidence and not because of a rule.
+        # The reason names the cause: the denominator does not exist, because
+        # no element qualifies for the depreciation-and-amortization role.
         detail = distribution["reason_detail"]
-        self.assertIn(REASON_MISSING_EBITDA_WINDOW, detail)
-        self.assertIn(REASON_MIXED_BALANCE_SHEET_PERIODS, detail)
+        self.assertIn(REASON_NO_QUALIFIED_DA_EVIDENCE, detail)
+        self.assertNotIn(REASON_MISSING_EBITDA_WINDOW, detail)
 
     def test_one_qualifying_distribution_does_not_qualify_the_other(self):
         distributions = self.payload["distributions"]
@@ -402,6 +396,114 @@ class TheCrossCompanyBoundary(unittest.TestCase):
         )
         median, _ = production_ps_for_reference(apple)
         self.assertEqual(median, 7.257709)
+
+
+class TheDepreciationRole(unittest.TestCase):
+    """Pure depreciation is not depreciation and amortization.
+
+    Microsoft reports depreciation alone on us-gaap:Depreciation and its
+    cash-flow line on a company-specific element the registry does not accept.
+    The role is therefore empty, and these tests hold it empty.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.income = load_issuer_historical_income(INCOME_CONFIGS[TICKER]).to_dict()
+        cls.manifest = json.loads(
+            (
+                ROOT / "data" / "historical_income" / TICKER / "manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+
+    def test_the_role_is_empty(self):
+        self.assertIsNone(self.income["concept_tags"]["depreciation_and_amortization"])
+        self.assertIsNone(INCOME_CONFIGS[TICKER].depreciation_concept)
+
+    def test_no_observation_carries_a_trailing_ebitda(self):
+        for observation in self.income["observations"]:
+            self.assertIsNone(observation["ttm_ebitda"], observation)
+
+    def test_no_window_is_published_for_the_ebitda_role(self):
+        for observation in self.income["observations"]:
+            rejection = (observation.get("window_rejection") or {}).get("ebitda")
+            if rejection is None:
+                continue
+            self.assertEqual(
+                rejection["reason_code"], "REASON_NO_QUALIFIED_DA_EVIDENCE", observation
+            )
+            self.assertEqual(rejection["positions_missing"], [])
+            self.assertIn("depreciation", rejection["detail"].lower())
+
+    def test_the_pure_depreciation_evidence_is_kept_and_named(self):
+        import hashlib
+
+        path = (
+            ROOT
+            / "data"
+            / "historical_income"
+            / TICKER
+            / "depreciation_expense_concept.json"
+        )
+        self.assertTrue(path.exists())
+        with open(path, encoding="utf-8") as handle:
+            payload = json.load(handle)
+        self.assertEqual(payload["tag"], "Depreciation")
+        files = self.manifest["provenance"]["files"]
+        self.assertIn("depreciation_expense_concept.json", files)
+        entry = files["depreciation_expense_concept.json"]
+        self.assertEqual(entry["role"], "evidence_only")
+        self.assertIn("DEPRECIATION ALONE", entry["definition"])
+        self.assertEqual(
+            hashlib.sha256(path.read_bytes()).hexdigest(), entry["content_sha256"]
+        )
+
+    def test_the_manifest_states_which_elements_fill_the_role_and_which_do_not(self):
+        role = self.manifest["provenance"]["depreciation_and_amortization_role"]
+        self.assertIs(role["filled"], False)
+        self.assertIsNone(role["element"])
+        self.assertIn(
+            "msft:DepreciationAmortizationAndOther",
+            role["rejected_element"]["element"],
+        )
+        self.assertIn("bundles 'other' items", role["rejected_element"]["why"])
+        # The two note elements are not added together to stand in for the
+        # cash-flow line, and the manifest says so.
+        self.assertIn("39,000,000,000", role["not_a_substitute"])
+
+    def test_the_pure_depreciation_never_reaches_an_ebitda_figure(self):
+        payload = _payload()
+        for observation in payload["observations"]:
+            self.assertIsNone(observation["ttm_ebitda"], observation)
+            self.assertIsNone(observation["ev_ebitda_ratio"], observation)
+        self.assertEqual(
+            payload["distributions"][METRIC_EV_EBITDA_RATIO]["sample_count"], 0
+        )
+
+    def test_the_core_registry_does_not_map_the_element_either(self):
+        # The provider's current EBITDA stays the provider's figure, because
+        # no element is mapped to the metric for this issuer.
+        from sec_derived_inputs import _concept_is_exact_for
+
+        self.assertFalse(
+            _concept_is_exact_for(
+                "depreciation_and_amortization", "Depreciation", TICKER
+            )
+        )
+        self.assertFalse(
+            _concept_is_exact_for(
+                "depreciation_and_amortization",
+                "DepreciationAmortizationAndOther",
+                TICKER,
+            )
+        )
+
+    def test_the_dataset_is_not_a_substitute_for_the_providers_current_figure(self):
+        # The income dataset holds no D&A element, so the valuation chain
+        # cannot read a filed EBITDA out of it; the provider's figure stands,
+        # and the two are different paths.
+        self.assertIsNone(
+            (self.income["concept_tags"] or {}).get("depreciation_and_amortization")
+        )
 
 
 class TheProductWiring(unittest.TestCase):

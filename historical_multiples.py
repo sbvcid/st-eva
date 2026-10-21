@@ -108,6 +108,12 @@ REASON_MISSING_SHARES = "REASON_MISSING_SHARES"
 REASON_MISSING_REVENUE_WINDOW = "REASON_MISSING_REVENUE_WINDOW"
 REASON_MISSING_EBITDA_WINDOW = "REASON_MISSING_EBITDA_WINDOW"
 REASON_SOURCE_CONCEPT_COVERAGE_GAP = "REASON_SOURCE_CONCEPT_COVERAGE_GAP"
+# The issuer has no element that qualifies for the
+# depreciation-and-amortization role, so no trailing EBITDA denominator
+# exists at all. The income dataset states the cause; this dataset carries it
+# through unchanged, because an absent denominator is not a shortage of
+# quarters and never becomes a multiple.
+REASON_NO_QUALIFIED_DA_EVIDENCE = "REASON_NO_QUALIFIED_DA_EVIDENCE"
 REASON_INCOMPLETE_EV_BRIDGE = "REASON_INCOMPLETE_EV_BRIDGE"
 REASON_MIXED_BALANCE_SHEET_PERIODS = "REASON_MIXED_BALANCE_SHEET_PERIODS"
 REASON_NON_POSITIVE_DENOMINATOR = "REASON_NON_POSITIVE_DENOMINATOR"
@@ -139,6 +145,7 @@ CLOSED_REASON_CODES = frozenset(
         REASON_MISSING_REVENUE_WINDOW,
         REASON_MISSING_EBITDA_WINDOW,
         REASON_SOURCE_CONCEPT_COVERAGE_GAP,
+        REASON_NO_QUALIFIED_DA_EVIDENCE,
         REASON_INCOMPLETE_EV_BRIDGE,
         REASON_MIXED_BALANCE_SHEET_PERIODS,
         REASON_NON_POSITIVE_DENOMINATOR,
@@ -522,6 +529,21 @@ def classify_window_refusal(
     if rejection is None:
         return None, ""
 
+    # A refusal that names its own cause keeps it. The income dataset's
+    # statement that the issuer has no element qualifying for the
+    # depreciation-and-amortization role is that cause, and no coverage test
+    # over the capture can restate it: the capture was never asked to cover
+    # anything, because the role was empty from the start.
+    stated = rejection.get("reason_code")
+    if stated == REASON_NO_QUALIFIED_DA_EVIDENCE:
+        return REASON_NO_QUALIFIED_DA_EVIDENCE, (
+            rejection.get("detail")
+            or "The income-statement dataset holds no element that qualifies "
+            "for the depreciation-and-amortization role, so no trailing "
+            "EBITDA denominator exists and no enterprise-value multiple is "
+            "published."
+        )
+
     missing = list(rejection.get("positions_missing") or [])
     covered_positions = sum(
         1
@@ -902,11 +924,17 @@ def load_issuer_historical_multiples(
     income_dir = config.income_config.data_dir
     income_payloads: Dict[str, Dict[str, Any]] = {}
     income_concept_shas: Dict[str, str] = {}
-    for role, filename in (
+    # The income dataset's own concept payloads, read by path. Which of them
+    # fills a role is the income dataset's declaration, and this module reads
+    # it: an issuer with no qualifying depreciation-and-amortization element
+    # has no such file, and the role it would have filled is empty there.
+    income_files = [
         ("revenue", "revenue_concept.json"),
         ("operating_income", "operating_income_concept.json"),
-        ("depreciation", "depreciation_concept.json"),
-    ):
+    ]
+    if config.income_config.depreciation_concept is not None:
+        income_files.append(("depreciation", "depreciation_concept.json"))
+    for role, filename in income_files:
         path = income_dir / filename
         if not path.exists():
             raise FileNotFoundError(f"Missing required file: {path}")
@@ -916,11 +944,7 @@ def load_issuer_historical_multiples(
     # The fiscal calendar the income dataset itself derives its windows on, so
     # the positions here are the positions there.
     fiscal_calendar = build_fiscal_calendar(
-        [
-            income_payloads["revenue"],
-            income_payloads["operating_income"],
-            income_payloads["depreciation"],
-        ],
+        list(income_payloads.values()),
         filings_index,
         units=("USD",),
     )
@@ -951,8 +975,15 @@ def load_issuer_historical_multiples(
 
     # The EBITDA role is served by two captured concepts: a quarter's EBITDA
     # needs both the operating income and the depreciation fact of that
-    # quarter, so the role's fact set is the two of them.
-    role_facts["ebitda"] = role_facts["operating_income"] + role_facts["depreciation"]
+    # quarter, so the role's fact set is the two of them. An issuer whose
+    # income dataset holds no qualifying depreciation-and-amortization
+    # element has no such role, and the coverage map says so by being empty.
+    if "depreciation" in role_facts:
+        role_facts["ebitda"] = (
+            role_facts["operating_income"] + role_facts["depreciation"]
+        )
+    else:
+        role_facts["ebitda"] = []
 
     # The fiscal positions each role's capture can serve, and the first date
     # the capture could know each of them. A position needs a fact of the
@@ -967,6 +998,10 @@ def load_issuer_historical_multiples(
         ("revenue", ("revenue",)),
         ("ebitda", ("operating_income", "depreciation")),
     ):
+        if any(required not in role_facts for required in required_roles):
+            # The role has no capture: there is nothing to cover and nothing
+            # to compare, and the refusal is stated by the income dataset.
+            continue
         ends_by_role = {
             required: {
                 fact["end"]

@@ -82,12 +82,18 @@ ROLE_DEPRECIATION = "depreciation_and_amortization"
 REASON_INSUFFICIENT_QUARTERS = REASON_INSUFFICIENT_QUARTERS
 REASON_NO_REVENUE_WINDOW = "REASON_NO_REVENUE_WINDOW"
 REASON_NO_EBITDA_WINDOW = "REASON_NO_EBITDA_WINDOW"
+# The issuer has no element that qualifies for the depreciation-and-
+# amortization role, so no trailing EBITDA window can exist at any date. It
+# is its own condition: neither a missing quarter nor a timing refusal, and
+# never filled from an estimate or from the provider.
+REASON_NO_QUALIFIED_DA_EVIDENCE = "REASON_NO_QUALIFIED_DA_EVIDENCE"
 
 CLOSED_REASON_CODES = frozenset(
     {
         REASON_INSUFFICIENT_QUARTERS,
         REASON_NO_REVENUE_WINDOW,
         REASON_NO_EBITDA_WINDOW,
+        REASON_NO_QUALIFIED_DA_EVIDENCE,
     }
 )
 
@@ -107,6 +113,19 @@ class HistoricalIncomeConfig:
     The concept tags are named here rather than inferred, because a concept is
     a filer's own choice of element: the dataset says which element it read,
     and the registry says whether that element is this metric for this issuer.
+
+    `depreciation_concept` is the element that fills the
+    depreciation-and-amortization role, and it is optional because a filer
+    may report no element that qualifies for that role. When it is absent the
+    role is left empty and no trailing EBITDA is constructed: an element that
+    carries depreciation alone is not this metric, and a dataset that filled
+    the role with it would publish an EBITDA that is not one.
+
+    `depreciation_evidence_path` and its two companions hold the evidence an
+    issuer does report about depreciation when that evidence is not the role:
+    the file is kept as source evidence, digested so the dataset's identity
+    covers it, and named with what it actually is. It never contributes to
+    an EBITDA figure.
     """
 
     ticker: str
@@ -118,7 +137,10 @@ class HistoricalIncomeConfig:
     acceptance_path: Path
     revenue_concept: str
     operating_income_concept: str
-    depreciation_concept: str
+    depreciation_concept: Optional[str]
+    depreciation_evidence_path: Optional[Path] = None
+    depreciation_evidence_concept: Optional[str] = None
+    depreciation_evidence_note: Optional[str] = None
 
 
 ISSUER_CONFIGS: Dict[str, HistoricalIncomeConfig] = {
@@ -165,17 +187,41 @@ ISSUER_CONFIGS: Dict[str, HistoricalIncomeConfig] = {
         / "filing_acceptance_evidence.json",
         revenue_concept="RevenueFromContractWithCustomerExcludingAssessedTax",
         operating_income_concept="OperatingIncomeLoss",
-        # Microsoft reports one cash-flow line labelled "Depreciation,
-        # amortization, and other" and carries it on this element. The
-        # element's own name says depreciation alone, and the line bundles
-        # "other" items, so the core registry does not map this element to the
-        # pure depreciation-and-amortization metric for Microsoft or for
-        # anyone else: Microsoft's current EBITDA therefore stays the
-        # provider's figure, and this dataset's trailing EBITDA is a
-        # reconstruction from the filer's own line, declared per issuer here
-        # and in the dataset manifest. Microsoft's company-custom element
-        # msft:DepreciationAmortizationAndOther stays refused.
-        depreciation_concept="Depreciation",
+        # Microsoft's depreciation and amortization.
+        #
+        # Microsoft has no element that carries depreciation and amortization
+        # for this metric. Its cash-flow line "Depreciation, amortization, and
+        # other" is carried on the company-specific element
+        # msft:DepreciationAmortizationAndOther, which the company-concept
+        # API does not serve and which the core registry does not accept --
+        # it bundles "other" items and is company-custom. The element the
+        # acquisition path can reach, us-gaap:Depreciation, is the property
+        # and equipment note's depreciation expense: depreciation alone,
+        # without the amortization the metric includes.
+        #
+        # So the role is left empty. The trailing EBITDA window is not
+        # constructed for any date, and no EBITDA figure is published for
+        # Microsoft from this dataset. The depreciation evidence is kept as
+        # source evidence below, named with what it is, and it contributes to
+        # nothing.
+        depreciation_concept=None,
+        depreciation_evidence_path=Path(__file__).resolve().parent
+        / "data"
+        / "historical_income"
+        / "MSFT"
+        / "depreciation_expense_concept.json",
+        depreciation_evidence_concept="us-gaap:Depreciation",
+        depreciation_evidence_note=(
+            "The property and equipment note's depreciation expense, "
+            "disclosed as 'depreciation expense was $34.3 billion, $22.0 "
+            "billion, and $15.2 billion' for fiscal 2026, 2025 and 2024. It "
+            "is depreciation alone: it excludes the amortization of "
+            "intangible assets and the other items the cash-flow line "
+            "aggregates, so it is not the depreciation-and-amortization "
+            "metric and it never contributes to an EBITDA figure. It is "
+            "retained as source evidence of what Microsoft reports about "
+            "depreciation."
+        ),
     ),
 }
 
@@ -275,7 +321,13 @@ def _window_rejection(
         return None
     missing = list(refusal.get("positions_missing") or [])
     anchor = refusal.get("anchor")
-    if refusal.get("no_quarter_knowable"):
+    stated_detail = refusal.get("detail")
+    if stated_detail:
+        # A refusal that carries its own statement keeps it: the reason an
+        # issuer has no qualifying evidence is not a shortage of quarters, and
+        # a description of quarters would misdescribe it.
+        detail = stated_detail
+    elif refusal.get("no_quarter_knowable"):
         detail = (
             f"No discrete quarterly {metric_label} is knowable at evaluation "
             f"date {day}."
@@ -431,14 +483,23 @@ def load_issuer_historical_income(
     """
     revenue_path = config.data_dir / "revenue_concept.json"
     operating_income_path = config.data_dir / "operating_income_concept.json"
+    # The depreciation-and-amortization role has a file only when the issuer
+    # has an element that qualifies for it. An issuer that reports
+    # depreciation alone keeps that evidence under
+    # `depreciation_evidence_path`, and the role stays empty.
     depreciation_path = config.data_dir / "depreciation_concept.json"
-    for path in (
+    has_depreciation_role = config.depreciation_concept is not None
+    required_paths = [
         config.prices_path,
         config.acceptance_path,
         revenue_path,
         operating_income_path,
-        depreciation_path,
-    ):
+    ]
+    if has_depreciation_role:
+        required_paths.append(depreciation_path)
+    if config.depreciation_evidence_path is not None:
+        required_paths.append(config.depreciation_evidence_path)
+    for path in required_paths:
         if not path.exists():
             raise FileNotFoundError(f"Missing required file: {path}")
 
@@ -468,16 +529,39 @@ def load_issuer_historical_income(
     # -- concepts --
     revenue_payload = json.loads(revenue_path.read_text(encoding="utf-8"))
     operating_income_payload = json.loads(operating_income_path.read_text(encoding="utf-8"))
-    depreciation_payload = json.loads(depreciation_path.read_text(encoding="utf-8"))
 
     import hashlib
 
     revenue_sha = hashlib.sha256(revenue_path.read_bytes()).hexdigest()
     operating_income_sha = hashlib.sha256(operating_income_path.read_bytes()).hexdigest()
-    depreciation_sha = hashlib.sha256(depreciation_path.read_bytes()).hexdigest()
+    # The evidence an issuer holds about depreciation, when that evidence is
+    # not the role. It is read so the fiscal calendar sees the same filed
+    # duration facts as before -- the calendar is a property of the issuer's
+    # reporting, not of a role -- and it is digested so the dataset's identity
+    # covers what the dataset holds. It is not read into any role and
+    # contributes to no figure.
+    depreciation_evidence_payload: Optional[Dict[str, Any]] = None
+    depreciation_evidence_sha: Optional[str] = None
+    if config.depreciation_evidence_path is not None:
+        depreciation_evidence_payload = json.loads(
+            config.depreciation_evidence_path.read_text(encoding="utf-8")
+        )
+        depreciation_evidence_sha = hashlib.sha256(
+            config.depreciation_evidence_path.read_bytes()
+        ).hexdigest()
+
+    # The fiscal calendar is derived from the issuer's filed duration facts.
+    # Which role each concept fills is a separate question, and a concept that
+    # does not fill a role still says when the issuer's periods end.
+    calendar_payloads = [revenue_payload, operating_income_payload]
+    if has_depreciation_role:
+        depreciation_payload = json.loads(depreciation_path.read_text(encoding="utf-8"))
+        calendar_payloads.append(depreciation_payload)
+    if depreciation_evidence_payload is not None:
+        calendar_payloads.append(depreciation_evidence_payload)
 
     fiscal_calendar = build_fiscal_calendar(
-        [revenue_payload, operating_income_payload, depreciation_payload],
+        calendar_payloads,
         filings_index,
         units=("USD",),
     )
@@ -505,7 +589,11 @@ def load_issuer_historical_income(
                 config.issuer_id, config.operating_income_concept
             ),
         )
-        + concept_spans_from_payload(
+    )
+    if has_depreciation_role:
+        depreciation_payload = json.loads(depreciation_path.read_text(encoding="utf-8"))
+        depreciation_sha = hashlib.sha256(depreciation_path.read_bytes()).hexdigest()
+        spans += concept_spans_from_payload(
             payload=depreciation_payload,
             unit="USD",
             role=ROLE_DEPRECIATION,
@@ -517,7 +605,8 @@ def load_issuer_historical_income(
                 config.issuer_id, config.depreciation_concept
             ),
         )
-    )
+    else:
+        depreciation_sha = None
 
     spans_by_key: Dict[Tuple[str, str, str], List[DurationSpanEvidence]] = {}
     for span in spans:
@@ -537,8 +626,13 @@ def load_issuer_historical_income(
         "acceptances": hashlib.sha256(config.acceptance_path.read_bytes()).hexdigest(),
         "revenue_concept": revenue_sha,
         "operating_income_concept": operating_income_sha,
-        "depreciation_concept": depreciation_sha,
     }
+    if has_depreciation_role:
+        input_manifest["depreciation_concept"] = depreciation_sha
+    if depreciation_evidence_sha is not None:
+        # The evidence is part of what the dataset holds, so it is part of
+        # what the dataset is.
+        input_manifest["depreciation_evidence"] = depreciation_evidence_sha
     input_set_id = canonical_json_hash(input_manifest)
 
     evaluation_dates = sorted({filing["usable_date"] for filing in filings_index.values()})
@@ -576,6 +670,35 @@ def load_issuer_historical_income(
         ebitda_window, ebitda_reason, ebitda_detail, ebitda_refusal = ttm_window_at(
             quarters=ebitda_quarters, day=day
         )
+        if not has_depreciation_role:
+            # The role is empty because the issuer has no element that
+            # qualifies for it. The refusal says so, and it says it in the
+            # issuer's terms: which element it does report, and why that
+            # element is not this metric. It is not a shortage of quarters and
+            # not a timing refusal, and it is not filled from anywhere else.
+            ebitda_reason = REASON_NO_QUALIFIED_DA_EVIDENCE
+            ebitda_detail = (
+                "This issuer has no element that qualifies for the "
+                "depreciation-and-amortization role"
+                + (
+                    f". What it does report is "
+                    f"{config.depreciation_evidence_concept}: "
+                    f"{config.depreciation_evidence_note.rstrip('.')}."
+                    if config.depreciation_evidence_concept
+                    else ""
+                )
+                + " No trailing EBITDA is constructed from it, from an "
+                "estimate, or from any other source, so no trailing EBITDA "
+                "window exists at this date."
+            )
+            ebitda_refusal = {
+                "reason_code": REASON_NO_QUALIFIED_DA_EVIDENCE,
+                "no_quarter_knowable": True,
+                "anchor": None,
+                "positions_required": [],
+                "positions_missing": [],
+                "detail": ebitda_detail,
+            }
 
         revenue_payload_out: Optional[Dict[str, Any]] = None
         if revenue_window is not None:
@@ -619,7 +742,11 @@ def load_issuer_historical_income(
             )
         elif ebitda_window is None:
             status = STATUS_UNAVAILABLE
-            reason_code = REASON_NO_EBITDA_WINDOW
+            reason_code = (
+                REASON_NO_QUALIFIED_DA_EVIDENCE
+                if not has_depreciation_role
+                else REASON_NO_EBITDA_WINDOW
+            )
             reason_detail = (
                 ebitda_rejection["detail"] if ebitda_rejection else ebitda_detail
             )

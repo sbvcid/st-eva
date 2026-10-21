@@ -1,8 +1,8 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-21 (Microsoft is the second production issuer: its P/S distribution qualifies on 23 observations and its EV/EBITDA distribution is reported unavailable with the filer's own evidence named; Apple's are unchanged)
+**Status checked:** 2026-10-21 (Microsoft is the second production issuer: its P/S distribution qualifies on 23 observations, and its EV/EBITDA distribution is reported unavailable because Microsoft has no element that qualifies for the depreciation-and-amortization role; Apple's are unchanged)
 **Repository:** `sbvcid/st-eva`, branch `master`
-**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified for two issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; MSFT: P/S 23 valid / 4 rejected over 27 evaluations, median 11.783822 - `USABLE_FOR_REFERENCE`, and EV/EBITDA 0 valid / 27 rejected - `UNAVAILABLE`, because Microsoft's interim depreciation line is tagged only from FY2026 and its commercial-paper line stops after FY2025; the filed EV bridge requires every component to describe the same balance-sheet date) **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
+**Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented and qualified for two issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; MSFT: P/S 23 valid / 4 rejected over 27 evaluations, median 11.783822 - `USABLE_FOR_REFERENCE`, and EV/EBITDA 0 valid / 27 rejected - `UNAVAILABLE`, because Microsoft has no element that qualifies for the depreciation-and-amortization role and because only 8 of its 27 evaluation dates have a complete filed EV bridge; the filed EV bridge requires every component to describe the same balance-sheet date) **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions
 **Latest verified GitHub Actions:** `784d721` (Microsoft as the second production issuer) verified `backend` and `browser` jobs success in run `39552263859` (checked via the GitHub API on 2026-10-21: backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding run `39544896687` verified the corrective round `7b6e159` (backend 2574 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);  (checked via the GitHub API on 2026-10-21: backend 2598 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); the preceding run `39480897329` verified the first phase 5 commit `4e40c8a` (backend 2574 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); `5661383` (the filed trailing revenue and EBITDA enter the valuation chain) verified `backend` and `browser` jobs success in run `39449339747` (checked via the GitHub API on 2026-10-20: backend 2539 passed / 171 skipped / 532 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed); `ca07496` (the replay reproduces the run's production reference) verified `backend`, `web API`, `archive isolation` and `browser` jobs success in run `39431909757`; `82ad6b6` (SEC-derived trailing figures in the formal valuation chain) verified in run `39424919643`; `b3de182` (its CI record) in run `39425423228`; `eb84b63` in run `39411729148`; the earlier rounds each in their own run. Each later commit is verified in its own run.
 
 
@@ -3375,7 +3375,7 @@ checked against the filer rather than assumed from Apple:
 | --- | --- | --- | --- |
 | revenue | `us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax` | the same | the same contract-revenue element |
 | operating income | `us-gaap:OperatingIncomeLoss` | the same | the same presented line |
-| depreciation and amortization | `us-gaap:DepreciationDepletionAndAmortization` | `us-gaap:Depreciation` | Microsoft has no pure D&A element at all: `us-gaap:DepreciationAndAmortization` returns HTTP 404, and its own `msft:DepreciationAmortizationAndOther` is company-custom, bundles "other" items, is not served by the company-concept API, and stays refused by the project's existing decision |
+| depreciation and amortization | `us-gaap:DepreciationDepletionAndAmortization` | **none qualifies** | Microsoft has no pure D&A element: `us-gaap:DepreciationAndAmortization` returns HTTP 404, and its own `msft:DepreciationAmortizationAndOther` is company-custom, bundles "other" items, is not served by the company-concept API, and stays refused by the project's existing decision. `us-gaap:Depreciation` is the property and equipment note's depreciation expense, which is depreciation alone. Phase 6 read that note figure as the D&A role; Phase 6.2 corrected it |
 | cash | `us-gaap:CashAndCashEquivalentsAtCarryingValue` | the same | the same balance-sheet line |
 | current marketable securities | `us-gaap:MarketableSecuritiesCurrent` | `us-gaap:ShortTermInvestments` | Microsoft reports the line as "Short-term investments" and does not use Apple's element at all |
 | commercial paper | `us-gaap:CommercialPaper` | the same | the same balance-sheet line |
@@ -3429,27 +3429,32 @@ the index. The window is refused rather than backfilled with a later filing's
 comparative.
 
 **The EV/EBITDA distribution has no qualifying observation, for two
-independent reasons that are both evidence, not judgement:**
+independent reasons that are both evidence, not judgement.** Phase 6.2
+corrected the first of them: the element Phase 6 used for the denominator was
+the wrong one, and the reason is now the correct one.
 
-1. **The trailing EBITDA window is unavailable at 25 of the 27 evaluation
-   dates.** Microsoft tags the interim "Depreciation, amortization, and other"
-   cash-flow line on `us-gaap:Depreciation` only from the FY2026 filings. The
-   10-Qs before that carry the line annually only, so no four consecutive
-   fiscal quarters of depreciation and amortization are knowable before
-   FY2026. The window can be built at 2026-04-30 and 2026-07-30 and nowhere
-   else.
-2. **The EV bridge mixes two balance sheets at exactly those two dates.**
-   Microsoft stopped tagging `us-gaap:CommercialPaper` after the FY2025 10-K
-   (the last facts are 2025-06-30, and the FY2025 quarterly filings report
-   the line at zero), so the component in force at 2026-03-31 and 2026-06-30 is
-   the FY2025 one. The same-date rule refuses both dates with
-   `REASON_MIXED_BALANCE_SHEET_PERIODS`; the stale component is not carried
-   forward and is never treated as zero.
+1. **There is no qualifying depreciation-and-amortization element for
+   Microsoft, so no trailing EBITDA denominator exists at all.** The cash-flow
+   line "Depreciation, amortization, and other" is carried on the
+   company-specific element `msft:DepreciationAmortizationAndOther`, which
+   the company-concept API does not serve and the core registry does not
+   accept; the element that *is* acquirable, `us-gaap:Depreciation`, is the
+   property and equipment note's depreciation expense, which is depreciation
+   alone. Every evaluation date refuses with
+   `REASON_NO_QUALIFIED_DA_EVIDENCE`. See Phase 6.2 below.
+2. **The EV bridge would not have qualified the distribution either.** Only 8
+   of the 27 evaluation dates have all five components describing one balance
+   sheet: Microsoft disclosed its commercial paper through the fair-value note
+   (6,693 million at 2024-06-30 and an explicit zero at 2025-06-30) and has
+   not reported it since, so 15 dates have no commercial-paper evidence inside
+   the acceptance index and the last four carry the stale 2025-06-30 fact,
+   which the same-date rule refuses. The ceiling is 8 observations against a
+   gate of 20, so the verdict does not depend on the denominator at all.
 
 The distribution therefore reports `REASON_INSUFFICIENT_OBSERVATIONS` with the
-tally of the exclusions -- "25 x REASON_MISSING_EBITDA_WINDOW, 2 x
-REASON_MIXED_BALANCE_SHEET_PERIODS" -- so a reader sees that the sample is
-thin because of the filer's own evidence and not because a rule was relaxed.
+tally of the exclusions -- "27 x REASON_NO_QUALIFIED_DA_EVIDENCE" -- so a
+reader sees that the sample is thin because of the filer's own evidence and
+not because a rule was relaxed.
 
 The bridge is complete, and the same-date rule passes, for the nine dates
 between 2023-10-25 and 2025-07-31, where all five components describe one
@@ -3587,6 +3592,113 @@ observations), its enterprise-value reference is unavailable, `implied_revenue`
 is 315,445,516,517.39 (the live market cap 3,717,153,817,339 ÷ 11.783822),
 no enterprise-value figure is computed, and Microsoft's current revenue and
 EBITDA are unchanged at the provider's figures.
+
+## Phase 6.2 (2026-10-21): Microsoft has no qualifying D&A evidence, and the role is empty
+
+### What the audit found
+
+A read-only audit of the Phase 6 implementation (commit `784d721`) examined
+Microsoft's FY2023-FY2026 10-Ks and 10-Qs in their own inline-XBRL instances,
+with their facts and contexts, and established:
+
+- The cash-flow line "Depreciation, amortization, and other" is 38,534 million
+  for fiscal 2026 (29,433 for 2025, 20,958 for 2024) and is carried on
+  **`msft:DepreciationAmortizationAndOther`**, in a context with no dimension
+  and in USD. The SEC's own definition of that element says it is the net
+  amount of depreciation, amortization and accretion "and other operating
+  transactions that are not included elsewhere in the statement of cash flows".
+- **`us-gaap:Depreciation` is the property and equipment note's depreciation
+  expense** -- 34,300 million for fiscal 2026 (22,000 for 2025, 15,200 for
+  2024), on a line that reads "During fiscal years 2026, 2025, and 2024,
+  depreciation expense was $34.3 billion, $22.0 billion, and $15.2 billion".
+  It is depreciation alone: it excludes the amortization of intangible assets
+  (4,700 / 6,000 / 4,800) and the other items the cash-flow line aggregates.
+- The company-concept and companyfacts APIs serve Microsoft only `dei` and
+  `us-gaap`; `msft:DepreciationAmortizationAndOther` returns HTTP 404 and is
+  absent from companyfacts. The element is reachable only by reading the
+  filing's own inline XBRL, and the core registry does not accept it.
+
+So the Phase 6 income dataset was reading the note's pure depreciation as the
+depreciation-and-amortization role, and its "TTM EBITDA" was operating income
+plus depreciation alone -- 189,537 million for fiscal 2026 where the cash-flow
+line's own figure would make 193,771 million.
+
+### What changed
+
+- The depreciation-and-amortization role is now **empty for Microsoft**. The
+  income config names no element for it, and the loader builds no such role.
+- The note's pure depreciation is **kept as source evidence** and named for
+  what it is. The file is now `depreciation_expense_concept.json` -- the
+  name makes the semantic error structurally impossible to repeat -- it is
+  digested so the dataset's identity covers what the dataset holds, and it
+  contributes to no figure.
+- No trailing EBITDA window is constructed for any date, and every
+  observation refuses with the new reason code
+  `REASON_NO_QUALIFIED_DA_EVIDENCE`, whose text names the element the issuer
+  reports and why it is not the metric. Nothing is estimated, the provider's
+  current figure is not used to fill a historical window, and the two note
+  elements are not added together to stand in for the cash-flow line (for
+  fiscal 2026 they sum to 39,000 million against the 38,534 million the line
+  reports, because the line is a net figure that also aggregates accretion
+  and other operating adjustments).
+- The `msft:DepreciationAmortizationAndOther` element stays out of the D&A
+  role. Accepting it is a separate registry decision, and this round does not
+  make it.
+- The EV/EBITDA distribution's refusal now names the cause that binds:
+  `27 x REASON_NO_QUALIFIED_DA_EVIDENCE`. The EV bridge's own state is still
+  recorded on every observation, and its evidence ceiling -- 8 complete
+  bridges against a gate of 20 -- means the verdict does not depend on the
+  denominator.
+
+### The identities, before and after
+
+| dataset | before (Phase 6) | after (Phase 6.2) |
+| --- | --- | --- |
+| MSFT income `input_set_id` | `2593d2b0c49ccc2c42e9664e63cfd228f1cd7eeacfa824d39ecc9c4be7f5f73f` | `39302572afa7c49ee22569681e43c1e46e39842610358d9d09cf2b166ac4bdee` |
+| MSFT income `content_hash` | `521eadca2112d9c9732a0218df0bc012b77231dd15c5e76207a6a2942a376479` | `d57ea0aeb4db864ef9cae8644fbb71a110cbc697efd475163a10b4ddbf25af5b` |
+| MSFT multiples `input_set_id` | `b98c4d94270e4e57473deadbc710e9d87d4666cd7095792ddc9fe8efe3a451ba` | `ba4b639cc4ca353ce999ac6c5190f6d169c6717634a55c82282d75033d18988f` |
+| MSFT multiples `content_hash` | `81f4b14c3c982a09b3f675f907e33d852af3ba021f163672b94bb6fc47573bac` | `d80b2d3d16331b3ed67f9d9edd4aa4ea75c1b405d6539cd9f2d9108a8cd38774` |
+
+The identities moved because the content moved: the income dataset no longer
+holds a depreciation role, its input manifest now carries the evidence file
+instead of a role file, and its observations state a different refusal. They
+were not preserved to keep the old identifiers.
+
+**Apple's identities did not move at all**: income `input_set_id`
+`401a14e73b53e6b1434be23b2c27c4ea6a0a10db0025b23cbf3740419c58e4b4` and
+`content_hash` `568d33fac2c202a2ac601657a6a5ebffdaa9057d0aec5bd2f0b600bec3f1f30b`;
+multiples `input_set_id`
+`77402a13b164324323ab08341cfca35408b489232a4066f0a9e61b479c78a540` and
+`content_hash`
+`321e8b165bfc7ef30e4c178934a122e5bc2f41fd639ab7ad0767d0ce595b59b0`. Its P/S
+(28 observations, median 7.257709) and EV/EBITDA (27 observations, median
+22.326) are unchanged, because the correction is a per-issuer role
+declaration and Apple's role is filled by its own element.
+
+### What did not change
+
+- Microsoft's P/S: 23 valid, 4 rejected, median **11.783822** -- the revenue
+  windows and the formula are untouched by the correction.
+- Microsoft's EV/EBITDA: `UNAVAILABLE`, no multiple published, and no number
+  produced from a wrong denominator.
+- Microsoft's current figures: revenue 331,839,000,000 and EBITDA
+  **207,519,000,000**, still the provider's. The core registry is untouched,
+  and the income dataset now holds no element the valuation chain could read a
+  filed EBITDA out of.
+- The P/FCF method, the user-multiple precedence, and every other valuation
+  path.
+
+### Tests
+
+`tests/test_historical_multiples_msft.py` grew to 45 tests. Added for this
+round: the role is empty and no element fills it; no observation carries a
+trailing EBITDA; the EBITDA role's refusal uses the new reason code and names
+no missing position; the pure-depreciation evidence is kept, pinned by hash and
+named for what it is; the manifest states which element fills the role, which
+is rejected and why, and that the two note elements are not summed to stand in
+for the cash-flow line; the pure depreciation reaches no EBITDA figure; the
+core registry maps neither element for this issuer; and the dataset is not a
+substitute for the provider's current figure.
 
 ## Next task status
 

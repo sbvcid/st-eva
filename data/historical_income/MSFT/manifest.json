@@ -21,11 +21,22 @@
       "fye_month": 6
     },
     "files": {
-      "revenue_concept.json": {
-        "bytes": 20920,
-        "content_sha256": "5d82a226a193327e8ab7b39abc9a0950b1b3d72ca705fb4a0f8829cd1372d4dd",
-        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax.json",
-        "definition": "Microsoft's contract-revenue line, the same element Apple uses: the 10-Q states the three-month and the year-to-date duration, so the discrete quarters are directly stated except the fourth, which is the fiscal year less the nine months."
+      "daily_prices.json (reused by path)": {
+        "path": "data/historical_pe/MSFT/daily_prices.json",
+        "content_sha256": "f7a13cf36b57aa9dcc338466a1f492d480bcba86c8404819e75f7c820c87a172",
+        "source": "The canonical production historical P/E dataset's price series, read by path. The trading calendar decides when a filing's fact becomes knowable under the 16:00 ET cutoff rule, so one calendar serves every reconstruction."
+      },
+      "depreciation_expense_concept.json": {
+        "bytes": 10886,
+        "content_sha256": "add92340a2019634a1f3593efab8f7a1b4459a64165e7ec6bcec62d166836814",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/Depreciation.json",
+        "definition": "The property and equipment note's depreciation expense, disclosed as 'depreciation expense was $34.3 billion, $22.0 billion, and $15.2 billion' for fiscal 2026, 2025 and 2024, and carried on us-gaap:Depreciation. It is DEPRECIATION ALONE: it excludes the amortization of intangible assets and the other items the cash-flow line aggregates, so it is not the depreciation-and-amortization metric. It is retained as source evidence of what Microsoft reports about depreciation, and it never contributes to an EBITDA figure.",
+        "role": "evidence_only"
+      },
+      "filing_acceptance_evidence.json (reused by path)": {
+        "path": "data/historical_pe/MSFT/filing_acceptance_evidence.json",
+        "content_sha256": "7f03d60d0ad009ff66de48210085457d38229f7defb7fe0e7e96786fa6e32692",
+        "source": "The canonical historical P/E dataset's acceptance index: each filing's acceptance datetime, form and period end. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped. The index covers 47 filings accepted between 2020-10-27 and 2026-07-29: 18 10-Q, 6 10-K and 23 8-K Item 2.02 earnings releases, the furnished evidence class this issuer's production dataset already uses."
       },
       "operating_income_concept.json": {
         "bytes": 41953,
@@ -33,26 +44,29 @@
         "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/OperatingIncomeLoss.json",
         "definition": "Operating activities before interest, taxes and non-operating items, as presented."
       },
-      "depreciation_concept.json": {
-        "bytes": 10886,
-        "content_sha256": "add92340a2019634a1f3593efab8f7a1b4459a64165e7ec6bcec62d166836814",
-        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/Depreciation.json",
-        "definition": "Microsoft reports one cash-flow line labelled 'Depreciation, amortization, and other' and carries it on us-gaap:Depreciation. The element's own name says depreciation alone and the line bundles 'other' items, so this element is not the pure depreciation-and-amortization metric and the core registry does not map it to that metric for any issuer. The trailing EBITDA this dataset builds is therefore a reconstruction from the filer's own line, declared here and in the dataset manifest, and it is not the core registry's filed pure-D&A figure. Microsoft's own company-custom element msft:DepreciationAmortizationAndOther stays refused: the company-concept API does not serve it, it is company-custom, and it bundles 'other' items."
-      },
-      "daily_prices.json (reused by path)": {
-        "path": "data/historical_pe/MSFT/daily_prices.json",
-        "content_sha256": "f7a13cf36b57aa9dcc338466a1f492d480bcba86c8404819e75f7c820c87a172",
-        "source": "The canonical production historical P/E dataset's price series, read by path. The trading calendar decides when a filing's fact becomes knowable under the 16:00 ET cutoff rule, so one calendar serves every reconstruction."
-      },
-      "filing_acceptance_evidence.json (reused by path)": {
-        "path": "data/historical_pe/MSFT/filing_acceptance_evidence.json",
-        "content_sha256": "7f03d60d0ad009ff66de48210085457d38229f7defb7fe0e7e96786fa6e32692",
-        "source": "The canonical historical P/E dataset's acceptance index: each filing's acceptance datetime, form and period end. A fact whose filing is not in the index has no knowability evidence in this dataset and is skipped. The index covers 47 filings accepted between 2020-10-27 and 2026-07-29: 18 10-Q, 6 10-K and 23 8-K Item 2.02 earnings releases, the furnished evidence class this issuer's production dataset already uses."
+      "revenue_concept.json": {
+        "bytes": 20920,
+        "content_sha256": "5d82a226a193327e8ab7b39abc9a0950b1b3d72ca705fb4a0f8829cd1372d4dd",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000789019/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax.json",
+        "definition": "Microsoft's contract-revenue line, the same element Apple uses: the 10-Q states the three-month and the year-to-date duration, so the discrete quarters are directly stated except the fourth, which is the fiscal year less the nine months."
       }
     },
     "known_limitations": [
+      "The depreciation-and-amortization role is empty for Microsoft, so this dataset produces no trailing EBITDA and no historical EV/EBITDA reference. The reason is stated by the data, in REASON_NO_QUALIFIED_DA_EVIDENCE.",
       "The acceptance index starts at 2020-10-27, so the first four evaluation dates have no trailing revenue window: the fiscal positions the window needs are carried by filings outside the index, and the window is refused rather than backfilled.",
-      "Microsoft tags the interim 'Depreciation, amortization, and other' line on us-gaap:Depreciation only from the FY2026 filings. The 10-Qs before that report the line annually only, so the trailing EBITDA window can be built for two evaluation dates only, and the EV/EBITDA reference has no qualifying observation."
-    ]
+      "Microsoft's current EBITDA and the provider's figure are different paths: the current figure is the provider's, and it is not a substitute for a historical window this dataset cannot build."
+    ],
+    "depreciation_and_amortization_role": {
+      "filled": false,
+      "element": null,
+      "reason": "Microsoft has no element that carries depreciation and amortization for this metric. Its cash-flow line 'Depreciation, amortization, and other' is carried on the company-specific element msft:DepreciationAmortizationAndOther, which the company-concept API does not serve and which the core registry does not accept: it bundles 'other' items and it is company-custom. The element the acquisition path can reach, us-gaap:Depreciation, is the property and equipment note's depreciation expense, which is depreciation alone.",
+      "consequence": "The depreciation-and-amortization role is left empty. No trailing EBITDA window is constructed for any date, every observation refuses the EBITDA window with REASON_NO_QUALIFIED_DA_EVIDENCE, and the dataset publishes no EBITDA figure for Microsoft. Nothing is estimated, and the provider's current figure is not used to fill a historical window.",
+      "rejected_element": {
+        "element": "msft:DepreciationAmortizationAndOther",
+        "why": "Company-specific; the company-concept API returns HTTP 404 for it and companyfacts does not carry it, so it is reachable only by reading the filing's own inline XBRL. It bundles 'other' items, so the core registry refuses it for this metric. Accepting it is a separate registry decision and is not made here.",
+        "value_the_filing_reports": "38,534,000,000 for fiscal 2026, 29,433,000,000 for fiscal 2025 and 20,958,000,000 for fiscal 2024, each in a context with no dimension and in USD"
+      },
+      "not_a_substitute": "The pure depreciation expense and the intangible amortization expense are not added together to stand in for the cash-flow line: for fiscal 2026 they sum to 39,000,000,000 against the 38,534,000,000 the line reports, because the line is a net figure that also aggregates accretion and other operating adjustments. A sum of note elements is not this metric and is not used as one."
+    }
   }
 }
