@@ -87,6 +87,11 @@ REASON_NO_EBITDA_WINDOW = "REASON_NO_EBITDA_WINDOW"
 # is its own condition: neither a missing quarter nor a timing refusal, and
 # never filled from an estimate or from the provider.
 REASON_NO_QUALIFIED_DA_EVIDENCE = "REASON_NO_QUALIFIED_DA_EVIDENCE"
+# The issuer's fiscal labels and the periods the facts cover contradict each
+# other, so the fiscal position a window needs cannot be determined. It is its
+# own condition: the facts are there, but nothing may say which fiscal quarter
+# they are, and a window is never published on a guess.
+REASON_FISCAL_POSITION_UNRESOLVED = "REASON_FISCAL_POSITION_UNRESOLVED"
 
 CLOSED_REASON_CODES = frozenset(
     {
@@ -94,6 +99,7 @@ CLOSED_REASON_CODES = frozenset(
         REASON_NO_REVENUE_WINDOW,
         REASON_NO_EBITDA_WINDOW,
         REASON_NO_QUALIFIED_DA_EVIDENCE,
+        REASON_FISCAL_POSITION_UNRESOLVED,
     }
 )
 
@@ -266,10 +272,15 @@ ISSUER_CONFIGS: Dict[str, HistoricalIncomeConfig] = {
         / "historical_pe"
         / "AEP"
         / "filing_acceptance_evidence.json",
-        # AEP's revenue and operating income are on the standard elements, and
-        # its revenue element is the one the registry already accepts for the
-        # revenue metric.
-        revenue_concept="Revenues",
+        # AEP's revenue role is the contract-revenue element, which is the
+        # registry's own EXACT source for the revenue metric. The element
+        # AEP's income statement headlines, us-gaap:Revenues, was retired by
+        # registry decision 2.99: its own definition is broader than the
+        # metric, so it is not a source for it, and no scope was invented to
+        # rescue it. The role names the element the registry accepts, and the
+        # sufficiency gate then decides what that element's coverage
+        # supports.
+        revenue_concept="RevenueFromContractWithCustomerExcludingAssessedTax",
         operating_income_concept="OperatingIncomeLoss",
         # AEP's cash-flow line "Depreciation and Amortization" is carried on
         # us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization, a
@@ -396,7 +407,7 @@ def _window_rejection(
             f"FY{anchor['fiscal_year']} Q{anchor['fiscal_quarter']} is missing "
             f"positions: {_format_positions(missing)}."
         )
-    return {
+    rejection = {
         "reason_code": refusal.get("reason_code"),
         "metric": metric_label,
         "no_quarter_knowable": bool(refusal.get("no_quarter_knowable")),
@@ -404,6 +415,210 @@ def _window_rejection(
         "positions_required": list(refusal.get("positions_required") or []),
         "positions_missing": missing,
         "detail": detail,
+    }
+    # The diagnostics a refusal carries beyond the reason and the positions are
+    # kept when the refusal has them, so the detail a reader sees is the
+    # detail the refusal holds.
+    for optional in (
+        "contiguity_breaks",
+        "unresolved_position",
+        "contested_positions",
+    ):
+        if refusal.get(optional) is not None:
+            rejection[optional] = refusal[optional]
+    return rejection
+
+
+def _quarter_period(
+    quarter: Mapping[str, Any]
+) -> Optional[Tuple[datetime.date, datetime.date]]:
+    """
+    The period a discrete quarter covers, from the spans it was built on.
+
+    A directly stated quarter-length fact is its own period. A quarter derived
+    from a cumulative difference runs from the day after the shorter span ends
+    to the end of the longer one. The period is read from the spans rather
+    than from the fiscal labels, because the labels are the thing that can be
+    wrong.
+    """
+    inputs = list(quarter.get("inputs") or [])
+    if not inputs:
+        return None
+    longer = inputs[0]
+    if len(inputs) > 1:
+        shorter = inputs[1]
+        try:
+            start = datetime.date.fromisoformat(str(shorter["end"])[:10]) + datetime.timedelta(days=1)
+            end = datetime.date.fromisoformat(str(longer["end"])[:10])
+        except (KeyError, TypeError, ValueError):
+            return None
+        return (start, end)
+    try:
+        start = datetime.date.fromisoformat(str(longer["start"])[:10])
+        end = datetime.date.fromisoformat(str(longer["end"])[:10])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return (start, end)
+
+
+def _window_contiguity(
+    window: Mapping[str, Any],
+    quarters: Mapping[datetime.date, Mapping[str, Any]],
+) -> Tuple[bool, List[str]]:
+    """
+    Whether a window's quarters are four consecutive periods of the issuer's.
+
+    The test is on the periods themselves: each quarter must begin the day
+    after the previous one ends. A window whose quarters carry the issuer's
+    fiscal labels but do not form a contiguous span is not a trailing twelve
+    months, whatever the labels say, and the issuer's own fiscal cycle decides
+    the test -- no calendar quarter and no fixed ninety days is assumed.
+
+    `quarters` is the role's own quarters, because a window's own quarters
+    need not carry their periods: an EBITDA quarter is the sum of two
+    quarters and states the period of neither.
+
+    Returns the verdict and, when it fails, the breaks.
+    """
+    periods: List[Tuple[datetime.date, datetime.date]] = []
+    for quarter in window.get("quarters", []):
+        period = _quarter_period(quarter)
+        if period is None:
+            end = quarter.get("period_end")
+            if end:
+                try:
+                    end_d = datetime.date.fromisoformat(str(end)[:10])
+                except (TypeError, ValueError):
+                    return False, ["a quarter carries no period"]
+                period = _quarter_period(
+                    quarters.get(end_d, {})
+                ) or (end_d, end_d)
+        periods.append(period)
+    periods.sort()
+    breaks: List[str] = []
+    for previous, current in zip(periods, periods[1:]):
+        if current[0] != previous[1] + datetime.timedelta(days=1):
+            breaks.append(
+                f"{previous[0]}..{previous[1]} is followed by {current[0]}..{current[1]}"
+            )
+    return (not breaks), breaks
+
+
+def _unresolved_position(
+    *,
+    quarters: Mapping[datetime.date, Mapping[str, Any]],
+    positions: Sequence[Tuple[int, int]],
+    missing: Sequence[Mapping[str, Any]],
+    anchor_period_end: Optional[str],
+    fiscal_calendar: FiscalCalendar,
+) -> Optional[Dict[str, Any]]:
+    """
+    A missing fiscal position whose period the capture holds under another
+    label.
+
+    A window's four positions are four consecutive fiscal quarters, so the
+    position immediately before the anchor covers the period immediately
+    before the anchor's own period -- derived from the issuer's own periods,
+    with no calendar quarter and no fixed ninety days assumed. When the
+    capture holds a quarter for exactly that period and the calendar names a
+    different position for it, the facts are there and nothing says which
+    fiscal quarter they are: the position is unresolved, and the window is
+    refused.
+    """
+    missing_positions = {
+        (position.get("fiscal_year"), position.get("fiscal_quarter"))
+        for position in missing
+    }
+    if not positions:
+        return None
+
+    # The period ends the calendar names for each position, so a position's
+    # neighbours give the period the missing one would cover.
+    period_end_by_position: Dict[Tuple[int, int], List[str]] = {}
+    for end, identity in fiscal_calendar.quarter_identity.items():
+        period_end_by_position.setdefault(
+            (identity.fiscal_year, identity.fiscal_quarter), []
+        ).append(end)
+
+    for index, position in enumerate(positions):
+        if position not in missing_positions:
+            continue
+        # The period the missing position covers ends the day before the
+        # period of the position that follows it in the walk.
+        following = positions[index + 1] if index + 1 < len(positions) else None
+        if following is not None:
+            following_ends = period_end_by_position.get(following) or []
+            if len(following_ends) != 1:
+                continue
+            following_quarter = quarters.get(
+                datetime.date.fromisoformat(following_ends[0][:10])
+            )
+            if following_quarter is None:
+                continue
+            following_period = _quarter_period(following_quarter)
+            if following_period is None:
+                continue
+            expected_end = following_period[0] - datetime.timedelta(days=1)
+        else:
+            preceding = positions[index - 1] if index else None
+            if preceding is None:
+                continue
+            preceding_ends = period_end_by_position.get(preceding) or []
+            if len(preceding_ends) != 1:
+                continue
+            preceding_quarter = quarters.get(
+                datetime.date.fromisoformat(preceding_ends[0][:10])
+            )
+            if preceding_quarter is None:
+                continue
+            preceding_period = _quarter_period(preceding_quarter)
+            if preceding_period is None:
+                continue
+            expected_end = preceding_period[1]
+        for quarter in quarters.values():
+            period = _quarter_period(quarter)
+            if period is None or period[1] != expected_end:
+                continue
+            identity = fiscal_calendar.identity_for(expected_end.isoformat())
+            stated = (
+                (identity.fiscal_year, identity.fiscal_quarter)
+                if identity is not None
+                else None
+            )
+            if stated == position:
+                continue
+            return {
+                "fiscal_year": position[0],
+                "fiscal_quarter": position[1],
+                "expected_period": f"{period[0].isoformat()}..{period[1].isoformat()}",
+                "held_by_period_end": quarter.get("period_end"),
+                "stated_fiscal_position": (
+                    f"FY{stated[0]} Q{stated[1]}"
+                    if stated is not None and stated[0] is not None
+                    else None
+                ),
+            }
+    return None
+
+
+def _contested_positions(
+    fiscal_calendar: FiscalCalendar,
+) -> Dict[Tuple[int, int], List[str]]:
+    """
+    The fiscal positions two period ends claim at once.
+
+    A position is a place in the issuer's fiscal year, and two different
+    period ends cannot both be it. When two are, the issuer's declarations
+    contradict each other about one of them, and any window that walks
+    through the position is walking on a contradiction.
+    """
+    claims: Dict[Tuple[int, int], List[str]] = {}
+    for end, identity in fiscal_calendar.quarter_identity.items():
+        claims.setdefault((identity.fiscal_year, identity.fiscal_quarter), []).append(end)
+    return {
+        position: sorted(ends)
+        for position, ends in claims.items()
+        if len(ends) > 1
     }
 
 
@@ -623,6 +838,10 @@ def load_issuer_historical_income(
         filings_index,
         units=("USD",),
     )
+    # The fiscal positions two period ends claim at once. A window that walks
+    # through one of them walks on a contradiction in the issuer's own
+    # declarations, and the positions it needs cannot be determined.
+    contested_positions = _contested_positions(fiscal_calendar)
 
     spans: List[DurationSpanEvidence] = (
         concept_spans_from_payload(
@@ -728,6 +947,106 @@ def load_issuer_historical_income(
         ebitda_window, ebitda_reason, ebitda_detail, ebitda_refusal = ttm_window_at(
             quarters=ebitda_quarters, day=day
         )
+
+        # A window whose quarters do not form a contiguous span of the
+        # issuer's periods is not a trailing twelve months, whatever fiscal
+        # labels it carries. It is refused, and the refusal says where the
+        # span breaks. The periods are read from the role's own quarters,
+        # because an EBITDA quarter states the period of neither of the two
+        # it sums.
+        for window, quarters, label in (
+            (revenue_window, revenue_quarters, "revenue"),
+            (ebitda_window, operating_income_quarters, "EBITDA"),
+        ):
+            if window is None:
+                continue
+            contiguous, breaks = _window_contiguity(window, quarters)
+            if contiguous:
+                continue
+            if label == "revenue":
+                revenue_window = None
+                revenue_reason = REASON_FISCAL_POSITION_UNRESOLVED
+                revenue_detail = (
+                    "The trailing revenue window's quarters are not four "
+                    "consecutive periods of the issuer's own cycle: "
+                    + "; ".join(breaks)
+                    + ". The window is refused rather than published on "
+                    "fiscal labels that contradict the periods the facts "
+                    "cover."
+                )
+                revenue_refusal = {
+                    "reason_code": REASON_FISCAL_POSITION_UNRESOLVED,
+                    "no_quarter_knowable": False,
+                    "anchor": window.get("anchor"),
+                    "positions_required": list(window.get("positions") or []),
+                    "positions_missing": [],
+                    "contiguity_breaks": breaks,
+                    "detail": revenue_detail,
+                }
+            else:
+                ebitda_window = None
+                ebitda_reason = REASON_FISCAL_POSITION_UNRESOLVED
+                ebitda_detail = (
+                    "The trailing EBITDA window's quarters are not four "
+                    "consecutive periods of the issuer's own cycle: "
+                    + "; ".join(breaks)
+                    + ". The window is refused rather than published on fiscal "
+                    "labels that contradict the periods the facts cover."
+                )
+                ebitda_refusal = {
+                    "reason_code": REASON_FISCAL_POSITION_UNRESOLVED,
+                    "no_quarter_knowable": False,
+                    "anchor": window.get("anchor"),
+                    "positions_required": list(window.get("positions") or []),
+                    "positions_missing": [],
+                    "contiguity_breaks": breaks,
+                    "detail": ebitda_detail,
+                }
+
+        # A position the walk could not fill, whose period the capture holds
+        # under a different fiscal label, is not a missing fact: the facts are
+        # there and nothing says which fiscal quarter they are. That is the
+        # issuer's own declarations contradicting each other, and the position
+        # is reported as unresolved.
+        for window, quarters, label in (
+            (revenue_window, revenue_quarters, "revenue"),
+            (ebitda_window, operating_income_quarters, "EBITDA"),
+        ):
+            refusal = revenue_refusal if label == "revenue" else ebitda_refusal
+            if refusal is None or not refusal.get("positions_missing"):
+                continue
+            required = [
+                (position.get("fiscal_year"), position.get("fiscal_quarter"))
+                for position in refusal.get("positions_required") or []
+            ]
+            unresolved = _unresolved_position(
+                quarters=quarters,
+                positions=required,
+                missing=refusal["positions_missing"],
+                anchor_period_end=(refusal.get("anchor") or {}).get("period_end"),
+                fiscal_calendar=fiscal_calendar,
+            )
+            if unresolved is None:
+                continue
+            detail = (
+                f"The trailing {label} window needs fiscal position "
+                f"FY{unresolved['fiscal_year']} Q{unresolved['fiscal_quarter']}, "
+                f"whose period is {unresolved['expected_period']}. The capture "
+                f"holds that period, but the issuer's own declarations name it "
+                f"{unresolved['stated_fiscal_position']}, so nothing says which "
+                "fiscal quarter it is. The position is unresolved and the "
+                "window is refused rather than published on a guess."
+            )
+            refusal["reason_code"] = REASON_FISCAL_POSITION_UNRESOLVED
+            refusal["unresolved_position"] = unresolved
+            refusal["detail"] = detail
+            if label == "revenue":
+                revenue_reason = REASON_FISCAL_POSITION_UNRESOLVED
+                revenue_detail = detail
+            else:
+                ebitda_reason = REASON_FISCAL_POSITION_UNRESOLVED
+                ebitda_detail = detail
+
         if not has_depreciation_role:
             # The role is empty because the issuer has no element that
             # qualifies for it. The refusal says so, and it says it in the

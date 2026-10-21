@@ -114,6 +114,10 @@ REASON_SOURCE_CONCEPT_COVERAGE_GAP = "REASON_SOURCE_CONCEPT_COVERAGE_GAP"
 # through unchanged, because an absent denominator is not a shortage of
 # quarters and never becomes a multiple.
 REASON_NO_QUALIFIED_DA_EVIDENCE = "REASON_NO_QUALIFIED_DA_EVIDENCE"
+# The fiscal position a window needs cannot be determined: the facts are in
+# the capture, but the issuer's own labels name another period for them. The
+# income dataset states it; this dataset carries it through unchanged.
+REASON_FISCAL_POSITION_UNRESOLVED = "REASON_FISCAL_POSITION_UNRESOLVED"
 REASON_INCOMPLETE_EV_BRIDGE = "REASON_INCOMPLETE_EV_BRIDGE"
 REASON_MIXED_BALANCE_SHEET_PERIODS = "REASON_MIXED_BALANCE_SHEET_PERIODS"
 REASON_NON_POSITIVE_DENOMINATOR = "REASON_NON_POSITIVE_DENOMINATOR"
@@ -146,6 +150,7 @@ CLOSED_REASON_CODES = frozenset(
         REASON_MISSING_EBITDA_WINDOW,
         REASON_SOURCE_CONCEPT_COVERAGE_GAP,
         REASON_NO_QUALIFIED_DA_EVIDENCE,
+        REASON_FISCAL_POSITION_UNRESOLVED,
         REASON_INCOMPLETE_EV_BRIDGE,
         REASON_MIXED_BALANCE_SHEET_PERIODS,
         REASON_NON_POSITIVE_DENOMINATOR,
@@ -620,6 +625,14 @@ def classify_window_refusal(
             "for the depreciation-and-amortization role, so no trailing "
             "EBITDA denominator exists and no enterprise-value multiple is "
             "published."
+        )
+    if stated == REASON_FISCAL_POSITION_UNRESOLVED:
+        return REASON_FISCAL_POSITION_UNRESOLVED, (
+            rejection.get("detail")
+            or "The fiscal position the trailing window needs cannot be "
+            "determined: the issuer's labels and the periods its facts cover "
+            "contradict each other, so the window is refused rather than "
+            "published on a guess."
         )
 
     missing = list(rejection.get("positions_missing") or [])

@@ -9,12 +9,13 @@
     "TTM_EBITDA"
   ],
   "provenance": {
-    "canonical_layout": "SEC XBRL company-concept payloads captured verbatim from data.sec.gov for the revenue, operating income and depreciation and amortization concepts, plus the canonical price series and acceptance evidence reused by path from data/historical_pe/AEP. The trailing revenue and EBITDA windows are the ones the data/historical_multiples/AEP dataset divides by.",
+    "canonical_layout": "SEC XBRL company-concept payloads for the revenue, operating income and depreciation and amortization concepts, each the byte-exact company-concept response with the facts the API does not yet carry taken from the filing's own inline XBRL instance, plus the canonical price series and acceptance evidence reused by path from data/historical_pe/AEP. The trailing revenue and EBITDA windows are the ones the data/historical_multiples/AEP dataset divides by.",
     "promoted_on": "2026-10-21",
     "concept_fetch": {
       "fetched_on": "2026-10-21",
-      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy",
-      "response_units": "verbatim as returned: USD for every concept"
+      "transport": "HTTPS GET data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/{tag}.json with a declared contactable User-Agent, honouring the SEC fair-access policy, with the facts the response does not yet carry taken from the filing's own inline XBRL instance",
+      "response_units": "verbatim as returned: USD for every concept",
+      "filing_instance_supplement": "The company-concept API did not yet carry the FY2026 second-quarter 10-Q (0000004904-26-000059, accepted 2026-07-30, period 2026-06-30), although that filing reports the same elements the capture already held. The facts it does carry were therefore read from the filing's own inline XBRL instance, consolidated facts only, keeping each fact's accession, acceptance datetime, context, period, unit and source URL."
     },
     "issuer_facts": {
       "cik": "0000004904",
@@ -22,43 +23,64 @@
     },
     "files": {
       "revenue_concept.json": {
-        "bytes": 45896,
-        "content_sha256": "a1de58e66ef8299cc403c9bdc34c4daab81a49a74b53bb5586e69417d07c4534",
-        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/Revenues.json",
-        "definition": "AEP's 'TOTAL REVENUES' line: the revenues of its operating segments, 21,876 million USD for fiscal 2025, with 'Other Income' of 48 million presented below operating income and therefore not part of it. The element is us-gaap:Revenues, whose own definition is broader than the revenue metric: it allows investment and interest income before taxes. The core registry retired that element as a mapping to the revenue metric (decision 2.99) and that decision stands -- no scope was invented to rescue it, for this issuer or any other. This dataset reads the filer's own line and the manifest states what that means: the trailing revenue it builds is the filer's own total revenue, and the issuer's CURRENT figures in the valuation chain remain the provider's, because the registry does not accept this element as the metric. That is the same boundary Microsoft's dataset has.",
-        "tag": "Revenues",
-        "units": [
-          "USD"
-        ],
-        "fact_count": 304,
-        "period_start": "2007-12-31",
-        "period_end": "2026-03-31"
+        "bytes": 6328,
+        "content_sha256": "7980d33e83a6f0ad8f0e41b9c6fcb239633b8ee962c62083a118e8dbaec0908b",
+        "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax.json",
+        "definition": "The revenue role's element, us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, the registry's own EXACT source for the revenue metric. The element AEP's income statement headlines, us-gaap:Revenues, was retired by registry decision 2.99 -- its own definition is broader than the metric, because it allows investment and interest income -- and no scope was invented to rescue it for any issuer, including this one.",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "unit": "USD",
+        "fact_count": 22,
+        "period_start": "2022-12-31",
+        "period_end": "2026-06-30",
+        "facts_from_company_concept_api": 18,
+        "facts_from_filing_instance": 4,
+        "filing_instance_source": {
+          "acceptance_datetime_header_et": "2026-07-30T10:12:10-04:00",
+          "accession": "0000004904-26-000059",
+          "primary_document": "aep-20260630.htm",
+          "url": "https://www.sec.gov/Archives/edgar/data/4904/000000490426000059/aep-20260630.htm",
+          "usable_date": "2026-07-30"
+        }
       },
       "operating_income_concept.json": {
-        "bytes": 45455,
-        "content_sha256": "acda5b5d1aaa80d077a044f44da90990ae36eafe9d9aafa75f7f1ae7a8e3b421",
+        "bytes": 75966,
+        "content_sha256": "3e3a092963e7e8ba3cb3fe68f9ed9d035d737da068ae49870b924a40905ed46d",
         "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/OperatingIncomeLoss.json",
         "definition": "Operating income as presented, after the operating expenses that include depreciation and amortization.",
         "tag": "OperatingIncomeLoss",
-        "units": [
-          "USD"
-        ],
-        "fact_count": 304,
+        "unit": "USD",
+        "fact_count": 308,
         "period_start": "2007-12-31",
-        "period_end": "2026-03-31"
+        "period_end": "2026-06-30",
+        "facts_from_company_concept_api": 304,
+        "facts_from_filing_instance": 4,
+        "filing_instance_source": {
+          "acceptance_datetime_header_et": "2026-07-30T10:12:10-04:00",
+          "accession": "0000004904-26-000059",
+          "primary_document": "aep-20260630.htm",
+          "url": "https://www.sec.gov/Archives/edgar/data/4904/000000490426000059/aep-20260630.htm",
+          "usable_date": "2026-07-30"
+        }
       },
       "depreciation_concept.json": {
-        "bytes": 29944,
-        "content_sha256": "e1ba5e6746056cfbe6eab3deb41f06729807f6e5314a8755ad31aad1e57cf9a2",
+        "bytes": 50299,
+        "content_sha256": "a1501e17b1deb0f3af5e3245dcb714a86ac8510249cd42e928af2d2779957746",
         "source": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000004904/us-gaap/UtilitiesOperatingExpenseDepreciationAndAmortization.json",
-        "definition": "AEP's cash-flow line 'Depreciation and Amortization', 3,380 million USD for fiscal 2025, carried on us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization. The amortization of nuclear fuel is a separate cash-flow line (109 million USD for fiscal 2025), so this line is depreciation and amortization and nothing else. The element is a utility-sector element, so the registry maps it to the metric for AEP alone and not as a market-wide EXACT mapping -- the same treatment Apple's own element receives.",
+        "definition": "AEP's cash-flow line 'Depreciation and Amortization', carried on us-gaap:UtilitiesOperatingExpenseDepreciationAndAmortization. The amortization of nuclear fuel is a separate cash-flow line, so this line is depreciation and amortization and nothing else. The element is a utility-sector element, so the registry maps it to the metric for AEP alone and not as a market-wide EXACT mapping -- the same treatment Apple's own element receives.",
         "tag": "UtilitiesOperatingExpenseDepreciationAndAmortization",
-        "units": [
-          "USD"
-        ],
-        "fact_count": 198,
+        "unit": "USD",
+        "fact_count": 202,
         "period_start": "2009-12-31",
-        "period_end": "2026-03-31"
+        "period_end": "2026-06-30",
+        "facts_from_company_concept_api": 198,
+        "facts_from_filing_instance": 4,
+        "filing_instance_source": {
+          "acceptance_datetime_header_et": "2026-07-30T10:12:10-04:00",
+          "accession": "0000004904-26-000059",
+          "primary_document": "aep-20260630.htm",
+          "url": "https://www.sec.gov/Archives/edgar/data/4904/000000490426000059/aep-20260630.htm",
+          "usable_date": "2026-07-30"
+        }
       },
       "daily_prices.json (reused by path)": {
         "path": "data/historical_pe/AEP/daily_prices.json",
@@ -72,10 +94,9 @@
       }
     },
     "known_limitations": [
-      "The captured revenue concept carries no fact for fiscal 2021 Q1 in any filing: the issuer reported that quarter on the contract-revenue element instead, and the two elements are the same quantity reported on different elements rather than two quantities to add. The trailing window that needs that position is refused with REASON_SOURCE_CONCEPT_COVERAGE_GAP, and the reason says so. Combining the two elements would be a change to the dataset's role design, not a repair of this one.",
-      "The captured revenue concept's coverage begins later than the acceptance index does, so the earliest evaluation dates are refused as a coverage gap of the captured source rather than for want of an acceptance record.",
-      "The trailing depreciation and amortization window is unavailable at four of the earliest evaluation dates, and those dates are refused with REASON_MISSING_EBITDA_WINDOW, naming the fiscal positions and the dates they became knowable.",
-      "The registry declines this issuer's revenue element, so the issuer's current figures in the valuation chain stay the provider's. The historical distributions here are unaffected: they are built from the filer's own filed line under this dataset's own methodology."
+      "The revenue role's element is the registry's contract-revenue element, whose own coverage begins with the fiscal 2023 annual figure. The trailing revenue window therefore exists only for the evaluation dates from late 2025 onward, which is why the P/S distribution holds four qualifying observations and is reported as short a sample rather than as a reference.",
+      "Microsoft's own fiscal declarations contradict each other about one period: the fiscal 2021 first-quarter 10-Q labels the quarter ended 2021-03-31 as fiscal 2020 Q3, a position its own fourth-quarter 10-Q already holds. The windows that need that position are refused with REASON_FISCAL_POSITION_UNRESOLVED, because the facts are in the capture and nothing says which fiscal quarter they are.",
+      "The acceptance index starts at 2019-01-24, so the earliest evaluation dates have no trailing revenue window and are refused rather than backfilled."
     ]
   }
 }
