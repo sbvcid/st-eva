@@ -50,6 +50,7 @@ from research_issuers import (
 
 # The KO case, read from the issuer configuration.
 _KO = settings_for_ticker("KO")
+_AAPL = settings_for_ticker("AAPL")
 CAPTURE_DIR = _KO.capture_dir
 LANE_CONFIGS = lane_configs()
 CANDIDATE_LANE_IDS = candidate_lane_ids()
@@ -360,7 +361,7 @@ class TheCapture(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             write_research_outputs(Path(directory))
             written = sorted(path.name for path in Path(directory).iterdir())
-            self.assertEqual(len(written), len(_KO.lanes) + 1)
+            self.assertEqual(len(written), len(_KO.lanes) + len(_AAPL.lanes) + 1)
         self.assertEqual(_versioned_data_digest(), repo_before)
 
 
@@ -433,6 +434,9 @@ class TheLanes(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.results = {result.lane_id: result for result in build_ko_research_lanes()}
+        cls.all_results = {
+            result.lane_id: result for result in build_lane_results().values()
+        }
 
     def test_the_lane_counts_and_medians(self):
         # The medians follow the capture's acceptance times. The FY2018,
@@ -491,10 +495,15 @@ class TheLanes(unittest.TestCase):
             CANDIDATE_LANE_IDS,
         )
 
-    def test_the_candidate_lanes_are_the_four_named_metrics(self):
-        self.assertEqual(len(CANDIDATE_LANE_IDS), 4)
+    def test_the_candidate_lanes_are_the_seven_named_metrics(self):
+        self.assertEqual(len(CANDIDATE_LANE_IDS), 7)
+        self.assertEqual(
+            set(CANDIDATE_LANE_IDS),
+            {lane.lane_id for lane in _KO.lanes if lane.candidate_metric}
+            | {lane.lane_id for lane in _AAPL.lanes if lane.candidate_metric},
+        )
         for lane_id in CANDIDATE_LANE_IDS:
-            self.assertTrue(self.results[lane_id].candidate_metric)
+            self.assertTrue(self.all_results[lane_id].candidate_metric)
 
     def test_the_diagnostic_overstates_the_short_term_borrowings_lane(self):
         diagnostic = {

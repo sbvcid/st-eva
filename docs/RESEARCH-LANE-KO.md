@@ -14,7 +14,9 @@ own name, and eligible for nothing.
 
 ## The capture
 
-`data/research_multiples/KO/`, built by `tools/build_ko_research_capture.py`.
+`data/research_multiples/KO/`, built by the general builder,
+`tools/build_research_capture.py --ticker KO`, from the element table in
+`data/research_issuers.json`.
 
 | | |
 |---|---|
@@ -25,10 +27,19 @@ own name, and eligible for nothing.
 | Source | the SEC's company facts payload for the issuer, SHA-256 recorded in the manifest |
 
 The acceptance datetime comes from each filing's SGML header for 49 filings.
-For 18 filings from 2010 to 2013 no SGML header was retrievable, and the
-submissions API's acceptance datetime, converted to America/New_York, is used
-instead. The basis is recorded per filing, and the capture says which is
-which.
+For 18 filings from 2010 to 2013 the SEC generated no filing index for the
+capture to read, and the submissions API's acceptance datetime, converted to
+America/New_York, is used instead. The basis is recorded per filing, and the
+capture says which is which.
+
+The general builder now reads the header out of the full submission itself
+when the filing index does not carry it, so a capture built today would hold
+the header's own time for all 67 filings. KO's committed capture is not
+rebuilt, so it still holds the API's time for those 18; for KO the two clocks
+agree to the second, so the instants it records are the same either way, and
+the identity the phase 9.9 run pinned is untouched. The divergence is real
+for other filers -- AAPL's API runs four to five hours late -- and it is
+recorded per filing in the capture as the difference in hours.
 
 The acceptance times carry the Eastern offset of their own date, so a
 standard-time filing is written at five hours from UTC and a daylight-time

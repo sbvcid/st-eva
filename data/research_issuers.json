@@ -333,7 +333,7 @@
     },
     {
       "capture": {
-        "captured_at": "",
+        "captured_at": "2026-10-22",
         "directory": "data/research_multiples/AAPL",
         "earliest_filed_date": "2010-01-01",
         "element_sources": [
@@ -487,7 +487,7 @@
           "element_change_kind": "RE_TAG",
           "formula_role": "DENOMINATOR",
           "name": "revenue",
-          "note": "AAPL reports net sales on us-gaap:Revenues through FY2018 and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from FY2017, and the two overlap for a year. The registry accepts the second element and retired the first in decision 2.99, so the standing that matters is the successor's.",
+          "note": "AAPL files net sales on us-gaap:SalesRevenueNet from the FY2009 10-Q to the FY2018 third-quarter 10-Q, on us-gaap:Revenues in the FY2018 10-K alone, and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from the FY2019 first-quarter 10-Q. The two elements this role reads overlap on FY2018, which the FY2018 10-K states on us-gaap:Revenues and the FY2019 10-Qs restate on the successor, and the FY2017 quarters are on us-gaap:Revenues alone. The registry accepts the successor and retired us-gaap:Revenues in decision 2.99, so the standing that matters is the successor's. AAPL's pre-FY2018 quarterly net sales are on us-gaap:SalesRevenueNet, which the registry does not accept and this role does not read, so the earliest four-quarter window the lane can build is FY2018.",
           "registry_metric_id": "revenue"
         },
         {
@@ -507,7 +507,7 @@
           "element_change_kind": "RE_TAG",
           "formula_role": "DEPRECIATION",
           "name": "depreciation",
-          "note": "AAPL carries its depreciation and amortisation on us-gaap:DepreciationAndAmortization through FY2016 and on us-gaap:DepreciationDepletionAndAmortization from FY2015, and the two overlap for a year. The registry accepts both.",
+          "note": "AAPL's cash-flow line 'Depreciation and amortization' is carried on us-gaap:DepreciationAndAmortization for FY2008 to FY2016 and on us-gaap:DepreciationDepletionAndAmortization from FY2015, so the two overlap on FY2015 and FY2016 and both are annual only before FY2018. The FY2018 10-K restates FY2016 on the successor at 10,105 million against the 8,300 million first filed, which the lane records as a prior-period value revision. AAPL tags its quarterly cash-flow depreciation on us-gaap:DepreciationAmortizationAndAccretionNet until the FY2018 third-quarter 10-Q, an element the registry does not accept and this role does not read, so the earliest four-quarter window the lane can build is FY2018. us-gaap:Depreciation is pure depreciation and is not read. The registry accepts both elements this role reads.",
           "registry_metric_id": "depreciation_and_amortization"
         },
         {
@@ -527,7 +527,7 @@
           "element_change_kind": "RE_TAG",
           "formula_role": "BRIDGE_COMPONENT",
           "name": "marketable_securities_current",
-          "note": "The registry declares no `marketable_securities_current` metric, so the filed-bridge specification governs the component. AAPL files us-gaap:MarketableSecuritiesCurrent quarterly, unlike KO, whose commercial paper is annual only.",
+          "note": "The registry declares no `marketable_securities_current` metric, so the filed-bridge specification governs the component. AAPL files us-gaap:MarketableSecuritiesCurrent at every quarterly balance-sheet date from the FY2018 10-K onwards, so the component first comes into force at the 2018-09-29 balance sheet.",
           "registry_metric_id": "marketable_securities_current"
         },
         {
@@ -537,7 +537,7 @@
           "element_change_kind": "RE_TAG",
           "formula_role": "BRIDGE_COMPONENT",
           "name": "commercial_paper",
-          "note": "The registry declares no `commercial_paper` metric. AAPL files it quarterly, so a bridge that holds it is complete at the quarterly dates.",
+          "note": "The registry declares no `commercial_paper` metric. AAPL files us-gaap:CommercialPaper at every quarterly balance-sheet date from FY2013 onwards, except in the FY2020 second and third quarters, where the balance-sheet line 'Commercial paper and repurchase agreement' is carried on us-gaap:OtherShortTermBorrowings and the element is not filed at all. The bridge therefore holds the 2019-12-28 commercial-paper instant against a later balance sheet at the two evaluation dates of those quarters, and the lane refuses them for a mixed balance sheet rather than mix two dates.",
           "registry_metric_id": "commercial_paper"
         },
         {

@@ -1056,6 +1056,85 @@ def _unit_policy_violation(
     return None
 
 
+def _element_availability_violation(
+    config: ResearchLaneConfig,
+    role_payloads: Mapping[str, Mapping[str, Any]],
+) -> Optional[Tuple[str, str]]:
+    """
+    Whether every element a role declares is one the capture actually holds.
+
+    A role names the elements it reads. If the capture does not hold one of
+    them, the lane would read the subset the capture happens to carry, and
+    the figure would be a different figure from the one the role names.
+    That is a refusal, not a smaller sample.
+    """
+    for role in config.roles:
+        held = role_payloads.get(role.name) or {}
+        for element in role.elements:
+            if element not in held:
+                return (
+                    REASON_ELEMENT_UNAVAILABLE,
+                    f"The {role.name} role declares {role.taxonomy}:{element}, which "
+                    "the capture does not hold, so the lane cannot read the element "
+                    "the role names. The lane refuses rather than compute from the "
+                    "elements the capture happens to carry.",
+                )
+    return None
+
+
+def _capture_normalisation_violation(
+    config: ResearchLaneConfig,
+    capture: Mapping[str, Any],
+) -> Optional[Tuple[str, str]]:
+    """
+    Whether the capture's own normalisation agrees with the unit policy.
+
+    The capture states the unit it holds its amounts in and the factor it
+    applied to the filed amounts. The policy states the unit the issuer's
+    figures are in and the factor the capture is to apply. When they
+    disagree, the figures the lane would compute are not the figures the
+    policy describes, and the lane refuses rather than publish a magnitude
+    that is wrong by a factor.
+    """
+    policy = config.unit_policy
+    declared = (
+        ((capture.get("manifest") or {}).get("capture_policy") or {}).get(
+            "role_normalisation"
+        )
+        or {}
+    )
+    for role in config.roles:
+        record = declared.get(role.capture_role)
+        if not isinstance(record, Mapping):
+            continue
+        expected_unit = (
+            policy.share_unit if role.formula_role == FORMULA_SHARES else policy.filing_unit
+        )
+        target_unit = record.get("target_unit")
+        if target_unit and target_unit != expected_unit:
+            return (
+                REASON_UNIT_CONFLICT,
+                f"The capture holds the {role.name} role in {target_unit}, but the "
+                f"issuer's unit policy states {expected_unit}. The lane refuses "
+                "to compute across that difference rather than assume the amounts "
+                "are already normalised.",
+            )
+        factor = record.get("factor")
+        if (
+            factor is not None
+            and role.formula_role != FORMULA_SHARES
+            and float(factor) != float(policy.scale)
+        ):
+            return (
+                REASON_UNIT_CONFLICT,
+                f"The capture applied a scaling factor of {factor} to the {role.name} "
+                f"role, but the issuer's unit policy states {policy.scale}. The lane "
+                "refuses to reuse a calculation identity that was computed under a "
+                "different scaling.",
+            )
+    return None
+
+
 def _revision_records(
     previous: Mapping[Tuple[str, str, str], Mapping[str, Any]],
     current: Mapping[Tuple[str, str, str], Mapping[str, Any]],
@@ -1381,6 +1460,10 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
     violation = _unit_policy_violation(
         config, role_units, share_unit, price_currency
     )
+    if violation is None:
+        violation = _element_availability_violation(config, role_payloads)
+    if violation is None:
+        violation = _capture_normalisation_violation(config, capture)
     if violation is not None:
         return _refused_result(
             config,

@@ -195,7 +195,12 @@ def _acceptance_index(
             found = re.search(pattern, text)
             return found.group(1) if found else None
 
-        raw = grab(r"ACCEPTANCE-DATETIME[&gt;:\s]+(\d{14})")
+        # The filing index renders the field as "ACCEPTANCE-DATETIME&gt;...";
+        # the full submission's SGML header writes "<ACCEPTANCE-DATETIME>...".
+        # Both shapes are read, so a filing whose index header is not
+        # retrievable still yields its own acceptance time from the document
+        # EDGAR itself filed.
+        raw = grab(r"ACCEPTANCE-DATETIME(?:&gt;|>|:|\s)+(\d{14})")
         api_utc = datetime.datetime.fromisoformat(acceptance.replace("Z", "+00:00"))
         if raw:
             header_et = header_acceptance_to_eastern(raw)
@@ -647,7 +652,12 @@ def build_capture(
                 f"{sorted(units)}; the unit policy must name one"
             )
         unit = next(iter(units))
-        rows, normalisation = _normalise(units[unit], unit, policy.scale)
+        # A share count is a count, not an amount. Scaling it with the
+        # issuer's amounts would make the capture hold a thousand shares
+        # for every share filed, and would cancel the scale out of a
+        # market-capitalisation multiple instead of stating it.
+        role_scale = 1.0 if unit == policy.share_unit else policy.scale
+        rows, normalisation = _normalise(units[unit], unit, role_scale)
         if captured[0].get("_scale"):
             normalisation["basis"] = (
                 "the filed amounts were stated with a scale in the instance "

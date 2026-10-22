@@ -149,14 +149,15 @@ class TheConfiguration(unittest.TestCase):
 
 
 class TheSecondCase(unittest.TestCase):
-    """AAPL is configured; its capture is not committed."""
+    """AAPL is configured, its capture is committed, and its lanes compute."""
 
     def test_the_issuer_is_configured(self):
         settings = settings_for_ticker("AAPL")
         self.assertEqual(settings.issuer_id, "CIK0000320193")
+        self.assertEqual(settings.entity_name, "Apple Inc.")
         self.assertEqual(settings.fiscal_year_end, "09-26")
         self.assertEqual(settings.fye_month, 9)
-        self.assertFalse(settings.capture_dir.exists())
+        self.assertTrue(settings.capture_dir.exists())
 
     def test_its_calendar_splits_and_semantics_are_expressible(self):
         settings = settings_for_ticker("AAPL")
@@ -187,25 +188,36 @@ class TheSecondCase(unittest.TestCase):
         self.assertIn("7:1", note)
         self.assertIn("4:1", note)
 
-    def test_its_lanes_are_configured_but_not_offered(self):
+    def test_its_lanes_are_offered(self):
         settings = settings_for_ticker("AAPL")
         self.assertTrue(settings.lanes)
-        # A lane whose capture has not been built is not offered.
-        self.assertNotIn(
-            "aapl_reported_revenue_multiple", candidate_lane_ids()
-        )
-        self.assertIn("aapl_reported_revenue_multiple", all_lane_ids())
+        for lane in settings.lanes:
+            self.assertIn(lane.lane_id, candidate_lane_ids())
+            self.assertIn(lane.lane_id, all_lane_ids())
 
-    def test_the_end_to_end_verification_is_not_established(self):
+    def test_the_end_to_end_verification_is_established(self):
         """
-        AAPL's capture is not committed, so no AAPL figure has been computed.
+        AAPL's capture is committed, so its lanes compute.
 
-        This is recorded rather than worked around: the AAPL case is a
-        configuration case, and until its capture is built and committed, its
-        figures are not established.
+        The figures are the lane's own. Nothing here is a production
+        reference, and no production figure may be read out of them.
         """
         results = build_lane_results(issuer_ids=["AAPL"])
-        self.assertEqual(results, {})
+        self.assertEqual(
+            sorted(results),
+            [
+                "aapl_filed_ev_bridge_multiple_production_shape",
+                "aapl_reported_operating_profit_plus_reported_d_and_a_multiple",
+                "aapl_reported_revenue_multiple",
+            ],
+        )
+        for result in results.values():
+            self.assertEqual(
+                result.distribution.status, "RESEARCH_DISTRIBUTION", result.lane_id
+            )
+            self.assertTrue(result.input_set_id)
+            self.assertTrue(result.content_hash)
+            self.assertFalse(result.distribution.production_eligible)
 
 
 class TheUnitPolicy(unittest.TestCase):

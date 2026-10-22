@@ -1,0 +1,443 @@
+{
+  "capture_policy": {
+    "accession_coverage": {
+      "cash": {
+        "count": 72,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "commercial_paper": {
+        "count": 48,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "depreciation": {
+        "count": 42,
+        "first": "0000320193-17-000070",
+        "last": "0001628280-16-020309"
+      },
+      "long_term_debt_current": {
+        "count": 45,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "long_term_debt_noncurrent": {
+        "count": 45,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "marketable_securities_current": {
+        "count": 31,
+        "first": "0000320193-19-000010",
+        "last": "0000320193-26-000020"
+      },
+      "operating_income": {
+        "count": 72,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "revenue": {
+        "count": 32,
+        "first": "0000320193-18-000145",
+        "last": "0000320193-26-000020"
+      },
+      "shares_outstanding": {
+        "count": 70,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      }
+    },
+    "companyconcept_substitutions": {},
+    "context_policy": "The SEC facts APIs publish facts without dimensional qualifiers, so every row in this capture is a fact with no dimensions. They do not publish the filing's contextRef, so each row's context is pinned by (accession, element, period, unit) with no dimensions, which identifies exactly one fact in that filing.",
+    "dimensions": "The SEC facts payloads publish only facts with no dimensional qualifiers, so every row here is a consolidated fact and the capture carries no segment or member variants.",
+    "earliest_filed_date": "2010-01-01",
+    "element_source_used": {
+      "cash": "companyfacts",
+      "commercial_paper": "companyfacts",
+      "depreciation": "companyfacts",
+      "long_term_debt_current": "companyfacts",
+      "long_term_debt_noncurrent": "companyfacts",
+      "marketable_securities_current": "companyfacts",
+      "operating_income": "companyfacts",
+      "revenue": "companyfacts",
+      "shares_outstanding": "companyfacts"
+    },
+    "element_sources": [
+      "companyfacts",
+      "companyconcept",
+      "filing_instance"
+    ],
+    "periodic_filings": [
+      "10-K",
+      "10-Q"
+    ],
+    "role_normalisation": {
+      "cash": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "commercial_paper": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "depreciation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "long_term_debt_current": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "long_term_debt_noncurrent": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "marketable_securities_current": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "operating_income": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "revenue": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "shares_outstanding": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "shares",
+        "target_unit": "shares",
+        "unit": "shares"
+      }
+    },
+    "unit_policy": {
+      "filing_currency": "USD",
+      "filing_unit": "USD",
+      "fx_rule": null,
+      "price_currency": "USD",
+      "scale": 1.0,
+      "scale_basis": "AAPL states its amounts in units; the capture holds them unchanged and no scaling is applied.",
+      "share_unit": "shares"
+    }
+  },
+  "captured_at": "2026-10-22",
+  "dataset": "AAPL research capture",
+  "files": {
+    "cash_concept.json": {
+      "accessions": {
+        "count": 72,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "bytes": 69877,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "cash",
+      "sha256": "e88732ea62b6066e8fdaeab7ea504a43a03054888aa4c5f7b2bba989e714c28a",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "commercial_paper_concept.json": {
+      "accessions": {
+        "count": 48,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "bytes": 29991,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "commercial_paper",
+      "sha256": "53b1a0f09fdcceffd657508e126e795ce7e1688cca6e403e3fc27b920849edb0",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "daily_prices.json": {
+      "bytes": 468463,
+      "role": "prices",
+      "sha256": "8bc0f33a467f92346e7a4bfdb93c42cb0b51835bfb5903053f260af81c4e6e34",
+      "source": {
+        "note": "The provider's close series reflects later split events. The lane restores the as-traded close from the split events in this payload before it pairs a price with a share count.",
+        "retrieval": "one daily-granularity chart request for the issuer's ticker; the payload is stored verbatim, including its split events",
+        "source_document_sha256": "8bc0f33a467f92346e7a4bfdb93c42cb0b51835bfb5903053f260af81c4e6e34",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1262304000&period2=1790000000&interval=1d&events=div%2Csplit"
+      }
+    },
+    "depreciation_concept.json": {
+      "accessions": {
+        "count": 42,
+        "first": "0000320193-17-000070",
+        "last": "0001628280-16-020309"
+      },
+      "bytes": 33038,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "depreciation",
+      "sha256": "c13e296d64f225b1e24f7ca0a8484e54ab8a5f4c10a6a135e71c8d3be72894c7",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "filing_acceptance_evidence.json": {
+      "bytes": 57152,
+      "role": "acceptance index",
+      "sha256": "a5f45c77dcae6a72afb2ffe8e340a245c241d6821524ffb82bbd400c1a3b29b6",
+      "source": {
+        "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
+        "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time and carries the offset the date has",
+        "source_document_sha256": null,
+        "url": "https://www.sec.gov/Archives/edgar/data/<cik>/<accession>/<accession>-index-headers.html"
+      }
+    },
+    "long_term_debt_current_concept.json": {
+      "accessions": {
+        "count": 45,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "bytes": 28262,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "long_term_debt_current",
+      "sha256": "1b6f3fb9be7a51f4875dad8a54e1069bace13ea6614275699f314ce17251aa8c",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "long_term_debt_noncurrent_concept.json": {
+      "accessions": {
+        "count": 45,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "bytes": 28456,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "long_term_debt_noncurrent",
+      "sha256": "25d2558136b78799a3a997c716205d3cc46bbdc15b9faa074a24bf5c4702506f",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "marketable_securities_current_concept.json": {
+      "accessions": {
+        "count": 31,
+        "first": "0000320193-19-000010",
+        "last": "0000320193-26-000020"
+      },
+      "bytes": 19717,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "marketable_securities_current",
+      "sha256": "515962a4ff02f5f2334ba44ed63fc1ee3635d1fad9882b7b0109328edc2998d3",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "operating_income_concept.json": {
+      "accessions": {
+        "count": 72,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "bytes": 73002,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "operating_income",
+      "sha256": "a8d1f8cce95c96d79714aa7b5ecddc1e6f9ec1a038323852b83b3aa5faf97c41",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "revenue_concept.json": {
+      "accessions": {
+        "count": 32,
+        "first": "0000320193-18-000145",
+        "last": "0000320193-26-000020"
+      },
+      "bytes": 41359,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "USD",
+        "target_unit": "USD",
+        "unit": "USD"
+      },
+      "role": "revenue",
+      "sha256": "326d54c199b9c8c359c6fa2c97cf3712f9604ae39cb80183f50c35a684d95237",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "USD"
+    },
+    "shares_outstanding_concept.json": {
+      "accessions": {
+        "count": 70,
+        "first": "0000320193-17-000009",
+        "last": "0001628280-17-004790"
+      },
+      "bytes": 22683,
+      "currency": "USD",
+      "normalisation": {
+        "basis": "the filed amounts are already in the unit the capture holds",
+        "currency": "USD",
+        "factor": 1,
+        "scaled": false,
+        "source_unit": "shares",
+        "target_unit": "shares",
+        "unit": "shares"
+      },
+      "role": "shares_outstanding",
+      "sha256": "f753b0fad21f35eb86862e00ef3ea9478decaded42c1d18ec54e780b8d675626",
+      "source": {
+        "note": "the element came from the companyfacts",
+        "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+        "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+      },
+      "unit": "shares"
+    }
+  },
+  "issuer": {
+    "cik": "CIK0000320193",
+    "entity_name": "Apple Inc.",
+    "fiscal_year_end": "09-26",
+    "ticker": "AAPL"
+  },
+  "purpose": "Research calculation lane inputs. Research use only: these files are not production inputs, they are not read by the production runner, and no figure computed from them is a production reference."
+}

@@ -60,6 +60,15 @@ EXPECTED = {
         24.675484,
         "enterprise_value",
     ),
+    "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE": (32, 6.996311, "market_cap"),
+    (
+        "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
+    ): (29, 22.054083, "market_cap"),
+    "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE": (
+        27,
+        22.326,
+        "enterprise_value",
+    ),
 }
 
 DIAGNOSTIC_METRIC_ID = (
@@ -70,9 +79,9 @@ DIAGNOSTIC_METRIC_ID = (
 class TheCatalogue(unittest.TestCase):
     """The metrics a user may choose."""
 
-    def test_the_four_candidate_lanes_are_offered(self):
+    def test_the_seven_candidate_lanes_are_offered(self):
         metrics = list_research_metrics()
-        self.assertEqual(len(metrics), 4)
+        self.assertEqual(len(metrics), 7)
         self.assertEqual(
             {metric.metric_id for metric in metrics}, set(EXPECTED)
         )
@@ -1063,7 +1072,7 @@ class TheResearchApi(unittest.TestCase):
         response = self.client.get("/api/research/metrics")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(len(payload["metrics"]), 4)
+        self.assertEqual(len(payload["metrics"]), 7)
         self.assertIn("RESEARCH USE ONLY", payload["research_use_notice"])
         self.assertEqual(
             payload["user_assumption_label"], USER_ASSUMPTION_LABEL

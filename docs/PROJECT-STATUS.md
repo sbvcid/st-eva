@@ -5063,6 +5063,118 @@ still cannot be selected, and the research results still carry
 `production_eligible=False` and write no Archive row, no Investment Context
 and no production reference.
 
+## Phase 9.10 (2026-10-22): AAPL's research lane, end to end
+
+Phase 9.9 made the research lane configuration-driven and left AAPL
+configured but unbuilt. This phase builds AAPL's capture with the general
+builder, runs the lane over it, and checks the result against the production
+AAPL dataset observation by observation. It is the phase that answers whether
+the shared engine can carry a second issuer whose history is shaped
+differently from the first.
+
+It adds no company to production, changes no registry mapping or scope, no
+production enterprise-value definition, no valuation method, no Archive and no
+Investment Context. Everything it writes lives under `data/research_*`.
+
+Local verification for this round: research lane suite **42 passed**; AAPL
+research lane suite **57 passed**; research issuer suite **32 passed**;
+research capture suite **8 passed**; research calculator suite **64 passed**;
+research comparison suite **44 passed**; backend suite **3001 passed, 171
+skipped, 534 subtests passed**.
+
+### What was added and what went
+
+| Artifact | What happened |
+|---|---|
+| `data/research_multiples/AAPL/` | AAPL's capture: 67 periodic filings, 4,204 daily closes with both split events, the cover-page share counts, and eleven filed element payloads, with the source, the unit, the normalisation and the SHA-256 of each file. Built by `tools/build_research_capture.py --ticker AAPL`, with no issuer-specific code. |
+| `data/research_lanes/AAPL/` | The three lanes' committed summaries and the tree's index, written by `write_research_outputs(..., issuer_ids=["AAPL"])`. |
+| `tests/test_research_lane_aapl.py` | The AAPL case end to end: the capture, the fiscal cycle, the two splits, the depreciation element's chronology, the point-in-time rule, the per-observation recomputation, the production cross-check, the isolation and the refusal paths. |
+| `docs/RESEARCH-LANE-AAPL.md` | The case document. |
+
+### The three lanes
+
+| Lane | Valid | Evaluations | Median | Period | Status |
+|---|---|---|---|---|---|
+| `aapl_reported_revenue_multiple` | 32 | 67 | 6.996311 | 2018-11-05 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
+| `aapl_reported_operating_profit_plus_reported_d_and_a_multiple` | 29 | 67 | 22.054083 | 2019-08-01 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
+| `aapl_filed_ev_bridge_multiple_production_shape` | 27 | 67 | 22.326 | 2019-08-01 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
+
+The refusals are 35, 38 and 40 respectively, and they are read for what they
+are: 38 are the missing four-quarter window, and 2 are the mixed balance
+sheet in the FY2020 second and third quarters.
+
+### A defect in the shared builder, found by the second issuer
+
+The SEC states a filing's acceptance time twice, and for AAPL the two clocks
+disagree: the submissions API serialises the Eastern wall clock with the
+offset applied twice, so it runs four hours late in summer and five hours
+late in winter. The SEC's own filing index page agrees with the SGML header,
+not with the API. The general builder's pattern for the header's
+`ACCEPTANCE-DATETIME` matched the filing index's HTML-escaped shape and not the
+full submission's `<ACCEPTANCE-DATETIME>...` shape, so a filing whose index
+header does not exist -- 18 of AAPL's 67 -- fell through to the API and took
+the late time. Several of those filings sit within an hour of the 16:00
+Eastern boundary, so the late time moved knowability.
+
+The builder now reads both shapes. AAPL's capture holds the header's own
+acceptance time for all 67 filings, and records the API's time and the
+difference in hours beside it. KO's committed capture is not rebuilt, so its
+identity is untouched; and KO's two clocks agree to the second, so a rebuilt
+KO capture would state the same instants with a richer provenance basis.
+
+### The identity contract, made explicit
+
+The phase sets out what each identity covers, because the manifest is not part
+of the input identity and a policy change must not be able to produce the same
+one:
+
+* the `input_set_id` covers the lane's identity and the SHA-256 of every
+  capture file it read;
+* the capture manifest describes the capture -- its issuer, its date, each
+  file's source, unit and normalisation -- and is not itself part of the
+  identity, so a change to a description alone is not a change to the
+  calculation;
+* the policy identity covers the unit policy and the registry's standing on
+  every element each role reads, and it is carried on the distribution and on
+  every observation;
+* the calculation hash is the hash of the input set id and the observation
+  hashes.
+
+Two refusals were added to close the gap between them. A role that names an
+element the capture does not hold is refused with
+`RESEARCH_REASON_ELEMENT_UNAVAILABLE` rather than read around; the code
+already existed and was never raised. A capture whose declared normalisation
+disagrees with the unit policy is refused with
+`RESEARCH_REASON_UNIT_CONFLICT` before it computes, so a scaling policy that
+was changed without rebuilding the capture cannot reuse the old identity.
+
+### The cross-check with production, date by date
+
+On the 35 evaluation dates the research lane and the production AAPL dataset
+share, the EV/EBITDA lane and production agree on every one: the same price,
+the same cover-page share count, the same market capitalisation, the same
+enterprise value, the same multiple to six decimal places, and the same
+refusal on the same dates. The revenue lane agrees with production's P/S on
+all 28 dates on which both publish.
+
+The four dates on which the revenue lane publishes and production refuses are
+named, and the reason is the source facts: the production capture holds only
+`us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax`, while the
+research capture also holds `us-gaap:Revenues`, which the FY2018 10-K states
+FY2018's quarters on. The medians differ because the samples differ (6.996311
+over 32 observations against 7.257709 over 28), and the research median is
+recomputed from the research observations.
+
+### What this phase does not do
+
+It does not qualify AAPL for production, and it does not make AAPL closer to
+production qualification. It reads no production median into a research
+figure, produces no `refc:*` reference, and writes no Archive row and no
+Investment Context. KO's four research lanes publish the same values, the
+same refusal reasons, the same input set ids, the same observation hashes and
+the same comparison hashes as before, and the production payload digests for
+AAPL, AEP and MSFT are unchanged.
+
 ## Next task status
 
 The Phase 5 round is complete and verified: the production historical P/S and
@@ -5121,7 +5233,7 @@ and the production pipeline's agree on the same capture, date by date. KO is
 not qualified for production and is not closer to being qualified.
 
 The research calculation now sits in front of that lane. A user picks one of
-the four research metrics -- never the diagnostic -- states a multiple and a
+the research metrics -- never a diagnostic -- states a multiple and a
 market value, and reads the implied denominator with the whole source chain
 behind it: the price, the cover-page share count and its accession, the four
 denominator quarters and the spans each was built from, the balance-sheet
@@ -5146,6 +5258,31 @@ source file, digest and endpoint, and the evidence view shows them as a
 table with the source as a link. The research capture's acceptance times
 carry the Eastern offset of their own date, so three annual filings are no
 longer knowable a trading day before the 16:00 ET rule allows.
+
+The lane now carries a second issuer. AAPL is not a copy of KO with a
+different ticker: its fiscal year ends on the last Saturday of September and
+its quarters are thirteen or fourteen weeks long, its share count changes
+scale twice inside the sample, its revenue and its depreciation both change
+tag, and its commercial paper is filed on a different element in two of its
+quarters. The same engine, the same configuration file and the same builder
+carry it, and the three lanes publish 32, 29 and 27 valid observations over
+67 evaluation dates with medians 6.996311, 22.054083 and 22.326. The
+enterprise-value lane agrees with the production AAPL dataset on every one of
+the 35 dates they share, to six decimal places, and the revenue lane agrees
+on all 28 dates on which both publish; the four dates where they differ are
+named, and the reason is the source facts rather than a disagreement about
+arithmetic. Two things the lane would have got wrong if it had assumed KO's
+shape were found and fixed: the builder read the acceptance time from the
+submissions API for the filings whose index header does not exist, and the
+API runs four to five hours late for this filer, so the lane would have moved
+knowability for several filings; and the capture's scaling policy was applied
+to the cover-page share count as well as to the amounts, which would have
+cancelled the scale out of a market-capitalisation multiple instead of
+stating it. The identity contract is now explicit about what each of the
+input set id, the capture manifest, the policy identity and the calculation
+hash covers, and a role that names an element the capture does not hold, or a
+capture whose normalisation disagrees with the unit policy, is refused rather
+than read around.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.

@@ -5,9 +5,10 @@ production qualification regime does not admit. It does so without touching
 that regime. This document states what a lane is, what it may and may not do,
 and how it is kept separate from production.
 
-The lane is implemented in `research_lane.py`. The first case, KO, is in
-`research_lane_ko.py` and is described in
-[RESEARCH-LANE-KO.md](RESEARCH-LANE-KO.md).
+The lane is implemented in `research_lane.py`, and the issuers it carries are
+described in `data/research_issuers.json`. The first case, KO, is documented in
+[RESEARCH-LANE-KO.md](RESEARCH-LANE-KO.md); the second, AAPL, in
+[RESEARCH-LANE-AAPL.md](RESEARCH-LANE-AAPL.md).
 
 ## Why a lane exists
 
@@ -122,9 +123,15 @@ for. An unknown code is an error, not a refusal.
 | `RESEARCH_REASON_NON_POSITIVE_DENOMINATOR` | The trailing denominator is non-positive; no multiple is produced from it. |
 | `RESEARCH_REASON_INCOMPLETE_EV_BRIDGE` | A filed bridge component is not knowable at the evaluation date. The bridge is never completed by omission or zero-fill. |
 | `RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS` | The bridge's components describe more than one balance-sheet date. The stale component is not carried forward. |
-| `RESEARCH_REASON_ELEMENT_UNAVAILABLE` | The capture holds no element for a role the lane reads. |
+| `RESEARCH_REASON_ELEMENT_UNAVAILABLE` | The capture holds no element for a role the lane reads, or holds only some of the elements the role names. The lane refuses rather than read the subset the capture happens to carry, because a figure computed from a smaller set of elements is a different figure from the one the role names. |
 
 Every refusal carries a readable reason that names what was missing.
+
+Two refusals are raised before the lane computes anything, because they are
+properties of the capture and the configuration rather than of an evaluation
+date: a role that names an element the capture does not hold, and a capture
+whose declared normalisation disagrees with the unit policy. Both are results
+with their reason, not exceptions.
 
 ### The calculation's refusals
 
@@ -183,14 +190,42 @@ rather than absorbing it.
 
 ## The run identity
 
-- `input_set_id` is the canonical hash of the lane's configuration, the
-  SHA-256 of every capture file it read, and the evidence of the isolation
-  check.
-- Each observation carries a `content_hash` over its own content.
-- The result's `content_hash` is the canonical hash of the input set id and
-  the observation hashes.
+Four things are identified separately, and it is worth being exact about what
+each one covers.
+
+| Identity | Covers |
+|---|---|
+| `input_set_id` | The lane's identity -- its lane id, the issuer id, the research metric id, the formula version, the denominator roles and the numerator kind -- the SHA-256 of every capture file it read, and the evidence of the isolation check. |
+| The capture manifest identity | The manifest describes the capture: the issuer, the capture date, the source of each file, its unit, its normalisation and its digest. The manifest is **not** part of `input_set_id`, so a change to a description alone is not a change to the calculation. |
+| The policy identity | The unit policy the lane was configured with -- the unit the filings are stated in, the currency, the price's currency, the share unit, the scaling factor and its basis, and the currency conversion rule -- and the registry's standing on every element each role reads. The unit policy is recorded on the distribution; the registry's standing is on every observation. |
+| The calculation hash | Each observation's `content_hash` is the canonical hash of that observation's own content, and the result's `content_hash` is the canonical hash of the input set id and the observation hashes. |
+
+The consequence is that a policy change is always visible, in one of two
+places, and never silent:
+
+* A change to the capture's **bytes** -- a different unit, a different
+  normalisation, a different element -- moves the file digests and therefore
+  the `input_set_id`.
+* A change to the **configuration** that the capture does not carry -- a
+  different unit policy, a different element in a role -- moves the policy
+  record and the observation's registry standing, and therefore the
+  observation's `content_hash`. A role element the capture does not hold is
+  refused outright rather than read around.
+* A change to the capture's **description** alone moves neither, because the
+  manifest is not part of the input identity.
 
 The same capture and the same logic version produce the same identity.
+
+### The capture and the policy must agree
+
+A capture states, per role, the unit it holds its amounts in and the factor it
+applied to the filed amounts. The configuration states the unit the issuer's
+figures are in and the factor the capture is to apply. When the two disagree,
+the figures the lane would compute are not the figures the policy describes,
+and the lane refuses with `RESEARCH_REASON_UNIT_CONFLICT` before it computes
+anything. That is what keeps "the policy changed but the identity did not" from
+being possible: a policy that disagrees with the capture produces a refusal,
+and a refusal has its own identity.
 
 ## The capture
 
@@ -232,13 +267,39 @@ gives. `tests/test_research_capture.py` pins the conversion in both seasons
 and pins the usable dates the capture produces, so a change to the
 representation cannot quietly move a filing's knowability.
 
+### The two clocks, and which one the lane uses
+
+The SEC states a filing's acceptance time twice: in the filing's own SGML
+header, and in the submissions API. **They do not always agree.** For AAPL the
+submissions API serialises the same instant with the eastern offset applied
+twice, so it runs four hours late in summer and five hours late in winter;
+KO's filings do not show the difference. The header agrees with what EDGAR
+itself displays on the filing's index page, and it agrees with the fact that
+the SEC accepts filings between 06:00 and 22:00 Eastern -- an API-derived
+time of 01:29 in the morning would be outside the window in which a filing can
+be accepted at all.
+
+The lane therefore uses the header's own `ACCEPTANCE-DATETIME`, and the
+capture records both: the header's time, the API's time, and the difference
+between them in hours, so the divergence is visible in the capture rather than
+buried in it. The capture builder reads the header from the filing's
+`-index-headers.html` when the SEC generates one, and from the full
+submission's own SGML header when it does not; both shapes are parsed, so a
+filing whose index header is not retrievable still yields its own acceptance
+time.
+
+A capture built before that fix may hold the API's time for the filings whose
+index header does not exist. KO's committed capture does, and for KO the two
+clocks agree to the second, so its instants are the same either way; AAPL's
+capture was built after the fix and holds the header's time for every filing.
+
 ## Running a lane
 
 ```python
-from research_lane_ko import build_ko_research_lanes
+from research_issuers import build_lane_results
 
-for result in build_ko_research_lanes():
-    print(result.metric_id, result.distribution.sample_count,
+for lane_id, result in build_lane_results().items():
+    print(lane_id, result.distribution.sample_count,
           result.distribution.percentiles.get("median"))
 ```
 
@@ -246,16 +307,26 @@ To write the research tree:
 
 ```python
 from pathlib import Path
-from research_lane_ko import write_ko_research_outputs
+from research_issuers import write_research_outputs
 
-write_ko_research_outputs(Path("data/research_lanes/KO"))
+write_research_outputs(Path("data/research_lanes/KO"), issuer_ids=["KO"])
+write_research_outputs(Path("data/research_lanes/AAPL"), issuer_ids=["AAPL"])
 ```
 
-To rebuild the capture from its sources:
+To rebuild an issuer's capture from its sources:
 
 ```
-python tools/build_ko_research_capture.py --as-of YYYY-MM-DD
+python tools/build_research_capture.py --ticker KO
+python tools/build_research_capture.py --ticker AAPL
 ```
+
+The builder takes the element table, the sources, the earliest filed date and
+the unit policy from `data/research_issuers.json`; there is no issuer-specific
+builder and none is needed. The builder is not deterministic in its bytes: the
+price payload carries the provider's live metadata and the acceptance index
+records the digest of a header page the SEC regenerates. A rebuilt capture is
+therefore evidence that the evidence behind the committed one is unchanged, not
+a replacement for it.
 
 ## The issuer configuration
 
@@ -437,9 +508,9 @@ evidence behind it.
 
 ### Choosing a metric
 
-The four candidate research metrics are the selectable ones. The diagnostic
-lane is not a metric and cannot be selected: asking for it by name is a
-refusal, not an empty result.
+The candidate research metrics are the selectable ones. A diagnostic lane is
+not a metric and cannot be selected: asking for it by name is a refusal, not
+an empty result.
 
 Every metric carries its own name and formula, its valid and refused
 observation counts, its sample period, its statistics, the registry's
@@ -541,3 +612,22 @@ and the source chain behind any one of them. The research-only notice is on
 the surface from the first moment, and it is not a warning line that can be
 dismissed: the figure is structurally ineligible, and the surface says what
 makes it so.
+
+## The two cases
+
+The engine is the same for both; only the configuration differs. Each case has
+its own capture, its own tree and its own document.
+
+| | KO | AAPL |
+|---|---|---|
+| Issuer | The Coca-Cola Company, CIK 0000021344 | Apple Inc., CIK 0000320193 |
+| Fiscal year end | 31 December | The last Saturday of September: a 52/53-week year |
+| Split in the price series's range | none | 7:1 on 2014-06-09 and 4:1 on 2020-08-31 |
+| Capture | `data/research_multiples/KO` | `data/research_multiples/AAPL` |
+| Results | `data/research_lanes/KO` | `data/research_lanes/AAPL` |
+| Document | `docs/RESEARCH-LANE-KO.md` | `docs/RESEARCH-LANE-AAPL.md` |
+
+AAPL is the case that tests the engine rather than the configuration: its
+fiscal quarters are not calendar quarters, its share count changes scale twice
+inside the sample, its revenue and depreciation elements both change tag, and
+its commercial paper is filed on a different element in two quarters.

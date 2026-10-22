@@ -466,15 +466,21 @@ def config_for_lane(
 
 
 def write_research_outputs(
-    output_dir: Path, include_lineage: bool = False
+    output_dir: Path,
+    include_lineage: bool = False,
+    issuer_ids: Optional[Sequence[str]] = None,
 ) -> Dict[str, Any]:
     """Write the research tree: one summary per lane and an index.
 
     The output is a research artifact. It is written under the caller's
     directory and nowhere else; no production path is touched.
+
+    ``issuer_ids`` narrows the tree to the named issuers, so each issuer's
+    lanes are committed under their own directory and neither tree lists
+    the other's figures.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    results = list(build_lane_results().values())
+    results = list(build_lane_results(issuer_ids=issuer_ids).values())
     settings = load_issuer_settings()
     issuer_of = {
         lane.lane_id: item.ticker
@@ -499,7 +505,9 @@ def write_research_outputs(
         "methodology": "research-multiples/1.0",
         "logic_version": "research-multiples/1.0.0",
         "lanes": {},
-        "candidate_lane_ids": list(candidate_lane_ids()),
+        "candidate_lane_ids": [
+            result.lane_id for result in results if result.candidate_metric
+        ],
         "diagnostic_lane_ids": [
             result.lane_id for result in results if not result.candidate_metric
         ],

@@ -1,0 +1,1435 @@
+{
+  "basis_breaks": {},
+  "candidate_metric": true,
+  "capture_manifest": {
+    "capture_dir": "C:\\git\\st-eva\\data\\research_multiples\\AAPL",
+    "captured_at": "2026-10-22",
+    "files": {
+      "cash_concept.json": {
+        "role": "cash",
+        "sha256": "e88732ea62b6066e8fdaeab7ea504a43a03054888aa4c5f7b2bba989e714c28a",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "commercial_paper_concept.json": {
+        "role": "commercial_paper",
+        "sha256": "53b1a0f09fdcceffd657508e126e795ce7e1688cca6e403e3fc27b920849edb0",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "daily_prices.json": {
+        "role": "prices",
+        "sha256": "8bc0f33a467f92346e7a4bfdb93c42cb0b51835bfb5903053f260af81c4e6e34",
+        "source": {
+          "note": "The provider's close series reflects later split events. The lane restores the as-traded close from the split events in this payload before it pairs a price with a share count.",
+          "retrieval": "one daily-granularity chart request for the issuer's ticker; the payload is stored verbatim, including its split events",
+          "source_document_sha256": "8bc0f33a467f92346e7a4bfdb93c42cb0b51835bfb5903053f260af81c4e6e34",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1262304000&period2=1790000000&interval=1d&events=div%2Csplit"
+        }
+      },
+      "depreciation_concept.json": {
+        "role": "depreciation",
+        "sha256": "c13e296d64f225b1e24f7ca0a8484e54ab8a5f4c10a6a135e71c8d3be72894c7",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "filing_acceptance_evidence.json": {
+        "role": "acceptance index",
+        "sha256": "a5f45c77dcae6a72afb2ffe8e340a245c241d6821524ffb82bbd400c1a3b29b6",
+        "source": {
+          "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
+          "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time and carries the offset the date has",
+          "source_document_sha256": null,
+          "url": "https://www.sec.gov/Archives/edgar/data/<cik>/<accession>/<accession>-index-headers.html"
+        }
+      },
+      "long_term_debt_current_concept.json": {
+        "role": "long_term_debt_current",
+        "sha256": "1b6f3fb9be7a51f4875dad8a54e1069bace13ea6614275699f314ce17251aa8c",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "long_term_debt_noncurrent_concept.json": {
+        "role": "long_term_debt_noncurrent",
+        "sha256": "25d2558136b78799a3a997c716205d3cc46bbdc15b9faa074a24bf5c4702506f",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "marketable_securities_current_concept.json": {
+        "role": "marketable_securities_current",
+        "sha256": "515962a4ff02f5f2334ba44ed63fc1ee3635d1fad9882b7b0109328edc2998d3",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "operating_income_concept.json": {
+        "role": "operating_income",
+        "sha256": "a8d1f8cce95c96d79714aa7b5ecddc1e6f9ec1a038323852b83b3aa5faf97c41",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "revenue_concept.json": {
+        "role": "revenue",
+        "sha256": "326d54c199b9c8c359c6fa2c97cf3712f9604ae39cb80183f50c35a684d95237",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      },
+      "shares_outstanding_concept.json": {
+        "role": "shares_outstanding",
+        "sha256": "f753b0fad21f35eb86862e00ef3ea9478decaded42c1d18ec54e780b8d675626",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+        }
+      }
+    },
+    "isolation": {
+      "checked": "against archive.PRODUCTION_REFERENCE_BASES and investment_context.REFERENCE_SOURCES as they are in this repository, at run time",
+      "collisions": [],
+      "production_metric_ids": [
+        "EV_EBITDA_RATIO_REFERENCE",
+        "P_S_RATIO_REFERENCE",
+        "TTM_EBITDA",
+        "TTM_REVENUE"
+      ],
+      "production_reference_bases": [
+        "HISTORICAL_MEDIAN",
+        "NONE",
+        "PRODUCTION_EV_EBITDA_MEDIAN",
+        "PRODUCTION_PE_MEDIAN",
+        "PRODUCTION_PFCF_MEDIAN",
+        "PRODUCTION_PS_MEDIAN",
+        "USER_SUPPLIED"
+      ],
+      "research_metric_ids": [
+        "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE"
+      ]
+    },
+    "issuer": {
+      "cik": "CIK0000320193",
+      "entity_name": "Apple Inc.",
+      "fiscal_year_end": "09-26",
+      "ticker": "AAPL"
+    }
+  },
+  "content_hash": "c5fbaa23b68459578262556070d77d4bab2ba4ed142d4e2feba950344238b373",
+  "distribution": {
+    "basis_breaks": {},
+    "candidate_metric": true,
+    "data_limitations": [
+      "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer.",
+      "AAPL's cash-flow line 'Depreciation and amortization' is carried on us-gaap:DepreciationAndAmortization for FY2008 to FY2016 and on us-gaap:DepreciationDepletionAndAmortization from FY2015, so the two overlap on FY2015 and FY2016 and both are annual only before FY2018. The FY2018 10-K restates FY2016 on the successor at 10,105 million against the 8,300 million first filed, which the lane records as a prior-period value revision. AAPL tags its quarterly cash-flow depreciation on us-gaap:DepreciationAmortizationAndAccretionNet until the FY2018 third-quarter 10-Q, an element the registry does not accept and this role does not read, so the earliest four-quarter window the lane can build is FY2018. us-gaap:Depreciation is pure depreciation and is not read. The registry accepts both elements this role reads.",
+      "us-gaap:CashAndCashEquivalentsAtCarryingValue is registry-qualified for AAPL.",
+      "The registry declares no `marketable_securities_current` metric, so the filed-bridge specification governs the component. AAPL files us-gaap:MarketableSecuritiesCurrent at every quarterly balance-sheet date from the FY2018 10-K onwards, so the component first comes into force at the 2018-09-29 balance sheet.",
+      "The registry declares no `commercial_paper` metric. AAPL files us-gaap:CommercialPaper at every quarterly balance-sheet date from FY2013 onwards, except in the FY2020 second and third quarters, where the balance-sheet line 'Commercial paper and repurchase agreement' is carried on us-gaap:OtherShortTermBorrowings and the element is not filed at all. The bridge therefore holds the 2019-12-28 commercial-paper instant against a later balance sheet at the two evaluation dates of those quarters, and the lane refuses them for a mixed balance sheet rather than mix two dates.",
+      "us-gaap:LongTermDebtNoncurrent is registry-qualified for AAPL.",
+      "us-gaap:LongTermDebtCurrent is registry-qualified for AAPL.",
+      "Cover-page shares outstanding, taken as filed and never adjusted for a split, paired with the as-traded close. AAPL has two splits in the price series's range: 7:1 on 2014-06-09 and 4:1 on 2020-08-31.",
+      "The capture's acceptance index covers the issuer's periodic filings only, so a fact first published in another form becomes knowable in this lane at the next periodic filing that carries it. The lane therefore never uses a value before it was public, and it may use a value later than it first became public."
+    ],
+    "excluded_observations": [
+      {
+        "evaluation_date": "2010-01-26",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter operating_income window is not knowable at 2010-01-26: The four-quarter fiscal window ending at FY2010 Q1 is missing positions: [{'fiscal_year': 2009, 'fiscal_quarter': 2}, {'fiscal_year': 2009, 'fiscal_quarter': 3}, {'fiscal_year': 2009, 'fiscal_quarter': 4}]."
+      },
+      {
+        "evaluation_date": "2010-04-22",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter operating_income window is not knowable at 2010-04-22: The four-quarter fiscal window ending at FY2010 Q2 is missing positions: [{'fiscal_year': 2009, 'fiscal_quarter': 3}, {'fiscal_year': 2009, 'fiscal_quarter': 4}]."
+      },
+      {
+        "evaluation_date": "2010-07-22",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter operating_income window is not knowable at 2010-07-22: The four-quarter fiscal window ending at FY2010 Q3 is missing positions: [{'fiscal_year': 2009, 'fiscal_quarter': 4}]."
+      },
+      {
+        "evaluation_date": "2010-10-28",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2010-10-28, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2011-01-20",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2011-01-20, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2011-04-21",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2011-04-21, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2011-07-21",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2011-07-21, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2011-10-27",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2011-10-27, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2012-01-26",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2012-01-26, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2012-04-26",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2012-04-26, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2012-07-26",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2012-07-26, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2012-11-01",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2012-11-01, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2013-01-25",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2013-01-25, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2013-04-24",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2013-04-24, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2013-07-25",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2013-07-25, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2013-10-30",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2013-10-30, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2014-01-29",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2014-01-29, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2014-04-25",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2014-04-25, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2014-07-24",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2014-07-24, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2014-10-28",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2014-10-28, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2015-01-29",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2015-01-29, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2015-04-29",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2015-04-29, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2015-07-23",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2015-07-23, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2015-10-29",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2015-10-29, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2016-01-28",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2016-01-28, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2016-04-28",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2016-04-28, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2016-07-28",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2016-07-28, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2016-10-27",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2016-10-27, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2017-02-02",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2017-02-02, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2017-05-04",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2017-05-04, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2017-08-03",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2017-08-03, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2017-11-03",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2017-11-03, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2018-02-02",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2018-02-02, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2018-05-03",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2018-05-03, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2018-08-02",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2018-08-02, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2018-11-05",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "No discrete quarter of the depreciation role is knowable at 2018-11-05, so no trailing window exists."
+      },
+      {
+        "evaluation_date": "2019-01-31",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter depreciation window is not knowable at 2019-01-31: The four-quarter fiscal window ending at FY2019 Q1 is missing positions: [{'fiscal_year': 2018, 'fiscal_quarter': 2}, {'fiscal_year': 2018, 'fiscal_quarter': 3}, {'fiscal_year': 2018, 'fiscal_quarter': 4}]."
+      },
+      {
+        "evaluation_date": "2019-05-02",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The four-quarter depreciation window is not knowable at 2019-05-02: The four-quarter fiscal window ending at FY2019 Q2 is missing positions: [{'fiscal_year': 2018, 'fiscal_quarter': 3}, {'fiscal_year': 2018, 'fiscal_quarter': 4}]."
+      },
+      {
+        "evaluation_date": "2020-05-01",
+        "reason_code": "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
+        "reason_detail": "The bridge at 2020-05-01 spans more than one balance-sheet date: cash as of 2020-03-28, commercial_paper as of 2019-12-28, long_term_debt_current as of 2020-03-28, long_term_debt_noncurrent as of 2020-03-28, marketable_securities_current as of 2020-03-28. The stale component is not carried forward."
+      },
+      {
+        "evaluation_date": "2020-07-31",
+        "reason_code": "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
+        "reason_detail": "The bridge at 2020-07-31 spans more than one balance-sheet date: cash as of 2020-06-27, commercial_paper as of 2019-12-28, long_term_debt_current as of 2020-06-27, long_term_debt_noncurrent as of 2020-06-27, marketable_securities_current as of 2020-06-27. The stale component is not carried forward."
+      }
+    ],
+    "formula": {
+      "denominator": "the trailing twelve months of AAPL's reported operating income plus reported depreciation and amortization",
+      "expression": "(market cap + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+      "formula_version": "research-multiples/1.0",
+      "numerator": "the filed enterprise-value bridge: market capitalization plus total debt less liquid funds"
+    },
+    "formula_version": "research-multiples/1.0",
+    "input_set_id": "4f0067be31d437c4607b55faa29f19603619b4f0519e9d7b1a36d170afec9081",
+    "instrument_id": "AAPL",
+    "issuer_id": "CIK0000320193",
+    "lane_id": "aapl_filed_ev_bridge_multiple_production_shape",
+    "logic_version": "research-multiples/1.0.0",
+    "max": 27.903961,
+    "mean": 22.38634,
+    "methodology": "research-multiples/1.0",
+    "metric_id": "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+    "metric_label": "AAPL filed enterprise-value bridge multiple, production shape (research): the filed bridge over the trailing twelve months of AAPL's reported operating income plus reported depreciation and amortization",
+    "min": 12.485945,
+    "min_observations_for_description": 20,
+    "percentiles": {
+      "10th": 18.989388,
+      "25th": 20.833618,
+      "75th": 25.199244,
+      "90th": 26.463519,
+      "median": 22.326
+    },
+    "period_end": "2026-07-31",
+    "period_start": "2019-08-01",
+    "prior_period_revisions": [
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-11-05",
+        "difference": 2205000000.0,
+        "difference_ratio": 0.2656626506024096,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000320193-18-000145",
+        "new_element": "us-gaap:DepreciationDepletionAndAmortization",
+        "new_usable_date": "2018-11-05",
+        "new_value": 10505000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000320193-17-000070",
+        "old_element": "us-gaap:DepreciationDepletionAndAmortization",
+        "old_usable_date": "2017-11-03",
+        "old_value": 8300000000.0,
+        "period_end": "2016-09-24",
+        "period_start": "2015-09-27",
+        "role": "depreciation"
+      },
+      {
+        "affected_observation_count": 0,
+        "affected_observation_dates": [],
+        "classification": "PRIOR_PERIOD_VALUE_REVISION",
+        "detected_at_evaluation_date": "2018-11-05",
+        "difference": 1957000000.0,
+        "difference_ratio": 0.23865853658536584,
+        "element_change_kind": null,
+        "element_changed": false,
+        "new_accession": "0000320193-18-000145",
+        "new_element": "us-gaap:DepreciationDepletionAndAmortization",
+        "new_usable_date": "2018-11-05",
+        "new_value": 10157000000.0,
+        "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
+        "old_accession": "0000320193-17-000070",
+        "old_element": "us-gaap:DepreciationDepletionAndAmortization",
+        "old_usable_date": "2017-11-03",
+        "old_value": 8200000000.0,
+        "period_end": "2017-09-30",
+        "period_start": "2016-09-25",
+        "role": "depreciation"
+      }
+    ],
+    "production_eligible": false,
+    "production_refusal": {
+      "production_eligible": false,
+      "statement": "No production reference is created from this distribution, and none may be created from it."
+    },
+    "reason_code": null,
+    "reason_detail": null,
+    "registry_standing": {
+      "cash": {
+        "CashAndCashEquivalentsAtCarryingValue": {
+          "basis": "The core registry maps us-gaap:CashAndCashEquivalentsAtCarryingValue to 'cash' for AAPL as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "cash",
+          "relation_kind": "IDENTITY",
+          "role": "cash",
+          "scope": null
+        }
+      },
+      "commercial_paper": {
+        "CommercialPaper": {
+          "basis": "The core registry declares no metric 'commercial_paper', so it cannot recognise us-gaap:CommercialPaper as a source of it. The role is governed by the calculation specification that names it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:CommercialPaper",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": "commercial_paper",
+          "relation_kind": null,
+          "role": "commercial_paper",
+          "scope": null
+        }
+      },
+      "depreciation": {
+        "DepreciationAndAmortization": {
+          "basis": "The core registry maps us-gaap:DepreciationAndAmortization to 'depreciation_and_amortization' for AAPL as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:DepreciationAndAmortization",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "depreciation_and_amortization",
+          "relation_kind": "IDENTITY",
+          "role": "depreciation",
+          "scope": null
+        },
+        "DepreciationDepletionAndAmortization": {
+          "basis": "The core registry maps us-gaap:DepreciationDepletionAndAmortization to 'depreciation_and_amortization' for AAPL as an EXACT IDENTITY mapping, scoped to AAPL. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:DepreciationDepletionAndAmortization",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "depreciation_and_amortization",
+          "relation_kind": "IDENTITY",
+          "role": "depreciation",
+          "scope": {
+            "ticker": "AAPL"
+          }
+        }
+      },
+      "long_term_debt_current": {
+        "LongTermDebtCurrent": {
+          "basis": "The core registry maps us-gaap:LongTermDebtCurrent to 'long_term_debt_current' for AAPL as an EXACT IDENTITY mapping, without a filer restriction, in force from 2014-09-27. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": "2014-09-27",
+          "effective_to": null,
+          "element": "us-gaap:LongTermDebtCurrent",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "long_term_debt_current",
+          "relation_kind": "IDENTITY",
+          "role": "long_term_debt_current",
+          "scope": null
+        }
+      },
+      "long_term_debt_noncurrent": {
+        "LongTermDebtNoncurrent": {
+          "basis": "The core registry maps us-gaap:LongTermDebtNoncurrent to 'long_term_debt_noncurrent' for AAPL as an EXACT IDENTITY mapping, without a filer restriction, in force from 2014-09-27. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": "2014-09-27",
+          "effective_to": null,
+          "element": "us-gaap:LongTermDebtNoncurrent",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "long_term_debt_noncurrent",
+          "relation_kind": "IDENTITY",
+          "role": "long_term_debt_noncurrent",
+          "scope": null
+        }
+      },
+      "marketable_securities_current": {
+        "MarketableSecuritiesCurrent": {
+          "basis": "The core registry declares no metric 'marketable_securities_current', so it cannot recognise us-gaap:MarketableSecuritiesCurrent as a source of it. The role is governed by the calculation specification that names it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:MarketableSecuritiesCurrent",
+          "mapping_type": null,
+          "qualified": false,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": "marketable_securities_current",
+          "relation_kind": null,
+          "role": "marketable_securities_current",
+          "scope": null
+        }
+      },
+      "operating_income": {
+        "OperatingIncomeLoss": {
+          "basis": "The core registry maps us-gaap:OperatingIncomeLoss to 'operating_income' for AAPL as an EXACT IDENTITY mapping, without a filer restriction. The element is this metric for this filer, and its filed values may produce a figure.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "us-gaap:OperatingIncomeLoss",
+          "mapping_type": "EXACT",
+          "qualified": true,
+          "reason_code": "QUALIFIED_EXACT_IDENTITY_MAPPING",
+          "registry_decision": "QUALIFIED",
+          "registry_metric_id": "operating_income",
+          "relation_kind": "IDENTITY",
+          "role": "operating_income",
+          "scope": null
+        }
+      },
+      "shares_outstanding": {
+        "EntityCommonStockSharesOutstanding": {
+          "basis": "The role names no registry metric, so the registry has no standing to rule on the element. The lane's own specification governs the role, and the element is read under it.",
+          "effective_from": null,
+          "effective_to": null,
+          "element": "dei:EntityCommonStockSharesOutstanding",
+          "mapping_type": null,
+          "qualified": null,
+          "reason_code": "NO_SUCH_REGISTRY_METRIC",
+          "registry_decision": "NOT_APPLICABLE",
+          "registry_metric_id": null,
+          "relation_kind": null,
+          "role": "shares_outstanding",
+          "scope": null
+        }
+      }
+    },
+    "research_use_label": "RESEARCH USE ONLY. This distribution is computed from filed evidence that the production qualification regime does not admit. It is not a valuation reference, it is not a production reference chain input, and it must not be presented as one.",
+    "sample_count": 27,
+    "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
+    "status": "RESEARCH_DISTRIBUTION",
+    "std": 3.595801,
+    "total_evaluations": 67,
+    "unit_policy": {
+      "filing_currency": "USD",
+      "filing_unit": "USD",
+      "fx_rule": null,
+      "observed_price_currency": "USD",
+      "observed_share_unit": "shares",
+      "price_currency": "USD",
+      "role_units": {
+        "cash": "USD",
+        "commercial_paper": "USD",
+        "depreciation": "USD",
+        "long_term_debt_current": "USD",
+        "long_term_debt_noncurrent": "USD",
+        "marketable_securities_current": "USD",
+        "operating_income": "USD",
+        "shares_outstanding": "shares"
+      },
+      "scale": 1.0,
+      "scale_basis": "AAPL states its amounts in units; the capture holds them unchanged and no scaling is applied.",
+      "share_unit": "shares"
+    }
+  },
+  "formula_version": "research-multiples/1.0",
+  "input_set_id": "4f0067be31d437c4607b55faa29f19603619b4f0519e9d7b1a36d170afec9081",
+  "instrument_id": "AAPL",
+  "issuer_id": "CIK0000320193",
+  "lane_id": "aapl_filed_ev_bridge_multiple_production_shape",
+  "logic_version": "research-multiples/1.0.0",
+  "methodology": "research-multiples/1.0",
+  "metric_id": "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+  "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",
+  "observations": [
+    {
+      "content_hash": "5605ff3b060fb59109bc335e3db560f2768317c2d27969b4634f75f0b1a377b2",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-01-26",
+      "market_cap": 186745277658.66,
+      "price": 205.94,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 906794589.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "9c7958444c0feae2d1190dc93964589998289a15ad7e12d66bdf91659c297e3f",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-04-22",
+      "market_cap": 242471280918.01,
+      "price": 266.47,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 909938383.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "766e31dc98f9f361ea2e30ee13d70b9729e48988645044e5504e26361f160687",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-07-22",
+      "market_cap": 236631057177.6,
+      "price": 259.02,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 913562880.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "bca5889dd0056ee3af33d97e32629fe565338acb2c2fc034f22fd4d63d7b2671",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2010-10-28",
+      "market_cap": 279998818898.76,
+      "price": 305.24,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 917307099.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "bb33a5bb00b27698612584e78dedf9bf84f0c0af392d73c03b8775c24a7216db",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2011-01-20",
+      "market_cap": 306490769032.16,
+      "price": 332.68,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 921278012.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "c547b3ea9ba8a0c896c39e5135cf71a9d5f777719662f88c7e697e8439208fa8",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2011-04-21",
+      "market_cap": 324311424542.7,
+      "price": 350.7,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 924754561.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "53fa2e83fc29c02d45bdd1ee1d2c9cdbc0f5fce20fad49d3d7f3427e847739d6",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2011-07-21",
+      "market_cap": 359053029238.94,
+      "price": 387.29,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 927090886.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "c388afa2f50b1463aff3da053d32e90ea5dbca3c40d60215a71a0947ce6c5c60",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2011-10-27",
+      "market_cap": 376122528210.0,
+      "price": 404.69,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 929409000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "2e2cc7abaf972c16fa39698b4382fbf2562357c27f5d293bfe05c0d4a9087f7a",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2012-01-26",
+      "market_cap": 414559673100.0,
+      "price": 444.63,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 932370000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "88c2e48713d864a516b622563e767ebf02539a0739c0bfc23cbb1d6d600dcda9",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2012-04-26",
+      "market_cap": 568237177400.0,
+      "price": 607.7,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 935062000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "03f70e9ff2bb08a59fad88870de1c065e4ce123f68fe98e81e358b6425d19ee0",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2012-07-26",
+      "market_cap": 538895961280.0,
+      "price": 574.88,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 937406000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "7f8876b95335a2df111de9a79d1f24ec2ffad9d0455dad6375cb63806f471329",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2012-11-01",
+      "market_cap": 561160405680.0,
+      "price": 596.54,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 940692000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "05d89086e3db161494a1f2522486d0dce18cf235bd9bd64b734e17a25dc36628",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2013-01-25",
+      "market_cap": 413072833040.0,
+      "price": 439.88,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 939058000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "6538cf68804c06031aac713c49e22ae477fdf6921f087129abc06ce1520d86da",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2013-04-24",
+      "market_cap": 380584623540.0,
+      "price": 405.46,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 938649000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "71397dd0cb9316f0261c6c242bce895e4c53ff0d5c3e021cb8f4e8e7c0c13e72",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2013-07-25",
+      "market_cap": 398375934500.0,
+      "price": 438.5,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 908497000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "89b8923ca675e27a8118ebacb8314ca568a92b26e81e06ba9b0741f06d071370",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2013-10-30",
+      "market_cap": 472272476200.0,
+      "price": 524.9,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 899738000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "64b13c68d21313a40d7c0f2e9cdec1176cc3c497f9f891086cfd1a87b1048d33",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2014-01-29",
+      "market_cap": 446663491750.0,
+      "price": 500.75,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 891989000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "84d9e4f59edb89513ce76d0204eca31ff1e349bdd67e13ed6afe898003700ac5",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2014-04-25",
+      "market_cap": 492658249140.0,
+      "price": 571.94,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 861381000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "581bdab41d5df40d3d4584593896d08f3eee1d9fa176f43d9a65a95269012df7",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2014-07-24",
+      "market_cap": 581002735010.0,
+      "price": 97.03,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5987867000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "314dd3643f762c8b626e2131bd860d5a48a1d607f43da0618e4a68cdc9d128fe",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2014-10-28",
+      "market_cap": 626013021600.0,
+      "price": 106.74,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5864840000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "a275d7fd9c4d49ed409fd35ede47ce5eed36ab7e2ba6829d4d786c687bde42e6",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2015-01-29",
+      "market_cap": 692562537200.0,
+      "price": 118.9,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5824748000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "6d403ba828485ccca1a4eae028a3aa66eeaf9002e5236db587e99b7b939747c6",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2015-04-29",
+      "market_cap": 741098899200.0,
+      "price": 128.64,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5761030000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "0b2749ca001cc256cf037d2681db7c2b287ecd5f7c47c10af3e68e7b3355305a",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2015-07-23",
+      "market_cap": 713752685520.0,
+      "price": 125.16,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5702722000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "4e8048b9cf9bc8055d674e0d36f8cc38dbbcfde39bae6f42985153b44f16150c",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2015-10-29",
+      "market_cap": 671994645430.0,
+      "price": 120.53,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5575331000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "f36fd3e58ae5f93eedc0b22b64248569a1415d1784fb9d5ecf868dd8b3916979",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2016-01-28",
+      "market_cap": 521689814470.0,
+      "price": 94.09,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5544583000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "5ffde19ecd73d9d4dac0154766b0d7a3ee00541d7546983339c1e0586ee016cc",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2016-04-28",
+      "market_cap": 519424212750.0,
+      "price": 94.83,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5477425000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "8be9839142e9fa46ec1acd14caed1c9ecaeb59885ab7c6f400e939c1e9ef5b4f",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2016-07-28",
+      "market_cap": 562230142620.0,
+      "price": 104.34,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5388443000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "a48d7f19345daec4d15030b3146708672dcf5b99209b07b501e0c82c2074ee12",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2016-10-27",
+      "market_cap": 610443192240.0,
+      "price": 114.48,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5332313000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "036b927b490d465b638ffdf723407ab1280fb1da0fa5129819b0b8bc6ef34a1e",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2017-02-02",
+      "market_cap": 674337786200.0,
+      "price": 128.53,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5246540000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "fbaeebe4174c3ed1b48afd52ed094aebe452a74f3e50ef6a424299d6b3ac958a",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2017-05-04",
+      "market_cap": 763983975200.0,
+      "price": 146.53,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5213840000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "61b180dbd6c0d6866eaebcf17544ec3b9ff892e202a2e1b917d36a4a2eeab71e",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2017-08-03",
+      "market_cap": 803554519960.0,
+      "price": 155.57,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5165228000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "b4f23bd2d82e575b0fbba49381bd18729562ee4b389f662aba9dcda08753473c",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2017-11-03",
+      "market_cap": 885668820000.0,
+      "price": 172.5,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5134312000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "c15404531a9b2bc11451e124c42135d487c129785b6b96537e7dbe7dd4dc380a",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2018-02-02",
+      "market_cap": 814379086500.0,
+      "price": 160.5,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 5074013000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "223c6efebb8347bbefadb0ec1c8a719912cab6923ae9831eece58ba308125f8b",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2018-05-03",
+      "market_cap": 869438760820.0,
+      "price": 176.89,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 4915138000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "535a84222ededde336ec896daca831422f69a93c349382eed7582b26d25bf20f",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2018-08-02",
+      "market_cap": 1001678353140.0,
+      "price": 207.39,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 4829926000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "91b7b96beaa75732962c33c96042bd410d840425dccef98916948b05a631fc26",
+      "denominator": null,
+      "enterprise_value": null,
+      "evaluation_date": "2018-11-05",
+      "market_cap": 956624782820.0,
+      "price": 201.59,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 4745398000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "982e8ab3cfc0f6cf3eae59f9727793e287b65398e5959195844e6a586d977bbe",
+      "denominator": null,
+      "enterprise_value": 813114203200.0,
+      "evaluation_date": "2019-01-31",
+      "market_cap": 784811203200.0,
+      "price": 166.44,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 4715280000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "97a559fa85f77f32f1c5f4b109c95bb94826334496564bc4a0599b79d2fd7419",
+      "denominator": null,
+      "enterprise_value": 994852836250.0,
+      "evaluation_date": "2019-05-02",
+      "market_cap": 962314836250.0,
+      "price": 209.15,
+      "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+      "shares_outstanding": 4601075000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "cfd67db2dab5f8335034addc32e554f120c48951e34f65669ba7bf6a630031bf",
+      "denominator": 76545000000.0,
+      "enterprise_value": 955736687400.0,
+      "evaluation_date": "2019-08-01",
+      "market_cap": 941932687400.0,
+      "price": 208.43,
+      "reason_code": null,
+      "shares_outstanding": 4519180000.0,
+      "status": "AVAILABLE",
+      "value": 12.485945
+    },
+    {
+      "content_hash": "45d93776eeeacae61eb2b1f5eed1a5f69c9aafe4471468883cde47692282f2bb",
+      "denominator": 76477000000.0,
+      "enterprise_value": 1112796601400.0,
+      "evaluation_date": "2019-10-31",
+      "market_cap": 1105306601400.0,
+      "price": 248.76,
+      "reason_code": null,
+      "shares_outstanding": 4443265000.0,
+      "status": "AVAILABLE",
+      "value": 14.550736
+    },
+    {
+      "content_hash": "726c079c0eec3529dfd7af75dd478f66611c0d3b6db3d00e6a221177e3b57bbb",
+      "denominator": 78121000000.0,
+      "enterprise_value": 1420273183200.0,
+      "evaluation_date": "2020-01-29",
+      "market_cap": 1419143183200.0,
+      "price": 324.34,
+      "reason_code": null,
+      "shares_outstanding": 4375480000.0,
+      "status": "AVAILABLE",
+      "value": 18.180428
+    },
+    {
+      "content_hash": "ec8f86e176126db712daf5cc3578a7c3e6c7240ab53f960efaabde886a6c80e5",
+      "denominator": 77305000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2020-05-01",
+      "market_cap": 1252926218450.0,
+      "price": 289.07,
+      "reason_code": "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
+      "shares_outstanding": 4334335000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "ddb0f0e5960df581d0179b4d773cfcd006ae550876db632f6663a557386a726a",
+      "denominator": 78671000000.0,
+      "enterprise_value": null,
+      "evaluation_date": "2020-07-31",
+      "market_cap": 1817315475360.0,
+      "price": 425.04,
+      "reason_code": "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
+      "shares_outstanding": 4275634000.0,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    {
+      "content_hash": "e618f694da9f64c49ea72cd2ab0a98816927a8fb6239907d588329509302463f",
+      "denominator": 77344000000.0,
+      "enterprise_value": 1872309165720.0,
+      "evaluation_date": "2020-10-30",
+      "market_cap": 1850816165720.0,
+      "price": 108.86,
+      "reason_code": null,
+      "shares_outstanding": 17001802000.0,
+      "status": "AVAILABLE",
+      "value": 24.207555
+    },
+    {
+      "content_hash": "59ee00179fb5ed103cf43aa7520d9d0196a711dc7e8f678c44f9375a11741292",
+      "denominator": 85159000000.0,
+      "enterprise_value": 2336697080640.0,
+      "evaluation_date": "2021-01-28",
+      "market_cap": 2301480080640.0,
+      "price": 137.09,
+      "reason_code": null,
+      "shares_outstanding": 16788096000.0,
+      "status": "AVAILABLE",
+      "value": 27.439226
+    },
+    {
+      "content_hash": "89f25df46757afc772eb7a42029f20a580e6b15f9f00e9dd9d96c79b94716eec",
+      "denominator": 99820000000.0,
+      "enterprise_value": 2279275985880.0,
+      "evaluation_date": "2021-04-29",
+      "market_cap": 2227464985880.0,
+      "price": 133.48,
+      "reason_code": null,
+      "shares_outstanding": 16687631000.0,
+      "status": "AVAILABLE",
+      "value": 22.833861
+    },
+    {
+      "content_hash": "bda6e0ef6c55eb2bb07c80298fc1e596e6feb761f0d44a5e0d22b1275a3768c6",
+      "denominator": 110935000000.0,
+      "enterprise_value": 2456638466680.0,
+      "evaluation_date": "2021-07-28",
+      "market_cap": 2396543466680.0,
+      "price": 144.98,
+      "reason_code": null,
+      "shares_outstanding": 16530166000.0,
+      "status": "AVAILABLE",
+      "value": 22.144846
+    },
+    {
+      "content_hash": "a968aedf1a01624a34fe1793336618047a4daf7805ad53ac2417ffc07c7ec668",
+      "denominator": 120233000000.0,
+      "enterprise_value": 2519758270600.0,
+      "evaluation_date": "2021-10-29",
+      "market_cap": 2457678270600.0,
+      "price": 149.8,
+      "reason_code": null,
+      "shares_outstanding": 16406397000.0,
+      "status": "AVAILABLE",
+      "value": 20.957294
+    },
+    {
+      "content_hash": "c58d9f8e6e030e20eb9c36a5263873a2638c9cfe3d3afded8d170d9795ec5d81",
+      "denominator": 128218000000.0,
+      "enterprise_value": 2838575385530.0,
+      "evaluation_date": "2022-01-28",
+      "market_cap": 2779690385530.0,
+      "price": 170.33,
+      "reason_code": null,
+      "shares_outstanding": 16319441000.0,
+      "status": "AVAILABLE",
+      "value": 22.138665
+    },
+    {
+      "content_hash": "a6b12a2be793535d24e61cd27ae0652cb63b417df89bb56f9ae907ef58223aff",
+      "denominator": 130634000000.0,
+      "enterprise_value": 2620063784650.0,
+      "evaluation_date": "2022-04-29",
+      "market_cap": 2551593784650.0,
+      "price": 157.65,
+      "reason_code": null,
+      "shares_outstanding": 16185181000.0,
+      "status": "AVAILABLE",
+      "value": 20.056523
+    },
+    {
+      "content_hash": "09e9683acf769f44afdc05bea048fb678d130fb3438b8a250603072e194654d9",
+      "denominator": 129557000000.0,
+      "enterprise_value": 2683117907520.0,
+      "evaluation_date": "2022-07-29",
+      "market_cap": 2611657907520.0,
+      "price": 162.51,
+      "reason_code": null,
+      "shares_outstanding": 16070752000.0,
+      "status": "AVAILABLE",
+      "value": 20.709942
+    },
+    {
+      "content_hash": "def911101d69b784d3716de429d8d7e3978a451c272ca742599229fc70fa03b7",
+      "denominator": 130541000000.0,
+      "enterprise_value": 2549295297320.0,
+      "evaluation_date": "2022-10-28",
+      "market_cap": 2477530297320.0,
+      "price": 155.74,
+      "reason_code": null,
+      "shares_outstanding": 15908118000.0,
+      "status": "AVAILABLE",
+      "value": 19.528694
+    },
+    {
+      "content_hash": "7300f027853148b54d99918be89b0dff9c751f8026c21927d426ee453eab44e5",
+      "denominator": 125288000000.0,
+      "enterprise_value": 2504245657000.0,
+      "evaluation_date": "2023-02-03",
+      "market_cap": 2444490657000.0,
+      "price": 154.5,
+      "reason_code": null,
+      "shares_outstanding": 15821946000.0,
+      "status": "AVAILABLE",
+      "value": 19.987913
+    },
+    {
+      "content_hash": "9655676ffd664661a11528e1fcdd6fe113b1d09206ff1a524765f12349457e57",
+      "denominator": 123788000000.0,
+      "enterprise_value": 2783773806140.0,
+      "evaluation_date": "2023-05-05",
+      "market_cap": 2730030806140.0,
+      "price": 173.57,
+      "reason_code": null,
+      "shares_outstanding": 15728702000.0,
+      "status": "AVAILABLE",
+      "value": 22.488236
+    },
+    {
+      "content_hash": "8216624fba6117d0e758b8dfe1ed26266d077fa50c22deea31ff4345db6b947b",
+      "denominator": 123957000000.0,
+      "enterprise_value": 2892071881680.0,
+      "evaluation_date": "2023-08-04",
+      "market_cap": 2845273881680.0,
+      "price": 181.99,
+      "reason_code": null,
+      "shares_outstanding": 15634232000.0,
+      "status": "AVAILABLE",
+      "value": 23.331251
+    },
+    {
+      "content_hash": "fc8bb6bebc1414de1648649ca2ed8a11f36bad9a54a61b8f939b4ea86a3efcf7",
+      "denominator": 125820000000.0,
+      "enterprise_value": 2796926640800.0,
+      "evaluation_date": "2023-11-03",
+      "market_cap": 2747393640800.0,
+      "price": 176.65,
+      "reason_code": null,
+      "shares_outstanding": 15552752000.0,
+      "status": "AVAILABLE",
+      "value": 22.229587
+    },
+    {
+      "content_hash": "37a9387e1f2788d989bee717c75a7d261c6a50cab2d5fa4fbeece29e4b04d8d0",
+      "denominator": 130109000000.0,
+      "enterprise_value": 2904813583850.0,
+      "evaluation_date": "2024-02-02",
+      "market_cap": 2869873583850.0,
+      "price": 185.85,
+      "reason_code": null,
+      "shares_outstanding": 15441881000.0,
+      "status": "AVAILABLE",
+      "value": 22.326
+    },
+    {
+      "content_hash": "e21ade7c9fc336c04d8bb49a2e60fca9b068899538a1eebd50e9841d9a425ba6",
+      "denominator": 129629000000.0,
+      "enterprise_value": 2849403957160.0,
+      "evaluation_date": "2024-05-03",
+      "market_cap": 2811963957160.0,
+      "price": 183.38,
+      "reason_code": null,
+      "shares_outstanding": 15334082000.0,
+      "status": "AVAILABLE",
+      "value": 21.981223
+    },
+    {
+      "content_hash": "28ad3659cc8f14eb0a74b4079a8478cb3850de62b60d9291bc8c8706e238b6ab",
+      "denominator": 131781000000.0,
+      "enterprise_value": 3382284560820.0,
+      "evaluation_date": "2024-08-02",
+      "market_cap": 3342781560820.0,
+      "price": 219.86,
+      "reason_code": null,
+      "shares_outstanding": 15204137000.0,
+      "status": "AVAILABLE",
+      "value": 25.66595
+    },
+    {
+      "content_hash": "cfa30e36504a90a18fe1114c811e25fae88d0823e65a29bf21d965f7e879cb38",
+      "denominator": 134661000000.0,
+      "enterprise_value": 3410926104930.0,
+      "evaluation_date": "2024-11-01",
+      "market_cap": 3369468104930.0,
+      "price": 222.91,
+      "reason_code": null,
+      "shares_outstanding": 15115823000.0,
+      "status": "AVAILABLE",
+      "value": 25.329725
+    },
+    {
+      "content_hash": "0d9c3737b6dd8b768a852d8f2ea43a7e104de9a3c273e8944b9646491b143fcb",
+      "denominator": 137352000000.0,
+      "enterprise_value": 3588233228000.0,
+      "evaluation_date": "2025-01-31",
+      "market_cap": 3545209228000.0,
+      "price": 236.0,
+      "reason_code": null,
+      "shares_outstanding": 15022073000.0,
+      "status": "AVAILABLE",
+      "value": 26.124361
+    },
+    {
+      "content_hash": "c9f54149a25c71aee55d8a879b5879ce361bde2f06009781093e8314d776a284",
+      "denominator": 138866000000.0,
+      "enterprise_value": 3116759869100.0,
+      "evaluation_date": "2025-05-02",
+      "market_cap": 3067071869100.0,
+      "price": 205.35,
+      "reason_code": null,
+      "shares_outstanding": 14935826000.0,
+      "status": "AVAILABLE",
+      "value": 22.44437
+    },
+    {
+      "content_hash": "e7b6e95d181b212105b014d70a41cabfc09f47db8eb17f880a3ab14ad228226a",
+      "denominator": 141696000000.0,
+      "enterprise_value": 3049724128200.0,
+      "evaluation_date": "2025-08-01",
+      "market_cap": 3003398128200.0,
+      "price": 202.38,
+      "reason_code": null,
+      "shares_outstanding": 14840390000.0,
+      "status": "AVAILABLE",
+      "value": 21.523008
+    },
+    {
+      "content_hash": "e66870c6c15121ed46eba17cf6f9c51c5d04020ec2cb007c99a1e7d4aeb499ad",
+      "denominator": 144748000000.0,
+      "enterprise_value": 4039042560610.0,
+      "evaluation_date": "2025-10-31",
+      "market_cap": 3995082560610.0,
+      "price": 270.37,
+      "reason_code": null,
+      "shares_outstanding": 14776353000.0,
+      "status": "AVAILABLE",
+      "value": 27.903961
+    },
+    {
+      "content_hash": "7336d62bb06a339a14da93b68eadd99b15a85907deb40e48edd6667827013cbd",
+      "denominator": 152902000000.0,
+      "enterprise_value": 3833064207200.0,
+      "evaluation_date": "2026-01-30",
+      "market_cap": 3809462207200.0,
+      "price": 259.48,
+      "reason_code": null,
+      "shares_outstanding": 14681140000.0,
+      "status": "AVAILABLE",
+      "value": 25.068764
+    },
+    {
+      "content_hash": "fa8fa90b052eadb1d0f0f9e45ce8088d0ffc53f78449588b6356a0cf9849c2c8",
+      "denominator": 159976000000.0,
+      "enterprise_value": 4130719909840.0,
+      "evaluation_date": "2026-05-01",
+      "market_cap": 4114515909840.0,
+      "price": 280.14,
+      "reason_code": null,
+      "shares_outstanding": 14687356000.0,
+      "status": "AVAILABLE",
+      "value": 25.820873
+    },
+    {
+      "content_hash": "ee27027f6335f4f881b8466d288636033462180868ed2d9a7a979a57403d0422",
+      "denominator": 167959000000.0,
+      "enterprise_value": 4530233143800.0,
+      "evaluation_date": "2026-07-31",
+      "market_cap": 4508288143800.0,
+      "price": 308.91,
+      "reason_code": null,
+      "shares_outstanding": 14594180000.0,
+      "status": "AVAILABLE",
+      "value": 26.972256
+    }
+  ]
+}

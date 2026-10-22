@@ -1,0 +1,87 @@
+{
+  "candidate_lane_ids": [
+    "aapl_reported_revenue_multiple",
+    "aapl_reported_operating_profit_plus_reported_d_and_a_multiple",
+    "aapl_filed_ev_bridge_multiple_production_shape"
+  ],
+  "dataset": "research lane results",
+  "diagnostic_lane_ids": [],
+  "issuers": {
+    "AAPL": {
+      "entity_name": "Apple Inc.",
+      "fiscal_year_end": "09-26",
+      "issuer_id": "CIK0000320193"
+    },
+    "KO": {
+      "entity_name": "The Coca-Cola Company",
+      "fiscal_year_end": "12-31",
+      "issuer_id": "CIK0000021344"
+    }
+  },
+  "lanes": {
+    "aapl_filed_ev_bridge_multiple_production_shape": {
+      "candidate_metric": true,
+      "content_hash": "c5fbaa23b68459578262556070d77d4bab2ba4ed142d4e2feba950344238b373",
+      "file": "aapl_filed_ev_bridge_multiple_production_shape.json",
+      "input_set_id": "4f0067be31d437c4607b55faa29f19603619b4f0519e9d7b1a36d170afec9081",
+      "issuer": "AAPL",
+      "mean": 22.38634,
+      "median": 22.326,
+      "metric_id": "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+      "period_end": "2026-07-31",
+      "period_start": "2019-08-01",
+      "prior_period_revisions": 2,
+      "rejection_counts": {
+        "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 2,
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 38
+      },
+      "sample_count": 27,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 3.595801,
+      "total_evaluations": 67
+    },
+    "aapl_reported_operating_profit_plus_reported_d_and_a_multiple": {
+      "candidate_metric": true,
+      "content_hash": "c48713e2cdadaf26cfc435da1d40f2b28b7b89c00f32ec729e8a4f11feee5cc0",
+      "file": "aapl_reported_operating_profit_plus_reported_d_and_a_multiple.json",
+      "input_set_id": "e59f5e4e0665bad1572fbebc2ae2c4a7ccfddc705dda0a39aaa5ee218714127c",
+      "issuer": "AAPL",
+      "mean": 21.881299,
+      "median": 22.054083,
+      "metric_id": "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+      "period_end": "2026-07-31",
+      "period_start": "2019-08-01",
+      "prior_period_revisions": 2,
+      "rejection_counts": {
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 38
+      },
+      "sample_count": 29,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 3.637017,
+      "total_evaluations": 67
+    },
+    "aapl_reported_revenue_multiple": {
+      "candidate_metric": true,
+      "content_hash": "1a23c95d3fcc6f1f79204e82c6aab3e5760bf2cf3ab32f02c104cb2eb10acb32",
+      "file": "aapl_reported_revenue_multiple.json",
+      "input_set_id": "7a10ab27891e6fa2ebe518905cddd3ac1a496a953cc1779f1ce3631040585b58",
+      "issuer": "AAPL",
+      "mean": 6.812216,
+      "median": 6.996311,
+      "metric_id": "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
+      "period_end": "2026-07-31",
+      "period_start": "2018-11-05",
+      "prior_period_revisions": 0,
+      "rejection_counts": {
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 35
+      },
+      "sample_count": 32,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 1.780924,
+      "total_evaluations": 67
+    }
+  },
+  "logic_version": "research-multiples/1.0.0",
+  "methodology": "research-multiples/1.0",
+  "purpose": "Research use only. No figure here is a production reference, and nothing here is read by the production runner, the Investment Context or the Archive."
+}

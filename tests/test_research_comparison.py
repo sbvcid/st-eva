@@ -39,6 +39,9 @@ B = "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
 C1 = "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE"
 C2 = "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS"
 DIAGNOSTIC = "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC"
+AAPL_A = "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE"
+AAPL_B = "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
+AAPL_C1 = "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE"
 
 
 def _observations(metric_id: str):
@@ -53,7 +56,9 @@ class TheMetricDefinitions(unittest.TestCase):
 
     def test_the_definitions_carry_the_comparability_attributes(self):
         definitions = {d.metric_id: d for d in metric_definitions()}
-        self.assertEqual(set(definitions), {A, B, C1, C2})
+        self.assertEqual(
+            set(definitions), {A, B, C1, C2, AAPL_A, AAPL_B, AAPL_C1}
+        )
         for definition in definitions.values():
             self.assertIn(
                 definition.numerator_kind, ("market_cap", "enterprise_value")
@@ -690,7 +695,7 @@ class TheComparisonApi(unittest.TestCase):
         response = self.client.get("/api/research/definitions")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(len(payload["definitions"]), 4)
+        self.assertEqual(len(payload["definitions"]), 7)
         self.assertIn("NUMERATOR_MULTIPLIER", payload["sensitivity_assumptions"])
 
     def test_the_paired_comparison_is_served(self):
