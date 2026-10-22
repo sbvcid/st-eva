@@ -184,6 +184,176 @@ class TestBrowserSmoke(unittest.TestCase):
             context.close()
             browser.close()
 
+    def test_research_surface_switches_issuers_against_the_real_api(self):
+        """
+        Cross-issuer selection through the real research API, no stubs.
+
+        The catalogue is the API's own, the three issuers' lanes each show
+        their own basis, median, count and status, and nothing of the lane
+        the user left behind stays on the card. The unavailable MSFT lane is
+        selectable and says why it holds no figure, and a reverse calculation
+        on it is refused by the real API rather than answered with a
+        fabricated multiple.
+        """
+        candidate_ids = [
+            "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+            "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+            "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+            "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS",
+            "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
+            "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+            "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+            "RESEARCH_MSFT_REPORTED_REVENUE_MULTIPLE",
+            "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+            "RESEARCH_MSFT_FILED_EV_BRIDGE_MULTIPLE_OVER_REVENUE",
+        ]
+
+        def card_text(page):
+            return page.locator(
+                "[data-testid='research-metric-card']"
+            ).inner_text()
+
+        def wait_for_median(page, median: str):
+            # Wait for the selected lane's own figure, not a fixed delay.
+            page.wait_for_function(
+                "expected => document.querySelector("
+                "\"[data-testid='research-median']\")?.textContent === expected",
+                arg=median,
+            )
+
+        def wait_for_status(page, status: str):
+            page.wait_for_function(
+                "expected => document.querySelector("
+                "\"[data-testid='research-distribution-status']\")"
+                "?.dataset.status === expected",
+                arg=status,
+            )
+
+        def assert_notice(page):
+            page.wait_for_selector("[data-testid='research-notice']")
+            self.assertIn(
+                "not a valuation reference",
+                page.locator("[data-testid='research-notice']").inner_text(),
+            )
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale="en-US", viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            page.wait_for_selector("button:has-text('Analyze')")
+            page.click("[data-testid='mode-research']")
+            page.wait_for_selector("[data-testid='research-metric-select']")
+            assert_notice(page)
+
+            # The catalogue is the API's own: exactly the candidate research
+            # metrics, and no diagnostic. The options arrive with the
+            # catalogue fetch, so the wait is for them, not a fixed delay.
+            page.wait_for_function(
+                "() => document.querySelector("
+                "\"[data-testid='research-metric-select']\")?.options.length > 1"
+            )
+            options = page.eval_on_selector(
+                "[data-testid='research-metric-select']",
+                "e => Array.from(e.options).map(o => o.value)",
+            )
+            self.assertEqual(sorted(options), sorted([""] + candidate_ids))
+            self.assertNotIn(
+                "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC",
+                options,
+            )
+
+            # -- AAPL: the homogeneous successor-only revenue sample. --------
+            page.select_option(
+                "[data-testid='research-metric-select']",
+                "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
+            )
+            wait_for_median(page, "7.257709")
+            wait_for_status(page, "RESEARCH_DISTRIBUTION")
+            aapl_card = card_text(page)
+            self.assertIn("AAPL reported-revenue multiple", aapl_card)
+            self.assertIn(
+                "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                aapl_card,
+            )
+            self.assertEqual(
+                page.text_content("[data-testid='research-valid-count']"), "28"
+            )
+            assert_notice(page)
+
+            # -- MSFT: its own lane, with none of AAPL's figures left. -------
+            page.select_option(
+                "[data-testid='research-metric-select']",
+                "RESEARCH_MSFT_REPORTED_REVENUE_MULTIPLE",
+            )
+            wait_for_median(page, "10.848125")
+            wait_for_status(page, "RESEARCH_DISTRIBUTION")
+            msft_card = card_text(page)
+            self.assertIn("MSFT reported-revenue multiple", msft_card)
+            self.assertIn(
+                "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                msft_card,
+            )
+            self.assertEqual(
+                page.text_content("[data-testid='research-valid-count']"), "33"
+            )
+            self.assertNotIn("7.257709", msft_card)
+            self.assertNotIn("AAPL", msft_card)
+            assert_notice(page)
+
+            # -- KO: its own retired-element lane, with none of MSFT's left. -
+            page.select_option(
+                "[data-testid='research-metric-select']",
+                "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+            )
+            wait_for_median(page, "6.403373")
+            wait_for_status(page, "RESEARCH_DISTRIBUTION")
+            ko_card = card_text(page)
+            self.assertIn("KO reported-revenue multiple", ko_card)
+            self.assertIn("us-gaap:Revenues", ko_card)
+            self.assertEqual(
+                page.text_content("[data-testid='research-valid-count']"), "29"
+            )
+            self.assertNotIn("10.848125", ko_card)
+            self.assertNotIn("MSFT", ko_card)
+            assert_notice(page)
+
+            # -- The unavailable MSFT D&A lane: selectable, says why it has
+            # no figure, and the real API refuses a reverse calculation on it
+            # rather than producing a multiple.
+            page.select_option(
+                "[data-testid='research-metric-select']",
+                "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+            )
+            wait_for_status(page, "RESEARCH_UNAVAILABLE")
+            unavailable_card = card_text(page)
+            self.assertIn(
+                "MSFT reported operating profit plus reported depreciation and amortization multiple",
+                unavailable_card,
+            )
+            self.assertIn("us-gaap:DepreciationDepletionAndAmortization", unavailable_card)
+            self.assertEqual(
+                page.text_content("[data-testid='research-median']"), "—"
+            )
+            self.assertEqual(
+                page.text_content("[data-testid='research-valid-count']"), "0"
+            )
+            self.assertNotIn("6.403373", unavailable_card)
+            self.assertNotIn("KO", unavailable_card)
+            assert_notice(page)
+
+            page.click("[data-testid='research-calculate']")
+            page.wait_for_selector("[data-testid='research-error']")
+            self.assertIn(
+                "RESEARCH_CALCULATION_REFUSED_MULTIPLE_UNAVAILABLE",
+                page.locator("[data-testid='research-error']").inner_text(),
+            )
+            self.assertIsNone(page.query_selector("[data-testid='research-result']"))
+
+            context.close()
+            browser.close()
+
     def test_desktop_aapl_full_flow(self):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
