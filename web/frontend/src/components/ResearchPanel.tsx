@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ResearchApiError,
   getResearchCatalogue,
@@ -71,6 +71,11 @@ const ResearchPanel: React.FC = () => {
   const [result, setResult] = useState<ResearchCalculation | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<boolean>(false)
+  // The selection the in-flight requests belong to. A response that arrives
+  // after the user has chosen another metric is stale: its figures belong
+  // to a metric the user has already left, and none of them may be shown
+  // under the current selection.
+  const selectionRef = useRef<string>('')
 
   useEffect(() => {
     let cancelled = false
@@ -93,19 +98,27 @@ const ResearchPanel: React.FC = () => {
 
   const handleSelect = useCallback(
     async (metricId: string) => {
+      selectionRef.current = metricId
       setSelectedId(metricId)
+      // Nothing of the previous metric survives a selection: its card, its
+      // observations, its evidence and its result are the previous metric's
+      // figures, and a load that fails or arrives late must not leave them
+      // standing behind the new selection. While the new metric's detail is
+      // loading, the catalogue's own summary of it is what is shown.
+      setDetail(null)
       setResult(null)
       setEvidence(null)
       setEvidenceDate('')
       setError(null)
       if (!metricId) {
-        setDetail(null)
         return
       }
       try {
         const payload = await getResearchMetric(metricId)
+        if (selectionRef.current !== metricId) return
         setDetail(payload)
       } catch (err: any) {
+        if (selectionRef.current !== metricId) return
         setError(err.message)
       }
     },
@@ -113,12 +126,13 @@ const ResearchPanel: React.FC = () => {
   )
 
   const handleCalculate = useCallback(async () => {
-    if (!selectedId) return
+    const requestedMetric = selectedId
+    if (!requestedMetric) return
     setBusy(true)
     setError(null)
     try {
       const payload = await runResearchCalculation({
-        metric_id: selectedId,
+        metric_id: requestedMetric,
         multiple_source: multipleSource,
         multiple: multipleValue ? Number(multipleValue) : null,
         observation_date: observationDate || null,
@@ -126,8 +140,10 @@ const ResearchPanel: React.FC = () => {
         numerator_value: numeratorValue ? Number(numeratorValue) : null,
         numerator_date: numeratorDate || null,
       })
+      if (selectionRef.current !== requestedMetric) return
       setResult(payload)
     } catch (err: any) {
+      if (selectionRef.current !== requestedMetric) return
       setResult(null)
       const refusal = err instanceof ResearchApiError ? err.refusal : undefined
       setError(refusal ? `${refusal.reason_code}: ${refusal.detail}` : err.message)
@@ -146,17 +162,23 @@ const ResearchPanel: React.FC = () => {
 
   const handleOpenEvidence = useCallback(
     async (date: string) => {
-      if (!selectedId) return
+      const requestedMetric = selectionRef.current
+      if (!requestedMetric) return
       setError(null)
       try {
-        const payload = await getResearchObservationEvidence(selectedId, date)
+        const payload = await getResearchObservationEvidence(
+          requestedMetric,
+          date,
+        )
+        if (selectionRef.current !== requestedMetric) return
         setEvidence(payload)
         setEvidenceDate(date)
       } catch (err: any) {
+        if (selectionRef.current !== requestedMetric) return
         setError(err.message)
       }
     },
-    [selectedId],
+    [],
   )
 
   const observations: ResearchObservation[] = detail?.observations ?? []

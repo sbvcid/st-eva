@@ -184,6 +184,60 @@ const evidenceFixture = () => ({
   bridge: { components: {} },
 })
 
+const AAPL_METRIC_ID = 'RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE'
+
+// A second issuer's lane, with its own figures: the AAPL revenue lane's
+// homogeneous successor-only sample, not a restatement of the KO fixture.
+const aaplMetric = (): any => ({
+  ...catalogue.metrics[0],
+  metric_id: AAPL_METRIC_ID,
+  lane_id: 'aapl_reported_revenue_multiple',
+  issuer_id: 'CIK0000320193',
+  instrument_id: 'AAPL',
+  metric_label: 'AAPL reported-revenue multiple (research)',
+  research_purpose:
+    'Research use only. A named revenue multiple for AAPL, over one element.',
+  status: 'RESEARCH_DISTRIBUTION',
+  sample_count: 28,
+  total_evaluations: 67,
+  refused_count: 35,
+  published_observation_count: 32,
+  median: 7.257709,
+  mean: 7.4,
+  percentiles: { median: 7.257709 },
+  period_start: '2019-10-31',
+  period_end: '2026-07-31',
+  basis: {
+    revenue: ['us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax'],
+  },
+  basis_groups: [],
+})
+
+const aaplDetail = (): ResearchMetricDetail => ({
+  metric: aaplMetric(),
+  observations: [
+    {
+      evaluation_date: '2026-07-31',
+      status: 'AVAILABLE',
+      value: 7.257709,
+      reason_code: null,
+      reason_detail: null,
+      price: 213.25,
+      shares_outstanding: 15000000000,
+      market_cap: 3198750000000,
+      enterprise_value: null,
+      denominator: 440708000000,
+      basis_breaks: [],
+      content_hash: 'aapl-obs-hash-1',
+    },
+  ],
+})
+
+const multiIssuerCatalogue = (): ResearchCatalogue => ({
+  ...catalogue,
+  metrics: [catalogue.metrics[0], aaplMetric()],
+})
+
 const definitionsFixture = () => ({
   definitions: [
     {
@@ -647,6 +701,134 @@ describe('the research surface', () => {
     expect(status).toHaveAttribute('data-status', 'RESEARCH_UNAVAILABLE')
     expect(status).toHaveTextContent('No window is knowable at any evaluation date.')
     expect(screen.getByTestId('research-median')).toHaveTextContent('—')
+  })
+
+  it('shows each issuer lane that is selected, not the previous one', async () => {
+    vi.mocked(researchApi.getResearchCatalogue).mockResolvedValue(
+      multiIssuerCatalogue(),
+    )
+    vi.mocked(researchApi.getResearchMetric).mockImplementation(
+      (metricId: string) =>
+        Promise.resolve(metricId === AAPL_METRIC_ID ? aaplDetail() : detail),
+    )
+
+    await enterResearchMode()
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-metric-card')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('research-median')).toHaveTextContent('6.403373')
+
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: AAPL_METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-metric-card')).toHaveTextContent(
+        /AAPL reported-revenue multiple/,
+      )
+    })
+    // The figures are the selected lane's own: the homogeneous successor
+    // sample's median and the elements its observations were read from.
+    expect(screen.getByTestId('research-median')).toHaveTextContent('7.257709')
+    expect(screen.getByTestId('research-basis')).toHaveTextContent(
+      'us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax',
+    )
+    expect(screen.getByTestId('research-basis')).not.toHaveTextContent(
+      'us-gaap:Revenues,',
+    )
+    // The observation table is the selected metric's, and the previous
+    // issuer's dates are gone.
+    expect(
+      screen.queryByTestId('research-open-2026-07-29'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByTestId('research-open-2026-07-31'),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('research-observations')).not.toHaveTextContent(
+      'RESEARCH_REASON_NO_DENOMINATOR_WINDOW',
+    )
+  })
+
+  it('does not leave the previous metric behind a selection that fails to load', async () => {
+    vi.mocked(researchApi.getResearchCatalogue).mockResolvedValue(
+      multiIssuerCatalogue(),
+    )
+    await enterResearchMode()
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-metric-card')).toHaveTextContent(
+        /KO reported-revenue multiple/,
+      )
+    })
+
+    vi.mocked(researchApi.getResearchMetric).mockRejectedValueOnce(
+      new Error('load failed'),
+    )
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: AAPL_METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-error')).toHaveTextContent(
+        'load failed',
+      )
+    })
+    // The failed selection shows the new metric's own catalogue summary and
+    // none of the previous metric's figures: nothing of KO survives behind
+    // AAPL's selection.
+    expect(screen.getByTestId('research-metric-card')).toHaveTextContent(
+      /AAPL reported-revenue multiple/,
+    )
+    expect(screen.getByTestId('research-median')).toHaveTextContent('7.257709')
+    expect(screen.queryByTestId('research-median')).not.toHaveTextContent(
+      '6.403373',
+    )
+    expect(screen.queryByTestId('research-open-2026-07-29')).not.toBeInTheDocument()
+  })
+
+  it('does not show a late response for an earlier selection', async () => {
+    let resolveKo!: (payload: ResearchMetricDetail) => void
+    vi.mocked(researchApi.getResearchCatalogue).mockResolvedValue(
+      multiIssuerCatalogue(),
+    )
+    vi.mocked(researchApi.getResearchMetric).mockImplementation(
+      (metricId: string) =>
+        metricId === METRIC_ID
+          ? new Promise<ResearchMetricDetail>((resolve) => {
+              resolveKo = resolve
+            })
+          : Promise.resolve(aaplDetail()),
+    )
+
+    await enterResearchMode()
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-metric-card')).toBeInTheDocument()
+    })
+    // The user moves on to AAPL before KO's detail arrives.
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: AAPL_METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-metric-card')).toHaveTextContent(
+        /AAPL reported-revenue multiple/,
+      )
+    })
+    resolveKo(detail)
+    await waitFor(() => {
+      expect(researchApi.getResearchMetric).toHaveBeenCalledTimes(2)
+    })
+    // KO's late response is stale: AAPL's figures stay on the card.
+    expect(screen.getByTestId('research-metric-card')).toHaveTextContent(
+      /AAPL reported-revenue multiple/,
+    )
+    expect(screen.getByTestId('research-median')).toHaveTextContent('7.257709')
+    expect(screen.queryByTestId('research-open-2026-07-29')).not.toBeInTheDocument()
   })
 
   it('offers the comparison modes and chooses no metric for the user', async () => {
