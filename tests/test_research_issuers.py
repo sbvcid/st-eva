@@ -398,6 +398,8 @@ class TheThirdCaseAgainstProduction(unittest.TestCase):
                 quarter["knowable_from"], observation.evaluation_date
             )
         self.assertEqual(quarters[0]["knowable_from"], "2020-07-31")
+        self.assertEqual(quarters[1]["knowable_from"], "2020-07-31")
+        self.assertEqual(quarters[2]["knowable_from"], "2020-07-31")
         self.assertEqual(quarters[3]["knowable_from"], "2020-10-28")
 
 
