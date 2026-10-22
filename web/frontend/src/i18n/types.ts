@@ -341,8 +341,9 @@ export interface Translations {
     stdLabel: string
     minLabel: string
     maxLabel: string
-    samplePeriod: string
-    numeratorLabel: string
+  samplePeriod: string
+  basisLabel: string
+  numeratorLabel: string
     formulaVersion: string
     notProductionTitle: string
     limitationsTitle: string

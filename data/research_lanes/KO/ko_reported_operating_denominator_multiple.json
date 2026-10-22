@@ -428,6 +428,14 @@
   },
   "content_hash": "3629b9e997de91ab06a6a3947c6c69fc73c6a7cccd33b7a3b74de140d9c50bba",
   "distribution": {
+    "basis": {
+      "depreciation": [
+        "us-gaap:DepreciationDepletionAndAmortization"
+      ],
+      "operating_income": [
+        "us-gaap:OperatingIncomeLoss"
+      ]
+    },
     "basis_breaks": {
       "The long_term_debt_current line changed element at 2024-06-28: us-gaap:LongTermDebtCurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
         "2024-07-29"
@@ -700,6 +708,107 @@
         "2019-10-24"
       ]
     },
+    "basis_groups": [
+      {
+        "basis": {
+          "depreciation": [
+            "us-gaap:DepreciationDepletionAndAmortization"
+          ],
+          "operating_income": [
+            "us-gaap:OperatingIncomeLoss"
+          ]
+        },
+        "elements": [
+          "us-gaap:DepreciationDepletionAndAmortization",
+          "us-gaap:OperatingIncomeLoss"
+        ],
+        "evaluation_dates": [
+          "2010-10-29",
+          "2011-02-28",
+          "2011-05-02",
+          "2011-08-01",
+          "2011-10-27",
+          "2012-02-23",
+          "2012-04-26",
+          "2012-07-26",
+          "2012-10-25",
+          "2013-02-27",
+          "2013-04-25",
+          "2013-07-25",
+          "2013-10-24",
+          "2014-02-27",
+          "2014-04-24",
+          "2014-07-30",
+          "2014-10-29",
+          "2015-02-25",
+          "2015-04-30",
+          "2015-07-29",
+          "2015-10-28",
+          "2016-02-25",
+          "2016-04-28",
+          "2016-07-28",
+          "2016-10-27",
+          "2017-02-24",
+          "2017-04-28",
+          "2017-07-27",
+          "2017-10-26",
+          "2018-02-23",
+          "2018-05-01",
+          "2018-07-26",
+          "2018-10-30",
+          "2019-02-22",
+          "2019-04-25",
+          "2019-07-26",
+          "2019-10-24",
+          "2020-02-25",
+          "2020-04-24",
+          "2020-07-22",
+          "2020-10-22",
+          "2021-02-25",
+          "2021-04-27",
+          "2021-07-27",
+          "2021-10-28",
+          "2022-02-22",
+          "2022-04-28",
+          "2022-07-27",
+          "2022-10-26",
+          "2023-02-22",
+          "2023-04-26",
+          "2023-07-27",
+          "2023-10-24",
+          "2024-02-20",
+          "2024-05-02",
+          "2024-07-29",
+          "2024-10-24",
+          "2025-02-20",
+          "2025-05-01",
+          "2025-07-24",
+          "2025-10-23",
+          "2026-02-20",
+          "2026-04-30",
+          "2026-07-29"
+        ],
+        "kind": "SAMPLE",
+        "max": 27.283526,
+        "mean": 19.084631,
+        "min": 12.930993,
+        "percentiles": {
+          "10th": 13.92113,
+          "25th": 15.13968,
+          "75th": 21.819049,
+          "90th": 23.306588,
+          "median": 19.774421
+        },
+        "period_end": "2026-07-29",
+        "period_start": "2010-10-29",
+        "reason_code": null,
+        "reason_detail": null,
+        "refused_count": 0,
+        "sample_count": 64,
+        "status": "RESEARCH_DISTRIBUTION",
+        "std": 3.831077
+      }
+    ],
     "candidate_metric": true,
     "data_limitations": [
       "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer, so this role is registry-qualified. The role's values were re-presented by KO for the consolidation of Coca-Cola Beverages Africa; see the prior-period value revisions the lane records.",
@@ -740,7 +849,7 @@
     "instrument_id": "KO",
     "issuer_id": "CIK0000021344",
     "lane_id": "ko_reported_operating_denominator_multiple",
-    "logic_version": "research-multiples/1.0.0",
+    "logic_version": "research-multiples/1.1.0",
     "max": 27.283526,
     "mean": 19.084631,
     "methodology": "research-multiples/1.0",
@@ -1210,6 +1319,7 @@
       "production_eligible": false,
       "statement": "No production reference is created from this distribution, and none may be created from it."
     },
+    "published_observation_count": 64,
     "reason_code": null,
     "reason_detail": null,
     "registry_standing": {
@@ -1417,7 +1527,7 @@
   "instrument_id": "KO",
   "issuer_id": "CIK0000021344",
   "lane_id": "ko_reported_operating_denominator_multiple",
-  "logic_version": "research-multiples/1.0.0",
+  "logic_version": "research-multiples/1.1.0",
   "methodology": "research-multiples/1.0",
   "metric_id": "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",

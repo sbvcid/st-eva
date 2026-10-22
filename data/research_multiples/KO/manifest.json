@@ -17,24 +17,24 @@
         "last": "0001628280-26-028802"
       },
       "long_term_debt_current": {
-        "count": 63,
+        "count": 72,
         "first": "0000021344-11-000011",
-        "last": "0001047469-11-006790"
+        "last": "0001628280-26-028802"
       },
       "long_term_debt_noncurrent": {
-        "count": 63,
+        "count": 72,
         "first": "0000021344-11-000011",
-        "last": "0001047469-11-006790"
+        "last": "0001628280-26-028802"
       },
       "marketable_securities_current": {
-        "count": 43,
+        "count": 72,
         "first": "0000021344-11-000011",
-        "last": "0001047469-11-006790"
+        "last": "0001628280-26-028802"
       },
       "notes_and_loans_payable": {
-        "count": 7,
+        "count": 30,
         "first": "0000021344-18-000042",
-        "last": "0000021344-20-000006"
+        "last": "0001628280-26-028802"
       },
       "operating_income": {
         "count": 72,
@@ -287,9 +287,9 @@
     },
     "long_term_debt_current_concept.json": {
       "accessions": {
-        "count": 63,
+        "count": 72,
         "first": "0000021344-11-000011",
-        "last": "0001047469-11-006790"
+        "last": "0001628280-26-028802"
       },
       "bytes": 45934,
       "currency": "USD",
@@ -314,9 +314,9 @@
     },
     "long_term_debt_noncurrent_concept.json": {
       "accessions": {
-        "count": 63,
+        "count": 72,
         "first": "0000021344-11-000011",
-        "last": "0001047469-11-006790"
+        "last": "0001628280-26-028802"
       },
       "bytes": 46199,
       "currency": "USD",
@@ -341,9 +341,9 @@
     },
     "marketable_securities_current_concept.json": {
       "accessions": {
-        "count": 43,
+        "count": 72,
         "first": "0000021344-11-000011",
-        "last": "0001047469-11-006790"
+        "last": "0001628280-26-028802"
       },
       "bytes": 45675,
       "currency": "USD",
@@ -368,9 +368,9 @@
     },
     "notes_and_loans_payable_concept.json": {
       "accessions": {
-        "count": 7,
+        "count": 30,
         "first": "0000021344-18-000042",
-        "last": "0000021344-20-000006"
+        "last": "0001628280-26-028802"
       },
       "bytes": 20767,
       "currency": "USD",

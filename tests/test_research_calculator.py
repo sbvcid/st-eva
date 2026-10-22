@@ -60,7 +60,7 @@ EXPECTED = {
         24.675484,
         "enterprise_value",
     ),
-    "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE": (32, 6.996311, "market_cap"),
+    "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE": (28, 7.257709, "market_cap"),
     (
         "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
     ): (29, 22.054083, "market_cap"),
@@ -991,6 +991,9 @@ class TheDistributionState(unittest.TestCase):
             production_refusal={"production_eligible": False},
             data_limitations=[],
             basis_breaks={},
+            basis={},
+            basis_groups=[],
+            published_observation_count=0,
             prior_period_revisions=[],
             input_set_id="",
             content_hash="",

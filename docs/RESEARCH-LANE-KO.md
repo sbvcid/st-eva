@@ -57,6 +57,17 @@ units for this filer, so the rows come from the issuer's fact set in the
 company facts payload. The capture records the substitution for that element
 and for no other.
 
+The manifest's accession coverage states, for each role, the filings that
+filed it. Four of KO's roles hold two elements, and a role is filed in more
+filings than its first element alone: the coverage is the union of the
+elements' accessions, de-duplicated. The committed manifest was written by an
+earlier builder that counted the first element's accessions only, and the
+phase 9.12 audit re-described the capture from its own files and corrected
+the four counts. Nothing else in the manifest moved: the capture's eleven
+files and their digests, every lane's figures and every lane's input set id
+and content hash are unchanged, and the manifest describes the capture rather
+than standing in for it.
+
 ## What the registry said
 
 Read from the core registry through `semantic_qualification.qualify_element`,

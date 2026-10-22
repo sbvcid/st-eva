@@ -147,6 +147,13 @@ class ResearchMetricDTO(BaseModel):
     production_refusal: Dict[str, Any] = Field(default_factory=dict)
     data_limitations: List[str] = Field(default_factory=list)
     basis_breaks: Dict[str, List[str]] = Field(default_factory=dict)
+    #: The elements the median rests on, per role.
+    basis: Dict[str, Any] = Field(default_factory=dict)
+    #: The homogeneous sub-samples the lane's published observations fall
+    #: into, each with its own count, its own statistics and its own status.
+    basis_groups: List[Dict[str, Any]] = Field(default_factory=list)
+    #: How many observations the lane published in all, across every basis.
+    published_observation_count: int = 0
     prior_period_revisions: List[Dict[str, Any]] = Field(default_factory=list)
     input_set_id: str
     content_hash: str

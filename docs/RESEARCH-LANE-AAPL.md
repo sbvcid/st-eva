@@ -111,7 +111,7 @@ the attribution between market capitalisation and enterprise value readable.
 
 | Lane | Research metric | Valid | Evaluations | Median | Period | Status |
 |---|---|---|---|---|---|---|
-| `aapl_reported_revenue_multiple` | `RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE` | 32 | 67 | 6.996311 | 2018-11-05 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
+| `aapl_reported_revenue_multiple` | `RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE` | 28 | 67 | 7.257709 | 2019-10-31 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
 | `aapl_reported_operating_profit_plus_reported_d_and_a_multiple` | `RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE` | 29 | 67 | 22.054083 | 2019-08-01 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
 | `aapl_filed_ev_bridge_multiple_production_shape` | `RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE` | 27 | 67 | 22.326 | 2019-08-01 to 2026-07-31 | `RESEARCH_DISTRIBUTION` |
 
@@ -123,6 +123,11 @@ Refusals:
 | operating profit plus D&A | `RESEARCH_REASON_NO_DENOMINATOR_WINDOW` | 38 |
 | EV bridge | `RESEARCH_REASON_NO_DENOMINATOR_WINDOW` | 38 |
 | EV bridge | `RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS` | 2 |
+
+The revenue lane's valid count is the count of the sample the median rests
+on. The lane publishes 32 observations in all, and they fall into three
+homogeneous sub-samples, which are described below; the median is published
+over one of them.
 
 The revenue lane starts at the FY2018 10-K's usable date, 2018-11-05, because
 that filing carries FY2018's four quarters. The two earnings lanes start at
@@ -212,15 +217,45 @@ The dates on which they differ are named, and the reason is the source facts:
 | 2019-08-01 | publishes | `REASON_MISSING_REVENUE_WINDOW` | as above |
 | 2018-02-02, 2018-05-03, 2018-08-02 | refuses, no window | refuses, coverage gap | neither can build a window before FY2018's quarters are filed |
 
-The medians differ because the samples differ: 6.996311 over 32 observations
-against 7.257709 over 28. The research median is recomputed from the
-research observations; the production median is never read into it.
+The medians now agree: 7.257709 over 28 observations on both sides. The
+research median is recomputed from the research observations, and it rests on
+the sample that is homogeneous -- the one every window of which was read from
+the successor element. The production median is never read into it.
 
 The evaluation dates differ at the left edge for a separate reason: the
 production AAPL price series begins on 2018-01-02, so every earlier filing
 collapses onto that first trading day, while the research capture's price
 series begins on 2010-01-04 and the lane evaluates 67 dates from
 2010-01-26.
+
+## The three semantic sub-samples
+
+The revenue lane publishes 32 observations, and they are not one kind of
+figure. The lane groups them by the elements their windows were read from,
+and each group states its own count, its own statistics and its own status.
+
+| Group | Windows read from | Observations | Dates | Status |
+|---|---|---|---|---|
+| successor-only | `us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax` | 28 | 2019-10-31 to 2026-07-31 | `RESEARCH_DISTRIBUTION`, median 7.257709 |
+| legacy-only | `us-gaap:Revenues` | 1 | 2018-11-05 | `RESEARCH_THIN_SAMPLE`, one observation against a threshold of 20 |
+| mixed | both | 3 | 2019-01-31, 2019-05-02, 2019-08-01 | `RESEARCH_DIAGNOSTIC`, and no statistic is published over it |
+
+The distribution's own figure is the successor-only group, and it says so:
+the `basis` field names the element the median rests on, and `basis_groups`
+lists the three groups. The legacy-only group is one observation and says it
+is below the threshold; the threshold is not relaxed, and the lane does not
+fall back to a statistic over the mixed windows. The mixed group is a
+diagnostic: its three observations are kept, with their evidence and their
+basis breaks, and no median is computed over them.
+
+The pooled median this replaces was 6.996311 over all 32 observations, and it
+described a sample that is not one kind of figure. The homogeneous median is
+7.257709 over 28, and it is the same figure the production dataset publishes
+for the same 28 dates.
+
+The other two AAPL lanes each hold one group, so their figures are unchanged:
+the operating-profit lane's denominator reads one element for each of its two
+roles, and the enterprise-value lane's does the same.
 
 ## The revenue element boundary
 
@@ -350,6 +385,12 @@ observation hashes.
   is a new snapshot rather than a replay.
 * **That the revenue line is one series.** It is not: one figure in the
   sample rests on the retired element alone, and three windows span the change
-  from it to the accepted one. The break is recorded on the observations and
-  named in the distribution's basis-break summary, and the median is computed
-  over the sample as it is.
+  from it to the accepted one. The break is recorded on the observations, the
+  three sub-samples are described in the distribution, and the median is
+  published over the one of them that rests on a single element. The sample as
+  a whole is not a series, and no figure says it is.
+* **That the two revenue elements mean the same thing.** The registry retired
+  the earlier one as broader than the revenue metric, and that stands. The
+  equality of the filed amounts for the periods they share is a fact about
+  Apple's filings and not a definition, and the lane does not treat it as
+  one.

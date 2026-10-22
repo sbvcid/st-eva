@@ -775,6 +775,9 @@ def describe_capture(
         name: entry.get("source")
         for name, entry in (existing.get("files") or {}).items()
     }
+    existing_role_normalisations = (
+        (existing.get("capture_policy") or {}).get("role_normalisation") or {}
+    )
     for path in sorted(output_dir.glob("*.json")):
         if path.name == MANIFEST_FILE:
             continue
@@ -840,20 +843,33 @@ def describe_capture(
             # the filed amounts, so it is read from the file rather than
             # re-derived from the configuration: a description that disagrees
             # with the file it describes is a disagreement, not a correction.
-            normalisation = document.get("normalisation") or {
-                "unit": unit,
-                "currency": (
-                    policy.filing_currency
-                    if unit and unit != policy.share_unit
-                    else None
-                ),
-                "source_unit": unit,
-                "factor": _role_scale(unit, policy),
-                "target_unit": unit,
-                "basis": policy.scale_basis,
-                "scaled": _role_scale(unit, policy) != 1,
-            }
-            entry["currency"] = normalisation.get("currency")
+            # A capture whose files carry no record of their own keeps the
+            # record the manifest already holds for it.
+            file_normalisation = document.get("normalisation")
+            existing_entry = (existing.get("files") or {}).get(path.name) or {}
+            if file_normalisation is not None:
+                normalisation = file_normalisation
+                currency = file_normalisation.get("currency")
+            else:
+                normalisation = (
+                    existing_entry.get("normalisation")
+                    or existing_role_normalisations.get(role)
+                    or {
+                        "unit": unit,
+                        "currency": (
+                            policy.filing_currency
+                            if unit and unit != policy.share_unit
+                            else None
+                        ),
+                        "source_unit": unit,
+                        "factor": _role_scale(unit, policy),
+                        "target_unit": unit,
+                        "basis": policy.scale_basis,
+                        "scaled": _role_scale(unit, policy) != 1,
+                    }
+                )
+                currency = existing_entry.get("currency")
+            entry["currency"] = currency
             entry["accessions"] = {
                 "count": len(role_accessions),
                 "first": role_accessions[0] if role_accessions else None,

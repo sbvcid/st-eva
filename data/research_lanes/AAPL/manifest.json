@@ -66,18 +66,18 @@
       "file": "aapl_reported_revenue_multiple.json",
       "input_set_id": "7a10ab27891e6fa2ebe518905cddd3ac1a496a953cc1779f1ce3631040585b58",
       "issuer": "AAPL",
-      "mean": 6.812216,
-      "median": 6.996311,
+      "mean": 7.286787,
+      "median": 7.257709,
       "metric_id": "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
       "period_end": "2026-07-31",
-      "period_start": "2018-11-05",
+      "period_start": "2019-10-31",
       "prior_period_revisions": 0,
       "rejection_counts": {
         "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 35
       },
-      "sample_count": 32,
+      "sample_count": 28,
       "status": "RESEARCH_DISTRIBUTION",
-      "std": 1.780924,
+      "std": 1.327004,
       "total_evaluations": 67
     }
   },

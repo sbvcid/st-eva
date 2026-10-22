@@ -366,6 +366,7 @@ export const zhTW: Translations = {
     minLabel: '最小',
     maxLabel: '最大',
     samplePeriod: '樣本期間',
+    basisLabel: '中位數的計算基礎',
     numeratorLabel: '市場價值',
     formulaVersion: '公式版本',
     notProductionTitle: '為何未取得生產資格',

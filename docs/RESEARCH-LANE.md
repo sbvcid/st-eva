@@ -102,8 +102,44 @@ Five objects.
 | `ResearchRole` | A quantity, the elements it may be read from in the filer's own chronology, the formula role, the registry metric it would be read for, the kind of element change, and its sign in the bridge. |
 | `ResearchLaneConfig` | The lane's identity, the issuer, the research metric id and label, the capture, the formula and its version, the numerator and denominator, and the research purpose. |
 | `ResearchObservation` | One evaluation date: the value or the refusal, the price, the share count, the market capitalisation, the enterprise value, every denominator quarter with its accessions and its input spans, every bridge component with its element, value, period end, accession, filed date, usable date, unit and source file hash, the registry standing of every role, the basis breaks, the prior-period revisions, the formula with every operand, the run identity and the content hash. |
-| `ResearchDistribution` | The sample size, the sample period, the statistics, the per-observation exclusion reasons, the research-use limits, and `production_eligible` fixed to `False`. |
+| `ResearchDistribution` | The sample size, the sample period, the statistics, the per-observation exclusion reasons, the basis the figure rests on, the homogeneous sub-samples the lane's published observations fall into, the research-use limits, and `production_eligible` fixed to `False`. |
 | `ResearchLaneResult` | The input set id, the content hash, the formula version and the whole package. |
+
+## The distribution's basis
+
+A role names a quantity and the filer's own chronology of the elements it
+filed that quantity on, so two of a lane's published observations may rest on
+different elements. A median over both would be a statistic over a sample
+that is not one kind of figure.
+
+The lane therefore groups its published observations by their **basis**: the
+elements each denominator role's window was read from, read from the
+observation's own evidence and not from the issuer's configuration. Each group
+states its own valid count, its own refusals, its own statistics and its own
+status, and a group is one of two kinds:
+
+| Kind | What it is | What may be published over it |
+|---|---|---|
+| `SAMPLE` | Every window in the group read a single element for every role. | A median, a mean, a period, and a status: a distribution at the lane's threshold, or a thin sample below it. |
+| `DIAGNOSTIC` | Some window in the group read more than one element, so the figure is on neither element alone. | Nothing. The observations are kept with their evidence and their basis breaks, and no statistic is published over them. |
+
+The distribution's own figure is the largest `SAMPLE` group, and it says which
+group that is: the `basis` field names the elements the median rests on, and
+`basis_groups` lists every group with its own count and status. The published
+observations that are not in the figure are not pooled into it: they are
+counted in `published_observation_count` and described in their own groups. A
+group below the lane's threshold says so; the threshold is not relaxed, and
+the lane does not fall back to a statistic over the mixed observations.
+
+The status of a distribution is one of `RESEARCH_DISTRIBUTION` (the sample is
+at the lane's threshold), `RESEARCH_THIN_SAMPLE` (it is below it),
+`RESEARCH_UNAVAILABLE` (there is no figure to describe) or
+`RESEARCH_DIAGNOSTIC` (the group is a diagnostic). The lane's own versions
+are `research-multiples/1.0.0` for an observation and
+`research-multiples/1.1.0` for a distribution's construction: an observation
+is the figure and the evidence it was computed from, and neither changes when
+the way a distribution is assembled changes.
+
 
 ## The refusals
 
@@ -124,6 +160,7 @@ for. An unknown code is an error, not a refusal.
 | `RESEARCH_REASON_INCOMPLETE_EV_BRIDGE` | A filed bridge component is not knowable at the evaluation date. The bridge is never completed by omission or zero-fill. |
 | `RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS` | The bridge's components describe more than one balance-sheet date. The stale component is not carried forward. |
 | `RESEARCH_REASON_ELEMENT_UNAVAILABLE` | The capture holds no element for a role the lane reads, or holds only some of the elements the role names. The lane refuses rather than read the subset the capture happens to carry, because a figure computed from a smaller set of elements is a different figure from the one the role names. |
+| `RESEARCH_REASON_NO_HOMOGENEOUS_SAMPLE` | The lane's published observations do not rest on one element, so there is no sample to describe and no median to publish. The observations are kept as traceable research observations, and they are not pooled into a single figure. |
 
 Every refusal carries a readable reason that names what was missing.
 

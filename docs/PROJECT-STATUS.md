@@ -5239,6 +5239,10 @@ distribution's basis-break summary names the three dates. The revenue lane's
 `content_hash` moved because of it; the other two AAPL lanes' hashes did not
 move, and neither did KO's.
 
+Phase 9.12 superseded the revenue lane's pooled figure: the median of 6.996311
+over all 32 published observations described a sample that was not one kind of
+figure, and the distribution is now described over one basis.
+
 ### The two replay contracts
 
 **A replay over fixed inputs** recomputes the canonical observations, the lane
@@ -5293,6 +5297,88 @@ before this phase and on the code after it, and are identical. The production
 payload digests for AAPL, AEP and MSFT are unchanged, every research result
 is still `production_eligible=False`, and no research output carries a
 `refc:*`.
+
+## Phase 9.12 (2026-10-22): homogeneous research distributions and manifest consistency
+
+Phase 9.11 audited what the research lane reads and closed the identity
+contract. This phase makes two targeted corrections: a research distribution
+is no longer described over a sample that rests on more than one element, and
+the capture's manifest describes a multi-element role's coverage correctly. It
+adds no issuer, changes no production registry mapping or scope, no
+production enterprise-value definition, no valuation method, no Archive and no
+Investment Context, and it re-downloads nothing and rewrites no capture file.
+
+### The AAPL revenue distribution's semantic boundary
+
+The AAPL revenue lane publishes 32 observations, and they are not one kind of
+figure: one rests on the retired `us-gaap:Revenues` alone, three span the
+change from it to the accepted successor, and 28 rest on the successor alone.
+The lane was describing all 32 as one distribution with a median of 6.996311
+over them.
+
+The lane now groups its published observations by their **basis** -- the
+elements each denominator role's window was read from, read from the
+observation's own evidence and not from the issuer's configuration -- and
+describes each group on its own:
+
+| Group | Observations | Dates | Status |
+|---|---|---|---|
+| successor-only | 28 | 2019-10-31 to 2026-07-31 | `RESEARCH_DISTRIBUTION`, median 7.257709 |
+| legacy-only | 1 | 2018-11-05 | `RESEARCH_THIN_SAMPLE`, below the threshold of 20 |
+| mixed | 3 | 2019-01-31, 2019-05-02, 2019-08-01 | `RESEARCH_DIAGNOSTIC`, and no statistic is published over it |
+
+The distribution's figure is the successor-only group, and it says so: the
+`basis` field names the element the median rests on, and `basis_groups` lists
+every group with its own count, its own statistics and its own status. The
+mixed windows are kept as traceable research observations with their evidence
+and their basis breaks, and they are never pooled with a sample. The
+threshold is not relaxed, and the lane does not fall back to a statistic over
+the mixed observations.
+
+The homogeneous median is 7.257709 over 28 observations, and it is the same
+figure the production AAPL dataset publishes for the same 28 dates. The
+pooled median it replaces described a sample that is not one kind of figure.
+
+The representation is general: the basis is read from the observations, the
+grouping and the choice of the figure are the lane's own, and nothing in it
+names an issuer. KO's four lanes and AAPL's other two each hold one group, so
+their figures, their medians, their statuses and their identities are
+unchanged.
+
+### The KO manifest's accession coverage
+
+The capture builder's describe path counted a multi-element role's accessions
+from its first element only, so KO's four two-element roles stated fewer
+filings than they were filed in. The defect was reproduced offline from the
+committed KO capture: `marketable_securities_current` stated 43 accessions
+where the union of its two elements' accessions is 72, and `notes_and_loans_
+payable` stated 7 where the union is 30.
+
+The builder is fixed, not the KO capture: the describe path now counts every
+element a role holds, de-duplicated, and reads the normalisation from the
+capture's own files rather than re-deriving it from the configuration. The
+committed KO manifest was then re-described from the capture's own files with
+the builder's own writer, and the difference is those four counts and nothing
+else. The capture's eleven files and their digests are unchanged, every KO
+lane's figures, statuses, input set ids and content hashes are unchanged, and
+the manifest still describes the capture rather than standing in for it. The
+AAPL capture's manifest reproduces byte for byte from its own files.
+
+The identity contract is unchanged by the correction: the manifest is
+descriptive, the files are the capture, and the lane refuses a capture whose
+files do not match their recorded digests.
+
+### What this phase does not do
+
+It does not qualify AAPL for production, does not change any lane's
+production eligibility, and does not read a production median into a
+research figure. The research results still carry
+`production_eligible=False`, still write no Archive row and no Investment
+Context, and still produce no `refc:*`. KO's four research lanes publish the
+same values, the same refusal reasons, the same input set ids, the same
+observation hashes and the same comparison hashes; the production payload
+digests for AAPL, AEP and MSFT are unchanged; and no source was re-downloaded
+and no capture file was rewritten.
 
 ## Next task status
 
@@ -5384,8 +5470,8 @@ its quarters are thirteen or fourteen weeks long, its share count changes
 scale twice inside the sample, its revenue and its depreciation both change
 tag, and its commercial paper is filed on a different element in two of its
 quarters. The same engine, the same configuration file and the same builder
-carry it, and the three lanes publish 32, 29 and 27 valid observations over
-67 evaluation dates with medians 6.996311, 22.054083 and 22.326. The
+carry it, and the three lanes publish 28, 29 and 27 valid observations over
+67 evaluation dates with medians 7.257709, 22.054083 and 22.326. The
 enterprise-value lane agrees with the production AAPL dataset on every one of
 the 35 dates they share, to six decimal places, and the revenue lane agrees
 on all 28 dates on which both publish; the four dates where they differ are
@@ -5402,6 +5488,24 @@ input set id, the capture manifest, the policy identity and the calculation
 hash covers, and a role that names an element the capture does not hold, or a
 capture whose normalisation disagrees with the unit policy, is refused rather
 than read around.
+
+A research distribution is now described over one basis. A lane that reads the
+filer's own chronology of elements may publish observations that rest on
+different elements, and a median over both of them is a statistic over a
+sample that is not one kind of figure. The lane groups its published
+observations by the elements their windows were read from and describes each
+group on its own: a group whose windows rest on a single element is a sample,
+and a group whose windows span a change is a diagnostic whose observations are
+kept with their evidence and over which no statistic is published. The
+distribution's figure is the largest sample among them, and it names the
+element it rests on. The AAPL revenue lane's pooled median of 6.996311 over
+32 observations described a sample that was not one kind of figure; the
+homogeneous median is 7.257709 over 28, and it is the figure the production
+dataset publishes for the same 28 dates. The legacy-only group holds one
+observation and says it is below the threshold, and the mixed group holds
+three and publishes no statistic at all. The capture's manifest was corrected
+at the same time: a role that holds two elements is filed in more filings
+than its first element alone, and the coverage now says so.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.

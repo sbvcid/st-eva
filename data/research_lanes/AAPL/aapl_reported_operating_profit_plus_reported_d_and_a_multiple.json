@@ -147,7 +147,81 @@
   },
   "content_hash": "c48713e2cdadaf26cfc435da1d40f2b28b7b89c00f32ec729e8a4f11feee5cc0",
   "distribution": {
+    "basis": {
+      "depreciation": [
+        "us-gaap:DepreciationDepletionAndAmortization"
+      ],
+      "operating_income": [
+        "us-gaap:OperatingIncomeLoss"
+      ]
+    },
     "basis_breaks": {},
+    "basis_groups": [
+      {
+        "basis": {
+          "depreciation": [
+            "us-gaap:DepreciationDepletionAndAmortization"
+          ],
+          "operating_income": [
+            "us-gaap:OperatingIncomeLoss"
+          ]
+        },
+        "elements": [
+          "us-gaap:DepreciationDepletionAndAmortization",
+          "us-gaap:OperatingIncomeLoss"
+        ],
+        "evaluation_dates": [
+          "2019-08-01",
+          "2019-10-31",
+          "2020-01-29",
+          "2020-05-01",
+          "2020-07-31",
+          "2020-10-30",
+          "2021-01-28",
+          "2021-04-29",
+          "2021-07-28",
+          "2021-10-29",
+          "2022-01-28",
+          "2022-04-29",
+          "2022-07-29",
+          "2022-10-28",
+          "2023-02-03",
+          "2023-05-05",
+          "2023-08-04",
+          "2023-11-03",
+          "2024-02-02",
+          "2024-05-03",
+          "2024-08-02",
+          "2024-11-01",
+          "2025-01-31",
+          "2025-05-02",
+          "2025-08-01",
+          "2025-10-31",
+          "2026-01-30",
+          "2026-05-01",
+          "2026-07-31"
+        ],
+        "kind": "SAMPLE",
+        "max": 27.600261,
+        "mean": 21.881299,
+        "min": 12.305607,
+        "percentiles": {
+          "10th": 17.774284,
+          "25th": 20.15837,
+          "75th": 24.914404,
+          "90th": 26.017217,
+          "median": 22.054083
+        },
+        "period_end": "2026-07-31",
+        "period_start": "2019-08-01",
+        "reason_code": null,
+        "reason_detail": null,
+        "refused_count": 0,
+        "sample_count": 29,
+        "status": "RESEARCH_DISTRIBUTION",
+        "std": 3.637017
+      }
+    ],
     "candidate_metric": true,
     "data_limitations": [
       "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer.",
@@ -358,7 +432,7 @@
     "instrument_id": "AAPL",
     "issuer_id": "CIK0000320193",
     "lane_id": "aapl_reported_operating_profit_plus_reported_d_and_a_multiple",
-    "logic_version": "research-multiples/1.0.0",
+    "logic_version": "research-multiples/1.1.0",
     "max": 27.600261,
     "mean": 21.881299,
     "methodology": "research-multiples/1.0",
@@ -426,6 +500,7 @@
       "production_eligible": false,
       "statement": "No production reference is created from this distribution, and none may be created from it."
     },
+    "published_observation_count": 29,
     "reason_code": null,
     "reason_detail": null,
     "registry_standing": {
@@ -522,7 +597,7 @@
   "instrument_id": "AAPL",
   "issuer_id": "CIK0000320193",
   "lane_id": "aapl_reported_operating_profit_plus_reported_d_and_a_multiple",
-  "logic_version": "research-multiples/1.0.0",
+  "logic_version": "research-multiples/1.1.0",
   "methodology": "research-multiples/1.0",
   "metric_id": "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",

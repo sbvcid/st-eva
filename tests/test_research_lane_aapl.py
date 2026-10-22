@@ -484,7 +484,7 @@ class TheLanes(unittest.TestCase):
     def test_the_lane_counts_and_medians(self):
         results = _results()
         expected = {
-            REVENUE_LANE: (32, 6.996311),
+            REVENUE_LANE: (28, 7.257709),
             OPERATING_LANE: (29, 22.054083),
             EV_LANE: (27, 22.326),
         }
@@ -668,15 +668,27 @@ class TheProductionCrossCheck(unittest.TestCase):
             differing, ["2018-11-05", "2019-01-31", "2019-05-02", "2019-08-01"]
         )
 
-    def test_the_research_median_is_not_the_production_median(self):
+    def test_the_homogeneous_research_median_is_the_production_median(self):
+        """
+        The research lane's own median is published over the sample that
+        rests on one element, and that sample is the production dataset's
+        sample. The two medians therefore agree, which is what a pooled
+        median over the mixed windows had been hiding.
+        """
         production = load_issuer_historical_multiples(
             ISSUER_CONFIGS["AAPL"]
         ).to_dict()
         production_median = production["distributions"]["P_S_RATIO_REFERENCE"][
             "percentiles"
         ]["median"]
-        research_median = self.results[REVENUE_LANE].distribution.percentiles["median"]
-        self.assertNotAlmostEqual(research_median, production_median, places=3)
+        distribution = self.results[REVENUE_LANE].distribution
+        self.assertAlmostEqual(
+            distribution.percentiles["median"], production_median, places=6
+        )
+        self.assertEqual(
+            distribution.sample_count,
+            production["distributions"]["P_S_RATIO_REFERENCE"]["sample_count"],
+        )
 
     def test_the_research_lane_publishes_dates_production_does_not_reach(self):
         production = load_issuer_historical_multiples(

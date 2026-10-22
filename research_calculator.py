@@ -176,6 +176,14 @@ class ResearchMetricSummary:
     production_refusal: Dict[str, Any]
     data_limitations: List[str]
     basis_breaks: Dict[str, List[str]]
+    #: The elements the median rests on, per role. A median is published over
+    #: one basis, and this says which.
+    basis: Dict[str, Any]
+    #: The homogeneous sub-samples the lane's published observations fall
+    #: into, each with its own count, its own statistics and its own status.
+    basis_groups: List[Dict[str, Any]]
+    #: How many observations the lane published in all, across every basis.
+    published_observation_count: int
     prior_period_revisions: List[Dict[str, Any]]
     input_set_id: str
     content_hash: str
@@ -220,6 +228,9 @@ class ResearchMetricSummary:
             "production_refusal": self.production_refusal,
             "data_limitations": self.data_limitations,
             "basis_breaks": self.basis_breaks,
+            "basis": self.basis,
+            "basis_groups": self.basis_groups,
+            "published_observation_count": self.published_observation_count,
             "prior_period_revisions": self.prior_period_revisions,
             "input_set_id": self.input_set_id,
             "content_hash": self.content_hash,
@@ -534,6 +545,9 @@ def list_research_metrics() -> List[ResearchMetricSummary]:
                 production_refusal=distribution.production_refusal,
                 data_limitations=distribution.data_limitations,
                 basis_breaks=distribution.basis_breaks,
+                basis=distribution.basis,
+                basis_groups=distribution.basis_groups,
+                published_observation_count=distribution.published_observation_count,
                 prior_period_revisions=distribution.prior_period_revisions,
                 input_set_id=result.input_set_id,
                 content_hash=result.content_hash,
@@ -753,6 +767,7 @@ def run_research_calculation(
             "sample_count": distribution.sample_count,
             "period_start": distribution.period_start,
             "period_end": distribution.period_end,
+            "basis": distribution.basis,
             "sampling_cadence": distribution.sampling_cadence,
         }
     elif request.multiple_source == MULTIPLE_OBSERVATION:

@@ -89,7 +89,14 @@ from historical_pfcf import (
 from semantic_qualification import qualify_element
 
 METHODOLOGY = "research-multiples/1.0"
+# The logic that produces an observation. The observation is the figure and the
+# evidence it was computed from, and neither changes when the way a
+# distribution is assembled changes, so the observation's version does not
+# move and neither does its content hash.
 LOGIC_VERSION = "research-multiples/1.0.0"
+# The logic that assembles a distribution. It moves when the way the lane's
+# published observations are grouped and described moves.
+DISTRIBUTION_LOGIC_VERSION = "research-multiples/1.1.0"
 FORMULA_VERSION = "research-multiples/1.0"
 
 # The lane's own distribution statuses. They are not the production statuses:
@@ -98,6 +105,14 @@ FORMULA_VERSION = "research-multiples/1.0"
 STATUS_RESEARCH_DISTRIBUTION = "RESEARCH_DISTRIBUTION"
 STATUS_RESEARCH_THIN_SAMPLE = "RESEARCH_THIN_SAMPLE"
 STATUS_RESEARCH_UNAVAILABLE = "RESEARCH_UNAVAILABLE"
+# A group of observations that do not rest on one element is a diagnostic: the
+# observations are kept, with their evidence and their basis breaks, and they
+# are not a sample and are not pooled with one.
+STATUS_RESEARCH_DIAGNOSTIC = "RESEARCH_DIAGNOSTIC"
+
+# The kinds of basis group a lane's published observations fall into.
+BASIS_KIND_SAMPLE = "SAMPLE"
+BASIS_KIND_DIAGNOSTIC = "DIAGNOSTIC"
 
 # The lane's own refusal codes. They are a closed set, separate from the
 # production one, because the conditions are different: a research lane has
@@ -115,6 +130,9 @@ REASON_ELEMENT_UNAVAILABLE = "RESEARCH_REASON_ELEMENT_UNAVAILABLE"
 REASON_UNIT_UNKNOWN = "RESEARCH_REASON_UNIT_UNKNOWN"
 REASON_UNIT_CONFLICT = "RESEARCH_REASON_UNIT_CONFLICT"
 REASON_CURRENCY_MISMATCH = "RESEARCH_REASON_CURRENCY_MISMATCH"
+# The lane's published observations do not rest on one element, so there is no
+# sample to describe and no median to publish.
+REASON_NO_HOMOGENEOUS_SAMPLE = "RESEARCH_REASON_NO_HOMOGENEOUS_SAMPLE"
 
 CLOSED_REASON_CODES = frozenset(
     {
@@ -129,6 +147,7 @@ CLOSED_REASON_CODES = frozenset(
         REASON_UNIT_UNKNOWN,
         REASON_UNIT_CONFLICT,
         REASON_CURRENCY_MISMATCH,
+        REASON_NO_HOMOGENEOUS_SAMPLE,
     }
 )
 
@@ -465,8 +484,18 @@ class ResearchDistribution:
     #: the units the capture's facts were actually read in. The scaling the
     #: capture applied is recorded with its basis.
     unit_policy: Dict[str, Any] = field(default_factory=dict)
+    #: The elements the figure the distribution describes was read from, per
+    #: role. A distribution is described over one basis, and this says which.
+    basis: Dict[str, Any] = field(default_factory=dict)
+    #: The homogeneous sub-samples the lane's published observations fall
+    #: into. Each states its own count, its own statistics and its own
+    #: status; a group whose windows read more than one element is a
+    #: diagnostic and is never pooled with a sample.
+    basis_groups: List[Dict[str, Any]] = field(default_factory=list)
+    #: How many observations the lane published in all, across every basis.
+    published_observation_count: int = 0
     methodology: str = METHODOLOGY
-    logic_version: str = LOGIC_VERSION
+    logic_version: str = DISTRIBUTION_LOGIC_VERSION
     formula_version: str = FORMULA_VERSION
     input_set_id: str = ""
 
@@ -489,7 +518,7 @@ class ResearchLaneResult:
     observations: List[ResearchObservation] = field(default_factory=list)
     capture_manifest: Dict[str, Any] = field(default_factory=dict)
     methodology: str = METHODOLOGY
-    logic_version: str = LOGIC_VERSION
+    logic_version: str = DISTRIBUTION_LOGIC_VERSION
     formula_version: str = FORMULA_VERSION
 
     def to_dict(self) -> Dict[str, Any]:
@@ -1052,6 +1081,188 @@ def _element_change_notes(
             "observation."
         )
     return notes, anchor_element
+
+
+def _observation_basis(observation: ResearchObservation) -> Dict[str, List[str]]:
+    """
+    The elements the observation's trailing window was read from, per role.
+
+    The basis is what makes two observations comparable. Two windows read
+    from the same elements rest on the same claim, and two that do not are
+    not the same kind of figure, so a statistic computed over both would
+    describe neither. The basis is read from the observation's own evidence
+    -- the elements of the spans its quarters were derived from -- and not
+    from the issuer's configuration, so it says what was actually read.
+    """
+    basis: Dict[str, List[str]] = {}
+    for quarter in (observation.denominator or {}).get("quarters", []) or []:
+        for span in quarter.get("input_spans", []) or []:
+            role = span.get("role")
+            element = span.get("element")
+            if not role or not element:
+                continue
+            elements = basis.setdefault(role, [])
+            if element not in elements:
+                elements.append(element)
+    return {role: sorted(elements) for role, elements in sorted(basis.items())}
+
+
+def _basis_groups(
+    observations: Sequence[ResearchObservation],
+    config: ResearchLaneConfig,
+) -> List[Dict[str, Any]]:
+    """
+    The homogeneous sub-samples the lane's published observations fall into.
+
+    Observations that rest on the same elements form one group. A group
+    whose windows each read a single element for every role is a sample: it
+    can be described, and it is the only kind of group a median is computed
+    over. A group whose windows read more than one element for any role is
+    a diagnostic: the observations are kept with their evidence and their
+    basis breaks, and they are not pooled with a sample.
+
+    Each group states its own valid count, its own refusals, its own
+    statistics and its own status. A group below the lane's threshold says
+    so; the threshold is not relaxed and the lane does not fall back to a
+    statistic over the mixed observations.
+    """
+    published = [
+        observation
+        for observation in observations
+        if observation.value is not None and observation.value > 0
+    ]
+    refused_dates = [
+        observation.evaluation_date
+        for observation in observations
+        if observation.value is None
+    ]
+    groups: Dict[str, Dict[str, Any]] = {}
+    for observation in published:
+        basis = _observation_basis(observation)
+        key = canonical_json_hash(basis)
+        group = groups.get(key)
+        if group is None:
+            group = {
+                "basis": basis,
+                "elements": sorted(
+                    {
+                        element
+                        for elements in basis.values()
+                        for element in elements
+                    }
+                ),
+                "kind": (
+                    BASIS_KIND_SAMPLE
+                    if all(len(elements) == 1 for elements in basis.values())
+                    else BASIS_KIND_DIAGNOSTIC
+                ),
+                "evaluation_dates": [],
+                "values": [],
+            }
+            groups[key] = group
+        group["evaluation_dates"].append(observation.evaluation_date)
+        group["values"].append(observation.value)
+
+    described: List[Dict[str, Any]] = []
+    for key in sorted(groups):
+        group = groups[key]
+        series = list(group["values"])
+        dates = sorted(group["evaluation_dates"])
+        percentiles: Dict[str, Optional[float]] = {}
+        mean: Optional[float] = None
+        std: Optional[float] = None
+        minimum: Optional[float] = None
+        maximum: Optional[float] = None
+        if group["kind"] == BASIS_KIND_DIAGNOSTIC:
+            # A statistic over a group that does not rest on one element would
+            # be the very figure the lane refuses to publish.
+            status = STATUS_RESEARCH_DIAGNOSTIC
+            reason_code: Optional[str] = REASON_NO_HOMOGENEOUS_SAMPLE
+            reason_detail = (
+                "The windows in this group read from more than one element, so "
+                "the figure is on neither element alone. The observations are "
+                "kept as traceable research observations with their evidence "
+                "and their basis breaks, and they are not a sample and are not "
+                "pooled with one. No statistic is published over them."
+            )
+        else:
+            if series:
+                mean = round(sum(series) / len(series), 6)
+                variance = (
+                    sum((x - mean) ** 2 for x in series) / (len(series) - 1)
+                    if len(series) > 1
+                    else 0.0
+                )
+                std = round(math.sqrt(variance), 6) if len(series) > 1 else 0.0
+                minimum = round(min(series), 6)
+                maximum = round(max(series), 6)
+                percentiles = compute_distribution_percentiles(series)
+            if len(series) >= config.min_observations_for_description:
+                status = STATUS_RESEARCH_DISTRIBUTION
+                reason_code = None
+                reason_detail = None
+            elif series:
+                status = STATUS_RESEARCH_THIN_SAMPLE
+                reason_code = REASON_NO_DENOMINATOR_WINDOW
+                reason_detail = (
+                    f"The sample holds {len(series)} valid observations, below the "
+                    f"{config.min_observations_for_description} the lane reports as a "
+                    "distribution. The figures are descriptive and are not a "
+                    "valuation reference at any size."
+                )
+            else:
+                status = STATUS_RESEARCH_UNAVAILABLE
+                reason_code = REASON_NO_DENOMINATOR_WINDOW
+                reason_detail = "The group holds no valid observation."
+        refused_within = [
+            day
+            for day in refused_dates
+            if dates and dates[0] <= day <= dates[-1]
+        ]
+        described.append(
+            {
+                "basis": group["basis"],
+                "elements": group["elements"],
+                "kind": group["kind"],
+                "status": status,
+                "sample_count": len(series),
+                "refused_count": len(refused_within),
+                "period_start": dates[0] if dates else None,
+                "period_end": dates[-1] if dates else None,
+                "mean": mean,
+                "std": std,
+                "min": minimum,
+                "max": maximum,
+                "percentiles": percentiles,
+                "reason_code": reason_code,
+                "reason_detail": reason_detail,
+                "evaluation_dates": dates,
+            }
+        )
+    return described
+
+
+def _primary_basis_group(
+    groups: Sequence[Mapping[str, Any]]
+) -> Optional[Mapping[str, Any]]:
+    """
+    The group the lane's own figure is described from.
+
+    A median is published over a sample and over nothing else. Where the
+    lane's published observations fall into more than one basis, the figure
+    is the largest sample among them, and the other groups are reported
+    beside it. A diagnostic group is never the figure.
+    """
+    samples = [group for group in groups if group["kind"] == BASIS_KIND_SAMPLE]
+    if not samples:
+        return None
+    return sorted(
+        samples,
+        key=lambda group: (
+            -group["sample_count"],
+            canonical_json_hash(group["basis"]),
+        ),
+    )[0]
 
 
 def _refused_result(
@@ -1860,9 +2071,24 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                         role = config.role(role_name)
                         unit = role_units[role_name]
                         for quarter in window["quarters"]:
+                            # The element the quarter was read from, not the
+                            # element the role declares last: a window may
+                            # read from more than one of them, and the
+                            # denominator records what was actually read.
+                            read_elements = sorted(
+                                {
+                                    f"{role.taxonomy}:{item['concept_tag']}"
+                                    for item in quarter.get("inputs", [])
+                                    if item.get("concept_tag")
+                                }
+                            )
                             per_end.setdefault(quarter["period_end"], {})[role_name] = {
                                 "value": quarter["value"],
-                                "element": f"{role.taxonomy}:{role.elements[-1]}",
+                                "element": (
+                                    read_elements[0]
+                                    if read_elements
+                                    else f"{role.taxonomy}:{role.elements[-1]}"
+                                ),
                                 "unit": unit,
                                 "currency": unit if unit == "USD" else None,
                                 "accessions": sorted(
@@ -2233,44 +2459,51 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
         for observation in observations
         if observation.value is None
     ]
-    series = [value for _day, value in valid]
-    percentiles: Dict[str, Optional[float]] = {}
-    mean = None
-    std = None
-    minimum = None
-    maximum = None
-    if series:
-        mean = round(sum(series) / len(series), 6)
-        variance = (
-            sum((x - mean) ** 2 for x in series) / (len(series) - 1)
-            if len(series) > 1
-            else 0.0
-        )
-        std = round(math.sqrt(variance), 6) if len(series) > 1 else 0.0
-        minimum = round(min(series), 6)
-        maximum = round(max(series), 6)
-        percentiles = compute_distribution_percentiles(series)
-
-    if series and len(series) >= config.min_observations_for_description:
-        status = STATUS_RESEARCH_DISTRIBUTION
-        distribution_reason = None
-        distribution_detail = None
-    elif series:
-        status = STATUS_RESEARCH_THIN_SAMPLE
-        distribution_reason = REASON_NO_DENOMINATOR_WINDOW
-        distribution_detail = (
-            f"The sample holds {len(series)} valid observations, below the "
-            f"{config.min_observations_for_description} the lane reports as a "
-            "distribution. The figures are descriptive and are not a valuation "
-            "reference at any size."
-        )
+    # The published observations are grouped by the elements their windows
+    # were read from. A median is published over one group, never over a
+    # mixture of them, so a sample that spans an element change is not
+    # presented as one homogeneous distribution.
+    basis_groups = _basis_groups(observations, config)
+    primary_group = _primary_basis_group(basis_groups)
+    if primary_group is not None:
+        percentiles: Dict[str, Optional[float]] = dict(primary_group["percentiles"])
+        mean = primary_group["mean"]
+        std = primary_group["std"]
+        minimum = primary_group["min"]
+        maximum = primary_group["max"]
+        sample_count = primary_group["sample_count"]
     else:
+        percentiles = {}
+        mean = None
+        std = None
+        minimum = None
+        maximum = None
+        sample_count = 0
+
+    if primary_group is not None and primary_group["status"] in (
+        STATUS_RESEARCH_DISTRIBUTION,
+        STATUS_RESEARCH_THIN_SAMPLE,
+    ):
+        status = primary_group["status"]
+        distribution_reason = primary_group["reason_code"]
+        distribution_detail = primary_group["reason_detail"]
+    elif not valid:
         status = STATUS_RESEARCH_UNAVAILABLE
         distribution_reason = REASON_NO_DENOMINATOR_WINDOW
         distribution_detail = (
             "No valid observation could be constructed. Every evaluation date "
             "was excluded, and the exclusions are on the excluded_observations "
             "list with their reasons."
+        )
+    else:
+        status = STATUS_RESEARCH_UNAVAILABLE
+        distribution_reason = REASON_NO_HOMOGENEOUS_SAMPLE
+        distribution_detail = (
+            "The lane's published observations do not rest on one element, so "
+            "there is no homogeneous sample to describe and no median to "
+            "publish. The observations are kept as traceable research "
+            "observations with their evidence and their basis breaks, and they "
+            "are not pooled into a single figure."
         )
 
     basis_break_summary: Dict[str, List[str]] = {}
@@ -2289,10 +2522,10 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
         instrument_id=config.instrument_id,
         status=status,
         candidate_metric=config.candidate_metric,
-        sample_count=len(series),
+        sample_count=sample_count,
         total_evaluations=len(observations),
-        period_start=valid[0][0] if valid else None,
-        period_end=valid[-1][0] if valid else None,
+        period_start=primary_group["period_start"] if primary_group else None,
+        period_end=primary_group["period_end"] if primary_group else None,
         min_observations_for_description=config.min_observations_for_description,
         mean=mean,
         std=std,
@@ -2331,6 +2564,9 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             note: dates for note, dates in sorted(basis_break_summary.items())
         },
         unit_policy=dict(unit_record),
+        basis=dict(primary_group["basis"]) if primary_group else {},
+        basis_groups=basis_groups,
+        published_observation_count=len(valid),
         input_set_id=input_set_id,
     )
 

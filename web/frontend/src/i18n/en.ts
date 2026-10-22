@@ -368,6 +368,7 @@ export const en: Translations = {
     minLabel: 'Min',
     maxLabel: 'Max',
     samplePeriod: 'Sample period',
+    basisLabel: 'Basis of the median',
     numeratorLabel: 'Market value',
     formulaVersion: 'Formula version',
     notProductionTitle: 'Why this is not a production reference',

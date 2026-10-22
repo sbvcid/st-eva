@@ -156,6 +156,11 @@
   },
   "content_hash": "1c577b355f001d35d2071779cf9c8deddd8adc12a738ec2cec7b94807a4d8f39",
   "distribution": {
+    "basis": {
+      "revenue": [
+        "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
+      ]
+    },
     "basis_breaks": {
       "The revenue line changed element at 2018-12-29: us-gaap:Revenues -> us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
         "2019-01-31"
@@ -166,6 +171,129 @@
         "2019-08-01"
       ]
     },
+    "basis_groups": [
+      {
+        "basis": {
+          "revenue": [
+            "us-gaap:Revenues"
+          ]
+        },
+        "elements": [
+          "us-gaap:Revenues"
+        ],
+        "evaluation_dates": [
+          "2018-11-05"
+        ],
+        "kind": "SAMPLE",
+        "max": 3.601818,
+        "mean": 3.601818,
+        "min": 3.601818,
+        "percentiles": {
+          "10th": 3.601818,
+          "25th": 3.601818,
+          "75th": 3.601818,
+          "90th": 3.601818,
+          "median": 3.601818
+        },
+        "period_end": "2018-11-05",
+        "period_start": "2018-11-05",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The sample holds 1 valid observations, below the 20 the lane reports as a distribution. The figures are descriptive and are not a valuation reference at any size.",
+        "refused_count": 0,
+        "sample_count": 1,
+        "status": "RESEARCH_THIN_SAMPLE",
+        "std": 0.0
+      },
+      {
+        "basis": {
+          "revenue": [
+            "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
+          ]
+        },
+        "elements": [
+          "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
+        ],
+        "evaluation_dates": [
+          "2019-10-31",
+          "2020-01-29",
+          "2020-05-01",
+          "2020-07-31",
+          "2020-10-30",
+          "2021-01-28",
+          "2021-04-29",
+          "2021-07-28",
+          "2021-10-29",
+          "2022-01-28",
+          "2022-04-29",
+          "2022-07-29",
+          "2022-10-28",
+          "2023-02-03",
+          "2023-05-05",
+          "2023-08-04",
+          "2023-11-03",
+          "2024-02-02",
+          "2024-05-03",
+          "2024-08-02",
+          "2024-11-01",
+          "2025-01-31",
+          "2025-05-02",
+          "2025-08-01",
+          "2025-10-31",
+          "2026-01-30",
+          "2026-05-01",
+          "2026-07-31"
+        ],
+        "kind": "SAMPLE",
+        "max": 9.657382,
+        "mean": 7.286787,
+        "min": 4.248336,
+        "percentiles": {
+          "10th": 5.988517,
+          "25th": 6.697746,
+          "75th": 8.022627,
+          "90th": 9.004834,
+          "median": 7.257709
+        },
+        "period_end": "2026-07-31",
+        "period_start": "2019-10-31",
+        "reason_code": null,
+        "reason_detail": null,
+        "refused_count": 0,
+        "sample_count": 28,
+        "status": "RESEARCH_DISTRIBUTION",
+        "std": 1.327004
+      },
+      {
+        "basis": {
+          "revenue": [
+            "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+            "us-gaap:Revenues"
+          ]
+        },
+        "elements": [
+          "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "us-gaap:Revenues"
+        ],
+        "evaluation_dates": [
+          "2019-01-31",
+          "2019-05-02",
+          "2019-08-01"
+        ],
+        "kind": "DIAGNOSTIC",
+        "max": null,
+        "mean": null,
+        "min": null,
+        "percentiles": {},
+        "period_end": "2019-08-01",
+        "period_start": "2019-01-31",
+        "reason_code": "RESEARCH_REASON_NO_HOMOGENEOUS_SAMPLE",
+        "reason_detail": "The windows in this group read from more than one element, so the figure is on neither element alone. The observations are kept as traceable research observations with their evidence and their basis breaks, and they are not a sample and are not pooled with one. No statistic is published over them.",
+        "refused_count": 0,
+        "sample_count": 3,
+        "status": "RESEARCH_DIAGNOSTIC",
+        "std": null
+      }
+    ],
     "candidate_metric": true,
     "data_limitations": [
       "AAPL files net sales on us-gaap:SalesRevenueNet from the FY2009 10-Q to the FY2018 third-quarter 10-Q, on us-gaap:Revenues in the FY2018 10-K alone, and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from the FY2019 first-quarter 10-Q. The two elements this role reads overlap on FY2018, and the three trailing windows that span the change read FY2018 from us-gaap:Revenues and FY2019 from the successor. The core registry accepts the successor as an exact identity mapping from 2017-09-30 and retired us-gaap:Revenues in decision 2.99 as the broader earning-process measure, so the two tags are not one claim. For AAPL they file the same amount for every period they both cover, so the filer's figures do not move, and the lane discloses the change on the observations it touches rather than treating the sample as one series. AAPL's pre-FY2018 quarterly net sales are on us-gaap:SalesRevenueNet, which the registry does not accept and this role does not read, so the earliest four-quarter window the lane can build is FY2018.",
@@ -360,29 +488,30 @@
     "instrument_id": "AAPL",
     "issuer_id": "CIK0000320193",
     "lane_id": "aapl_reported_revenue_multiple",
-    "logic_version": "research-multiples/1.0.0",
+    "logic_version": "research-multiples/1.1.0",
     "max": 9.657382,
-    "mean": 6.812216,
+    "mean": 7.286787,
     "methodology": "research-multiples/1.0",
     "metric_id": "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
     "metric_label": "AAPL reported-revenue multiple (research): market capitalization over the trailing twelve months of AAPL's reported net sales",
-    "min": 2.999905,
+    "min": 4.248336,
     "min_observations_for_description": 20,
     "percentiles": {
-      "10th": 3.775382,
-      "25th": 6.30155,
-      "75th": 7.701645,
-      "90th": 8.936678,
-      "median": 6.996311
+      "10th": 5.988517,
+      "25th": 6.697746,
+      "75th": 8.022627,
+      "90th": 9.004834,
+      "median": 7.257709
     },
     "period_end": "2026-07-31",
-    "period_start": "2018-11-05",
+    "period_start": "2019-10-31",
     "prior_period_revisions": [],
     "production_eligible": false,
     "production_refusal": {
       "production_eligible": false,
       "statement": "No production reference is created from this distribution, and none may be created from it."
     },
+    "published_observation_count": 32,
     "reason_code": null,
     "reason_detail": null,
     "registry_standing": {
@@ -434,10 +563,10 @@
       }
     },
     "research_use_label": "RESEARCH USE ONLY. This distribution is computed from filed evidence that the production qualification regime does not admit. It is not a valuation reference, it is not a production reference chain input, and it must not be presented as one.",
-    "sample_count": 32,
+    "sample_count": 28,
     "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
     "status": "RESEARCH_DISTRIBUTION",
-    "std": 1.780924,
+    "std": 1.327004,
     "total_evaluations": 67,
     "unit_policy": {
       "filing_currency": "USD",
@@ -460,7 +589,7 @@
   "instrument_id": "AAPL",
   "issuer_id": "CIK0000320193",
   "lane_id": "aapl_reported_revenue_multiple",
-  "logic_version": "research-multiples/1.0.0",
+  "logic_version": "research-multiples/1.1.0",
   "methodology": "research-multiples/1.0",
   "metric_id": "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",

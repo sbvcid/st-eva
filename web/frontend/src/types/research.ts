@@ -39,6 +39,14 @@ export interface ResearchMetric {
   production_refusal: Record<string, unknown>
   data_limitations: string[]
   basis_breaks: Record<string, string[]>
+  /** The elements the median rests on, per role. A median is published over
+   * one basis, and this says which. */
+  basis?: Record<string, string[]>
+  /** The homogeneous sub-samples the lane's published observations fall into,
+   * each with its own count, its own statistics and its own status. */
+  basis_groups?: Array<Record<string, any>>
+  /** How many observations the lane published in all, across every basis. */
+  published_observation_count?: number
   prior_period_revisions: ResearchRevision[]
   input_set_id: string
   content_hash: string

@@ -324,6 +324,16 @@ const ResearchPanel: React.FC = () => {
                 {t.research.minLabel} {formatNumber(metric.minimum)} ·{' '}
                 {t.research.maxLabel} {formatNumber(metric.maximum)}
               </p>
+              {metric.basis && Object.keys(metric.basis).length > 0 && (
+                <p data-testid="research-basis">
+                  <span className="text-slate-400">{t.research.basisLabel}: </span>
+                  {Object.entries(metric.basis).map(([role, elements]) => (
+                    <span key={role} className="font-mono">
+                      {role}: {elements.join(', ')}
+                    </span>
+                  ))}
+                </p>
+              )}
               <p>
                 <span className="text-slate-400">{t.research.numeratorLabel}: </span>
                 {metric.numerator_label}

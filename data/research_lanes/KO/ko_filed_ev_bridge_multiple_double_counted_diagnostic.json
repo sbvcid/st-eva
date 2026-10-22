@@ -501,6 +501,14 @@
   },
   "content_hash": "be552eeddb7f26886afe09b53505807a4e1625c13ca5b58afb665b565d09225f",
   "distribution": {
+    "basis": {
+      "depreciation": [
+        "us-gaap:DepreciationDepletionAndAmortization"
+      ],
+      "operating_income": [
+        "us-gaap:OperatingIncomeLoss"
+      ]
+    },
     "basis_breaks": {
       "The long_term_debt_current line changed element at 2024-06-28: us-gaap:LongTermDebtCurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
         "2024-07-29"
@@ -846,6 +854,59 @@
         "2019-10-24"
       ]
     },
+    "basis_groups": [
+      {
+        "basis": {
+          "depreciation": [
+            "us-gaap:DepreciationDepletionAndAmortization"
+          ],
+          "operating_income": [
+            "us-gaap:OperatingIncomeLoss"
+          ]
+        },
+        "elements": [
+          "us-gaap:DepreciationDepletionAndAmortization",
+          "us-gaap:OperatingIncomeLoss"
+        ],
+        "evaluation_dates": [
+          "2019-02-22",
+          "2020-02-25",
+          "2023-04-26",
+          "2023-07-27",
+          "2023-10-24",
+          "2024-02-20",
+          "2024-05-02",
+          "2024-07-29",
+          "2024-10-24",
+          "2025-02-20",
+          "2025-05-01",
+          "2025-07-24",
+          "2025-10-23",
+          "2026-02-20",
+          "2026-04-30",
+          "2026-07-29"
+        ],
+        "kind": "SAMPLE",
+        "max": 30.32851,
+        "mean": 25.69558,
+        "min": 21.350097,
+        "percentiles": {
+          "10th": 22.954453,
+          "25th": 23.889205,
+          "75th": 27.286891,
+          "90th": 29.133052,
+          "median": 25.556776
+        },
+        "period_end": "2026-07-29",
+        "period_start": "2019-02-22",
+        "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+        "reason_detail": "The sample holds 16 valid observations, below the 20 the lane reports as a distribution. The figures are descriptive and are not a valuation reference at any size.",
+        "refused_count": 15,
+        "sample_count": 16,
+        "status": "RESEARCH_THIN_SAMPLE",
+        "std": 2.583163
+      }
+    ],
     "candidate_metric": false,
     "data_limitations": [
       "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer, so this role is registry-qualified. The role's values were re-presented by KO for the consolidation of Coca-Cola Beverages Africa; see the prior-period value revisions the lane records.",
@@ -1127,7 +1188,7 @@
     "instrument_id": "KO",
     "issuer_id": "CIK0000021344",
     "lane_id": "ko_filed_ev_bridge_multiple_double_counted_diagnostic",
-    "logic_version": "research-multiples/1.0.0",
+    "logic_version": "research-multiples/1.1.0",
     "max": 30.32851,
     "mean": 25.69558,
     "methodology": "research-multiples/1.0",
@@ -1597,6 +1658,7 @@
       "production_eligible": false,
       "statement": "No production reference is created from this distribution, and none may be created from it."
     },
+    "published_observation_count": 16,
     "reason_code": "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
     "reason_detail": "The sample holds 16 valid observations, below the 20 the lane reports as a distribution. The figures are descriptive and are not a valuation reference at any size.",
     "registry_standing": {
@@ -1835,7 +1897,7 @@
   "instrument_id": "KO",
   "issuer_id": "CIK0000021344",
   "lane_id": "ko_filed_ev_bridge_multiple_double_counted_diagnostic",
-  "logic_version": "research-multiples/1.0.0",
+  "logic_version": "research-multiples/1.1.0",
   "methodology": "research-multiples/1.0",
   "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC",
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",

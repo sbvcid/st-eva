@@ -422,6 +422,11 @@
   },
   "content_hash": "0c250afd31c5d0651161e722478e8af53125ae69bb2de6bdc69045ed1a4d3687",
   "distribution": {
+    "basis": {
+      "revenue": [
+        "us-gaap:Revenues"
+      ]
+    },
     "basis_breaks": {
       "The long_term_debt_current line changed element at 2024-06-28: us-gaap:LongTermDebtCurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
         "2024-07-29"
@@ -688,6 +693,68 @@
         "2019-10-24"
       ]
     },
+    "basis_groups": [
+      {
+        "basis": {
+          "revenue": [
+            "us-gaap:Revenues"
+          ]
+        },
+        "elements": [
+          "us-gaap:Revenues"
+        ],
+        "evaluation_dates": [
+          "2019-07-26",
+          "2019-10-24",
+          "2020-02-25",
+          "2020-04-24",
+          "2020-07-22",
+          "2020-10-22",
+          "2021-02-25",
+          "2021-04-27",
+          "2021-07-27",
+          "2021-10-28",
+          "2022-02-22",
+          "2022-04-28",
+          "2022-07-27",
+          "2022-10-26",
+          "2023-02-22",
+          "2023-04-26",
+          "2023-07-27",
+          "2023-10-24",
+          "2024-02-20",
+          "2024-05-02",
+          "2024-07-29",
+          "2024-10-24",
+          "2025-02-20",
+          "2025-05-01",
+          "2025-07-24",
+          "2025-10-23",
+          "2026-02-20",
+          "2026-04-30",
+          "2026-07-29"
+        ],
+        "kind": "SAMPLE",
+        "max": 7.776665,
+        "mean": 6.458171,
+        "min": 5.248888,
+        "percentiles": {
+          "10th": 5.781124,
+          "25th": 6.117175,
+          "75th": 6.875731,
+          "90th": 7.121982,
+          "median": 6.403373
+        },
+        "period_end": "2026-07-29",
+        "period_start": "2019-07-26",
+        "reason_code": null,
+        "reason_detail": null,
+        "refused_count": 0,
+        "sample_count": 29,
+        "status": "RESEARCH_DISTRIBUTION",
+        "std": 0.559397
+      }
+    ],
     "candidate_metric": true,
     "data_limitations": [
       "KO reports net operating revenues on us-gaap:Revenues. The core registry retired that element as a source of the `revenue` metric in decision 2.99, because the element's own definition is broader than the metric, so no production revenue role exists for KO on the element KO files. The registry's accepted revenue element, us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, is not filed by KO at all. The lane reads the element KO files and names what it reads.",
@@ -902,7 +969,7 @@
     "instrument_id": "KO",
     "issuer_id": "CIK0000021344",
     "lane_id": "ko_reported_revenue_multiple",
-    "logic_version": "research-multiples/1.0.0",
+    "logic_version": "research-multiples/1.1.0",
     "max": 7.776665,
     "mean": 6.458171,
     "methodology": "research-multiples/1.0",
@@ -1038,6 +1105,7 @@
       "production_eligible": false,
       "statement": "No production reference is created from this distribution, and none may be created from it."
     },
+    "published_observation_count": 29,
     "reason_code": null,
     "reason_detail": null,
     "registry_standing": {
@@ -1228,7 +1296,7 @@
   "instrument_id": "KO",
   "issuer_id": "CIK0000021344",
   "lane_id": "ko_reported_revenue_multiple",
-  "logic_version": "research-multiples/1.0.0",
+  "logic_version": "research-multiples/1.1.0",
   "methodology": "research-multiples/1.0",
   "metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",
