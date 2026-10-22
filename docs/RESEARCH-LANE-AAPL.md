@@ -222,13 +222,86 @@ collapses onto that first trading day, while the research capture's price
 series begins on 2010-01-04 and the lane evaluates 67 dates from
 2010-01-26.
 
+## The revenue element boundary
+
+The four dates above are the ones at which the research lane and the
+production dataset do not both publish, and they are the same four dates at
+which the research lane's own trailing window reads from two elements. This
+section records what the lane reads there, and what is and is not established
+about it.
+
+### What the lane reads, date by date
+
+Every quarter of every window names the element it was read from, the
+accession it came from, and the date it became knowable. The four dates:
+
+| Date | FY2018 quarters read from | FY2019 quarters read from | Elements in the window |
+|---|---|---|---|
+| 2018-11-05 | `us-gaap:Revenues` (the FY2018 10-K) | — | one |
+| 2019-01-31 | `us-gaap:Revenues` (three quarters) | the successor (one quarter) | two |
+| 2019-05-02 | `us-gaap:Revenues` (two quarters) | the successor (two quarters) | two |
+| 2019-08-01 | `us-gaap:Revenues` (one quarter) | the successor (three quarters) | two |
+
+The first date is a window of four quarters of the same element. The other
+three are windows that span the change.
+
+### The determination
+
+The two elements are **not** one claim, and the registry says so: decision
+2.99 retired `us-gaap:Revenues` as a source of the `revenue` metric because
+it is the broader "earning process" measure and includes investment and
+interest income, and it is not re-typed as exact because the source is not the
+same object. The registry accepts
+`us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax` as an exact
+identity mapping from 2017-09-30, and the standing of both elements is
+recorded on every observation.
+
+For AAPL itself, the two elements file **the same amount for every period
+they both cover** -- the six periods the capture holds under both, which are
+FY2017's annual, FY2018's first quarter, first half, third quarter, fourth
+quarter and annual. Apple's FY2018 cumulative spans are identical on either
+tag, so the four quarters the mixed windows use are the quarters Apple
+reported, on either tag. The figures do not move.
+
+That is a fact about the filer, not a definition, and it is stated as such.
+What the lane does with it is R-6's work: the change is a break in the series,
+not a continuity, and the break is on the observation.
+
+* The three windows that span the change carry a basis break naming both
+  elements and stating that in this capture the two file the same amount for
+  the six periods they both cover, so for those periods the change is a
+  re-tagging of the same quantity.
+* The observation at 2019-01-31, where the element the line is carried by
+  changes, carries the series break as well.
+* The distribution's basis-break summary names the three dates, so a reader
+  who reads only the distribution sees that the sample is not one series.
+
+The lane therefore does not silently continue, and it does not discard
+figures that are sound. It reads the filer's own chronology, says where the
+chronology changes, and leaves the standing of each element on the record.
+
+### What this does not establish
+
+* That the two elements measure the same thing in general. The registry says
+  they do not, and the evidence here is AAPL's practice, not a definition.
+* That the two elements are interchangeable as a metric source. They are not,
+  and this figure is not a `revenue`-metric figure and is not a price-to-sales
+  ratio. The metric says so.
+* That the sample is homogeneous. It is not: one figure in the sample rests
+  on the retired element alone, three windows span the change, and the median
+  is computed over all of them.
+
 ## The identities
 
 | Lane | `input_set_id` | `content_hash` |
 |---|---|---|
-| revenue | `7a10ab27891e6fa2ebe518905cddd3ac1a496a953cc1779f1ce3631040585b58` | `1a23c95d3fcc6f1f79204e82c6aab3e5760bf2cf3ab32f02c104cb2eb10acb32` |
+| revenue | `7a10ab27891e6fa2ebe518905cddd3ac1a496a953cc1779f1ce3631040585b58` | `1c577b355f001d35d2071779cf9c8deddd8adc12a738ec2cec7b94807a4d8f39` |
 | operating profit plus D&A | `e59f5e4e0665bad1572fbebc2ae2c4a7ccfddc705dda0a39aaa5ee218714127c` | `c48713e2cdadaf26cfc435da1d40f2b28b7b89c00f32ec729e8a4f11feee5cc0` |
 | EV bridge | `4f0067be31d437c4607b55faa29f19603619b4f0519e9d7b1a36d170afec9081` | `c5fbaa23b68459578262556070d77d4bab2ba4ed142d4e2feba950344238b373` |
+
+The revenue lane's `content_hash` moved when the element break was recorded
+on the three observations that carry it. The other two lanes' hashes did not
+move, and neither did KO's.
 
 What each identity covers is set out in `docs/RESEARCH-LANE.md`. In short: the
 `input_set_id` holds the lane's identity and the digests of the eleven capture
@@ -250,9 +323,9 @@ observation hashes.
   comparison hashes as before.
 * AAPL is not qualified for production by any of this, and is not closer to
   being qualified. The registry's standing on the elements the lanes read is
-  recorded on every observation, and it says that one of the two revenue
-  elements and one of the two depreciation elements the lanes read are
-  accepted and one is not.
+  recorded on every observation: the successor revenue element and both of the
+  depreciation elements are accepted for AAPL, and the earlier revenue
+  element is not.
 
 ## What could not be established
 
@@ -273,4 +346,10 @@ observation hashes.
 * **A byte-for-byte rebuild.** The capture cannot be rebuilt byte for byte,
   because the price payload carries the provider's live metadata and the
   acceptance index records the digest of a header page the SEC regenerates.
-  The committed capture is the one the identity is pinned to.
+  The committed capture is the one the identity is pinned to, and a re-download
+  is a new snapshot rather than a replay.
+* **That the revenue line is one series.** It is not: one figure in the
+  sample rests on the retired element alone, and three windows span the change
+  from it to the accepted one. The break is recorded on the observations and
+  named in the distribution's basis-break summary, and the median is computed
+  over the sample as it is.

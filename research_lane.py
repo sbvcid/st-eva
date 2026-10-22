@@ -908,6 +908,152 @@ def _mixed_basis_notes(
     return notes
 
 
+def _element_change_notes(
+    role: ResearchRole,
+    quarters: Sequence[Mapping[str, Any]],
+    versions_by_key: Mapping[Tuple[str, str, str], Sequence[Any]],
+    previous_anchor_element: Optional[str],
+) -> Tuple[List[str], Optional[str]]:
+    """
+    The basis breaks an element change produces (R-6), and the element read.
+
+    A role names a quantity, never a concept, and its ``elements`` are the
+    filer's own chronology. Where the filer moved from one element to
+    another, the series is broken and not continued, and the break is
+    disclosed on the observation that carries it:
+
+    * on the observation whose trailing window reads from more than one
+      element, because that figure is made of two elements;
+    * on the observation whose quarter is derived from spans of two
+      elements, because that quarter is made of two elements; and
+    * on the observation where the element the role reads changes, because
+      the series the sample is drawn from is not continuous.
+
+    Where the capture holds the same period under both elements, the note
+    states whether they file the same amount, so that a reader can see
+    whether the filer re-tagged the same figure or moved the figure as
+    well. The lane records the condition; it does not decide that the two
+    are the same quantity.
+    """
+    notes: List[str] = []
+    reads: Dict[Tuple[str, str, str], str] = {}
+    elements_read: set = set()
+    for quarter in quarters or []:
+        for item in quarter.get("inputs", []) or []:
+            tag = item.get("concept_tag")
+            if not tag:
+                continue
+            reads[(tag, str(item.get("start") or ""), str(item.get("end") or ""))] = (
+                str(item.get("accession") or "")
+            )
+            elements_read.add(tag)
+    if not reads:
+        return notes, None
+    elements = sorted(elements_read)
+
+    # A quarter made of spans from two elements is on neither element.
+    for quarter in quarters or []:
+        tags = sorted(
+            {
+                item.get("concept_tag")
+                for item in quarter.get("inputs", []) or []
+                if item.get("concept_tag")
+            }
+        )
+        if len(tags) <= 1:
+            continue
+        notes.append(
+            f"The {role.name} quarter ending {quarter.get('period_end')} is derived "
+            "from spans of more than one element: "
+            + ", ".join(
+                f"{role.taxonomy}:{tag} "
+                f"{reads.get((tag, str(item.get('start') or ''), str(item.get('end') or '')))}"
+                for tag in tags
+                for item in quarter.get("inputs", []) or []
+                if item.get("concept_tag") == tag
+            )
+            + ". The quarter is on neither element and the change is disclosed on "
+            "this observation."
+        )
+
+    # A window made of more than one element is on neither element alone.
+    if len(elements) > 1:
+        shared: List[Tuple[str, Dict[str, List[float]]]] = []
+        for (role_name, start, end), versions in sorted(versions_by_key.items()):
+            if role_name != role.name:
+                continue
+            filed: Dict[str, List[float]] = {}
+            for version in versions:
+                filed.setdefault(version.concept_tag, []).append(version.value)
+            if len(filed) < 2:
+                continue
+            shared.append(
+                (
+                    end,
+                    {
+                        tag: sorted(set(values))
+                        for tag, values in sorted(filed.items())
+                    },
+                )
+            )
+        agree = [
+            row for row in shared if len({tuple(values) for values in row[1].values()}) == 1
+        ]
+        differ = [row for row in shared if row not in agree]
+        if shared and not differ:
+            evidence = (
+                f"In this capture the two elements file the same amount for the "
+                f"{len(shared)} period(s) they both cover, so for those periods "
+                "the change is a re-tagging of the same quantity."
+            )
+        elif differ:
+            evidence = (
+                f"In this capture the two elements file different amounts for "
+                f"{len(differ)} of the {len(shared)} period(s) they both cover, "
+                "so the change moves the filed amount as well as the tag."
+            )
+        else:
+            evidence = (
+                "In this capture the two elements cover no common period, so the "
+                "change cannot be checked against a common amount."
+            )
+        notes.append(
+            f"The {role.name} line changes element inside this window: "
+            + ", ".join(f"{role.taxonomy}:{tag}" for tag in elements)
+            + f". {evidence}"
+        )
+
+    # The element the window's most recent quarter is read from is the
+    # element the line is carried by at this date.
+    anchor_element = None
+    ordered = sorted(
+        (str(quarter.get("period_end") or ""), quarter) for quarter in quarters or []
+    )
+    if ordered:
+        tags = sorted(
+            {
+                item.get("concept_tag")
+                for item in ordered[-1][1].get("inputs", []) or []
+                if item.get("concept_tag")
+            }
+        )
+        if tags:
+            anchor_element = tags[-1]
+    if (
+        anchor_element
+        and previous_anchor_element
+        and anchor_element != previous_anchor_element
+    ):
+        notes.append(
+            f"The {role.name} line changed element at {ordered[-1][0]}: "
+            f"{role.taxonomy}:{previous_anchor_element} -> "
+            f"{role.taxonomy}:{anchor_element}. The series continues on the "
+            "issuer's successor element and the change is disclosed on this "
+            "observation."
+        )
+    return notes, anchor_element
+
+
 def _refused_result(
     config: ResearchLaneConfig,
     capture: Mapping[str, Any],
@@ -1082,19 +1228,49 @@ def _element_availability_violation(
     return None
 
 
+def _file_normalisation(
+    capture: Mapping[str, Any], role: ResearchRole
+) -> Optional[Mapping[str, Any]]:
+    """The normalisation the capture's own file for the role records.
+
+    The concept file states the unit it holds its amounts in and the factor
+    it applied to the filed amounts. That statement is inside the file, so
+    the file's digest covers it.
+    """
+    for entry in (capture.get("files") or {}).values():
+        if entry.get("role") != role.capture_role:
+            continue
+        path = entry.get("path")
+        if not path or not Path(path).exists():
+            continue
+        try:
+            document = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        record = document.get("normalisation")
+        if isinstance(record, Mapping):
+            return record
+    return None
+
+
 def _capture_normalisation_violation(
     config: ResearchLaneConfig,
     capture: Mapping[str, Any],
 ) -> Optional[Tuple[str, str]]:
     """
-    Whether the capture's own normalisation agrees with the unit policy.
+    Whether the capture's own record of its normalisation agrees with the policy.
 
-    The capture states the unit it holds its amounts in and the factor it
-    applied to the filed amounts. The policy states the unit the issuer's
-    figures are in and the factor the capture is to apply. When they
-    disagree, the figures the lane would compute are not the figures the
-    policy describes, and the lane refuses rather than publish a magnitude
-    that is wrong by a factor.
+    The capture states, per role, the unit it holds its amounts in and the
+    factor it applied to the filed amounts. Two places state it: the concept
+    file's own normalisation block, whose digest the identity covers, and
+    the manifest's copy of it, which describes the file. The lane checks
+    both against the policy, and checks them against each other, so a
+    capture whose description and whose files disagree is refused rather
+    than one of the two being adopted silently.
+
+    When the figures the lane would compute are not the figures the policy
+    describes, the lane refuses rather than publish a magnitude that is
+    wrong by a factor.
     """
     policy = config.unit_policy
     declared = (
@@ -1104,35 +1280,62 @@ def _capture_normalisation_violation(
         or {}
     )
     for role in config.roles:
-        record = declared.get(role.capture_role)
-        if not isinstance(record, Mapping):
-            continue
         expected_unit = (
             policy.share_unit if role.formula_role == FORMULA_SHARES else policy.filing_unit
         )
-        target_unit = record.get("target_unit")
-        if target_unit and target_unit != expected_unit:
-            return (
-                REASON_UNIT_CONFLICT,
-                f"The capture holds the {role.name} role in {target_unit}, but the "
-                f"issuer's unit policy states {expected_unit}. The lane refuses "
-                "to compute across that difference rather than assume the amounts "
-                "are already normalised.",
-            )
-        factor = record.get("factor")
-        if (
-            factor is not None
-            and role.formula_role != FORMULA_SHARES
-            and float(factor) != float(policy.scale)
-        ):
-            return (
-                REASON_UNIT_CONFLICT,
-                f"The capture applied a scaling factor of {factor} to the {role.name} "
-                f"role, but the issuer's unit policy states {policy.scale}. The lane "
-                "refuses to reuse a calculation identity that was computed under a "
-                "different scaling.",
-            )
+        from_file = _file_normalisation(capture, role)
+        from_manifest = declared.get(role.capture_role)
+        records = [
+            ("the capture's own file", record)
+            for record in (from_file,)
+            if isinstance(record, Mapping)
+        ] + [
+            ("the capture's manifest", record)
+            for record in (from_manifest,)
+            if isinstance(record, Mapping)
+        ]
+        for where, record in records:
+            target_unit = record.get("target_unit")
+            if target_unit and target_unit != expected_unit:
+                return (
+                    REASON_UNIT_CONFLICT,
+                    f"{where} holds the {role.name} role in {target_unit}, but the "
+                    f"issuer's unit policy states {expected_unit}. The lane refuses "
+                    "to compute across that difference rather than assume the "
+                    "amounts are already normalised.",
+                )
+            factor = record.get("factor")
+            if (
+                factor is not None
+                and role.formula_role != FORMULA_SHARES
+                and float(factor) != float(policy.scale)
+            ):
+                return (
+                    REASON_UNIT_CONFLICT,
+                    f"{where} applied a scaling factor of {factor} to the "
+                    f"{role.name} role, but the issuer's unit policy states "
+                    f"{policy.scale}. The lane refuses to reuse a calculation "
+                    "identity that was computed under a different scaling.",
+                )
+        if len(records) == 2:
+            file_record = records[0][1]
+            manifest_record = records[1][1]
+            if (
+                file_record.get("target_unit") != manifest_record.get("target_unit")
+                or file_record.get("factor") != manifest_record.get("factor")
+            ):
+                return (
+                    REASON_UNIT_CONFLICT,
+                    f"The capture's manifest and the capture's own file disagree "
+                    f"about the {role.name} role: the manifest states "
+                    f"{manifest_record.get('target_unit')} at a factor of "
+                    f"{manifest_record.get('factor')}, and the file states "
+                    f"{file_record.get('target_unit')} at a factor of "
+                    f"{file_record.get('factor')}. The lane refuses rather than "
+                    "adopt one of the two silently.",
+                )
     return None
+
 
 
 def _revision_records(
@@ -1484,6 +1687,7 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
 
     observations: List[ResearchObservation] = []
     previous_elements: Dict[str, str] = {}
+    previous_denominator_elements: Dict[str, str] = {}
     previous_span_versions: Dict[Tuple[str, str, str], Mapping[str, Any]] = {}
     revisions: List[Dict[str, Any]] = []
     revisions_by_span: Dict[Tuple[str, str, str], List[str]] = {}
@@ -1743,6 +1947,23 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                             "quarters": quarters_out,
                         }
 
+        # -- R-6: the element the denominator's roles read ----------------------------
+        # A role names a quantity and the filer's own chronology of elements.
+        # Where the filer moved between them, the break is disclosed here, on
+        # the observation that carries it, rather than left to be inferred.
+        denominator_notes: List[str] = []
+        for role_name, window in windows:
+            role = config.role(role_name)
+            notes, anchor_element = _element_change_notes(
+                role,
+                window.get("quarters") or [],
+                spans_by_key,
+                previous_denominator_elements.get(role_name),
+            )
+            denominator_notes.extend(notes)
+            if anchor_element:
+                previous_denominator_elements[role_name] = anchor_element
+
         # -- the market capitalization ---------------------------------------------
         price = None
         price_provenance: Optional[List[Dict[str, Any]]] = None
@@ -1951,6 +2172,7 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             bridge=bridge,
             registry_standing=standing_by_role,
             basis_breaks=list(bridge.get("basis_breaks") or [])
+            + denominator_notes
             + _mixed_basis_notes(denominator_window, revived_spans),
             prior_period_revisions=day_revisions,
             point_in_time={

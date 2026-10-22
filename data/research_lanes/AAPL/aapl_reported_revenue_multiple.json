@@ -1,5 +1,14 @@
 {
-  "basis_breaks": {},
+  "basis_breaks": {
+    "The revenue line changed element at 2018-12-29: us-gaap:Revenues -> us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+      "2019-01-31"
+    ],
+    "The revenue line changes element inside this window: us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, us-gaap:Revenues. In this capture the two elements file the same amount for the 6 period(s) they both cover, so for those periods the change is a re-tagging of the same quantity.": [
+      "2019-01-31",
+      "2019-05-02",
+      "2019-08-01"
+    ]
+  },
   "candidate_metric": true,
   "capture_manifest": {
     "capture_dir": "C:\\git\\st-eva\\data\\research_multiples\\AAPL",
@@ -145,12 +154,21 @@
       "ticker": "AAPL"
     }
   },
-  "content_hash": "1a23c95d3fcc6f1f79204e82c6aab3e5760bf2cf3ab32f02c104cb2eb10acb32",
+  "content_hash": "1c577b355f001d35d2071779cf9c8deddd8adc12a738ec2cec7b94807a4d8f39",
   "distribution": {
-    "basis_breaks": {},
+    "basis_breaks": {
+      "The revenue line changed element at 2018-12-29: us-gaap:Revenues -> us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
+        "2019-01-31"
+      ],
+      "The revenue line changes element inside this window: us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, us-gaap:Revenues. In this capture the two elements file the same amount for the 6 period(s) they both cover, so for those periods the change is a re-tagging of the same quantity.": [
+        "2019-01-31",
+        "2019-05-02",
+        "2019-08-01"
+      ]
+    },
     "candidate_metric": true,
     "data_limitations": [
-      "AAPL files net sales on us-gaap:SalesRevenueNet from the FY2009 10-Q to the FY2018 third-quarter 10-Q, on us-gaap:Revenues in the FY2018 10-K alone, and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from the FY2019 first-quarter 10-Q. The two elements this role reads overlap on FY2018, which the FY2018 10-K states on us-gaap:Revenues and the FY2019 10-Qs restate on the successor, and the FY2017 quarters are on us-gaap:Revenues alone. The registry accepts the successor and retired us-gaap:Revenues in decision 2.99, so the standing that matters is the successor's. AAPL's pre-FY2018 quarterly net sales are on us-gaap:SalesRevenueNet, which the registry does not accept and this role does not read, so the earliest four-quarter window the lane can build is FY2018.",
+      "AAPL files net sales on us-gaap:SalesRevenueNet from the FY2009 10-Q to the FY2018 third-quarter 10-Q, on us-gaap:Revenues in the FY2018 10-K alone, and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from the FY2019 first-quarter 10-Q. The two elements this role reads overlap on FY2018, and the three trailing windows that span the change read FY2018 from us-gaap:Revenues and FY2019 from the successor. The core registry accepts the successor as an exact identity mapping from 2017-09-30 and retired us-gaap:Revenues in decision 2.99 as the broader earning-process measure, so the two tags are not one claim. For AAPL they file the same amount for every period they both cover, so the filer's figures do not move, and the lane discloses the change on the observations it touches rather than treating the sample as one series. AAPL's pre-FY2018 quarterly net sales are on us-gaap:SalesRevenueNet, which the registry does not accept and this role does not read, so the earliest four-quarter window the lane can build is FY2018.",
       "Cover-page shares outstanding, taken as filed and never adjusted for a split, paired with the as-traded close. AAPL has two splits in the price series's range: 7:1 on 2014-06-09 and 4:1 on 2020-08-31.",
       "The capture's acceptance index covers the issuer's periodic filings only, so a fact first published in another form becomes knowable in this lane at the next periodic filing that carries it. The lane therefore never uses a value before it was public, and it may use a value later than it first became public."
     ],
@@ -880,7 +898,7 @@
       "value": 3.601818
     },
     {
-      "content_hash": "4cbf9c6c3d49c016a9fe32467a12d744f52055bc3157585c8637700eb88759dc",
+      "content_hash": "c3487dea4c4a8d79fc9cdf3111593771c8b2ec29d4f09b4ede488881ee73c3fa",
       "denominator": 261612000000.0,
       "enterprise_value": null,
       "evaluation_date": "2019-01-31",
@@ -892,7 +910,7 @@
       "value": 2.999905
     },
     {
-      "content_hash": "1c68e4973cc51f8ba9b76d7439159fd417a60dab75a679bb0f426ace7c81e042",
+      "content_hash": "28fc63be44106cf099f3cf948a601bafc2e0d9cc3ced031fe3407fa1591dfe74",
       "denominator": 258490000000.0,
       "enterprise_value": null,
       "evaluation_date": "2019-05-02",
@@ -904,7 +922,7 @@
       "value": 3.722832
     },
     {
-      "content_hash": "fa3057789fedf9d0c6d78c18c09429452a4da7a85f63ea799dd39d566180ca2d",
+      "content_hash": "880383ceb08feebb68fee89d4b35a008f5d08119eedd17595bccf555639fb575",
       "denominator": 259034000000.0,
       "enterprise_value": null,
       "evaluation_date": "2019-08-01",

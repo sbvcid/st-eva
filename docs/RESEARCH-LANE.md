@@ -77,7 +77,7 @@ Context, and is never read by the production runner.
 | R-3 | The registry's standing on every element is read and recorded on every observation, and it never decides the figure. |
 | R-4 | A research metric names its own quantity. A research figure is never a production metric under another name: the metric id says what the denominator is, and the formula is carried on every observation. |
 | R-5 | The filed balance-sheet bridge keeps the production rules: every component must be knowable at the evaluation date, every component must describe one balance-sheet date, and the bridge is never completed by omission, substitution or zero-fill. |
-| R-6 | An element change is a basis break, not a continuity. Where a filer changes the element it uses for a line, the lane reads the successor element and records the break on the observation. |
+| R-6 | An element change is a basis break, not a continuity. Where a filer changes the element it uses for a line, the lane reads whichever element is in force at the evaluation date and records the break on the observation: on the observation whose window reads from more than one element, on the observation whose quarter is derived from spans of two elements, and on the observation where the element the line is carried by changes. The break states, from the capture, whether the two elements file the same amount for the periods they share, so a reader can see whether the filer re-tagged the same figure or moved the figure as well. |
 | R-7 | Every observation carries the accessions, elements, spans, periods, units, usable dates and the operands the figure was computed from, so the figure can be recomputed from the evidence rather than trusted. |
 | R-8 | The result is descriptive. A lane states its sample size and its sample period, and it never asserts production eligibility. |
 | R-9 | A revision of a value already known for a prior period is detected and recorded rather than absorbed. |
@@ -226,6 +226,50 @@ and the lane refuses with `RESEARCH_REASON_UNIT_CONFLICT` before it computes
 anything. That is what keeps "the policy changed but the identity did not" from
 being possible: a policy that disagrees with the capture produces a refusal,
 and a refusal has its own identity.
+
+The capture states its normalisation in two places: the concept file's own
+`normalisation` block, which is inside the file and so covered by the file's
+digest, and the manifest's copy of it, which describes the file. The lane reads
+the file's own block, checks it against the policy, checks the manifest's copy
+against the policy, and checks the two against each other. A capture whose
+description and whose files disagree is refused rather than one of the two
+being adopted silently, and re-describing a capture cannot paper over a
+mismatch the files themselves carry.
+
+A share count is a count, not an amount. The unit policy's scaling factor
+applies to the issuer's amounts and never to the cover-page share count: a
+capture that scaled the count would hold a thousand shares for every share
+filed, and would cancel the scale out of a market-capitalisation multiple
+instead of stating it.
+
+## Replay: two contracts, not one
+
+"Reproducible" means two different things here, and the repository keeps them
+apart.
+
+**A replay over fixed inputs.** The committed capture files and the committed
+configuration are the inputs; the lane recomputes the canonical observations,
+the lane outputs, the `input_set_id`, the `content_hash` and every
+observation's hash from them, without reaching the network. The same inputs
+give the same figures and the same hashes, and the replay leaves the capture
+untouched. `tests/test_research_lane_boundaries.py` runs the replay with the
+network refused and compares the result against the committed tree.
+
+**A re-download of the sources.** The SEC and the price provider answer again,
+and their answers are not the same bytes: the price payload carries the
+provider's live metadata, and the acceptance index records the digest of a
+header page the SEC regenerates. A re-download is therefore a **new snapshot**,
+not a replay, and it is not required to match the old one byte for byte. What
+it does produce is evidence: the element rows of a rebuilt capture are
+identical to the committed capture's when the sources have not moved, and the
+files whose bytes have moved are named by their digests.
+
+The manifest is a function of the files it describes: a manifest written from
+the same files is the same manifest, so the manifest can be re-derived offline
+and the capture's identity does not depend on when it was described. What the
+manifest cannot do is stand in for the files. The lane verifies every file
+against its recorded digest before it reads anything, and a capture whose
+bytes have changed since it was built is refused rather than read.
 
 ## The capture
 

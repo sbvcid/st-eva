@@ -62,7 +62,7 @@
     },
     "aapl_reported_revenue_multiple": {
       "candidate_metric": true,
-      "content_hash": "1a23c95d3fcc6f1f79204e82c6aab3e5760bf2cf3ab32f02c104cb2eb10acb32",
+      "content_hash": "1c577b355f001d35d2071779cf9c8deddd8adc12a738ec2cec7b94807a4d8f39",
       "file": "aapl_reported_revenue_multiple.json",
       "input_set_id": "7a10ab27891e6fa2ebe518905cddd3ac1a496a953cc1779f1ce3631040585b58",
       "issuer": "AAPL",

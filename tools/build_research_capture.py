@@ -501,6 +501,31 @@ def _element_from_instance(
 # ---------------------------------------------------------------------------
 
 
+def _role_scale(unit: str, policy: Mapping[str, Any]) -> float:
+    """
+    The scaling factor one role's rows are held under.
+
+    A share count is a count, not an amount. Scaling it with the issuer's
+    amounts would make the capture hold a thousand shares for every share
+    filed, and would cancel the scale out of a market-capitalisation
+    multiple instead of stating it. The count is therefore held unscaled,
+    and the manifest records that it was.
+    """
+    share_unit = (
+        policy.get("share_unit")
+        if isinstance(policy, Mapping)
+        else getattr(policy, "share_unit", None)
+    )
+    scale = (
+        policy.get("scale", 1.0)
+        if isinstance(policy, Mapping)
+        else getattr(policy, "scale", 1.0)
+    )
+    if unit and unit == share_unit:
+        return 1.0
+    return float(scale)
+
+
 def _normalise(
     rows: List[Dict[str, Any]], unit: str, scale: float
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
@@ -656,7 +681,7 @@ def build_capture(
         # issuer's amounts would make the capture hold a thousand shares
         # for every share filed, and would cancel the scale out of a
         # market-capitalisation multiple instead of stating it.
-        role_scale = 1.0 if unit == policy.share_unit else policy.scale
+        role_scale = _role_scale(unit, policy)
         rows, normalisation = _normalise(units[unit], unit, role_scale)
         if captured[0].get("_scale"):
             normalisation["basis"] = (
@@ -798,29 +823,41 @@ def describe_capture(
         else:
             document = json.loads(path.read_text(encoding="utf-8"))
             role = document.get("role") or path.stem.replace("_concept", "")
-            element = (document.get("elements") or [{}])[0]
-            units = element.get("units") or {}
-            unit = next(iter(units)) if units else None
-            rows = units.get(unit, []) if unit else []
-            role_accessions = sorted({row.get("accn") for row in rows if row.get("accn")})
+            unit = None
+            role_accessions: set = set()
+            for element in document.get("elements") or []:
+                for element_unit, rows in (element.get("units") or {}).items():
+                    if unit is None:
+                        unit = element_unit
+                    if element_unit == unit:
+                        role_accessions.update(
+                            row.get("accn") for row in rows if row.get("accn")
+                        )
+            role_accessions = sorted(role_accessions)
             entry["role"] = role
             entry["unit"] = unit
-            entry["currency"] = (
-                policy.filing_currency if unit and unit != policy.share_unit else None
-            )
+            # The normalisation is the capture's own record of what it did to
+            # the filed amounts, so it is read from the file rather than
+            # re-derived from the configuration: a description that disagrees
+            # with the file it describes is a disagreement, not a correction.
+            normalisation = document.get("normalisation") or {
+                "unit": unit,
+                "currency": (
+                    policy.filing_currency
+                    if unit and unit != policy.share_unit
+                    else None
+                ),
+                "source_unit": unit,
+                "factor": _role_scale(unit, policy),
+                "target_unit": unit,
+                "basis": policy.scale_basis,
+                "scaled": _role_scale(unit, policy) != 1,
+            }
+            entry["currency"] = normalisation.get("currency")
             entry["accessions"] = {
                 "count": len(role_accessions),
                 "first": role_accessions[0] if role_accessions else None,
                 "last": role_accessions[-1] if role_accessions else None,
-            }
-            normalisation = {
-                "unit": unit,
-                "currency": policy.filing_currency,
-                "source_unit": unit,
-                "factor": policy.scale,
-                "target_unit": unit,
-                "basis": policy.scale_basis,
-                "scaled": policy.scale != 1,
             }
             entry["normalisation"] = normalisation
             normalisations[role] = normalisation

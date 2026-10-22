@@ -5180,6 +5180,108 @@ same refusal reasons, the same input set ids, the same observation hashes and
 the same comparison hashes as before, and the production payload digests for
 AAPL, AEP and MSFT are unchanged.
 
+## Phase 9.11 (2026-10-22): the research lane's semantic boundaries and its replay
+
+Phase 9.10 built AAPL's capture and ran the lane over it. This phase audits
+what that lane reads, and it audits the two contracts a research result rests
+on: that a fixed input replays to the same figure, and that a change to
+anything that matters to the calculation moves the identity that says so. It
+adds no issuer, changes no production registry mapping or scope, no
+production enterprise-value definition, no valuation method, no Archive and no
+Investment Context, and it does not rewrite either capture.
+
+### The AAPL revenue element boundary
+
+The four dates at which the research revenue lane and the production AAPL
+dataset do not both publish are audited. Every quarter of every trailing
+window names the element it was read from, the accession it came from and the
+date it became knowable, and the four dates are:
+
+| Date | FY2018 quarters | FY2019 quarters | Elements in the window |
+|---|---|---|---|
+| 2018-11-05 | `us-gaap:Revenues` (the FY2018 10-K) | — | one |
+| 2019-01-31 | `us-gaap:Revenues` (three) | the successor (one) | two |
+| 2019-05-02 | `us-gaap:Revenues` (two) | the successor (two) | two |
+| 2019-08-01 | `us-gaap:Revenues` (one) | the successor (three) | two |
+
+So the two elements are mixed inside one lane, and the first of the four
+dates rests on the retired element alone.
+
+The determination: the two elements are **not** one claim. Decision 2.99
+retired `us-gaap:Revenues` as a source of the `revenue` metric because it is
+the broader earning-process measure and includes investment and interest
+income, and it is not re-typed as exact because the source is not the same
+object. For AAPL, however, the two elements file the same amount for every
+period they both cover -- the six periods the capture holds under both, which
+include FY2018's first quarter, first half, third quarter, fourth quarter and
+annual -- so the figures the mixed windows use are the quarters Apple
+reported, on either tag. That is a fact about the filer and not a definition,
+and the lane says so.
+
+The lane does not silently continue and does not discard sound figures. R-6's
+break is now recorded for the denominator roles, which it was not: the three
+windows that span the change carry a basis break naming both elements and
+stating what the change did to the filed amount, the observation where the
+element the line is carried by changes carries the series break, and the
+distribution's basis-break summary names the three dates. The revenue lane's
+`content_hash` moved because of it; the other two AAPL lanes' hashes did not
+move, and neither did KO's.
+
+### The two replay contracts
+
+**A replay over fixed inputs** recomputes the canonical observations, the lane
+outputs, the `input_set_id`, the `content_hash` and every observation's hash
+from the committed capture files and the committed configuration, without the
+network. `tests/test_research_lane_boundaries.py` runs the replay with the
+socket refused, compares the result against the committed tree, and checks
+that the capture's bytes are untouched afterwards.
+
+**A re-download of the sources** is a new snapshot and is not required to match
+the old one byte for byte: the price payload carries the provider's live
+metadata and the acceptance index records the digest of a header page the SEC
+regenerates. What the phase established about the tooling is that the
+manifest is a function of the files it describes, so a manifest written from
+the same files is the same manifest, and the manifest can be re-derived
+offline.
+
+### The identity contract, closed
+
+Three gaps were found and closed.
+
+* The lane's consistency check read the manifest's copy of the capture's
+  normalisation, which is a description. It now reads the concept file's own
+  `normalisation` block, which is inside the file and covered by the file's
+  digest, and it checks the manifest's copy against the file's and against the
+  policy. A capture whose description and whose files disagree is refused
+  rather than one of the two being adopted silently, and re-describing a
+  capture can no longer paper over a mismatch the files carry.
+* The capture builder's scaling policy was applied to the cover-page share
+  count as well as to the amounts. The scale now applies to amounts only, and
+  the manifest's own copy of the normalisation says so. A dedicated
+  regression test holds the count unscaled and shows that a capture scaled a
+  thousandfold changes the multiple a thousandfold and leaves the market
+  capitalisation alone.
+* The capture builder's describe path counted the accessions of a
+  multi-element role from its first element only, and re-derived the
+  normalisation from the configuration instead of reading it from the file. The
+  AAPL capture's manifest now reproduces byte for byte from the capture's own
+  files. The KO capture's manifest does not, because it was written by an
+  earlier builder that under-counted the accessions of the roles holding two
+  elements; its files, its digests and every lane identity are unaffected, and
+  it is not rewritten.
+
+### The invariants
+
+The AAPL EV/EBITDA lane still agrees with the production AAPL dataset on all
+35 shared dates, field for field. The four divergent dates have a traceable
+explanation. KO's four lanes publish the same values, the same refusal
+reasons, the same input set ids, the same observation hashes and the same
+comparison hashes -- the six KO comparison hashes were computed on the code
+before this phase and on the code after it, and are identical. The production
+payload digests for AAPL, AEP and MSFT are unchanged, every research result
+is still `production_eligible=False`, and no research output carries a
+`refc:*`.
+
 ## Next task status
 
 The Phase 5 round is complete and verified: the production historical P/S and
