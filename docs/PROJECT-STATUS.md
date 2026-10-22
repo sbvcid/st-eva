@@ -5077,9 +5077,9 @@ production enterprise-value definition, no valuation method, no Archive and no
 Investment Context. Everything it writes lives under `data/research_*`.
 
 Local verification for this round: research lane suite **42 passed**; AAPL
-research lane suite **57 passed**; research issuer suite **32 passed**;
-research capture suite **8 passed**; research calculator suite **64 passed**;
-research comparison suite **44 passed**; backend suite **3001 passed, 171
+research lane suite **57 passed**; research issuer suite **31 passed**;
+research capture suite **8 passed**; research calculator suite **63 passed**;
+research comparison suite **49 passed**; backend suite **3001 passed, 171
 skipped, 534 subtests passed**; archive isolation **6 passed**; web API **25
 passed**; browser smoke **14 passed**.
 
