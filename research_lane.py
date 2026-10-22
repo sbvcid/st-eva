@@ -112,6 +112,9 @@ REASON_NON_POSITIVE_DENOMINATOR = "RESEARCH_REASON_NON_POSITIVE_DENOMINATOR"
 REASON_INCOMPLETE_EV_BRIDGE = "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE"
 REASON_MIXED_BALANCE_SHEET_PERIODS = "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS"
 REASON_ELEMENT_UNAVAILABLE = "RESEARCH_REASON_ELEMENT_UNAVAILABLE"
+REASON_UNIT_UNKNOWN = "RESEARCH_REASON_UNIT_UNKNOWN"
+REASON_UNIT_CONFLICT = "RESEARCH_REASON_UNIT_CONFLICT"
+REASON_CURRENCY_MISMATCH = "RESEARCH_REASON_CURRENCY_MISMATCH"
 
 CLOSED_REASON_CODES = frozenset(
     {
@@ -123,6 +126,9 @@ CLOSED_REASON_CODES = frozenset(
         REASON_INCOMPLETE_EV_BRIDGE,
         REASON_MIXED_BALANCE_SHEET_PERIODS,
         REASON_ELEMENT_UNAVAILABLE,
+        REASON_UNIT_UNKNOWN,
+        REASON_UNIT_CONFLICT,
+        REASON_CURRENCY_MISMATCH,
     }
 )
 
@@ -137,6 +143,18 @@ FORMULA_SHARES = "SHARES"
 BRIDGE_SIGN_DEBT = "DEBT"
 BRIDGE_SIGN_LIQUID_FUNDS = "LIQUID_FUNDS"
 BRIDGE_SIGN_NONE = "NONE"
+
+# What a bridge component is. The comparison service reads the group rather
+# than a component's name, so an issuer that names its short-term
+# borrowings differently is still compared correctly.
+BRIDGE_GROUP_LONG_TERM = "LONG_TERM"
+BRIDGE_GROUP_SHORT_TERM = "SHORT_TERM"
+BRIDGE_GROUP_LIQUID = "LIQUID"
+BRIDGE_GROUPS = (
+    BRIDGE_GROUP_LONG_TERM,
+    BRIDGE_GROUP_SHORT_TERM,
+    BRIDGE_GROUP_LIQUID,
+)
 
 # What a change of element means for the series.
 CHANGE_RE_TAG = "RE_TAG"
@@ -180,9 +198,18 @@ class ResearchRole:
     taxonomy: str
     elements: Tuple[str, ...]
     formula_role: str
+    #: The capture role the elements come from. The capture's element table
+    #: is the single place an issuer's elements are written down, and this
+    #: says which row of it the role reads.
+    capture_role: str = ""
     registry_metric_id: Optional[str] = None
     element_change_kind: str = CHANGE_RE_TAG
     bridge_sign: str = BRIDGE_SIGN_NONE
+    #: What the role is in the bridge, when it is a bridge component:
+    #: LONG_TERM, SHORT_TERM or LIQUID. The comparison service reads the
+    #: group rather than a component's name, so a filer that names its
+    #: short-term borrowings differently is still compared correctly.
+    bridge_group: Optional[str] = None
     note: str = ""
 
     def __post_init__(self) -> None:
@@ -200,6 +227,59 @@ class ResearchRole:
         ):
             raise ValueError(
                 f"role {self.name!r} has an unknown bridge_sign {self.bridge_sign!r}"
+            )
+        if self.bridge_group is not None and self.bridge_group not in BRIDGE_GROUPS:
+            raise ValueError(
+                f"role {self.name!r} has an unknown bridge_group "
+                f"{self.bridge_group!r}"
+            )
+        if self.bridge_group is not None and self.bridge_sign == BRIDGE_SIGN_NONE:
+            raise ValueError(
+                f"role {self.name!r} declares a bridge group but takes no part in "
+                "the bridge"
+            )
+
+
+@dataclass(frozen=True)
+class ResearchUnitPolicy:
+    """
+    The units and the currency a lane's inputs are in.
+
+    A multiple is a market value over a financial denominator, so the two
+    must be in the same currency and the denominator must be stated in a unit
+    the policy names. A filer that states its amounts in thousands is not the
+    same as a filer that states them in units, and the difference is a factor
+    of a thousand rather than a rounding detail.
+
+    ``scale`` is the factor the capture applied to the filed amounts, and
+    ``scale_basis`` says why. The lane refuses a capture whose units do not
+    match the policy, rather than computing a figure whose magnitude is
+    wrong by a factor of a thousand.
+    """
+
+    filing_unit: str
+    filing_currency: str
+    price_currency: str
+    share_unit: str
+    scale: float = 1.0
+    scale_basis: str = ""
+    #: The rule that converts the price's currency into the denominator's,
+    #: when they differ. Without it a lane whose price and denominator are
+    #: in different currencies refuses to compute.
+    fx_rule: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        for name in (
+            "filing_unit",
+            "filing_currency",
+            "price_currency",
+            "share_unit",
+        ):
+            if not getattr(self, name):
+                raise ValueError(f"the unit policy names no {name}")
+        if self.scale <= 0:
+            raise ValueError(
+                f"the unit policy's scale must be positive, got {self.scale}"
             )
 
 
@@ -237,6 +317,17 @@ class ResearchLaneConfig:
     #: descriptive summary. This says how much evidence a description rests
     #: on; it never grants production eligibility.
     min_observations_for_description: int = 20
+    #: The units and the currency the lane's inputs are in, and the rule that
+    #: ties them together. A lane whose inputs do not match the policy
+    #: refuses to compute.
+    unit_policy: ResearchUnitPolicy = field(
+        default_factory=lambda: ResearchUnitPolicy(
+            filing_unit="USD",
+            filing_currency="USD",
+            price_currency="USD",
+            share_unit="shares",
+        )
+    )
 
     def __post_init__(self) -> None:
         if self.numerator_kind not in ("market_cap", "enterprise_value"):
@@ -370,6 +461,10 @@ class ResearchDistribution:
     data_limitations: List[str] = field(default_factory=list)
     prior_period_revisions: List[Dict[str, Any]] = field(default_factory=list)
     basis_breaks: List[Dict[str, Any]] = field(default_factory=dict)
+    #: The unit and currency policy the distribution was computed under, and
+    #: the units the capture's facts were actually read in. The scaling the
+    #: capture applied is recorded with its basis.
+    unit_policy: Dict[str, Any] = field(default_factory=dict)
     methodology: str = METHODOLOGY
     logic_version: str = LOGIC_VERSION
     formula_version: str = FORMULA_VERSION
@@ -813,6 +908,154 @@ def _mixed_basis_notes(
     return notes
 
 
+def _refused_result(
+    config: ResearchLaneConfig,
+    capture: Mapping[str, Any],
+    isolation: Mapping[str, Any],
+    input_set_id: Optional[str],
+    reason_code: str,
+    reason_detail: str,
+    unit_record: Mapping[str, Any],
+) -> ResearchLaneResult:
+    """
+    A lane that refuses to compute, with the reason it refuses.
+
+    The refusal is a result, not an exception: a caller can read why the
+    lane produced nothing, and the refusal carries the same production
+    refusal every other research result carries.
+    """
+    distribution = ResearchDistribution(
+        metric_id=config.metric_id,
+        metric_label=config.metric_label,
+        research_use_label=RESEARCH_USE_LABEL,
+        lane_id=config.lane_id,
+        issuer_id=config.issuer_id,
+        instrument_id=config.instrument_id,
+        status=STATUS_RESEARCH_UNAVAILABLE,
+        candidate_metric=config.candidate_metric,
+        sample_count=0,
+        total_evaluations=0,
+        min_observations_for_description=config.min_observations_for_description,
+        reason_code=reason_code,
+        reason_detail=reason_detail,
+        formula={
+            "expression": config.formula_expression,
+            "formula_version": config.formula_version,
+            "numerator": config.formula_numerator,
+            "denominator": config.formula_denominator,
+        },
+        production_refusal={
+            "production_eligible": False,
+            "statement": (
+                "No production reference is created from this result, and none "
+                "may be created from it."
+            ),
+        },
+        data_limitations=[
+            f"the unit and currency policy: {reason_detail}",
+        ],
+        unit_policy=dict(unit_record),
+        input_set_id=input_set_id or "",
+    )
+    return ResearchLaneResult(
+        lane_id=config.lane_id,
+        issuer_id=config.issuer_id,
+        instrument_id=config.instrument_id,
+        metric_id=config.metric_id,
+        candidate_metric=config.candidate_metric,
+        input_set_id=input_set_id or "",
+        content_hash=canonical_json_hash(
+            {
+                "reason_code": reason_code,
+                "reason_detail": reason_detail,
+                "input_set_id": input_set_id or "",
+            }
+        ),
+        distribution=distribution,
+        observations=[],
+        capture_manifest={
+            "capture_dir": str(config.capture_dir),
+            "files": {
+                name: entry.get("sha256")
+                for name, entry in sorted((capture.get("files") or {}).items())
+            },
+            "unit_policy": dict(unit_record),
+            "isolation": isolation,
+        },
+    )
+
+
+def _unit_policy_violation(
+    config: ResearchLaneConfig,
+    role_units: Mapping[str, str],
+    share_unit: Optional[str],
+    price_currency: Optional[str],
+) -> Optional[Tuple[str, str]]:
+    """
+    Whether the lane's inputs match the unit and currency policy.
+
+    A multiple is a market value over a financial denominator, so the two
+    must be in the same currency, and the denominator must be stated in the
+    unit the policy names. A capture whose facts are stated in thousands is
+    not the same capture as one stated in units, and the difference is a
+    factor of a thousand rather than a rounding detail. A lane that cannot
+    state the units it reads refuses to compute rather than publishing a
+    figure whose magnitude is wrong.
+    """
+    policy = config.unit_policy
+    for role in config.roles:
+        if role.formula_role == FORMULA_SHARES:
+            continue
+        unit = role_units.get(role.name)
+        if not unit:
+            return (
+                REASON_UNIT_UNKNOWN,
+                f"The capture names no unit for the {role.name} role, so the "
+                "lane cannot state what its figures are in.",
+            )
+        if unit != policy.filing_unit:
+            return (
+                REASON_UNIT_CONFLICT,
+                f"The {role.name} role is stated in {unit}, but the issuer's "
+                f"unit policy states {policy.filing_unit}. The lane refuses to "
+                "compute across that difference rather than assume the "
+                "amounts are already normalised.",
+            )
+    if share_unit is None:
+        return (
+            REASON_UNIT_UNKNOWN,
+            "The capture names no unit for the cover-page share count, so the "
+            "lane cannot state what it is counting.",
+        )
+    if share_unit != policy.share_unit:
+        return (
+            REASON_UNIT_CONFLICT,
+            f"The cover-page share count is stated in {share_unit}, but the "
+            f"issuer's unit policy states {policy.share_unit}.",
+        )
+    if not price_currency:
+        return (
+            REASON_UNIT_UNKNOWN,
+            "The price series names no currency, so the lane cannot state what "
+            "the market value is in.",
+        )
+    if price_currency != policy.price_currency:
+        return (
+            REASON_CURRENCY_MISMATCH,
+            f"The price series is in {price_currency}, but the issuer's unit "
+            f"policy states {policy.price_currency}.",
+        )
+    if policy.filing_currency != price_currency and not policy.fx_rule:
+        return (
+            REASON_CURRENCY_MISMATCH,
+            f"The denominator is in {policy.filing_currency} and the price is "
+            f"in {price_currency}, and the issuer's unit policy declares no "
+            "conversion rule between them, so the lane refuses to divide one "
+            "by the other.",
+        )
+    return None
+
+
 def _revision_records(
     previous: Mapping[Tuple[str, str, str], Mapping[str, Any]],
     current: Mapping[Tuple[str, str, str], Mapping[str, Any]],
@@ -884,12 +1127,40 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
     capture = _load_capture(config)
     directory = config.capture_dir
 
+    # The capture's files are found by the role the manifest gives them, so
+    # the lane does not depend on a file's name.
+    files_by_role: Dict[str, Dict[str, Any]] = {}
+    for name, entry in capture["files"].items():
+        role = entry.get("role")
+        if role:
+            files_by_role.setdefault(str(role), {"name": name, **entry})
+    if "prices" not in files_by_role:
+        raise ValueError(
+            "the capture names no file with the role 'prices'; the lane "
+            "cannot read a price series from it"
+        )
+    price_entry = files_by_role["prices"]
+    price_source = _source_reference(price_entry, price_entry["name"])
+    shares_role_name = None
+    for role in config.roles:
+        if role.formula_role == FORMULA_SHARES:
+            shares_role_name = role.name
+            break
+    shares_entry = files_by_role.get(shares_role_name or "", {})
+    shares_source = _source_reference(shares_entry, shares_entry.get("name", ""))
+
     # -- the acceptance index ------------------------------------------------
+    acceptance_entry = files_by_role.get("acceptance index")
+    if acceptance_entry is None:
+        raise ValueError(
+            "the capture names no file with the role 'acceptance index'; the "
+            "lane cannot know when a filing became knowable"
+        )
     acceptance = json.loads(
-        (directory / "filing_acceptance_evidence.json").read_text(encoding="utf-8")
+        (directory / acceptance_entry["name"]).read_text(encoding="utf-8")
     )
     price_document = json.loads(
-        (directory / "daily_prices.json").read_bytes().decode("utf-8")
+        (directory / price_entry["name"]).read_bytes().decode("utf-8")
     )["chart"]["result"][0]
     granularity = price_document.get("meta", {}).get("dataGranularity")
     if granularity != "1d":
@@ -907,6 +1178,7 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
     }
     trading_days = sorted(bars)
     splits = price_document.get("events", {}).get("splits", {})
+    price_currency = (price_document.get("meta") or {}).get("currency")
 
     filings_index: Dict[str, Dict[str, Any]] = {}
     for row in acceptance:
@@ -925,15 +1197,6 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             "period_end": row["period_end"],
         }
 
-    # The source of the price series and of the share counts, as the capture
-    # records it.
-    price_source = _source_reference(
-        capture["files"].get("daily_prices.json") or {}, "daily_prices.json"
-    )
-    shares_source = _source_reference(
-        capture["files"].get("shares_outstanding_concept.json") or {},
-        "shares_outstanding_concept.json",
-    )
 
     # -- the role payloads ----------------------------------------------------
     role_payloads: Dict[str, Dict[str, Dict[str, Any]]] = {}
@@ -1076,6 +1339,7 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             fact["accession"],
         )
     )
+    share_unit = share_facts[0]["unit"] if share_facts else None
 
     # -- the run identity -------------------------------------------------------
     input_manifest = {
@@ -1097,6 +1361,36 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
     evaluation_dates = sorted(
         {filing["usable_date"] for filing in filings_index.values()}
     )
+
+    # -- the unit and currency policy -----------------------------------------
+    # A lane that cannot state the units it reads does not compute. The
+    # refusal is a result, not an exception, so the reason travels with it.
+    policy = config.unit_policy
+    unit_record = {
+        "filing_unit": policy.filing_unit,
+        "filing_currency": policy.filing_currency,
+        "price_currency": policy.price_currency,
+        "share_unit": policy.share_unit,
+        "scale": policy.scale,
+        "scale_basis": policy.scale_basis,
+        "fx_rule": policy.fx_rule,
+        "role_units": dict(role_units),
+        "observed_share_unit": share_unit,
+        "observed_price_currency": price_currency,
+    }
+    violation = _unit_policy_violation(
+        config, role_units, share_unit, price_currency
+    )
+    if violation is not None:
+        return _refused_result(
+            config,
+            capture,
+            isolation,
+            input_set_id=input_set_id,
+            reason_code=violation[0],
+            reason_detail=violation[1],
+            unit_record=unit_record,
+        )
 
     standing_by_role: Dict[str, Dict[str, Any]] = {}
     for role in config.roles:
@@ -1516,7 +1810,8 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                 )
                 value = round(numerator_value / denominator_value, 6)
 
-        observation = ResearchObservation(            observation_id=f"research-{config.lane_id}-{day}",
+        observation = ResearchObservation(
+            observation_id=f"research-{config.lane_id}-{day}",
             lane_id=config.lane_id,
             issuer_id=config.issuer_id,
             instrument_id=config.instrument_id,
@@ -1730,6 +2025,7 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
         basis_breaks={
             note: dates for note, dates in sorted(basis_break_summary.items())
         },
+        unit_policy=dict(unit_record),
         input_set_id=input_set_id,
     )
 

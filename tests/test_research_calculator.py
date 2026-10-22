@@ -30,7 +30,18 @@ from research_calculator import (
     observation_evidence,
     run_research_calculation,
 )
-from research_lane_ko import CAPTURE_DIR, build_ko_research_lanes
+from research_issuers import (
+    build_lane_results,
+    candidate_lane_ids,
+    lane_configs,
+    load_issuer_settings,
+    settings_for_ticker,
+)
+
+# The KO case, read from the issuer configuration.
+_KO = settings_for_ticker("KO")
+CAPTURE_DIR = _KO.capture_dir
+LANE_CONFIGS = lane_configs()
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -532,35 +543,27 @@ class TheRefusals(unittest.TestCase):
     """The conditions that must refuse a calculation."""
 
     def test_a_capture_that_does_not_match_its_manifest_is_refused(self):
+        import dataclasses
         import shutil
         import tempfile
 
-        import research_calculator
+        from research_issuers import config_for_lane
+        from research_lane import load_research_lane
 
         with tempfile.TemporaryDirectory() as directory:
             copy = Path(directory) / "KO"
-            shutil.copytree(research_calculator.CAPTURE_DIR, copy)
+            shutil.copytree(CAPTURE_DIR, copy)
             target = copy / "revenue_concept.json"
             target.write_text(
                 target.read_text(encoding="utf-8") + "\n", encoding="utf-8"
             )
-            original = research_calculator.CAPTURE_DIR
-            research_calculator.CAPTURE_DIR = copy
-            research_calculator._reset_lane_cache()
-            try:
-                with self.assertRaises(ResearchCalculationError) as caught:
-                    run_research_calculation(
-                        ResearchCalculationRequest(
-                            metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"
-                        )
-                    )
-            finally:
-                research_calculator.CAPTURE_DIR = original
-                research_calculator._reset_lane_cache()
-            self.assertEqual(
-                caught.exception.reason_code,
-                "RESEARCH_CALCULATION_REFUSED_DATA_IDENTITY_MISMATCH",
-            )
+            # The lane is pointed at a capture that does not match its own
+            # manifest, which is what the capture's digest contract forbids.
+            config = config_for_lane("ko_reported_revenue_multiple")
+            tampered = dataclasses.replace(config, capture_dir=copy)
+            with self.assertRaises(ValueError) as caught:
+                load_research_lane(tampered)
+            self.assertIn("SHA-256", str(caught.exception))
 
     def test_a_denominator_that_cannot_be_formed_refuses_the_multiple(self):
         # A metric with no valid observation has no median to apply.
@@ -574,6 +577,7 @@ class TheRefusals(unittest.TestCase):
         self.assertIsNotNone(result.multiple)
 
     def test_a_missing_price_refuses_the_observation(self):
+        import dataclasses
         import hashlib
         import shutil
         import tempfile
@@ -643,6 +647,13 @@ class TheRefusals(unittest.TestCase):
                         formula_role=FORMULA_DENOMINATOR,
                         registry_metric_id="revenue",
                     ),
+                    ResearchRole(
+                        name="shares_outstanding",
+                        taxonomy="dei",
+                        elements=("EntityCommonStockSharesOutstanding",),
+                        formula_role="SHARES",
+                        registry_metric_id=None,
+                    ),
                 ),
             )
             lane = load_research_lane(config)
@@ -701,7 +712,7 @@ class TheRefusals(unittest.TestCase):
     def test_a_point_in_time_violation_cannot_reach_a_result(self):
         # Every fact a published observation rests on was knowable at that
         # observation's date.
-        for result in build_ko_research_lanes():
+        for result in build_lane_results(issuer_ids=["KO"]).values():
             for observation in result.observations:
                 if observation.value is None:
                     continue
@@ -901,7 +912,7 @@ class TheDistributionState(unittest.TestCase):
         import dataclasses
 
         import research_calculator
-        from research_lane_ko import LANE_CONFIGS
+        from research_issuers import lane_configs
 
         config = dataclasses.replace(
             LANE_CONFIGS[0], min_observations_for_description=100

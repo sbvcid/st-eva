@@ -29,7 +29,7 @@ from research_comparison import (
     metric_definitions,
     run_sensitivity,
 )
-from research_lane_ko import build_ko_research_lanes
+from research_issuers import build_lane_results
 from web.app import create_app
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,7 +42,7 @@ DIAGNOSTIC = "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC"
 
 
 def _observations(metric_id: str):
-    for result in build_ko_research_lanes():
+    for result in build_lane_results(issuer_ids=["KO"]).values():
         if result.metric_id == metric_id:
             return {o.evaluation_date: o for o in result.observations}
     raise AssertionError(metric_id)
@@ -771,7 +771,7 @@ class TheComparisonChangesNothing(unittest.TestCase):
             C2: (29, 24.675484),
             DIAGNOSTIC: (16, 25.556776),
         }
-        for result in build_ko_research_lanes():
+        for result in build_lane_results(issuer_ids=["KO"]).values():
             count, median = expected[result.metric_id]
             self.assertEqual(result.distribution.sample_count, count)
             self.assertAlmostEqual(
@@ -779,7 +779,7 @@ class TheComparisonChangesNothing(unittest.TestCase):
             )
 
     def test_the_observations_and_their_refusals_are_unchanged(self):
-        for result in build_ko_research_lanes():
+        for result in build_lane_results(issuer_ids=["KO"]).values():
             for observation in result.observations:
                 if observation.value is None:
                     self.assertIn(

@@ -36,8 +36,18 @@ import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
-from research_lane import ResearchLaneResult, ResearchObservation
-from research_lane_ko import CANDIDATE_LANE_IDS, build_ko_research_lanes
+from research_issuers import (
+    build_lane_results,
+    candidate_lane_ids,
+    config_for_lane,
+)
+from research_lane import (
+    BRIDGE_GROUP_LIQUID,
+    BRIDGE_GROUP_LONG_TERM,
+    BRIDGE_GROUP_SHORT_TERM,
+    ResearchLaneResult,
+    ResearchObservation,
+)
 
 COMPARISON_VERSION = "research-comparison/1.0"
 
@@ -168,7 +178,7 @@ _LANE_RESULTS: Optional[Dict[str, ResearchLaneResult]] = None
 def _lane_results() -> Dict[str, ResearchLaneResult]:
     global _LANE_RESULTS
     if _LANE_RESULTS is None:
-        _LANE_RESULTS = {result.lane_id: result for result in build_ko_research_lanes()}
+        _LANE_RESULTS = build_lane_results()
     return _LANE_RESULTS
 
 
@@ -234,7 +244,7 @@ def _definition_for(lane_id: str) -> MetricDefinition:
 
 def metric_definitions() -> List[MetricDefinition]:
     """The comparability attributes of every selectable research metric."""
-    return [_definition_for(lane_id) for lane_id in CANDIDATE_LANE_IDS]
+    return [_definition_for(lane_id) for lane_id in candidate_lane_ids()]
 
 
 def _definition_by_metric(metric_id: str) -> MetricDefinition:
@@ -654,6 +664,8 @@ def compare_bridges(
                 right_observation,
                 left_definition,
                 right_definition,
+                _bridge_groups(left_definition.lane_id),
+                _bridge_groups(right_definition.lane_id),
             )
         )
 
@@ -677,28 +689,58 @@ def compare_bridges(
     return summary
 
 
-def _long_term_debt(components: Mapping[str, Any]) -> Optional[float]:
+def _bridge_groups(lane_id: str) -> Dict[str, Optional[str]]:
+    """
+    The bridge groups a lane declares.
+
+    A group says what a component is -- long-term debt, short-term borrowings
+    or liquid funds -- and the comparison reads the group rather than the
+    component's name, so an issuer that names its short-term borrowings
+    differently is still compared correctly.
+    """
+    config = config_for_lane(lane_id)
+    return {role.name: role.bridge_group for role in config.roles}
+
+
+def _grouped(
+    components: Mapping[str, Any],
+    groups: Mapping[str, Optional[str]],
+    group: str,
+) -> Optional[float]:
+    """The total of the bridge components in one group."""
+    values = [
+        component.get("value")
+        for name, component in components.items()
+        if groups.get(name) == group
+    ]
+    if not values or any(value is None for value in values):
+        return None
+    return sum(values)
+
+
+def _long_term_debt(
+    components: Mapping[str, Any], groups: Mapping[str, Optional[str]]
+) -> Optional[float]:
     """The long-term debt of a bridge, taken component by component."""
-    values = [
-        component.get("value")
-        for name, component in components.items()
-        if name in ("long_term_debt_current", "long_term_debt_noncurrent")
-    ]
-    if not values or any(value is None for value in values):
-        return None
-    return sum(values)
+    return _grouped(components, groups, BRIDGE_GROUP_LONG_TERM)
 
 
-def _liquid_funds(components: Mapping[str, Any]) -> Optional[float]:
+def _liquid_funds(
+    components: Mapping[str, Any], groups: Mapping[str, Optional[str]]
+) -> Optional[float]:
     """The liquid funds of a bridge, taken component by component."""
-    values = [
-        component.get("value")
+    return _grouped(components, groups, BRIDGE_GROUP_LIQUID)
+
+
+def _short_term_components(
+    components: Mapping[str, Any], groups: Mapping[str, Optional[str]]
+) -> Dict[str, Any]:
+    """The bridge's short-term borrowings, by component name."""
+    return {
+        name: component
         for name, component in components.items()
-        if name in ("cash", "marketable_securities_current")
-    ]
-    if not values or any(value is None for value in values):
-        return None
-    return sum(values)
+        if groups.get(name) == BRIDGE_GROUP_SHORT_TERM
+    }
 
 
 def _pair_entry(
@@ -706,6 +748,8 @@ def _pair_entry(
     right: ResearchObservation,
     left_definition: MetricDefinition,
     right_definition: MetricDefinition,
+    left_groups: Mapping[str, Optional[str]],
+    right_groups: Mapping[str, Optional[str]],
 ) -> Dict[str, Any]:
     """One paired date, with the difference and what it can be attributed to."""
     left_bridge = _bridge_summary(left)
@@ -727,11 +771,11 @@ def _pair_entry(
     # The long-term debt is compared component by component: a lane's
     # `total_debt` aggregate includes its short-term component, so the
     # aggregate would differ by exactly the difference under test.
-    same_long_term_debt = _long_term_debt(left_components) == _long_term_debt(
-        right_components
-    )
-    same_liquid_funds = _liquid_funds(left_components) == _liquid_funds(
-        right_components
+    same_long_term_debt = _long_term_debt(
+        left_components, left_groups
+    ) == _long_term_debt(right_components, right_groups)
+    same_liquid_funds = _liquid_funds(left_components, left_groups) == _liquid_funds(
+        right_components, right_groups
     )
 
     # Every component of both bridges: one balance-sheet date, knowable.
@@ -750,29 +794,29 @@ def _pair_entry(
         ev_difference = right.enterprise_value - left.enterprise_value
     multiple_difference = right.value - left.value
 
-    # The short-term components, and what their difference is.
+    # The short-term components, and what their difference is. The lanes
+    # differ in which short-term component they hold, so the difference is
+    # between the two lanes' short-term groups.
     short_term_difference = None
     short_term_names: Dict[str, Any] = {}
-    for name, component in right_components.items():
-        if name in left_components:
-            continue
-        if name in ("commercial_paper", "notes_and_loans_payable"):
-            counterpart = "commercial_paper" if name == "notes_and_loans_payable" else "notes_and_loans_payable"
-            left_value = left_components.get(counterpart, {}).get("value")
-            if left_value is not None:
-                short_term_difference = component["value"] - left_value
-                short_term_names = {
-                    "right": name,
-                    "left": counterpart,
-                    "right_value": component["value"],
-                    "left_value": left_value,
-                    "right_element": component.get("element"),
-                    "left_element": left_components.get(counterpart, {}).get("element"),
-                    "right_period_end": component.get("period_end"),
-                    "left_period_end": left_components.get(counterpart, {}).get(
-                        "period_end"
-                    ),
-                }
+    left_short_term = _short_term_components(left_components, left_groups)
+    right_short_term = _short_term_components(right_components, right_groups)
+    if len(left_short_term) == 1 and len(right_short_term) == 1:
+        left_name, left_component = next(iter(left_short_term.items()))
+        right_name, right_component = next(iter(right_short_term.items()))
+        left_value = left_component.get("value")
+        if left_value is not None:
+            short_term_difference = right_component["value"] - left_value
+            short_term_names = {
+                "right": right_name,
+                "left": left_name,
+                "right_value": right_component["value"],
+                "left_value": left_value,
+                "right_element": right_component.get("element"),
+                "left_element": left_component.get("element"),
+                "right_period_end": right_component.get("period_end"),
+                "left_period_end": left_component.get("period_end"),
+            }
 
     factors: List[str] = []
     if not knowable:

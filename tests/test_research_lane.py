@@ -13,7 +13,6 @@ side may never change because a research lane exists.
 """
 import hashlib
 import json
-import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -41,13 +40,23 @@ from research_lane import (
     assert_research_isolation,
     load_research_lane,
 )
-from research_lane_ko import (
-    CAPTURE_DIR,
-    CANDIDATE_LANE_IDS,
-    LANE_CONFIGS,
-    build_ko_research_lanes,
-    write_ko_research_outputs,
+from research_issuers import (
+    build_lane_results,
+    candidate_lane_ids,
+    lane_configs,
+    settings_for_ticker,
+    write_research_outputs,
 )
+
+# The KO case, read from the issuer configuration.
+_KO = settings_for_ticker("KO")
+CAPTURE_DIR = _KO.capture_dir
+LANE_CONFIGS = lane_configs()
+CANDIDATE_LANE_IDS = candidate_lane_ids()
+
+
+def build_ko_research_lanes():
+    return list(build_lane_results(issuer_ids=["KO"]).values())
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "data" / "research_lanes" / "KO"
@@ -349,9 +358,9 @@ class TheCapture(unittest.TestCase):
     def test_the_lane_writes_nothing_outside_the_directory_it_is_given(self):
         repo_before = _versioned_data_digest()
         with tempfile.TemporaryDirectory() as directory:
-            write_ko_research_outputs(Path(directory))
+            write_research_outputs(Path(directory))
             written = sorted(path.name for path in Path(directory).iterdir())
-            self.assertEqual(len(written), len(LANE_CONFIGS) + 1)
+            self.assertEqual(len(written), len(_KO.lanes) + 1)
         self.assertEqual(_versioned_data_digest(), repo_before)
 
 

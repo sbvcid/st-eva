@@ -5,14 +5,21 @@
     "ko_filed_ev_bridge_multiple_production_shape",
     "ko_filed_ev_bridge_multiple_short_term_borrowings"
   ],
-  "dataset": "KO research lane results",
+  "dataset": "research lane results",
   "diagnostic_lane_ids": [
     "ko_filed_ev_bridge_multiple_double_counted_diagnostic"
   ],
-  "issuer": {
-    "cik": "CIK0000021344",
-    "entity_name": "The Coca-Cola Company",
-    "ticker": "KO"
+  "issuers": {
+    "AAPL": {
+      "entity_name": "Apple Inc.",
+      "fiscal_year_end": "09-26",
+      "issuer_id": "CIK0000320193"
+    },
+    "KO": {
+      "entity_name": "The Coca-Cola Company",
+      "fiscal_year_end": "12-31",
+      "issuer_id": "CIK0000021344"
+    }
   },
   "lanes": {
     "ko_filed_ev_bridge_multiple_double_counted_diagnostic": {
@@ -20,6 +27,7 @@
       "content_hash": "be552eeddb7f26886afe09b53505807a4e1625c13ca5b58afb665b565d09225f",
       "file": "ko_filed_ev_bridge_multiple_double_counted_diagnostic.json",
       "input_set_id": "e74cf263c35e664753b12500ac23221b683b96e76e1bf14e51691b01f7b1426a",
+      "issuer": "KO",
       "mean": 25.69558,
       "median": 25.556776,
       "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC",
@@ -41,6 +49,7 @@
       "content_hash": "b3fac6c44844883e39f474a237cf57b851532df06325d39cb6be281caddbfe3d",
       "file": "ko_filed_ev_bridge_multiple_production_shape.json",
       "input_set_id": "0352d7e17cb1caa3bd35b6d370921ff3cd3e50ca55da8f2a46ae0dd21801f135",
+      "issuer": "KO",
       "mean": 23.114838,
       "median": 23.654283,
       "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
@@ -62,6 +71,7 @@
       "content_hash": "ff655874d0ed3aa041907625c921afd62d3c5ca33dcd3e758ef5e0eeaace2fc2",
       "file": "ko_filed_ev_bridge_multiple_short_term_borrowings.json",
       "input_set_id": "5d7767f81ace124bf59bb45536da154c5f0afb699f43ff212d4a79e48ac4a664",
+      "issuer": "KO",
       "mean": 24.733625,
       "median": 24.675484,
       "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS",
@@ -83,6 +93,7 @@
       "content_hash": "3629b9e997de91ab06a6a3947c6c69fc73c6a7cccd33b7a3b74de140d9c50bba",
       "file": "ko_reported_operating_denominator_multiple.json",
       "input_set_id": "d58c73018a6208172e7bf5d517e68cf94d8f4a4bfc8bed14116ab3fa5bc2611e",
+      "issuer": "KO",
       "mean": 19.084631,
       "median": 19.774421,
       "metric_id": "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
@@ -102,6 +113,7 @@
       "content_hash": "0c250afd31c5d0651161e722478e8af53125ae69bb2de6bdc69045ed1a4d3687",
       "file": "ko_reported_revenue_multiple.json",
       "input_set_id": "78a7559f6952342130cfec6fb27e091bb2668d953ecbafbf87ef3039c871f1b6",
+      "issuer": "KO",
       "mean": 6.458171,
       "median": 6.403373,
       "metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",

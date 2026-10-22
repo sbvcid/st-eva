@@ -20,7 +20,7 @@ import unittest
 from pathlib import Path
 
 from historical_pe import resolve_usable_date
-from tools.build_ko_research_capture import (
+from tools.build_research_capture import (
     api_acceptance_to_eastern,
     header_acceptance_to_eastern,
 )

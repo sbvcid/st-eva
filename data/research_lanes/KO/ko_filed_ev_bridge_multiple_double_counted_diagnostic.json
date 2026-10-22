@@ -1806,7 +1806,29 @@
     "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
     "status": "RESEARCH_THIN_SAMPLE",
     "std": 2.583163,
-    "total_evaluations": 67
+    "total_evaluations": 67,
+    "unit_policy": {
+      "filing_currency": "USD",
+      "filing_unit": "USD",
+      "fx_rule": null,
+      "observed_price_currency": "USD",
+      "observed_share_unit": "shares",
+      "price_currency": "USD",
+      "role_units": {
+        "cash": "USD",
+        "commercial_paper": "USD",
+        "depreciation": "USD",
+        "long_term_debt_current": "USD",
+        "long_term_debt_noncurrent": "USD",
+        "marketable_securities_current": "USD",
+        "notes_and_loans_payable": "USD",
+        "operating_income": "USD",
+        "shares_outstanding": "shares"
+      },
+      "scale": 1.0,
+      "scale_basis": "KO states its amounts in units; the capture holds them unchanged and no scaling is applied.",
+      "share_unit": "shares"
+    }
   },
   "formula_version": "research-multiples/1.0",
   "input_set_id": "e74cf263c35e664753b12500ac23221b683b96e76e1bf14e51691b01f7b1426a",

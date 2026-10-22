@@ -34,17 +34,19 @@ from __future__ import annotations
 import hashlib
 import math
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from research_issuers import (
+    build_lane_results,
+    candidate_lane_ids,
+    config_for_lane,
+    lane_configs,
+)
 from research_lane import (
     ResearchLaneResult,
     ResearchObservation,
     assert_research_isolation,
-)
-from research_lane_ko import (
-    CANDIDATE_LANE_IDS,
-    CAPTURE_DIR,
-    LANE_CONFIGS,
 )
 
 CALCULATOR_VERSION = "research-calculator/1.0"
@@ -377,17 +379,16 @@ _LANE_RESULTS: Optional[Dict[str, ResearchLaneResult]] = None
 
 
 def _lane_results() -> Dict[str, ResearchLaneResult]:
-    """The KO lanes, computed once and held for the process's lifetime.
+    """The configured lanes, computed once and held for the lifetime.
 
-    The lanes are a pure function of the committed capture, so the results
-    are the same every time; holding them keeps a user browsing the
-    evidence explorer from recomputing the same windows on every request.
+    The lanes are a pure function of the committed captures and the
+    configuration, so the results are the same every time; holding them
+    keeps a user browsing the evidence explorer from recomputing the same
+    windows on every request.
     """
     global _LANE_RESULTS
     if _LANE_RESULTS is None:
-        from research_lane_ko import build_ko_research_lanes
-
-        _LANE_RESULTS = {result.lane_id: result for result in build_ko_research_lanes()}
+        _LANE_RESULTS = build_lane_results()
     return _LANE_RESULTS
 
 
@@ -397,7 +398,7 @@ def _reset_lane_cache() -> None:
     _LANE_RESULTS = None
 
 
-def _capture_identity() -> Dict[str, Any]:
+def _capture_identity(capture_dir: Path) -> Dict[str, Any]:
     """
     The research data identity: what the capture is, by content.
 
@@ -407,7 +408,7 @@ def _capture_identity() -> Dict[str, Any]:
     """
     import json
 
-    manifest_path = CAPTURE_DIR / "manifest.json"
+    manifest_path = capture_dir / "manifest.json"
     if not manifest_path.exists():
         raise ResearchCalculationError(
             REFUSED_DATA_IDENTITY_MISMATCH,
@@ -417,7 +418,7 @@ def _capture_identity() -> Dict[str, Any]:
     files = manifest.get("files") or {}
     mismatches = []
     for name, entry in sorted(files.items()):
-        path = CAPTURE_DIR / name
+        path = capture_dir / name
         if not path.exists():
             mismatches.append(f"{name} is missing")
             continue
@@ -432,7 +433,7 @@ def _capture_identity() -> Dict[str, Any]:
             + ". No calculation is made from evidence the manifest does not name.",
         )
     return {
-        "capture_dir": str(CAPTURE_DIR),
+        "capture_dir": str(capture_dir),
         "captured_at": manifest.get("captured_at"),
         "issuer": manifest.get("issuer"),
         "capture_policy": manifest.get("capture_policy"),
@@ -444,13 +445,13 @@ def _capture_identity() -> Dict[str, Any]:
 
 
 def _config_for(lane_id: str) -> Any:
-    for config in LANE_CONFIGS:
-        if config.lane_id == lane_id:
-            return config
-    raise ResearchCalculationError(
-        REFUSED_METRIC_UNAVAILABLE,
-        f"No research lane named {lane_id!r} is configured.",
-    )
+    try:
+        return config_for_lane(lane_id)
+    except Exception as error:
+        raise ResearchCalculationError(
+            REFUSED_METRIC_UNAVAILABLE,
+            f"No research lane named {lane_id!r} is configured.",
+        ) from error
 
 
 def _numerator_kind(lane_id: str) -> str:
@@ -489,7 +490,7 @@ def list_research_metrics() -> List[ResearchMetricSummary]:
     """
     results = _lane_results()
     summaries: List[ResearchMetricSummary] = []
-    for lane_id in CANDIDATE_LANE_IDS:
+    for lane_id in candidate_lane_ids():
         result = results[lane_id]
         distribution = result.distribution
         config = _config_for(lane_id)
@@ -551,7 +552,7 @@ def _selected_result(metric_id: str) -> ResearchLaneResult:
     refusal rather than an empty result.
     """
     results = _lane_results()
-    for lane_id in CANDIDATE_LANE_IDS:
+    for lane_id in candidate_lane_ids():
         result = results[lane_id]
         if result.metric_id == metric_id or lane_id == metric_id:
             return result
@@ -568,7 +569,7 @@ def _selected_result(metric_id: str) -> ResearchLaneResult:
         f"No research metric named {metric_id!r} is available. The selectable "
         "research metrics are "
         + ", ".join(
-            results[lane_id].metric_id for lane_id in CANDIDATE_LANE_IDS
+            results[lane_id].metric_id for lane_id in candidate_lane_ids()
         )
         + ".",
     )
@@ -621,7 +622,9 @@ def observation_evidence(metric_id: str, evaluation_date: str) -> Dict[str, Any]
     for observation in result.observations:
         if observation.evaluation_date == evaluation_date:
             payload = observation.to_dict()
-            payload["capture_identity"] = _capture_identity()
+            payload["capture_identity"] = _capture_identity(
+                _config_for(result.lane_id).capture_dir
+            )
             return payload
     raise ResearchCalculationError(
         REFUSED_OBSERVATION_UNKNOWN,
@@ -718,12 +721,12 @@ def run_research_calculation(
     # The isolation is asserted here, at the point a figure is produced, not
     # assumed to have survived from the lane.
     assert_research_isolation(
-        [config.metric_id for config in LANE_CONFIGS]
+        [config.metric_id for config in lane_configs()]
     )
-    capture_identity = _capture_identity()
 
     result = _selected_result(request.metric_id)
     config = _config_for(result.lane_id)
+    capture_identity = _capture_identity(config.capture_dir)
     distribution = result.distribution
     numerator_kind = config.numerator_kind
 

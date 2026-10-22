@@ -257,6 +257,73 @@ To rebuild the capture from its sources:
 python tools/build_ko_research_capture.py --as-of YYYY-MM-DD
 ```
 
+## The issuer configuration
+
+`data/research_issuers.json` is the only place an issuer's elements, roles,
+formulas and units are written down. The capture builder and the research
+lanes both read it, so an issuer is described once rather than twice.
+
+It records, for each issuer:
+
+* the identity -- the CIK, the ticker, the entity name and the fiscal year
+  end;
+* the capture -- its directory, the earliest filed date, the periodic forms,
+  the price series, the order the element sources are tried in, and the
+  element table, which is the single truth about which elements a capture
+  role holds;
+* the roles -- the capture role each one reads, the formula role, the
+  registry metric the element would be read for, the kind of element change,
+  the bridge sign and the bridge group, and the note that says what the
+  element means for this filer;
+* the unit policy -- the unit the filings are stated in, the currency, the
+  price's currency, the unit the share count is in, the factor the capture
+  scaled by and the basis for the scaling, and the conversion rule when the
+  price and the denominator are in different currencies;
+* the lanes -- the lane id, the research metric id, the name, the research
+  purpose, the formula, the denominator and bridge roles, the numerator
+  kind, the descriptive threshold and whether the lane is a candidate.
+
+`research_issuers.py` loads it and checks it. A configuration that names a
+role twice, a lane twice, a metric twice, a role the capture does not hold,
+a lane that names a role the issuer does not declare, an unknown formula
+role, an unknown bridge group, a metric that takes a production name, or a
+missing file is refused with the field that is wrong. Nothing falls back to a
+built-in issuer.
+
+A lane whose capture has not been built is not offered as a metric. The
+configuration may describe it, and the registry says so, but there is nothing
+to compute from and the metric is not listed.
+
+### The unit policy
+
+A multiple is a market value over a financial denominator, so the two must be
+in the same currency and the denominator must be stated in the unit the
+policy names. A capture whose facts are stated in thousands is not the same
+capture as one stated in units, and the difference is a factor of a thousand
+rather than a rounding detail.
+
+Before a lane computes, it checks that every role's unit is the unit the
+policy names, that the share count is in the unit the policy names, that the
+price series names the currency the policy names, and that the denominator's
+currency and the price's currency agree or that the policy declares a
+conversion rule between them. A lane that cannot state the units it reads
+refuses to compute, and the refusal is a result with its reason rather than
+an exception: `RESEARCH_REASON_UNIT_UNKNOWN`,
+`RESEARCH_REASON_UNIT_CONFLICT` or
+`RESEARCH_REASON_CURRENCY_MISMATCH`.
+
+Every scaling is recorded: the unit the filer used, the factor, the unit the
+capture holds, and the basis. The capture's manifest records it per role, and
+the distribution records the policy and the units the facts were read in.
+
+### The bridge groups
+
+A bridge component says what it is -- `LONG_TERM`, `SHORT_TERM` or
+`LIQUID` -- rather than what it is called. The comparison service reads the
+group, so an issuer that names its short-term borrowings differently is still
+compared correctly, and the attribution to a single component still requires
+the other components and the denominator window to agree.
+
 ## The comparison and sensitivity service
 
 `research_comparison.py` is the service a user works with when the question

@@ -4946,6 +4946,112 @@ CI for this round: commit `d2bb77b`, run `39725124318`, `backend` and
 API 25 passed, archive isolation 6 passed, browser smoke 14 passed,
 success).
 
+## Phase 9.9 (2026-10-22): the research lanes become configuration driven
+
+The research lanes were written for one issuer. The engine behind them was
+already issuer-neutral, but the issuer itself was written down twice -- once
+in the capture builder and once in the lane module -- and two services
+depended on the issuer's own module. This phase makes the configuration the
+single source and removes the duplication.
+
+It adds no company, changes no registry decision or scope, changes no
+production valuation rule, and commits no new capture.
+
+### What was added and what went
+
+| Artifact | What happened |
+|---|---|
+| `data/research_issuers.json` | The single source: the issuer identities, the capture's element table, the roles, the unit policies and the lanes. KO's configuration was migrated from the lane module without a change to any formula, role, refusal or result. |
+| `research_issuers.py` | The loader and its checks. A configuration that names a role twice, a lane twice, a metric twice, a role the capture does not hold, a lane that names an unknown role, an unknown formula role or bridge group, a metric that takes a production name, or a missing file is refused with the field that is wrong. Nothing falls back to a built-in issuer. |
+| `tools/build_research_capture.py` | The general capture builder, which replaces the issuer-specific one. The element table is the configuration's, the sources are tried in the configured order, and the manifest records each role, its source file name, its URL, its accession coverage, its unit, its normalisation and its digest. |
+| `research_lane.py` | The capture's files are found by the role the manifest gives them rather than by their names, and the unit and currency policy is checked before the lane computes. |
+| `research_comparison.py` | The bridge's components are read by the group the role declares rather than by their names. |
+| `research_calculator.py` | The metric catalogue comes from the configuration. |
+| `research_lane_ko.py`, `tools/build_ko_research_capture.py` | Retired. Their content is in the configuration and the registry. |
+
+### The four things the phase set out to remove
+
+1. **The element table was written twice.** The capture builder and the lane
+   definition each held the elements. The configuration holds them once, in
+   the capture's element table, and a role names the capture role it reads.
+2. **The comparison service read fixed component names.** It now reads the
+   group a role declares -- `LONG_TERM`, `SHORT_TERM` or `LIQUID` -- so an
+   issuer that names its short-term borrowings differently is still compared
+   correctly.
+3. **The units were never checked against the price's currency.** A lane now
+   refuses, before it computes, when a role's unit is not the unit the
+   policy names, when the share count is not a count of shares, when the
+   price names no currency, or when the price and the denominator are in
+   different currencies with no declared conversion rule. The refusals are
+   `RESEARCH_REASON_UNIT_UNKNOWN`, `RESEARCH_REASON_UNIT_CONFLICT` and
+   `RESEARCH_REASON_CURRENCY_MISMATCH`, and they are results with their
+   reason rather than exceptions.
+4. **The metric catalogue depended on the issuer's module.** It now comes
+   from the configuration, and a lane whose capture has not been built is
+   not offered as a metric.
+
+### The three kinds of result, verified separately
+
+**The mathematical results are unchanged.** The four lanes produce the same
+67 evaluation dates, the same values, the same refusals with the same
+reasons, and the same statistics: 29 and 6.403373, 64 and 19.774421, 27 and
+23.654283, 29 and 24.675484, and the diagnostic's 16 and 25.556776. The
+paired comparison is unchanged: sixteen paired dates, all sixteen
+attributable, the same unpaired dates and the same reason distribution.
+
+**The research identity is unchanged.** The input set id, every observation's
+content hash, the distribution's content hash and the comparison hash are
+what they were before the migration. The capture's twelve data files were
+not touched; only its manifest was rewritten, to record what the builder's
+manifest records, and the manifest is not itself part of the input
+identity.
+
+**The production results are unchanged.** The payload digests for AAPL, AEP
+and MSFT are the ones the phase 9.6 and 9.7 runs recorded, and no registry
+decision, scope, bridge, window, point-in-time rule or sample gate was
+touched.
+
+### The capture, rebuilt and compared
+
+The builder rebuilt KO's capture into a temporary directory and the files were
+compared one by one against the committed capture. The rows of every element
+are identical -- the same accessions, the same periods, the same values and
+the same units -- so the evidence behind KO's figures is the evidence the
+committed capture holds. The files differ in three ways, none of which is a
+fact about the filings:
+
+* the price payload carries the provider's live metadata, so its bytes move
+  on every request;
+* the acceptance index records the digest of a header page the SEC
+  generates, so that digest moves on every request as well;
+* the element documents carry the normalisation the capture applied, which the
+  phase 9.6 capture did not record.
+
+A capture therefore cannot be rebuilt byte for byte, and a rebuild would
+produce a different input identity. The committed capture is the one the
+identity is pinned to, and the builder's rebuild is the evidence that the
+evidence behind it is unchanged.
+
+### The second case
+
+AAPL is configured: its September 52/53-week fiscal year end, the revenue
+and depreciation element chronologies the registry accepts, the quarterly
+bridge components, the unit policy, and the two splits in its price
+series's range. **Its capture is not committed, so no AAPL figure has been
+computed and no end-to-end AAPL result is established.** The configuration
+case is in place; the second company's numbers are not, and the test says so
+rather than working around it.
+
+### What this phase does not do
+
+It does not qualify KO or AAPL for production, and it does not make either
+closer to production qualification. It changes no registry mapping or scope,
+no production enterprise-value definition, adds no production company and
+adds no valuation method. The research metric that cannot be selected
+still cannot be selected, and the research results still carry
+`production_eligible=False` and write no Archive row, no Investment Context
+and no production reference.
+
 ## Next task status
 
 The Phase 5 round is complete and verified: the production historical P/S and

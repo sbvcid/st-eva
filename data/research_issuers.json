@@ -1,0 +1,587 @@
+{
+  "description": "The research issuers and their research lanes. This file is the only place an issuer's elements, roles, formulas and unit policy are written down: the capture builder and the research lanes both read it.",
+  "issuers": [
+    {
+      "capture": {
+        "captured_at": "2026-10-21",
+        "directory": "data/research_multiples/KO",
+        "earliest_filed_date": "2010-01-01",
+        "element_sources": [
+          "companyfacts",
+          "companyconcept",
+          "filing_instance"
+        ],
+        "elements": {
+          "cash": {
+            "elements": [
+              "CashAndCashEquivalentsAtCarryingValue"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "commercial_paper": {
+            "elements": [
+              "CommercialPaper"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "depreciation": {
+            "elements": [
+              "DepreciationDepletionAndAmortization"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "long_term_debt_current": {
+            "elements": [
+              "LongTermDebtCurrent",
+              "LongTermDebtAndCapitalLeaseObligationsCurrent"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "long_term_debt_noncurrent": {
+            "elements": [
+              "LongTermDebtNoncurrent",
+              "LongTermDebtAndCapitalLeaseObligations"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "marketable_securities_current": {
+            "elements": [
+              "MarketableSecuritiesCurrent",
+              "MarketableSecurities"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "notes_and_loans_payable": {
+            "elements": [
+              "NotesAndLoansPayableCurrent",
+              "NotesAndLoansPayable"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "operating_income": {
+            "elements": [
+              "OperatingIncomeLoss"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "revenue": {
+            "elements": [
+              "Revenues"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "shares_outstanding": {
+            "elements": [
+              "EntityCommonStockSharesOutstanding"
+            ],
+            "taxonomy": "dei"
+          }
+        },
+        "periodic_forms": [
+          "10-K",
+          "10-Q"
+        ],
+        "price": {
+          "events": [
+            "div",
+            "split"
+          ],
+          "interval": "1d",
+          "period_end_epoch": 1790000000,
+          "period_start_epoch": 1262304000,
+          "provider": "yahoo_chart",
+          "symbol": "KO"
+        }
+      },
+      "entity_name": "The Coca-Cola Company",
+      "fiscal_year_end": "12-31",
+      "issuer_id": "CIK0000021344",
+      "lanes": [
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "revenue"
+          ],
+          "formula_denominator": "the trailing twelve months of us-gaap:Revenues, KO's reported net operating revenues, as four consecutive fiscal quarters",
+          "formula_expression": "(as-traded close x cover-page shares outstanding) / TTM of us-gaap:Revenues",
+          "formula_numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "ko_reported_revenue_multiple",
+          "metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+          "metric_label": "KO reported-revenue multiple (research): market capitalization over the trailing twelve months of KO's reported net operating revenues",
+          "min_observations_for_description": 20,
+          "numerator_kind": "market_cap",
+          "research_purpose": "Research use only. A named alternative to a price-to-sales reference for KO, computed from the revenue element KO actually files. It is not a price-to-sales reference and it is not qualified for production use."
+        },
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization, each a discrete fiscal quarter, summed over four consecutive quarters; a quarter missing either role is absent, not half a quarter",
+          "formula_expression": "(as-traded close x cover-page shares outstanding) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "ko_reported_operating_denominator_multiple",
+          "metric_id": "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+          "metric_label": "KO reported operating profit plus reported depreciation and amortization multiple (research): market capitalization over the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization",
+          "min_observations_for_description": 20,
+          "numerator_kind": "market_cap",
+          "research_purpose": "Research use only. A named alternative operating denominator for KO, built from the two elements KO files. It is not EBITDA and it is not qualified for production use: the registry does not accept KO's depreciation element for the depreciation-and-amortization metric."
+        },
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization",
+          "formula_expression": "(market cap + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "the filed enterprise-value bridge: market capitalization plus total debt less liquid funds",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "ko_filed_ev_bridge_multiple_production_shape",
+          "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+          "metric_label": "KO filed enterprise-value bridge multiple, production shape (research): the filed bridge over the trailing twelve months of KO's reported operating income plus reported depreciation and amortization",
+          "min_observations_for_description": 20,
+          "numerator_kind": "enterprise_value",
+          "research_purpose": "Research use only. The filed enterprise-value bridge in the production component shape, so that a research figure and a production figure can be compared on the same bridge. It is not a production EV/EBITDA reference."
+        },
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "notes_and_loans_payable",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization",
+          "formula_expression": "(market cap + total debt [long-term debt non-current + long-term debt current + loans and notes payable] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "the filed enterprise-value bridge with short-term borrowings read from KO's 'Loans and notes payable' line",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "ko_filed_ev_bridge_multiple_short_term_borrowings",
+          "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS",
+          "metric_label": "KO filed enterprise-value bridge multiple with loans and notes payable (research): the filed bridge, with KO's total short-term borrowings in place of commercial paper, over the trailing twelve months of KO's reported operating income plus reported depreciation and amortization",
+          "min_observations_for_description": 20,
+          "numerator_kind": "enterprise_value",
+          "research_purpose": "Research use only. The same filed bridge with KO's own 'Loans and notes payable' line in place of commercial paper. KO's line is its total short-term borrowings and includes commercial paper, so the substitution is scope-correct and a bridge holding both would double count. The two bridge lanes sample different dates, so the difference between their medians is not a difference in debt."
+        },
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "notes_and_loans_payable",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": false,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of KO's reported operating income plus KO's reported depreciation and amortization",
+          "formula_expression": "(market cap + total debt [long-term debt non-current + long-term debt current + commercial paper + loans and notes payable] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "a bridge that is known to count commercial paper twice; a diagnostic measurement, not an enterprise-value definition",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "ko_filed_ev_bridge_multiple_double_counted_diagnostic",
+          "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC",
+          "metric_label": "DIAGNOSTIC ONLY, NOT A CANDIDATE METRIC: a bridge holding commercial paper AND loans and notes payable in the short-term debt component, which counts KO's commercial paper twice",
+          "min_observations_for_description": 20,
+          "numerator_kind": "enterprise_value",
+          "research_purpose": "Diagnostic only. This lane exists to measure how far a bridge that counts commercial paper twice overstates the multiple. It is not a research metric, it is not offered as one, and its formula is not an acceptable enterprise-value definition."
+        }
+      ],
+      "roles": [
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "revenue",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "DENOMINATOR",
+          "name": "revenue",
+          "note": "KO reports net operating revenues on us-gaap:Revenues. The core registry retired that element as a source of the `revenue` metric in decision 2.99, because the element's own definition is broader than the metric, so no production revenue role exists for KO on the element KO files. The registry's accepted revenue element, us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax, is not filed by KO at all. The lane reads the element KO files and names what it reads.",
+          "registry_metric_id": "revenue"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "operating_income",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "OPERATING_INCOME",
+          "name": "operating_income",
+          "note": "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer, so this role is registry-qualified. The role's values were re-presented by KO for the consolidation of Coca-Cola Beverages Africa; see the prior-period value revisions the lane records.",
+          "registry_metric_id": "operating_income"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "depreciation",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "DEPRECIATION",
+          "name": "depreciation",
+          "note": "KO's cash-flow line 'Depreciation and amortization' is carried on us-gaap:DepreciationDepletionAndAmortization. The registry maps that element to the `depreciation_and_amortization` metric for Apple and Nike alone, so for KO the standing is SCOPE_NOT_APPLICABLE and the role is not registry-qualified. The filed values are still evidence and a research lane may read them; the figure they produce is not the registry's EBITDA and is not named EBITDA. KO's separate us-gaap:Depreciation element is disclosed only annually and cannot carry a quarterly trailing window at all.",
+          "registry_metric_id": "depreciation_and_amortization"
+        },
+        {
+          "bridge_group": "LIQUID",
+          "bridge_sign": "LIQUID_FUNDS",
+          "capture_role": "cash",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "cash",
+          "note": "us-gaap:CashAndCashEquivalentsAtCarryingValue is registry-qualified for KO.",
+          "registry_metric_id": "cash"
+        },
+        {
+          "bridge_group": "LIQUID",
+          "bridge_sign": "LIQUID_FUNDS",
+          "capture_role": "marketable_securities_current",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "marketable_securities_current",
+          "note": "The registry declares no `marketable_securities_current` metric, so it has no standing to rule on this component and the filed-bridge specification governs it. KO's 'Marketable securities' line is carried on us-gaap:MarketableSecuritiesCurrent through 2020-12-31 and on us-gaap:MarketableSecurities afterwards; the two carry the same filed value on the dates at which both are reported, so the change is a re-tagging of the same quantity and is disclosed as a basis break. KO's separate 'Short-term investments' line is not part of this component.",
+          "registry_metric_id": "marketable_securities_current"
+        },
+        {
+          "bridge_group": "SHORT_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "commercial_paper",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "commercial_paper",
+          "note": "The registry declares no `commercial_paper` metric, so it has no standing to rule on this component. KO does not carry a commercial paper line on the face of its balance sheet: KO's balance sheet carries 'Loans and notes payable' as the total of its short-term borrowings, and KO discloses commercial paper as a component of that line in its debt note. KO files this element annually only until 2023, so a bridge that holds it is incomplete at most quarterly dates.",
+          "registry_metric_id": "commercial_paper"
+        },
+        {
+          "bridge_group": "SHORT_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "notes_and_loans_payable",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "notes_and_loans_payable",
+          "note": "The registry declares no `notes_and_loans_payable` metric, so it has no standing to rule on this component. KO's balance-sheet line 'Loans and notes payable' is its total short-term borrowings: the debt note states that loans and notes payable consist primarily of commercial paper, and the filed values satisfy NotesAndLoansPayable = CommercialPaper + OtherShortTermBorrowings at every date at which both are reported. This role therefore REPLACES commercial paper in the bridge; a bridge holding both counts commercial paper twice.",
+          "registry_metric_id": "notes_and_loans_payable"
+        },
+        {
+          "bridge_group": "LONG_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "long_term_debt_noncurrent",
+          "element_change_kind": "SCOPE_CHANGE",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "long_term_debt_noncurrent",
+          "note": "us-gaap:LongTermDebtNoncurrent is registry-qualified for KO and is filed through 2024-03-29. From 2023-12-31 KO carries the same line on us-gaap:LongTermDebtAndCapitalLeaseObligations, whose definition includes the lease obligation where the earlier element excluded it, so the element change is also a scope change and is disclosed as a basis break.",
+          "registry_metric_id": "long_term_debt_noncurrent"
+        },
+        {
+          "bridge_group": "LONG_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "long_term_debt_current",
+          "element_change_kind": "SCOPE_CHANGE",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "long_term_debt_current",
+          "note": "us-gaap:LongTermDebtCurrent is registry-qualified for KO and is filed through 2024-03-29. Its successor carries the current maturities of long-term debt from 2023-12-31 and, like its noncurrent counterpart, includes the lease obligation.",
+          "registry_metric_id": "long_term_debt_current"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "shares_outstanding",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "SHARES",
+          "name": "shares_outstanding",
+          "note": "Cover-page shares outstanding, taken as filed and never adjusted for a split, paired with the as-traded close. The registry declares no metric for it; the production rule for pairing it with the as-traded close governs the role.",
+          "registry_metric_id": null
+        }
+      ],
+      "ticker": "KO",
+      "unit_policy": {
+        "filing_currency": "USD",
+        "filing_unit": "USD",
+        "fx_rule": null,
+        "price_currency": "USD",
+        "scale": 1,
+        "scale_basis": "KO states its amounts in units; the capture holds them unchanged and no scaling is applied.",
+        "share_unit": "shares"
+      }
+    },
+    {
+      "capture": {
+        "captured_at": "",
+        "directory": "data/research_multiples/AAPL",
+        "earliest_filed_date": "2010-01-01",
+        "element_sources": [
+          "companyfacts",
+          "companyconcept",
+          "filing_instance"
+        ],
+        "elements": {
+          "cash": {
+            "elements": [
+              "CashAndCashEquivalentsAtCarryingValue"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "commercial_paper": {
+            "elements": [
+              "CommercialPaper"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "depreciation": {
+            "elements": [
+              "DepreciationAndAmortization",
+              "DepreciationDepletionAndAmortization"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "long_term_debt_current": {
+            "elements": [
+              "LongTermDebtCurrent"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "long_term_debt_noncurrent": {
+            "elements": [
+              "LongTermDebtNoncurrent"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "marketable_securities_current": {
+            "elements": [
+              "MarketableSecuritiesCurrent"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "operating_income": {
+            "elements": [
+              "OperatingIncomeLoss"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "revenue": {
+            "elements": [
+              "Revenues",
+              "RevenueFromContractWithCustomerExcludingAssessedTax"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "shares_outstanding": {
+            "elements": [
+              "EntityCommonStockSharesOutstanding"
+            ],
+            "taxonomy": "dei"
+          }
+        },
+        "periodic_forms": [
+          "10-K",
+          "10-Q"
+        ],
+        "price": {
+          "events": [
+            "div",
+            "split"
+          ],
+          "interval": "1d",
+          "period_end_epoch": 1790000000,
+          "period_start_epoch": 1262304000,
+          "provider": "yahoo_chart",
+          "symbol": "AAPL"
+        }
+      },
+      "entity_name": "Apple Inc.",
+      "fiscal_year_end": "09-26",
+      "issuer_id": "CIK0000320193",
+      "lanes": [
+        {
+          "bridge_roles": [],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "revenue"
+          ],
+          "formula_denominator": "the trailing twelve months of AAPL's reported net sales, as four consecutive fiscal quarters",
+          "formula_expression": "(as-traded close x cover-page shares outstanding) / TTM of us-gaap:Revenues or us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "formula_numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "aapl_reported_revenue_multiple",
+          "metric_id": "RESEARCH_AAPL_REPORTED_REVENUE_MULTIPLE",
+          "metric_label": "AAPL reported-revenue multiple (research): market capitalization over the trailing twelve months of AAPL's reported net sales",
+          "min_observations_for_description": 20,
+          "numerator_kind": "market_cap",
+          "research_purpose": "Research use only. A named revenue multiple for AAPL, computed from the revenue element AAPL files. AAPL's revenue and depreciation elements are accepted by the core registry, so this figure is deliberately not published as a valuation reference: a research metric exists to be examined, not to stand in for a production reference."
+        },
+        {
+          "bridge_roles": [],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of AAPL's reported operating income plus reported depreciation and amortization, each a discrete fiscal quarter, summed over four consecutive quarters",
+          "formula_expression": "(as-traded close x cover-page shares outstanding) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "aapl_reported_operating_profit_plus_reported_d_and_a_multiple",
+          "metric_id": "RESEARCH_AAPL_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+          "metric_label": "AAPL reported operating profit plus reported depreciation and amortization multiple (research): market capitalization over the trailing twelve months of AAPL's reported operating income plus reported depreciation and amortization",
+          "min_observations_for_description": 20,
+          "numerator_kind": "market_cap",
+          "research_purpose": "Research use only. A named operating denominator for AAPL, built from the two elements AAPL files. It is not EBITDA: the research lane names what it reads, and the registry's EBITDA remains a production metric."
+        },
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of AAPL's reported operating income plus reported depreciation and amortization",
+          "formula_expression": "(market cap + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + current marketable securities]) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "the filed enterprise-value bridge: market capitalization plus total debt less liquid funds",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "aapl_filed_ev_bridge_multiple_production_shape",
+          "metric_id": "RESEARCH_AAPL_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+          "metric_label": "AAPL filed enterprise-value bridge multiple, production shape (research): the filed bridge over the trailing twelve months of AAPL's reported operating income plus reported depreciation and amortization",
+          "min_observations_for_description": 20,
+          "numerator_kind": "enterprise_value",
+          "research_purpose": "Research use only. The filed enterprise-value bridge in the production component shape, so that a research figure and a production figure can be compared on the same bridge."
+        }
+      ],
+      "roles": [
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "revenue",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "DENOMINATOR",
+          "name": "revenue",
+          "note": "AAPL reports net sales on us-gaap:Revenues through FY2018 and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from FY2017, and the two overlap for a year. The registry accepts the second element and retired the first in decision 2.99, so the standing that matters is the successor's.",
+          "registry_metric_id": "revenue"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "operating_income",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "OPERATING_INCOME",
+          "name": "operating_income",
+          "note": "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer.",
+          "registry_metric_id": "operating_income"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "depreciation",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "DEPRECIATION",
+          "name": "depreciation",
+          "note": "AAPL carries its depreciation and amortisation on us-gaap:DepreciationAndAmortization through FY2016 and on us-gaap:DepreciationDepletionAndAmortization from FY2015, and the two overlap for a year. The registry accepts both.",
+          "registry_metric_id": "depreciation_and_amortization"
+        },
+        {
+          "bridge_group": "LIQUID",
+          "bridge_sign": "LIQUID_FUNDS",
+          "capture_role": "cash",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "cash",
+          "note": "us-gaap:CashAndCashEquivalentsAtCarryingValue is registry-qualified for AAPL.",
+          "registry_metric_id": "cash"
+        },
+        {
+          "bridge_group": "LIQUID",
+          "bridge_sign": "LIQUID_FUNDS",
+          "capture_role": "marketable_securities_current",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "marketable_securities_current",
+          "note": "The registry declares no `marketable_securities_current` metric, so the filed-bridge specification governs the component. AAPL files us-gaap:MarketableSecuritiesCurrent quarterly, unlike KO, whose commercial paper is annual only.",
+          "registry_metric_id": "marketable_securities_current"
+        },
+        {
+          "bridge_group": "SHORT_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "commercial_paper",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "commercial_paper",
+          "note": "The registry declares no `commercial_paper` metric. AAPL files it quarterly, so a bridge that holds it is complete at the quarterly dates.",
+          "registry_metric_id": "commercial_paper"
+        },
+        {
+          "bridge_group": "LONG_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "long_term_debt_noncurrent",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "long_term_debt_noncurrent",
+          "note": "us-gaap:LongTermDebtNoncurrent is registry-qualified for AAPL.",
+          "registry_metric_id": "long_term_debt_noncurrent"
+        },
+        {
+          "bridge_group": "LONG_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "long_term_debt_current",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "long_term_debt_current",
+          "note": "us-gaap:LongTermDebtCurrent is registry-qualified for AAPL.",
+          "registry_metric_id": "long_term_debt_current"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "shares_outstanding",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "SHARES",
+          "name": "shares_outstanding",
+          "note": "Cover-page shares outstanding, taken as filed and never adjusted for a split, paired with the as-traded close. AAPL has two splits in the price series's range: 7:1 on 2014-06-09 and 4:1 on 2020-08-31.",
+          "registry_metric_id": null
+        }
+      ],
+      "ticker": "AAPL",
+      "unit_policy": {
+        "filing_currency": "USD",
+        "filing_unit": "USD",
+        "fx_rule": null,
+        "price_currency": "USD",
+        "scale": 1,
+        "scale_basis": "AAPL states its amounts in units; the capture holds them unchanged and no scaling is applied.",
+        "share_unit": "shares"
+      }
+    }
+  ],
+  "schema_version": 1
+}
