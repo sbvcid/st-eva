@@ -5537,6 +5537,90 @@ submissions-API fallback for a filer whose index headers do not exist
 is below the threshold and publishes no distribution claim), and any
 statement about MSFT's valuation: a research multiple is not a reference.
 
+## Phase 9.14 (2026-10-22): the research surface audited across the three issuers
+
+Local verification for this round: frontend suite **123 passed** (9 files,
+including three new regression tests); frontend build and lint unchanged;
+backend suite **3014 passed, 171 skipped, 534 subtests passed**; archive
+isolation and web API **31 passed**; browser smoke is CI's.
+
+This phase audited the whole research chain -- lane output, catalogue, API
+DTO, reverse calculation, comparison, provenance explorer and the frontend
+panel -- against the committed captures of the three issuers, read-only
+first, with nothing re-downloaded and no committed hash updated. One defect
+was found, fixed generically, and pinned by tests; everything else verified
+as already conformant.
+
+### What the audit verified as conformant
+
+The catalogue offers exactly the ten candidate research metrics of KO, AAPL
+and MSFT and never the diagnostic, which is refused by name if asked for.
+The figures on the API path are the committed lanes' own: AAPL's revenue
+lane publishes 28 observations over its named successor-only basis with
+median 7.257709, keeps the 1-observation legacy sample and the 3-observation
+mixed diagnostic beside it with no pooled median over the 32; MSFT's
+revenue lane publishes 33 with median 10.848125, its filed-bridge lane 12
+as a `RESEARCH_THIN_SAMPLE` with median 11.628085, and its
+operating-profit-plus-D&A lane `RESEARCH_UNAVAILABLE` with no median; KO's
+four lanes publish 29, 64, 27 and 29 with their recorded medians. The
+basis each distribution names is read from the observations' own evidence,
+not from the issuer's configuration. The four states are distinguished end
+to end: the API carries the status and reason, and the panel renders a
+distribution, a thin sample and an unavailable lane differently and shows
+the unavailable lane's own reason text.
+
+The reverse calculation uses the selected metric's own homogeneous median
+and nothing else: the unavailable MSFT lane refuses a history-median
+calculation with `RESEARCH_CALCULATION_REFUSED_MULTIPLE_UNAVAILABLE`
+rather than producing a multiple, and a market value for it is refused
+rather than invented. The provenance explorer traces one evaluation date
+to its source file, digest, element, accession, period, filing date and
+usable date, and carries the capture's content-verified identity (the MSFT
+capture's manifest names CIK0000789019 and every file is checked against
+its recorded SHA-256 before any calculation). The comparison surface states
+each pair's compatibility before any numbers: pairs that do not share a
+formula are labelled a difference between two formulas with no single
+attribution, and the paired-bridge comparison attributes a difference to
+the short-term component only on dates where every other component and the
+denominator window agree. The user-supplied operand keeps its
+`user_supplied_research_assumption` label, and the research-only notice
+stands before any figure on the surface.
+
+### The defect found and fixed
+
+Switching the selected research metric cleared the previous metric's
+result and evidence but left its detail -- the metric card, its counts,
+its median and its whole observation table -- on screen until the new
+metric's load finished, and a load that failed left the previous metric's
+figures standing behind the new selection indefinitely. The calculation
+and the per-date evidence could do the same when the selection changed
+while a request was in flight: the previous lane's figure or evidence
+would render under the current selection. That is exactly the failure the
+surface must not have: one issuer's figures shown as another's.
+
+The fix is generic. A selection now clears the detail first, so while the
+new metric loads the panel shows the catalogue's own summary of that
+metric and nothing of the previous one, and every in-flight response is
+guarded by the selection it belongs to and dropped as stale when the user
+has already moved on -- for the detail, the reverse calculation and the
+per-date evidence alike. No issuer is named anywhere in the fix. Three
+regression tests pin the contract across two issuers' fixtures: each
+selected lane shows its own figures and basis, a failed load leaves none
+of the previous metric behind, and a late response for an earlier
+selection does not overwrite the current one.
+
+### What this phase does not do
+
+It adds no issuer, widens no capture, changes no production data,
+registry, eligibility or valuation policy, and touches no committed lane
+output, identity or comparison hash: the working tree's only changes are
+the panel fix and its tests. The production payload digests for AAPL, AEP
+and MSFT are pinned by the AAPL suite and unchanged, every research result
+is still `production_eligible=False`, and no `refc:*` appears in research
+output. What remains unverified here is the browser smoke pass against the
+real API (CI's) and any statement about figures under a user-supplied
+assumption, which remain the user's own.
+
 ## Next task status
 
 The Phase 5 round is complete and verified: the production historical P/S and
