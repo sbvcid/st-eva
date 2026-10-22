@@ -130,6 +130,60 @@ class TestBrowserSmoke(unittest.TestCase):
             context.close()
             browser.close()
 
+    def test_research_comparison_reads_the_real_comparison_api(self):
+        """
+        The comparison surface against the real comparison API.
+
+        The paired comparison of the two enterprise-value lanes is read from
+        the service, not from a stub: the paired count, the attributable
+        count and the unpaired dates all come from the observation records.
+        """
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                locale="en-US", viewport={"width": 1280, "height": 900}
+            )
+            page = context.new_page()
+            page.goto(self.base_url)
+
+            page.click("[data-testid='mode-research']")
+            page.wait_for_selector("[data-testid='research-compare']")
+
+            # The comparison surface chooses no metric for the user.
+            page.click("[data-testid='compare-mode-pair']")
+            page.wait_for_selector("[data-testid='compare-left-metric']")
+            left = page.eval_on_selector(
+                "[data-testid='compare-left-metric']", "e => e.value"
+            )
+            self.assertEqual(left, "")
+
+            page.select_option(
+                "[data-testid='compare-left-metric']",
+                "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE",
+            )
+            page.select_option(
+                "[data-testid='compare-right-metric']",
+                "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS",
+            )
+            page.click("[data-testid='compare-run']")
+
+            page.wait_for_selector("[data-testid='compare-pairs-result']")
+            page.wait_for_selector("[data-testid='compare-compatibility-statement']")
+            paired = page.text_content("[data-testid='compare-paired-count']")
+            attributable = page.text_content(
+                "[data-testid='compare-attributable-count']"
+            )
+            self.assertEqual(paired, "16")
+            self.assertEqual(attributable, "16")
+            # The dates that are not paired are shown with their reasons.
+            page.wait_for_selector("[data-testid='compare-unpaired']")
+            unpaired = page.text_content("[data-testid='compare-unpaired']")
+            self.assertIn("RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS", unpaired)
+            self.assertIn("RESEARCH_REASON_INCOMPLETE_EV_BRIDGE", unpaired)
+
+            context.close()
+            browser.close()
+
     def test_desktop_aapl_full_flow(self):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)

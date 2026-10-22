@@ -284,6 +284,50 @@ export interface Translations {
     valuation: string
     research: string
   }
+  compare: {
+    title: string
+    intro: string
+    modeHistory: string
+    modePair: string
+    modeSensitivity: string
+    metricLabel: string
+    leftLabel: string
+    rightLabel: string
+    earlierDateLabel: string
+    laterDateLabel: string
+    evaluationDateLabel: string
+    assumptionLabel: string
+    assumptionValueLabel: string
+    run: string
+    running: string
+    compatibilityTitle: string
+    numeratorLabel: string
+    denominatorLabel: string
+    historyTitle: string
+    earlierMultipleLabel: string
+    laterMultipleLabel: string
+    absoluteChangeLabel: string
+    percentageChangeLabel: string
+    observationHashLabel: string
+    comparisonHashLabel: string
+    assumptionHashLabel: string
+    refusedBetweenLabel: string
+    evidenceChangesLabel: string
+    pairsTitle: string
+    pairedSampleLabel: string
+    attributableLabel: string
+    unpairedLeftLabel: string
+    unpairedRightLabel: string
+    evDifferenceLabel: string
+    shortTermDifferenceLabel: string
+    multipleDifferenceLabel: string
+    attributableColumnLabel: string
+    attributableYes: string
+    unpairedLabel: string
+    sensitivityTitle: string
+    baselineLabel: string
+    adjustedLabel: string
+  },
   research: {
     bannerTitle: string
     bannerBody: string

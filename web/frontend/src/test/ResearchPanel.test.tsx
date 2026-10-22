@@ -9,6 +9,11 @@ vi.mock('../services/researchApi', () => ({
   getResearchMetric: vi.fn(),
   getResearchObservationEvidence: vi.fn(),
   runResearchCalculation: vi.fn(),
+  getResearchDefinitions: vi.fn(),
+  getResearchComparability: vi.fn(),
+  compareResearchHistory: vi.fn(),
+  compareResearchBridges: vi.fn(),
+  runResearchSensitivity: vi.fn(),
   ResearchApiError: class ResearchApiError extends Error {
     status: number
     refusal?: { reason_code: string; detail: string; production_eligible: boolean }
@@ -179,11 +184,97 @@ const evidenceFixture = () => ({
   bridge: { components: {} },
 })
 
+const definitionsFixture = () => ({
+  definitions: [
+    {
+      metric_id: 'C1',
+      lane_id: 'ko_filed_ev_bridge_multiple_production_shape',
+      metric_label: 'KO filed enterprise-value bridge multiple, production shape (research)',
+      numerator_kind: 'enterprise_value',
+      numerator_description: 'Enterprise value',
+      denominator_definition: 'TTM of operating income plus D&A',
+      denominator_elements: [
+        'us-gaap:DepreciationDepletionAndAmortization',
+        'us-gaap:OperatingIncomeLoss',
+      ],
+      currency: 'USD',
+      unit: 'USD',
+      formula_version: 'research-multiples/1.0',
+      formula_expression: '(market cap + total debt ... - liquid funds) / TTM',
+      bridge_components: ['cash', 'commercial_paper'],
+      candidate_metric: true,
+      sample_count: 27,
+      total_evaluations: 67,
+      period_start: '2011-02-28',
+      period_end: '2026-07-29',
+      registry_standing: {},
+      basis_breaks: {},
+    },
+    {
+      metric_id: 'C2',
+      lane_id: 'ko_filed_ev_bridge_multiple_short_term_borrowings',
+      metric_label: 'KO filed enterprise-value bridge multiple with loans and notes payable (research)',
+      numerator_kind: 'enterprise_value',
+      numerator_description: 'Enterprise value',
+      denominator_definition: 'TTM of operating income plus D&A',
+      denominator_elements: [
+        'us-gapa:DepreciationDepletionAndAmortization',
+        'us-gaap:OperatingIncomeLoss',
+      ],
+      currency: 'USD',
+      unit: 'USD',
+      formula_version: 'research-multiples/1.0',
+      formula_expression: '(market cap + total debt ... - liquid funds) / TTM',
+      bridge_components: ['cash', 'notes_and_loans_payable'],
+      candidate_metric: true,
+      sample_count: 29,
+      total_evaluations: 67,
+      period_start: '2018-10-30',
+      period_end: '2026-07-29',
+      registry_standing: {},
+      basis_breaks: {},
+    },
+    {
+      metric_id: METRIC_ID,
+      lane_id: 'ko_reported_revenue_multiple',
+      metric_label: 'KO reported-revenue multiple (research)',
+      numerator_kind: 'market_cap',
+      numerator_description: 'Market capitalisation',
+      denominator_definition: "TTM of us-gaap:Revenues",
+      denominator_elements: ['us-gaap:Revenues'],
+      currency: 'USD',
+      unit: 'USD',
+      formula_version: 'research-multiples/1.0',
+      formula_expression: '(as-traded close x cover-page shares outstanding) / TTM of us-gaap:Revenues',
+      bridge_components: ['cash', 'commercial_paper'],
+      candidate_metric: true,
+      sample_count: 29,
+      total_evaluations: 67,
+      period_start: '2019-07-26',
+      period_end: '2026-07-29',
+      registry_standing: {},
+      basis_breaks: {},
+    },
+  ],
+  sensitivity_assumptions: {
+    NUMERATOR_MULTIPLIER: {
+      name: 'NUMERATOR_MULTIPLIER',
+      label: 'The market value is multiplied by a factor',
+      unit: 'factor',
+      applies_to: 'numerator',
+    },
+  },
+  comparison_version: 'research-comparison/1.0',
+})
+
 describe('the research surface', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(researchApi.getResearchCatalogue).mockResolvedValue(catalogue)
     vi.mocked(researchApi.getResearchMetric).mockResolvedValue(detail)
+    vi.mocked(researchApi.getResearchDefinitions).mockResolvedValue(
+      definitionsFixture() as any,
+    )
   })
 
   const enterResearchMode = async () => {
@@ -556,5 +647,216 @@ describe('the research surface', () => {
     expect(status).toHaveAttribute('data-status', 'RESEARCH_UNAVAILABLE')
     expect(status).toHaveTextContent('No window is knowable at any evaluation date.')
     expect(screen.getByTestId('research-median')).toHaveTextContent('—')
+  })
+
+  it('offers the comparison modes and chooses no metric for the user', async () => {
+    await enterResearchMode()
+    await waitFor(() => {
+      expect(screen.getByTestId('research-compare')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('compare-mode-history')).toBeInTheDocument()
+    expect(screen.getByTestId('compare-mode-pair')).toBeInTheDocument()
+    expect(screen.getByTestId('compare-mode-sensitivity')).toBeInTheDocument()
+    const select = screen.getByTestId(
+      'compare-history-metric',
+    ) as HTMLSelectElement
+    expect(select.value).toBe('')
+  })
+
+  it('compares one metric at two dates and shows the refused dates between', async () => {
+    vi.mocked(researchApi.compareResearchHistory).mockResolvedValue({
+      comparison_kind: 'SAME_LANE_HISTORY',
+      comparison_version: 'research-comparison/1.0',
+      comparison_hash: 'comparison-hash-0001',
+      production_eligible: false,
+      metric_id: METRIC_ID,
+      lane_id: 'ko_reported_revenue_multiple',
+      earlier: { content_hash: 'earlier-hash' },
+      later: { content_hash: 'later-hash' },
+      comparison: {
+        earlier_multiple: 6.875731,
+        later_multiple: 7.776665,
+        absolute_change: 0.900934,
+        percentage_change: 0.131031,
+        earlier_numerator: 369360515241.68,
+        later_numerator: 413762133795.44,
+        earlier_denominator: 49284000000,
+        later_denominator: 49284000000,
+      },
+      evidence_changes: { elements_changed: [] },
+      basis_breaks: { earlier: [], later: [] },
+      prior_period_revisions: { earlier: [], later: [] },
+      refused_between: [
+        {
+          evaluation_date: '2026-06-30',
+          reason_code: 'RESEARCH_REASON_NO_DENOMINATOR_WINDOW',
+          reason_detail: 'no window',
+        },
+      ],
+      refused_between_count: 1,
+    } as any)
+
+    await enterResearchMode()
+    await waitFor(() => {
+      expect(screen.getByTestId('research-compare')).toBeInTheDocument()
+    })
+    fireEvent.change(screen.getByTestId('compare-history-metric'), {
+      target: { value: METRIC_ID },
+    })
+    fireEvent.change(screen.getByTestId('compare-history-earlier'), {
+      target: { value: '2026-04-30' },
+    })
+    fireEvent.change(screen.getByTestId('compare-history-later'), {
+      target: { value: '2026-07-29' },
+    })
+    fireEvent.click(screen.getByTestId('compare-run'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('compare-history-result')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('compare-earlier-multiple')).toHaveTextContent(
+      '6.875731',
+    )
+    expect(screen.getByTestId('compare-later-multiple')).toHaveTextContent(
+      '7.776665',
+    )
+    expect(screen.getByTestId('compare-absolute-change')).toHaveTextContent(
+      '0.900934',
+    )
+    // The dates in between that were refused are shown, not hidden.
+    expect(screen.getByTestId('compare-refused-between')).toHaveTextContent(
+      'RESEARCH_REASON_NO_DENOMINATOR_WINDOW',
+    )
+  })
+
+  it('compares two metrics on their shared dates and says what may be compared', async () => {
+    vi.mocked(researchApi.getResearchComparability).mockResolvedValue({
+      left: { metric_id: 'C1', numerator_kind: 'enterprise_value' },
+      right: { metric_id: 'C2', numerator_kind: 'enterprise_value' },
+      same_formula: false,
+      comparable: true,
+      comparable_as: 'PAIRED_BRIDGE',
+      shared: { numerator_kind: 'enterprise_value' },
+      differences: [],
+      reasons: ['The two metrics differ only in the short-term component.'],
+    } as any)
+    vi.mocked(researchApi.compareResearchBridges).mockResolvedValue({
+      comparison_kind: 'PAIRED_BRIDGE',
+      comparison_version: 'research-comparison/1.0',
+      comparison_hash: 'comparison-hash-0002',
+      production_eligible: false,
+      paired_sample_count: 16,
+      attributable_sample_count: 16,
+      shared_date_count: 67,
+      unpaired_left: [
+        {
+          evaluation_date: '2019-04-25',
+          reason_code: 'RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS',
+          side: 'left',
+        },
+      ],
+      unpaired_right: [
+        {
+          evaluation_date: '2016-02-25',
+          reason_code: 'RESEARCH_REASON_INCOMPLETE_EV_BRIDGE',
+          side: 'right',
+        },
+      ],
+      refused_on_both: [],
+      pairs: [
+        {
+          evaluation_date: '2026-07-29',
+          differences: {
+            enterprise_value: 82000000,
+            short_term_value_difference: 82000000,
+            multiple: 0.005288,
+          },
+          attributable: true,
+          other_factors: [],
+        },
+      ],
+    } as any)
+
+    await enterResearchMode()
+    await waitFor(() => {
+      expect(screen.getByTestId('research-compare')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('compare-mode-pair'))
+    fireEvent.change(screen.getByTestId('compare-left-metric'), {
+      target: { value: 'C1' },
+    })
+    fireEvent.change(screen.getByTestId('compare-right-metric'), {
+      target: { value: 'C2' },
+    })
+    fireEvent.click(screen.getByTestId('compare-run'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('compare-pairs-result')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('compare-paired-count')).toHaveTextContent('16')
+    expect(screen.getByTestId('compare-attributable-count')).toHaveTextContent('16')
+    // The unpaired dates and their reasons are shown.
+    expect(screen.getByTestId('compare-unpaired')).toHaveTextContent(
+      'RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS',
+    )
+    expect(screen.getByTestId('compare-unpaired')).toHaveTextContent(
+      'RESEARCH_REASON_INCOMPLETE_EV_BRIDGE',
+    )
+    // The compatibility statement is shown before the numbers.
+    expect(screen.getByTestId('compare-compatibility-statement')).toHaveTextContent(
+      /short-term component/i,
+    )
+  })
+
+  it('shows a sensitivity as a named assumption, apart from the observation', async () => {
+    vi.mocked(researchApi.runResearchSensitivity).mockResolvedValue({
+      comparison_kind: 'SENSITIVITY',
+      comparison_version: 'research-comparison/1.0',
+      comparison_hash: 'comparison-hash-0003',
+      assumption_hash: 'assumption-hash-0001',
+      production_eligible: false,
+      metric_id: METRIC_ID,
+      lane_id: 'ko_reported_revenue_multiple',
+      evaluation_date: '2026-07-29',
+      assumption: {
+        name: 'NUMERATOR_MULTIPLIER',
+        label: 'The market value is multiplied by a factor',
+        unit: 'factor',
+        applies_to: 'numerator',
+        value: 1.1,
+        origin: 'user_supplied_research_assumption',
+      },
+      baseline: { multiple: 7.776665, numerator: 413762133795.44, denominator: 49284000000 },
+      adjusted: { multiple: 9.235012, numerator: 455138347174.98, denominator: 49284000000 },
+      change: { absolute: 1.458347, percentage: 0.187528 },
+      formula: '(market value x the factor) / the denominator = the adjusted multiple',
+      observation: { content_hash: 'observation-hash-0001' },
+      notice: 'A sensitivity is a what-if on one named input.',
+    } as any)
+
+    await enterResearchMode()
+    await waitFor(() => {
+      expect(screen.getByTestId('research-compare')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('compare-mode-sensitivity'))
+    fireEvent.change(screen.getByTestId('compare-sensitivity-metric'), {
+      target: { value: METRIC_ID },
+    })
+    fireEvent.change(screen.getByTestId('compare-sensitivity-date'), {
+      target: { value: '2026-07-29' },
+    })
+    fireEvent.change(screen.getByTestId('compare-sensitivity-value'), {
+      target: { value: '1.1' },
+    })
+    fireEvent.click(screen.getByTestId('compare-run'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('compare-sensitivity-result')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('compare-baseline')).toHaveTextContent('7.776665')
+    expect(screen.getByTestId('compare-adjusted')).toHaveTextContent('9.235012')
+    expect(screen.getByTestId('compare-sensitivity-result')).toHaveTextContent(
+      'user_supplied_research_assumption',
+    )
   })
 })

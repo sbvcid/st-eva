@@ -1,6 +1,6 @@
 # ST-EVA — Current Project Status
 
-**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role; and every role of every historical valuation dataset is now qualified against the core registry before it produces a figure, so an element the registry does not accept cannot obtain `USABLE_FOR_REFERENCE` however many complete, point-in-time observations it carries -- Phase 8, `semantic_qualification.py`) -- Phase 9.3, `research_lane.py` (the isolated research calculation lane: a named research metric is computed from filed evidence the production qualification regime does not admit, under its own `RESEARCH_*` id and its own formula, with the registry's standing recorded on every observation and never enforced, the point-in-time, fiscal-window and filed-bridge rules unchanged, and the result held out of the Archive, the Investment Context, the production Summary and the production reference chain; KO is the first case, and KO remains without a production P/S and without a production EV/EBITDA) -- Phase 9.4, `research_calculator.py` and `web/research_api.py` (the research calculation and its evidence explorer: the user chooses one of the four KO research metrics, states a multiple and a market value, and reads the implied denominator together with the operands, the accessions, the elements, the periods, the units, the knowability, the source-file digests, the registry's standing, the basis breaks and the lane's identity; a user-supplied input is labelled `user_supplied_research_assumption` and kept apart from the observed facts; the path is mounted at `/api/research`, writes no Archive, and reaches no Investment Context or production runner) -- Phase 9.6, the research calculation hardening (a non-finite multiple or market value is refused on both the request and the service path, and a finite pair whose quotient overflows is refused too, so no research result is ever published as a non-finite figure; the research surface now tells a research distribution, a thin sample and an unusable distribution apart, and carries the lane's own descriptive threshold so it is not hard-coded in the interface; every input -- the price, the cover-page share count, each denominator quarter and each balance-sheet component -- now states its unit, its currency, the period it applies to and its source file, digest and endpoint; and the research capture's acceptance times carry the Eastern offset of their own date, so three annual filings are no longer knowable a trading day before the 16:00 ET rule allows)
+**Status checked:** 2026-10-21 (Apple holds qualified historical P/S and EV/EBITDA references on 28 and 27 observations; American Electric Power holds a qualified EV/EBITDA reference on 24 observations and reports its P/S as a short sample of four, because the registry-accepted revenue element's coverage reaches four windows; Microsoft holds a qualified P/S reference on 23 observations and reports its EV/EBITDA unavailable, because it has no element that qualifies for the depreciation-and-amortization role; and every role of every historical valuation dataset is now qualified against the core registry before it produces a figure, so an element the registry does not accept cannot obtain `USABLE_FOR_REFERENCE` however many complete, point-in-time observations it carries -- Phase 8, `semantic_qualification.py`) -- Phase 9.3, `research_lane.py` (the isolated research calculation lane: a named research metric is computed from filed evidence the production qualification regime does not admit, under its own `RESEARCH_*` id and its own formula, with the registry's standing recorded on every observation and never enforced, the point-in-time, fiscal-window and filed-bridge rules unchanged, and the result held out of the Archive, the Investment Context, the production Summary and the production reference chain; KO is the first case, and KO remains without a production P/S and without a production EV/EBITDA) -- Phase 9.4, `research_calculator.py` and `web/research_api.py` (the research calculation and its evidence explorer: the user chooses one of the four KO research metrics, states a multiple and a market value, and reads the implied denominator together with the operands, the accessions, the elements, the periods, the units, the knowability, the source-file digests, the registry's standing, the basis breaks and the lane's identity; a user-supplied input is labelled `user_supplied_research_assumption` and kept apart from the observed facts; the path is mounted at `/api/research`, writes no Archive, and reaches no Investment Context or production runner) -- Phase 9.6, the research calculation hardening (a non-finite multiple or market value is refused on both the request and the service path, and a finite pair whose quotient overflows is refused too, so no research result is ever published as a non-finite figure; the research surface now tells a research distribution, a thin sample and an unusable distribution apart, and carries the lane's own descriptive threshold so it is not hard-coded in the interface; every input -- the price, the cover-page share count, each denominator quarter and each balance-sheet component -- now states its unit, its currency, the period it applies to and its source file, digest and endpoint; and the research capture's acceptance times carry the Eastern offset of their own date, so three annual filings are no longer knowable a trading day before the 16:00 ET rule allows) -- Phase 9.7, the research comparison and sensitivity analysis (a user may now compare one metric at two dates, or two metrics on the dates where both published, or apply one named assumption to one published figure; every metric publishes the attributes it may be compared with -- its numerator kind, its denominator and elements, its currency and unit, its formula version and its registry standing -- and a pair that does not share a definition is labelled as a difference between two different formulas with no single attribution; the two enterprise-value lanes pair on the 16 dates where both published, and on every one of them the enterprise-value difference reproduces from the two bridges as the difference of the short-term component alone, with the unpaired dates and their refusal reasons recorded; a sensitivity names its assumption, its unit and its own hash, never modifies the observation, and may only be computed on a date the lane itself published)
 **Repository:** `sbvcid/st-eva`, branch `master`
 **Current implementation baseline:** the production historical P/S and EV/EBITDA reference distributions are implemented for three issuers by the same generic code (`historical_multiples.py`, `data/historical_multiples/{TICKER}`; AAPL: P/S 28 valid / 8 rejected over 36 evaluations, median 7.257709, and EV/EBITDA 27 valid / 9 rejected, median 22.326 - both `USABLE_FOR_REFERENCE`; AEP: EV/EBITDA 24 valid / 9 rejected over 33 evaluations, median 13.221693, `USABLE_FOR_REFERENCE`, and P/S 4 valid / 29 rejected, `INSUFFICIENT_OBSERVATIONS`, because the registry-accepted revenue element's coverage reaches four windows; MSFT: P/S 23 valid / 4 rejected, median 11.783822, and EV/EBITDA unavailable, because Microsoft has no element that qualifies for the depreciation-and-amortization role; the filed EV bridge requires every component to describe the same balance-sheet date, and a window's quarters must be four consecutive periods of the issuer's own cycle **+** the filed trailing revenue and trailing EBITDA are the engine's inputs (`production historical income-statement dataset`, `data/historical_income/{TICKER}`; `der:ttm_revenue` and `der:ttm_ebitda` are `sum_periods` over the four quarters the document holds, and P/S and EV/EBITDA divide by them) **+ SEC-derived trailing figures in the formal valuation chain** (`82ad6b6`; the engine computes `der:current_pe` and `der:current_pfcf` from `der:ttm_eps` / `der:ttm_fcf`, the document recomputes each from the four quarters it holds, the parity check is not relaxed) **+ the replay reproduces the run's production reference** (`ca07496`; the AAPL live replay reports `MATCH` with 0 field differences) on top of the unified historical P/E reference eligibility round (`band_reference_eligibility` shared rule; unverified-count bands and ineligible distributions produce no matrix scenarios; MSFT web regression matrix 160→80) **+ traceable EPS anchor catalogue / reverse-valuation anchor** (`7b44618`; verified `backend` 2352 passed / 169 skipped / 498 subtests; `browser` run `39030611724` success — fixed by conditional `eps_ev` preserving legacy 14-field contract; new identity fields only when `anchor_id` set) on top of `965d5c1` (verified `backend` + `browser` in CI `39021861188`) (`fiscal_calendar.py` issuer-declared identity model + `a9a6630` fail-closed identity-conflict rules; MU FY2026 TTM verified; AAPL restored to 36/36) on top of the MU historical P/E + Q4 furnished evidence round (Q4 evidence dataset from 8-K Item 2.02 EX-99.1, corrected filing-acceptance timestamps, TTM window continuity guard) on top of `6c66550` (AAPL P/E and P/FCF baseline update after the quarter_number fix) on top of `10224e9` (quarter_number calculation fix + MU `eps_diluted_concept.json`) on top of `50043be` (declared SEC diluted-EPS evidence: period-declared GAAP facts from the run's own filing acquisition, cross-check only) with the archive-reconstruction-completeness fix; before that, the web path carrying the production historical P/FCF reference (`4797f1f`), MSFT cross-ticker validation (`37262ae`) with the MSFT P/FCF dataset and issuer config, AAPL v1 market-cap reconciliation `9ca6999`, AAPL v1 research snapshot `fe7d7c7`, historical P/FCF reconstruction `fd311c5`, consensus revisions/trend extraction `66616ec`, and the earlier R7 series, R6.x replay work, and first-use mode = live with expanded assumptions **+ every historical dataset's source role is qualified against the core registry before it produces a figure** (Phase 8; `semantic_qualification.py` asks the registry's own resolver whether an element is a metric for a filer, and `historical_income.py` / `historical_multiples.py` refuse a role the registry does not qualify, with the refusal naming the registry's decision rather than a shortage of quarters; the datasets, the six manifests, the summary, the Investment Context and the archive all carry the basis, and the replay compares it) **+ the isolated research calculation lane** (Phase 9.3; `research_lane.py` and `research_lane_ko.py`, `data/research_multiples/KO/` and `data/research_lanes/KO/`; four candidate research metrics and one diagnostic over KO's filed facts, medians 6.403373, 19.775345, 23.639435 and 24.675484 on 29, 64, 27 and 29 valid observations; the production pipeline refuses both of KO's production figures over the same capture, and the two agree on the price, the share count, the market capitalisation and the enterprise value date by date)
 **Latest verified GitHub Actions:** `21343fe` (Phase 9.6, the research calculation hardening and the capture's Eastern times) verified `backend` and `browser` jobs success in run `39717641976` (checked via the GitHub API on 2026-10-22: backend 2819 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 13 passed, success); `f2a8674` (Phase 9.4, the research calculation and its evidence explorer) verified `backend` and `browser` jobs success in run `39667766985` (checked via the GitHub API on 2026-10-21: backend 2791 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 13 passed, success); `aba08b6` (the phase 9.3 CI record) verified `backend` and `browser` jobs success in run `39654587262` (checked via the GitHub API on 2026-10-21: backend 2749 passed / 171 skipped / 534 subtests, success); `bc32209` (Phase 9.3, the isolated research calculation lane) verified `backend` and `browser` jobs success in run `39653312560` (checked via the GitHub API on 2026-10-21: backend 2748 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39617779061` verified `3f268d9` (the phase 8 CI record: backend 2749 passed / 171 skipped / 534 subtests, success); the preceding run `39616759679` verified `9f2911f` (Phase 8, the registry-backed semantic qualification) verified `backend` and `browser` jobs success in run `39616759679` (checked via the GitHub API on 2026-10-21: backend 2706 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39598786653` verified `d85cfc1` (the phase 7.3 CI record: backend 2706 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39598264148` verified `bc36384` (the phase and documentation reconciliation: backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding run `39591871200` verified the American Electric Power correction `0aadc8a` (backend 2681 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success); the preceding runs `39578452809` (Microsoft's dataset `d3cec3b`: backend 2635 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success) and `39562741308` (Microsoft's D&A role left empty, `3ec78b7`: backend 2643 passed / 171 skipped / 534 subtests, web API 25 passed, archive isolation 6 passed, browser smoke 12 passed, success);
@@ -4807,6 +4807,139 @@ CI for this round: commit `21343fe`, run `39717641976`, `backend` and
 `browser` jobs success (backend 2819 passed / 171 skipped / 534 subtests, web
 API 25 passed, archive isolation 6 passed, browser smoke 13 passed,
 success).
+
+## Phase 9.7 (2026-10-21): research comparison and sensitivity analysis
+
+The research calculation answers "what is this figure". This phase adds the
+questions around it: how a figure moved, why two figures differ, and what a
+difference may be attributed to.
+
+It adds no company, changes no registry decision, changes no production
+valuation rule, and lets no research result into the production valuation
+chain.
+
+### What was added
+
+| Artifact | What it is |
+|---|---|
+| `research_comparison.py` | The comparison and sensitivity service: the comparability attributes of every research metric, the same-lane historical comparison, the paired bridge comparison, and the sensitivity analysis. |
+| `web/research_api.py` | Five more research routes: the definitions, the compatibility, the historical comparison, the paired bridge comparison and the sensitivity. |
+| `web/frontend/src/components/ResearchCompare.tsx` | The comparison surface: three comparisons the user chooses between, with its own state and its own metric selectors. |
+| `tests/test_research_comparison.py` | 43 tests over the comparability, the two comparisons, the sensitivity, the refusals and the isolation. |
+| `web/frontend/src/test/ResearchPanel.test.tsx` | Four more tests over the comparison surface. |
+| `tests/test_browser_smoke.py` | A real-Chromium test that reads the real comparison API end to end. |
+
+### The comparability attributes
+
+Every research metric publishes what it may be compared with: the kind of
+numerator it divides by, the definition and the elements of its denominator,
+the currency and the unit, the formula version, the bridge components, the
+registry's standing on it, and the basis breaks it carries. A comparison
+between two metrics that do not share a definition is still allowed, and is
+labelled as a difference between two different formulas, with no single
+attribution offered.
+
+| Pair | What it supports | What differs |
+|---|---|---|
+| The two enterprise-value lanes | A paired bridge comparison | nothing: same numerator kind, same denominator, same currency, same formula version |
+| Lane A against lane B | A side-by-side view | the denominator definition and its elements |
+| Lane B against either enterprise-value lane | A side-by-side view | the numerator kind, and the denominator |
+| Lane A against either enterprise-value lane | A side-by-side view | the numerator kind, the denominator definition and its elements |
+
+### The paired bridge comparison
+
+Only the dates where both enterprise-value lanes published are paired, and
+the count is computed from the observation records rather than assumed. For
+KO it is **16 paired dates out of 67 shared dates**, and all 16 are
+attributable to the short-term component alone. The other dates are recorded
+with their reasons: 13 where the production-shaped lane was refused because
+its bridge spanned two balance sheets, 11 where the loans-and-notes lane was
+refused because the component was not filed or its bridge spanned two dates,
+and 27 where both were refused.
+
+A worked pair, on 2026-07-29, with the balance sheet of 2026-04-03, recomputed
+from the two bridges:
+
+```
+C1  market capitalisation   383,265,133,795.44
+    total debt               43,808,000,000.00   (long-term debt + commercial paper)
+    liquid funds             13,311,000,000.00
+    enterprise value         413,762,133,795.44   multiple 26.678840
+C2  market capitalisation   383,265,133,795.44
+    total debt               43,890,000,000.00   (long-term debt + loans and notes payable)
+    liquid funds             13,311,000,000.00
+    enterprise value         413,844,133,795.44   multiple 26.684128
+the enterprise-value difference        82,000,000.00
+the short-term component difference    82,000,000.00   (332,000,000 - 250,000,000)
+the multiple difference                       0.005288   (82,000,000 / 15,509,000,000)
+the denominator                    15,509,000,000    the same window in both lanes
+```
+
+The difference is attributable only because the checks hold on that date:
+every component of both bridges describes one balance-sheet date and was
+knowable at the date, the denominator window is the same version in both
+lanes, and the market capitalisation, the long-term debt and the liquid funds
+agree. Where any of those does not hold, the pair is marked as affected by
+other factors and the factors are named.
+
+**The difference between the two lanes' medians is still not a measurement.**
+The two lanes publish on different dates, so their medians are not comparable;
+the paired comparison is what the service offers, and the service does not
+offer the median difference.
+
+### The historical comparison
+
+One metric at two evaluation dates, recomputed from the observation records:
+the two multiples, the two numerators, the two denominators, the absolute and
+the percentage change, each observation's own source and content hash, and
+the calculation's own hash. The dates in between that the lane refused are
+returned with their reasons, so that two figures are never read as a
+continuous series. The comparison also reports what changed in the evidence
+itself between the two dates: the elements each bridge read, the balance
+sheet each bridge described, and whether the denominator window moved, so
+that an element change or a value revision is not read as a market movement.
+
+### The sensitivity analysis
+
+One named assumption applied to one published figure. The assumptions are a
+closed set -- `NUMERATOR_MULTIPLIER` and `MULTIPLE_OVERRIDE` -- and each
+records its name, its value, its unit, its own hash and the label
+`user_supplied_research_assumption`. The baseline, the adjusted figure, the
+change and the formula are all shown. The observation is never modified, and
+a sensitivity may only be computed on a date the lane itself published, so it
+cannot be used to get around a point-in-time refusal, a fiscal window that
+does not exist, or an incomplete enterprise-value bridge. A sensitivity is
+labelled as a what-if on one named input; it is not a forecast, a target
+price or a fair value.
+
+### The interface
+
+The comparison surface has its own state and its own metric selectors, and
+no metric and no date is chosen for the user. It offers three comparisons,
+and the user chooses which: one metric at two dates, two metrics on the dates
+where both published, or one assumption applied to one published figure. The
+comparability statement is shown before the numbers, the sample counts and
+the unpaired dates with their reasons are shown, and a comparison that
+cannot be made says why.
+
+### What this phase does not do
+
+It does not qualify KO for production, and it does not make KO closer to
+production qualification. It changes no registry decision, extends no
+registry scope, adds no registry metric, changes no production bridge,
+window, point-in-time rule or sample gate, adds no production issuer, and
+touches no production dataset, valuation result or Archive. The research
+metric that cannot be selected still cannot be selected, and the
+double-counting diagnostic is not offered as a comparison either. The four
+lanes' observations, refusals and statistics are unchanged by the comparison
+function.
+
+Local verification for this round: research comparison suite **43 passed**;
+research capture suite **8 passed**; research calculator suite **63 passed**;
+research lane suite **42 passed**; backend suite **2862 passed, 171 skipped,
+534 subtests passed**; archive isolation **6 passed**; web API **25 passed**;
+browser smoke **14 passed**; frontend **120 passed**. The production payload
+digests for AAPL, AEP and MSFT are unchanged.
 
 ## Next task status
 

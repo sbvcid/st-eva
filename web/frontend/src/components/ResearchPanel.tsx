@@ -14,6 +14,7 @@ import {
   ResearchObservation,
 } from '../types/research'
 import { useI18n } from '../i18n'
+import { ResearchCompare } from './ResearchCompare'
 import {
   AlertTriangle,
   ChevronDown,
@@ -221,6 +222,12 @@ const ResearchPanel: React.FC = () => {
           </p>
         )}
       </div>
+
+      {/* The comparison and sensitivity surface. It is a separate
+          activity from the calculation, with its own state and its own
+          metric selectors: nothing is compared that the definitions do not
+          support, and no metric or date is chosen for the user. */}
+      <ResearchCompare />
 
       {metric && (
         <>

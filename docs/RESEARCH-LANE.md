@@ -257,6 +257,95 @@ To rebuild the capture from its sources:
 python tools/build_ko_research_capture.py --as-of YYYY-MM-DD
 ```
 
+## The comparison and sensitivity service
+
+`research_comparison.py` is the service a user works with when the question
+is not "what is this metric" but "why do these two numbers differ, and what
+may that difference rest on".
+
+A comparison is an argument about two numbers, and the service answers three
+questions before it shows anything.
+
+### Are the two metrics the same kind of thing?
+
+Every research metric publishes its comparability attributes: the kind of
+numerator it divides by, the definition and elements of its denominator, the
+currency and unit, its formula version, its bridge components, the registry's
+standing on it, and the basis breaks it carries. Two metrics may be shown side
+by side whatever they are, but a difference between them is only a statement
+about something when their definitions agree.
+
+| Pair | What it supports |
+|---|---|
+| The two enterprise-value lanes | A paired bridge comparison. They share their numerator kind, their denominator, their currency and their formula version, and differ only in the short-term component of the bridge. |
+| Two metrics with different denominators | A side-by-side view, labelled as a difference between two different formulas. No single attribution is offered. |
+| Two metrics with different numerators | The same, with the numerator difference named. |
+
+The comparability record names every attribute that agrees and every one
+that does not, so that a reader is never left to assume the two are the same
+kind of thing.
+
+### Are the two observations of the same thing?
+
+A comparison across two evaluation dates of one lane requires both dates to
+have published a figure. A date the lane refused is a refusal, with its
+reason, not a gap to be filled in. The dates in between that were refused
+are returned with their reasons, so that two figures are never read as a
+continuous series. The comparison also reports what changed in the evidence
+itself between the two dates: the elements each bridge read, the balance
+sheet each bridge described, and whether the denominator window moved.
+
+### Is the difference attributable?
+
+For the two enterprise-value lanes, only the dates where both published are
+paired. For each paired date the service checks that every component of both
+bridges describes one balance-sheet date and was knowable at that date, that
+the denominator window is the same version in both lanes, and that the
+components other than the short-term one agree. Where they do, the
+difference is the difference of the two short-term components, and the
+service says so. Where they do not, the pair is marked as affected by other
+factors, and the factors are named.
+
+The paired sample count, the attributable count, the unpaired dates and the
+reason each was refused are all computed from the observation records. The
+number of paired dates is never assumed.
+
+A difference between the two lanes' *medians* is not a measurement of
+anything, because the two lanes publish on different dates. The paired
+comparison, not the median difference, is what the service offers.
+
+### The sensitivity analysis
+
+A sensitivity asks how one published figure changes when one named input
+changes. The assumptions are a closed, named set, and each one records its
+name, its value, its unit and its own hash.
+
+| Assumption | What it changes |
+|---|---|
+| `NUMERATOR_MULTIPLIER` | The market value, or the enterprise value, is multiplied by a factor. |
+| `MULTIPLE_OVERRIDE` | The research multiple is replaced with a supplied one. |
+
+A sensitivity may only be computed on a date the lane itself published, so
+it cannot be used to get around a point-in-time refusal, a fiscal window
+that does not exist, or an enterprise-value bridge that is not complete. The
+observation is never modified: the sensitivity is a separate record that
+names the assumption it makes, and it is not a forecast, a target price or
+a fair value.
+
+### The comparison routes
+
+| Route | What it serves |
+|---|---|
+| `GET /api/research/definitions` | The comparability attributes of every selectable metric, and the named sensitivity assumptions. |
+| `POST /api/research/compare/compatibility` | Whether two metrics may be compared, and on what basis. |
+| `POST /api/research/compare/history` | One metric at two evaluation dates. |
+| `POST /api/research/compare/bridges` | Two metrics on the dates where both published. |
+| `POST /api/research/sensitivity` | One named assumption applied to one published figure. |
+
+The comparison surface has its own state and its own metric selectors. No
+metric and no date is chosen for the user, and a comparison that cannot be
+made says why.
+
 ## What a lane may not do
 
 - It may not publish under a production name, and it may not feed

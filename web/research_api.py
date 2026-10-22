@@ -36,6 +36,16 @@ from research_calculator import (
     observation_evidence,
     run_research_calculation,
 )
+from research_comparison import (
+    COMPARISON_VERSION,
+    SENSITIVITY_ASSUMPTIONS,
+    ResearchComparisonError,
+    comparability,
+    compare_bridges,
+    compare_history,
+    metric_definitions,
+    run_sensitivity,
+)
 
 research_router = APIRouter(prefix="/api/research", tags=["research"])
 
@@ -401,3 +411,255 @@ def calculate_research(request: ResearchCalculationRequestDTO) -> ResearchCalcul
             },
         ) from exc
     return ResearchCalculationDTO(**result.to_dict())
+
+
+# ---------------------------------------------------------------------------
+# The comparison and sensitivity surface
+# ---------------------------------------------------------------------------
+
+
+class ResearchComparisonRequestDTO(BaseModel):
+    """What the user asked to compare."""
+
+    left_metric_id: str = Field(
+        ..., description="The research metric on the left. There is no default."
+    )
+    right_metric_id: str = Field(
+        ..., description="The research metric on the right."
+    )
+
+
+class ResearchHistoryRequestDTO(BaseModel):
+    """Two evaluation dates of one research metric."""
+
+    metric_id: str = Field(..., description="The research metric to compare.")
+    earlier_date: str = Field(..., description="The earlier evaluation date.")
+    later_date: str = Field(..., description="The later evaluation date.")
+
+
+class ResearchSensitivityRequestDTO(BaseModel):
+    """One named assumption applied to one published observation."""
+
+    metric_id: str = Field(..., description="The research metric.")
+    evaluation_date: str = Field(..., description="A date the metric published.")
+    assumption: str = Field(
+        ..., description="The named assumption: NUMERATOR_MULTIPLIER or MULTIPLE_OVERRIDE."
+    )
+    value: float = Field(
+        ...,
+        allow_inf_nan=False,
+        description="The assumption's value, in the assumption's own unit.",
+    )
+
+
+class ResearchMetricDefinitionDTO(BaseModel):
+    """The comparability attributes of one research metric."""
+
+    metric_id: str
+    lane_id: str
+    metric_label: str
+    numerator_kind: str
+    numerator_description: str
+    denominator_definition: str
+    denominator_elements: List[str]
+    currency: str
+    unit: str
+    formula_version: str
+    formula_expression: str
+    bridge_components: List[str]
+    candidate_metric: bool
+    sample_count: int
+    total_evaluations: int
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    registry_standing: Dict[str, Any] = Field(default_factory=dict)
+    basis_breaks: Dict[str, List[str]] = Field(default_factory=dict)
+
+
+class ResearchComparabilityDTO(BaseModel):
+    """Whether two research metrics may be compared, and on what basis."""
+
+    left: ResearchMetricDefinitionDTO
+    right: ResearchMetricDefinitionDTO
+    same_formula: bool
+    comparable: bool
+    comparable_as: str
+    shared: Dict[str, Any] = Field(default_factory=dict)
+    differences: List[Dict[str, Any]] = Field(default_factory=list)
+    reasons: List[str] = Field(default_factory=list)
+
+
+class ResearchDefinitionsDTO(BaseModel):
+    """Every selectable research metric, with the assumptions on offer."""
+
+    definitions: List[ResearchMetricDefinitionDTO]
+    sensitivity_assumptions: Dict[str, Any] = Field(default_factory=dict)
+    comparison_version: str = COMPARISON_VERSION
+
+
+class ResearchComparisonDTO(BaseModel):
+    """A comparison, with everything it rests on."""
+
+    comparison_kind: str
+    comparison_version: str
+    comparison_hash: str
+    production_eligible: bool = False
+    metric_id: Optional[str] = None
+    lane_id: Optional[str] = None
+    earlier: Optional[Dict[str, Any]] = None
+    later: Optional[Dict[str, Any]] = None
+    comparison: Optional[Dict[str, Any]] = None
+    evidence_changes: Optional[Dict[str, Any]] = None
+    basis_breaks: Optional[Dict[str, Any]] = None
+    prior_period_revisions: Optional[Dict[str, Any]] = None
+    refused_between: List[Dict[str, Any]] = Field(default_factory=list)
+    refused_between_count: int = 0
+    left: Optional[Dict[str, Any]] = None
+    right: Optional[Dict[str, Any]] = None
+    paired_sample_count: int = 0
+    attributable_sample_count: int = 0
+    shared_date_count: int = 0
+    unpaired_left: List[Dict[str, Any]] = Field(default_factory=list)
+    unpaired_right: List[Dict[str, Any]] = Field(default_factory=list)
+    refused_on_both: List[Dict[str, Any]] = Field(default_factory=list)
+    pairs: List[Dict[str, Any]] = Field(default_factory=list)
+    compatibility: Optional[Dict[str, Any]] = None
+
+
+class ResearchSensitivityDTO(BaseModel):
+    """A sensitivity: the baseline, the assumption, and the change."""
+
+    comparison_kind: str
+    comparison_version: str
+    comparison_hash: str
+    assumption_hash: str
+    production_eligible: bool = False
+    metric_id: str
+    lane_id: str
+    evaluation_date: str
+    assumption: Dict[str, Any]
+    baseline: Dict[str, Any]
+    adjusted: Dict[str, Any]
+    change: Dict[str, Any]
+    formula: str
+    observation: Dict[str, Any]
+    notice: str
+
+
+def _comparison_refusal(exc: ResearchComparisonError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail={
+            "reason_code": exc.reason_code,
+            "detail": exc.detail,
+            "production_eligible": False,
+        },
+    )
+
+
+@research_router.get("/definitions", response_model=ResearchDefinitionsDTO)
+def get_research_definitions() -> ResearchDefinitionsDTO:
+    """
+    The comparability attributes of every selectable research metric.
+
+    A reader is told, before any comparison is made, what each metric's
+    numerator is, what its denominator is, in what currency and unit, under
+    which formula version, and what the registry's standing on it is.
+    """
+    return ResearchDefinitionsDTO(
+        definitions=[
+            ResearchMetricDefinitionDTO(**definition.to_dict())
+            for definition in metric_definitions()
+        ],
+        sensitivity_assumptions={
+            name: {
+                "name": name,
+                **description,
+            }
+            for name, description in SENSITIVITY_ASSUMPTIONS.items()
+        },
+    )
+
+
+@research_router.post(
+    "/compare/compatibility", response_model=ResearchComparabilityDTO
+)
+def get_research_compatibility(
+    request: ResearchComparisonRequestDTO,
+) -> ResearchComparabilityDTO:
+    """
+    Whether two research metrics may be compared, and on what basis.
+
+    Metrics that do not share a definition may still be shown side by side,
+    but the comparison is then a difference between two different formulas
+    and carries no single attribution.
+    """
+    try:
+        payload = comparability(request.left_metric_id, request.right_metric_id)
+    except ResearchComparisonError as exc:
+        raise _comparison_refusal(exc) from exc
+    return ResearchComparabilityDTO(**payload)
+
+
+@research_router.post("/compare/history", response_model=ResearchComparisonDTO)
+def compare_research_history(
+    request: ResearchHistoryRequestDTO,
+) -> ResearchComparisonDTO:
+    """
+    One research metric at two evaluation dates.
+
+    Both dates must have published a figure. The dates in between that did
+    not are returned with their reasons, so that the two figures are not
+    read as a continuous series.
+    """
+    try:
+        payload = compare_history(request.metric_id, request.earlier_date, request.later_date)
+    except ResearchComparisonError as exc:
+        raise _comparison_refusal(exc) from exc
+    return ResearchComparisonDTO(**payload)
+
+
+@research_router.post("/compare/bridges", response_model=ResearchComparisonDTO)
+def compare_research_bridges(
+    request: ResearchComparisonRequestDTO,
+) -> ResearchComparisonDTO:
+    """
+    Two research metrics on the dates where both published.
+
+    Only the intersection counts. For each shared date the service checks
+    that every component of both bridges describes one balance-sheet date
+    and was knowable at that date, that the denominator window is the same
+    version in both lanes, and that the components other than the short-term
+    one agree. Where they do, the difference is attributed to the short-term
+    component; where they do not, the pair is marked as affected by other
+    factors.
+    """
+    try:
+        payload = compare_bridges(request.left_metric_id, request.right_metric_id)
+    except ResearchComparisonError as exc:
+        raise _comparison_refusal(exc) from exc
+    return ResearchComparisonDTO(**payload)
+
+
+@research_router.post("/sensitivity", response_model=ResearchSensitivityDTO)
+def run_research_sensitivity(
+    request: ResearchSensitivityRequestDTO,
+) -> ResearchSensitivityDTO:
+    """
+    How one published research figure changes when one named input changes.
+
+    The observation is not modified. A sensitivity may only be computed on a
+    date the lane itself published, so it cannot be used to get around a
+    point-in-time refusal, a fiscal window that does not exist, or an
+    incomplete enterprise-value bridge.
+    """
+    try:
+        payload = run_sensitivity(
+            request.metric_id,
+            request.evaluation_date,
+            request.assumption,
+            request.value,
+        )
+    except ResearchComparisonError as exc:
+        raise _comparison_refusal(exc) from exc
+    return ResearchSensitivityDTO(**payload)

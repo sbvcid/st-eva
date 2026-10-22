@@ -1,7 +1,10 @@
 import {
   ResearchCalculation,
   ResearchCatalogue,
+  ResearchComparability,
+  ResearchComparison,
   ResearchMetricDetail,
+  ResearchSensitivity,
 } from '../types/research'
 
 /**
@@ -91,6 +94,85 @@ export async function runResearchCalculation(
   input: ResearchCalculationInput,
 ): Promise<ResearchCalculation> {
   const res = await fetch(`${RESEARCH_API_BASE}/calculate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) throw await readError(res)
+  return res.json()
+}
+
+/**
+ * The comparability attributes of every selectable research metric, and the
+ * named sensitivity assumptions on offer.
+ */
+export async function getResearchDefinitions(): Promise<{
+  definitions: any[]
+  sensitivity_assumptions: Record<string, any>
+  comparison_version: string
+}> {
+  const res = await fetch(`${RESEARCH_API_BASE}/definitions`)
+  if (!res.ok) throw await readError(res)
+  return res.json()
+}
+
+export async function getResearchComparability(
+  leftMetricId: string,
+  rightMetricId: string,
+): Promise<ResearchComparability> {
+  const res = await fetch(`${RESEARCH_API_BASE}/compare/compatibility`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      left_metric_id: leftMetricId,
+      right_metric_id: rightMetricId,
+    }),
+  })
+  if (!res.ok) throw await readError(res)
+  return res.json()
+}
+
+export async function compareResearchHistory(
+  metricId: string,
+  earlierDate: string,
+  laterDate: string,
+): Promise<ResearchComparison> {
+  const res = await fetch(`${RESEARCH_API_BASE}/compare/history`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      metric_id: metricId,
+      earlier_date: earlierDate,
+      later_date: laterDate,
+    }),
+  })
+  if (!res.ok) throw await readError(res)
+  return res.json()
+}
+
+export async function compareResearchBridges(
+  leftMetricId: string,
+  rightMetricId: string,
+): Promise<ResearchComparison> {
+  const res = await fetch(`${RESEARCH_API_BASE}/compare/bridges`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      left_metric_id: leftMetricId,
+      right_metric_id: rightMetricId,
+    }),
+  })
+  if (!res.ok) throw await readError(res)
+  return res.json()
+}
+
+export async function runResearchSensitivity(input: {
+  metric_id: string
+  evaluation_date: string
+  assumption: string
+  value: number
+}): Promise<ResearchSensitivity> {
+  const res = await fetch(`${RESEARCH_API_BASE}/sensitivity`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
