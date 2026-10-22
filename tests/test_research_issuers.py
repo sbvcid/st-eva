@@ -13,6 +13,7 @@ import json
 import unittest
 from pathlib import Path
 
+from historical_multiples import ISSUER_CONFIGS, load_issuer_historical_multiples
 from research_calculator import ResearchCalculationRequest, run_research_calculation
 from research_comparison import compare_bridges
 from research_issuers import (
@@ -286,6 +287,118 @@ class TheThirdCase(unittest.TestCase):
         self.assertTrue(revenue.input_set_id)
         self.assertTrue(revenue.content_hash)
         self.assertFalse(revenue.distribution.production_eligible)
+
+
+class TheThirdCaseAgainstProduction(unittest.TestCase):
+    """
+    MSFT's research revenue lane and the production P/S reference read the
+    same filed facts.
+
+    The research lane reaches further back than the production dataset, so
+    the two datasets do not evaluate the same dates. Where both publish, the
+    figures must agree, and where only the research lane publishes, the
+    difference must be the reach of the two datasets over the same filed
+    facts and not a disagreement about arithmetic.
+    """
+
+    REVENUE_LANE = "msft_reported_revenue_multiple"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.production = {
+            observation["evaluation_date"]: observation
+            for observation in load_issuer_historical_multiples(
+                ISSUER_CONFIGS["MSFT"]
+            ).to_dict()["observations"]
+        }
+        cls.results = build_lane_results(issuer_ids=["MSFT"])
+
+    def test_the_revenue_lane_matches_production_wherever_both_publish(self):
+        lane = self.results[self.REVENUE_LANE]
+        shared = 0
+        for observation in lane.observations:
+            other = self.production.get(observation.evaluation_date)
+            if other is None or observation.value is None:
+                continue
+            if other.get("ps_ratio") is None:
+                continue
+            shared += 1
+            self.assertEqual(
+                observation.price, other["price"], observation.evaluation_date
+            )
+            self.assertEqual(
+                observation.shares_outstanding,
+                other["shares_outstanding"],
+                observation.evaluation_date,
+            )
+            self.assertAlmostEqual(
+                observation.value,
+                other["ps_ratio"],
+                places=6,
+                msg=observation.evaluation_date,
+            )
+        self.assertEqual(shared, 21)
+
+    def test_the_dates_only_the_research_lane_reaches_are_named(self):
+        """
+        On three of the dates both datasets evaluate, only the research lane
+        publishes. Production refuses the window under its own rule and
+        refuses rather than backfill a quarter from a later filing; the
+        research capture reads each quarter from the annual filing that
+        stated it, which was public before the evaluation date. The dates
+        are named rather than reconciled away.
+        """
+        lane = self.results[self.REVENUE_LANE]
+        research_only = []
+        for observation in lane.observations:
+            other = self.production.get(observation.evaluation_date)
+            if other is None or observation.value is None:
+                continue
+            if other.get("ps_ratio") is None:
+                research_only.append(observation)
+        self.assertEqual(
+            [observation.evaluation_date for observation in research_only],
+            ["2020-10-28", "2021-01-27", "2021-04-28"],
+        )
+        for observation in research_only:
+            other = self.production[observation.evaluation_date]
+            self.assertIsNone(other["ps_ratio"])
+            self.assertEqual(
+                other["ps_reason_code"], "REASON_MISSING_REVENUE_WINDOW"
+            )
+
+    def test_the_first_research_only_window_is_pit_clean_and_crosses_the_june_boundary(
+        self,
+    ):
+        """
+        The 2020-10-28 window is four consecutive quarters of MSFT's June
+        cycle -- Q2, Q3 and Q4 of FY2020 plus Q1 of FY2021 -- and every
+        quarter was public before the evaluation date: the three FY2020
+        quarters from the FY2020 10-K, accepted after the close of
+        2020-07-30 and so usable from 2020-07-31, and Q1 FY2021 from the
+        10-Q accepted after the close of 2020-10-27, usable 2020-10-28.
+        """
+        lane = self.results[self.REVENUE_LANE]
+        observation = next(
+            item
+            for item in lane.observations
+            if item.evaluation_date == "2020-10-28"
+        )
+        quarters = observation.denominator["quarters"]
+        self.assertEqual(
+            [quarter["period_end"] for quarter in quarters],
+            ["2019-12-31", "2020-03-31", "2020-06-30", "2020-09-30"],
+        )
+        self.assertEqual(
+            [(quarter["fiscal_year"], quarter["fiscal_quarter"]) for quarter in quarters],
+            [(2020, 2), (2020, 3), (2020, 4), (2021, 1)],
+        )
+        for quarter in quarters:
+            self.assertLessEqual(
+                quarter["knowable_from"], observation.evaluation_date
+            )
+        self.assertEqual(quarters[0]["knowable_from"], "2020-07-31")
+        self.assertEqual(quarters[3]["knowable_from"], "2020-10-28")
 
 
 class TheUnitPolicy(unittest.TestCase):

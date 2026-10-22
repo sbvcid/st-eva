@@ -5393,6 +5393,143 @@ observation hashes and the same comparison hashes; the production payload
 digests for AAPL, AEP and MSFT are unchanged; and no source was re-downloaded
 and no capture file was rewritten.
 
+## Phase 9.13 (2026-10-22): MSFT's research lane, end to end, and the round's report corrected
+
+Local verification for this round: research issuer suite **38 passed**;
+research lane suite **42 passed**; AAPL research lane suite **57 passed**;
+research lane boundaries suite **28 passed**; research lane homogeneity suite
+**23 passed**; research capture suite **8 passed**; research calculator suite
+**63 passed**; research comparison suite **49 passed**; research dossier suite
+**34 passed**; backend suite **3014 passed, 171 skipped, 534 subtests
+passed**; archive isolation and web API **31 passed**; browser smoke is CI's.
+
+The round's first report did not satisfy the round: it named AAPL the third
+issuer and quoted the AAPL revenue lane's superseded pooled figures (32
+observations, median 6.996311) against the homogeneous contract Phase 9.12
+had accepted, and its commit message describes the AAPL work of Phase 9.10
+rather than the MSFT work the commit carries. The committed tree was audited
+before anything was changed, from the committed captures alone, with no
+source re-downloaded and no capture file rewritten.
+
+### The audit of the AAPL contract
+
+The conflict is in the report, not in the tree. The committed
+`research_lane.py` at this round's parent is the Phase 9.12 code that groups
+published observations by the basis their windows were read from, and the
+committed AAPL lane output is its product: regenerating all three issuers'
+lane trees from the committed captures with the committed code reproduces
+every committed file byte for byte. The AAPL revenue lane at HEAD describes
+the successor-only sample (28 observations, 2019-10-31 to 2026-07-31,
+`RESEARCH_DISTRIBUTION`, median 7.257709, the basis named on the
+distribution), the legacy-only sample (1 observation on the retired
+`us-gaap:Revenues`, `RESEARCH_THIN_SAMPLE`, median 3.601818, below the
+threshold of 20) and the mixed group (3 observations, `RESEARCH_DIAGNOSTIC`,
+no statistic), and publishes no pooled median over the 32. The mixed windows
+cannot re-enter the figure: the figure is the largest sample among the
+groups, a diagnostic is never the figure, and the lane falls back to nothing.
+The regression tests Phase 9.12 added for all of this are in the tree and
+pass. No code path was changed for this audit, and no expected hash was
+touched.
+
+### MSFT is the third issuer
+
+MSFT's research capture, configuration and lanes are committed by this
+round's parent commit, built with the same generic builder, the same
+configuration file and the same lane engine as KO and AAPL, with no
+MSFT-specific builder logic. The issuer identity is verified from the
+filings' own evidence: every capture row's accession resolves under
+`/Archives/edgar/data/0000789019/`, every filing header states
+`fiscal_year_end 0630`, and the capture's manifest names
+`CIK0000789019` / Microsoft Corporation. The capture is research-only: it
+lives under `data/research_multiples/MSFT`, and nothing in the production
+tree changed (`git diff` against the Phase 9.12 state touches only research
+data, `research_lane.py` and research tests).
+
+The acceptance evidence carries each periodic filing's SGML header
+ACCEPTANCE-DATETIME with its Eastern offset and the submissions-API reading
+beside it, which runs four to five hours late for this filer; the lane
+knows a filing from the header time under the 16:00 ET rule. The capture
+holds 67 periodic filings (10-K and 10-Q) from 2010 onwards.
+
+### The lanes
+
+| Lane | Valid | Evaluations | Median | Status |
+|---|---|---|---|---|
+| `msft_reported_revenue_multiple` | 33 | 67 | 10.848125 | `RESEARCH_DISTRIBUTION` |
+| `msft_filed_ev_bridge_multiple_over_revenue` | 12 | 67 | 11.628085 | `RESEARCH_THIN_SAMPLE` |
+| `msft_reported_operating_profit_plus_reported_d_and_a_multiple` | 0 | 0 | — | `RESEARCH_UNAVAILABLE` |
+
+The revenue lane is one homogeneous sample: every window reads
+`us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax`, the one
+element the core registry accepts for MSFT, from the FY2018 10-K onwards.
+It does not fall back to `us-gaap:Revenues` or the partially mapped
+`us-gaap:SalesRevenueNet` to lengthen the sample, and it says so. The
+34 refused evaluations are all `RESEARCH_REASON_NO_DENOMINATOR_WINDOW`
+before the accepted element's reach begins. The bridge lane's 55 refusals
+are named: 34 no window, 20 `RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS`
+(the filed bridge requires every component to describe the same
+balance-sheet date, and MSFT stops filing commercial paper from the FY2026
+first quarter, so a stale instant is refused rather than carried forward),
+1 incomplete bridge. All three are `candidate_metric` lanes under the
+generic threshold; none is qualified for production.
+
+### The D&A refusal, explicitly
+
+The operating-profit-plus-D&A lane is assessed and refused. Its
+depreciation role names `us-gaap:DepreciationDepletionAndAmortization`,
+which MSFT does not file: none of the configured sources -- companyfacts,
+companyconcept, filing_instance -- served it, and the capture records that
+finding. What MSFT does report is `us-gaap:Depreciation`, the property-and-
+equipment note's depreciation expense alone, which excludes amortization
+and is not the depreciation-and-amortization metric, so the lane refuses
+with `RESEARCH_REASON_ELEMENT_UNAVAILABLE` and publishes no figure rather
+than substitute the element it happens to hold. This matches the production
+finding that Microsoft has no element that qualifies for the
+depreciation-and-amortization role, and the production EV/EBITDA
+eligibility for MSFT is unchanged by this lane.
+
+### The cross-check with production
+
+On the 21 evaluation dates on which the MSFT research revenue lane and the
+production P/S reference both publish, the price, the share count and the
+multiple agree to six decimal places on every date. On the three dates both
+evaluate where only the research lane publishes -- 2020-10-28, 2021-01-27,
+2021-04-28 -- production refuses with `REASON_MISSING_REVENUE_WINDOW` under
+its own first-knowable rule, refusing rather than backfill a quarter from a
+later filing; the research capture reads the three FY2020 quarters from the
+FY2020 10-K itself (accepted after the close of 2020-07-30, usable
+2020-07-31) and Q1 FY2021 from the 10-Q usable 2020-10-28, so every quarter
+of the window was public before the evaluation date. The difference is the
+reach of the two datasets over the same filed facts, not arithmetic, and
+the regression tests added this round name the dates and pin the window's
+fiscal quarters (2020 Q2-Q4, 2021 Q1) and knowability.
+
+### Isolation and replay
+
+Every MSFT lane result carries `production_eligible=False`, no `refc:*`
+appears anywhere in the research tree, and the production payload digests
+for AAPL, AEP and MSFT are pinned by the AAPL suite and unchanged. KO's
+lanes, refusal reasons, input set ids, observation hashes and comparison
+hashes are unchanged: regenerating KO's tree reproduces its committed
+files byte for byte, as it does AAPL's and MSFT's. The AAPL Phase 9.12
+subgroup results and identities obey the accepted contract, and the
+homogeneity suite's identity-sensitivity tests (adding or removing an
+observation moves the lane identity; a descriptive-only manifest
+re-description moves no figure) pass.
+
+### What this phase does not do
+
+It does not qualify MSFT for production, does not change MSFT's production
+eligibility, registry standing or EV/EBITDA policy, does not read a
+production median into a research figure, and does not add MSFT-specific
+builder logic. The D&A lane's refusal stands: no complete
+depreciation-and-amortization evidence for MSFT is claimed, and no
+substitute figure is published in its place. What remains unproven is the
+submissions-API fallback for a filer whose index headers do not exist
+(MSFT's headers all exist), the bridge lane's thin sample (12 observations
+is below the threshold and publishes no distribution claim), and any
+statement about MSFT's valuation: a research multiple is not a reference.
+
 ## Next task status
 
 The Phase 5 round is complete and verified: the production historical P/S and
@@ -5519,6 +5656,20 @@ observation and says it is below the threshold, and the mixed group holds
 three and publishes no statistic at all. The capture's manifest was corrected
 at the same time: a role that holds two elements is filed in more filings
 than its first element alone, and the coverage now says so.
+
+The lane now carries a third issuer. MSFT is carried by the same engine, the
+same configuration file and the same builder, and its June fiscal year, its
+10-K's own quarterly revenue facts and its commercial paper's exit from the
+balance sheet are all handled by the generic code. The revenue lane publishes
+33 observations over 67 evaluation dates with a median of 10.848125 on the
+one element the registry accepts for MSFT; the filed-bridge lane publishes 12
+and says it is below the threshold; and the operating-profit-plus-D&A lane
+refuses outright, because MSFT files no depreciation-and-amortization total
+and the lane will not read the property-and-equipment note's depreciation
+alone as one. The research lane and the production P/S reference agree to six
+decimal places on all 21 dates both publish, and the three dates only the
+research lane reaches are named with the filed facts that make the window
+knowable. MSFT is not qualified for production by any of this.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.
