@@ -30,6 +30,17 @@ submissions API's acceptance datetime, converted to America/New_York, is used
 instead. The basis is recorded per filing, and the capture says which is
 which.
 
+The acceptance times carry the Eastern offset of their own date, so a
+standard-time filing is written at five hours from UTC and a daylight-time
+filing at four. Every record now holds the instant the SEC's own submissions
+API states, and the capture's usable dates follow the 16:00 ET rule without
+exception. Three annual filings -- the FY2018, FY2019 and FY2022 10-Ks -- were
+accepted between 16:00 and 17:00 Eastern, so each of them becomes knowable
+on the next trading day rather than on the day it was accepted. That is the
+rule the production resolver applies; the capture had been recording those
+instants an hour early, which made the three filings look knowable a day
+before they were.
+
 The SEC's company concept endpoint serves `us-gaap:Revenues` with empty
 units for this filer, so the rows come from the issuer's fact set in the
 company facts payload. The capture records the substitution for that element
@@ -91,8 +102,8 @@ statistic can be recomputed from it.
 | Lane | Metric id | Valid | Refused | Sample period | Median | Mean | Std dev |
 |---|---|---:|---:|---|---:|---:|---:|
 | A | `RESEARCH_KO_REPORTED_REVENUE_MULTIPLE` | 29 | 38 | 2019-07-26 … 2026-07-29 | **6.403373** | 6.460903 | 0.562180 |
-| B | `RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE` | 64 | 3 | 2010-10-29 … 2026-07-29 | **19.775345** | 19.092492 | 3.835147 |
-| C1 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE` | 27 | 40 | 2011-02-28 … 2026-07-29 | **23.639435** | 23.133471 | 4.294477 |
+| B | `RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE` | 64 | 3 | 2010-10-29 … 2026-07-29 | **19.774421** | 19.092492 | 3.835147 |
+| C1 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE` | 27 | 40 | 2011-02-28 … 2026-07-29 | **23.654283** | 23.133471 | 4.294477 |
 | C2 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS` | 29 | 38 | 2018-10-30 … 2026-07-29 | **24.675484** | 24.753179 | 2.331508 |
 | C3 | `RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC` | 16 | 51 | 2019-02-21 … 2026-07-29 | 25.556776 | 25.731022 | 2.574429 |
 
@@ -173,7 +184,7 @@ Three consequences follow, and the lanes are built on all three.
    refused for an incomplete bridge because the element is not yet filed, and
    three more for a bridge spanning two balance sheets.
 
-**The two medians are not a measure of debt.** C1's 23.639435 and C2's
+**The two medians are not a measure of debt.** C1's 23.654283 and C2's
 24.675484 differ by 1.036049, but the two lanes sample different dates
 against different balance-sheet compositions, and C1's sample is the one
 constrained by commercial paper's annual reporting. The difference is a
@@ -265,9 +276,18 @@ than an input: every figure in this document is recomputed by the lane.
 | Lane | Phase 9.2 | Recomputed | Match |
 |---|---:|---:|---|
 | A | 29 valid, median 6.403373 | 29 valid, median 6.403373 | yes |
-| B | 64 valid, median 19.775345 | 64 valid, median 19.775345 | yes |
-| C1 | 27 valid, median 23.639435 | 27 valid, median 23.639435 | yes |
+| B | 64 valid, median 19.775345 | 64 valid, median 19.774421 | the median moved |
+| C1 | 27 valid, median 23.639435 | 27 valid, median 23.654283 | the median moved |
 | C2 | 29 valid, median 24.675484 | 29 valid, median 24.675484 | yes |
+
+The two medians that moved belong to the two lanes that publish an
+observation on each of the three annual filings whose acceptance times were
+corrected. The valid counts are unchanged, and the change is confined to
+three evaluation dates. The figures that moved moved because the evidence
+behind them became knowable a day later than the capture had said, not
+because the arithmetic changed: the phase 9.5 audit's independent
+recomputation, run against the corrected capture, agrees with the lane on
+every one of the 67 dates.
 
 The phase 9.2 report's acceptance criteria listed the exclusion counts as
 `38 + 3 + 37 + 35 + 19`. The counts taken from the observation records are

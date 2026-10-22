@@ -38,10 +38,10 @@ EXPECTED = {
     "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE": (29, 6.403373, "market_cap"),
     (
         "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
-    ): (64, 19.775345, "market_cap"),
+    ): (64, 19.774421, "market_cap"),
     "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_PRODUCTION_SHAPE": (
         27,
-        23.639435,
+        23.654283,
         "enterprise_value",
     ),
     "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS": (
@@ -713,6 +713,334 @@ class TheRefusals(unittest.TestCase):
                     self.assertLessEqual(component["usable_date"], day)
 
 
+class TheNonFiniteOperands(unittest.TestCase):
+    """A non-finite operand is refused, on every path into the service."""
+
+    def setUp(self):
+        self.client = TestClient(create_app(), raise_server_exceptions=False)
+
+    def _raw(self, body: str):
+        return self.client.post(
+            "/api/research/calculate",
+            content=body.encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+
+    def test_a_not_a_number_multiple_is_refused_by_the_service(self):
+        with self.assertRaises(ResearchCalculationError) as caught:
+            run_research_calculation(
+                ResearchCalculationRequest(
+                    metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+                    multiple_source=MULTIPLE_USER_SUPPLIED,
+                    multiple=float("nan"),
+                )
+            )
+        self.assertEqual(
+            caught.exception.reason_code,
+            "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE",
+        )
+        self.assertIn("finite", caught.exception.detail)
+
+    def test_an_infinite_multiple_is_refused_by_the_service(self):
+        with self.assertRaises(ResearchCalculationError) as caught:
+            run_research_calculation(
+                ResearchCalculationRequest(
+                    metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+                    multiple_source=MULTIPLE_USER_SUPPLIED,
+                    multiple=float("inf"),
+                )
+            )
+        self.assertEqual(
+            caught.exception.reason_code,
+            "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE",
+        )
+
+    def test_a_not_a_number_market_value_is_refused_by_the_service(self):
+        with self.assertRaises(ResearchCalculationError) as caught:
+            run_research_calculation(
+                ResearchCalculationRequest(
+                    metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+                    numerator_source=NUMERATOR_USER_SUPPLIED,
+                    numerator_value=float("nan"),
+                )
+            )
+        self.assertEqual(
+            caught.exception.reason_code,
+            "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_FINITE",
+        )
+
+    def test_an_infinite_market_value_is_refused_by_the_service(self):
+        with self.assertRaises(ResearchCalculationError) as caught:
+            run_research_calculation(
+                ResearchCalculationRequest(
+                    metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+                    numerator_source=NUMERATOR_USER_SUPPLIED,
+                    numerator_value=float("inf"),
+                )
+            )
+        self.assertEqual(
+            caught.exception.reason_code,
+            "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_FINITE",
+        )
+
+    def test_a_finite_result_that_overflows_is_refused(self):
+        # Both operands are finite and positive, but the quotient is not.
+        with self.assertRaises(ResearchCalculationError) as caught:
+            run_research_calculation(
+                ResearchCalculationRequest(
+                    metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+                    multiple_source=MULTIPLE_USER_SUPPLIED,
+                    multiple=1e-320,
+                    numerator_source=NUMERATOR_USER_SUPPLIED,
+                    numerator_value=1e308,
+                )
+            )
+        self.assertEqual(
+            caught.exception.reason_code,
+            "RESEARCH_CALCULATION_REFUSED_RESULT_NOT_FINITE",
+        )
+
+    def test_the_raw_request_path_refuses_a_not_a_number(self):
+        response = self._raw(
+            '{"metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",'
+            ' "multiple_source": "USER_SUPPLIED", "multiple": NaN}'
+        )
+        self.assertEqual(response.status_code, 400)
+        detail = response.json()["detail"]
+        self.assertEqual(
+            detail["reason_code"],
+            "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE",
+        )
+        self.assertFalse(detail["production_eligible"])
+        self.assertTrue(detail["detail"])
+
+    def test_the_raw_request_path_refuses_an_infinity(self):
+        response = self._raw(
+            '{"metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",'
+            ' "multiple_source": "USER_SUPPLIED", "multiple": Infinity}'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["detail"]["reason_code"],
+            "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE",
+        )
+
+    def test_the_raw_request_path_refuses_a_not_a_number_market_value(self):
+        response = self._raw(
+            '{"metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",'
+            ' "numerator_source": "USER_SUPPLIED", "numerator_value": NaN}'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["detail"]["reason_code"],
+            "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_FINITE",
+        )
+
+    def test_no_non_finite_operand_ever_yields_an_available_result(self):
+        for multiple in (float("nan"), float("inf"), float("-inf")):
+            for numerator in (float("nan"), float("inf"), float("-inf")):
+                with self.assertRaises(ResearchCalculationError):
+                    run_research_calculation(
+                        ResearchCalculationRequest(
+                            metric_id="RESEARCH_KO_REPORTED_REVENUE_MULTIPLE",
+                            multiple_source=MULTIPLE_USER_SUPPLIED,
+                            multiple=multiple,
+                            numerator_source=NUMERATOR_USER_SUPPLIED,
+                            numerator_value=numerator,
+                        )
+                    )
+
+    def test_the_earlier_refusals_do_not_regress(self):
+        cases = [
+            (dict(multiple_source=MULTIPLE_USER_SUPPLIED, multiple=0),
+             "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_POSITIVE"),
+            (dict(multiple_source=MULTIPLE_USER_SUPPLIED, multiple=-1),
+             "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_POSITIVE"),
+            (dict(numerator_source=NUMERATOR_USER_SUPPLIED, numerator_value=0),
+             "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_POSITIVE"),
+            (dict(numerator_source=NUMERATOR_USER_SUPPLIED, numerator_value=-1),
+             "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_POSITIVE"),
+            (dict(metric_id="RESEARCH_DOES_NOT_EXIST"),
+             "RESEARCH_CALCULATION_REFUSED_METRIC_UNAVAILABLE"),
+            (dict(multiple_source=MULTIPLE_OBSERVATION, observation_date=None),
+             "RESEARCH_CALCULATION_REFUSED_MULTIPLE_UNAVAILABLE"),
+            (dict(multiple_source=MULTIPLE_OBSERVATION, observation_date="1999-01-01"),
+             "RESEARCH_CALCULATION_REFUSED_OBSERVATION_UNKNOWN"),
+        ]
+        for override, expected in cases:
+            body = {"metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"}
+            body.update(override)
+            with self.assertRaises(ResearchCalculationError) as caught:
+                run_research_calculation(ResearchCalculationRequest(**body))
+            self.assertEqual(caught.exception.reason_code, expected)
+
+    def test_every_refusal_code_is_in_the_closed_set(self):
+        from research_calculator import CLOSED_CALCULATION_REASON_CODES
+
+        for code in (
+            "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE",
+            "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_FINITE",
+            "RESEARCH_CALCULATION_REFUSED_RESULT_NOT_FINITE",
+        ):
+            self.assertIn(code, CLOSED_CALCULATION_REASON_CODES)
+
+
+class TheDistributionState(unittest.TestCase):
+    """The distribution's state, and the threshold it is read against."""
+
+    def test_the_catalogue_carries_the_state_and_the_threshold(self):
+        client = TestClient(create_app())
+        metric = client.get("/api/research/metrics").json()["metrics"][0]
+        self.assertEqual(metric["status"], "RESEARCH_DISTRIBUTION")
+        self.assertEqual(metric["min_observations_for_description"], 20)
+        self.assertEqual(metric["sample_count"], 29)
+        self.assertEqual(metric["refused_count"], 38)
+        self.assertFalse(metric["production_eligible"])
+
+    def test_a_lane_below_its_threshold_is_a_thin_sample(self):
+        import dataclasses
+
+        import research_calculator
+        from research_lane_ko import LANE_CONFIGS
+
+        config = dataclasses.replace(
+            LANE_CONFIGS[0], min_observations_for_description=100
+        )
+        from research_lane import load_research_lane
+
+        result = load_research_lane(config)
+        self.assertEqual(result.distribution.status, "RESEARCH_THIN_SAMPLE")
+        self.assertTrue(result.distribution.reason_detail)
+        self.assertEqual(result.distribution.sample_count, 29)
+        self.assertEqual(result.distribution.min_observations_for_description, 100)
+
+        # The service publishes the state and the threshold it read against.
+        original = research_calculator._lane_results
+        results = dict(original())
+        results[config.lane_id] = result
+        research_calculator._lane_results = lambda: results
+        try:
+            summaries = research_calculator.list_research_metrics()
+        finally:
+            research_calculator._lane_results = original
+        summary = next(
+            item for item in summaries if item.metric_id == config.metric_id
+        )
+        self.assertEqual(summary.status, "RESEARCH_THIN_SAMPLE")
+        self.assertEqual(summary.min_observations_for_description, 100)
+        self.assertFalse(summary.production_eligible)
+
+    def test_an_unavailable_state_carries_its_reason(self):
+        from research_calculator import ResearchMetricSummary
+        from web.research_api import ResearchMetricDTO
+
+        summary = ResearchMetricSummary(
+            metric_id="RESEARCH_KO_PROBE",
+            lane_id="probe",
+            issuer_id="CIK0000021344",
+            instrument_id="KO",
+            metric_label="probe",
+            research_purpose="probe",
+            research_use_label="RESEARCH USE ONLY.",
+            formula_expression="probe",
+            formula_version="research-multiples/1.0",
+            formula_numerator="probe",
+            formula_denominator="probe",
+            numerator_kind="market_cap",
+            numerator_label="probe",
+            denominator_label="probe",
+            status="RESEARCH_UNAVAILABLE",
+            production_eligible=False,
+            candidate_metric=True,
+            sample_count=0,
+            total_evaluations=67,
+            refused_count=67,
+            min_observations_for_description=20,
+            reason_code="RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+            reason_detail="No window is knowable at any evaluation date.",
+            period_start=None,
+            period_end=None,
+            mean=None,
+            std=None,
+            minimum=None,
+            maximum=None,
+            percentiles={},
+            median=None,
+            sampling_cadence="PERIODIC_FILING_USABLE_DATES",
+            registry_standing={},
+            production_refusal={"production_eligible": False},
+            data_limitations=[],
+            basis_breaks={},
+            prior_period_revisions=[],
+            input_set_id="",
+            content_hash="",
+            methodology="research-multiples/1.0",
+            logic_version="research-multiples/1.0.0",
+        )
+        payload = ResearchMetricDTO(**summary.to_dict())
+        self.assertEqual(payload.status, "RESEARCH_UNAVAILABLE")
+        self.assertEqual(payload.min_observations_for_description, 20)
+        self.assertTrue(payload.reason_detail)
+        self.assertFalse(payload.production_eligible)
+
+
+class TheSourcePresentation(unittest.TestCase):
+    """Every input says where it came from, in what unit, over what period."""
+
+    def setUp(self):
+        self.client = TestClient(create_app())
+        self.evidence = self.client.get(
+            "/api/research/metrics/RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"
+            "/observations/2026-07-29"
+        ).json()["evidence"]
+
+    def test_the_denominator_states_its_unit(self):
+        denominator = self.evidence["denominator"]
+        self.assertEqual(denominator["unit"], "USD")
+        self.assertEqual(denominator["currency"], "USD")
+        for quarter in denominator["quarters"]:
+            self.assertEqual(quarter["unit"], "USD")
+            for span in quarter["input_spans"]:
+                self.assertEqual(span["unit"], "USD")
+
+    def test_the_denominator_quarters_name_their_source(self):
+        for quarter in self.evidence["denominator"]["quarters"]:
+            for span in quarter["input_spans"]:
+                self.assertTrue(span["source_file"])
+                self.assertTrue(span["source_sha256"])
+                self.assertTrue(span["source_url"])
+                self.assertTrue(span["source_known"])
+
+    def test_the_price_names_its_source_and_its_period(self):
+        price = self.evidence["price_source"]
+        self.assertEqual(price["source_file"], "daily_prices.json")
+        self.assertTrue(price["source_sha256"])
+        self.assertTrue(price["source_url"])
+        self.assertEqual(price["as_of_date"], "2026-07-29")
+
+    def test_the_share_count_names_its_source_its_unit_and_its_period(self):
+        shares = self.evidence["shares_source"]
+        self.assertEqual(shares["source_file"], "shares_outstanding_concept.json")
+        self.assertTrue(shares["source_sha256"])
+        self.assertTrue(shares["source_url"])
+        self.assertEqual(shares["unit"], "shares")
+        self.assertEqual(shares["as_of_date"], "2026-04-28")
+
+    def test_the_bridge_components_name_their_source(self):
+        for component in self.evidence["bridge"]["components"].values():
+            self.assertTrue(component["source_file"])
+            self.assertTrue(component["content_sha256"])
+            self.assertTrue(component["source_url"])
+            self.assertEqual(component["currency"], "USD")
+
+    def test_a_missing_source_is_reported_as_unknown(self):
+        from research_lane import _source_reference
+
+        reference = _source_reference({}, "a_file_that_has_no_record.json")
+        self.assertFalse(reference["source_known"])
+        self.assertIsNone(reference["source_url"])
+
+
 class TheResearchApi(unittest.TestCase):
     """The research path is its own path."""
 
@@ -790,12 +1118,23 @@ class TheResearchApi(unittest.TestCase):
         self.assertFalse(response.json()["detail"]["production_eligible"])
 
     def test_the_research_path_does_not_answer_the_production_path(self):
-        response = self.client.post(
-            "/api/analyze", json={"ticker": "KO", "mode": "live"}
+        client = TestClient(create_app())
+        paths = set(client.app.openapi()["paths"])
+        self.assertIn("/api/research/calculate", paths)
+        self.assertIn("/api/analyze", paths)
+        self.assertIn("/api/jobs/{job_id}", paths)
+        # The two paths are separate, and a research calculation starts no
+        # analysis job: it can never reach the production pipeline, the
+        # Archive or the Investment Context. (The assertion is made on the
+        # job manager rather than by asking the production path to run, so
+        # that the test itself starts no production analysis.)
+        manager = client.app.state.job_manager
+        before = set(manager.jobs)
+        client.post(
+            "/api/research/calculate",
+            json={"metric_id": "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"},
         )
-        # The production path is untouched and does not know the research
-        # metric; the research path is a separate route.
-        self.assertNotEqual(response.status_code, 404)
+        self.assertEqual(set(manager.jobs), before)
 
     def test_the_research_path_writes_no_archive(self):
         client = TestClient(create_app(archives_dir=None))

@@ -232,6 +232,43 @@ const ResearchPanel: React.FC = () => {
             <div className="font-mono text-[11px] bg-slate-50 border border-slate-200 rounded p-2 mb-3 break-words">
               {metric.formula_expression}
             </div>
+            {/* The distribution's state. The three states are told apart: a
+                distribution that rests on too little evidence says so, and a
+                distribution that could not be built says why. Neither is a
+                statement about production eligibility, which the notice
+                above already settles. */}
+            <div
+              data-testid="research-distribution-status"
+              data-status={metric.status}
+              className={`mb-3 p-2.5 rounded border text-[11px] ${
+                metric.status === 'RESEARCH_THIN_SAMPLE'
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : metric.status === 'RESEARCH_UNAVAILABLE'
+                    ? 'bg-rose-50 border-rose-200 text-rose-900'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              }`}
+            >
+              <span className="font-semibold block mb-0.5">
+                {metric.status === 'RESEARCH_THIN_SAMPLE'
+                  ? t.research.thinSampleTitle
+                  : metric.status === 'RESEARCH_UNAVAILABLE'
+                    ? t.research.unavailableTitle
+                    : t.research.distributionTitle}
+              </span>
+              <span>
+                {metric.status === 'RESEARCH_THIN_SAMPLE'
+                  ? t.research.thinSampleBody
+                  : metric.status === 'RESEARCH_UNAVAILABLE'
+                    ? metric.reason_detail || t.research.unavailableBody
+                    : t.research.distributionBody}
+              </span>
+              <span className="block mt-1 font-mono">
+                {t.research.validObservations} {metric.sample_count} /{' '}
+                {t.research.thresholdLabel} {metric.min_observations_for_description}
+                {' · '}
+                {t.research.refusedObservations} {metric.refused_count}
+              </span>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
               <div>
                 <span className="text-[10px] text-slate-500 block">
@@ -631,23 +668,8 @@ const ResearchPanel: React.FC = () => {
                   {t.research.closeEvidence}
                 </button>
               </div>
-              <div className="text-[11px] text-slate-600 space-y-1 mb-2">
-                <p>
-                  <span className="text-slate-400">{t.research.priceLabel}: </span>
-                  {formatNumber(evidence.price, 4)} (
-                  {evidence.price_accounting_basis}) ·{' '}
-                  <span className="text-slate-400">{t.research.sharesLabel}: </span>
-                  {formatCompact(evidence.shares_outstanding)} (
-                  {evidence.shares_accession})
-                </p>
-                <p>
-                  <span className="text-slate-400">{t.research.marketValueLabel}: </span>
-                  {evidence.numerator_kind === 'enterprise_value'
-                    ? `EV ${formatCompact(evidence.enterprise_value)}`
-                    : `MC ${formatCompact(evidence.market_cap)}`}
-                </p>
-              </div>
-              <details open className="text-[11px]">
+              <EvidenceTable evidence={evidence} />
+              <details className="text-[11px]">
                 <summary className="cursor-pointer font-semibold text-slate-700">
                   {t.research.fullEvidence}
                 </summary>
@@ -659,6 +681,162 @@ const ResearchPanel: React.FC = () => {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+/**
+ * The evidence of one evaluation date, as a table.
+ *
+ * Every input the figure rests on is a row: what it is, what it is worth,
+ * the unit it is in, the period it applies to, where it came from and when
+ * it became knowable. A reader does not have to read the raw payload to
+ * find a source link.
+ */
+const EvidenceTable: React.FC<{ evidence: Record<string, any> }> = ({
+  evidence,
+}) => {
+  const { t } = useI18n()
+  const priceSource = evidence.price_source || {}
+  const sharesSource = evidence.shares_source || {}
+  const denominator = evidence.denominator || {}
+  const bridge = evidence.bridge || {}
+  const components = bridge.components || {}
+
+  const rows: Array<{
+    label: string
+    value: string
+    unit: string
+    period: string
+    source: string
+    url: string | null
+    known: boolean
+    accession: string | null
+    knowable: string | null
+  }> = []
+
+  rows.push({
+    label: t.research.priceRow,
+    value: formatNumber(evidence.price, 4),
+    unit: evidence.price_currency || '—',
+    period: priceSource.as_of_date || evidence.evaluation_date || '—',
+    source: priceSource.source_file || t.research.sourceNotProvided,
+    url: priceSource.source_url || null,
+    known: Boolean(priceSource.source_known),
+    accession: null,
+    knowable: null,
+  })
+  rows.push({
+    label: t.research.sharesRow,
+    value: formatCompact(evidence.shares_outstanding),
+    unit: sharesSource.unit || '—',
+    period: sharesSource.as_of_date || '—',
+    source: sharesSource.source_file || t.research.sourceNotProvided,
+    url: sharesSource.source_url || null,
+    known: Boolean(sharesSource.source_known),
+    accession: evidence.shares_accession || null,
+    knowable: evidence.shares_usable_date || null,
+  })
+  rows.push({
+    label: t.research.marketCapRow,
+    value: formatCompact(evidence.market_cap),
+    unit: evidence.price_currency || '—',
+    period: priceSource.as_of_date || evidence.evaluation_date || '—',
+    source: t.research.derivedLabel,
+    url: null,
+    known: true,
+    accession: null,
+    knowable: null,
+  })
+  if (evidence.enterprise_value !== null && evidence.enterprise_value !== undefined) {
+    rows.push({
+      label: t.research.enterpriseValueRow,
+      value: formatCompact(evidence.enterprise_value),
+      unit: evidence.price_currency || '—',
+      period: bridge.balance_sheet_date || '—',
+      source: t.research.derivedLabel,
+      url: null,
+      known: true,
+      accession: null,
+      knowable: null,
+    })
+  }
+  for (const quarter of denominator.quarters || []) {
+    const span = (quarter.input_spans || [])[0] || {}
+    rows.push({
+      label: `${t.research.quarterRow} ${quarter.period_end}`,
+      value: formatCompact(quarter.value),
+      unit: quarter.unit || span.unit || '—',
+      period: quarter.period_end || '—',
+      source: span.source_file || t.research.sourceNotProvided,
+      url: span.source_url || null,
+      known: Boolean(span.source_known),
+      accession: (quarter.accessions || [])[0] || null,
+      knowable: quarter.knowable_from || null,
+    })
+  }
+  for (const [name, component] of Object.entries(components)) {
+    rows.push({
+      label: `${t.research.bridgeRow} ${name}`,
+      value: formatCompact((component as any).value),
+      unit: (component as any).currency || '—',
+      period: (component as any).period_end || '—',
+      source: (component as any).source_file || t.research.sourceNotProvided,
+      url: (component as any).source_url || null,
+      known: Boolean((component as any).source_url),
+      accession: (component as any).accession || null,
+      knowable: (component as any).usable_date || null,
+    })
+  }
+
+  return (
+    <div className="overflow-x-auto mb-2" data-testid="research-evidence-table">
+      <table className="w-full text-[10px]">
+        <thead>
+          <tr className="text-slate-400 text-left border-b border-slate-200">
+            <th className="py-1 pr-2">{t.research.evidenceInputLabel}</th>
+            <th className="py-1 pr-2">{t.research.evidenceValue}</th>
+            <th className="py-1 pr-2">{t.research.evidenceUnit}</th>
+            <th className="py-1 pr-2">{t.research.evidencePeriod}</th>
+            <th className="py-1 pr-2">{t.research.evidenceSource}</th>
+            <th className="py-1 pr-2">{t.research.evidenceAccession}</th>
+            <th className="py-1">{t.research.evidenceKnowable}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={`${row.label}-${index}`} className="border-b border-slate-100 align-top">
+              <td className="py-1 pr-2 text-slate-700">{row.label}</td>
+              <td className="py-1 pr-2 font-mono text-slate-900">{row.value}</td>
+              <td className="py-1 pr-2 font-mono text-slate-600">{row.unit}</td>
+              <td className="py-1 pr-2 font-mono text-slate-600">{row.period}</td>
+              <td className="py-1 pr-2 text-slate-600">
+                {row.url ? (
+                  <a
+                    href={row.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-700 hover:text-blue-900 underline break-all"
+                  >
+                    {row.source}
+                  </a>
+                ) : (
+                  row.source
+                )}
+                {!row.known && row.source === t.research.sourceNotProvided && (
+                  <span className="block text-slate-400">
+                    {t.research.sourceUnknown}
+                  </span>
+                )}
+              </td>
+              <td className="py-1 pr-2 font-mono text-slate-500">
+                {row.accession || '—'}
+              </td>
+              <td className="py-1 font-mono text-slate-500">{row.knowable || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

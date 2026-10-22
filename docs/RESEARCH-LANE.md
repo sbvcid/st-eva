@@ -111,6 +111,8 @@ renamed into it: the conditions are different, and a lane must be able to say
 that a figure was refused for a reason the production vocabulary has no word
 for. An unknown code is an error, not a refusal.
 
+### The lane's observation refusals
+
 | Code | Meaning |
 |---|---|
 | `RESEARCH_REASON_MISSING_PRICE` | No price is observed for the trading day. |
@@ -120,8 +122,39 @@ for. An unknown code is an error, not a refusal.
 | `RESEARCH_REASON_NON_POSITIVE_DENOMINATOR` | The trailing denominator is non-positive; no multiple is produced from it. |
 | `RESEARCH_REASON_INCOMPLETE_EV_BRIDGE` | A filed bridge component is not knowable at the evaluation date. The bridge is never completed by omission or zero-fill. |
 | `RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS` | The bridge's components describe more than one balance-sheet date. The stale component is not carried forward. |
+| `RESEARCH_REASON_ELEMENT_UNAVAILABLE` | The capture holds no element for a role the lane reads. |
 
 Every refusal carries a readable reason that names what was missing.
+
+### The calculation's refusals
+
+The calculation service has its own closed set, separate from the lane's
+observation refusals, because the conditions are different: the lane refuses
+an observation, the service refuses a calculation.
+
+| Code | Meaning |
+|---|---|
+| `RESEARCH_CALCULATION_REFUSED_METRIC_UNAVAILABLE` | No research metric carries that id. |
+| `RESEARCH_CALCULATION_REFUSED_METRIC_NOT_SELECTABLE` | The metric is a research diagnostic, not a research metric. |
+| `RESEARCH_CALCULATION_REFUSED_MULTIPLE_UNAVAILABLE` | The multiple does not exist: the metric has no median, or the observation has no value, or the user supplied none. |
+| `RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_POSITIVE` | The multiple is not greater than zero. |
+| `RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE` | The multiple is not a finite number. |
+| `RESEARCH_CALCULATION_REFUSED_NUMERATOR_UNAVAILABLE` | The market value does not exist. |
+| `RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_POSITIVE` | The market value is not greater than zero. |
+| `RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_FINITE` | The market value is not a finite number. |
+| `RESEARCH_CALCULATION_REFUSED_RESULT_NOT_FINITE` | Finite operands produced a quotient that is not finite. |
+| `RESEARCH_CALCULATION_REFUSED_OBSERVATION_REJECTED` | The observation the user named was refused by the lane. |
+| `RESEARCH_CALCULATION_REFUSED_OBSERVATION_UNKNOWN` | The metric has no evaluation on that date. |
+| `RESEARCH_CALCULATION_REFUSED_DATA_IDENTITY_MISMATCH` | The capture does not match its own manifest. |
+| `RESEARCH_CALCULATION_REFUSED_DENOMINATOR_UNAVAILABLE` | The denominator cannot be built. |
+
+A non-finite operand is refused on **every** path into the service. The
+request model refuses a NaN or an infinity at validation, and the service
+refuses one itself, so a caller that reaches the service directly -- with no
+HTTP model in between -- is refused as well. A finite pair whose quotient
+overflows is refused too, and a non-finite result is never published as an
+available figure: it is not turned into `null`, into `0.0`, or into any other
+value that would look like a result.
 
 ## R-9: prior-period value revisions
 
@@ -180,6 +213,24 @@ publish a filing's context reference. Each row's context is therefore pinned
 by `(accession, element, period, unit)` with no dimensions, which identifies
 exactly one fact in that filing, and the capture states that in every file's
 provenance.
+
+### The acceptance times, and their time zone
+
+The capture records when each filing was accepted, and that time is what
+decides when the filing's facts become knowable. The SEC states the time in
+Eastern local time and carries no offset, and Eastern local time is not a
+fixed offset: a standard-time filing is five hours from UTC and a
+daylight-time filing is four. The capture therefore takes the offset from the
+region, not from a constant, so that the recorded instant is the instant the
+SEC states. A capture that writes a fixed offset records an instant an hour
+early for every winter filing, and a filing accepted between 16:00 and 17:00
+Eastern then appears to be knowable a trading day before it was.
+
+The capture's own manifest records, for every filing, the acceptance
+datetime the SEC's submissions API states, and the usable date the rule
+gives. `tests/test_research_capture.py` pins the conversion in both seasons
+and pins the usable dates the capture produces, so a change to the
+representation cannot quietly move a filing's knowability.
 
 ## Running a lane
 
@@ -284,6 +335,34 @@ the result is not a production reference.
 The same inputs and the same formula version give the same result. A change
 of input or of data version changes the calculation's content hash, so the
 difference is visible.
+
+### The distribution's state, and the threshold it is read against
+
+A distribution is in one of three states, and the surface tells them apart:
+
+| State | What it means |
+|---|---|
+| `RESEARCH_DISTRIBUTION` | The metric holds enough valid observations to be described as a distribution. It is still a research figure, not a valuation reference. |
+| `RESEARCH_THIN_SAMPLE` | The sample holds fewer valid observations than the lane's own descriptive threshold. The figures describe a small sample. The threshold is the lane's research setting, carried in the payload so a reader is told it rather than left to assume one; it says how much evidence a description rests on, and it says nothing about production eligibility, which is a separate field and stays `False`. |
+| `RESEARCH_UNAVAILABLE` | The metric holds no valid observation, so no distribution is shown. The reason travels with the metric. |
+
+The threshold is never hard-coded in the interface: it comes from the lane's
+own setting, through the payload.
+
+### The source of every input
+
+Every input says where it came from, in what unit, and over what period, so
+that a reader does not have to read a payload to find a source link.
+
+| Input | What it carries |
+|---|---|
+| The price | The capture file, its digest, the provider URL, the currency, the accounting basis and the date the price applies to. |
+| The cover-page share count | The capture file, its digest, the element's endpoint, the unit (`shares`), the cover date, the accession and the usable date. |
+| Each denominator quarter and its input spans | The unit and currency, the period, the accessions, the file, its digest, the element's endpoint, and when each span became knowable. |
+| Each balance-sheet component | The currency, the balance-sheet date, the accession, the filed date, the usable date, the file, its digest and the element's endpoint. |
+
+A source the capture does not record is shown as not provided. Nothing is
+guessed.
 
 ### The interface
 

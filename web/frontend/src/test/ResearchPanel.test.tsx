@@ -128,6 +128,57 @@ const detail: ResearchMetricDetail = {
   ],
 }
 
+const evidenceFixture = () => ({
+  evaluation_date: '2026-07-29',
+  price: 89.08,
+  price_currency: 'USD',
+  price_accounting_basis: 'as_traded',
+  price_source: {
+    source_file: 'daily_prices.json',
+    source_sha256: 'abc123',
+    source_url: 'https://example.test/prices',
+    as_of_date: '2026-07-29',
+    source_known: true,
+  },
+  shares_outstanding: 4302482418,
+  shares_accession: '0001628280-26-028802',
+  shares_usable_date: '2026-04-30',
+  shares_source: {
+    source_file: 'shares_outstanding_concept.json',
+    source_sha256: 'def456',
+    source_url: 'https://example.test/shares',
+    unit: 'shares',
+    as_of_date: '2026-04-28',
+    source_known: true,
+  },
+  market_cap: 383265133795.44,
+  enterprise_value: null,
+  numerator_kind: 'market_cap',
+  denominator: {
+    unit: 'USD',
+    currency: 'USD',
+    value: 49284000000,
+    quarters: [
+      {
+        period_end: '2026-04-03',
+        value: 12472000000,
+        unit: 'USD',
+        knowable_from: '2026-04-30',
+        accessions: ['0001628280-26-028802'],
+        input_spans: [
+          {
+            source_file: 'revenue_concept.json',
+            source_sha256: 'aaa111',
+            source_url: 'https://example.test/revenues',
+            source_known: true,
+          },
+        ],
+      },
+    ],
+  },
+  bridge: { components: {} },
+})
+
 describe('the research surface', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -392,16 +443,9 @@ describe('the research surface', () => {
   })
 
   it('opens the source evidence of one evaluation date', async () => {
-    vi.mocked(researchApi.getResearchObservationEvidence).mockResolvedValue({
-      evaluation_date: '2026-07-29',
-      price: 69.5,
-      price_accounting_basis: 'as_traded',
-      shares_outstanding: 4300000000,
-      shares_accession: '0000021344-26-000047',
-      market_cap: 298850000000,
-      denominator: { quarters: [] },
-      bridge: { components: {} },
-    })
+    vi.mocked(researchApi.getResearchObservationEvidence).mockResolvedValue(
+      evidenceFixture(),
+    )
 
     await enterResearchMode()
     fireEvent.change(screen.getByTestId('research-metric-select'), {
@@ -416,7 +460,101 @@ describe('the research surface', () => {
       expect(screen.getByTestId('research-evidence')).toBeInTheDocument()
     })
     expect(screen.getByTestId('research-evidence')).toHaveTextContent(
-      '0000021344-26-000047',
+      '0001628280-26-028802',
     )
+  })
+
+  it('shows the source link, the unit and the period of every input', async () => {
+    vi.mocked(researchApi.getResearchObservationEvidence).mockResolvedValue(
+      evidenceFixture(),
+    )
+
+    await enterResearchMode()
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-observations')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('research-open-2026-07-29'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('research-evidence-table')).toBeInTheDocument()
+    })
+    const table = screen.getByTestId('research-evidence-table')
+    expect(table).toHaveTextContent('USD')
+    expect(table).toHaveTextContent('shares')
+    expect(table).toHaveTextContent('2026-07-29')
+    expect(table).toHaveTextContent('2026-04-28')
+    const link = table.querySelector('a[href="https://example.test/prices"]')
+    expect(link).not.toBeNull()
+    expect(link?.textContent).toContain('daily_prices.json')
+  })
+
+  it('tells a thin sample apart from a research distribution', async () => {
+    const thin = {
+      ...catalogue.metrics[0],
+      status: 'RESEARCH_THIN_SAMPLE',
+      sample_count: 9,
+      refused_count: 58,
+      min_observations_for_description: 20,
+    }
+    vi.mocked(researchApi.getResearchCatalogue).mockResolvedValue({
+      ...catalogue,
+      metrics: [thin],
+    })
+    vi.mocked(researchApi.getResearchMetric).mockResolvedValue({
+      metric: thin,
+      observations: detail.observations,
+    })
+
+    await enterResearchMode()
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-distribution-status')).toBeInTheDocument()
+    })
+    const status = screen.getByTestId('research-distribution-status')
+    expect(status).toHaveAttribute('data-status', 'RESEARCH_THIN_SAMPLE')
+    expect(status).toHaveTextContent(/thin sample/i)
+    expect(status).toHaveTextContent('9')
+    expect(status).toHaveTextContent('20')
+    expect(status).toHaveTextContent('58')
+    expect(screen.getByTestId('research-notice')).toHaveTextContent(
+      /not a valuation reference/i,
+    )
+  })
+
+  it('says why a metric holds no usable distribution', async () => {
+    const unavailable = {
+      ...catalogue.metrics[0],
+      status: 'RESEARCH_UNAVAILABLE',
+      sample_count: 0,
+      refused_count: 67,
+      median: null,
+      reason_code: 'RESEARCH_REASON_NO_DENOMINATOR_WINDOW',
+      reason_detail: 'No window is knowable at any evaluation date.',
+    }
+    vi.mocked(researchApi.getResearchCatalogue).mockResolvedValue({
+      ...catalogue,
+      metrics: [unavailable],
+    })
+    vi.mocked(researchApi.getResearchMetric).mockResolvedValue({
+      metric: unavailable,
+      observations: detail.observations,
+    })
+
+    await enterResearchMode()
+    fireEvent.change(screen.getByTestId('research-metric-select'), {
+      target: { value: METRIC_ID },
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('research-distribution-status')).toBeInTheDocument()
+    })
+    const status = screen.getByTestId('research-distribution-status')
+    expect(status).toHaveAttribute('data-status', 'RESEARCH_UNAVAILABLE')
+    expect(status).toHaveTextContent('No window is knowable at any evaluation date.')
+    expect(screen.getByTestId('research-median')).toHaveTextContent('—')
   })
 })

@@ -17,12 +17,17 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from research_calculator import (
     CALCULATOR_VERSION,
     MULTIPLE_HISTORY_MEDIAN,
     NUMERATOR_OBSERVATION,
+    REFUSED_MULTIPLE_NOT_FINITE,
+    REFUSED_NUMERATOR_NOT_FINITE,
     USER_ASSUMPTION_LABEL,
     ResearchCalculationError,
     ResearchCalculationRequest,
@@ -33,6 +38,64 @@ from research_calculator import (
 )
 
 research_router = APIRouter(prefix="/api/research", tags=["research"])
+
+# The refusal a non-finite operand gets, by the field it arrived in.
+NOT_FINITE_BY_FIELD = {
+    "multiple": REFUSED_MULTIPLE_NOT_FINITE,
+    "numerator_value": REFUSED_NUMERATOR_NOT_FINITE,
+}
+
+
+async def research_validation_exception_handler(
+    request, exc: RequestValidationError
+) -> JSONResponse:
+    """
+    A non-finite operand is a research refusal, not a schema error.
+
+    The request model refuses a NaN or an infinity at validation, which
+    would otherwise reach the caller as a generic schema error. On the
+    research path it is given the same shape as every other refusal: a
+    status, a closed reason code and a readable message. The production path
+    is untouched.
+    """
+    if not str(request.url.path).startswith("/api/research"):
+        return await request_validation_exception_handler(request, exc)
+    for error in exc.errors():
+        location = [str(part) for part in error.get("loc") or ()]
+        field = location[-1] if location else ""
+        value = error.get("input")
+        code = NOT_FINITE_BY_FIELD.get(field)
+        if code and isinstance(value, float) and value != value:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "detail": {
+                        "reason_code": code,
+                        "detail": (
+                            f"The {field} the user supplied is not a finite "
+                            "number, so it cannot take part in a calculation. "
+                            "A research operand must be a finite number."
+                        ),
+                        "production_eligible": False,
+                    }
+                },
+            )
+        if code and isinstance(value, float) and value in (float("inf"), float("-inf")):
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "detail": {
+                        "reason_code": code,
+                        "detail": (
+                            f"The {field} the user supplied is not a finite "
+                            "number, so it cannot take part in a calculation. "
+                            "A research operand must be a finite number."
+                        ),
+                        "production_eligible": False,
+                    }
+                },
+            )
+    return await request_validation_exception_handler(request, exc)
 
 
 class ResearchMetricDTO(BaseModel):
@@ -58,6 +121,9 @@ class ResearchMetricDTO(BaseModel):
     sample_count: int
     total_evaluations: int
     refused_count: int
+    min_observations_for_description: int
+    reason_code: Optional[str] = None
+    reason_detail: Optional[str] = None
     period_start: Optional[str] = None
     period_end: Optional[str] = None
     mean: Optional[float] = None
@@ -135,7 +201,9 @@ class ResearchCalculationRequestDTO(BaseModel):
         ),
     )
     multiple: Optional[float] = Field(
-        None, description="The multiple, when the user supplied it."
+        None,
+        allow_inf_nan=False,
+        description="The multiple, when the user supplied it.",
     )
     observation_date: Optional[str] = Field(
         None, description="The evaluation date, when the multiple is one observation."
@@ -148,7 +216,9 @@ class ResearchCalculationRequestDTO(BaseModel):
         ),
     )
     numerator_value: Optional[float] = Field(
-        None, description="The market value, when the user supplied it."
+        None,
+        allow_inf_nan=False,
+        description="The market value, when the user supplied it.",
     )
     numerator_date: Optional[str] = Field(
         None,

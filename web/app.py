@@ -7,12 +7,13 @@ from pathlib import Path
 import re
 from typing import Optional
 from fastapi import FastAPI, HTTPException, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from web.job_manager import JobManager
-from web.research_api import research_router
+from web.research_api import research_router, research_validation_exception_handler
 from web.service_adapter import AnalysisServiceAdapter
 from web.schemas import (
     AnalyzeRequest,
@@ -72,6 +73,9 @@ def create_app(
     # starts no analysis job, writes no Archive and produces no production
     # reference: every figure under it is a research figure.
     app.include_router(research_router)
+    app.add_exception_handler(
+        RequestValidationError, research_validation_exception_handler
+    )
 
     @app.get("/api/health", response_model=HealthResponse)
     def health_check() -> HealthResponse:

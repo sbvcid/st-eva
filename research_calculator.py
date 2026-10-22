@@ -32,6 +32,7 @@ here, at the point a result is produced, rather than assumed to survive.
 from __future__ import annotations
 
 import hashlib
+import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -70,10 +71,13 @@ REFUSED_METRIC_UNAVAILABLE = "RESEARCH_CALCULATION_REFUSED_METRIC_UNAVAILABLE"
 REFUSED_METRIC_NOT_SELECTABLE = "RESEARCH_CALCULATION_REFUSED_METRIC_NOT_SELECTABLE"
 REFUSED_MULTIPLE_UNAVAILABLE = "RESEARCH_CALCULATION_REFUSED_MULTIPLE_UNAVAILABLE"
 REFUSED_MULTIPLE_NOT_POSITIVE = "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_POSITIVE"
+REFUSED_MULTIPLE_NOT_FINITE = "RESEARCH_CALCULATION_REFUSED_MULTIPLE_NOT_FINITE"
 REFUSED_OBSERVATION_REJECTED = "RESEARCH_CALCULATION_REFUSED_OBSERVATION_REJECTED"
 REFUSED_OBSERVATION_UNKNOWN = "RESEARCH_CALCULATION_REFUSED_OBSERVATION_UNKNOWN"
 REFUSED_NUMERATOR_UNAVAILABLE = "RESEARCH_CALCULATION_REFUSED_NUMERATOR_UNAVAILABLE"
 REFUSED_NUMERATOR_NOT_POSITIVE = "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_POSITIVE"
+REFUSED_NUMERATOR_NOT_FINITE = "RESEARCH_CALCULATION_REFUSED_NUMERATOR_NOT_FINITE"
+REFUSED_RESULT_NOT_FINITE = "RESEARCH_CALCULATION_REFUSED_RESULT_NOT_FINITE"
 REFUSED_DATA_IDENTITY_MISMATCH = "RESEARCH_CALCULATION_REFUSED_DATA_IDENTITY_MISMATCH"
 REFUSED_DENOMINATOR_UNAVAILABLE = "RESEARCH_CALCULATION_REFUSED_DENOMINATOR_UNAVAILABLE"
 
@@ -83,10 +87,13 @@ CLOSED_CALCULATION_REASON_CODES = frozenset(
         REFUSED_METRIC_NOT_SELECTABLE,
         REFUSED_MULTIPLE_UNAVAILABLE,
         REFUSED_MULTIPLE_NOT_POSITIVE,
+        REFUSED_MULTIPLE_NOT_FINITE,
         REFUSED_OBSERVATION_REJECTED,
         REFUSED_OBSERVATION_UNKNOWN,
         REFUSED_NUMERATOR_UNAVAILABLE,
         REFUSED_NUMERATOR_NOT_POSITIVE,
+        REFUSED_NUMERATOR_NOT_FINITE,
+        REFUSED_RESULT_NOT_FINITE,
         REFUSED_DATA_IDENTITY_MISMATCH,
         REFUSED_DENOMINATOR_UNAVAILABLE,
     }
@@ -143,6 +150,17 @@ class ResearchMetricSummary:
     sample_count: int
     total_evaluations: int
     refused_count: int
+    #: The minimum sample the lane reports as a distribution rather than a
+    #: descriptive summary. It is the lane's own research setting, carried
+    #: here so a reader is told the threshold rather than left to assume one.
+    #: It says how much evidence a description rests on; it says nothing about
+    #: production eligibility, which is a separate field.
+    min_observations_for_description: int
+    #: Why the distribution is unavailable, when it is. A distribution that
+    #: holds no valid observation says so here rather than being presented as
+    #: an empty result.
+    reason_code: Optional[str]
+    reason_detail: Optional[str]
     period_start: Optional[str]
     period_end: Optional[str]
     mean: Optional[float]
@@ -184,6 +202,9 @@ class ResearchMetricSummary:
             "sample_count": self.sample_count,
             "total_evaluations": self.total_evaluations,
             "refused_count": self.refused_count,
+            "min_observations_for_description": self.min_observations_for_description,
+            "reason_code": self.reason_code,
+            "reason_detail": self.reason_detail,
             "period_start": self.period_start,
             "period_end": self.period_end,
             "mean": self.mean,
@@ -494,6 +515,11 @@ def list_research_metrics() -> List[ResearchMetricSummary]:
                 sample_count=distribution.sample_count,
                 total_evaluations=distribution.total_evaluations,
                 refused_count=len(distribution.excluded_observations),
+                min_observations_for_description=(
+                    distribution.min_observations_for_description
+                ),
+                reason_code=distribution.reason_code,
+                reason_detail=distribution.reason_detail,
                 period_start=distribution.period_start,
                 period_end=distribution.period_end,
                 mean=distribution.mean,
@@ -763,6 +789,13 @@ def run_research_calculation(
                 REFUSED_MULTIPLE_UNAVAILABLE,
                 "A user-supplied multiple needs a value.",
             )
+        if not math.isfinite(multiple):
+            raise ResearchCalculationError(
+                REFUSED_MULTIPLE_NOT_FINITE,
+                f"A multiple of {multiple!r} is not a finite number, so it "
+                "cannot be applied to a market value. A multiple must be a "
+                "finite number greater than zero.",
+            )
         if multiple <= 0:
             raise ResearchCalculationError(
                 REFUSED_MULTIPLE_NOT_POSITIVE,
@@ -788,6 +821,13 @@ def run_research_calculation(
             raise ResearchCalculationError(
                 REFUSED_NUMERATOR_UNAVAILABLE,
                 "A user-supplied market value needs a value.",
+            )
+        if not math.isfinite(request.numerator_value):
+            raise ResearchCalculationError(
+                REFUSED_NUMERATOR_NOT_FINITE,
+                f"A market value of {request.numerator_value!r} is not a finite "
+                "number, so it cannot be divided by a multiple. A market value "
+                "must be a finite number greater than zero.",
             )
         if request.numerator_value <= 0:
             raise ResearchCalculationError(
@@ -856,6 +896,16 @@ def run_research_calculation(
 
     # -- the figure ------------------------------------------------------------
     implied_denominator = numerator / multiple
+    if not math.isfinite(implied_denominator):
+        # Finite operands can still overflow: a very large market value over a
+        # very small multiple is not a figure, and a figure that is not finite
+        # is never published as a result.
+        raise ResearchCalculationError(
+            REFUSED_RESULT_NOT_FINITE,
+            "The implied denominator is not a finite number: dividing the "
+            f"market value {numerator} by the multiple {multiple} does not "
+            "produce a figure. No result is produced from it.",
+        )
     formula_operands = {
         "numerator": numerator,
         "numerator_source": request.numerator_source,

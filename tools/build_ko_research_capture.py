@@ -30,6 +30,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "data" / "research_multiples" / "KO"
@@ -143,6 +144,33 @@ def sha256_of(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+# The SEC's SGML header timestamps are Eastern local time and carry no
+# offset, and the Eastern offset changes with daylight saving. The zone is
+# therefore taken from the region, not from a fixed offset, so a winter
+# filing keeps its standard-time instant and a summer filing keeps its
+# daylight-time one.
+EASTERN = ZoneInfo("America/New_York")
+
+
+def header_acceptance_to_eastern(raw: str) -> datetime.datetime:
+    """
+    The header's ACCEPTANCE-DATETIME, as an aware Eastern datetime.
+
+    The header gives Eastern local time with no offset. Attaching the
+    region's own zone keeps the instant right in both daylight saving
+    seasons: a standard-time filing is five hours from UTC and a
+    daylight-time filing is four.
+    """
+    return datetime.datetime.strptime(raw, "%Y%m%d%H%M%S").replace(tzinfo=EASTERN)
+
+
+def api_acceptance_to_eastern(iso: str) -> datetime.datetime:
+    """The submissions API's acceptance datetime, as an aware Eastern one."""
+    return datetime.datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(
+        EASTERN
+    )
+
+
 def write_json(path: Path, payload: object) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
@@ -207,16 +235,12 @@ def build_acceptance_index(cache_dir: Path | None) -> list[dict]:
         raw = grab(r"ACCEPTANCE-DATETIME[&gt;:\s]+(\d{14})")
         api_utc = datetime.datetime.fromisoformat(acceptance.replace("Z", "+00:00"))
         if raw:
-            header_et = datetime.datetime.strptime(raw, "%Y%m%d%H%M%S").replace(
-                tzinfo=datetime.timezone(datetime.timedelta(hours=-4))
-            )
+            header_et = header_acceptance_to_eastern(raw)
             basis = "SGML header ACCEPTANCE-DATETIME"
             effective_et = header_et
         else:
             header_et = None
-            effective_et = api_utc.astimezone(
-                datetime.timezone(datetime.timedelta(hours=-4))
-            )
+            effective_et = api_acceptance_to_eastern(acceptance)
             basis = (
                 "submissions API acceptanceDateTime, converted to America/New_York; "
                 "no SGML header was retrievable for this filing"

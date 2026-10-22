@@ -63,7 +63,7 @@
     "filing_acceptance_evidence.json": {
       "bytes": 58214,
       "role": "acceptance index",
-      "sha256": "62af147718050f2c763d1b2de9ff1fb0f4d597dc187602a3d16a069618c13215",
+      "sha256": "ef6bf3d1a1b12ef3c15398997aecf1987cbaef4f83d81a3c25d8b214496798ea",
       "source": {
         "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
         "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time",

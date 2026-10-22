@@ -99,7 +99,7 @@
       "2022-10-26"
     ],
     "The marketable_securities_current line is carried by MarketableSecurities as of 2022-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
-      "2023-02-21"
+      "2023-02-22"
     ],
     "The marketable_securities_current line is carried by MarketableSecurities as of 2023-03-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
       "2023-04-26"
@@ -244,7 +244,7 @@
       "2018-10-30"
     ],
     "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
-      "2019-02-21"
+      "2019-02-22"
     ],
     "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-03-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
       "2019-04-25"
@@ -256,7 +256,7 @@
       "2019-10-24"
     ],
     "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
-      "2020-02-24"
+      "2020-02-25"
     ],
     "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2020-12-31; MarketableSecurities as of 2020-09-25 describes an earlier balance sheet and is not carried forward.": [
       "2021-02-25"
@@ -292,7 +292,7 @@
     ],
     "The notes_and_loans_payable line is carried by NotesAndLoansPayable as of 2022-09-30; NotesAndLoansPayableCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
       "2022-10-26",
-      "2023-02-21"
+      "2023-02-22"
     ],
     "The notes_and_loans_payable line is carried by NotesAndLoansPayable as of 2023-03-31; NotesAndLoansPayableCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
       "2023-04-26"
@@ -391,7 +391,7 @@
       },
       "filing_acceptance_evidence.json": {
         "role": "acceptance index",
-        "sha256": "62af147718050f2c763d1b2de9ff1fb0f4d597dc187602a3d16a069618c13215",
+        "sha256": "ef6bf3d1a1b12ef3c15398997aecf1987cbaef4f83d81a3c25d8b214496798ea",
         "source": {
           "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
           "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time",
@@ -499,7 +499,7 @@
       "ticker": "KO"
     }
   },
-  "content_hash": "642fafbad92ee6e7347000a72db17036417642ec358a87dd43f8b2443a984b11",
+  "content_hash": "ff655874d0ed3aa041907625c921afd62d3c5ca33dcd3e758ef5e0eeaace2fc2",
   "distribution": {
     "basis_breaks": {
       "The long_term_debt_current line changed element at 2024-06-28: us-gaap:LongTermDebtCurrent -> us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent. The series continues on the issuer's successor element and the change is disclosed on this observation.": [
@@ -601,7 +601,7 @@
         "2022-10-26"
       ],
       "The marketable_securities_current line is carried by MarketableSecurities as of 2022-12-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
-        "2023-02-21"
+        "2023-02-22"
       ],
       "The marketable_securities_current line is carried by MarketableSecurities as of 2023-03-31; MarketableSecuritiesCurrent as of 2020-12-31 describes an earlier balance sheet and is not carried forward.": [
         "2023-04-26"
@@ -746,7 +746,7 @@
         "2018-10-30"
       ],
       "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2018-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
-        "2019-02-21"
+        "2019-02-22"
       ],
       "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-03-29; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
         "2019-04-25"
@@ -758,7 +758,7 @@
         "2019-10-24"
       ],
       "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2019-12-31; MarketableSecurities as of 2010-04-02 describes an earlier balance sheet and is not carried forward.": [
-        "2020-02-24"
+        "2020-02-25"
       ],
       "The marketable_securities_current line is carried by MarketableSecuritiesCurrent as of 2020-12-31; MarketableSecurities as of 2020-09-25 describes an earlier balance sheet and is not carried forward.": [
         "2021-02-25"
@@ -794,7 +794,7 @@
       ],
       "The notes_and_loans_payable line is carried by NotesAndLoansPayable as of 2022-09-30; NotesAndLoansPayableCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
         "2022-10-26",
-        "2023-02-21"
+        "2023-02-22"
       ],
       "The notes_and_loans_payable line is carried by NotesAndLoansPayable as of 2023-03-31; NotesAndLoansPayableCurrent as of 2019-12-31 describes an earlier balance sheet and is not carried forward.": [
         "2023-04-26"
@@ -1045,9 +1045,9 @@
         "reason_detail": "The bridge at 2022-02-22 spans more than one balance-sheet date: cash as of 2021-12-31, long_term_debt_current as of 2021-12-31, long_term_debt_noncurrent as of 2021-12-31, marketable_securities_current as of 2021-12-31, notes_and_loans_payable as of 2021-10-01. The stale component is not carried forward."
       },
       {
-        "evaluation_date": "2023-02-21",
+        "evaluation_date": "2023-02-22",
         "reason_code": "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
-        "reason_detail": "The bridge at 2023-02-21 spans more than one balance-sheet date: cash as of 2022-12-31, long_term_debt_current as of 2022-12-31, long_term_debt_noncurrent as of 2022-12-31, marketable_securities_current as of 2022-12-31, notes_and_loans_payable as of 2022-09-30. The stale component is not carried forward."
+        "reason_detail": "The bridge at 2023-02-22 spans more than one balance-sheet date: cash as of 2022-12-31, long_term_debt_current as of 2022-12-31, long_term_debt_noncurrent as of 2022-12-31, marketable_securities_current as of 2022-12-31, notes_and_loans_payable as of 2022-09-30. The stale component is not carried forward."
       }
     ],
     "formula": {
@@ -1057,13 +1057,13 @@
       "numerator": "the filed enterprise-value bridge with short-term borrowings read from KO's 'Loans and notes payable' line"
     },
     "formula_version": "research-multiples/1.0",
-    "input_set_id": "5431d3e9192735f837c07ad74b686a340d92470bd8817c7333c4e5352c0c2555",
+    "input_set_id": "5d7767f81ace124bf59bb45536da154c5f0afb699f43ff212d4a79e48ac4a664",
     "instrument_id": "KO",
     "issuer_id": "CIK0000021344",
     "lane_id": "ko_filed_ev_bridge_multiple_short_term_borrowings",
     "logic_version": "research-multiples/1.0.0",
     "max": 30.157514,
-    "mean": 24.753179,
+    "mean": 24.733625,
     "methodology": "research-multiples/1.0",
     "metric_id": "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS",
     "metric_label": "KO filed enterprise-value bridge multiple with loans and notes payable (research): the filed bridge, with KO's total short-term borrowings in place of commercial paper, over the trailing twelve months of KO's reported operating income plus reported depreciation and amortization",
@@ -1329,14 +1329,14 @@
         "affected_observation_count": 0,
         "affected_observation_dates": [],
         "classification": "PRIOR_PERIOD_VALUE_REVISION",
-        "detected_at_evaluation_date": "2019-02-21",
+        "detected_at_evaluation_date": "2019-02-22",
         "difference": 31000000.0,
         "difference_ratio": 0.0035937862276837467,
         "element_change_kind": null,
         "element_changed": false,
         "new_accession": "0000021344-19-000014",
         "new_element": "us-gaap:OperatingIncomeLoss",
-        "new_usable_date": "2019-02-21",
+        "new_usable_date": "2019-02-22",
         "new_value": 8657000000.0,
         "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
         "old_accession": "0000021344-18-000008",
@@ -1351,14 +1351,14 @@
         "affected_observation_count": 0,
         "affected_observation_dates": [],
         "classification": "PRIOR_PERIOD_VALUE_REVISION",
-        "detected_at_evaluation_date": "2019-02-21",
+        "detected_at_evaluation_date": "2019-02-22",
         "difference": 98000000.0,
         "difference_ratio": 0.013064924676709772,
         "element_change_kind": null,
         "element_changed": false,
         "new_accession": "0000021344-19-000014",
         "new_element": "us-gaap:OperatingIncomeLoss",
-        "new_usable_date": "2019-02-21",
+        "new_usable_date": "2019-02-22",
         "new_value": 7599000000.0,
         "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
         "old_accession": "0000021344-18-000008",
@@ -1463,19 +1463,19 @@
         "affected_observation_count": 0,
         "affected_observation_dates": [],
         "classification": "PRIOR_PERIOD_VALUE_REVISION",
-        "detected_at_evaluation_date": "2020-02-24",
+        "detected_at_evaluation_date": "2020-02-25",
         "difference": 156000000.0,
         "difference_ratio": 0.020529016975917885,
         "element_change_kind": null,
         "element_changed": false,
         "new_accession": "0000021344-20-000006",
         "new_element": "us-gaap:OperatingIncomeLoss",
-        "new_usable_date": "2020-02-24",
+        "new_usable_date": "2020-02-25",
         "new_value": 7755000000.0,
         "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
         "old_accession": "0000021344-19-000014",
         "old_element": "us-gaap:OperatingIncomeLoss",
-        "old_usable_date": "2019-02-21",
+        "old_usable_date": "2019-02-22",
         "old_value": 7599000000.0,
         "period_end": "2017-12-31",
         "period_start": "2017-01-01",
@@ -1485,19 +1485,19 @@
         "affected_observation_count": 0,
         "affected_observation_dates": [],
         "classification": "PRIOR_PERIOD_VALUE_REVISION",
-        "detected_at_evaluation_date": "2020-02-24",
+        "detected_at_evaluation_date": "2020-02-25",
         "difference": 452000000.0,
         "difference_ratio": 0.051954022988505745,
         "element_change_kind": null,
         "element_changed": false,
         "new_accession": "0000021344-20-000006",
         "new_element": "us-gaap:OperatingIncomeLoss",
-        "new_usable_date": "2020-02-24",
+        "new_usable_date": "2020-02-25",
         "new_value": 9152000000.0,
         "note": "The lane's evidence shows that the value it already knew for this period was replaced by a different value. It does not show that the issuer formally restated, and it does not say so.",
         "old_accession": "0000021344-19-000014",
         "old_element": "us-gaap:OperatingIncomeLoss",
-        "old_usable_date": "2019-02-21",
+        "old_usable_date": "2019-02-22",
         "old_value": 8700000000.0,
         "period_end": "2018-12-31",
         "period_start": "2018-01-01",
@@ -1723,11 +1723,11 @@
     "sample_count": 29,
     "sampling_cadence": "PERIODIC_FILING_USABLE_DATES",
     "status": "RESEARCH_DISTRIBUTION",
-    "std": 2.331508,
+    "std": 2.337667,
     "total_evaluations": 67
   },
   "formula_version": "research-multiples/1.0",
-  "input_set_id": "5431d3e9192735f837c07ad74b686a340d92470bd8817c7333c4e5352c0c2555",
+  "input_set_id": "5d7767f81ace124bf59bb45536da154c5f0afb699f43ff212d4a79e48ac4a664",
   "instrument_id": "KO",
   "issuer_id": "CIK0000021344",
   "lane_id": "ko_filed_ev_bridge_multiple_short_term_borrowings",
@@ -1737,7 +1737,7 @@
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",
   "observations": [
     {
-      "content_hash": "8211d2de834993c3bea1baf6e3ced0b1bbb5416a83e12a0ce17d27e09c0b5673",
+      "content_hash": "76722d0bd7cce62aba87901ea937fb8fce80c69b9e90b5ea20cd23a21074d37f",
       "denominator": null,
       "enterprise_value": null,
       "evaluation_date": "2010-02-26",
@@ -1749,7 +1749,7 @@
       "value": null
     },
     {
-      "content_hash": "fddf5435a53c6d2d20d247528596aad8dc00437cc3cb7bd6406cc2a379c38910",
+      "content_hash": "9547cc158c592d1cae4f29f1ee07925d67c05067035f9768996c7e204f5e6b81",
       "denominator": null,
       "enterprise_value": null,
       "evaluation_date": "2010-04-29",
@@ -1761,7 +1761,7 @@
       "value": null
     },
     {
-      "content_hash": "0f007c08eb44a37ea95ae9b5cf7fee970a7838bf4662ca2ed6dcb06a38d57700",
+      "content_hash": "01cc8617194a96dadcabee5165b58b53623d97f6e8bc10dba9fe3cef492456f2",
       "denominator": null,
       "enterprise_value": null,
       "evaluation_date": "2010-08-02",
@@ -1773,7 +1773,7 @@
       "value": null
     },
     {
-      "content_hash": "a5b507862f26bf3dc62e2fe04cd4c03f8b7f6191e632de287ca117be4cc439a3",
+      "content_hash": "df75755e9be68fed99a2c8316724b77cc744510790d12d82255b64c35e6614b0",
       "denominator": 10335000000.0,
       "enterprise_value": null,
       "evaluation_date": "2010-10-29",
@@ -1785,7 +1785,7 @@
       "value": null
     },
     {
-      "content_hash": "578095b716b0f9dac80f5a3061e71ff8126ca7242850e687fb3aa958a06631e2",
+      "content_hash": "76a3f0bb3d32335a4017a8db75cf3d6fe08b0bf1e82b712438cc3f7224db2629",
       "denominator": 9892000000.0,
       "enterprise_value": null,
       "evaluation_date": "2011-02-28",
@@ -1797,7 +1797,7 @@
       "value": null
     },
     {
-      "content_hash": "bebc2356c8ecbaf4f8e8408fd5f0dd5a12d846f6c51d6604b45cf17bc88a59a3",
+      "content_hash": "7186b7652738be8bbb9bd5a713b174223718231438834b9f44ce4f9fb2571434",
       "denominator": 10179000000.0,
       "enterprise_value": null,
       "evaluation_date": "2011-05-02",
@@ -1809,7 +1809,7 @@
       "value": null
     },
     {
-      "content_hash": "551408cb0d4025317300963b91de71b6784b8e6addeb53655a3d64c4af58f6fe",
+      "content_hash": "97dfb1907237b0416a190bb5d922ed5c7e2f03986b50544734d5d30c38fdb97a",
       "denominator": 10745000000.0,
       "enterprise_value": null,
       "evaluation_date": "2011-08-01",
@@ -1821,7 +1821,7 @@
       "value": null
     },
     {
-      "content_hash": "15640d8a084ed0c6b15e05dd6d4154d5f1f71a0af21ed656e531c59d4427a302",
+      "content_hash": "3408990f2dfe45dea23c2bdd65c0551159f13c68dd02117c06f5837ab4fcc75f",
       "denominator": 11294000000.0,
       "enterprise_value": null,
       "evaluation_date": "2011-10-27",
@@ -1833,7 +1833,7 @@
       "value": null
     },
     {
-      "content_hash": "5ce7dd9053cb22e493ee661dadc33a43c0afaa84c9e7ca13ac1616877538a7be",
+      "content_hash": "0c8d8b6a691075ed82909dbda0c99445b769721f2269cb69994add24a423f60c",
       "denominator": 12108000000.0,
       "enterprise_value": null,
       "evaluation_date": "2012-02-23",
@@ -1845,7 +1845,7 @@
       "value": null
     },
     {
-      "content_hash": "0ffe5a9238db157a2645db93ddea9049ef51e902f65762ef100948e921f444f4",
+      "content_hash": "636b2daebae6b22816f9c0166972d6693b695ae272e4d57f5572ee0167ce83dd",
       "denominator": 12299000000.0,
       "enterprise_value": null,
       "evaluation_date": "2012-04-26",
@@ -1857,7 +1857,7 @@
       "value": null
     },
     {
-      "content_hash": "f42bb70ccfea460380f1c3c75aba7ba5c561e5481e80cb046421eacbde322093",
+      "content_hash": "7e93760611493dbc548cfe772c84da7044af369bedce65740b2e7f422200cd65",
       "denominator": 12456000000.0,
       "enterprise_value": null,
       "evaluation_date": "2012-07-26",
@@ -1869,7 +1869,7 @@
       "value": null
     },
     {
-      "content_hash": "a663331fb707d066802496aa3db30c0995cfc31ec5d99c74138dfbb4c96b0f4a",
+      "content_hash": "e4645864260aa1d0d9a81d304b09c92dbc8aa09d4fa0ba5a683017255bb72835",
       "denominator": 12533000000.0,
       "enterprise_value": null,
       "evaluation_date": "2012-10-25",
@@ -1881,7 +1881,7 @@
       "value": null
     },
     {
-      "content_hash": "078fde2800c3e3372b6f8f1fcb1871ad6e24a5888865e2172a21b7e6adf7bf1e",
+      "content_hash": "6fba2f678ccb838e1161e99b0dc083c8071f63a14a3a004cdd284c6f6c117667",
       "denominator": 12761000000.0,
       "enterprise_value": null,
       "evaluation_date": "2013-02-27",
@@ -1893,7 +1893,7 @@
       "value": null
     },
     {
-      "content_hash": "dd6ad0e71095254aba3d030df98e9a8b472f18d56646e96a2ab512e1dad54178",
+      "content_hash": "bc00718e1df698d717586ce5e0692eb2e92e4fb6b40032af6e4710bad8fcabec",
       "denominator": 12686000000.0,
       "enterprise_value": null,
       "evaluation_date": "2013-04-25",
@@ -1905,7 +1905,7 @@
       "value": null
     },
     {
-      "content_hash": "0fbf11bd509fc838a0be6bea9d5182203d16640bb9c437748ba4d3c667d9f11c",
+      "content_hash": "5d73ea3d749a8e4ff3f72f3abedd51abc5d4e0ae5b21e16eae7de3c907b3e3b4",
       "denominator": 12601000000.0,
       "enterprise_value": null,
       "evaluation_date": "2013-07-25",
@@ -1917,7 +1917,7 @@
       "value": null
     },
     {
-      "content_hash": "9643ddf3b7c88506804bbb485024aaf6dc51b0d2a50f6f2f40d60b5a71cf0720",
+      "content_hash": "d9f744c938dd9460ed3803d470ea139db6825d50c61ddc23f25e43b66a5db8c2",
       "denominator": 12263000000.0,
       "enterprise_value": null,
       "evaluation_date": "2013-10-24",
@@ -1929,7 +1929,7 @@
       "value": null
     },
     {
-      "content_hash": "dd5db1ce2e62e729c25d1b251dfa5f4e7353c89bf7d5bffa81fe2ae8a0ba819c",
+      "content_hash": "f0c32f5089916d50f9c10794663b3fec3697052c00cd22db87d38bd301d90eec",
       "denominator": 12205000000.0,
       "enterprise_value": null,
       "evaluation_date": "2014-02-27",
@@ -1941,7 +1941,7 @@
       "value": null
     },
     {
-      "content_hash": "dada8413449b9809c11976e1af3c9d800f6e4df13c1940ef02cc00c5f45af800",
+      "content_hash": "cabcce56dcb1591cc200cd4a94dc19c979ded5a55df9733287cbe14f5de349d3",
       "denominator": 12173000000.0,
       "enterprise_value": null,
       "evaluation_date": "2014-04-24",
@@ -1953,7 +1953,7 @@
       "value": null
     },
     {
-      "content_hash": "960af824827ff89638831faa9d29529cc188fa8bda01ac71ca9e58796a1369c9",
+      "content_hash": "cb67c03e532ad7d0a7b6cab330b641d46b0c128ebfd81939a0bab7d2a645d953",
       "denominator": 12120000000.0,
       "enterprise_value": null,
       "evaluation_date": "2014-07-30",
@@ -1965,7 +1965,7 @@
       "value": null
     },
     {
-      "content_hash": "671210a60ea5484c2800f433bf8bbb63b36f6809b2ebb9cb7ee70d9cbcdbe6fb",
+      "content_hash": "9d88d1826e0045b48defc936b71e0de5b2d76a8402f9ce0745b9525e4f5e6f42",
       "denominator": 12372000000.0,
       "enterprise_value": null,
       "evaluation_date": "2014-10-29",
@@ -1977,7 +1977,7 @@
       "value": null
     },
     {
-      "content_hash": "8a5e403fed29466926ae71a2606094109b8de60c0a8f1fb34b06d6da1d099811",
+      "content_hash": "518e57c170fc00983dd20d57ddd8c2250ae5b457f82f6039055988b0e2e9f22b",
       "denominator": 11684000000.0,
       "enterprise_value": null,
       "evaluation_date": "2015-02-25",
@@ -1989,7 +1989,7 @@
       "value": null
     },
     {
-      "content_hash": "4ff8788d83ce2f8fdd0b8297dc2b750d19d040f15ec84957b84e112d13cc94ad",
+      "content_hash": "0d85921ba98f9caa558dbcbb3d3a3fb4a01105cb1afd195ae0f4f22445b936b0",
       "denominator": 11604000000.0,
       "enterprise_value": null,
       "evaluation_date": "2015-04-30",
@@ -2001,7 +2001,7 @@
       "value": null
     },
     {
-      "content_hash": "7c2c3c1f49481c81a859cc4200df2eeae462cdea4afa0f8f66d33d19a376ab44",
+      "content_hash": "9111fba4a8448cc294db2c9c38cf0e89839be707afc60626f726e1c2b1d1da6f",
       "denominator": 10963000000.0,
       "enterprise_value": null,
       "evaluation_date": "2015-07-29",
@@ -2013,7 +2013,7 @@
       "value": null
     },
     {
-      "content_hash": "dcd9a47e6c11985113e7ab08301d8c9385d158ecde64a80b7c7bbd7b21884ad7",
+      "content_hash": "8f1f28484b938a0fb3aa3e670a16262656844be8089e00002b00ccc077966ada",
       "denominator": 10603000000.0,
       "enterprise_value": null,
       "evaluation_date": "2015-10-28",
@@ -2025,7 +2025,7 @@
       "value": null
     },
     {
-      "content_hash": "6c0097af4fff29367c146b08aaadc6af29e8c8f2e25fc573c385d6c3e49846bf",
+      "content_hash": "c40c48133156e912639e79b6188162a349cbe68439bbe8be38c140874dcbb1a9",
       "denominator": 10698000000.0,
       "enterprise_value": null,
       "evaluation_date": "2016-02-25",
@@ -2037,7 +2037,7 @@
       "value": null
     },
     {
-      "content_hash": "2f362ba00f68ff19267ca1a9dcf6d645537a5a28b099620a6c0bdc8d6b6e635e",
+      "content_hash": "79ed2838987e6e32f5893a940b127d530b9364c18fed5d499109788a1862d0d6",
       "denominator": 10528000000.0,
       "enterprise_value": null,
       "evaluation_date": "2016-04-28",
@@ -2049,7 +2049,7 @@
       "value": null
     },
     {
-      "content_hash": "3f2c853b02d406accb5323e82292456c4e336c66e60fbe8c3ab133322ef32e21",
+      "content_hash": "180bc160f536936976eb550d937ee5629c971e7f8f3e8d3a78651a1685919e68",
       "denominator": 10809000000.0,
       "enterprise_value": null,
       "evaluation_date": "2016-07-28",
@@ -2061,7 +2061,7 @@
       "value": null
     },
     {
-      "content_hash": "db5ffc5c4c16ce8098042b740186e787e9cb31feee9e972f8b2b26b99371f4b4",
+      "content_hash": "8ee5d7060a896cc91a78e2d4423521f0cff1412eea8a60556de936a03226dfb1",
       "denominator": 10639000000.0,
       "enterprise_value": null,
       "evaluation_date": "2016-10-27",
@@ -2073,7 +2073,7 @@
       "value": null
     },
     {
-      "content_hash": "f46c3fc1b98b25f8761ae0c368cf869e87b2fee358b0f41e2cb8876694612fed",
+      "content_hash": "5bdfaec4a6c843dd835565a02de0b278b8f5b491f73fdd5248d3d77502e79b6e",
       "denominator": 10413000000.0,
       "enterprise_value": null,
       "evaluation_date": "2017-02-24",
@@ -2085,7 +2085,7 @@
       "value": null
     },
     {
-      "content_hash": "bab1b4dcde82ef4a7acd100e0aa96c0a85f9ab005aef41f43c54580f3d07fc4f",
+      "content_hash": "290d52deccb70ebdc3346cda21eb7ef764c1a1f1225237fdbc311f6fa76947b3",
       "denominator": 10124000000.0,
       "enterprise_value": null,
       "evaluation_date": "2017-04-28",
@@ -2097,7 +2097,7 @@
       "value": null
     },
     {
-      "content_hash": "873108e55a634279d2c26079a24da6277471b0074dead765873e77129748e1a6",
+      "content_hash": "5a216de6b11d7047730332e0d080fc1c4e88691f8ff8d80b10bdb8934f93489d",
       "denominator": 9199000000.0,
       "enterprise_value": null,
       "evaluation_date": "2017-07-27",
@@ -2109,7 +2109,7 @@
       "value": null
     },
     {
-      "content_hash": "56fa40a7a470b4d854372fb02a8e38315bf5a65fe65f00341be2ed22fd3bc81a",
+      "content_hash": "219a761dc77d6d045054e39472488aa11650ed8c23d19658360e014d21f44fbe",
       "denominator": 8925000000.0,
       "enterprise_value": null,
       "evaluation_date": "2017-10-26",
@@ -2121,7 +2121,7 @@
       "value": null
     },
     {
-      "content_hash": "587481167658936e54babc3a2222c83ee8fe2b22710777987d1c24cb8136f76c",
+      "content_hash": "a6214414654120f39d7766dbf567f348c154fea279c5c409a80a83cc948c670e",
       "denominator": 8761000000.0,
       "enterprise_value": null,
       "evaluation_date": "2018-02-23",
@@ -2133,7 +2133,7 @@
       "value": null
     },
     {
-      "content_hash": "1a1cdf02a2c01bc9cb0bbb0b387f8f504d3f70de1b150a7907b3f56ad7652d9b",
+      "content_hash": "45f7f570b09e7af94e12f6d461c341234af2070023ea9481236dc50a9a257a8e",
       "denominator": 8532000000.0,
       "enterprise_value": null,
       "evaluation_date": "2018-05-01",
@@ -2145,7 +2145,7 @@
       "value": null
     },
     {
-      "content_hash": "8c15e37c7dc19b27007e3ae70eb33271f439c46a130f9df0a182f3f4712b9e54",
+      "content_hash": "2129930216f25d9f3d93f16a1788fcddbe8bf1e389f59591d4e0b599b344e2c8",
       "denominator": 9163000000.0,
       "enterprise_value": null,
       "evaluation_date": "2018-07-26",
@@ -2157,7 +2157,7 @@
       "value": null
     },
     {
-      "content_hash": "978e04bcc8ddb89e369de841e36beee1415b332bf99f6bb1b2f30d2314201414",
+      "content_hash": "c1e89ee5a3a437ce65ce90cc434d25774b23e0cd2c3987c26e2c233134186318",
       "denominator": 9461000000.0,
       "enterprise_value": 233454756961.74,
       "evaluation_date": "2018-10-30",
@@ -2169,19 +2169,19 @@
       "value": 24.675484
     },
     {
-      "content_hash": "40029a89e1790d1bb4798b69d9b8c5b3a2f2a63df7d957b31f452fecb0e6c56e",
+      "content_hash": "3c5eb82ee7b55dab19817ecc3610cd06ccf4562170ef912c66ac3dc16c7163df",
       "denominator": 9786000000.0,
-      "enterprise_value": 225683093821.66,
-      "evaluation_date": "2019-02-21",
-      "market_cap": 196067093821.66,
-      "price": 45.86,
+      "enterprise_value": 223203396603.68,
+      "evaluation_date": "2019-02-22",
+      "market_cap": 193587396603.68,
+      "price": 45.28,
       "reason_code": null,
       "shares_outstanding": 4275340031.0,
       "status": "AVAILABLE",
-      "value": 23.061833
+      "value": 22.80844
     },
     {
-      "content_hash": "27cdd1fdfd58189ba66acbec65da02cfadcdd57efa14623c11fcc69db662b948",
+      "content_hash": "4d4944298691a51a405de1d9f440d3447129f3e21a4b8f32dd94116cfcf400e2",
       "denominator": 10316000000.0,
       "enterprise_value": 237947946910.24,
       "evaluation_date": "2019-04-25",
@@ -2193,7 +2193,7 @@
       "value": 23.065912
     },
     {
-      "content_hash": "ba8211a35b0552900ae853faa388ee9e7e6fe1852fed8c3f97318079993d1024",
+      "content_hash": "d3936442f67f8f8b0154380d4ae1b43dec88da3c0d0c0292dcbd4234d9ee6d30",
       "denominator": 10621000000.0,
       "enterprise_value": 265918406262.29,
       "evaluation_date": "2019-07-26",
@@ -2205,7 +2205,7 @@
       "value": 25.03704
     },
     {
-      "content_hash": "c5c490e3a88e509338f9b55afbf13df9148d85dc83b588ccda655aa87a277a79",
+      "content_hash": "214d169ddfccb7ae79e49c907945090d005183c569b355a6c00794b495c8f0fb",
       "denominator": 10440000000.0,
       "enterprise_value": 265465074097.97,
       "evaluation_date": "2019-10-24",
@@ -2217,19 +2217,19 @@
       "value": 25.427689
     },
     {
-      "content_hash": "a2eaaa19a76d0b3f8507b63330cd9a10bfb8da81064712a1e5ca141605ee2b44",
+      "content_hash": "575c6db74ee1c0df7a2a9e22e58a975dd834ae188c348aa868d5f1534190d49d",
       "denominator": 11352000000.0,
-      "enterprise_value": 284679691329.55,
-      "evaluation_date": "2020-02-24",
-      "market_cap": 251624691329.55,
-      "price": 58.65,
+      "enterprise_value": 281118762193.94,
+      "evaluation_date": "2020-02-25",
+      "market_cap": 248063762193.94,
+      "price": 57.82,
       "reason_code": null,
       "shares_outstanding": 4290276067.0,
       "status": "AVAILABLE",
-      "value": 25.077492
+      "value": 24.763809
     },
     {
-      "content_hash": "713203b9c74ccc9a2d62524d9cf855f2107413dce2db92b714bde8b6c5abc2db",
+      "content_hash": "b011f377f3ce69bce0c162eeae53800549311ccc461b399cb66fdb9102217482",
       "denominator": 11488000000.0,
       "enterprise_value": 229556914166.79,
       "evaluation_date": "2020-04-24",
@@ -2241,7 +2241,7 @@
       "value": 19.982322
     },
     {
-      "content_hash": "712b297e7d0a022a9c7fa2613cb845f3f9c55c1dc459bc993df2b5e9d231d62a",
+      "content_hash": "f3873e07dab519192f4b8b0349f374da0c23e84a4ab59543ac58f9a46f9ac889",
       "denominator": 10535000000.0,
       "enterprise_value": 248310878793.12,
       "evaluation_date": "2020-07-22",
@@ -2253,7 +2253,7 @@
       "value": 23.570088
     },
     {
-      "content_hash": "eb7841d2ae958325b7a91b6f68d0f7371dcf90eeff2da93619fc83cd5291d3b1",
+      "content_hash": "d7f83945fc522bf8edcbe505f7889b768854b8ec5adf4327a7440c1f8357ff2d",
       "denominator": 10329000000.0,
       "enterprise_value": 256879986136.16,
       "evaluation_date": "2020-10-22",
@@ -2265,7 +2265,7 @@
       "value": 24.869783
     },
     {
-      "content_hash": "2f5100d06ea672300ffed0f5061fe6e4ba1a0290cdd1012611a3e3d9280d7251",
+      "content_hash": "e09dd829b3638944528b602e73359b424af95359bab77f0837b6ec8be54670ae",
       "denominator": 10533000000.0,
       "enterprise_value": null,
       "evaluation_date": "2021-02-25",
@@ -2277,7 +2277,7 @@
       "value": null
     },
     {
-      "content_hash": "13285434f36b072d4b55215a877d98721c0297c37c0160e379d3c12909e380db",
+      "content_hash": "f8dbb5abcd4affc26a3d580effea5750753376b91bc91fb50ee6ed6350d5079d",
       "denominator": 10874000000.0,
       "enterprise_value": 265284850137.86,
       "evaluation_date": "2021-04-27",
@@ -2289,7 +2289,7 @@
       "value": 24.396253
     },
     {
-      "content_hash": "b90ea9a22bcf02847fc6b30dbefc61e3cbfa4d9f49f1107b8a11d7b6a59af472",
+      "content_hash": "3be29c645ddcb216a1abdd7d64280b5fb05cd328ab9b879ff4cf188011e0664d",
       "denominator": 11911000000.0,
       "enterprise_value": 278214586933.78,
       "evaluation_date": "2021-07-27",
@@ -2301,7 +2301,7 @@
       "value": 23.357786
     },
     {
-      "content_hash": "99fbc32e5b0aba1f78b4c103a0ee3634be640da8d8e4e4065c2bce7ee65a767d",
+      "content_hash": "007a4ead860dc735c8bd1d62868f179391102acad10d7962cc9d98bf2e5e14d1",
       "denominator": 12515000000.0,
       "enterprise_value": 270743310025.44,
       "evaluation_date": "2021-10-28",
@@ -2313,7 +2313,7 @@
       "value": 21.633505
     },
     {
-      "content_hash": "613c34513be3565b648d4d13d79ed74528fa927aa4934e147c7b67aec7824afb",
+      "content_hash": "84a07457e2386c728967d177d68db60a49df3775b843391d48e6237759a2b3e7",
       "denominator": 11760000000.0,
       "enterprise_value": null,
       "evaluation_date": "2022-02-22",
@@ -2325,7 +2325,7 @@
       "value": null
     },
     {
-      "content_hash": "8255e68a41fa4bd008f9ec7c85433f8f20f212907c2bd162d17d6f998fc50581",
+      "content_hash": "97b99ffdb7d50974aa1df3909a2f60b17f9276e6c2152a5cca698ed41e56f414",
       "denominator": 12401000000.0,
       "enterprise_value": 319016551440.13,
       "evaluation_date": "2022-04-28",
@@ -2337,7 +2337,7 @@
       "value": 25.725067
     },
     {
-      "content_hash": "1d9c58ed6d331ebd86bd2c5e9151b7545864da15b546b110cc50e17281f92669",
+      "content_hash": "671ab59c6203996101c6363e95a002545f366880a01ad6fc6e2a9a34b38fab8e",
       "denominator": 11665000000.0,
       "enterprise_value": 303552884253.74,
       "evaluation_date": "2022-07-27",
@@ -2349,7 +2349,7 @@
       "value": 26.022536
     },
     {
-      "content_hash": "03249752c64a585eeaede4dc352a65b69f5636e63bd576c6c77aaa164db555d3",
+      "content_hash": "486ffbb6e70828a3c5dda64719343fdee8e608bccb183dfb783c3bab98ea1385",
       "denominator": 11800000000.0,
       "enterprise_value": 284319842748.96,
       "evaluation_date": "2022-10-26",
@@ -2361,19 +2361,19 @@
       "value": 24.094902
     },
     {
-      "content_hash": "86e28ee9de1c363d0db1c73a93e109127ac0b9765db2fb45ce7242c9cacc0c51",
+      "content_hash": "b986534b395c8aef8ba6ee0e99191af68bbcb0813643ff72859703ef6271a5b0",
       "denominator": 12169000000.0,
       "enterprise_value": null,
-      "evaluation_date": "2023-02-21",
-      "market_cap": 258736168623.4,
-      "price": 59.8,
+      "evaluation_date": "2023-02-22",
+      "market_cap": 259514973144.34,
+      "price": 59.98,
       "reason_code": "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
       "shares_outstanding": 4326691783.0,
       "status": "UNAVAILABLE",
       "value": null
     },
     {
-      "content_hash": "a9c9b94a55290a83176ea0da9ee837635a9dca97aa332cb043980f7d2c1cdd5d",
+      "content_hash": "f9d8525d92590a7164257856a28d7b3b2d7ece99fd912da9b3e876f1ab98d313",
       "denominator": 12093000000.0,
       "enterprise_value": 304097943910.95,
       "evaluation_date": "2023-04-26",
@@ -2385,7 +2385,7 @@
       "value": 25.146609
     },
     {
-      "content_hash": "cdf01138d2cc4b19c89601dc51e20b1cc4b4beaa39218f9dbdc7a08cc9da6e0b",
+      "content_hash": "07977d067f5d0bfc080d018515b33c1c885a4f59324caefb6ccfcc6d3a50fd52",
       "denominator": 12112000000.0,
       "enterprise_value": 297810090061.28,
       "evaluation_date": "2023-07-27",
@@ -2397,7 +2397,7 @@
       "value": 24.588019
     },
     {
-      "content_hash": "499506a95ac97a942f52a302c20088f434546f1d822e2551dbca39dbf39a6796",
+      "content_hash": "81bb77c294d4c50725b5985b322f4f798e1cdf63c4b5e14f46d0f6052968e7cc",
       "denominator": 12277000000.0,
       "enterprise_value": 267622744388.4,
       "evaluation_date": "2023-10-24",
@@ -2409,7 +2409,7 @@
       "value": 21.798709
     },
     {
-      "content_hash": "7ffe826666d852c98204437a6e81712b61a781e1e9d754ab9f0a102892151cf0",
+      "content_hash": "13a62ee6e952b041fdd9a5b80c4e50757f73e5aa9f0b0a02faff83a8e1c37c0f",
       "denominator": 12439000000.0,
       "enterprise_value": 293164089397.6,
       "evaluation_date": "2024-02-20",
@@ -2421,7 +2421,7 @@
       "value": 23.56814
     },
     {
-      "content_hash": "ff18fd51849cd31690ec138b9bad81529e2dd10d8571b9770f9d9c1b6bee63be",
+      "content_hash": "db1b64807f7faa85edee340be74524eaa8122d22b926e31f1d6b20f3d418ea65",
       "denominator": 11189000000.0,
       "enterprise_value": 297441149480.93,
       "evaluation_date": "2024-05-02",
@@ -2433,7 +2433,7 @@
       "value": 26.583354
     },
     {
-      "content_hash": "ea2da302ec4cc4c6e5a01106b333f777e97070581a4f75f7d8f0423152319d9c",
+      "content_hash": "89eb9109104476c78c5f54fa36282f463d67b4ec75e1b3ac550f6a5d2efd3a45",
       "denominator": 11408000000.0,
       "enterprise_value": 316543488464.5,
       "evaluation_date": "2024-07-29",
@@ -2445,7 +2445,7 @@
       "value": 27.747501
     },
     {
-      "content_hash": "364e230351a3e96614c6f3ca61c94a14107e3e75551c906276b5c3c37a47b6bf",
+      "content_hash": "306464fa623230ed9692b09a544d0124d94c05e166c15144e897244e76420e59",
       "denominator": 10626000000.0,
       "enterprise_value": 320453747387.4,
       "evaluation_date": "2024-10-24",
@@ -2457,7 +2457,7 @@
       "value": 30.157514
     },
     {
-      "content_hash": "79eb1bce3bb33041dd64445ee27949229034066ed926434fe826e74eb1cdf994",
+      "content_hash": "8ee861eb737d54b087fe33da4c257303a6f5ae0d539956e7e40bdab4f6b0c1ff",
       "denominator": 11067000000.0,
       "enterprise_value": 333213067665.8,
       "evaluation_date": "2025-02-20",
@@ -2469,7 +2469,7 @@
       "value": 30.108708
     },
     {
-      "content_hash": "715f974a705ffb17e10897def0d00a092e696a828f9a75d5716cc0fe0de0fa34",
+      "content_hash": "80cf059aedeea838d122b945a9da874a6370453fa2b3e8d4e9bd3c92e1e622ce",
       "denominator": 12590000000.0,
       "enterprise_value": 345754175752.02,
       "evaluation_date": "2025-05-01",
@@ -2481,7 +2481,7 @@
       "value": 27.462603
     },
     {
-      "content_hash": "76eb3d427bc9ea69f4261abd4ae38c50ee3be33bfe01e144b229168109069008",
+      "content_hash": "0620ee83c550f46ec320f2e34104220899647c2b7a1080a0d0fdb40ec63c058e",
       "denominator": 14248000000.0,
       "enterprise_value": 335190407113.2,
       "evaluation_date": "2025-07-24",
@@ -2493,7 +2493,7 @@
       "value": 23.525436
     },
     {
-      "content_hash": "74f65fa7bcb598d79492d2fcc6e9bb64c48ad41fdf1b2e48cb3b47cdfb926cce",
+      "content_hash": "48672b452f35e06b5040f1efe14eb3b3200cebf2f6ff47f99f47aeb6143f5d1b",
       "denominator": 15720000000.0,
       "enterprise_value": 333631522619.3,
       "evaluation_date": "2025-10-23",
@@ -2505,7 +2505,7 @@
       "value": 21.223379
     },
     {
-      "content_hash": "6ea70c4451c00cbea9f158e224102e20f88b6d8a08b7f4d46184957bb664d18a",
+      "content_hash": "af57d1d35a98743bd59dc003ab18c4c74024c230885483ecf021886136a2703f",
       "denominator": 14812000000.0,
       "enterprise_value": 376657729828.96,
       "evaluation_date": "2026-02-20",
@@ -2517,7 +2517,7 @@
       "value": 25.429228
     },
     {
-      "content_hash": "c0cccd5bbfe3853bc53700a93f71e62c08555ccf918466cf7edf3e622bc9c480",
+      "content_hash": "2237dd31c4a767d6d5c49f9cd69b710d6d46062aee4f4eeb89db868e778c13a2",
       "denominator": 15509000000.0,
       "enterprise_value": 369442515241.68,
       "evaluation_date": "2026-04-30",
@@ -2529,7 +2529,7 @@
       "value": 23.821169
     },
     {
-      "content_hash": "184c4a156525ab9b54c0e22665ec3990bd75e9bf3e0e3c5939725cecac1efb9f",
+      "content_hash": "dce3e9df44f20d54b0f3281c4f03859597743a62aa3a2ecc0a0d3a15acb53626",
       "denominator": 15509000000.0,
       "enterprise_value": 413844133795.44,
       "evaluation_date": "2026-07-29",

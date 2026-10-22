@@ -338,6 +338,29 @@ export interface Translations {
     marketValueLabel: string
     fullEvidence: string
     closeEvidence: string
+    distributionTitle: string
+    distributionBody: string
+    thinSampleTitle: string
+    thinSampleBody: string
+    unavailableTitle: string
+    unavailableBody: string
+    thresholdLabel: string
+    evidenceInputLabel: string
+    evidenceValue: string
+    evidenceUnit: string
+    evidencePeriod: string
+    evidenceSource: string
+    evidenceAccession: string
+    evidenceKnowable: string
+    priceRow: string
+    sharesRow: string
+    marketCapRow: string
+    enterpriseValueRow: string
+    quarterRow: string
+    bridgeRow: string
+    derivedLabel: string
+    sourceNotProvided: string
+    sourceUnknown: string
   }
   footer: {
     text: string

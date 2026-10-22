@@ -19,6 +19,13 @@ export interface ResearchMetric {
   sample_count: number
   total_evaluations: number
   refused_count: number
+  /** The lane's own descriptive threshold: the sample below which the lane
+   *  describes a thin sample rather than a distribution. It says how much
+   *  evidence a description rests on; it says nothing about production
+   *  eligibility, which is a separate field. */
+  min_observations_for_description: number
+  reason_code: string | null
+  reason_detail: string | null
   period_start: string | null
   period_end: string | null
   mean: number | null

@@ -426,10 +426,16 @@ class TheLanes(unittest.TestCase):
         cls.results = {result.lane_id: result for result in build_ko_research_lanes()}
 
     def test_the_lane_counts_and_medians(self):
+        # The medians follow the capture's acceptance times. The FY2018,
+        # FY2019 and FY2022 annual filings were accepted between 16:00 and
+        # 17:00 Eastern, so they became knowable on the next trading day
+        # rather than on the day they were accepted. Lanes B and C1 publish
+        # an observation on each of those dates, so their medians moved when
+        # the capture's acceptance instants were corrected.
         expected = {
             "ko_reported_revenue_multiple": (29, 6.403373),
-            "ko_reported_operating_denominator_multiple": (64, 19.775345),
-            "ko_filed_ev_bridge_multiple_production_shape": (27, 23.639435),
+            "ko_reported_operating_denominator_multiple": (64, 19.774421),
+            "ko_filed_ev_bridge_multiple_production_shape": (27, 23.654283),
             "ko_filed_ev_bridge_multiple_short_term_borrowings": (29, 24.675484),
         }
         for lane_id, (count, median) in expected.items():

@@ -285,7 +285,9 @@ class ResearchObservation:
     price_currency: str = "USD"
     price_accounting_basis: str = "as_traded"
     price_split_restoration: Optional[List[Dict[str, Any]]] = None
+    price_source: Dict[str, Any] = field(default_factory=dict)
     shares_outstanding: Optional[float] = None
+    shares_source: Dict[str, Any] = field(default_factory=dict)
     shares_as_of_date: Optional[str] = None
     shares_accession: Optional[str] = None
     shares_usable_date: Optional[str] = None
@@ -509,8 +511,58 @@ def _element_payloads(
         for element in document.get("elements") or []:
             tag = element.get("tag")
             if tag in role.elements and tag not in payloads:
-                payloads[tag] = {**element, "_file": name, "_sha256": entry["sha256"]}
+                payloads[tag] = {
+                    **element,
+                    "_file": name,
+                    "_sha256": entry["sha256"],
+                    "_source": entry.get("source") or {},
+                }
     return payloads
+
+
+def _unit_of(payloads: Mapping[str, Mapping[str, Any]]) -> str:
+    """
+    The unit a role's facts are read in, taken from the capture.
+
+    The unit is a property of the filed facts, not an assumption: it is
+    whatever unit the capture's rows for that role carry. A role whose
+    payloads carry more than one unit is read in the one the capture's
+    manifest names for it, and the others are recorded rather than hidden.
+    """
+    units: set = set()
+    for payload in payloads.values():
+        units.update((payload.get("units") or {}).keys())
+    if len(units) == 1:
+        return next(iter(units))
+    if "USD" in units:
+        return "USD"
+    raise ValueError(
+        "the capture holds a role in more than one unit and names no unit to "
+        f"read it in: {sorted(units)}"
+    )
+
+
+def _source_reference(
+    entry: Mapping[str, Any], file_name: str
+) -> Dict[str, Any]:
+    """
+    The source of a capture file, as the evidence view shows it.
+
+    The file, its digest, and where it came from. When the capture's manifest
+    does not say where a file came from, the reference says so rather than
+    guessing.
+    """
+    source = entry.get("source") or {}
+    url = source.get("url")
+    return {
+        "source_file": file_name,
+        "source_sha256": entry.get("sha256"),
+        "source_url": url,
+        "source_retrieval": source.get("retrieval"),
+        "source_document_sha256": source.get("source_document_sha256"),
+        "source_note": source.get("note"),
+        "source_known": bool(url or source.get("retrieval")),
+    }
 
 
 def _registry_standing(role: ResearchRole, element: str, ticker: str) -> Dict[str, Any]:
@@ -656,27 +708,62 @@ def _select_bridge_fact(
     )
 
 
+def _element_source(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """
+    Where one element's facts came from, as the capture recorded it.
+
+    The capture names the endpoint each element was read from and, where the
+    company concept endpoint served nothing for a filer, the substitution it
+    used instead. When the capture records neither, the reference says the
+    source was not provided rather than guessing at one.
+    """
+    source = payload.get("source") or {}
+    url = source.get("companyconcept_endpoint") or source.get("facts_endpoint")
+    return {
+        "source_url": url,
+        "source_retrieval": source.get("retrieval"),
+        "source_document_sha256": source.get("source_document_sha256"),
+        "source_note": source.get("substitution_note") or source.get("note"),
+        "source_known": bool(url or source.get("retrieval")),
+    }
+
+
 def _input_spans(
-    role: ResearchRole, quarter: Mapping[str, Any]
+    role: ResearchRole,
+    quarter: Mapping[str, Any],
+    unit: str,
+    payloads: Mapping[str, Mapping[str, Any]],
 ) -> List[Dict[str, Any]]:
-    """The cumulative spans a discrete quarter was derived from.
+    """
+    The cumulative spans a discrete quarter was derived from.
 
     A quarter made from a cumulative difference names the periods it was
     made of, so a reader can see which filings the quarter rests on and
-    which of them were later revised.
+    which of them were later revised. Each span names the unit it was read
+    in and the source it was read from.
     """
     spans: List[Dict[str, Any]] = []
     for item in quarter.get("inputs", []) or []:
+        tag = item.get("concept_tag")
+        payload = payloads.get(tag) or {}
+        source = _element_source(payload)
         spans.append(
             {
                 "role": role.name,
-                "element": f"{role.taxonomy}:{item.get('concept_tag')}",
+                "element": f"{role.taxonomy}:{tag}",
                 "start": item.get("start"),
                 "end": item.get("end"),
                 "value": item.get("value"),
+                "unit": unit,
+                "currency": unit if unit == "USD" else None,
                 "accession": item.get("accession"),
                 "filed_date": item.get("filed_date"),
                 "usable_date": item.get("usable_date"),
+                "source_file": payload.get("_file"),
+                "source_sha256": payload.get("_sha256"),
+                "source_url": source["source_url"],
+                "source_note": source["source_note"],
+                "source_known": source["source_known"],
             }
         )
     return spans
@@ -838,6 +925,16 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             "period_end": row["period_end"],
         }
 
+    # The source of the price series and of the share counts, as the capture
+    # records it.
+    price_source = _source_reference(
+        capture["files"].get("daily_prices.json") or {}, "daily_prices.json"
+    )
+    shares_source = _source_reference(
+        capture["files"].get("shares_outstanding_concept.json") or {},
+        "shares_outstanding_concept.json",
+    )
+
     # -- the role payloads ----------------------------------------------------
     role_payloads: Dict[str, Dict[str, Dict[str, Any]]] = {}
     for role in config.roles:
@@ -847,6 +944,12 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                 f"the capture holds no element for role {role.name!r}; the "
                 "lane cannot be executed"
             )
+
+    # The unit each role's facts are read in. The unit is a property of the
+    # filed facts the capture holds, not an assumption the lane makes.
+    role_units: Dict[str, str] = {
+        role.name: _unit_of(role_payloads[role.name]) for role in config.roles
+    }
 
     # -- the fiscal calendar --------------------------------------------------
     duration_roles = [
@@ -862,7 +965,9 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             if payload is not None:
                 calendar_payloads.append(payload)
     fiscal_calendar = build_fiscal_calendar(
-        calendar_payloads, filings_index, units=("USD",)
+        calendar_payloads,
+        filings_index,
+        units=tuple(sorted({role_units[role.name] for role in duration_roles})),
     )
 
     # -- the duration spans ----------------------------------------------------
@@ -872,17 +977,16 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             payload = role_payloads[role.name].get(element)
             if payload is None:
                 continue
+            element_source = _element_source(payload)
             spans += concept_spans_from_payload(
                 payload=payload,
-                unit="USD",
+                unit=role_units[role.name],
                 role=role.name,
                 concept_tag=element,
                 issuer_id=config.issuer_id,
                 filings_index=filings_index,
                 content_sha256=payload["_sha256"],
-                source_url=payload.get("source", {}).get(
-                    "facts_endpoint", ""
-                ),
+                source_url=element_source["source_url"] or "",
             )
     spans_by_key: Dict[Tuple[str, str, str], List[DurationSpanEvidence]] = {}
     for span in spans:
@@ -921,6 +1025,8 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                             "usable_date_rule": filing["usable_date_rule"],
                             "content_sha256": payload["_sha256"],
                             "source_file": payload["_file"],
+                            "source_url": _element_source(payload)["source_url"],
+                            "source_note": _element_source(payload)["source_note"],
                         }
                     )
             facts.sort(
@@ -960,6 +1066,7 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                             "unit": unit,
                             "content_sha256": payload["_sha256"],
                             "source_file": payload["_file"],
+                            "source_url": _element_source(payload)["source_url"],
                         }
                     )
     share_facts.sort(
@@ -1094,8 +1201,11 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                 denominator_value = sum(
                     quarter["value"] for quarter in window["quarters"]
                 )
+                unit = role_units[role_name]
                 denominator_window = {
                     "value": denominator_value,
+                    "unit": unit,
+                    "currency": unit if unit == "USD" else None,
                     "anchor": window["anchor"],
                     "positions": window["positions"],
                     "derivation": (
@@ -1109,6 +1219,8 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                             "fiscal_year": quarter["fiscal_year"],
                             "fiscal_quarter": quarter["fiscal_quarter"],
                             "value": quarter["value"],
+                            "unit": unit,
+                            "currency": unit if unit == "USD" else None,
                             "knowable_from": quarter["knowable_from"],
                             "derivation": quarter["derivation"],
                             "accessions": sorted(
@@ -1123,7 +1235,12 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                                     for item in quarter.get("inputs", [])
                                 }
                             ),
-                            "input_spans": _input_spans(role, quarter),
+                            "input_spans": _input_spans(
+                                role,
+                                quarter,
+                                unit,
+                                role_payloads[role_name],
+                            ),
                         }
                         for quarter in window["quarters"]
                     ],
@@ -1149,13 +1266,24 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                         )
                     )
                 else:
+                    role_units_in_window = [
+                        role_units[role_name] for role_name, _window in windows
+                    ]
+                    quarter_unit = (
+                        role_units_in_window[0]
+                        if len(set(role_units_in_window)) == 1
+                        else "MIXED"
+                    )
                     per_end: Dict[str, Dict[str, Any]] = {}
                     for role_name, window in windows:
                         role = config.role(role_name)
+                        unit = role_units[role_name]
                         for quarter in window["quarters"]:
                             per_end.setdefault(quarter["period_end"], {})[role_name] = {
                                 "value": quarter["value"],
                                 "element": f"{role.taxonomy}:{role.elements[-1]}",
+                                "unit": unit,
+                                "currency": unit if unit == "USD" else None,
                                 "accessions": sorted(
                                     {
                                         item["accession"]
@@ -1163,7 +1291,12 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                                     }
                                 ),
                                 "knowable_from": quarter["knowable_from"],
-                                "input_spans": _input_spans(role, quarter),
+                                "input_spans": _input_spans(
+                                    role,
+                                    quarter,
+                                    unit,
+                                    role_payloads[role_name],
+                                ),
                             }
                     quarters_out: List[Dict[str, Any]] = []
                     total = 0.0
@@ -1183,6 +1316,10 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                             {
                                 "period_end": end,
                                 "value": contribution,
+                                "unit": quarter_unit,
+                                "currency": (
+                                    quarter_unit if quarter_unit == "USD" else None
+                                ),
                                 "knowable_from": max(
                                     part["knowable_from"] for part in parts.values()
                                 ),
@@ -1212,6 +1349,10 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
                         denominator_value = total
                         denominator_window = {
                             "value": total,
+                            "unit": quarter_unit,
+                            "currency": (
+                                quarter_unit if quarter_unit == "USD" else None
+                            ),
                             "anchor": windows[0][1]["anchor"],
                             "positions": windows[0][1]["positions"],
                             "derivation": (
@@ -1228,6 +1369,11 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
         # -- the market capitalization ---------------------------------------------
         price = None
         price_provenance: Optional[List[Dict[str, Any]]] = None
+        price_evidence: Dict[str, Any] = {
+            **price_source,
+            "as_of_date": day,
+            "period": day,
+        }
         close = bars.get(day)
         if close is not None:
             restored, provenance, _note = restore_as_traded_close(close, day, splits)
@@ -1382,10 +1528,24 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
             value=value,
             price=price,
             price_split_restoration=price_provenance,
+            price_source=price_evidence,
             shares_outstanding=share["shares"] if share else None,
             shares_as_of_date=share["as_of_date"] if share else None,
             shares_accession=share["accession"] if share else None,
             shares_usable_date=share["usable_date"] if share else None,
+            shares_source=(
+                {
+                    **shares_source,
+                    "source_url": share.get("source_url") or shares_source.get(
+                        "source_url"
+                    ),
+                    "unit": share["unit"] if share else None,
+                    "as_of_date": share["as_of_date"] if share else None,
+                    "accession": share["accession"] if share else None,
+                }
+                if share
+                else shares_source
+            ),
             market_cap=market_cap,
             enterprise_value=enterprise_value,
             total_debt=total_debt,
