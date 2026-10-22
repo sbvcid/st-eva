@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -384,6 +385,161 @@ class ThePairedBridgeComparison(unittest.TestCase):
 
     def test_the_comparison_is_never_production_eligible(self):
         self.assertFalse(self.payload["production_eligible"])
+
+
+class ThePairedReasonCounts(unittest.TestCase):
+    """Each side's unpaired reason distribution, recomputed from the records.
+
+    The counts of a comparison can be right while the reasons behind them are
+    misstated, and a report can misstate a number the program never produced.
+    These tests therefore rebuild the four mutually exclusive sets from the
+    observation records, count each side's reasons with a `Counter`, and
+    compare the result against the service's own lists item by item. The
+    oracle is the records: it is never taken from the service's
+    classification.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.payload = compare_bridges(C1, C2)
+        cls.left = _observations(C1)
+        cls.right = _observations(C2)
+
+    def _sets(self):
+        """The four mutually exclusive sets, built from the records."""
+        both_valid = []
+        left_refused = []
+        right_refused = []
+        both_refused = []
+        for day in sorted(set(self.left) | set(self.right)):
+            left = self.left.get(day)
+            right = self.right.get(day)
+            left_valid = left is not None and left.value is not None
+            right_valid = right is not None and right.value is not None
+            if left_valid and right_valid:
+                both_valid.append(day)
+            elif not left_valid and right_valid:
+                left_refused.append(day)
+            elif left_valid and not right_valid:
+                right_refused.append(day)
+            else:
+                both_refused.append(day)
+        return {
+            "both valid": both_valid,
+            "left refused only": left_refused,
+            "right refused only": right_refused,
+            "both refused": both_refused,
+        }
+
+    def test_the_four_sets_partition_every_evaluation_date(self):
+        sets = self._sets()
+        every = [day for days in sets.values() for day in days]
+        self.assertEqual(len(every), len(set(every)))
+        self.assertEqual(set(every), set(self.left))
+        self.assertEqual(len(self.left), 67)
+        self.assertEqual(len(self.right), 67)
+        self.assertEqual(len(sets["both valid"]), 16)
+        self.assertEqual(len(sets["left refused only"]), 13)
+        self.assertEqual(len(sets["right refused only"]), 11)
+        self.assertEqual(len(sets["both refused"]), 27)
+        self.assertEqual(
+            16 + 13 + 11 + 27,
+            len(self.left),
+        )
+
+    def test_the_left_unpaired_reasons_match_the_records(self):
+        sets = self._sets()
+        expected_dates = set(sets["left refused only"])
+        served = self.payload["unpaired_left"]
+        self.assertEqual({item["evaluation_date"] for item in served}, expected_dates)
+        # The reasons, counted from the records, and the reasons the service
+        # reported, must be the same distribution.
+        expected = Counter(
+            self.left[day].reason_code for day in sorted(expected_dates)
+        )
+        self.assertEqual(Counter(item["reason_code"] for item in served), expected)
+        # And they must agree date by date, with the detail the records hold.
+        for item in served:
+            day = item["evaluation_date"]
+            self.assertEqual(item["reason_code"], self.left[day].reason_code)
+            self.assertEqual(item["reason_detail"], self.left[day].reason_detail)
+            self.assertEqual(item["side"], "left")
+
+    def test_the_right_unpaired_reasons_match_the_records(self):
+        sets = self._sets()
+        expected_dates = set(sets["right refused only"])
+        served = self.payload["unpaired_right"]
+        self.assertEqual({item["evaluation_date"] for item in served}, expected_dates)
+        expected = Counter(
+            self.right[day].reason_code for day in sorted(expected_dates)
+        )
+        self.assertEqual(Counter(item["reason_code"] for item in served), expected)
+        for item in served:
+            day = item["evaluation_date"]
+            self.assertEqual(item["reason_code"], self.right[day].reason_code)
+            self.assertEqual(item["reason_detail"], self.right[day].reason_detail)
+            self.assertEqual(item["side"], "right")
+
+    def test_the_unpaired_reason_distributions_are_pinned(self):
+        # The distributions the records currently give, so that a change in
+        # the evidence is noticed rather than quietly absorbed.
+        sets = self._sets()
+        left = Counter(
+            self.left[day].reason_code for day in sets["left refused only"]
+        )
+        right = Counter(
+            self.right[day].reason_code for day in sets["right refused only"]
+        )
+        self.assertEqual(
+            left, Counter({"RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 13})
+        )
+        self.assertEqual(
+            right,
+            Counter(
+                {
+                    "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE": 8,
+                    "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 3,
+                }
+            ),
+        )
+
+    def test_the_reason_counts_sum_to_the_set_size(self):
+        sets = self._sets()
+        left = Counter(
+            self.left[day].reason_code for day in sets["left refused only"]
+        )
+        right = Counter(
+            self.right[day].reason_code for day in sets["right refused only"]
+        )
+        self.assertEqual(sum(left.values()), len(sets["left refused only"]))
+        self.assertEqual(sum(right.values()), len(sets["right refused only"]))
+        both = Counter(
+            self.left[day].reason_code for day in sets["both refused"]
+        )
+        both_right = Counter(
+            self.right[day].reason_code for day in sets["both refused"]
+        )
+        self.assertEqual(sum(both.values()), len(sets["both refused"]))
+        self.assertEqual(sum(both_right.values()), len(sets["both refused"]))
+
+    def test_every_refused_observation_carries_a_reason_and_a_readable_detail(self):
+        for records in (self.left, self.right):
+            for day, observation in records.items():
+                if observation.value is not None:
+                    self.assertIsNone(observation.reason_code, day)
+                    continue
+                self.assertTrue(observation.reason_code, day)
+                self.assertTrue(observation.reason_detail, day)
+                self.assertGreater(len(observation.reason_detail), 20, day)
+                self.assertIn(
+                    observation.reason_code,
+                    {
+                        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW",
+                        "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE",
+                        "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS",
+                    },
+                    day,
+                )
 
 
 class TheSensitivity(unittest.TestCase):
