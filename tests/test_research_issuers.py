@@ -53,7 +53,8 @@ class TheConfiguration(unittest.TestCase):
         document = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
         self.assertEqual(document["schema_version"], 1)
         self.assertEqual(
-            [issuer["ticker"] for issuer in document["issuers"]], ["KO", "AAPL"]
+            [issuer["ticker"] for issuer in document["issuers"]],
+            ["KO", "AAPL", "MSFT"],
         )
 
     def test_the_element_table_is_written_down_once(self):
@@ -218,6 +219,73 @@ class TheSecondCase(unittest.TestCase):
             self.assertTrue(result.input_set_id)
             self.assertTrue(result.content_hash)
             self.assertFalse(result.distribution.production_eligible)
+
+
+class TheThirdCase(unittest.TestCase):
+    """MSFT is configured, its capture is committed, and its lanes compute."""
+
+    def test_the_issuer_is_configured(self):
+        settings = settings_for_ticker("MSFT")
+        self.assertEqual(settings.issuer_id, "CIK0000789019")
+        self.assertEqual(settings.entity_name, "Microsoft Corporation")
+        self.assertEqual(settings.fiscal_year_end, "06-30")
+        self.assertEqual(settings.fye_month, 6)
+        self.assertTrue(settings.capture_dir.exists())
+
+    def test_its_calendar_and_elements_are_expressible(self):
+        settings = settings_for_ticker("MSFT")
+        elements = settings.capture["elements"]
+        # MSFT files its revenue on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax,
+        # which the registry accepts as an exact identity mapping.
+        self.assertEqual(
+            elements["revenue"]["elements"],
+            ["RevenueFromContractWithCustomerExcludingAssessedTax"],
+        )
+        self.assertEqual(
+            elements["operating_income"]["elements"],
+            ["OperatingIncomeLoss"],
+        )
+        # MSFT files no depreciation-and-amortization total; the depreciation role
+        # names us-gaap:DepreciationDepletionAndAmortization, which is not filed.
+        self.assertEqual(
+            elements["depreciation"]["elements"],
+            ["DepreciationDepletionAndAmortization"],
+        )
+        # MSFT's fiscal year ends 30 June.
+        self.assertEqual(settings.fye_month, 6)
+
+    def test_its_lanes_are_offered(self):
+        settings = settings_for_ticker("MSFT")
+        self.assertTrue(settings.lanes)
+        for lane in settings.lanes:
+            self.assertIn(lane.lane_id, candidate_lane_ids())
+            self.assertIn(lane.lane_id, all_lane_ids())
+
+    def test_the_end_to_end_verification_is_established(self):
+        """
+        MSFT's capture is committed, so its lanes compute.
+
+        The revenue lane computes; the operating-profit-plus-depreciation lane
+        refuses because MSFT files no depreciation-and-amortization total.
+        """
+        results = build_lane_results(issuer_ids=["MSFT"])
+        self.assertEqual(
+            sorted(results),
+            [
+                "msft_filed_ev_bridge_multiple_over_revenue",
+                "msft_reported_operating_profit_plus_reported_d_and_a_multiple",
+                "msft_reported_revenue_multiple",
+            ],
+        )
+        revenue = results["msft_reported_revenue_multiple"]
+        da = results["msft_reported_operating_profit_plus_reported_d_and_a_multiple"]
+        self.assertEqual(revenue.distribution.status, "RESEARCH_DISTRIBUTION")
+        self.assertEqual(revenue.distribution.sample_count, 33)
+        self.assertEqual(da.distribution.status, "RESEARCH_UNAVAILABLE")
+        self.assertEqual(da.distribution.reason_code, "RESEARCH_REASON_ELEMENT_UNAVAILABLE")
+        self.assertTrue(revenue.input_set_id)
+        self.assertTrue(revenue.content_hash)
+        self.assertFalse(revenue.distribution.production_eligible)
 
 
 class TheUnitPolicy(unittest.TestCase):

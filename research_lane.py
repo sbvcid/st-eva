@@ -656,6 +656,11 @@ def _unit_of(payloads: Mapping[str, Mapping[str, Any]]) -> str:
     units: set = set()
     for payload in payloads.values():
         units.update((payload.get("units") or {}).keys())
+    if not units:
+        # The capture holds nothing for this role. That is not a unit
+        # conflict; it is a missing element, and the lane refuses it as one
+        # rather than raising here.
+        return ""
     if len(units) == 1:
         return next(iter(units))
     if "USD" in units:
@@ -1427,6 +1432,13 @@ def _element_availability_violation(
     """
     for role in config.roles:
         held = role_payloads.get(role.name) or {}
+        if not role.elements:
+            return (
+                REASON_ELEMENT_UNAVAILABLE,
+                f"The {role.name} role names no element, so there is nothing for "
+                "the lane to read. The lane refuses rather than compute from a "
+                "quantity it cannot name.",
+            )
         for element in role.elements:
             if element not in held:
                 return (
@@ -1695,11 +1707,6 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
     role_payloads: Dict[str, Dict[str, Dict[str, Any]]] = {}
     for role in config.roles:
         role_payloads[role.name] = _element_payloads(capture, role)
-        if not role_payloads[role.name]:
-            raise ValueError(
-                f"the capture holds no element for role {role.name!r}; the "
-                "lane cannot be executed"
-            )
 
     # The unit each role's facts are read in. The unit is a property of the
     # filed facts the capture holds, not an assumption the lane makes.
@@ -1871,11 +1878,15 @@ def load_research_lane(config: ResearchLaneConfig) -> ResearchLaneResult:
         "observed_share_unit": share_unit,
         "observed_price_currency": price_currency,
     }
-    violation = _unit_policy_violation(
-        config, role_units, share_unit, price_currency
-    )
+    # A role that names an element the capture does not hold is refused
+    # before the unit policy is read: the figures are not the ones the
+    # quantity describes, and that is a more specific condition than a unit
+    # conflict.
+    violation = _element_availability_violation(config, role_payloads)
     if violation is None:
-        violation = _element_availability_violation(config, role_payloads)
+        violation = _unit_policy_violation(
+            config, role_units, share_unit, price_currency
+        )
     if violation is None:
         violation = _capture_normalisation_violation(config, capture)
     if violation is not None:

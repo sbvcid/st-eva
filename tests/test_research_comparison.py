@@ -56,15 +56,21 @@ class TheMetricDefinitions(unittest.TestCase):
 
     def test_the_definitions_carry_the_comparability_attributes(self):
         definitions = {d.metric_id: d for d in metric_definitions()}
-        self.assertEqual(
-            set(definitions), {A, B, C1, C2, AAPL_A, AAPL_B, AAPL_C1}
-        )
+        self.assertEqual(len(definitions), 10)
+        # MSFT adds three more lanes; all are defined.
+        self.assertIn("RESEARCH_MSFT_REPORTED_REVENUE_MULTIPLE", definitions)
+        self.assertIn("RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE", definitions)
+        self.assertIn("RESEARCH_MSFT_FILED_EV_BRIDGE_MULTIPLE_OVER_REVENUE", definitions)
         for definition in definitions.values():
             self.assertIn(
                 definition.numerator_kind, ("market_cap", "enterprise_value")
             )
             self.assertTrue(definition.denominator_definition)
-            self.assertTrue(definition.denominator_elements)
+            # MSFT's D&A lane has no filed depreciation element, so no denominator elements.
+            if definition.metric_id == "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE":
+                self.assertEqual(definition.denominator_elements, ())
+            else:
+                self.assertTrue(definition.denominator_elements)
             self.assertTrue(definition.currency)
             self.assertTrue(definition.unit)
             self.assertTrue(definition.formula_version)
@@ -695,7 +701,7 @@ class TheComparisonApi(unittest.TestCase):
         response = self.client.get("/api/research/definitions")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(len(payload["definitions"]), 7)
+        self.assertEqual(len(payload["definitions"]), 10)
         self.assertIn("NUMERATOR_MULTIPLIER", payload["sensitivity_assumptions"])
 
     def test_the_paired_comparison_is_served(self):

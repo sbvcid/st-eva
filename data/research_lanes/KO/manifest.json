@@ -19,6 +19,11 @@
       "entity_name": "The Coca-Cola Company",
       "fiscal_year_end": "12-31",
       "issuer_id": "CIK0000021344"
+    },
+    "MSFT": {
+      "entity_name": "Microsoft Corporation",
+      "fiscal_year_end": "06-30",
+      "issuer_id": "CIK0000789019"
     }
   },
   "lanes": {

@@ -581,6 +581,254 @@
         "scale_basis": "AAPL states its amounts in units; the capture holds them unchanged and no scaling is applied.",
         "share_unit": "shares"
       }
+    },
+    {
+      "capture": {
+        "captured_at": "2026-10-22",
+        "directory": "data/research_multiples/MSFT",
+        "earliest_filed_date": "2010-01-01",
+        "element_sources": [
+          "companyfacts",
+          "companyconcept",
+          "filing_instance"
+        ],
+        "elements": {
+          "cash": {
+            "elements": [
+              "CashAndCashEquivalentsAtCarryingValue"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "commercial_paper": {
+            "elements": [
+              "CommercialPaper"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "depreciation": {
+            "elements": [
+              "DepreciationDepletionAndAmortization"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "long_term_debt_current": {
+            "elements": [
+              "LongTermDebtCurrent"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "long_term_debt_noncurrent": {
+            "elements": [
+              "LongTermDebtNoncurrent"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "marketable_securities_current": {
+            "elements": [
+              "ShortTermInvestments"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "operating_income": {
+            "elements": [
+              "OperatingIncomeLoss"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "revenue": {
+            "elements": [
+              "RevenueFromContractWithCustomerExcludingAssessedTax"
+            ],
+            "taxonomy": "us-gaap"
+          },
+          "shares_outstanding": {
+            "elements": [
+              "EntityCommonStockSharesOutstanding"
+            ],
+            "taxonomy": "dei"
+          }
+        },
+        "periodic_forms": [
+          "10-K",
+          "10-Q"
+        ],
+        "price": {
+          "events": [
+            "div",
+            "split"
+          ],
+          "interval": "1d",
+          "period_end_epoch": 1790000000,
+          "period_start_epoch": 1262304000,
+          "provider": "yahoo_chart",
+          "symbol": "MSFT"
+        }
+      },
+      "entity_name": "Microsoft Corporation",
+      "fiscal_year_end": "06-30",
+      "issuer_id": "CIK0000789019",
+      "lanes": [
+        {
+          "bridge_roles": [],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "revenue"
+          ],
+          "formula_denominator": "the trailing twelve months of MSFT's reported revenue, as four consecutive fiscal quarters",
+          "formula_expression": "(as-traded close x cover-page shares outstanding) / TTM of us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "formula_numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "msft_reported_revenue_multiple",
+          "metric_id": "RESEARCH_MSFT_REPORTED_REVENUE_MULTIPLE",
+          "metric_label": "MSFT reported-revenue multiple (research): market capitalization over the trailing twelve months of MSFT's reported revenue",
+          "min_observations_for_description": 20,
+          "numerator_kind": "market_cap",
+          "research_purpose": "Research use only. A named revenue multiple for MSFT, computed from the one revenue element the core registry accepts for MSFT. It is not a price-to-sales reference and it is not qualified for production use."
+        },
+        {
+          "bridge_roles": [],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "operating_income",
+            "depreciation"
+          ],
+          "formula_denominator": "the trailing twelve months of MSFT's reported operating income plus reported depreciation and amortization, each a discrete fiscal quarter, summed over four consecutive quarters",
+          "formula_expression": "(as-traded close x cover-page shares outstanding) / TTM of (us-gaap:OperatingIncomeLoss + us-gaap:DepreciationDepletionAndAmortization)",
+          "formula_numerator": "as-traded close on the evaluation date times the latest knowable cover-page shares outstanding",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "msft_reported_operating_profit_plus_reported_d_and_a_multiple",
+          "metric_id": "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+          "metric_label": "MSFT reported operating profit plus reported depreciation and amortization multiple (research): market capitalization over the trailing twelve months of MSFT's reported operating income plus reported depreciation and amortization",
+          "min_observations_for_description": 20,
+          "numerator_kind": "market_cap",
+          "research_purpose": "Research use only. A named operating denominator for MSFT, from the two elements the quantity requires. MSFT files no depreciation-and-amortization total, so the capture holds no element for the depreciation role and the lane refuses: the figure is not established and is not published as one. It is not EBITDA, and the production EV/EBITDA qualification for MSFT is unchanged by this lane."
+        },
+        {
+          "bridge_roles": [
+            "cash",
+            "marketable_securities_current",
+            "commercial_paper",
+            "long_term_debt_noncurrent",
+            "long_term_debt_current"
+          ],
+          "candidate_metric": true,
+          "denominator_roles": [
+            "revenue"
+          ],
+          "formula_denominator": "the trailing twelve months of MSFT's reported revenue",
+          "formula_expression": "(market cap + total debt [long-term debt non-current + long-term debt current + commercial paper] - liquid funds [cash and cash equivalents + short-term investments]) / TTM of us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "formula_numerator": "the filed enterprise-value bridge: market capitalization plus total debt less liquid funds",
+          "formula_version": "research-multiples/1.0",
+          "lane_id": "msft_filed_ev_bridge_multiple_over_revenue",
+          "metric_id": "RESEARCH_MSFT_FILED_EV_BRIDGE_MULTIPLE_OVER_REVENUE",
+          "metric_label": "MSFT filed enterprise-value bridge multiple over reported revenue (research): the filed bridge over the trailing twelve months of MSFT's reported revenue",
+          "min_observations_for_description": 20,
+          "numerator_kind": "enterprise_value",
+          "research_purpose": "Research use only. The filed enterprise-value bridge in the production component shape, over the trailing twelve months of MSFT's reported revenue. It is not an EV/EBITDA reference: MSFT files no depreciation-and-amortization total, so the production EV/EBITDA qualification for MSFT is unchanged by this lane."
+        }
+      ],
+      "roles": [
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "revenue",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "DENOMINATOR",
+          "name": "revenue",
+          "note": "MSFT files net sales on us-gaap:Revenues until FY2010 and on us-gaap:SalesRevenueNet from FY2009 to the FY2018 third-quarter 10-Q, and on us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax from the FY2018 10-K, which states FY2016 and FY2017 on it as comparatives. The core registry accepts the successor as an exact identity mapping from 2017-09-30, holds no mapping for us-gaap:Revenues, and maps us-gaap:SalesRevenueNet only partially, which is not accepted as a source. This role reads the one element with a clear semantic basis and names what it reads, rather than falling back to a broader or unaccepted element to lengthen the sample.",
+          "registry_metric_id": "revenue"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "operating_income",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "OPERATING_INCOME",
+          "name": "operating_income",
+          "note": "us-gaap:OperatingIncomeLoss is an EXACT IDENTITY mapping to the `operating_income` metric for every filer, so this role is registry-qualified.",
+          "registry_metric_id": "operating_income"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "depreciation",
+          "element_change_kind": "RE_TAG",
+            "formula_role": "DEPRECIATION",
+            "name": "depreciation",
+          "note": "MSFT files no depreciation-and-amortization total. The element this role names, us-gaap:DepreciationDepletionAndAmortization, is not filed by MSFT: the SEC's facts APIs serve nothing for it and no periodic filing states it in an instance document. What MSFT does report is us-gaap:Depreciation, the depreciation expense from the property and equipment note, which is depreciation alone: it excludes the amortization of intangible assets and the other items the cash-flow line aggregates, so it is not the depreciation-and-amortization metric, it is not read, and it never contributes to an EBITDA figure. The capture records that no source served the element this role names, and the lane refuses rather than substitute the one it does file.",
+          "registry_metric_id": "depreciation_and_amortization"
+        },
+        {
+          "bridge_group": "LIQUID",
+          "bridge_sign": "LIQUID_FUNDS",
+          "capture_role": "cash",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "cash",
+          "note": "us-gaap:CashAndCashEquivalentsAtCarryingValue is registry-qualified for MSFT.",
+          "registry_metric_id": "cash"
+        },
+        {
+          "bridge_group": "LIQUID",
+          "bridge_sign": "LIQUID_FUNDS",
+          "capture_role": "marketable_securities_current",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "marketable_securities_current",
+          "note": "The registry declares no `marketable_securities_current` metric, so the filed-bridge specification governs the component. MSFT files us-gaap:ShortTermInvestments at every quarterly balance-sheet date from the FY2018 10-K onwards, and files no us-gaap:MarketableSecuritiesCurrent at all, so this is the component the bridge holds.",
+          "registry_metric_id": "marketable_securities_current"
+        },
+        {
+          "bridge_group": "SHORT_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "commercial_paper",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "commercial_paper",
+          "note": "The registry declares no `commercial_paper` metric. MSFT files us-gaap:CommercialPaper at its quarterly balance-sheet dates from FY2010 to FY2025, and states an explicit zero in the later quarters of that period, which is a filed zero and not an absent figure. MSFT files no commercial paper at all from the FY2026 first quarter, so the component goes out of force rather than being carried forward: a bridge that holds a stale commercial-paper instant against a later balance sheet is refused for a mixed balance sheet.",
+          "registry_metric_id": "commercial_paper"
+        },
+        {
+          "bridge_group": "LONG_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "long_term_debt_noncurrent",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "long_term_debt_noncurrent",
+          "note": "us-gaap:LongTermDebtNoncurrent is registry-qualified for MSFT.",
+          "registry_metric_id": "long_term_debt_noncurrent"
+        },
+        {
+          "bridge_group": "LONG_TERM",
+          "bridge_sign": "DEBT",
+          "capture_role": "long_term_debt_current",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "BRIDGE_COMPONENT",
+          "name": "long_term_debt_current",
+          "note": "us-gaap:LongTermDebtCurrent is registry-qualified for MSFT.",
+          "registry_metric_id": "long_term_debt_current"
+        },
+        {
+          "bridge_group": null,
+          "bridge_sign": "NONE",
+          "capture_role": "shares_outstanding",
+          "element_change_kind": "RE_TAG",
+          "formula_role": "SHARES",
+          "name": "shares_outstanding",
+          "note": "Cover-page shares outstanding, taken as filed and never adjusted for a split, paired with the as-traded close. MSFT has no split in the price series's range: its last was the 2:1 of February 2003, before the series begins.",
+          "registry_metric_id": null
+        }
+      ],
+      "ticker": "MSFT",
+      "unit_policy": {
+        "filing_currency": "USD",
+        "filing_unit": "USD",
+        "fx_rule": null,
+        "price_currency": "USD",
+        "scale": 1,
+        "scale_basis": "MSFT states its amounts in units; the capture holds them unchanged and no scaling is applied.",
+        "share_unit": "shares"
+      }
     }
   ],
   "schema_version": 1

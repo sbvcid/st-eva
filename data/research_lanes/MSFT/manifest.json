@@ -1,0 +1,91 @@
+{
+  "candidate_lane_ids": [
+    "msft_reported_revenue_multiple",
+    "msft_reported_operating_profit_plus_reported_d_and_a_multiple",
+    "msft_filed_ev_bridge_multiple_over_revenue"
+  ],
+  "dataset": "research lane results",
+  "diagnostic_lane_ids": [],
+  "issuers": {
+    "AAPL": {
+      "entity_name": "Apple Inc.",
+      "fiscal_year_end": "09-26",
+      "issuer_id": "CIK0000320193"
+    },
+    "KO": {
+      "entity_name": "The Coca-Cola Company",
+      "fiscal_year_end": "12-31",
+      "issuer_id": "CIK0000021344"
+    },
+    "MSFT": {
+      "entity_name": "Microsoft Corporation",
+      "fiscal_year_end": "06-30",
+      "issuer_id": "CIK0000789019"
+    }
+  },
+  "lanes": {
+    "msft_filed_ev_bridge_multiple_over_revenue": {
+      "candidate_metric": true,
+      "content_hash": "2db8c8cb0cf41d6484273d073a8de39ace068912406e82bb113a386940ff5c54",
+      "file": "msft_filed_ev_bridge_multiple_over_revenue.json",
+      "input_set_id": "87a4bbc1c1d2966cbc483f2f48a8b196871b8dfcdbaffef8b1c5be08c78dd6d5",
+      "issuer": "MSFT",
+      "mean": 10.572289,
+      "median": 11.628085,
+      "metric_id": "RESEARCH_MSFT_FILED_EV_BRIDGE_MULTIPLE_OVER_REVENUE",
+      "period_end": "2025-07-31",
+      "period_start": "2018-10-25",
+      "prior_period_revisions": 0,
+      "rejection_counts": {
+        "RESEARCH_REASON_INCOMPLETE_EV_BRIDGE": 1,
+        "RESEARCH_REASON_MIXED_BALANCE_SHEET_PERIODS": 20,
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 34
+      },
+      "sample_count": 12,
+      "status": "RESEARCH_THIN_SAMPLE",
+      "std": 2.676806,
+      "total_evaluations": 67
+    },
+    "msft_reported_operating_profit_plus_reported_d_and_a_multiple": {
+      "candidate_metric": true,
+      "content_hash": "d95cd060078eea570a27a651fe6d5469205a6dd373c0300d2aef9d8c652d6cf2",
+      "file": "msft_reported_operating_profit_plus_reported_d_and_a_multiple.json",
+      "input_set_id": "85c16d5ba3bab3301884c67c010b2ec3932a6a1e81cb565dbefb2daf00c8a6b5",
+      "issuer": "MSFT",
+      "mean": null,
+      "median": null,
+      "metric_id": "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE",
+      "period_end": null,
+      "period_start": null,
+      "prior_period_revisions": 0,
+      "rejection_counts": {},
+      "sample_count": 0,
+      "status": "RESEARCH_UNAVAILABLE",
+      "std": null,
+      "total_evaluations": 0
+    },
+    "msft_reported_revenue_multiple": {
+      "candidate_metric": true,
+      "content_hash": "4f1cb75ef1cfc3b57b7429dec7ca7a33b281c7792e1d43c98b61ae84cbed5987",
+      "file": "msft_reported_revenue_multiple.json",
+      "input_set_id": "f331bd8c5c1cfa97d01f3eef49bd310592013383115e9b2d39770eb6db392773",
+      "issuer": "MSFT",
+      "mean": 10.702098,
+      "median": 10.848125,
+      "metric_id": "RESEARCH_MSFT_REPORTED_REVENUE_MULTIPLE",
+      "period_end": "2026-07-30",
+      "period_start": "2018-08-03",
+      "prior_period_revisions": 0,
+      "rejection_counts": {
+        "RESEARCH_REASON_NO_DENOMINATOR_WINDOW": 34
+      },
+      "sample_count": 33,
+      "status": "RESEARCH_DISTRIBUTION",
+      "std": 1.964133,
+      "total_evaluations": 67
+    }
+  },
+  "logic_version": "research-multiples/1.0.0",
+  "methodology": "research-multiples/1.0",
+  "purpose": "Research use only. No figure here is a production reference, and nothing here is read by the production runner, the Investment Context or the Archive."
+}

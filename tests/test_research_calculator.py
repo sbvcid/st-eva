@@ -69,6 +69,15 @@ EXPECTED = {
         22.326,
         "enterprise_value",
     ),
+    "RESEARCH_MSFT_REPORTED_REVENUE_MULTIPLE": (33, 10.848125, "market_cap"),
+    (
+        "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
+    ): (0, None, "market_cap"),
+    "RESEARCH_MSFT_FILED_EV_BRIDGE_MULTIPLE_OVER_REVENUE": (
+        12,
+        11.628085,
+        "enterprise_value",
+    ),
 }
 
 DIAGNOSTIC_METRIC_ID = (
@@ -79,9 +88,9 @@ DIAGNOSTIC_METRIC_ID = (
 class TheCatalogue(unittest.TestCase):
     """The metrics a user may choose."""
 
-    def test_the_seven_candidate_lanes_are_offered(self):
+    def test_the_ten_candidate_lanes_are_offered(self):
         metrics = list_research_metrics()
-        self.assertEqual(len(metrics), 7)
+        self.assertEqual(len(metrics), 10)
         self.assertEqual(
             {metric.metric_id for metric in metrics}, set(EXPECTED)
         )
@@ -90,9 +99,12 @@ class TheCatalogue(unittest.TestCase):
         for metric in list_research_metrics():
             count, median, _numerator_kind = EXPECTED[metric.metric_id]
             self.assertEqual(metric.sample_count, count, metric.metric_id)
-            self.assertAlmostEqual(
-                metric.median, median, places=6, msg=metric.metric_id
-            )
+            if median is None:
+                self.assertIsNone(metric.median, metric.metric_id)
+            else:
+                self.assertAlmostEqual(
+                    metric.median, median, places=6, msg=metric.metric_id
+                )
             self.assertTrue(metric.formula_expression)
             self.assertTrue(metric.formula_numerator)
             self.assertTrue(metric.formula_denominator)
@@ -129,6 +141,11 @@ class TheCatalogue(unittest.TestCase):
 
     def test_every_metric_carries_the_registry_standing_and_the_refusal(self):
         for metric in list_research_metrics():
+            # MSFT's D&A lane has no filed element, so its standing is empty;
+            # every other metric has at least one element standing.
+            if metric.metric_id == "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE":
+                self.assertEqual(metric.registry_standing, {})
+                continue
             self.assertTrue(metric.registry_standing)
             self.assertFalse(metric.production_eligible)
             self.assertIn("production_eligible", metric.production_refusal)
@@ -137,6 +154,11 @@ class TheCatalogue(unittest.TestCase):
 
     def test_every_metric_states_the_elements_it_reads(self):
         for metric in list_research_metrics():
+            # MSFT's D&A lane reads no element (the capture holds none), so its
+            # standing is empty.
+            if metric.metric_id == "RESEARCH_MSFT_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE":
+                self.assertEqual(metric.registry_standing, {})
+                continue
             elements = set()
             for standing in metric.registry_standing.values():
                 elements.update(standing)
@@ -1075,7 +1097,7 @@ class TheResearchApi(unittest.TestCase):
         response = self.client.get("/api/research/metrics")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(len(payload["metrics"]), 7)
+        self.assertEqual(len(payload["metrics"]), 10)
         self.assertIn("RESEARCH USE ONLY", payload["research_use_notice"])
         self.assertEqual(
             payload["user_assumption_label"], USER_ASSUMPTION_LABEL

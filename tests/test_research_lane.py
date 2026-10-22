@@ -51,6 +51,7 @@ from research_issuers import (
 # The KO case, read from the issuer configuration.
 _KO = settings_for_ticker("KO")
 _AAPL = settings_for_ticker("AAPL")
+_MSFT = settings_for_ticker("MSFT")
 CAPTURE_DIR = _KO.capture_dir
 LANE_CONFIGS = lane_configs()
 CANDIDATE_LANE_IDS = candidate_lane_ids()
@@ -361,7 +362,10 @@ class TheCapture(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             write_research_outputs(Path(directory))
             written = sorted(path.name for path in Path(directory).iterdir())
-            self.assertEqual(len(written), len(_KO.lanes) + len(_AAPL.lanes) + 1)
+            self.assertEqual(
+                len(written),
+                len(_KO.lanes) + len(_AAPL.lanes) + len(_MSFT.lanes) + 1,
+            )
         self.assertEqual(_versioned_data_digest(), repo_before)
 
 
@@ -495,12 +499,13 @@ class TheLanes(unittest.TestCase):
             CANDIDATE_LANE_IDS,
         )
 
-    def test_the_candidate_lanes_are_the_seven_named_metrics(self):
-        self.assertEqual(len(CANDIDATE_LANE_IDS), 7)
+    def test_the_candidate_lanes_are_the_ten_named_metrics(self):
+        self.assertEqual(len(CANDIDATE_LANE_IDS), 10)
         self.assertEqual(
             set(CANDIDATE_LANE_IDS),
             {lane.lane_id for lane in _KO.lanes if lane.candidate_metric}
-            | {lane.lane_id for lane in _AAPL.lanes if lane.candidate_metric},
+            | {lane.lane_id for lane in _AAPL.lanes if lane.candidate_metric}
+            | {lane.lane_id for lane in _MSFT.lanes if lane.candidate_metric},
         )
         for lane_id in CANDIDATE_LANE_IDS:
             self.assertTrue(self.all_results[lane_id].candidate_metric)
