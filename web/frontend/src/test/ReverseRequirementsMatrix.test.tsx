@@ -1121,6 +1121,68 @@ describe('Starting EPS period basis disclosure', () => {
   })
 })
 
+describe('market price evidence assumption badge', () => {
+  const withPriceEvidence = (
+    priceEvidence: Partial<
+      ReverseRequirementsReportDTO['reverse_requirements_matrix'][number]['evidence']['price_evidence']
+    >,
+  ): ReverseRequirementsReportDTO => ({
+    ...mockReport,
+    matrix_size: 1,
+    reverse_requirements_matrix: [
+      {
+        ...mockReport.reverse_requirements_matrix[1],
+        evidence: {
+          ...mockReport.reverse_requirements_matrix[1].evidence,
+          price_evidence: {
+            ...mockReport.reverse_requirements_matrix[1].evidence!.price_evidence,
+            ...priceEvidence,
+          },
+        },
+      },
+    ],
+  })
+
+  const openDrawer = (report: ReverseRequirementsReportDTO) => {
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={report} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+  }
+
+  it('renders the user assumption badge when price_evidence.is_user_assumption is true', () => {
+    const report = withPriceEvidence({ is_user_assumption: true })
+    openDrawer(report)
+
+    expect(screen.getByText('User Assumption')).toBeInTheDocument()
+    expect(screen.queryByText('Verified Sourced Fact')).not.toBeInTheDocument()
+  })
+
+  it('renders the sourced fact badge when price_evidence.is_user_assumption is false', () => {
+    const report = withPriceEvidence({ is_user_assumption: false })
+    openDrawer(report)
+
+    expect(screen.getByText('Verified Sourced Fact')).toBeInTheDocument()
+    expect(screen.queryByText('User Assumption')).not.toBeInTheDocument()
+  })
+
+  it('never labels a user assumption as a sourced fact', () => {
+    const report = withPriceEvidence({ is_user_assumption: true })
+    openDrawer(report)
+
+    expect(screen.queryByText('Verified Sourced Fact')).not.toBeInTheDocument()
+  })
+
+  it('never labels a sourced fact as a user assumption', () => {
+    const report = withPriceEvidence({ is_user_assumption: false })
+    openDrawer(report)
+
+    expect(screen.queryByText('User Assumption')).not.toBeInTheDocument()
+  })
+})
+
 describe('Dividend & Total-Return Comparison display', () => {
   const withDividendReport = (
     dividendBasis: any = null,

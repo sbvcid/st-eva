@@ -580,8 +580,16 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                       <span className="font-semibold text-slate-800 text-[11px]">
                                         {t.matrix.marketPriceFact}
                                       </span>
-                                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-mono">
-                                        {t.matrix.sourcedFactBadge}
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                                          sc.evidence.price_evidence.is_user_assumption
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-slate-100 text-slate-700'
+                                        }`}
+                                      >
+                                        {sc.evidence.price_evidence.is_user_assumption
+                                          ? t.matrix.userSpecifiedBadge
+                                          : t.matrix.sourcedFactBadge}
                                       </span>
                                     </div>
                                     <div className="font-mono text-sm font-bold text-slate-900">
