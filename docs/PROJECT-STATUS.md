@@ -5854,3 +5854,56 @@ knowable. MSFT is not qualified for production by any of this.
 
 No product blocker. Archive cleanup remains deferred per the existing
 decision.
+
+## Phase 9.21 — Reverse-Valuation End-to-End Acceptance Audit (verified 2026-10-23, commit fe26c6e)
+
+### Baseline and CI
+
+Git: `master` at `4657bba`, in sync with `origin/master`, clean working tree.
+CI run `39439420001` for `fe26c6e`: **backend 3014 passed, 171 skipped, 534 subtests passed; web API 25 passed; archive isolation 6 passed; frontend Vitest 131 passed; frontend build produced `dist/index.html`; browser smoke 15 passed (48.40s).** The workflow is green — no failures.
+
+### Audit findings
+
+All invariants were verified against the committed implementation. **No defects found. No code changes required.**
+
+1. **Identity and price** — verified: `SecurityIdentityHeader` renders ticker, company name, current price, currency, as-of date, and research ID above the matrix; `ResultCards` no longer duplicates them (price appears exactly once as `USD 425.50` for MSFT, ticker `MSFT` exactly once).
+
+2. **Evidence classification** — verified: `is_user_assumption` badges shown for market-price, start-EPS and exit-multiple evidence (blue `user-supplied` badge vs slate `verified-source` badge); market-price badge respects `price_evidence.is_user_assumption` in `ReverseRequirementsMatrix.tsx`.
+
+3. **Production/research isolation** — verified: `production_eligible=False` frozen on frozen `ResearchDistribution` dataclasses; research writes nothing to Archive, produces no `refc:*`, reaches no Investment Context; research API mounted separately at `/api/research`; all 11 research lanes confirmed `production_eligible=False` with no `refc:*` in output.
+
+4. **Reference eligibility** — verified: production historical P/E, P/S, EV/EBITDA and P/FCF distributions gate on their own `usable_for_reference` flag (`>=20` qualifying observations); insufficient samples reported as `INSUFFICIENT_OBSERVATIONS`, never silently substituted; unavailable references reported explicitly, never as zero.
+
+5. **Conditional matrix** — verified: each matrix row discloses holding period, required return, exit multiple and starting EPS basis (`period_label`, `period_start`, `period_end`, `period_undeclared_by_source`, `basis`, `months_covered`); no row preselected; no buy/sell/verdict language anywhere.
+
+6. **Missing/incompatible evidence** — verified: unavailable values shown as `—`, never zero; currency mismatches and incomplete inputs refused explicitly.
+
+7. **Exports** — verified: JSON and CSV retain `refc:*` provenance, `is_user_assumption` flags, `user_assumptions_json`, `sourced_facts_json`, `missing_or_unvalidated_json`; uncomputed matrices exported as status-only rows without fabrication.
+
+8. **Browser acceptance** — verified: 15/15 browser smoke tests pass (48.40s), including identity→matrix→cards ordering and localized heading in en/zh-TW.
+
+### SOFI replay divergence (investigated, confirmed reproducible, not a defect)
+
+SOFI's two committed context snapshots (`ctx_9474f510...` archived 13:41:02, `ctx_1ae24090...` archived 13:46:01, both `USABLE_FOR_REFERENCE`, both from 2026-10-19) were replayed against the committed archive using `archive.replay()` at the archival watermark:
+
+- **ctx_9474f510**: `DIVERGED` — price changed from `14.54` (stored) to `14.445` (rebuilt); `implied_forward_eps` `17.63300549363926` → `17.517796723220023`; `current_pe` `29.6734693877551` → `29.479591836734695`. 27 field diffs. Observations: 108 used / 108 considered.
+- **ctx_1ae24090**: `DIVERGED` — `implied_forward_eps` `0.7222500000000001` → `None`; provenance `CONDITIONAL` → `UNAVAILABLE`. 29 field diffs. Observations: 108 used / 108 considered.
+
+**Classification:** input drift / provider revision, not a defect. The archived price observation was revised by the provider between archival and replay; the rebuild uses the current observation value and correctly reports `DIVERGED`. The consensus EPS that supported `implied_forward_eps=0.72` in the second context was not available at replay time, so the rebuild correctly reports it unavailable. Neither divergence is silenced, smoothed, or overwritten; the archived documents are preserved untouched.
+
+**Replay determinism** — verified: replaying the same frozen inputs twice reproduces identical results (`context_id` stable across repeated replays at the same watermark); volatile fields (`generated_at`, `document_hash`) are excluded from the identity hash; `refc:*` timestamps remain in the payload.
+
+### Tests
+
+- `tests/test_replay_divergence.py` — 7 tests, all passing (data-date vs watermark replay, semantic equality, genuine divergence still diverges, no substitution at earlier cutoff, insufficient and no snapshot preserved, canonicalization deterministic).
+- `tests/test_replay_snapshot_identity.py` — 10 tests, all passing (replay targets named snapshot, unknown snapshot identity absent, default `as_of` selection unchanged, two contexts sharing `as_of` distinct and selectable, web path reconciles against its own run).
+- Full backend suite: 3014 passed, 171 skipped, 534 subtests.
+- Frontend Vitest: 131 passed, 9 files.
+- Frontend build (`dist/index.html`): produced.
+- `git diff --cached --check`: clean.
+
+### Git
+
+Committed and pushed; remote HEAD verified in sync and the working tree clean.
+
+## Phase 5 (2026-10-20): Production historical P/S and EV/EBITDA reference distributions
