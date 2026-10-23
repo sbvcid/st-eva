@@ -5882,28 +5882,29 @@ All invariants were verified against the committed implementation. **No defects 
 
 8. **Browser acceptance** — verified: 15/15 browser smoke tests pass (48.40s), including identity→matrix→cards ordering and localized heading in en/zh-TW.
 
-### SOFI replay divergence (investigated, confirmed reproducible, not a defect)
+### SOFI replay divergence (investigated, replay divergence confirmed, root cause partially verified)
 
-SOFI's two committed context snapshots (`ctx_9474f510...` archived 13:41:02, `ctx_1ae24090...` archived 13:46:01, both `USABLE_FOR_REFERENCE`, both from 2026-10-19) were replayed against the committed archive using `archive.replay()` at the archival watermark:
+SOFI's two committed context snapshots (`ctx_9474f510dd18e1b4b6fbba568c0d31cf` archived 13:41:02, `ctx_1ae2409054a5aec06729fa0fd3c7d73f` archived 13:46:01, both `USABLE_FOR_REFERENCE`, both from 2026-10-19) were inspected directly from the committed `data/archives/SOFI.sqlite` archive database:
 
-- **ctx_9474f510**: `DIVERGED` — price changed from `14.54` (stored) to `14.445` (rebuilt); `implied_forward_eps` `17.63300549363926` → `17.517796723220023`; `current_pe` `29.6734693877551` → `29.479591836734695`. 27 field diffs. Observations: 108 used / 108 considered.
-- **ctx_1ae24090**: `DIVERGED` — `implied_forward_eps` `0.7222500000000001` → `None`; provenance `CONDITIONAL` → `UNAVAILABLE`. 29 field diffs. Observations: 108 used / 108 considered.
+- **ctx_9474f510**: price = `14.54`, `implied_forward_eps` = `None` (provenance `UNAVAILABLE`), `consensus_forward_eps` = `0.82459` (OBSERVED), valuation reference basis = `NONE`
+- **ctx_1ae24090**: price = `14.445`, `implied_forward_eps` = `0.7222500000000001` (provenance `CONDITIONAL`), `consensus_forward_eps` = `0.82459` (OBSERVED), valuation reference basis = `USER_SUPPLIED`, multiple = `20.0`
 
-**Classification:** input drift / provider revision, not a defect. The archived price observation was revised by the provider between archival and replay; the rebuild uses the current observation value and correctly reports `DIVERGED`. The consensus EPS that supported `implied_forward_eps=0.72` in the second context was not available at replay time, so the rebuild correctly reports it unavailable. Neither divergence is silenced, smoothed, or overwritten; the archived documents are preserved untouched.
+**Confirmed from committed data:**
+- **Price changed from `14.54` to `14.445`** — real input change documented in both archived snapshots.
+- **`implied_forward_eps` changed from `None` (UNAVAILABLE) to `0.7222500000000001` (CONDITIONAL)** — the direction is the opposite of an earlier note; context 1 has it unavailable, context 2 has it computed.
+- **`consensus_forward_eps` was `0.82459` in BOTH contexts** — consensus was available in both snapshots and did not become unavailable.
 
-**Replay determinism** — verified: replaying the same frozen inputs twice reproduces identical results (`context_id` stable across repeated replays at the same watermark); volatile fields (`generated_at`, `document_hash`) are excluded from the identity hash; `refc:*` timestamps remain in the payload.
+**Classification: input change confirmed, root cause partially confirmed.**
+- The price change (`14.54 → 14.445`) is an observed input change; whether it resulted from a provider revision or another cause is not independently established from committed evidence alone.
+- The `implied_forward_eps` change (`None → 0.7222500000000001`) is caused by the valuation reference changing from `NONE` to `USER_SUPPLIED` (multiple `20.0`) between the two snapshots — this is directly observable in the archived data and is not due to consensus unavailability.
+- Neither divergence is silenced, smoothed, or overwritten; archived documents are preserved untouched.
+
+**Replay determinism:** Not independently verified from committed code; no replay test files exist in the repository (`tests/test_replay_divergence.py` and `tests/test_replay_snapshot_identity.py` referenced in commit `62fec63` were never added to the repo).
 
 ### Tests
-
-- `tests/test_replay_divergence.py` — 7 tests, all passing (data-date vs watermark replay, semantic equality, genuine divergence still diverges, no substitution at earlier cutoff, insufficient and no snapshot preserved, canonicalization deterministic).
-- `tests/test_replay_snapshot_identity.py` — 10 tests, all passing (replay targets named snapshot, unknown snapshot identity absent, default `as_of` selection unchanged, two contexts sharing `as_of` distinct and selectable, web path reconciles against its own run).
-- Full backend suite: 3014 passed, 171 skipped, 534 subtests.
-- Frontend Vitest: 131 passed, 9 files.
-- Frontend build (`dist/index.html`): produced.
-- `git diff --cached --check`: clean.
+- No replay-specific test files exist in the repository. Full backend suite: 3014 passed, 171 skipped, 534 subtests; archive isolation 6 passed; frontend Vitest 131 passed, 9 files; frontend build produced `dist/index.html`; `git diff --cached --check` clean.
 
 ### Git
-
 Committed and pushed; remote HEAD verified in sync and the working tree clean.
 
 ## Phase 5 (2026-10-20): Production historical P/S and EV/EBITDA reference distributions
