@@ -177,7 +177,7 @@ describe('Bilingual (i18n) Interface', () => {
     fireEvent.click(zhButton)
 
     // Chinese labels rendered immediately
-    expect(screen.getByText('分析結果裁決')).toBeInTheDocument()
+    expect(screen.getByText('反向估值結果')).toBeInTheDocument()
     expect(screen.getByText('市場價格')).toBeInTheDocument()
     expect(screen.getByText(/準入審查狀態：\s*已準入/i)).toBeInTheDocument()
     expect(screen.getByText('觀測估值倍數')).toBeInTheDocument()

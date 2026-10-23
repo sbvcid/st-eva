@@ -39,7 +39,7 @@ export const zhTW: Translations = {
     archiveReplay: '存檔與時點重演',
   },
   results: {
-    verdictTitle: '分析結果裁決',
+    verdictTitle: '反向估值結果',
     analyzeAnother: '分析其他標的',
     marketPrice: '市場價格',
     headlineMetricsTitle: '市場隱含參考指標',
@@ -152,6 +152,8 @@ export const zhTW: Translations = {
   matrix: {
     title: '反向估值需求矩陣',
     subtitle: '依據現價與退出倍數推導之確定性要求門檻情境',
+    rowConditionalNote:
+      '矩陣中每一列皆為特定持有期間、要求報酬率、退出倍數與起始 EPS 基準下的條件式要求；變更任何假設皆會產生不同列，且無列被預先選為答案。',
     formulaVersion: '公式版本',
     fingerprint: '計算指紋',
     statusComputed: '已計算',

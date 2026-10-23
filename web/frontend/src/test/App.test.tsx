@@ -318,6 +318,96 @@ describe('ST-EVA Frontend App Component', () => {
     expect(screen.getByText('reverse-requirements/1.1')).toBeInTheDocument()
   })
 
+  it('renders the reverse-requirements matrix as the primary answer before supporting cards', async () => {
+    const completedJob: JobDetailResponse = {
+      job_id: 'job-hierarchy',
+      ticker: 'AAPL',
+      status: 'COMPLETED',
+      stage: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      result: {
+        ticker: 'AAPL',
+        company_name: 'Apple Inc.',
+        status: 'success',
+        as_of: '2026-06-30',
+        research_id: 'RES-R5',
+        source_identifiers: [],
+        admission_summary: {
+          total_admitted: 0,
+          total_refused: 0,
+          metrics_admitted: [],
+          refusals: [],
+        },
+        valuation_summary: {
+          limitations: [],
+          current_price: 336.64,
+          currency: 'USD',
+          forward_eps_at_reference_multiple: 11.22,
+          selected_pe: 30.0,
+        },
+        replay_summary: {
+          attempted: false,
+          matched: false,
+          reconstructed: false,
+          observations_used: 0,
+          observations_considered: 0,
+        },
+        refusal_reasons: [],
+        reverse_requirements: {
+          formula_version: 'reverse-requirements/1.1',
+          status: 'COMPUTED',
+          matrix_size: 1,
+          reverse_requirements_matrix: [
+            {
+              horizon_years: 3.0,
+              required_return: 0.12,
+              required_return_basis: 'PRICE_RETURN_ONLY',
+              exit_multiple: { value: 25.0, source: 'user_supplied' },
+              required_exit_price: 200.0,
+              required_terminal_eps: 8.0,
+              start_eps: { value: 6.0, basis: 'TRAILING_TWELVE_MONTHS', months_covered: 12.0 },
+              growth_years: 3.0,
+              required_eps_cagr: 0.10,
+              total_terminal_eps_growth: 0.33,
+              comparison_notes: [],
+              flags: [],
+              formula_version: 'reverse-requirements/1.1',
+            },
+          ],
+          reading_notes: [],
+        },
+        raw_analysis: { evidence_ids: ['ev-price-001'] },
+      },
+    }
+
+    vi.mocked(apiClient.startAnalysis).mockResolvedValue({
+      job_id: 'job-hierarchy',
+      ticker: 'AAPL',
+      status: 'PENDING',
+    })
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue(completedJob)
+
+    render(<App />)
+    fireEvent.change(screen.getByPlaceholderText(/Enter ticker/i), {
+      target: { value: 'AAPL' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+
+    await waitFor(() => expect(screen.getByText('Apple Inc.')).toBeInTheDocument())
+
+    // The verdict-style label is replaced with a neutral results heading.
+    expect(screen.queryByText('Analysis Verdict')).not.toBeInTheDocument()
+    expect(screen.getByText('Reverse-Valuation Results')).toBeInTheDocument()
+
+    // Matrix (primary answer) precedes supporting result cards in document order.
+    const body = document.body.textContent || ''
+    const matrixIdx = body.indexOf('Reverse Requirements Matrix')
+    const headlineIdx = body.indexOf('Market-Implied Headline Metrics')
+    expect(matrixIdx).toBeGreaterThanOrEqual(0)
+    expect(headlineIdx).toBeGreaterThan(matrixIdx)
+  })
+
   it('renders regression fixture notice when data comes from RegressionFixture', async () => {
     vi.mocked(apiClient.startAnalysis).mockResolvedValue({
       job_id: 'job-regression-fixture',

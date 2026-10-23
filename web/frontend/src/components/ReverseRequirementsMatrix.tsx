@@ -208,6 +208,9 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">{t.matrix.subtitle}</p>
+          <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+            {t.matrix.rowConditionalNote}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">

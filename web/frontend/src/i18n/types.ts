@@ -131,6 +131,7 @@ export interface Translations {
   matrix: {
     title: string
     subtitle: string
+    rowConditionalNote: string
     formulaVersion: string
     fingerprint: string
     statusComputed: string

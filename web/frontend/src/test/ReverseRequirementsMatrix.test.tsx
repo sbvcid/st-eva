@@ -1183,6 +1183,28 @@ describe('market price evidence assumption badge', () => {
   })
 })
 
+describe('matrix row conditional meaning', () => {
+  it('states that each row is conditional on its own assumptions', () => {
+    render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={mockReport} />
+      </I18nProvider>
+    )
+    expect(
+      screen.getByText(/Each row is a conditional requirement/i)
+    ).toBeInTheDocument()
+  })
+
+  it('localises the row conditional note in Traditional Chinese', () => {
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ReverseRequirementsMatrix report={mockReport} />
+      </I18nProvider>
+    )
+    expect(screen.getByText(/矩陣中每一列皆為特定持有期間/i)).toBeInTheDocument()
+  })
+})
+
 describe('Dividend & Total-Return Comparison display', () => {
   const withDividendReport = (
     dividendBasis: any = null,

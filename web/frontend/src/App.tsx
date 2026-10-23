@@ -659,6 +659,11 @@ const MainApp: React.FC = () => {
               </div>
             </div>
 
+            <ReverseRequirementsMatrix
+              report={currentJob.result.reverse_requirements}
+              currency={currentJob.result.valuation_summary?.currency || '$'}
+            />
+
             <ResultCards
               ticker={currentJob.result.ticker}
               companyName={currentJob.result.company_name}
@@ -669,11 +674,6 @@ const MainApp: React.FC = () => {
               replay={currentJob.result.replay_summary}
               refusalReasons={currentJob.result.refusal_reasons}
               sourceIdentifiers={currentJob.result.source_identifiers}
-            />
-
-            <ReverseRequirementsMatrix
-              report={currentJob.result.reverse_requirements}
-              currency={currentJob.result.valuation_summary?.currency || '$'}
             />
 
             <EvidenceAccordion

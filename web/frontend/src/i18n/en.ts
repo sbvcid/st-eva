@@ -39,7 +39,7 @@ export const en: Translations = {
     archiveReplay: 'Archive / Replay',
   },
   results: {
-    verdictTitle: 'Analysis Verdict',
+    verdictTitle: 'Reverse-Valuation Results',
     analyzeAnother: 'Analyze another',
     marketPrice: 'Market Price',
     headlineMetricsTitle: 'Market-Implied Headline Metrics',
@@ -152,6 +152,8 @@ export const en: Translations = {
   matrix: {
     title: 'Reverse Requirements Matrix',
     subtitle: 'Pure deterministic scenario requirements implied by price and exit multiples',
+    rowConditionalNote:
+      'Each row is a conditional requirement for its own holding period, required return, exit multiple and starting EPS basis; changing any assumption produces a different row, and no row is preselected as the answer.',
     formulaVersion: 'Formula Version',
     fingerprint: 'Fingerprint',
     statusComputed: 'COMPUTED',
