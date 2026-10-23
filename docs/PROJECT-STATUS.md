@@ -62,8 +62,7 @@ This section is the hand-off checkpoint for future conversations and coding agen
 **Outstanding but intentionally not complete**
 
 - The production point-in-time historical P/E reference is available on the web path only for the two configured issuers, ``AAPL`` and ``MSFT``. Any other ticker is reported as ``UNAVAILABLE`` with an explicit reason rather than being given a fabricated distribution.
-- The production point-in-time historical **P/S** reference (Phase 5) is established for ``AAPL`` and ``MSFT`` (28 and 23 qualifying observations respectively); AEP's P/S is a short sample of four and reports ``INSUFFICIENT_OBSERVATIONS`` rather than a reference. The historical **EV/EBITDA** reference (Phase 5) is established for ``AAPL`` and ``AEP`` only; MSFT reports ``UNAVAILABLE`` because it has no element that qualifies for the depreciation-and-amortization role. Any ticker without a qualified distribution is reported ``UNAVAILABLE`` with the explicit reason and contributes no reference to the report's sales and enterprise-value methods.
-- The **P/FCF** valuation method still reads no production reference: the production historical P/FCF distribution does not feed that method, so it reports itself unavailable rather than being filled with a thin vendor band. This is pre-existing behaviour, unchanged by Phase 5.
+- The production point-in-time historical **P/S** reference (Phase 5) is established for ``AAPL`` and ``MSFT`` (28 and 23 qualifying observations respectively); AEP's P/S is a short sample of four and reports ``INSUFFICIENT_OBSERVATIONS`` rather than a reference. The historical **EV/EBITDA** reference (Phase 5) is established for ``AAPL`` and ``AEP`` only; MSFT reports ``UNAVAILABLE`` because it has no element that qualifies for the depreciation-and-amortization role. The production **P/FCF** reference is already integrated: it is established for ``AAPL`` (35/36, median 25.343981), ``MSFT`` (23/27, median 41.578319) and ``MU`` (362/575, median 67.712721), each gated on its distribution's own ``usable_for_reference`` flag at the same ``>= 20`` qualifying-observation rule as P/E and reported as ``production_historical_pfcf_median``; any other ticker reports ``UNAVAILABLE`` with an explicit reason. P/S, EV/EBITDA and P/FCF do not borrow each other's references, and a production median is never recorded as a vendor-band figure.
 - The distribution is evaluated on periodic SEC filing and earnings-release usable dates, so it is not a continuous daily history, and it does not extend past the frozen dataset's last evaluation date. Both are stated in the report.
 - No second historical P/E engine and no broad caching or ingestion framework was added, and no new network acquisition was introduced to reach any source.
 - The archive has **not** been deleted or cleaned. The integration decision lists about 1.3–1.5 GB as `NO_LONGER_NEEDED` and about 0.8–1.0 GB as `REVIEW_REQUIRED`; these are planning classifications, not proof that files were deleted. Cleanup is a separate bounded task and must not block product development.
@@ -3024,7 +3023,7 @@ Each quarter's depreciation is itself a difference where the cash-flow statement
 ### What did not change
 
 - The FY2025 annual EBITDA (144,748,000,000) and the latest quarter's free cash flow (51,552,000,000) are still reported on their own periods in the admission summary, and neither is a trailing figure.
-- A qualified trailing denominator is not a qualified historical exit multiple. The minimum twenty qualifying observations for a reference multiple is unchanged, and P/S, EV/EBITDA and P/FCF do not borrow each other's references. The production historical P/S and EV/EBITDA distributions are **now implemented** — see "Phase 5 (2026-10-20)" below for the dataset, its measured counts, its eligibility and how the qualified references reach the report's sales and enterprise-value methods. The P/FCF distribution remains the one production reference the report's cash-flow method does not read, so that method still reports itself unavailable rather than being filled from a thin vendor band.
+- A qualified trailing denominator is not a qualified historical exit multiple. The minimum twenty qualifying observations for a reference multiple is unchanged, and P/S, EV/EBITDA and P/FCF do not borrow each other's references. The production historical P/S and EV/EBITDA distributions are **now implemented** — see "Phase 5 (2026-10-20)" below for the dataset, its measured counts, its eligibility and how the qualified references reach the report's sales and enterprise-value methods. The cash-flow method reads the production historical P/FCF reference where eligible (integrated via `fd311c5`/`4797f1f`, applying the same ``usable_for_reference`` gate as P/E); Phase 5's P/S and EV/EBITDA work did not change P/FCF selection. MSFT: 23/27, median 41.578319; AAPL: 35/36, median 25.343981; MU: 362/575, median 67.712721.
 - `VOLATILE_FIELDS` is unchanged and the document's schema version stays `2.3-C.2`: the round changed what the valuation is computed from, not the document's shape.
 
 ### An archive tie the replay needed
@@ -3240,9 +3239,7 @@ carries the counts (P/S 28, EV/EBITDA 27).
 - The evaluation dates are the filing usable dates shared with the income
   reconstruction, not a continuous daily trading history, and the distributions
   do not extend past the frozen dataset's last evaluation date.
-- The **P/FCF** valuation method is unchanged: the production historical P/FCF
-  distribution still does not feed that method, so it reports itself
-  unavailable. That is pre-existing behaviour and outside this round's scope.
+- The **P/FCF** valuation method was not altered in this round; it is outside this round's scope because it was already integrated via `fd311c5`/`4797f1f` and reads the production historical P/FCF reference where eligible (same ``usable_for_reference`` gate as P/E). MSFT: 23/27, median 41.578319; AAPL: 35/36, median 25.343981; MU: 362/575, median 67.712721.
 - The reconstructed enterprise value omits operating leases, non-current
   investments and off-balance sheet commitments. It is labelled partial on
   every observation.
@@ -3486,11 +3483,7 @@ Apple's goes, with no Microsoft-specific branch anywhere:
   from 23 observations, and the enterprise-value reference reports `none` /
   `UNAVAILABLE` -- Microsoft's P/S reference is never borrowed for anything
   else, and no other issuer's multiple is used for Microsoft.
-- The reverse-requirements report carries the compact summary, and the sales
-  valuation method reads the production median with
-  `ELIGIBLE_PRODUCTION_DISTRIBUTION` and `is_user_assumption: false`; the
-  enterprise-value method reports itself unavailable, and the cash-flow
-  method still reads no production reference at all.
+- The reverse-requirements report carries the compact summary, and the sales valuation method reads the production median with `ELIGIBLE_PRODUCTION_DISTRIBUTION` and `is_user_assumption: false`; the enterprise-value method reports itself unavailable, and the cash-flow method still reads no production reference at all. Clarification (superseded): this sentence records the Phase 6 MSFT audit state; the production historical P/FCF distribution was subsequently rebuilt (`fd311c5`, `historical_pfcf/1.0`) and carried through the web path (`4797f1f`), so the cash-flow method now reads the production reference where eligible — `production_pfcf_for_reference` applies the same `usable_for_reference` gate (>= 20 qualifying observations, the distribution's own median). MSFT's distribution qualifies with 23 observations and median 41.578319 (`production_historical_pfcf_median`); AAPL: 35/36, median 25.343981; MU: 362/575, median 67.712721. The dated sentence is preserved; it no longer describes the current tree.
 - The Investment Context registers `refc:ps_reference` under
   `PRODUCTION_PS_MEDIAN` with the observation count 23.
 - The archive saves the count, the replay request carries it, and a replay
