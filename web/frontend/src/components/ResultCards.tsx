@@ -7,8 +7,6 @@ import {
 import {
   AlertCircle,
   ArrowRight,
-  Building2,
-  Calendar,
   CheckCircle2,
   Repeat,
   ShieldAlert,
@@ -18,10 +16,7 @@ import { useI18n } from '../i18n'
 import { MATRIX_SECTION_ID } from './ReverseRequirementsMatrix'
 
 interface ResultCardsProps {
-  ticker: string
-  companyName: string
   asOf?: string | null
-  researchId?: string | null
   valuation: ValuationSummary
   admission: AdmissionSummary
   replay: ReplaySummary
@@ -30,10 +25,7 @@ interface ResultCardsProps {
 }
 
 export const ResultCards: React.FC<ResultCardsProps> = ({
-  ticker,
-  companyName,
   asOf,
-  researchId,
   valuation,
   admission,
   replay,
@@ -94,30 +86,6 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
 
       {/* Primary Overview Card */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold tracking-tight text-slate-900">{ticker}</span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600">
-                {valuation.currency || 'USD'}
-              </span>
-            </div>
-            <div className="text-sm text-slate-600 flex items-center gap-1.5 mt-0.5 font-medium">
-              <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
-              <span>{companyName || 'Unknown Entity'}</span>
-            </div>
-          </div>
-
-          <div className="flex sm:flex-col items-baseline sm:items-end gap-2 text-xs text-slate-500 font-mono">
-            {asOf && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" /> As of {asOf}
-              </span>
-            )}
-            {researchId && <span className="text-[11px] text-slate-400">ID: {researchId}</span>}
-          </div>
-        </div>
-
         <div className="pt-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             {t.results.headlineMetricsTitle}
@@ -127,18 +95,7 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
           </p>
 
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3">
-            <div>
-              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                {t.results.marketPrice}
-              </div>
-              <div className="text-lg font-bold text-slate-900 mt-0.5">
-                {valuation.current_price !== null && valuation.current_price !== undefined
-                  ? `${valuation.currency || '$'} ${valuation.current_price.toFixed(2)}`
-                  : '—'}
-              </div>
-            </div>
-
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-3">
             <div>
               <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                 {t.results.impliedFwdEps}

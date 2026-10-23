@@ -13,6 +13,7 @@ import { I18nProvider, useI18n, Language } from './i18n'
 import { ProgressStepper } from './components/ProgressStepper'
 import { ResultCards } from './components/ResultCards'
 import { ReverseRequirementsMatrix } from './components/ReverseRequirementsMatrix'
+import { SecurityIdentityHeader } from './components/SecurityIdentityHeader'
 import { EvidenceAccordion } from './components/EvidenceAccordion'
 import { ResearchPanel } from './components/ResearchPanel'
 import {
@@ -659,16 +660,24 @@ const MainApp: React.FC = () => {
               </div>
             </div>
 
+            <SecurityIdentityHeader
+              ticker={currentJob.result.ticker}
+              companyName={currentJob.result.company_name}
+              currentPrice={
+                currentJob.result.valuation_summary?.current_price ?? null
+              }
+              currency={currentJob.result.valuation_summary?.currency || null}
+              asOf={currentJob.result.as_of}
+              researchId={currentJob.result.research_id}
+            />
+
             <ReverseRequirementsMatrix
               report={currentJob.result.reverse_requirements}
               currency={currentJob.result.valuation_summary?.currency || '$'}
             />
 
             <ResultCards
-              ticker={currentJob.result.ticker}
-              companyName={currentJob.result.company_name}
               asOf={currentJob.result.as_of}
-              researchId={currentJob.result.research_id}
               valuation={currentJob.result.valuation_summary}
               admission={currentJob.result.admission_summary}
               replay={currentJob.result.replay_summary}

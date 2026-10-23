@@ -28,10 +28,6 @@ const renderCards = (valuation: Partial<ValuationSummary>) =>
   render(
     <I18nProvider initialLang="en">
       <ResultCards
-        ticker="AAPL"
-        companyName="Apple Inc."
-        asOf="2026-10-09"
-        researchId="RES-R5"
         valuation={{ limitations: [], ...valuation } as ValuationSummary}
         admission={admission}
         replay={replay}
@@ -119,10 +115,6 @@ describe('ResultCards headline-metric reconciliation', () => {
     render(
       <I18nProvider initialLang="zh-TW">
         <ResultCards
-          ticker="AAPL"
-          companyName="Apple Inc."
-          asOf="2026-10-09"
-          researchId="RES-R5"
           valuation={
             {
               limitations: [],

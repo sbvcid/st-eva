@@ -408,6 +408,108 @@ describe('ST-EVA Frontend App Component', () => {
     expect(headlineIdx).toBeGreaterThan(matrixIdx)
   })
 
+  it('shows security identity before the matrix and supporting cards after, with no duplication', async () => {
+    const completedJob: JobDetailResponse = {
+      job_id: 'job-identity-order',
+      ticker: 'MSFT',
+      company_name: 'Microsoft Corporation',
+      status: 'COMPLETED',
+      stage: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      result: {
+        ticker: 'MSFT',
+        company_name: 'Microsoft Corporation',
+        status: 'success',
+        as_of: '2026-09-18',
+        research_id: 'RES-R9',
+        source_identifiers: [],
+        admission_summary: {
+          total_admitted: 0,
+          total_refused: 0,
+          metrics_admitted: [],
+          refusals: [],
+        },
+        valuation_summary: {
+          limitations: [],
+          current_price: 425.5,
+          currency: 'USD',
+          forward_eps_at_reference_multiple: 23.0,
+          selected_pe: 18.5,
+        },
+        replay_summary: {
+          attempted: false,
+          matched: false,
+          reconstructed: false,
+          observations_used: 0,
+          observations_considered: 0,
+        },
+        refusal_reasons: [],
+        reverse_requirements: {
+          formula_version: 'reverse-requirements/1.1',
+          status: 'COMPUTED',
+          matrix_size: 1,
+          reverse_requirements_matrix: [
+            {
+              horizon_years: 3.0,
+              required_return: 0.12,
+              required_return_basis: 'PRICE_RETURN_ONLY',
+              exit_multiple: { value: 25.0, source: 'user_supplied' },
+              required_exit_price: 200.0,
+              required_terminal_eps: 8.0,
+              start_eps: { value: 6.0, basis: 'TRAILING_TWELVE_MONTHS', months_covered: 12.0 },
+              growth_years: 3.0,
+              required_eps_cagr: 0.10,
+              total_terminal_eps_growth: 0.33,
+              comparison_notes: [],
+              flags: [],
+              formula_version: 'reverse-requirements/1.1',
+            },
+          ],
+          reading_notes: [],
+        },
+        raw_analysis: { evidence_ids: ['ev-price-001'] },
+      },
+    }
+
+    vi.mocked(apiClient.startAnalysis).mockResolvedValue({
+      job_id: 'job-identity-order',
+      ticker: 'MSFT',
+      status: 'PENDING',
+    })
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue(completedJob)
+
+    render(<App />)
+    fireEvent.change(screen.getByPlaceholderText(/Enter ticker/i), {
+      target: { value: 'MSFT' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
+
+    await waitFor(() => expect(screen.getByText('Microsoft Corporation')).toBeInTheDocument())
+
+    // Identity header appears before the primary matrix; supporting cards after.
+    expect(await screen.findByText('Microsoft Corporation')).toBeInTheDocument()
+    expect(screen.getByText('USD 425.50')).toBeInTheDocument()
+    expect(screen.getByText('As of 2026-09-18')).toBeInTheDocument()
+    expect(screen.getByText('ID: RES-R9')).toBeInTheDocument()
+
+    const text = document.body.textContent || ''
+    // Identity header must appear before the primary matrix, which must appear
+    // before the supporting summary cards and the admission/replay diagnostics.
+    const identityIdx = text.indexOf('Microsoft Corporation')
+    const matrixIdx = text.indexOf('Reverse Requirements Matrix')
+    const headlineIdx = text.indexOf('Market-Implied Headline Metrics')
+    const admissionIdx = text.indexOf('Admission Status')
+    expect(identityIdx).toBeGreaterThanOrEqual(0)
+    expect(matrixIdx).toBeGreaterThan(identityIdx)
+    expect(headlineIdx).toBeGreaterThan(matrixIdx)
+    expect(admissionIdx).toBeGreaterThan(headlineIdx)
+
+    // Identity fields are rendered once (no duplication across header and cards).
+    const priceCount = (text.match(/USD 425\.50/g) || []).length
+    expect(priceCount).toBe(1)
+  })
+
   it('renders regression fixture notice when data comes from RegressionFixture', async () => {
     vi.mocked(apiClient.startAnalysis).mockResolvedValue({
       job_id: 'job-regression-fixture',
