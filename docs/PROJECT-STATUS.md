@@ -304,6 +304,23 @@ Local verification for the same commit before observing CI: full backend suite 1
 
 Local verification for Phase 9.20.x (reverse-valuation UI refinements): full backend suite 3014 passed, 171 skipped, 534 subtests passed; web API 25 passed; frontend lint clean; frontend build produced `dist/index.html`; Vitest frontend 131 passed; browser smoke 15 passed (15 passed in 48.40s). Reverse-requirements matrix now renders as the primary result above supporting summary cards; security identity header (ticker, company, price, currency, as-of) rendered above the matrix; verdict-style wording replaced with neutral "Reverse-Valuation Results" (en/zh-TW); matrix rows carry explicit conditional-assumption disclosure; market-price evidence badge respects the user-assumption flag.
 
+## Phase 9.21 — Reverse-Valuation End-to-End Acceptance Audit (verified 2026-10-23, commit fe26c6e)
+
+**Audit result: No defects found. No code changes required.**
+
+All invariants verified against the committed implementation:
+
+- **Identity and price:** ticker, company name, current price, currency, as-of date, and research ID rendered by `SecurityIdentityHeader` above the matrix; `ResultCards` no longer duplicates ticker/price/as-of.
+- **Evidence classification:** `is_user_assumption` badges correctly shown for market-price, start-EPS, and exit-multiple evidence (blue "User Assumption" vs slate "Verified Sourced Fact"/"Provider-Sourced"/"SEC-Linked Source").
+- **Production/research isolation:** `production_eligible=False` frozen on research distributions; research lanes write nothing to Archive, produce no `refc:*`, reach no Investment Context; research API mounted separately at `/api/research`; all 11 research lanes confirmed `production_eligible=False` with no `refc:*` in output.
+- **Reference eligibility:** historical P/E, P/S, EV/EBITDA, P/FCF distributions gate on their own `usable_for_reference` flag (`>=20` qualifying observations); insufficient samples reported as `INSUFFICIENT_OBSERVATIONS`, never silently substituted; missing/unavailable references reported explicitly, never as zero.
+- **Conditional matrix:** each row discloses its holding period, required return, exit multiple, and starting EPS basis (period label, start/end, declared vs assumed coverage); no row preselected; no buy/sell/verdict language.
+- **Missing/incompatible evidence:** unavailable values shown as `—`, never zero; currency mismatches and incomplete inputs refused explicitly.
+- **Exports:** JSON/CSV retain `refc:*` provenance, `is_user_assumption` flags, `user_assumptions_json`, `sourced_facts_json`, `missing_or_unvalidated_json`; uncomputed matrices exported as status-only rows without fabrication.
+- **Browser acceptance:** 15/15 browser smoke tests pass (48.40s), including identity→matrix→cards ordering and localized heading in en/zh-TW.
+
+CI: backend 3014 passed / 171 skipped / 534 subtests; web API 25 passed; archive isolation 6 passed; Vitest frontend 131 passed; browser smoke 15 passed; production build (`dist/index.html`) produced; `git diff --cached --check` clean.
+
 ## R2.1 — EPS Source Binding Correction (accepted 2026-10-11, verified by run 38160351228)
 
 **Defect reviewed:** `_resolve_sec_eps_fact` accepted a `target_value` but did not use it to establish a relationship between the selected anchor and the returned SEC record. It returned the first historical SEC EPS observation with an accession, or a recent annual filing entry, and its caller attached the result to any non-user EPS anchor — including vendor forward and consensus EPS. A value's source therefore described a document about the same metric/company rather than where the value came from.
