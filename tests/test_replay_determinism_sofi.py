@@ -119,6 +119,11 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
         # The recomputed policy identity must be identical both times
         self.assertTrue(result1.reconstructed)
         self.assertTrue(result2.reconstructed)
+        # Same observation set used in both replays
+        self.assertEqual(result1.observations_used, result2.observations_used)
+        self.assertEqual(result1.observations_considered, result2.observations_considered)
+        # Same replay fidelity
+        self.assertEqual(result1.replay_fidelity, result2.replay_fidelity)
         # Implied forward EPS must be None in both (valuation reference NONE)
         self.assertIsNone(
             result1.document["derived"]["implied_forward_eps"]["figure"].get(
@@ -158,6 +163,11 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
         self.assertEqual(result1.reason, result2.reason)
         self.assertTrue(result1.reconstructed)
         self.assertTrue(result2.reconstructed)
+        # Same observation set used in both replays
+        self.assertEqual(result1.observations_used, result2.observations_used)
+        self.assertEqual(result1.observations_considered, result2.observations_considered)
+        # Same replay fidelity
+        self.assertEqual(result1.replay_fidelity, result2.replay_fidelity)
         # Implied forward EPS is None in both (user-supplied valuation
         # reference is not passed during replay)
         self.assertIsNone(
@@ -200,6 +210,11 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
         self.assertEqual(result_ctx1.reason, result_ctx2.reason)
         self.assertTrue(result_ctx1.reconstructed)
         self.assertTrue(result_ctx2.reconstructed)
+        # Same observation set used in both replays
+        self.assertEqual(result_ctx1.observations_used, result_ctx2.observations_used)
+        self.assertEqual(result_ctx1.observations_considered, result_ctx2.observations_considered)
+        # Same replay fidelity
+        self.assertEqual(result_ctx1.replay_fidelity, result_ctx2.replay_fidelity)
         # Same rebuilt document (same observation set)
         self.assertEqual(
             result_ctx1.document["observed"]["price"][0]["figure"]["value"],
