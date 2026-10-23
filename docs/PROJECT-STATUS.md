@@ -5903,13 +5903,13 @@ SOFI's two committed context snapshots (`ctx_9474f510dd18e1b4b6fbba568c0d31cf` a
 
 `tests/test_replay_determinism_sofi.py` was added and passes. It replays both SOFI context snapshots twice through `archive.replay()` and verifies:
 
-- **Same snapshot replayed twice produces identical results** — both replays of `ctx_9474f510` and both replays of `ctx_1ae24090` produce the same `recomputed` policy identity and the same divergence reason (`resolver_policy_identity` mismatch). The rebuilt document differs from the archived document only because the policy environment changed between archival and replay (the policy files on disk differ from when the archive was created), not because the calculation is non-deterministic.
+- **Same snapshot replayed twice produces identical results** — both replays of `ctx_9474f510` and both replays of `ctx_1ae24090` produce the same `recomputed` policy identity and the same divergence reason (`resolver_policy_identity` mismatch). The two rebuilt documents are compared in full after normalizing away exactly the contract's volatile fields (`generated_at`, `retrieved_at`, `checked_at`, `selected_at`, and `refc:*` reference timestamps) via `archive._dict_diff`, so every valuation output and source state must match, not just the result-level fields; the recomputed knowledge identity (`compute_content_hash`) and the `context_id` must also agree. The rebuilt document differs from the archived document only because the policy environment changed between archival and replay (the policy files on disk differ from when the archive was created), not because the calculation is non-deterministic.
 - **Both contexts replay to the same rebuilt document** — `store.observations_for(asset, as_of)` returns all observations for SOFI at `as_of=2026-10-19`, so both contexts rebuild from the same observation pool and produce identical documents (price=14.445, implied_forward_eps=None).
 - **`implied_forward_eps` is `None` in both replays** — context 1 has it `None` because valuation reference is `NONE`; context 2 has it `None` in the rebuilt document because the user-supplied valuation reference (multiple=20.0) is not passed during replay (only production references are carried through). The archived value of `0.7222500000000001` in context 2 cannot be reconstructed because the user-supplied multiple is not part of the replay input.
 
 ### Tests
 
-- `tests/test_replay_determinism_sofi.py` — 3 tests, all passed (same snapshot replayed twice is deterministic; both contexts replay to the same document).
+- `tests/test_replay_determinism_sofi.py` — 3 tests, all passed (same snapshot replayed twice is deterministic, including full normalized rebuilt-document comparison; both contexts replay to the same document). Related replay suites re-run: 164 passed, 13 skipped (pre-existing environment skips).
 - Full backend suite: 3014 passed, 171 skipped, 534 subtests; archive isolation 6 passed; frontend Vitest 131 passed, 9 files; frontend build produced `dist/index.html`; `git diff --cached --check` clean.
 
 ### Git

@@ -37,7 +37,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from archive import REPLAY_DIVERGED, REPLAY_MATCH, replay
+from archive import REPLAY_DIVERGED, REPLAY_MATCH, _dict_diff, replay
+from investment_context import compute_content_hash
 from st_eva_runner import build_context_from_observations
 from sqlite_archive import SQLiteArchive
 
@@ -89,6 +90,47 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
         self.store.close()
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
+    def assert_same_replay_output(self, result1, result2):
+        """The complete same-input determinism contract between two replays.
+
+        The rebuilt documents are compared in full after normalizing away
+        exactly the fields the contract itself treats as non-deterministic:
+        `archive._dict_diff` is the replay's own field-difference comparison
+        and excludes only the contract's VOLATILE_FIELDS (generated_at,
+        retrieved_at, checked_at, selected_at) and refc:* reference
+        timestamps. Every valuation output and every source state must be
+        identical; a difference anywhere else fails here.
+        """
+        # Full normalized comparison of the rebuilt documents: no substantive
+        # field may differ between two replays of the same frozen input.
+        self.assertEqual(
+            _dict_diff(result1.document, result2.document),
+            [],
+            "two replays of the same frozen input produced different "
+            "substantive document content",
+        )
+        # The knowledge identity recomputed over the whole normalized document
+        # must agree, so a stale stored context_id cannot hide a difference.
+        self.assertEqual(
+            compute_content_hash(result1.document),
+            compute_content_hash(result2.document),
+        )
+        self.assertEqual(
+            result1.document["context_id"],
+            result2.document["context_id"],
+        )
+        # The stored snapshot reconciled is the same (same frozen input).
+        self.assertEqual(
+            result1.stored_document_hash, result2.stored_document_hash
+        )
+        # The reported stored-vs-rebuilt field differences are the same.
+        self.assertEqual(result1.field_diffs, result2.field_diffs)
+        # Same observation source states (availability classification).
+        self.assertEqual(
+            result1.availability_classes, result2.availability_classes
+        )
+        self.assertEqual(result1.replay_fidelity, result2.replay_fidelity)
+
     def test_same_snapshot_replayed_twice_is_deterministic_ctx_9474f510(self):
         """Replaying context ctx_9474f510 twice yields identical results.
 
@@ -113,17 +155,18 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
             context_id=CTX_9474F510,
         )
 
-        # Both replays must produce the same divergence reason
+        # Both replays must produce the same replay state
         self.assertEqual(result1.outcome, result2.outcome)
         self.assertEqual(result1.reason, result2.reason)
-        # The recomputed policy identity must be identical both times
         self.assertTrue(result1.reconstructed)
         self.assertTrue(result2.reconstructed)
         # Same observation set used in both replays
         self.assertEqual(result1.observations_used, result2.observations_used)
         self.assertEqual(result1.observations_considered, result2.observations_considered)
-        # Same replay fidelity
-        self.assertEqual(result1.replay_fidelity, result2.replay_fidelity)
+        # Full comparison of the normalized rebuilt documents, covering every
+        # valuation output and source state, plus identity, diff fields, and
+        # fidelity.
+        self.assert_same_replay_output(result1, result2)
         # Implied forward EPS must be None in both (valuation reference NONE)
         self.assertIsNone(
             result1.document["derived"]["implied_forward_eps"]["figure"].get(
@@ -159,6 +202,7 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
             context_id=CTX_1AE24090,
         )
 
+        # Both replays must produce the same replay state
         self.assertEqual(result1.outcome, result2.outcome)
         self.assertEqual(result1.reason, result2.reason)
         self.assertTrue(result1.reconstructed)
@@ -166,8 +210,10 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
         # Same observation set used in both replays
         self.assertEqual(result1.observations_used, result2.observations_used)
         self.assertEqual(result1.observations_considered, result2.observations_considered)
-        # Same replay fidelity
-        self.assertEqual(result1.replay_fidelity, result2.replay_fidelity)
+        # Full comparison of the normalized rebuilt documents, covering every
+        # valuation output and source state, plus identity, diff fields, and
+        # fidelity.
+        self.assert_same_replay_output(result1, result2)
         # Implied forward EPS is None in both (user-supplied valuation
         # reference is not passed during replay)
         self.assertIsNone(
