@@ -618,7 +618,7 @@ const MainApp: React.FC = () => {
         {currentJob?.result && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <span data-testid="results-heading" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 {t.results.verdictTitle}
               </span>
               <div className="flex flex-wrap items-center gap-2">

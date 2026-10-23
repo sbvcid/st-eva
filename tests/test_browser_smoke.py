@@ -371,7 +371,7 @@ class TestBrowserSmoke(unittest.TestCase):
 
             # Wait for verdict and result cards (timeout up to 90s for live EDGAR/market data fetch)
             try:
-                page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+                page.get_by_test_id("results-heading").wait_for(state="visible", timeout=90000)
             except Exception:
                 print("Page content at timeout:\n", page.locator("body").inner_text())
                 raise
@@ -400,7 +400,7 @@ class TestBrowserSmoke(unittest.TestCase):
             tsm_button = page.locator("button:has-text('TSM')")
             tsm_button.click()
 
-            page.wait_for_selector("text=Analysis Verdict", timeout=60000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=60000)
             page.wait_for_selector("text=Admission Status: REFUSED", timeout=10000)
 
             # Verify no generic error banner
@@ -496,7 +496,7 @@ class TestBrowserSmoke(unittest.TestCase):
                 # running the whole suite alongside it can exceed the old
                 # budget. The wait is for a real completion condition, so a
                 # longer budget costs nothing when the page is ready.
-                page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+                page.get_by_test_id("results-heading").wait_for(state="visible", timeout=90000)
 
                 # Verify cards are within viewport width
                 card_box = page.locator("text=Microsoft Corporation").bounding_box()
@@ -593,7 +593,7 @@ class TestBrowserSmoke(unittest.TestCase):
             msft_btn = page.locator("button:has-text('MSFT')")
             msft_btn.click()
 
-            page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=90000)
             page.wait_for_selector("text=Reverse Requirements Matrix", timeout=10000)
 
             # Locate row detail toggle button and expand
@@ -626,7 +626,7 @@ class TestBrowserSmoke(unittest.TestCase):
             page.select_option("select >> nth=0", "regression")
             msft_btn = page.locator("button:has-text('MSFT')")
             msft_btn.click()
-            page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=90000)
             page.wait_for_selector("text=Reverse Requirements Matrix", timeout=10000)
 
             # Export controls are present in the real browser response.
@@ -683,7 +683,7 @@ class TestBrowserSmoke(unittest.TestCase):
             page.select_option("select >> nth=0", "regression")
             page.locator("button:has-text('MSFT')").click()
 
-            page.wait_for_selector("text=Analysis Verdict", timeout=90000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=90000)
             page.wait_for_selector("text=Reverse Requirements Matrix", timeout=10000)
 
             # The matrix computed, so the limitations are not a failure banner.
@@ -1044,7 +1044,7 @@ class TestLiveModeSelectionBrowser(unittest.TestCase):
 
             page.locator("input[placeholder*='Enter ticker']").fill("AAPL")
             page.locator("button[type='submit']").click()
-            page.wait_for_selector("text=Analysis Verdict", timeout=30000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=30000)
 
             self.assertEqual(
                 submitted[0],
@@ -1102,7 +1102,7 @@ class TestLiveModeSelectionBrowser(unittest.TestCase):
                     "required_returns": [0.12],
                 },
             )
-            self.assertGreater(page.locator("text=Analysis Verdict").count(), 0)
+            self.assertGreater(page.get_by_test_id("results-heading").count(), 0)
 
             new_matrix_text = page.locator("body").inner_text()
             self.assertIn("12.0%", new_matrix_text)

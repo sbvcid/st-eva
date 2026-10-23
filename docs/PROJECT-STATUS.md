@@ -302,6 +302,8 @@ Runs after the R2 baseline:
 
 Local verification for the same commit before observing CI: full backend suite 1,958 passed, 168 skipped, 140 subtests passed (341.60s); provenance regression 20 passed; wiring 49 passed; web API 22 passed; browser smoke 8 passed; Vitest frontend 27 passed; frontend build produced `dist/index.html`.
 
+Local verification for Phase 9.20.x (reverse-valuation UI refinements): full backend suite 3014 passed, 171 skipped, 534 subtests passed; web API 25 passed; frontend lint clean; frontend build produced `dist/index.html`; Vitest frontend 131 passed; browser smoke 15 passed (15 passed in 48.40s). Reverse-requirements matrix now renders as the primary result above supporting summary cards; security identity header (ticker, company, price, currency, as-of) rendered above the matrix; verdict-style wording replaced with neutral "Reverse-Valuation Results" (en/zh-TW); matrix rows carry explicit conditional-assumption disclosure; market-price evidence badge respects the user-assumption flag.
+
 ## R2.1 — EPS Source Binding Correction (accepted 2026-10-11, verified by run 38160351228)
 
 **Defect reviewed:** `_resolve_sec_eps_fact` accepted a `target_value` but did not use it to establish a relationship between the selected anchor and the returned SEC record. It returned the first historical SEC EPS observation with an accession, or a recent annual filing entry, and its caller attached the result to any non-user EPS anchor — including vendor forward and consensus EPS. A value's source therefore described a document about the same metric/company rather than where the value came from.

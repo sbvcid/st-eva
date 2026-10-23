@@ -171,7 +171,7 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
                 {"ticker": "AAPL", "mode": "live"},
             )
 
-            page.wait_for_selector("text=Analysis Verdict", timeout=480000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=480000)
             detail = self._completed_job()
             self.assertEqual(detail["status"], "COMPLETED")
             result = detail.get("result") or {}
@@ -373,7 +373,7 @@ class TestRealLiveAaplAcceptanceBrowser(unittest.TestCase):
             self.assertEqual(second["status"], "COMPLETED")
             second_result = second.get("result") or {}
             second_rr = second_result.get("reverse_requirements") or {}
-            page.wait_for_selector("text=Analysis Verdict", timeout=480000)
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=480000)
             if second_rr.get("status") == "COMPUTED":
                 second_rows = second_rr.get("reverse_requirements_matrix") or []
                 self.assertTrue(second_rows)
