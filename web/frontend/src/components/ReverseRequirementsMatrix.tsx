@@ -601,8 +601,8 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                       </span>
                                     </div>
                                     <div className="text-[11px] text-slate-500 space-y-0.5">
-                                      <div>{t.matrix.providerLabel}: {sc.evidence.price_evidence.provider || 'market'}</div>
-                                      <div>{t.matrix.asOfLabel}: {sc.evidence.price_evidence.as_of || sc.as_of || 'N/A'}</div>
+                                      <div>{t.matrix.providerLabel}: {sc.evidence.price_evidence.provider || t.matrix.providerFallbackMarket}</div>
+                                      <div>{t.matrix.asOfLabel}: {sc.evidence.price_evidence.as_of || sc.as_of || t.matrix.valueNotAvailable}</div>
                                       {sc.evidence.price_evidence.observation_id && (
                                         <div className="font-mono text-[10px] text-indigo-700">
                                           {sc.evidence.price_evidence.observation_id}
@@ -684,7 +684,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           {t.matrix.startEpsPeriodUndeclared}
                                         </div>
                                       )}
-                                      <div>{t.matrix.providerLabel}: {sc.evidence.eps_evidence.provider || 'reported'}</div>
+                                      <div>{t.matrix.providerLabel}: {sc.evidence.eps_evidence.provider || t.matrix.providerFallbackReported}</div>
                                       {sc.evidence.eps_evidence.available_at && (
                                         <div>
                                           {t.matrix.startEpsAvailableAt}: {sc.evidence.eps_evidence.available_at}
@@ -1145,7 +1145,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
 
                             {/* Lineage Info */}
                             <div className="pt-1.5 border-t border-slate-200/60 flex flex-wrap gap-4 text-[11px] text-slate-500 font-mono">
-                              <span>{t.matrix.growthWindowLabel}: {sc.growth_years !== null ? `${sc.growth_years} ${t.matrix.yrsUnit}` : 'N/A'}</span>
+                              <span>{t.matrix.growthWindowLabel}: {sc.growth_years !== null ? `${sc.growth_years} ${t.matrix.yrsUnit}` : t.matrix.valueNotAvailable}</span>
                               <span>{t.matrix.returnBasisLabel}: {sc.required_return_basis}</span>
                               {sc.start_eps?.provider && (
                                 <span>{t.matrix.epsProviderLabel}: {sc.start_eps.provider}</span>

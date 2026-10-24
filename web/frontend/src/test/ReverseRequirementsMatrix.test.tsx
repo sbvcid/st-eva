@@ -1641,5 +1641,66 @@ describe('bilingual evidence and provenance labels', () => {
     // The provider value and the retained EPS value stay visible.
     expect(screen.getByText('資料供應商: YahooFinance')).toBeInTheDocument()
   })
+
+  it('renders generic fallbacks through i18n while machine values stay as-is', () => {
+    // Empty provider strings and a missing as_of/growth window trigger the
+    // generic human-readable fallbacks; the ISO currency code stays as-is in
+    // both languages because it is a machine identifier.
+    const fallbackReport: ReverseRequirementsReportDTO = {
+      ...bilingualReport,
+      reverse_requirements_matrix: [
+        {
+          ...bilingualReport.reverse_requirements_matrix[0],
+          growth_years: null,
+          evidence: {
+            ...bilingualReport.reverse_requirements_matrix[0].evidence!,
+            price_evidence: {
+              ...bilingualReport.reverse_requirements_matrix[0].evidence!.price_evidence,
+              provider: '',
+              as_of: null,
+            },
+            eps_evidence: {
+              ...bilingualReport.reverse_requirements_matrix[0].evidence!.eps_evidence,
+              provider: '',
+            },
+          },
+        },
+      ],
+    }
+
+    // English: the generic fallbacks read in English.
+    const first = render(
+      <I18nProvider initialLang="en">
+        <ReverseRequirementsMatrix report={fallbackReport} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+    expect(screen.getByText('Provider: market')).toBeInTheDocument()
+    expect(screen.getByText('As-of: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Provider: reported')).toBeInTheDocument()
+    expect(screen.getByText('Growth window: N/A')).toBeInTheDocument()
+    // The currency code is a machine identifier and stays untouched.
+    expect(screen.getByText('USD')).toBeInTheDocument()
+    first.unmount()
+
+    // Traditional Chinese: the same fallbacks translate, the currency code
+    // does not.
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ReverseRequirementsMatrix report={fallbackReport} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('展開／收合詳情')[0])
+    expect(screen.getByText('資料供應商: 市場')).toBeInTheDocument()
+    expect(screen.getByText('資料時點: 未提供')).toBeInTheDocument()
+    expect(screen.getByText('資料供應商: 供應商申報')).toBeInTheDocument()
+    expect(screen.getByText('成長期間: 未提供')).toBeInTheDocument()
+    expect(screen.getByText('USD')).toBeInTheDocument()
+    // No English fallback text remains in the zh-TW render.
+    expect(screen.queryByText('Provider: market')).not.toBeInTheDocument()
+    expect(screen.queryByText('As-of: N/A')).not.toBeInTheDocument()
+    expect(screen.queryByText('Provider: reported')).not.toBeInTheDocument()
+    expect(screen.queryByText('Growth window: N/A')).not.toBeInTheDocument()
+  })
 })
 

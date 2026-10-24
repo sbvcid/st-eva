@@ -9,6 +9,7 @@ Verifies real Chromium execution against live FastAPI static serving and backgro
 """
 
 import json
+import re
 import time
 import threading
 import socket
@@ -438,7 +439,8 @@ class TestBrowserSmoke(unittest.TestCase):
     def test_browser_bilingual_switch(self):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            page = browser.new_page(viewport={"width": 1280, "height": 800})
+            context = browser.new_context(locale="en-US", viewport={"width": 1280, "height": 800})
+            page = context.new_page()
             page.goto(self.base_url)
 
             # Ensure header language switcher is present
@@ -455,6 +457,66 @@ class TestBrowserSmoke(unittest.TestCase):
             page.locator("button:has-text('EN')").click()
             page.wait_for_selector("text=Reverse-engineer market expectations")
             page.wait_for_selector("button:has-text('Analyze')")
+
+            # Run a real analysis so the audit drawer, source lineage and
+            # admission statistics render for the bilingual checks below.
+            page.locator("button:has-text('AAPL')").first.click()
+            page.get_by_test_id("results-heading").wait_for(state="visible", timeout=90000)
+            page.wait_for_selector("text=Admission Status:", timeout=10000)
+
+            # EN admission stats use metric/row wording with counts.
+            admission_en = page.get_by_text(re.compile(r"\d+ metrics? / \d+ rows? admitted")).first.inner_text()
+            m = re.search(r"(\d+) metrics? / (\d+) rows? admitted", admission_en)
+            self.assertIsNotNone(m)
+            admitted_metrics, admitted_rows = m.group(1), m.group(2)
+
+            # Open the audit drawer and capture machine values in English.
+            page.locator("[title='Toggle details']").first.click()
+            page.wait_for_selector("text=Scenario Audit Trail")
+            self.assertGreater(page.locator("text=/^Provider:/").count(), 0)
+            formula_en = page.locator("text=reverse-requirements/1.1").first.inner_text()
+            # accn/Flags render only for rows whose evidence carries them; the
+            # bilingual check is that zh shows the same count, not a fixed one.
+            accn_count_en = page.locator("text=/^accn: /").count()
+            accn_value = ""
+            if accn_count_en > 0:
+                accn_value = re.sub(
+                    r"^accn: ", "", page.locator("text=/^accn: /").first.inner_text()
+                ).strip()
+            flags_count_en = page.locator("text=/^Flags:/").count()
+
+            # Switch to 中文: admission counts keep the same numbers; the
+            # drawer labels translate; machine values are untouched.
+            page.locator("button:has-text('中文')").click()
+            page.wait_for_selector("text=反向估值需求矩陣")
+            page.wait_for_selector(
+                f"text=/{admitted_metrics} 項指標 / {admitted_rows} 列已準入/"
+            )
+            if page.locator("text=情境審計軌跡").count() == 0:
+                page.locator("[title='展開／收合詳情']").first.click()
+            self.assertGreater(page.locator("text=/^資料供應商:/").count(), 0)
+            self.assertEqual(
+                page.locator("text=/^文號: /").count(), accn_count_en
+            )
+            self.assertEqual(page.locator("text=/^旗標:/").count(), flags_count_en)
+            self.assertEqual(page.locator("text=/^Provider:/").count(), 0)
+            self.assertEqual(page.locator("text=/^accn: /").count(), 0)
+            if accn_value:
+                # The accession captured in English is identical in Chinese.
+                self.assertGreater(
+                    page.locator(f"text=/文號: {re.escape(accn_value)}/").count(), 0
+                )
+            # Unquoted text= selectors are literal substrings; no escaping.
+            self.assertGreater(page.locator(f"text={formula_en}").count(), 0)
+
+            # Switch back to EN: the English labels and values return.
+            page.locator("button:has-text('EN')").click()
+            page.wait_for_selector("text=Reverse Requirements Matrix")
+            self.assertGreater(page.locator("text=/^Provider:/").count(), 0)
+            if accn_value:
+                self.assertGreater(
+                    page.locator(f"text=/accn: {re.escape(accn_value)}/").count(), 0
+                )
 
             browser.close()
 

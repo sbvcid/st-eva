@@ -447,11 +447,11 @@ export interface ReverseRequirementsReportDTO {
   production_historical_pfcf_summary?: ProductionHistoricalPfcfDTO | null
   production_historical_multiples_summary?: Record<string, any> | null
   // Each production distribution for P/S, P/FCF and EV/EBITDA that the
-  # report computed from its own committed dataset. Keyed by metric key so
-  # the browser can present each reference's status, sample count and
+  // report computed from its own committed dataset. Keyed by metric key so
+  // the browser can present each reference's status, sample count and
   // refusal reason without depending on the valuation_methods results.
-  # Present when the distribution was established, absent otherwise -- never
-  # fabricated or inferred from anything else.
+  // Present when the distribution was established, absent otherwise -- never
+  // fabricated or inferred from anything else.
   production_historical_multiples_distributions?: Record<string, ProductionHistoricalMultiplesDistributionDTO> | null
   consensus_reference?: ConsensusReferenceDTO
   eps_anchor_catalogue?: Record<string, any> | null

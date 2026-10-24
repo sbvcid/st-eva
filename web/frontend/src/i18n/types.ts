@@ -149,6 +149,9 @@ export interface Translations {
     scenariosCount: (count: number) => string
     providerLabel: string
     asOfLabel: string
+    providerFallbackMarket: string
+    providerFallbackReported: string
+    valueNotAvailable: string
     monthsUnit: string
     secSourceLabel: string
     accnLabel: string

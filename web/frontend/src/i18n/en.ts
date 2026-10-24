@@ -80,8 +80,13 @@ export const en: Translations = {
       admittedRows: number,
       refusedMetrics: number,
       refusedRows: number,
-    ) =>
-      `${admittedMetrics} metric(s) / ${admittedRows} row(s) admitted · ${refusedMetrics} metric(s) / ${refusedRows} row(s) refused`,
+    ) => {
+      const metric = (n: number) => `${n} metric${n === 1 ? '' : 's'}`
+      const row = (n: number) => `${n} row${n === 1 ? '' : 's'}`
+      return `${metric(admittedMetrics)} / ${row(admittedRows)} admitted · ${metric(
+        refusedMetrics,
+      )} / ${row(refusedRows)} refused`
+    },
     refusalExplanation:
       'This issuer was legitimately withheld per data contract and comparability rules (e.g. cross-currency or unmapped basis). This is a formal contract result, not a system defect.',
     coreFactsAdmitted: 'Core facts admitted into valuation input boundary.',
@@ -173,6 +178,9 @@ export const en: Translations = {
     scenariosCount: (count: number) => `${count} scenarios`,
     providerLabel: 'Provider',
     asOfLabel: 'As-of',
+    providerFallbackMarket: 'market',
+    providerFallbackReported: 'reported',
+    valueNotAvailable: 'N/A',
     monthsUnit: 'months',
     secSourceLabel: 'Source: SEC',
     accnLabel: 'accn',

@@ -222,10 +222,34 @@ describe('ResultCards partial-admission reconciliation', () => {
 })
 
 describe('ResultCards bilingual admission counts', () => {
-  it('renders the admission counts with metric/row semantics in English', () => {
+  it('renders singular counts with correct English singulars', () => {
     renderCards({ current_price: 336.64, currency: 'USD' })
     expect(
-      screen.getByText('1 metric(s) / 1 row(s) admitted · 0 metric(s) / 0 row(s) refused')
+      screen.getByText('1 metric / 1 row admitted · 0 metrics / 0 rows refused')
+    ).toBeInTheDocument()
+  })
+
+  it('renders plural counts with correct English plurals', () => {
+    const multi: AdmissionSummary = {
+      total_admitted: 3,
+      total_refused: 2,
+      metrics_admitted: ['revenue', 'shares', 'price'],
+      metrics_refused: ['dividend', 'consensus'],
+      refusals: [],
+    }
+    render(
+      <I18nProvider initialLang="en">
+        <ResultCards
+          valuation={{ limitations: [], current_price: 336.64, currency: 'USD' } as ValuationSummary}
+          admission={multi}
+          replay={replay}
+          refusalReasons={[]}
+          sourceIdentifiers={[]}
+        />
+      </I18nProvider>
+    )
+    expect(
+      screen.getByText('3 metrics / 3 rows admitted · 2 metrics / 2 rows refused')
     ).toBeInTheDocument()
   })
 
@@ -244,6 +268,32 @@ describe('ResultCards bilingual admission counts', () => {
     expect(
       screen.getByText('1 項指標 / 1 列已準入 · 0 項指標 / 0 列已拒絕')
     ).toBeInTheDocument()
-    expect(screen.queryByText('1 metric(s) / 1 row(s) admitted')).not.toBeInTheDocument()
+    expect(screen.queryByText('1 metric / 1 row admitted')).not.toBeInTheDocument()
+  })
+
+  it('renders the plural counts in Traditional Chinese without English plural forms', () => {
+    const multi: AdmissionSummary = {
+      total_admitted: 3,
+      total_refused: 2,
+      metrics_admitted: ['revenue', 'shares', 'price'],
+      metrics_refused: ['dividend', 'consensus'],
+      refusals: [],
+    }
+    render(
+      <I18nProvider initialLang='zh-TW'>
+        <ResultCards
+          valuation={{ limitations: [], current_price: 336.64, currency: 'USD' } as ValuationSummary}
+          admission={multi}
+          replay={replay}
+          refusalReasons={[]}
+          sourceIdentifiers={[]}
+        />
+      </I18nProvider>
+    )
+    // Chinese does not inflect for number; the same wording covers 1 and 2+.
+    expect(
+      screen.getByText('3 項指標 / 3 列已準入 · 2 項指標 / 2 列已拒絕')
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/metric(s)?/)).not.toBeInTheDocument()
   })
 })
