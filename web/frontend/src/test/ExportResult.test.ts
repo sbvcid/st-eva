@@ -690,6 +690,59 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     expect(row.report_method_ps_multiple_source).toBe('')
   })
 
+  it('exports observed-fundamental provenance distinct from the reference sampling period', () => {
+    const report: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      valuation_methods: {
+        methods: {
+          enterprise_value_multiple: {
+            status: 'COMPUTED',
+            reference_multiple: {
+              value: 13.221693,
+              source: 'production_historical_ev_ebitda_median',
+              eligibility_state: 'ELIGIBLE_PRODUCTION_DISTRIBUTION',
+              is_user_assumption: false,
+              usable_for_reference: true,
+            },
+            implied: 9008271932.35,
+            observed: 8849200000,
+            unit: 'currency',
+            gap_implied_vs_observed: 0.018,
+          },
+        },
+        unavailable: [],
+        reading_notes: [],
+      },
+      input_provenance: {
+        current_ebitda: {
+          value: 8849200000,
+          source: 'SEC_DERIVED',
+          basis: 'TTM',
+          currency: 'USD',
+          derivation:
+            'sum of four discrete quarterly EBITDA figures',
+          usable_from: '2026-07-30',
+          period_start: '2025-06-30',
+          period_end: '2026-03-31',
+          used_by_engine: true,
+        },
+      },
+    }
+    const result = buildResult(report)
+    result.valuation_summary.enterprise_value = 119104605950
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const row = rows[0]
+    expect(row.report_observed_ebitda_source).toBe('SEC_DERIVED')
+    expect(row.report_observed_ebitda_basis).toBe('TTM')
+    expect(row.report_observed_ebitda_currency).toBe('USD')
+    expect(row.report_observed_ebitda_period_start).toBe('2025-06-30')
+    expect(row.report_observed_ebitda_period_end).toBe('2026-03-31')
+    // Without provenance, the period columns are empty rather than invented.
+    const bare = csvToObjects(buildReverseRequirementsCsv(buildResult(computedReport), GENERATED_AT))[0]
+    expect(bare.report_observed_ebitda_source).toBe('')
+    expect(bare.report_observed_ebitda_period_start).toBe('')
+  })
+
   it('preserves missing values as empty fields rather than zeros', () => {
     const result = buildResult(computedReport)
     const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))

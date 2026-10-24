@@ -307,6 +307,10 @@ export const zhTW: Translations = {
     refusalReasonLabel: '原因',
     notComparable: '—',
     notAvailable: '不可用',
+    impliedObservedNote:
+      '隱含數值以選定倍數下的觀察企業價值計算；觀察數值為所用倍數所依據的申報追朔數值。兩者來源或期間可能不同，請連同來源一併閱讀差異，不視為嚴格可比的蘋果對蘋果比較。',
+    observedPeriodLabel: '觀察期間',
+    observedSourceLabel: '觀察來源',
     sourceProductionPs: '產出時點正確之歷史股價營收比',
     sourceProductionEvEbitda: '產出時點正確之歷史企業價值息税折旧摊销前比',
     sourceProductionPfcf: '產出時點正確之歷史股價自由現金流比',

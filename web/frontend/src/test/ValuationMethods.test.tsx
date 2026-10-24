@@ -66,6 +66,36 @@ const mockReport: ReverseRequirementsReportDTO = {
     unavailable: [],
     reading_notes: [],
   },
+  input_provenance: {
+    current_ebitda: {
+      value: 8849200000,
+      source: 'SEC_DERIVED',
+      basis: 'TTM',
+      currency: 'USD',
+      derivation:
+        'sum of four discrete quarterly EBITDA figures, each the quarter\'s operating income plus its depreciation and amortization',
+      usable_from: '2026-07-30',
+      period_start: '2025-06-30',
+      period_end: '2026-03-31',
+      used_by_engine: true,
+      provider_figure: {
+        value: 9308000000,
+        source: 'VENDOR_REPORTED',
+        basis: 'UNDECLARED',
+      },
+    },
+    current_revenue: {
+      value: 22207500000,
+      source: 'SEC_DERIVED',
+      basis: 'TTM',
+      currency: 'USD',
+      derivation: 'sum of four discrete quarterly revenue figures',
+      usable_from: '2026-07-30',
+      period_start: '2025-06-30',
+      period_end: '2026-03-31',
+      used_by_engine: true,
+    },
+  },
 }
 
 describe('ValuationMethods Component', () => {
@@ -145,6 +175,20 @@ describe('ValuationMethods Component', () => {
     )
 
     expect(screen.getByText('0.00%')).toBeInTheDocument()
+  })
+
+  it('shows the observed financial period and source beside the observed figure', () => {
+    render(
+      <I18nProvider initialLang="en">
+        <ValuationMethods report={mockReport} />
+      </I18nProvider>
+    )
+
+    // Observed EBITDA carries its SEC-derived TTM period and source.
+    expect(screen.getAllByText('Observed period: 2025-06-30 to 2026-03-31')).toHaveLength(2)
+    expect(screen.getAllByText('Observed source: SEC-derived TTM')).toHaveLength(2)
+    // The reference sampling period is shown separately from the observed period.
+    expect(screen.getAllByText('Sample period: 2020-06-30 .. 2026-06-30')).toHaveLength(2)
   })
 
   it('shows NOT COMPUTED for methods without a usable reference', () => {

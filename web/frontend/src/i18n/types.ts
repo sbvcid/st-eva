@@ -283,6 +283,9 @@ export interface Translations {
     refusalReasonLabel: string
     notComparable: string
     notAvailable: string
+    impliedObservedNote: string
+    observedPeriodLabel: string
+    observedSourceLabel: string
     sourceProductionPs: string
     sourceProductionEvEbitda: string
     sourceProductionPfcf: string

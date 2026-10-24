@@ -20,21 +20,25 @@ const METHODS: Array<{
   key: 'revenue_multiple' | 'cash_flow_multiple' | 'enterprise_value_multiple'
   labelKey: string
   multipleLabelKey: string
+  provenanceKey: 'current_revenue' | 'current_fcf' | 'current_ebitda'
 }> = [
   {
     key: 'revenue_multiple',
     labelKey: 'methodRevenue',
     multipleLabelKey: 'ps',
+    provenanceKey: 'current_revenue',
   },
   {
     key: 'cash_flow_multiple',
     labelKey: 'methodPfcf',
     multipleLabelKey: 'pfcf',
+    provenanceKey: 'current_fcf',
   },
   {
     key: 'enterprise_value_multiple',
     labelKey: 'methodEvEbitda',
     multipleLabelKey: 'evEbitda',
+    provenanceKey: 'current_ebitda',
   },
 ]
 
@@ -49,6 +53,18 @@ const sourceLabel = (t: any, source: string | null | undefined): string => {
       return t.valuationMethods.sourceProductionPfcf
     case 'user_supplied':
       return t.valuationMethods.sourceUserSupplied
+    default:
+      return String(source)
+  }
+}
+
+const provenanceSourceLabel = (source: string | null | undefined): string => {
+  if (!source) return ''
+  switch (source) {
+    case 'SEC_DERIVED':
+      return 'SEC-derived TTM'
+    case 'VENDOR_REPORTED':
+      return 'Vendor-reported'
     default:
       return String(source)
   }
@@ -128,6 +144,7 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
   const { t } = useI18n()
   const methods = report?.valuation_methods?.methods ?? {}
   const distributions = report?.production_historical_multiples_summary?.distributions ?? {}
+  const provenance = report?.input_provenance ?? {}
 
   const distributionFor = (key: string): any => {
     switch (key) {
@@ -183,6 +200,10 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
         </span>
       </div>
 
+      <p className="text-xs text-slate-500">
+        {t.valuationMethods.impliedObservedNote}
+      </p>
+
       <div className="overflow-x-auto border border-slate-200 rounded-lg">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -193,11 +214,10 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
               <th className="py-2.5 px-3">{t.valuationMethods.columnImplied}</th>
               <th className="py-2.5 px-3">{t.valuationMethods.columnObserved}</th>
               <th className="py-2.5 px-3">{t.valuationMethods.columnGap}</th>
-              <th className="py-2.5 px-3">{t.valuationMethods.columnSource}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono text-[12px]">
-            {METHODS.map(({ key, labelKey, multipleLabelKey }) => {
+            {METHODS.map(({ key, labelKey, multipleLabelKey, provenanceKey }) => {
               const block = methods[key]
               const multiple = block?.reference_multiple ?? null
               const dist = distributionFor(key)
@@ -211,7 +231,16 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
                 multiple?.sample_size ??
                 null
               const minObs = dist?.min_observations_required ?? null
-              const period = dist?.sample_period ?? multiple?.sample_period ?? ''
+              const samplePeriod =
+                dist?.sample_period ?? multiple?.sample_period ?? ''
+  const prov = provenance[provenanceKey] ?? null
+              const obsPeriod =
+                prov?.period_start && prov?.period_end
+                  ? `${prov.period_start} to ${prov.period_end}`
+                  : ''
+              const obsSource = prov?.source
+                ? provenanceSourceLabel(prov.source)
+                : ''
 
               return (
                 <tr key={key}>
@@ -243,9 +272,9 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
                           }`
                         : ''}
                     </div>
-                    {period && (
+                    {samplePeriod && (
                       <div className="text-[10px] text-slate-500 mt-0.5">
-                        {t.valuationMethods.samplePeriodLabel}: {period}
+                        {t.valuationMethods.samplePeriodLabel}: {samplePeriod}
                       </div>
                     )}
                     {refusal && (
@@ -258,18 +287,22 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
                     {money(currency, implied)}
                   </td>
                   <td className="py-3 px-3 text-slate-700">
-                    {money(currency, observed)}
+                    <div className="font-medium">{money(currency, observed)}</div>
+                    {obsPeriod && (
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {t.valuationMethods.observedPeriodLabel}: {obsPeriod}
+                      </div>
+                    )}
+                    {obsSource && (
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {t.valuationMethods.observedSourceLabel}: {obsSource}
+                      </div>
+                    )}
                   </td>
                   <td className="py-3 px-3 text-slate-700">
                     {isComputed && (implied != null && observed != null)
                       ? gapText(t, gap)
                       : t.valuationMethods.notComparable}
-                  </td>
-                  <td className="py-3 px-3 text-[10px] text-slate-500">
-                    {dist
-                      ? `${dist.period_start ?? ''} ${dist.period_end ?? ''}`.trim() ||
-                        t.valuationMethods.notAvailable
-                      : t.valuationMethods.notAvailable}
                   </td>
                 </tr>
               )

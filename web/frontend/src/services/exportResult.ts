@@ -215,6 +215,30 @@ export const REVERSE_REQUIREMENTS_CSV_COLUMNS = [
   'report_method_ev_ebitda_gap',
   'report_method_ev_ebitda_multiple_value',
   'report_method_ev_ebitda_multiple_source',
+  // Observed-fundamental provenance: source, basis, currency and the
+  // observed financial period, distinct from the reference multiple's
+  // sampling period.
+  'report_observed_revenue_source',
+  'report_observed_revenue_basis',
+  'report_observed_revenue_currency',
+  'report_observed_revenue_period_start',
+  'report_observed_revenue_period_end',
+  'report_observed_fcf_source',
+  'report_observed_fcf_basis',
+  'report_observed_fcf_currency',
+  'report_observed_fcf_period_start',
+  'report_observed_fcf_period_end',
+  'report_observed_ebitda_source',
+  'report_observed_ebitda_basis',
+  'report_observed_ebitda_currency',
+  'report_observed_ebitda_period_start',
+  'report_observed_ebitda_period_end',
+  'report_observed_enterprise_value_source',
+  'report_observed_enterprise_value_basis',
+  'report_observed_enterprise_value_currency',
+  'report_observed_market_cap_source',
+  'report_observed_market_cap_basis',
+  'report_observed_market_cap_currency',
   'report_valuation_methods_json',
 ] as const
 
@@ -249,6 +273,22 @@ const formatGap = (value: number | null | undefined): string => {
   return `${sign}${Number(Math.abs(value * 100)).toFixed(2)}%`
 }
 
+// Observed-fundamental provenance, keyed by metric (current_ebitda,
+// current_revenue, current_fcf, current_enterprise_value,
+// current_market_cap). Distinguishes the observed financial period/source
+// from the reference multiple's sampling period so the gap is not read as
+// apples-to-apples when the bases differ.
+const provenanceField = (
+  provenance: Record<string, any> | null | undefined,
+  key: string,
+  field: 'source' | 'basis' | 'currency' | 'period_start' | 'period_end',
+): string => {
+  const entry = provenance?.[key]
+  if (!entry || typeof entry !== 'object') return ''
+  const value = entry[field]
+  return value == null ? '' : String(value)
+}
+
 function reportLevelFields(
   result: AnalysisResultDTO,
   report: ReverseRequirementsReportDTO | null | undefined,
@@ -258,6 +298,7 @@ function reportLevelFields(
   const valuation = result.valuation_summary ?? null
   const consensus = report?.consensus_reference ?? null
   const methods = methodsOf(report)
+  const provenance = report?.input_provenance ?? null
   return {
     ticker: result.ticker,
     company_name: result.company_name,
@@ -327,6 +368,103 @@ function reportLevelFields(
     report_method_ev_ebitda_multiple_source: methodMultipleSource(
       methods,
       'enterprise_value_multiple',
+    ),
+    // Observed-fundamental provenance: source, basis, currency and the
+    // observed financial period, distinct from the reference multiple's
+    // sampling period. Absent (empty) when the run did not carry provenance,
+    // never fabricated.
+    report_observed_revenue_source: provenanceField(
+      provenance,
+      'current_revenue',
+      'source',
+    ),
+    report_observed_revenue_basis: provenanceField(
+      provenance,
+      'current_revenue',
+      'basis',
+    ),
+    report_observed_revenue_currency: provenanceField(
+      provenance,
+      'current_revenue',
+      'currency',
+    ),
+    report_observed_revenue_period_start: provenanceField(
+      provenance,
+      'current_revenue',
+      'period_start',
+    ),
+    report_observed_revenue_period_end: provenanceField(
+      provenance,
+      'current_revenue',
+      'period_end',
+    ),
+    report_observed_fcf_source: provenanceField(provenance, 'current_fcf', 'source'),
+    report_observed_fcf_basis: provenanceField(provenance, 'current_fcf', 'basis'),
+    report_observed_fcf_currency: provenanceField(provenance, 'current_fcf', 'currency'),
+    report_observed_fcf_period_start: provenanceField(
+      provenance,
+      'current_fcf',
+      'period_start',
+    ),
+    report_observed_fcf_period_end: provenanceField(
+      provenance,
+      'current_fcf',
+      'period_end',
+    ),
+    report_observed_ebitda_source: provenanceField(
+      provenance,
+      'current_ebitda',
+      'source',
+    ),
+    report_observed_ebitda_basis: provenanceField(
+      provenance,
+      'current_ebitda',
+      'basis',
+    ),
+    report_observed_ebitda_currency: provenanceField(
+      provenance,
+      'current_ebitda',
+      'currency',
+    ),
+    report_observed_ebitda_period_start: provenanceField(
+      provenance,
+      'current_ebitda',
+      'period_start',
+    ),
+    report_observed_ebitda_period_end: provenanceField(
+      provenance,
+      'current_ebitda',
+      'period_end',
+    ),
+    report_observed_enterprise_value_source: provenanceField(
+      provenance,
+      'current_enterprise_value',
+      'source',
+    ),
+    report_observed_enterprise_value_basis: provenanceField(
+      provenance,
+      'current_enterprise_value',
+      'basis',
+    ),
+    report_observed_enterprise_value_currency: provenanceField(
+      provenance,
+      'current_enterprise_value',
+      'currency',
+    ),
+    report_observed_market_cap_source: provenanceField(
+      provenance,
+      'current_market_cap',
+      'source',
+    ),
+    report_observed_market_cap_basis: provenanceField(
+      provenance,
+      'current_market_cap',
+      'basis',
+    ),
+    report_observed_market_cap_currency: provenanceField(
+      provenance,
+      'current_market_cap',
+      'currency',
     ),
     report_valuation_methods_json: jsonColumn(
       report?.valuation_methods?.methods ?? null,

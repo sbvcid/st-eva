@@ -4,7 +4,7 @@ Stable contracts decoupled from internal domain structures.
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -646,6 +646,34 @@ class ValuationMethodsDTO(BaseModel):
     reading_notes: List[str] = Field(default_factory=list)
 
 
+class ProvenanceEntryDTO(BaseModel):
+    """
+    Where one observed fundamental came from and on what basis, so the reader
+    can tell a filed figure from a provider's and a trailing figure from a
+    year's or quarter's, and check the implied figure against like-for-like
+    facts. A method's implied figure and its observed figure are only
+    comparable when they share the same source, basis and period; otherwise
+    the gap is presented beside its provenance rather than read as a clean
+    apples-to-apples difference.
+
+    `value` is either the observed number or the engine's named-absence
+    sentinel (e.g. "UNAVAILABLE"): an absent fundamental travels as its
+    explicit refusal, never coerced to zero and never dropped.
+    """
+
+    value: Optional[Union[float, str]] = None
+    source: Optional[str] = None
+    basis: Optional[str] = None
+    currency: Optional[str] = None
+    derivation: Optional[str] = None
+    usable_from: Optional[str] = None
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    used_by_engine: Optional[bool] = None
+    note: Optional[str] = None
+    provider_figure: Optional[Dict[str, Any]] = None
+
+
 class ReverseRequirementsReportDTO(BaseModel):
     formula_version: str = "reverse-requirements/1.1"
     fingerprint: Optional[str] = None
@@ -677,6 +705,13 @@ class ReverseRequirementsReportDTO(BaseModel):
     # each method's own reference multiple, never ranked against each other
     # and never substituted for a per-scenario EPS matrix row.
     valuation_methods: Optional[ValuationMethodsDTO] = None
+    # Where each observed fundamental the multiples are computed from came
+    # from and on what basis (filed TTM window vs provider's undeclared
+    # trailing figure), keyed by metric. Present so the implied and observed
+    # figures can be checked against like-for-like facts and the gap is not
+    # read as apples-to-apples when the bases differ. Absent when the run did
+    # not carry provenance.
+    input_provenance: Optional[Dict[str, ProvenanceEntryDTO]] = None
     # The consensus the gap column is differenced against, with the period the
     # source declared for it. An eligible gap can be checked against these
     # facts, and a missing gap is explained by them rather than read as a zero.

@@ -149,6 +149,25 @@ export interface ValuationMethodsDTO {
   reading_notes?: string[]
 }
 
+export interface ProvenanceEntryDTO {
+  // Where one observed fundamental came from and on what basis, so the reader
+  // can tell a filed figure from a provider's and a trailing figure from a
+  // year's or quarter's, and check the implied figure against it.
+  // `value` is either the observed number or the engine's named-absence
+  // sentinel (e.g. "UNAVAILABLE"), never coerced to zero.
+  value?: number | string | null
+  source?: string | null
+  basis?: string | null
+  currency?: string | null
+  derivation?: string | null
+  usable_from?: string | null
+  period_start?: string | null
+  period_end?: string | null
+  used_by_engine?: boolean | null
+  note?: string | null
+  provider_figure?: Record<string, any> | null
+}
+
 export interface SecFactDTO {
   accession?: string | null
   form?: string | null
@@ -410,6 +429,11 @@ export interface ReverseRequirementsReportDTO {
   // each method's own reference multiple, never ranked against each other
   // and never substituted for a per-scenario EPS matrix row.
   valuation_methods?: ValuationMethodsDTO | null
+  // Where each observed fundamental the multiples are computed from came from
+  // and on what basis (filed TTM window vs provider's undeclared trailing
+  // figure), keyed by metric, so the implied and observed figures can be
+  // checked against like-for-like facts.
+  input_provenance?: Record<string, ProvenanceEntryDTO> | null
 }
 
 export interface AnalysisResultDTO {

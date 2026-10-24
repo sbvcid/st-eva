@@ -151,3 +151,73 @@ class TestWebValuationMethods(unittest.TestCase):
         self.assertIsNone(req.ev_ebitda_multiple)
         self.assertIsNone(req.pfcf_multiple)
         self.assertIsNone(req.reference_multiple)
+
+    def test_input_provenance_observed_ebitda_sec_derived_ttm(self):
+        # The web path loads the filed income statement, so the observed EBITDA
+        # the enterprise-value multiple is computed from is the qualified filed
+        # TTM figure (SEC-derived), not the vendor's undeclared trailing figure.
+        dto = self._run("AEP")
+        prov = dto.reverse_requirements.input_provenance
+        self.assertIsNotNone(prov)
+        ebitda = prov.get("current_ebitda")
+        self.assertIsNotNone(ebitda)
+        self.assertEqual(ebitda.source, "SEC_DERIVED")
+        self.assertEqual(ebitda.basis, "TTM")
+        self.assertEqual(ebitda.currency, "USD")
+        self.assertTrue(ebitda.used_by_engine)
+        self.assertEqual(ebitda.value, 8849200000.0)
+        self.assertEqual(ebitda.period_start, "2025-06-30")
+        self.assertEqual(ebitda.period_end, "2026-03-31")
+        # The vendor's undeclared trailing figure is preserved as the
+        # cross-check, not substituted for the observed figure.
+        self.assertIsNotNone(ebitda.provider_figure)
+        self.assertEqual(ebitda.provider_figure["value"], 9308000000.0)
+        self.assertEqual(ebitda.provider_figure["source"], "VENDOR_REPORTED")
+        self.assertEqual(ebitda.provider_figure["basis"], "UNDECLARED")
+
+    def test_implied_and_observed_share_one_run(self):
+        # Implied EBITDA = enterprise value / selected EV/EBITDA; observed
+        # EBITDA = the qualified filed TTM figure. Both come from the same run
+        # and are reproducible for the same input.
+        dto = self._run("AEP")
+        ev = dto.reverse_requirements.valuation_methods.methods[
+            "enterprise_value_multiple"
+        ]
+        self.assertEqual(ev.status, "COMPUTED")
+        ev_operand = dto.valuation_summary.enterprise_value
+        self.assertIsNotNone(ev_operand)
+        expected_implied = ev_operand / ev.reference_multiple["value"]
+        self.assertAlmostEqual(ev.implied, expected_implied, places=2)
+        self.assertEqual(ev.observed, 8849200000.0)
+        # The gap is a relative ratio (implied / observed - 1), not an
+        # absolute currency difference.
+        self.assertAlmostEqual(
+            ev.gap_implied_vs_observed,
+            ev.implied / ev.observed - 1.0,
+            places=6,
+        )
+
+    def test_aapl_and_msft_historical_references_unchanged(self):
+        for ticker, ps_value, ps_count, ev_value, ev_count in (
+            ("AAPL", 7.257709, 28, 22.326, 27),
+            ("MSFT", 11.783822, 23, None, 0),
+        ):
+            dto = self._run(ticker)
+            vm = dto.reverse_requirements.valuation_methods
+            ps = vm.methods["revenue_multiple"]
+            self.assertEqual(ps.status, "NOT_COMPUTED")
+            self.assertEqual(ps.reference_multiple["value"], ps_value)
+            self.assertTrue(ps.reference_multiple["usable_for_reference"])
+            summary = dto.reverse_requirements.production_historical_multiples_summary
+            self.assertIsNotNone(summary)
+            dist = summary.distributions or {}
+            self.assertEqual(dist["P_S_RATIO_REFERENCE"].sample_count, ps_count)
+            ev = vm.methods["enterprise_value_multiple"]
+            if ev_value is None:
+                self.assertEqual(ev.status, "NOT_COMPUTED")
+                rm = ev.reference_multiple
+                self.assertTrue(rm is None or rm.get("value") is None)
+                self.assertEqual(dist["EV_EBITDA_RATIO_REFERENCE"].sample_count, ev_count)
+            else:
+                self.assertEqual(ev.reference_multiple["value"], ev_value)
+                self.assertEqual(dist["EV_EBITDA_RATIO_REFERENCE"].sample_count, ev_count)

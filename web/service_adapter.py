@@ -26,6 +26,7 @@ from web.schemas import (
     FiledFigure,
     JobProgressStage,
     ProductionHistoricalPfcfSummaryDTO,
+    ProvenanceEntryDTO,
     RefusalItem,
     ReplaySummary,
     ReverseRequirementsReportDTO,
@@ -902,6 +903,24 @@ class AnalysisServiceAdapter:
                 production_multiples_summary = production_multiples_summary(
                     raw_multiples
                 )
+
+            # Where each observed fundamental the multiples are computed from
+            # came from and on what basis, so the UI and export can show the
+            # observed financial period/source beside the reference multiple's
+            # sampling period and the implied figure can be checked against
+            # like-for-like facts. Absent when the run did not carry it.
+            input_provenance: Optional[Dict[str, Any]] = None
+            raw_input_provenance = core_result.get("input_provenance")
+            if isinstance(raw_input_provenance, dict) and reverse_reqs_dto is not None:
+                input_provenance = {
+                    key: ProvenanceEntryDTO.model_validate(entry)
+                    for key, entry in raw_input_provenance.items()
+                    if isinstance(entry, dict)
+                }
+                if input_provenance:
+                    reverse_reqs_dto = reverse_reqs_dto.model_copy(
+                        update={"input_provenance": input_provenance}
+                    )
 
             dto = AnalysisResultDTO(
                 ticker=core_result.get("ticker", clean_ticker),

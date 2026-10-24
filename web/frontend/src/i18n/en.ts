@@ -309,6 +309,10 @@ export const en: Translations = {
     refusalReasonLabel: 'Reason',
     notComparable: '—',
     notAvailable: 'not available',
+    impliedObservedNote:
+      'The implied figure uses the observed enterprise value at the chosen multiple; the observed figure is the filed trailing figure the multiple is computed from. They can differ in source and period, so read the gap beside the provenance, not as a clean apples-to-apples difference.',
+    observedPeriodLabel: 'Observed period',
+    observedSourceLabel: 'Observed source',
     sourceProductionPs: 'Production point-in-time historical P/S',
     sourceProductionEvEbitda: 'Production point-in-time historical EV/EBITDA',
     sourceProductionPfcf: 'Production point-in-time historical P/FCF',
