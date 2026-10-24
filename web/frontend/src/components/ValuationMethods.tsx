@@ -58,13 +58,13 @@ const sourceLabel = (t: any, source: string | null | undefined): string => {
   }
 }
 
-const provenanceSourceLabel = (source: string | null | undefined): string => {
+const provenanceSourceLabel = (t: any, source: string | null | undefined): string => {
   if (!source) return ''
   switch (source) {
     case 'SEC_DERIVED':
-      return 'SEC-derived TTM'
+      return t.valuationMethods.provenanceSecDerived
     case 'VENDOR_REPORTED':
-      return 'Vendor-reported'
+      return t.valuationMethods.provenanceVendorReported
     default:
       return String(source)
   }
@@ -147,6 +147,10 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
   const provenance = report?.input_provenance ?? {}
 
   const distributionFor = (key: string): any => {
+    const distributions =
+      report?.production_historical_multiples_distributions ??
+      report?.production_historical_multiples_summary?.distributions ??
+      {}
     switch (key) {
       case 'revenue_multiple':
         return distributions.P_S_RATIO_REFERENCE ?? null
@@ -236,10 +240,10 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
   const prov = provenance[provenanceKey] ?? null
               const obsPeriod =
                 prov?.period_start && prov?.period_end
-                  ? `${prov.period_start} to ${prov.period_end}`
+                  ? `${prov.period_start}${t.valuationMethods.periodRangeSeparator}${prov.period_end}`
                   : ''
               const obsSource = prov?.source
-                ? provenanceSourceLabel(prov.source)
+                ? provenanceSourceLabel(t, prov.source)
                 : ''
 
               return (

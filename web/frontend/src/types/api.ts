@@ -343,6 +343,31 @@ export interface ProductionHistoricalPfcfDTO {
   reason_detail?: string | null
 }
 
+export interface ProductionHistoricalMultiplesDistributionDTO {
+  issuer_id?: string | null
+  instrument_id?: string | null
+  metric_id?: string | null
+  status?: string | null
+  usable_for_reference?: boolean | null
+  sample_count?: number | null
+  total_evaluations?: number | null
+  min_observations_required?: number | null
+  period_start?: string | null
+  period_end?: string | null
+  mean?: number | null
+  std?: number | null
+  min?: number | null
+  max?: number | null
+  percentiles?: Record<string, number> | null
+  sampling_cadence?: string | null
+  evaluation_schedule_description?: string | null
+  excluded_observation_count?: number | null
+  input_set_id?: string | null
+  content_hash?: string | null
+  reason_code?: string | null
+  reason_detail?: string | null
+}
+
 export interface ScenarioEvidenceDTO {
   price_evidence: MarketPriceEvidenceDTO
   eps_evidence: EpsAnchorEvidenceDTO
@@ -421,6 +446,13 @@ export interface ReverseRequirementsReportDTO {
   production_historical_pe_summary?: ProductionHistoricalPeDTO | null
   production_historical_pfcf_summary?: ProductionHistoricalPfcfDTO | null
   production_historical_multiples_summary?: Record<string, any> | null
+  // Each production distribution for P/S, P/FCF and EV/EBITDA that the
+  # report computed from its own committed dataset. Keyed by metric key so
+  # the browser can present each reference's status, sample count and
+  // refusal reason without depending on the valuation_methods results.
+  # Present when the distribution was established, absent otherwise -- never
+  # fabricated or inferred from anything else.
+  production_historical_multiples_distributions?: Record<string, ProductionHistoricalMultiplesDistributionDTO> | null
   consensus_reference?: ConsensusReferenceDTO
   eps_anchor_catalogue?: Record<string, any> | null
   eps_anchor_selection?: Record<string, any> | null

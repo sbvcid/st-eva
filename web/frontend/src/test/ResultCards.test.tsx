@@ -220,3 +220,30 @@ describe('ResultCards partial-admission reconciliation', () => {
     expect(screen.queryByTestId('refused-metrics')).not.toBeInTheDocument()
   })
 })
+
+describe('ResultCards bilingual admission counts', () => {
+  it('renders the admission counts with metric/row semantics in English', () => {
+    renderCards({ current_price: 336.64, currency: 'USD' })
+    expect(
+      screen.getByText('1 metric(s) / 1 row(s) admitted · 0 metric(s) / 0 row(s) refused')
+    ).toBeInTheDocument()
+  })
+
+  it('renders the admission counts in Traditional Chinese', () => {
+    render(
+      <I18nProvider initialLang='zh-TW'>
+        <ResultCards
+          valuation={{ limitations: [], current_price: 336.64, currency: 'USD' } as ValuationSummary}
+          admission={admission}
+          replay={replay}
+          refusalReasons={[]}
+          sourceIdentifiers={[]}
+        />
+      </I18nProvider>
+    )
+    expect(
+      screen.getByText('1 項指標 / 1 列已準入 · 0 項指標 / 0 列已拒絕')
+    ).toBeInTheDocument()
+    expect(screen.queryByText('1 metric(s) / 1 row(s) admitted')).not.toBeInTheDocument()
+  })
+})

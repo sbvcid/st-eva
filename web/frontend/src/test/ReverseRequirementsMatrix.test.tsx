@@ -1074,11 +1074,11 @@ describe('Starting EPS period basis disclosure', () => {
         <ReverseRequirementsMatrix report={report} />
       </I18nProvider>
     )
-    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+    fireEvent.click(screen.getAllByTitle('展開／收合詳情')[0])
 
     // Chinese translations
     expect(screen.getByText('期間標籤: TRAILING_TWELVE_MONTHS')).toBeInTheDocument()
-    expect(screen.getByText('假設涵蓋範圍（來源未宣告）: 12 months')).toBeInTheDocument()
+    expect(screen.getByText('假設涵蓋範圍（來源未宣告）: 12 個月')).toBeInTheDocument()
     expect(screen.getByText('期間基準由 ST-EVA 假設（來源未宣告）')).toBeInTheDocument()
     expect(screen.getByText('期間起始日: 未宣告')).toBeInTheDocument()
     expect(screen.getByText('期間結束日: 未宣告')).toBeInTheDocument()
@@ -1108,11 +1108,11 @@ describe('Starting EPS period basis disclosure', () => {
         <ReverseRequirementsMatrix report={report} />
       </I18nProvider>
     )
-    fireEvent.click(screen.getAllByTitle('Toggle details')[0])
+    fireEvent.click(screen.getAllByTitle('展開／收合詳情')[0])
 
     // Chinese translations for declared period
     expect(screen.getByText('期間標籤: FY2026')).toBeInTheDocument()
-    expect(screen.getByText('來源宣告之涵蓋範圍: 12 months')).toBeInTheDocument()
+    expect(screen.getByText('來源宣告之涵蓋範圍: 12 個月')).toBeInTheDocument()
     expect(screen.getByText('期間起始日: 2025-07-01')).toBeInTheDocument()
     expect(screen.getByText('期間結束日: 2026-06-30')).toBeInTheDocument()
 
@@ -1503,6 +1503,143 @@ expect(screen.getByText('每股股利:')).toBeInTheDocument()
     // Dividend section should not render for NOT_COMPUTED
     expect(screen.queryByText('Dividend & Total-Return Comparison')).not.toBeInTheDocument()
     expect(screen.getByText('NOT COMPUTED')).toBeInTheDocument()
+  })
+})
+
+describe('bilingual evidence and provenance labels', () => {
+  // A full evidence set: direct SEC fact, related cross-check filing, flags,
+  // comparison notes and the lineage strip, so both languages can be checked
+  // against the same machine values.
+  const bilingualReport: ReverseRequirementsReportDTO = {
+    ...mockReport,
+    matrix_size: 1,
+    reverse_requirements_matrix: [
+      {
+        ...mockReport.reverse_requirements_matrix[1],
+        start_eps: {
+          ...mockReport.reverse_requirements_matrix[1].start_eps,
+          provider: 'sec',
+        },
+        flags: ['SOME_FLAG_VALUE'],
+        comparison_notes: ['Growth window check note kept as reported.'],
+        evidence: {
+          ...mockReport.reverse_requirements_matrix[1].evidence!,
+          related_sec_evidence: {
+            accession: '0001193125-26-123450',
+            concept: 'us-gaap:Revenues',
+            unit: 'USD',
+            period_end: '2026-03-31',
+            form: '10-Q',
+            filed_date: '2026-02-01',
+            note: 'Related filing shown for cross-check only',
+          },
+        },
+      },
+    ],
+  }
+
+  const openDrawer = (lang: 'en' | 'zh-TW') => {
+    render(
+      <I18nProvider initialLang={lang}>
+        <ReverseRequirementsMatrix report={bilingualReport} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle(lang === 'zh-TW' ? '展開／收合詳情' : 'Toggle details')[0])
+  }
+
+  it('renders the audit drawer labels with unchanged machine values in English', () => {
+    openDrawer('en')
+
+    expect(screen.getByText('Provider: RegressionFixture')).toBeInTheDocument()
+    expect(screen.getByText('As-of: 2026-09-18')).toBeInTheDocument()
+    expect(screen.getByText('Source: SEC 10-K')).toBeInTheDocument()
+    expect(screen.getByText('accn: 0001193125-26-323660')).toBeInTheDocument()
+    expect(screen.getByText('filed: 2026-07-30')).toBeInTheDocument()
+    expect(screen.getByText('Related SEC 10-Q (cross-check)')).toBeInTheDocument()
+    expect(screen.getByText('accn: 0001193125-26-123450')).toBeInTheDocument()
+    expect(screen.getByText('filed: 2026-02-01')).toBeInTheDocument()
+    expect(screen.getByText('Flags:')).toBeInTheDocument()
+    expect(screen.getByText('SOME_FLAG_VALUE')).toBeInTheDocument()
+    expect(screen.getByText('Notes:')).toBeInTheDocument()
+    expect(screen.getByText('Growth window: 3 yrs')).toBeInTheDocument()
+    expect(screen.getByText('Return basis: PRICE_RETURN_ONLY')).toBeInTheDocument()
+    expect(screen.getByText('EPS provider: sec')).toBeInTheDocument()
+    expect(screen.getByText('Formula: reverse-requirements/1.1')).toBeInTheDocument()
+  })
+
+  it('renders the same drawer without translatable English labels in Traditional Chinese', () => {
+    openDrawer('zh-TW')
+
+    // Translated labels carrying the same data values.
+    expect(screen.getByText('資料供應商: RegressionFixture')).toBeInTheDocument()
+    expect(screen.getByText('資料時點: 2026-09-18')).toBeInTheDocument()
+    expect(screen.getByText('來源：SEC 10-K')).toBeInTheDocument()
+    expect(screen.getByText('文號: 0001193125-26-323660')).toBeInTheDocument()
+    expect(screen.getByText('申報日: 2026-07-30')).toBeInTheDocument()
+    expect(screen.getByText('相關 SEC 申報 10-Q （交叉核對）')).toBeInTheDocument()
+    expect(screen.getByText('文號: 0001193125-26-123450')).toBeInTheDocument()
+    expect(screen.getByText('申報日: 2026-02-01')).toBeInTheDocument()
+    expect(screen.getByText('旗標:')).toBeInTheDocument()
+    expect(screen.getByText('備註:')).toBeInTheDocument()
+    expect(screen.getByText('成長期間: 3 年')).toBeInTheDocument()
+    expect(screen.getByText('報酬基準: PRICE_RETURN_ONLY')).toBeInTheDocument()
+    expect(screen.getByText('EPS 供應商: sec')).toBeInTheDocument()
+    expect(screen.getByText('公式: reverse-requirements/1.1')).toBeInTheDocument()
+
+    // The translatable English labels no longer appear.
+    for (const label of [
+      'Provider:',
+      'As-of:',
+      'Source: SEC',
+      'accn:',
+      'filed:',
+      'Flags:',
+      'Notes:',
+      'Growth window:',
+      'Return basis:',
+      'Formula:',
+    ]) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument()
+    }
+    expect(screen.queryByTitle('Toggle details')).not.toBeInTheDocument()
+
+    // Machine identifiers and raw data stay as-is.
+    expect(screen.getByText('us-gaap:EarningsPerShareDiluted')).toBeInTheDocument()
+    expect(screen.getByText('Growth window check note kept as reported.')).toBeInTheDocument()
+  })
+
+  it('keeps the no-direct-SEC-source caveat explicit in Traditional Chinese', () => {
+    const noDirectSource: ReverseRequirementsReportDTO = {
+      ...bilingualReport,
+      reverse_requirements_matrix: [
+        {
+          ...bilingualReport.reverse_requirements_matrix[0],
+          evidence: {
+            ...bilingualReport.reverse_requirements_matrix[0].evidence!,
+            eps_evidence: {
+              ...bilingualReport.reverse_requirements_matrix[0].evidence!.eps_evidence,
+              provider: 'YahooFinance',
+              sec_fact: null,
+            },
+          },
+        },
+      ],
+    }
+
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ReverseRequirementsMatrix report={noDirectSource} />
+      </I18nProvider>
+    )
+    fireEvent.click(screen.getAllByTitle('展開／收合詳情')[0])
+
+    expect(screen.getByText('直接 SEC 來源：未建立')).toBeInTheDocument()
+    expect(
+      screen.getByText('數值保留其聲明來源；不將任何申報檔案事實聲稱為其來源。')
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Direct SEC source: not established')).not.toBeInTheDocument()
+    // The provider value and the retained EPS value stay visible.
+    expect(screen.getByText('資料供應商: YahooFinance')).toBeInTheDocument()
   })
 })
 

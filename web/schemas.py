@@ -741,6 +741,15 @@ class ReverseRequirementsReportDTO(BaseModel):
     production_historical_multiples_summary: Optional[
         ProductionHistoricalMultiplesSummaryDTO
     ] = None
+    # Each production distribution for P/S, P/FCF and EV/EBITDA that the
+    # report computed from its own committed dataset. Keyed by metric key so
+    # the browser can present each reference's status, sample count and
+    # refusal reason without depending on the valuation_methods results.
+    # Present when the distribution was established, absent otherwise -- never
+    # fabricated or inferred from anything else.
+    production_historical_multiples_distributions: Optional[
+        Dict[str, ProductionHistoricalMultiplesDistributionDTO]
+    ] = None
     # The per-method reverse results (revenue / P/S, cash flow / P/FCF,
     # enterprise value / EV/EBITDA): single-point references implied by
     # each method's own reference multiple, never ranked against each other

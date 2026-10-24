@@ -213,5 +213,33 @@ describe('ValuationMethods Component', () => {
     expect(screen.getByText('估值方法')).toBeInTheDocument()
     expect(screen.getByText('企業價值 (EV/EBITDA)')).toBeInTheDocument()
     expect(screen.queryByText('COMPUTED')).not.toBeInTheDocument()
+    // The provenance source labels translate with the language.
+    expect(screen.getAllByText('觀察來源: SEC 申報加總（TTM）')).toHaveLength(2)
+    expect(screen.getAllByText('觀察期間: 2025-06-30 至 2026-03-31')).toHaveLength(2)
+    expect(screen.queryByText('Observed source: SEC-derived TTM')).not.toBeInTheDocument()
+  })
+
+  it('keeps vendor-reported provenance labelled and untranslated data intact', () => {
+    const vendor = {
+      ...mockReport,
+      input_provenance: {
+        ...mockReport.input_provenance,
+        current_ebitda: {
+          ...mockReport.input_provenance.current_ebitda,
+          source: 'VENDOR_REPORTED',
+          basis: 'UNDECLARED',
+        },
+      },
+    }
+    render(
+      <I18nProvider initialLang="zh-TW">
+        <ValuationMethods report={vendor} />
+      </I18nProvider>
+    )
+    expect(screen.getAllByText('觀察來源: 供應商申報值')).toHaveLength(1)
+    // The machine source value never replaces the label, and the underlying
+    // provenance data stays intact for export.
+    expect(vendor.input_provenance.current_ebitda.source).toBe('VENDOR_REPORTED')
+    expect(vendor.input_provenance.current_ebitda.basis).toBe('UNDECLARED')
   })
 })

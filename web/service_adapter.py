@@ -28,6 +28,7 @@ from web.schemas import (
     FiledFigure,
     IssuerCoverageDTO,
     JobProgressStage,
+    ProductionHistoricalMultiplesDistributionDTO,
     ProductionHistoricalPfcfSummaryDTO,
     ProvenanceEntryDTO,
     RefusalItem,
@@ -976,9 +977,22 @@ class AnalysisServiceAdapter:
             if isinstance(raw_multiples, dict):
                 from historical_multiples import production_multiples_summary
 
-                production_multiples_summary = production_multiples_summary(
-                    raw_multiples
-                )
+            production_multiples_summary = production_multiples_summary(
+                raw_multiples
+            )
+
+            production_multiples_distributions: Optional[Dict[str, Any]] = None
+            raw_multiples_distributions = (raw_multiples or {}).get(
+                "distributions"
+            )
+            if isinstance(raw_multiples_distributions, dict):
+                production_multiples_distributions = {
+                    key: ProductionHistoricalMultiplesDistributionDTO.model_validate(
+                        dist
+                    )
+                    for key, dist in raw_multiples_distributions.items()
+                    if isinstance(dist, dict)
+                }
 
             # Where each observed fundamental the multiples are computed from
             # came from and on what basis, so the UI and export can show the
@@ -1013,6 +1027,7 @@ class AnalysisServiceAdapter:
                 production_historical_pe=production_pe_summary,
                 production_historical_pfcf=production_pfcf_summary,
                 production_historical_multiples=production_multiples_summary,
+                production_historical_multiples_distributions=production_multiples_distributions,
                 calculation_inputs=_calculation_inputs(core_result),
                 raw_analysis=_web_visible_analysis(core_result),
             )

@@ -221,7 +221,12 @@ export const ResultCards: React.FC<ResultCardsProps> = ({
                   : t.results.admitted}
               </span>
               <span className="text-xs font-mono font-medium text-slate-600">
-                {`${admission.metrics_admitted.length} metric(s) / ${admission.total_admitted} row(s) admitted · ${(admission.metrics_refused?.length ?? 0)} metric(s) / ${admission.total_refused} row(s) refused`}
+                {t.results.admissionMetricRowCounts(
+                  admission.metrics_admitted.length,
+                  admission.total_admitted,
+                  admission.metrics_refused?.length ?? 0,
+                  admission.total_refused,
+                )}
               </span>
             </div>
 

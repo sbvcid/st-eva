@@ -64,6 +64,12 @@ export interface Translations {
     refused: string
     partialAdmission: string
     admittedCounts: (admitted: number, refused: number) => string
+    admissionMetricRowCounts: (
+      admittedMetrics: number,
+      admittedRows: number,
+      refusedMetrics: number,
+      refusedRows: number,
+    ) => string
     refusalExplanation: string
     coreFactsAdmitted: string
     admittedMetricsPrefix: string
@@ -141,6 +147,27 @@ export interface Translations {
     statusComputed: string
     statusNotComputed: string
     scenariosCount: (count: number) => string
+    providerLabel: string
+    asOfLabel: string
+    monthsUnit: string
+    secSourceLabel: string
+    accnLabel: string
+    filedLabel: string
+    furnishedSuffix: string
+    directSecSourceNotEstablished: string
+    valueRetainedNote: string
+    relatedSecLabel: string
+    crossCheckLabel: string
+    notVerifiedDirectNote: string
+    flagsLabel: string
+    notesLabel: string
+    growthWindowLabel: string
+    yrsUnit: string
+    returnBasisLabel: string
+    epsProviderLabel: string
+    toggleDetailsTitle: string
+    notComputableFallback: string
+    uncomputableFallback: string
     filterHorizon: string
     filterReturn: string
     all: string
@@ -287,6 +314,7 @@ export interface Translations {
     impliedObservedNote: string
     observedPeriodLabel: string
     observedSourceLabel: string
+    periodRangeSeparator: string
     sourceProductionPs: string
     sourceProductionEvEbitda: string
     sourceProductionPfcf: string
@@ -294,6 +322,8 @@ export interface Translations {
     methodRevenue: string
     methodPfcf: string
     methodEvEbitda: string
+    provenanceSecDerived: string
+    provenanceVendorReported: string
     noticeSomeUnavailable: string
     noticeSomeUnavailableBody: string
   }

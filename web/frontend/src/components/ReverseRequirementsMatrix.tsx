@@ -233,8 +233,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                 {t.matrix.uncomputableMatrixNotice}
               </span>
               <p className="text-amber-800">
-                {report.status_reason ||
-                  'The calculation engine cannot construct the matrix due to missing positive EPS anchor or exit multiples.'}
+                {report.status_reason || t.matrix.uncomputableFallback}
               </p>
             </div>
           </div>
@@ -449,7 +448,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                           ) : (
                             <span
                               className="px-1.5 py-0.5 rounded text-[10px] font-sans font-medium bg-amber-100 text-amber-800"
-                              title={sc.comparison_notes?.join(' ') || 'Not Computable'}
+                              title={sc.comparison_notes?.join(' ') || t.matrix.notComputableFallback}
                             >
                               {t.matrix.notComputable}
                             </span>
@@ -476,7 +475,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                             type="button"
                             onClick={() => toggleRow(idx)}
                             className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition-colors"
-                            title="Toggle details"
+                            title={t.matrix.toggleDetailsTitle}
                           >
                             {isExpanded ? (
                               <ChevronDown className="w-3.5 h-3.5" />
@@ -602,8 +601,8 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                       </span>
                                     </div>
                                     <div className="text-[11px] text-slate-500 space-y-0.5">
-                                      <div>Provider: {sc.evidence.price_evidence.provider || 'market'}</div>
-                                      <div>As-of: {sc.evidence.price_evidence.as_of || sc.as_of || 'N/A'}</div>
+                                      <div>{t.matrix.providerLabel}: {sc.evidence.price_evidence.provider || 'market'}</div>
+                                      <div>{t.matrix.asOfLabel}: {sc.evidence.price_evidence.as_of || sc.as_of || 'N/A'}</div>
                                       {sc.evidence.price_evidence.observation_id && (
                                         <div className="font-mono text-[10px] text-indigo-700">
                                           {sc.evidence.price_evidence.observation_id}
@@ -658,7 +657,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                         {sc.evidence.eps_evidence.period_undeclared_by_source
                                           ? t.matrix.startEpsCoverageAssumed
                                           : t.matrix.startEpsCoverageDeclared}
-                                        : {sc.evidence.eps_evidence.months_covered} months
+                                        : {sc.evidence.eps_evidence.months_covered} {t.matrix.monthsUnit}
                                       </div>
                                       {sc.evidence.eps_evidence.period_start && (
                                         <div>
@@ -685,7 +684,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           {t.matrix.startEpsPeriodUndeclared}
                                         </div>
                                       )}
-                                      <div>Provider: {sc.evidence.eps_evidence.provider || 'reported'}</div>
+                                      <div>{t.matrix.providerLabel}: {sc.evidence.eps_evidence.provider || 'reported'}</div>
                                       {sc.evidence.eps_evidence.available_at && (
                                         <div>
                                           {t.matrix.startEpsAvailableAt}: {sc.evidence.eps_evidence.available_at}
@@ -704,7 +703,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           <div className="font-semibold">{t.matrix.startEpsDerivedComponentsHeader}</div>
                                           {(sc.evidence.eps_evidence.sec_components || []).map((comp, ci) => (
                                             <div key={ci}>
-                                              {comp.period_start || '?'} .. {comp.period_end} = {comp.value} ({comp.form} accn {comp.accession}{comp.evidence_class === 'furnished' ? ', furnished' : ''})
+                                              {comp.period_start || '?'} .. {comp.period_end} = {comp.value} ({comp.form} {t.matrix.accnLabel} {comp.accession}{comp.evidence_class === 'furnished' ? t.matrix.furnishedSuffix : ''})
                                             </div>
                                           ))}
                                           {sc.evidence.eps_evidence.annual_comparison?.comparable && (
@@ -722,13 +721,13 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                         <div className="mt-1 pt-1 border-t border-slate-100 space-y-0.5 text-[10px] font-mono text-slate-600">
                                           <div className="text-emerald-700 font-semibold flex items-center gap-1">
                                             <FileText className="w-3 h-3" />
-                                            <span>Source: SEC {sc.evidence.eps_evidence.sec_fact.form || '10-K'}</span>
+                                            <span>{t.matrix.secSourceLabel} {sc.evidence.eps_evidence.sec_fact.form || '10-K'}</span>
                                           </div>
                                           {sc.evidence.eps_evidence.sec_fact.accession && (
-                                            <div>accn: {sc.evidence.eps_evidence.sec_fact.accession}</div>
+                                            <div>{t.matrix.accnLabel}: {sc.evidence.eps_evidence.sec_fact.accession}</div>
                                           )}
                                           {sc.evidence.eps_evidence.sec_fact.filed_date && (
-                                            <div>filed: {sc.evidence.eps_evidence.sec_fact.filed_date}</div>
+                                            <div>{t.matrix.filedLabel}: {sc.evidence.eps_evidence.sec_fact.filed_date}</div>
                                           )}
                                           <div>{sc.evidence.eps_evidence.sec_fact.concept}</div>
                                         </div>
@@ -738,9 +737,9 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                           derivation block above is its provenance and this caveat is not raised. */}
                                       {!sc.evidence.eps_evidence.sec_fact && (sc.evidence.eps_evidence.sec_components?.length || 0) === 0 && !sc.evidence.eps_evidence.is_user_assumption && (
                                         <div className="mt-1 pt-1 border-t border-amber-200 text-[10px] font-mono text-amber-800">
-                                          <div className="font-semibold">Direct SEC source: not established</div>
+                                          <div className="font-semibold">{t.matrix.directSecSourceNotEstablished}</div>
                                           <div className="text-[9px] text-amber-700 italic">
-                                            Value retained from its declared provider; no filing fact is claimed as its source.
+                                            {t.matrix.valueRetainedNote}
                                           </div>
                                         </div>
                                       )}
@@ -749,13 +748,13 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                                         <div className="mt-1 pt-1 border-t border-amber-200 space-y-0.5 text-[10px] font-mono text-amber-800">
                                           <div className="font-semibold flex items-center gap-1">
                                             <FileText className="w-3 h-3 text-amber-600" />
-                                            <span>Related SEC {sc.evidence.related_sec_evidence.form || '10-K'} (cross-check)</span>
+                                            <span>{t.matrix.relatedSecLabel} {sc.evidence.related_sec_evidence.form || '10-K'} {t.matrix.crossCheckLabel}</span>
                                           </div>
-                                          <div>accn: {sc.evidence.related_sec_evidence.accession}</div>
+                                          <div>{t.matrix.accnLabel}: {sc.evidence.related_sec_evidence.accession}</div>
                                           {sc.evidence.related_sec_evidence.filed_date && (
-                                            <div>filed: {sc.evidence.related_sec_evidence.filed_date}</div>
+                                            <div>{t.matrix.filedLabel}: {sc.evidence.related_sec_evidence.filed_date}</div>
                                           )}
-                                          <div className="text-[9px] text-amber-700 italic">{sc.evidence.related_sec_evidence.note || "Not verified as direct source of selected EPS value"}</div>
+                                          <div className="text-[9px] text-amber-700 italic">{sc.evidence.related_sec_evidence.note || t.matrix.notVerifiedDirectNote}</div>
                                         </div>
                                       )}
                                     </div>
@@ -1117,7 +1116,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                             {sc.flags && sc.flags.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 items-center pt-1">
                                 <span className="text-[11px] font-semibold text-slate-500">
-                                  Flags:
+                                  {t.matrix.flagsLabel}:
                                 </span>
                                 {sc.flags.map((fl, fIdx) => (
                                   <span
@@ -1134,7 +1133,7 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
                             {sc.comparison_notes && sc.comparison_notes.length > 0 && (
                               <div className="space-y-1">
                                 <span className="text-[11px] font-semibold text-slate-500">
-                                  Notes:
+                                  {t.matrix.notesLabel}:
                                 </span>
                                 <ul className="list-disc list-inside space-y-0.5 text-slate-600 text-[11px]">
                                   {sc.comparison_notes.map((note, nIdx) => (
@@ -1146,12 +1145,12 @@ export const ReverseRequirementsMatrix: React.FC<ReverseRequirementsMatrixProps>
 
                             {/* Lineage Info */}
                             <div className="pt-1.5 border-t border-slate-200/60 flex flex-wrap gap-4 text-[11px] text-slate-500 font-mono">
-                              <span>Growth window: {sc.growth_years !== null ? `${sc.growth_years} yrs` : 'N/A'}</span>
-                              <span>Return basis: {sc.required_return_basis}</span>
+                              <span>{t.matrix.growthWindowLabel}: {sc.growth_years !== null ? `${sc.growth_years} ${t.matrix.yrsUnit}` : 'N/A'}</span>
+                              <span>{t.matrix.returnBasisLabel}: {sc.required_return_basis}</span>
                               {sc.start_eps?.provider && (
-                                <span>EPS provider: {sc.start_eps.provider}</span>
+                                <span>{t.matrix.epsProviderLabel}: {sc.start_eps.provider}</span>
                               )}
-                              <span>Formula: {sc.formula_version}</span>
+                              <span>{t.matrix.formulaLabel}: {sc.formula_version}</span>
                             </div>
                           </td>
                         </tr>
