@@ -304,6 +304,7 @@ export const en: Translations = {
     columnSource: 'Source & Period',
     sampleSizeLabel: 'Sample',
     minObservationsLabel: 'min required',
+    requiredObservationsSuffix: ' required observations',
     samplePeriodLabel: 'Sample period',
     refusalReasonLabel: 'Reason',
     notComparable: '—',

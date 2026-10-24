@@ -115,3 +115,39 @@ class TestWebValuationMethods(unittest.TestCase):
         # No user multiple supplied in regression: references stay historical.
         ps = dto.reverse_requirements.valuation_methods.methods["revenue_multiple"]
         self.assertFalse(ps.reference_multiple["is_user_assumption"])
+
+    def test_valid_multiples_pass_through(self):
+        req = AnalyzeRequest(
+            ticker="AAPL",
+            ps_multiple=7.0,
+            ev_ebitda_multiple=13.0,
+            pfcf_multiple=25.0,
+            reference_multiple=20.0,
+        )
+        self.assertEqual(req.ps_multiple, 7.0)
+        self.assertEqual(req.ev_ebitda_multiple, 13.0)
+        self.assertEqual(req.pfcf_multiple, 25.0)
+        self.assertEqual(req.reference_multiple, 20.0)
+
+    def test_invalid_multiples_are_rejected(self):
+        from pydantic import ValidationError
+
+        invalid_values = [0, -1.0, float("nan"), float("inf"), float("-inf")]
+        for value in invalid_values:
+            for name in (
+                "ps_multiple",
+                "ev_ebitda_multiple",
+                "pfcf_multiple",
+                "reference_multiple",
+            ):
+                with self.assertRaises(ValidationError):
+                    AnalyzeRequest(ticker="AAPL", **{name: value})
+
+    def test_none_multiples_are_accepted(self):
+        # Absent multiples fall back to historical references; None is not an
+        # invalid value.
+        req = AnalyzeRequest(ticker="AAPL")
+        self.assertIsNone(req.ps_multiple)
+        self.assertIsNone(req.ev_ebitda_multiple)
+        self.assertIsNone(req.pfcf_multiple)
+        self.assertIsNone(req.reference_multiple)

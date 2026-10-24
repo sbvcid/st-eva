@@ -278,6 +278,7 @@ export interface Translations {
     columnSource: string
     sampleSizeLabel: string
     minObservationsLabel: string
+    requiredObservationsSuffix: string
     samplePeriodLabel: string
     refusalReasonLabel: string
     notComparable: string

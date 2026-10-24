@@ -302,6 +302,7 @@ export const zhTW: Translations = {
     columnSource: '來源與期間',
     sampleSizeLabel: '樣本數',
     minObservationsLabel: '最少門檻',
+    requiredObservationsSuffix: ' 個所需觀察值',
     samplePeriodLabel: '樣本期間',
     refusalReasonLabel: '原因',
     notComparable: '—',

@@ -98,14 +98,27 @@ const formatNumber = (value: number): string =>
     maximumFractionDigits: 2,
   })
 
+// Show the reference multiple with full precision (e.g. 13.221693, 7.257709,
+// 22.326, 11.783822) so the reader can re-verify the figure the engine
+// actually used instead of a rounded one-decimal rendering.
+const formatMultiple = (value: number): string => {
+  return Number(value)
+    .toFixed(6)
+    .replace(/\.?0+$/, '')
+}
+
 const money = (currency: string | null | undefined, value: number | null | undefined): string => {
   if (value === null || value === undefined) return '—'
   return `${currency || '$'}${formatNumber(value)}`
 }
 
-const gapText = (t: any, currency: string | null | undefined, gap: number | null | undefined): string => {
+// gap_implied_vs_observed is a relative ratio (implied / observed - 1),
+// e.g. +0.0180 -> +1.80%, -0.0322 -> -3.22%. It is not an absolute currency
+// difference, so it is shown as a signed percentage, never as money.
+const gapText = (t: any, gap: number | null | undefined): string => {
   if (gap === null || gap === undefined) return '—'
-  return `${gap >= 0 ? '+' : ''}${currency || '$'}${formatNumber(Math.abs(gap))}`
+  const sign = gap > 0 ? '+' : gap < 0 ? '-' : ''
+  return `${sign}${Number(Math.abs(gap * 100)).toFixed(2)}%`
 }
 
 export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
@@ -115,17 +128,6 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
   const { t } = useI18n()
   const methods = report?.valuation_methods?.methods ?? {}
   const distributions = report?.production_historical_multiples_summary?.distributions ?? {}
-
-  // The refusal reason the engine attached to each method block, when it
-  // refused to compute one (kept distinct from the matrix's unavailable
-  // list but reconciled with it).
-  const refusalFor = (key: string): string | null => {
-    const unavailable = report?.unavailable ?? []
-    const entry = unavailable.find(
-      (u) => u.item === `valuation_method.${key}`,
-    )
-    return entry ? (entry.reason as string) : null
-  }
 
   const distributionFor = (key: string): any => {
     switch (key) {
@@ -138,6 +140,23 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
       default:
         return null
     }
+  }
+
+  // The refusal reason, preferring the distribution's own ineligibility
+  // (e.g. INSUFFICIENT_OBSERVATIONS with its sample count and required
+  // minimum) over the top-level unavailable entry, whose reason names the
+  // input a method would invert rather than why the reference is absent.
+  const refusalFor = (key: string): string | null => {
+    const dist = distributionFor(key)
+    if (dist && dist.status && dist.status !== 'USABLE_FOR_REFERENCE') {
+      if (dist.reason_detail) return dist.reason_detail
+      return `${String(dist.status)} — ${dist.sample_count ?? '—'} of ${
+        dist.min_observations_required ?? '—'
+      }${t.valuationMethods.requiredObservationsSuffix}`
+    }
+    const unavailable = report?.unavailable ?? []
+    const entry = unavailable.find((u) => u.item === `valuation_method.${key}`)
+    return entry ? (entry.reason as string) : null
   }
 
   if (!report) return null
@@ -207,7 +226,7 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
                   <td className="py-3 px-3">{statusBadge(t, block?.status ?? null)}</td>
                   <td className="py-3 px-3">
                     <div className="font-semibold text-slate-900">
-                      {multiple ? `${Number(multiple.value).toFixed(1)}x` : '—'}
+                      {multiple ? `${formatMultiple(Number(multiple.value))}x` : '—'}
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5">
                       {sourceLabel(t, multiple?.source)}
@@ -243,7 +262,7 @@ export const ValuationMethods: React.FC<ValuationMethodsProps> = ({
                   </td>
                   <td className="py-3 px-3 text-slate-700">
                     {isComputed && (implied != null && observed != null)
-                      ? gapText(t, currency, gap)
+                      ? gapText(t, gap)
                       : t.valuationMethods.notComparable}
                   </td>
                   <td className="py-3 px-3 text-[10px] text-slate-500">

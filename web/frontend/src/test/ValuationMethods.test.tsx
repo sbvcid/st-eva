@@ -60,7 +60,7 @@ const mockReport: ReverseRequirementsReportDTO = {
         implied: 9008271932.35,
         observed: 8849200000,
         unit: 'currency',
-        gap_implied_vs_observed: 159071932.35,
+        gap_implied_vs_observed: 0.018,
       },
     },
     unavailable: [],
@@ -92,9 +92,59 @@ describe('ValuationMethods Component', () => {
     expect(screen.getByText('COMPUTED')).toBeInTheDocument()
     expect(screen.getByText('$9,008,271,932.35')).toBeInTheDocument()
     expect(screen.getByText('$8,849,200,000.00')).toBeInTheDocument()
-    expect(screen.getByText('+$159,071,932.35')).toBeInTheDocument()
-    expect(screen.getByText('13.2x')).toBeInTheDocument()
+    expect(screen.getByText('+1.80%')).toBeInTheDocument()
+    expect(screen.getByText('13.221693x')).toBeInTheDocument()
     expect(screen.getByText('Production point-in-time historical EV/EBITDA')).toBeInTheDocument()
+  })
+
+  it('shows a negative signed gap when implied is below observed', () => {
+    const negative = {
+      ...mockReport,
+      valuation_methods: {
+        ...mockReport.valuation_methods,
+        methods: {
+          ...mockReport.valuation_methods.methods,
+          enterprise_value_multiple: {
+            ...mockReport.valuation_methods.methods.enterprise_value_multiple,
+            implied: 8500000000,
+            observed: 8849200000,
+            gap_implied_vs_observed: -0.0395,
+          },
+        },
+      },
+    }
+    render(
+      <I18nProvider initialLang="en">
+        <ValuationMethods report={negative} />
+      </I18nProvider>
+    )
+
+    expect(screen.getByText('-3.95%')).toBeInTheDocument()
+  })
+
+  it('shows a zero gap without a sign when implied equals observed', () => {
+    const zero = {
+      ...mockReport,
+      valuation_methods: {
+        ...mockReport.valuation_methods,
+        methods: {
+          ...mockReport.valuation_methods.methods,
+          enterprise_value_multiple: {
+            ...mockReport.valuation_methods.methods.enterprise_value_multiple,
+            implied: 8849200000,
+            observed: 8849200000,
+            gap_implied_vs_observed: 0,
+          },
+        },
+      },
+    }
+    render(
+      <I18nProvider initialLang="en">
+        <ValuationMethods report={zero} />
+      </I18nProvider>
+    )
+
+    expect(screen.getByText('0.00%')).toBeInTheDocument()
   })
 
   it('shows NOT COMPUTED for methods without a usable reference', () => {

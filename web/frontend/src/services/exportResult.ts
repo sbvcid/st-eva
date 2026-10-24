@@ -240,6 +240,15 @@ function csvField(value: unknown): string {
 
 const jsonColumn = (value: unknown): string => JSON.stringify(value ?? null)
 
+// gap_implied_vs_observed is a relative ratio (implied / observed - 1), e.g.
+// +0.0180 -> +1.80%, -0.0322 -> -3.22%. It is not an absolute currency
+// difference, so it is exported as a signed percentage, never as money.
+const formatGap = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || !Number.isFinite(value)) return ''
+  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
+  return `${sign}${Number(Math.abs(value * 100)).toFixed(2)}%`
+}
+
 function reportLevelFields(
   result: AnalysisResultDTO,
   report: ReverseRequirementsReportDTO | null | undefined,
@@ -296,19 +305,21 @@ function reportLevelFields(
     report_method_ps_status: methodStatus(methods, 'revenue_multiple'),
     report_method_ps_implied: methodValue(methods, 'revenue_multiple', 'implied'),
     report_method_ps_observed: methodValue(methods, 'revenue_multiple', 'observed'),
-    report_method_ps_gap: methodValue(methods, 'revenue_multiple', 'gap_implied_vs_observed'),
+    report_method_ps_gap: formatGap(methodValue(methods, 'revenue_multiple', 'gap_implied_vs_observed')),
     report_method_ps_multiple_value: methodMultipleValue(methods, 'revenue_multiple'),
     report_method_ps_multiple_source: methodMultipleSource(methods, 'revenue_multiple'),
     report_method_pfcf_status: methodStatus(methods, 'cash_flow_multiple'),
     report_method_pfcf_implied: methodValue(methods, 'cash_flow_multiple', 'implied'),
     report_method_pfcf_observed: methodValue(methods, 'cash_flow_multiple', 'observed'),
-    report_method_pfcf_gap: methodValue(methods, 'cash_flow_multiple', 'gap_implied_vs_observed'),
+    report_method_pfcf_gap: formatGap(methodValue(methods, 'cash_flow_multiple', 'gap_implied_vs_observed')),
     report_method_pfcf_multiple_value: methodMultipleValue(methods, 'cash_flow_multiple'),
     report_method_pfcf_multiple_source: methodMultipleSource(methods, 'cash_flow_multiple'),
     report_method_ev_ebitda_status: methodStatus(methods, 'enterprise_value_multiple'),
     report_method_ev_ebitda_implied: methodValue(methods, 'enterprise_value_multiple', 'implied'),
     report_method_ev_ebitda_observed: methodValue(methods, 'enterprise_value_multiple', 'observed'),
-    report_method_ev_ebitda_gap: methodValue(methods, 'enterprise_value_multiple', 'gap_implied_vs_observed'),
+    report_method_ev_ebitda_gap: formatGap(
+      methodValue(methods, 'enterprise_value_multiple', 'gap_implied_vs_observed'),
+    ),
     report_method_ev_ebitda_multiple_value: methodMultipleValue(
       methods,
       'enterprise_value_multiple',

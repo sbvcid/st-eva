@@ -5,7 +5,7 @@ Stable contracts decoupled from internal domain structures.
 
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class JobStatus(str, Enum):
@@ -45,6 +45,31 @@ class AnalyzeRequest(BaseModel):
     ps_multiple: Optional[float] = Field(None, description="Explicit P/S (price-to-sales) reference multiple")
     ev_ebitda_multiple: Optional[float] = Field(None, description="Explicit EV/EBITDA reference multiple")
     pfcf_multiple: Optional[float] = Field(None, description="Explicit P/FCF (price-to-free-cash-flow) reference multiple")
+
+    @model_validator(mode="after")
+    def _validate_reference_multiples(self) -> "AnalyzeRequest":
+        """Reject zero, negative, non-finite (NaN / +/-inf) reference multiples.
+
+        A valuation multiple must be a positive finite number; an invalid value
+        is refused outright instead of being silently treated as "not supplied"
+        and falling back to a historical reference.
+        """
+        import math
+
+        for name in (
+            "ps_multiple",
+            "ev_ebitda_multiple",
+            "pfcf_multiple",
+            "reference_multiple",
+        ):
+            value = getattr(self, name)
+            if value is None:
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"{name} must be a number")
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be a positive finite number")
+        return self
 
 
 class AnalyzeResponse(BaseModel):

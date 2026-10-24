@@ -655,7 +655,7 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
             implied: 9008271932.35,
             observed: 8849200000,
             unit: 'currency',
-            gap_implied_vs_observed: 159071932.35,
+            gap_implied_vs_observed: 0.018,
           },
           revenue_multiple: {
             status: 'NOT_COMPUTED',
@@ -676,7 +676,7 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     expect(row.report_method_ev_ebitda_status).toBe('COMPUTED')
     expect(row.report_method_ev_ebitda_implied).toBe('9008271932.35')
     expect(row.report_method_ev_ebitda_observed).toBe('8849200000')
-    expect(row.report_method_ev_ebitda_gap).toBe('159071932.35')
+    expect(row.report_method_ev_ebitda_gap).toBe('+1.80%')
     expect(row.report_method_ev_ebitda_multiple_value).toBe('13.221693')
     expect(row.report_method_ev_ebitda_multiple_source).toBe(
       'production_historical_ev_ebitda_median',
