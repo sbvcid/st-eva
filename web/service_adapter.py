@@ -977,9 +977,9 @@ class AnalysisServiceAdapter:
             if isinstance(raw_multiples, dict):
                 from historical_multiples import production_multiples_summary
 
-            production_multiples_summary = production_multiples_summary(
-                raw_multiples
-            )
+                production_multiples_summary = production_multiples_summary(
+                    raw_multiples
+                )
 
             production_multiples_distributions: Optional[Dict[str, Any]] = None
             raw_multiples_distributions = (raw_multiples or {}).get(
