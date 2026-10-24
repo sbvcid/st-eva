@@ -1,6 +1,7 @@
 import {
   AnalyzeRequest,
   AnalyzeResponse,
+  CoverageResponseDTO,
   HealthResponse,
   JobDetailResponse,
 } from '../types/api'
@@ -23,6 +24,14 @@ export async function checkHealth(): Promise<HealthResponse> {
   const res = await fetch(`${API_BASE}/health`)
   if (!res.ok) {
     throw new ApiError(res.status, `Health check failed with status ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function getCoverage(): Promise<CoverageResponseDTO> {
+  const res = await fetch(`${API_BASE}/coverage`)
+  if (!res.ok) {
+    throw new ApiError(res.status, `Failed to fetch coverage (${res.status})`)
   }
   return res.json()
 }

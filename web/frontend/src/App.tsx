@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   AnalyzeRequest,
+  CoverageResponseDTO,
+  IssuerCoverageDTO,
   JobDetailResponse,
 } from './types/api'
-import { startAnalysis, getJobStatus } from './services/apiClient'
+import { startAnalysis, getJobStatus, getCoverage } from './services/apiClient'
 import {
   downloadReverseRequirementsJson,
   downloadReverseRequirementsCsv,
@@ -30,7 +32,24 @@ import {
   WifiOff,
 } from 'lucide-react'
 
-const QUICK_EXAMPLES = ['AAPL', 'MSFT', 'MU', 'TSM']
+// Fallback when the coverage endpoint is unreachable: a single issuer whose
+// qualified references are verified, so the first-use path never suggests an
+// unsupported ticker. The full list is data-driven from /api/coverage.
+const FALLBACK_QUICK_EXAMPLES = ['AAPL']
+
+// The reference families a quick example can carry, in display order, with
+// the compact tag each chip shows.
+const FAMILY_ORDER: Array<{ key: 'pe' | 'ps' | 'pfcf' | 'ev_ebitda'; tag: string }> = [
+  { key: 'pe', tag: 'P/E' },
+  { key: 'ps', tag: 'P/S' },
+  { key: 'pfcf', tag: 'P/FCF' },
+  { key: 'ev_ebitda', tag: 'EV/EBITDA' },
+]
+
+const eligibleFamilies = (issuer: IssuerCoverageDTO): string[] =>
+  FAMILY_ORDER.filter(({ key }) => issuer[key]?.usable_for_reference).map(({ tag }) => tag)
+
+const QUICK_EXAMPLE_LIMIT = 5
 
 type AppMode = 'valuation' | 'research'
 
@@ -55,6 +74,11 @@ const MainApp: React.FC = () => {
   // calculation never touches the analysis path, and an analysis never
   // touches a research figure.
   const [appMode, setAppMode] = useState<AppMode>('valuation')
+  // First-use coverage: which issuers carry which qualified production
+  // reference families. Loaded once from the read-only /api/coverage summary;
+  // a fetch failure degrades to the verified fallback rather than a hardcoded
+  // list that could silently drift from the datasets.
+  const [coverage, setCoverage] = useState<CoverageResponseDTO | null>(null)
 
   // Scenario assumption controls
   // Live-first by default: a normal analysis must observe real market data, not
@@ -95,13 +119,52 @@ const MainApp: React.FC = () => {
     window.addEventListener('beforeinstallprompt', handleInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
 
+    // Coverage is read-only and independent of any analysis; a failure is not
+    // an error the user must act on, so the examples simply fall back.
+    let cancelled = false
+    getCoverage()
+      .then((data) => {
+        if (!cancelled) setCoverage(data)
+      })
+      .catch(() => {
+        /* covered by the fallback below */
+      })
+
     return () => {
+      cancelled = true
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
   }, [])
+
+  // Quick examples are the issuers the coverage summary actually qualifies,
+  // richest coverage first, so the homepage reflects coverage differences
+  // instead of implying every ticker supports every method. When the summary
+  // is unreachable, the verified fallback stands in with no family tags.
+  const quickExamples: IssuerCoverageDTO[] = useMemo(() => {
+    if (!coverage) {
+      return FALLBACK_QUICK_EXAMPLES.map(
+        (ticker) =>
+          ({
+            ticker,
+            pe: { status: 'UNAVAILABLE', usable_for_reference: false, sample_count: 0 },
+            ps: { status: 'UNAVAILABLE', usable_for_reference: false, sample_count: 0 },
+            pfcf: { status: 'UNAVAILABLE', usable_for_reference: false, sample_count: 0 },
+            ev_ebitda: { status: 'UNAVAILABLE', usable_for_reference: false, sample_count: 0 },
+          }) as IssuerCoverageDTO,
+      )
+    }
+    return Object.values(coverage.issuers)
+      .filter((issuer) => eligibleFamilies(issuer).length > 0)
+      .sort(
+        (a, b) =>
+          eligibleFamilies(b).length - eligibleFamilies(a).length ||
+          a.ticker.localeCompare(b.ticker),
+      )
+      .slice(0, QUICK_EXAMPLE_LIMIT)
+  }, [coverage])
 
   const handleInstallClick = async () => {
     if (!installPrompt) return
@@ -650,31 +713,50 @@ const MainApp: React.FC = () => {
             </div>
           )}
 
-          {/* Quick Examples */}
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 text-xs">
-            <span className="text-slate-400 text-[11px] font-medium">{t.search.quickExamples}</span>
+          {/* Quick Examples — only issuers the coverage summary qualifies, each
+              labelled with the reference families it actually carries. */}
+          <div className="flex items-start gap-2 mt-3 pt-3 border-t border-slate-100 text-xs">
+            <span className="text-slate-400 text-[11px] font-medium pt-1.5 shrink-0">
+              {t.search.quickExamples}
+            </span>
             <div className="flex flex-wrap gap-1.5">
-              {QUICK_EXAMPLES.map((sym) => (
-                <button
-                  key={sym}
-                  type="button"
-                  onClick={() => {
-                    setTickerInput(sym)
-                    handleAnalyze(sym)
-                  }}
-                  disabled={loading}
-                  className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-50 min-h-[32px] sm:min-h-0"
-                >
-                  {sym}
-                </button>
-              ))}
+              {quickExamples.map((issuer) => {
+                const families = eligibleFamilies(issuer)
+                return (
+                  <button
+                    key={issuer.ticker}
+                    type="button"
+                    onClick={() => {
+                      setTickerInput(issuer.ticker)
+                      handleAnalyze(issuer.ticker)
+                    }}
+                    disabled={loading}
+                    title={
+                      families.length > 0
+                        ? `${issuer.ticker}: ${families.join(' · ')}`
+                        : undefined
+                    }
+                    className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer disabled:opacity-50 min-h-[38px] sm:min-h-0"
+                  >
+                    <span className="font-mono text-[11px] font-medium block leading-tight">
+                      {issuer.ticker}
+                    </span>
+                    {families.length > 0 && (
+                      <span className="text-[9px] text-slate-400 block leading-tight">
+                        {families.join(' · ')}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {/* Coverage Notice */}
-          <p className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-400 leading-normal">
-            {t.search.coverageNotice}
-          </p>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-400 leading-normal space-y-1">
+            <p>{t.search.coverageNotice}</p>
+            <p>{t.search.coverageNoticeCustom}</p>
+          </div>
         </div>
 
         {/* Global Error Notice */}

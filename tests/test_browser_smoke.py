@@ -397,8 +397,11 @@ class TestBrowserSmoke(unittest.TestCase):
             page = context.new_page()
             page.goto(self.base_url)
 
-            tsm_button = page.locator("button:has-text('TSM')")
-            tsm_button.click()
+            # TSM is deliberately not a quick example (no committed production
+            # dataset), so the unsupported-ticker refusal is reached by typing.
+            input_box = page.locator("input[placeholder*='Enter ticker']")
+            input_box.fill("TSM")
+            page.locator("button:has-text('Analyze')").click()
 
             page.get_by_test_id("results-heading").wait_for(state="visible", timeout=60000)
             page.wait_for_selector("text=Admission Status: REFUSED", timeout=10000)
@@ -446,7 +449,7 @@ class TestBrowserSmoke(unittest.TestCase):
             page.locator("button:has-text('中文')").click()
             page.wait_for_selector("text=反推市場定價預期")
             page.wait_for_selector("button:has-text('開始分析')")
-            page.wait_for_selector("text=目前針對美國 SEC 申報企業最佳化")
+            page.wait_for_selector("text=樣本不足或資料不可用會以具名缺失呈現")
 
             # Click EN
             page.locator("button:has-text('EN')").click()
@@ -731,8 +734,11 @@ class TestBrowserSmoke(unittest.TestCase):
             page.goto(self.base_url)
 
             page.wait_for_selector("text=Reverse-engineer market expectations", timeout=10000)
-            tsm_btn = page.locator("button:has-text('TSM')")
-            tsm_btn.click()
+            # TSM is deliberately not a quick example (no committed production
+            # dataset), so this refusal path is reached by typing.
+            input_box = page.locator("input[placeholder*='Enter ticker']")
+            input_box.fill("TSM")
+            page.locator("button:has-text('Analyze')").click()
             page.wait_for_selector("text=Admission Status: REFUSED", timeout=60000)
 
             # The banner carries the status explanation rather than a limitations

@@ -436,6 +436,34 @@ export interface ReverseRequirementsReportDTO {
   input_provenance?: Record<string, ProvenanceEntryDTO> | null
 }
 
+export interface FamilyCoverageDTO {
+  // One reference family's coverage state for one issuer, read from the
+  // family's own production distribution and its own qualification gate:
+  // USABLE_FOR_REFERENCE when qualified, INSUFFICIENT_OBSERVATIONS for a thin
+  // sample, UNAVAILABLE for a missing dataset. An ineligible state never
+  // renders as a zero multiple.
+  status: string
+  usable_for_reference: boolean
+  sample_count: number
+  min_observations_required?: number | null
+  reason_detail?: string | null
+}
+
+export interface IssuerCoverageDTO {
+  ticker: string
+  pe: FamilyCoverageDTO
+  ps: FamilyCoverageDTO
+  pfcf: FamilyCoverageDTO
+  ev_ebitda: FamilyCoverageDTO
+}
+
+export interface CoverageResponseDTO {
+  // First-use coverage derived from the committed production datasets the
+  // engine itself loads, so the homepage cannot drift from what an analysis
+  // would actually use.
+  issuers: Record<string, IssuerCoverageDTO>
+}
+
 export interface AnalysisResultDTO {
   ticker: string
   company_name: string

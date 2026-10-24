@@ -674,6 +674,47 @@ class ProvenanceEntryDTO(BaseModel):
     provider_figure: Optional[Dict[str, Any]] = None
 
 
+class FamilyCoverageDTO(BaseModel):
+    """
+    One valuation reference family's coverage state for one issuer, read from
+    the family's own production distribution and its own qualification gate.
+
+    The state is the dataset's, not a re-derivation: `status` is the
+    distribution's own status string (ELIGIBLE distributions carry
+    USABLE_FOR_REFERENCE; a thin sample carries INSUFFICIENT_OBSERVATIONS;
+    a missing dataset carries UNAVAILABLE), `usable_for_reference` is the
+    same flag the engine's reference precedence gates on, and the refusal
+    detail is preserved so "unsupported" never renders as a zero multiple.
+    """
+
+    status: str = "UNAVAILABLE"
+    usable_for_reference: bool = False
+    sample_count: int = 0
+    min_observations_required: Optional[int] = None
+    reason_detail: Optional[str] = None
+
+
+class IssuerCoverageDTO(BaseModel):
+    """One issuer's coverage across the four non-earnings reference families."""
+
+    ticker: str
+    pe: FamilyCoverageDTO = Field(default_factory=FamilyCoverageDTO)
+    ps: FamilyCoverageDTO = Field(default_factory=FamilyCoverageDTO)
+    pfcf: FamilyCoverageDTO = Field(default_factory=FamilyCoverageDTO)
+    ev_ebitda: FamilyCoverageDTO = Field(default_factory=FamilyCoverageDTO)
+
+
+class CoverageResponseDTO(BaseModel):
+    """
+    First-use coverage: which issuers carry which qualified production
+    reference families. Read-only, derived from the committed datasets the
+    engine itself loads, so the homepage cannot drift from what an analysis
+    would actually use.
+    """
+
+    issuers: Dict[str, IssuerCoverageDTO] = Field(default_factory=dict)
+
+
 class ReverseRequirementsReportDTO(BaseModel):
     formula_version: str = "reverse-requirements/1.1"
     fingerprint: Optional[str] = None

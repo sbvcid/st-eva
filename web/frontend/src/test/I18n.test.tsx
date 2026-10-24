@@ -10,11 +10,13 @@ vi.mock('../services/apiClient', () => ({
   startAnalysis: vi.fn(),
   getJobStatus: vi.fn(),
   checkHealth: vi.fn(),
+  getCoverage: vi.fn(),
 }))
 
 describe('Bilingual (i18n) Interface', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(apiClient.getCoverage).mockResolvedValue({ issuers: {} })
     localStorage.clear()
     Object.defineProperty(navigator, 'onLine', {
       value: true,
@@ -67,7 +69,10 @@ describe('Bilingual (i18n) Interface', () => {
     expect(screen.getByText('反推市場定價預期')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^開始分析$/i })).toBeInTheDocument()
     expect(
-      screen.getByText(/目前針對美國 SEC 申報企業最佳化/i)
+      screen.getByText(/樣本不足或資料不可用會以具名缺失呈現/i)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/自訂假設是明確陳述的假設，而非歷史資料支持/i)
     ).toBeInTheDocument()
 
     // Switch back to English

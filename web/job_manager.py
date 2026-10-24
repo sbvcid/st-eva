@@ -100,6 +100,9 @@ class JobManager:
         required_returns: Optional[List[float]] = None,
         prefer_eps_anchor: Optional[str] = None,
         user_eps: Optional[float] = None,
+        ps_multiple: Optional[float] = None,
+        ev_ebitda_multiple: Optional[float] = None,
+        pfcf_multiple: Optional[float] = None,
     ) -> JobRecord:
         job_id = f"job-{uuid.uuid4().hex[:12]}"
         record = JobRecord(job_id=job_id, ticker=ticker)
@@ -119,6 +122,9 @@ class JobManager:
             required_returns,
             prefer_eps_anchor,
             user_eps,
+            ps_multiple,
+            ev_ebitda_multiple,
+            pfcf_multiple,
         )
         return record
 
@@ -138,6 +144,9 @@ class JobManager:
         required_returns: Optional[List[float]],
         prefer_eps_anchor: Optional[str],
         user_eps: Optional[float],
+        ps_multiple: Optional[float],
+        ev_ebitda_multiple: Optional[float],
+        pfcf_multiple: Optional[float],
     ) -> None:
         record = self.get_job(job_id)
         if not record:
@@ -177,6 +186,12 @@ class JobManager:
                     call_kwargs["prefer_eps_anchor"] = prefer_eps_anchor
                 if has_var_kwargs or "user_eps" in param_names:
                     call_kwargs["user_eps"] = user_eps
+                if has_var_kwargs or "ps_multiple" in param_names:
+                    call_kwargs["ps_multiple"] = ps_multiple
+                if has_var_kwargs or "ev_ebitda_multiple" in param_names:
+                    call_kwargs["ev_ebitda_multiple"] = ev_ebitda_multiple
+                if has_var_kwargs or "pfcf_multiple" in param_names:
+                    call_kwargs["pfcf_multiple"] = pfcf_multiple
             except Exception:
                 call_kwargs.update({
                     "reference_multiples": reference_multiples,
@@ -184,6 +199,9 @@ class JobManager:
                     "required_returns": required_returns,
                     "prefer_eps_anchor": prefer_eps_anchor,
                     "user_eps": user_eps,
+                    "ps_multiple": ps_multiple,
+                    "ev_ebitda_multiple": ev_ebitda_multiple,
+                    "pfcf_multiple": pfcf_multiple,
                 })
 
             result = self.adapter.run_analysis_pipeline(**call_kwargs)

@@ -14,10 +14,11 @@ from fastapi.staticfiles import StaticFiles
 
 from web.job_manager import JobManager
 from web.research_api import research_router, research_validation_exception_handler
-from web.service_adapter import AnalysisServiceAdapter
+from web.service_adapter import AnalysisServiceAdapter, coverage_summary
 from web.schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
+    CoverageResponseDTO,
     HealthResponse,
     JobDetailResponse,
 )
@@ -81,6 +82,15 @@ def create_app(
     def health_check() -> HealthResponse:
         return HealthResponse(status="ok", version="0.1.0")
 
+    @app.get("/api/coverage", response_model=CoverageResponseDTO)
+    def get_coverage() -> CoverageResponseDTO:
+        """
+        First-use coverage: which issuers carry which qualified production
+        reference families. Read-only over the committed datasets; starts no
+        job, writes no archive and produces no research figure.
+        """
+        return coverage_summary()
+
     @app.post("/api/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_202_ACCEPTED)
     def start_analysis(request: AnalyzeRequest) -> AnalyzeResponse:
         valid_ticker = validate_ticker(request.ticker)
@@ -94,6 +104,9 @@ def create_app(
             required_returns=request.required_returns,
             prefer_eps_anchor=request.prefer_eps_anchor,
             user_eps=request.user_eps,
+            ps_multiple=request.ps_multiple,
+            ev_ebitda_multiple=request.ev_ebitda_multiple,
+            pfcf_multiple=request.pfcf_multiple,
         )
         return AnalyzeResponse(
             job_id=record.job_id,

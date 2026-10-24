@@ -12,12 +12,14 @@ export const en: Translations = {
     subtitle: 'Extract implied fundamentals and verify historical admissibility with point-in-time replay.',
   },
   search: {
-    placeholder: 'Enter ticker (e.g. AAPL, MSFT, TSM, MU)...',
+    placeholder: 'Enter ticker (e.g. AAPL, MSFT, MU)...',
     analyze: 'Analyze',
     analyzing: 'Analyzing...',
     quickExamples: 'Quick examples:',
     coverageNotice:
-      'Currently optimized for U.S. SEC-reporting companies. Coverage may vary for foreign issuers and non-U.S. securities.',
+      'Historical valuation references exist only where a committed, point-in-time production dataset qualifies — the supported families differ by issuer. A thin sample or a missing dataset is stated as a named absence, never as a zero multiple.',
+    coverageNoticeCustom:
+      'You can still enter your own multiple for any ticker — a custom assumption is a stated hypothesis, not historical support.',
   },
   offline: {
     banner:

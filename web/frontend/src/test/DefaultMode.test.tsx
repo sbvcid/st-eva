@@ -7,6 +7,7 @@ vi.mock('../services/apiClient', () => ({
   startAnalysis: vi.fn(),
   getJobStatus: vi.fn(),
   checkHealth: vi.fn(),
+  getCoverage: vi.fn(),
 }))
 
 const completedJob = (overrides: Record<string, unknown> = {}) =>
@@ -75,6 +76,7 @@ const modeSelect = (): HTMLSelectElement => {
 describe('default execution mode and assumptions discoverability', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(apiClient.getCoverage).mockResolvedValue({ issuers: {} })
   })
 
   it('shows the assumptions/settings panel expanded on initial render', () => {

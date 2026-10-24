@@ -17,6 +17,7 @@ export interface Translations {
     analyzing: string
     quickExamples: string
     coverageNotice: string
+    coverageNoticeCustom: string
   }
   offline: {
     banner: string

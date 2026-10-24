@@ -22,8 +22,11 @@ from web.schemas import (
     AdmittedMetric,
     AnalysisResultDTO,
     CalculationInput,
+    CoverageResponseDTO,
     CrossingDerivation,
+    FamilyCoverageDTO,
     FiledFigure,
+    IssuerCoverageDTO,
     JobProgressStage,
     ProductionHistoricalPfcfSummaryDTO,
     ProvenanceEntryDTO,
@@ -133,6 +136,79 @@ def _as_number(value: Any) -> Optional[float]:
     if number != number or number in (float("inf"), float("-inf")):
         return None
     return number
+
+
+def _as_int(value: Any) -> Optional[int]:
+    """A real integer observation count when the payload carries one, else None."""
+    number = _as_number(value)
+    if number is None or not float(number).is_integer():
+        return None
+    return int(number)
+
+
+def _family_coverage(distribution: Optional[Dict[str, Any]]) -> FamilyCoverageDTO:
+    """
+    One family's coverage from the distribution's own payload.
+
+    The gate is the distribution's own `usable_for_reference` flag -- the same
+    flag `production_pe_for_reference` and its siblings gate on -- so the
+    homepage states exactly the eligibility an analysis would apply. A thin
+    sample keeps its INSUFFICIENT_OBSERVATIONS status and its refusal detail;
+    a missing dataset keeps UNAVAILABLE. Neither ever renders as a zero
+    multiple.
+    """
+    dist = distribution or {}
+    return FamilyCoverageDTO(
+        status=str(dist.get("status") or "UNAVAILABLE"),
+        usable_for_reference=dist.get("usable_for_reference") is True,
+        sample_count=_as_int(dist.get("sample_count")) or 0,
+        min_observations_required=_as_int(dist.get("min_observations_required")),
+        reason_detail=dist.get("reason_detail"),
+    )
+
+
+def coverage_summary() -> CoverageResponseDTO:
+    """
+    First-use coverage across every issuer the committed datasets establish.
+
+    Tickers come from the three loaders' own ISSUER_CONFIGS (not a second
+    hand-maintained list), and each family's state comes from
+    `load_production_historical_references` -- the same pure, read-only load
+    `run_st_eva` performs, with the same explicit UNAVAILABLE payloads for
+    unestablished datasets. Nothing is fetched, nothing is written, and no
+    median is recomputed here: the homepage reports the datasets' own
+    qualification, so it cannot drift from what an analysis would use.
+    """
+    from historical_pe import ISSUER_CONFIGS as PE_CONFIGS
+    from historical_pfcf import ISSUER_CONFIGS as PFCF_CONFIGS
+    from historical_multiples import ISSUER_CONFIGS as MULTIPLES_CONFIGS
+    from st_eva_runner import load_production_historical_references
+
+    tickers = sorted(set(PE_CONFIGS) | set(PFCF_CONFIGS) | set(MULTIPLES_CONFIGS))
+
+    issuers: Dict[str, IssuerCoverageDTO] = {}
+    for ticker in tickers:
+        pe_payload, pfcf_payload, multiples_payload = (
+            load_production_historical_references(
+                ticker,
+                include_historical_pe=True,
+                include_historical_pfcf=True,
+                include_historical_multiples=True,
+            )
+        )
+        multiples_distributions = (multiples_payload or {}).get("distributions") or {}
+        issuers[ticker] = IssuerCoverageDTO(
+            ticker=ticker,
+            pe=_family_coverage((pe_payload or {}).get("distribution")),
+            ps=_family_coverage(
+                multiples_distributions.get("P_S_RATIO_REFERENCE")
+            ),
+            pfcf=_family_coverage((pfcf_payload or {}).get("distribution")),
+            ev_ebitda=_family_coverage(
+                multiples_distributions.get("EV_EBITDA_RATIO_REFERENCE")
+            ),
+        )
+    return CoverageResponseDTO(issuers=issuers)
 
 
 def _crossing_metric_names() -> List[str]:

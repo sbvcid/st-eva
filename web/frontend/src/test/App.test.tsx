@@ -8,28 +8,89 @@ vi.mock('../services/apiClient', () => ({
   startAnalysis: vi.fn(),
   getJobStatus: vi.fn(),
   checkHealth: vi.fn(),
+  getCoverage: vi.fn(),
 }))
+
+// The verified first-use coverage: the issuers the committed production
+// datasets actually qualify, and one registered issuer whose dataset is
+// incomplete (NKE) that must never surface as an example.
+const family = (usable: boolean) => ({
+  status: usable ? 'USABLE_FOR_REFERENCE' : 'UNAVAILABLE',
+  usable_for_reference: usable,
+  sample_count: usable ? 30 : 0,
+  min_observations_required: 20,
+  reason_detail: null,
+})
+const issuerCoverage = (
+  ticker: string,
+  usable: Partial<Record<'pe' | 'ps' | 'pfcf' | 'ev_ebitda', boolean>>,
+) => ({
+  ticker,
+  pe: family(!!usable.pe),
+  ps: family(!!usable.ps),
+  pfcf: family(!!usable.pfcf),
+  ev_ebitda: family(!!usable.ev_ebitda),
+})
+const COVERAGE_FIXTURE = {
+  issuers: {
+    AAPL: issuerCoverage('AAPL', { pe: true, ps: true, pfcf: true, ev_ebitda: true }),
+    MSFT: issuerCoverage('MSFT', { pe: true, ps: true, pfcf: true }),
+    MU: issuerCoverage('MU', { pe: true, pfcf: true }),
+    AEP: issuerCoverage('AEP', { ev_ebitda: true }),
+    SOFI: issuerCoverage('SOFI', { pe: true }),
+    NKE: issuerCoverage('NKE', {}),
+  },
+}
 
 describe('ST-EVA Frontend App Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(apiClient.getCoverage).mockResolvedValue(COVERAGE_FIXTURE)
   })
 
-  it('renders title, input, and quick examples', () => {
+  it('renders title, input, and quick examples aligned with verified coverage', async () => {
     render(<App />)
     expect(screen.getByText('ST-EVA')).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Enter ticker/i)).toBeInTheDocument()
-    expect(screen.getByText('AAPL')).toBeInTheDocument()
-    expect(screen.getByText('TSM')).toBeInTheDocument()
+    // The five issuers the coverage summary qualifies; TSM (no committed
+    // dataset) is never offered as a first-use example.
+    for (const ticker of ['AAPL', 'MSFT', 'MU', 'AEP', 'SOFI']) {
+      expect(await screen.findByText(ticker)).toBeInTheDocument()
+    }
+    expect(screen.queryByText('TSM')).not.toBeInTheDocument()
+    // An issuer whose dataset is incomplete is not offered either.
+    expect(screen.queryByText('NKE')).not.toBeInTheDocument()
+  })
+
+  it('labels each quick example with the reference families it actually carries', async () => {
+    render(<App />)
+    // The coverage fetch resolves after mount; wait for the chips first.
+    await screen.findByText('P/E · P/S · P/FCF · EV/EBITDA')
+    expect(screen.getByText('P/E · P/S · P/FCF')).toBeInTheDocument()
+    expect(screen.getByText('P/E · P/FCF')).toBeInTheDocument()
+    expect(screen.getByText('EV/EBITDA')).toBeInTheDocument()
+    expect(screen.getByText('P/E')).toBeInTheDocument()
   })
 
   it('renders coverage notice near the ticker search area', () => {
     render(<App />)
     expect(
       screen.getByText(
-        'Currently optimized for U.S. SEC-reporting companies. Coverage may vary for foreign issuers and non-U.S. securities.'
+        'Historical valuation references exist only where a committed, point-in-time production dataset qualifies — the supported families differ by issuer. A thin sample or a missing dataset is stated as a named absence, never as a zero multiple.'
       )
     ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'You can still enter your own multiple for any ticker — a custom assumption is a stated hypothesis, not historical support.'
+      )
+    ).toBeInTheDocument()
+  })
+
+  it('falls back to a verified example when the coverage summary is unreachable', async () => {
+    vi.mocked(apiClient.getCoverage).mockRejectedValue(new Error('offline'))
+    render(<App />)
+    await waitFor(() => expect(screen.getByText('AAPL')).toBeInTheDocument())
+    expect(screen.queryByText('TSM')).not.toBeInTheDocument()
   })
 
   it('handles ticker input change and submission to API', async () => {
@@ -195,8 +256,11 @@ describe('ST-EVA Frontend App Component', () => {
     vi.mocked(apiClient.getJobStatus).mockResolvedValue(tsmJob)
 
     render(<App />)
-    const tsmBtn = screen.getByText('TSM')
-    fireEvent.click(tsmBtn)
+    // TSM is deliberately not a quick example (no committed production
+    // dataset), so the unsupported-ticker refusal is reached by typing it.
+    const input = screen.getByPlaceholderText(/Enter ticker/i)
+    fireEvent.change(input, { target: { value: 'TSM' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyze/i }))
 
     await waitFor(() => {
       expect(screen.getByText('Taiwan Semiconductor Manufacturing Co.')).toBeInTheDocument()

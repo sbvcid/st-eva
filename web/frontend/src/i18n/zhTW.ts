@@ -12,12 +12,14 @@ export const zhTW: Translations = {
     subtitle: '萃取隱含基本面假設，並以時點重演驗證歷史可接納性。',
   },
   search: {
-    placeholder: '輸入股票代號（例如 AAPL, MSFT, TSM, MU）...',
+    placeholder: '輸入股票代號（例如 AAPL, MSFT, MU）...',
     analyze: '開始分析',
     analyzing: '分析中...',
     quickExamples: '快速範例：',
     coverageNotice:
-      '目前針對美國 SEC 申報企業最佳化。外國發行人與非美股標的之覆蓋程度可能有所不同。',
+      '歷史估值參考僅存在於已提交且時點正確的 production 資料集合格之處——各標的支援的估值家族不同。樣本不足或資料不可用會以具名缺失呈現，絕不會顯示為零倍數。',
+    coverageNoticeCustom:
+      '您仍可為任何標的輸入自訂倍數——自訂假設是明確陳述的假設，而非歷史資料支持。',
   },
   offline: {
     banner:
