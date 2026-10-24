@@ -315,7 +315,73 @@ describe('ST-EVA Frontend App Component', () => {
 
     // Matrix component is rendered with formula version
     expect(await screen.findByText('Reverse Requirements Matrix')).toBeInTheDocument()
-    expect(screen.getByText('reverse-requirements/1.1')).toBeInTheDocument()
+    expect(screen.getAllByText('reverse-requirements/1.1')).toHaveLength(2)
+  })
+
+  it('passes user-supplied non-earnings reference multiples to startAnalysis', async () => {
+    const mockStart = vi.mocked(apiClient.startAnalysis).mockResolvedValue({
+      job_id: 'job-test123',
+      ticker: 'AAPL',
+      status: 'PENDING',
+    })
+
+    vi.mocked(apiClient.getJobStatus).mockResolvedValue({
+      job_id: 'job-test123',
+      ticker: 'AAPL',
+      status: 'COMPLETED',
+      stage: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      result: {
+        ticker: 'AAPL',
+        company_name: 'Apple Inc.',
+        status: 'success',
+        as_of: '2026-06-30',
+        source_identifiers: [],
+        admission_summary: { total_admitted: 0, total_refused: 0, metrics_admitted: [], refusals: [] },
+        valuation_summary: { limitations: [] },
+        replay_summary: { attempted: false, matched: false, reconstructed: false, observations_used: 0, observations_considered: 0 },
+        refusal_reasons: [],
+        reverse_requirements: {
+          formula_version: 'reverse-requirements/1.1',
+          fingerprint: 'mock-fp',
+          status: 'NOT_COMPUTED',
+          status_reason: null,
+          matrix_size: 0,
+          reverse_requirements_matrix: [],
+          reading_notes: [],
+          unavailable: [],
+        },
+      },
+    })
+
+    render(<App />)
+
+    const refMultipleInput = screen.getByPlaceholderText('e.g. 20.0')
+    fireEvent.change(refMultipleInput, { target: { value: '20.0' } })
+    const psInput = screen.getByPlaceholderText('e.g. 7.0')
+    fireEvent.change(psInput, { target: { value: '7.0' } })
+    const pfcfInput = screen.getByPlaceholderText('e.g. 25.0')
+    fireEvent.change(pfcfInput, { target: { value: '25.0' } })
+    const evInput = screen.getByPlaceholderText('e.g. 13.0')
+    fireEvent.change(evInput, { target: { value: '13.0' } })
+
+    const input = screen.getByPlaceholderText(/Enter ticker/i)
+    fireEvent.change(input, { target: { value: 'AAPL' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Analyze$/i }))
+
+    await waitFor(() => {
+      expect(mockStart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ticker: 'AAPL',
+          mode: 'live',
+          reference_multiple: 20.0,
+          ps_multiple: 7.0,
+          pfcf_multiple: 25.0,
+          ev_ebitda_multiple: 13.0,
+        })
+      )
+    })
   })
 
   it('renders the reverse-requirements matrix as the primary answer before supporting cards', async () => {

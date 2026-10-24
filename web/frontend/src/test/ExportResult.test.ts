@@ -638,6 +638,58 @@ describe('buildReverseRequirementsCsv (full scenario matrix)', () => {
     expect(row.report_market_cap).toBe('')
   })
 
+  it('exports each non-earnings valuation method with status, figures and reference', () => {
+    const report: ReverseRequirementsReportDTO = {
+      ...computedReport,
+      valuation_methods: {
+        methods: {
+          enterprise_value_multiple: {
+            status: 'COMPUTED',
+            reference_multiple: {
+              value: 13.221693,
+              source: 'production_historical_ev_ebitda_median',
+              eligibility_state: 'ELIGIBLE_PRODUCTION_DISTRIBUTION',
+              is_user_assumption: false,
+              usable_for_reference: true,
+            },
+            implied: 9008271932.35,
+            observed: 8849200000,
+            unit: 'currency',
+            gap_implied_vs_observed: 159071932.35,
+          },
+          revenue_multiple: {
+            status: 'NOT_COMPUTED',
+            reference_multiple: null,
+            implied: null,
+            observed: null,
+            unit: 'currency',
+          },
+        },
+        unavailable: [],
+        reading_notes: [],
+      },
+    }
+    const result = buildResult(report)
+    result.valuation_summary.enterprise_value = 119104605950
+    const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))
+    const row = rows[0]
+    expect(row.report_method_ev_ebitda_status).toBe('COMPUTED')
+    expect(row.report_method_ev_ebitda_implied).toBe('9008271932.35')
+    expect(row.report_method_ev_ebitda_observed).toBe('8849200000')
+    expect(row.report_method_ev_ebitda_gap).toBe('159071932.35')
+    expect(row.report_method_ev_ebitda_multiple_value).toBe('13.221693')
+    expect(row.report_method_ev_ebitda_multiple_source).toBe(
+      'production_historical_ev_ebitda_median',
+    )
+    // No usable P/S reference: nothing fabricated, not even zero.
+    expect(row.report_method_ps_status).toBe('NOT_COMPUTED')
+    expect(row.report_method_ps_implied).toBe('')
+    expect(row.report_method_ps_observed).toBe('')
+    expect(row.report_method_ps_gap).toBe('')
+    expect(row.report_method_ps_multiple_value).toBe('')
+    expect(row.report_method_ps_multiple_source).toBe('')
+  })
+
   it('preserves missing values as empty fields rather than zeros', () => {
     const result = buildResult(computedReport)
     const rows = csvToObjects(buildReverseRequirementsCsv(result, GENERATED_AT))

@@ -85,6 +85,16 @@ export interface ValuationSummary {
   // `currency`. A total, never a per-share figure; carried so the headline can
   // be recomputed from the response and the export.
   market_cap?: number | null
+  // Operands each non-earnings method inverts from, so the implied figure can
+  // be recomputed straight from the response:
+  //   implied_revenue == market_cap / P/S
+  //   implied_fcf     == market_cap / P/FCF
+  //   implied_ebitda  == enterprise_value / EV/EBITDA
+  // Totals in `currency`, never per-share figures; absent when not observed.
+  enterprise_value?: number | null
+  revenue?: number | null
+  ebitda?: number | null
+  fcf?: number | null
   summary_horizon_years?: number | null
   observed_pe?: number | null
   observed_ps?: number | null
@@ -111,6 +121,32 @@ export interface ReferenceMultipleDTO {
   is_user_assumption?: boolean
   eligibility_state?: string | null
   usable_for_reference?: boolean | null
+}
+
+export interface ValuationMethodResultDTO {
+  // One valuation method's single-point reverse result (revenue / P/S,
+  // cash flow / P/FCF, enterprise value / EV/EBITDA). It carries no
+  // holding period, required return or EPS CAGR -- it is a different
+  // question from the EPS matrix scenario.
+  status?: 'COMPUTED' | 'NOT_COMPUTED' | string
+  // The reference multiple in force for this method. For revenue /
+  // cash_flow / enterprise_value this is ReferenceMultiple-shaped;
+  // implied_net_margin carries a pe/revenue pair instead, so the type is
+  // deliberately permissive and implied_net_margin is not rendered.
+  reference_multiple?: ReferenceMultipleDTO | Record<string, any> | null
+  implied?: number | null
+  observed?: number | null
+  unit?: string | null
+  gap_implied_vs_observed?: number | null
+  notes?: string[]
+  reason_kind?: string | null
+  reason_detail?: string | null
+}
+
+export interface ValuationMethodsDTO {
+  methods?: Record<string, ValuationMethodResultDTO> | null
+  unavailable?: Array<Record<string, any>> | null
+  reading_notes?: string[]
 }
 
 export interface SecFactDTO {
@@ -365,9 +401,15 @@ export interface ReverseRequirementsReportDTO {
   price_vs_total_return_comparison?: Array<Record<string, any>> | null
   production_historical_pe_summary?: ProductionHistoricalPeDTO | null
   production_historical_pfcf_summary?: ProductionHistoricalPfcfDTO | null
+  production_historical_multiples_summary?: Record<string, any> | null
   consensus_reference?: ConsensusReferenceDTO
   eps_anchor_catalogue?: Record<string, any> | null
   eps_anchor_selection?: Record<string, any> | null
+  // The per-method reverse results (revenue / P/S, cash flow / P/FCF,
+  // enterprise value / EV/EBITDA): single-point references implied by
+  // each method's own reference multiple, never ranked against each other
+  // and never substituted for a per-scenario EPS matrix row.
+  valuation_methods?: ValuationMethodsDTO | null
 }
 
 export interface AnalysisResultDTO {
@@ -384,6 +426,7 @@ export interface AnalysisResultDTO {
   reverse_requirements?: ReverseRequirementsReportDTO | null
   production_historical_pe?: ProductionHistoricalPeDTO | null
   production_historical_pfcf?: ProductionHistoricalPfcfDTO | null
+  production_historical_multiples?: Record<string, any> | null
   raw_analysis?: Record<string, any> | null
 }
 
@@ -397,6 +440,9 @@ export interface AnalyzeRequest {
   required_returns?: number[] | null
   prefer_eps_anchor?: string | null
   user_eps?: number | null
+  ps_multiple?: number | null
+  ev_ebitda_multiple?: number | null
+  pfcf_multiple?: number | null
 }
 
 export interface AnalyzeResponse {

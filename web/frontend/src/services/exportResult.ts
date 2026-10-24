@@ -186,6 +186,36 @@ export const REVERSE_REQUIREMENTS_CSV_COLUMNS = [
   // makes the figure recomputable (`market cap / P/FCF`) straight from the
   // file; it is a total, never a per-share figure.
   'report_market_cap',
+  // Operands each non-earnings method inverts from, carried so the implied
+  // figure can be recomputed straight from the file (EV / EV-EBITDA, market
+  // cap / P/S, market cap / P/FCF). Absent when not observed -- never zero.
+  'report_enterprise_value',
+  'report_revenue',
+  'report_ebitda',
+  'report_fcf',
+  // Valuation methods (single-point references beside the EPS matrix).
+  // Explicit scalar columns per method so no internal object is flattened
+  // without structure; `report_valuation_methods_json` carries the full
+  // methods block for offline re-parse.
+  'report_method_ps_status',
+  'report_method_ps_implied',
+  'report_method_ps_observed',
+  'report_method_ps_gap',
+  'report_method_ps_multiple_value',
+  'report_method_ps_multiple_source',
+  'report_method_pfcf_status',
+  'report_method_pfcf_implied',
+  'report_method_pfcf_observed',
+  'report_method_pfcf_gap',
+  'report_method_pfcf_multiple_value',
+  'report_method_pfcf_multiple_source',
+  'report_method_ev_ebitda_status',
+  'report_method_ev_ebitda_implied',
+  'report_method_ev_ebitda_observed',
+  'report_method_ev_ebitda_gap',
+  'report_method_ev_ebitda_multiple_value',
+  'report_method_ev_ebitda_multiple_source',
+  'report_valuation_methods_json',
 ] as const
 
 type CsvRow = Record<string, unknown>
@@ -218,6 +248,7 @@ function reportLevelFields(
   const pfcfSummary = report?.production_historical_pfcf_summary ?? null
   const valuation = result.valuation_summary ?? null
   const consensus = report?.consensus_reference ?? null
+  const methods = methodsOf(report)
   return {
     ticker: result.ticker,
     company_name: result.company_name,
@@ -255,9 +286,67 @@ function reportLevelFields(
     report_implied_fcf_at_reference_multiple:
       valuation?.implied_fcf_at_reference_multiple ?? null,
     report_market_cap: valuation?.market_cap ?? null,
+    report_enterprise_value: valuation?.enterprise_value ?? null,
+    report_revenue: valuation?.revenue ?? null,
+    report_ebitda: valuation?.ebitda ?? null,
+    report_fcf: valuation?.fcf ?? null,
+    // Valuation methods: single-point references beside the EPS matrix. Each
+    // column reads the typed method block the response carries, so an absent
+    // input stays absent instead of being written as zero.
+    report_method_ps_status: methodStatus(methods, 'revenue_multiple'),
+    report_method_ps_implied: methodValue(methods, 'revenue_multiple', 'implied'),
+    report_method_ps_observed: methodValue(methods, 'revenue_multiple', 'observed'),
+    report_method_ps_gap: methodValue(methods, 'revenue_multiple', 'gap_implied_vs_observed'),
+    report_method_ps_multiple_value: methodMultipleValue(methods, 'revenue_multiple'),
+    report_method_ps_multiple_source: methodMultipleSource(methods, 'revenue_multiple'),
+    report_method_pfcf_status: methodStatus(methods, 'cash_flow_multiple'),
+    report_method_pfcf_implied: methodValue(methods, 'cash_flow_multiple', 'implied'),
+    report_method_pfcf_observed: methodValue(methods, 'cash_flow_multiple', 'observed'),
+    report_method_pfcf_gap: methodValue(methods, 'cash_flow_multiple', 'gap_implied_vs_observed'),
+    report_method_pfcf_multiple_value: methodMultipleValue(methods, 'cash_flow_multiple'),
+    report_method_pfcf_multiple_source: methodMultipleSource(methods, 'cash_flow_multiple'),
+    report_method_ev_ebitda_status: methodStatus(methods, 'enterprise_value_multiple'),
+    report_method_ev_ebitda_implied: methodValue(methods, 'enterprise_value_multiple', 'implied'),
+    report_method_ev_ebitda_observed: methodValue(methods, 'enterprise_value_multiple', 'observed'),
+    report_method_ev_ebitda_gap: methodValue(methods, 'enterprise_value_multiple', 'gap_implied_vs_observed'),
+    report_method_ev_ebitda_multiple_value: methodMultipleValue(
+      methods,
+      'enterprise_value_multiple',
+    ),
+    report_method_ev_ebitda_multiple_source: methodMultipleSource(
+      methods,
+      'enterprise_value_multiple',
+    ),
+    report_valuation_methods_json: jsonColumn(
+      report?.valuation_methods?.methods ?? null,
+    ),
     report_unavailable_json: jsonColumn(report?.unavailable ?? []),
   }
 }
+
+const methodsOf = (report: ReverseRequirementsReportDTO | null | undefined) =>
+  report?.valuation_methods?.methods ?? {}
+
+const methodStatus = (
+  methods: Record<string, any>,
+  key: string,
+): string | null => methods[key]?.status ?? null
+
+const methodValue = (
+  methods: Record<string, any>,
+  key: string,
+  field: 'implied' | 'observed' | 'gap_implied_vs_observed',
+): number | null => methods[key]?.[field] ?? null
+
+const methodMultipleValue = (
+  methods: Record<string, any>,
+  key: string,
+): number | null => methods[key]?.reference_multiple?.value ?? null
+
+const methodMultipleSource = (
+  methods: Record<string, any>,
+  key: string,
+): string | null => methods[key]?.reference_multiple?.source ?? null
 
 function scenarioRow(
   result: AnalysisResultDTO,

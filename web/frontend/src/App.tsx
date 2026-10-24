@@ -13,6 +13,7 @@ import { I18nProvider, useI18n, Language } from './i18n'
 import { ProgressStepper } from './components/ProgressStepper'
 import { ResultCards } from './components/ResultCards'
 import { ReverseRequirementsMatrix } from './components/ReverseRequirementsMatrix'
+import { ValuationMethods } from './components/ValuationMethods'
 import { SecurityIdentityHeader } from './components/SecurityIdentityHeader'
 import { EvidenceAccordion } from './components/EvidenceAccordion'
 import { ResearchPanel } from './components/ResearchPanel'
@@ -64,6 +65,9 @@ const MainApp: React.FC = () => {
   // data sourcing are visible on first use instead of hidden behind a toggle.
   const [showAssumptions, setShowAssumptions] = useState<boolean>(true)
   const [customReferenceMultiple, setCustomReferenceMultiple] = useState<string>('')
+  const [customPsMultiple, setCustomPsMultiple] = useState<string>('')
+  const [customPfcfMultiple, setCustomPfcfMultiple] = useState<string>('')
+  const [customEvEbitdaMultiple, setCustomEvEbitdaMultiple] = useState<string>('')
   const [customHorizons, setCustomHorizons] = useState<string>('')
   const [customReturns, setCustomReturns] = useState<string>('')
   const [epsAnchorBasis, setEpsAnchorBasis] = useState<string>('trailing')
@@ -143,6 +147,27 @@ const MainApp: React.FC = () => {
         const val = parseFloat(customReferenceMultiple.trim())
         if (!isNaN(val) && val > 0) {
           payload.reference_multiple = val
+        }
+      }
+
+      if (customPsMultiple.trim()) {
+        const val = parseFloat(customPsMultiple.trim())
+        if (!isNaN(val) && val > 0) {
+          payload.ps_multiple = val
+        }
+      }
+
+      if (customPfcfMultiple.trim()) {
+        const val = parseFloat(customPfcfMultiple.trim())
+        if (!isNaN(val) && val > 0) {
+          payload.pfcf_multiple = val
+        }
+      }
+
+      if (customEvEbitdaMultiple.trim()) {
+        const val = parseFloat(customEvEbitdaMultiple.trim())
+        if (!isNaN(val) && val > 0) {
+          payload.ev_ebitda_multiple = val
         }
       }
 
@@ -231,6 +256,9 @@ const MainApp: React.FC = () => {
   const handleResetAssumptions = () => {
     setMode('live')
     setCustomReferenceMultiple('')
+    setCustomPsMultiple('')
+    setCustomPfcfMultiple('')
+    setCustomEvEbitdaMultiple('')
     setCustomHorizons('')
     setCustomReturns('')
     setEpsAnchorBasis('trailing')
@@ -500,7 +528,58 @@ const MainApp: React.FC = () => {
                   />
                 </div>
 
-                {/* Holding Horizons */}
+                  {/* Reference P/S */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.refPsMultipleLabel}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={customPsMultiple}
+                    onChange={(e) => setCustomPsMultiple(e.target.value)}
+                    placeholder="e.g. 7.0"
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Reference P/FCF */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.refPfcfMultipleLabel}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={customPfcfMultiple}
+                    onChange={(e) => setCustomPfcfMultiple(e.target.value)}
+                    placeholder="e.g. 25.0"
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Reference EV/EBITDA */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {t.assumptions.refEvEbitdaMultipleLabel}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={customEvEbitdaMultiple}
+                    onChange={(e) => setCustomEvEbitdaMultiple(e.target.value)}
+                    placeholder="e.g. 13.0"
+                    disabled={loading}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+              {/* Holding Horizons */}
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                     {t.assumptions.horizonsLabel}
@@ -672,6 +751,11 @@ const MainApp: React.FC = () => {
             />
 
             <ReverseRequirementsMatrix
+              report={currentJob.result.reverse_requirements}
+              currency={currentJob.result.valuation_summary?.currency || '$'}
+            />
+
+            <ValuationMethods
               report={currentJob.result.reverse_requirements}
               currency={currentJob.result.valuation_summary?.currency || '$'}
             />

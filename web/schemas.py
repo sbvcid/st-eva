@@ -36,6 +36,15 @@ class AnalyzeRequest(BaseModel):
     required_returns: Optional[List[float]] = Field(None, description="Scenario required returns, e.g. [0.08, 0.10, 0.12, 0.15]")
     prefer_eps_anchor: Optional[str] = Field(None, description="Preferred EPS anchor basis: trailing, forward, or consensus")
     user_eps: Optional[float] = Field(None, description="Explicit user-supplied starting EPS anchor")
+    # Explicit reference multiples for the non-earnings valuation methods,
+    # mirroring the runner's CLI flags (--ps-multiple, --ev-ebitda-multiple,
+    # --pfcf-multiple). Each method keeps its own multiple; an unsupplied
+    # method falls back to its eligible production distribution, and an
+    # unsupplied and ineligible method is reported as absent, never filled
+    # from another method's multiple.
+    ps_multiple: Optional[float] = Field(None, description="Explicit P/S (price-to-sales) reference multiple")
+    ev_ebitda_multiple: Optional[float] = Field(None, description="Explicit EV/EBITDA reference multiple")
+    pfcf_multiple: Optional[float] = Field(None, description="Explicit P/FCF (price-to-free-cash-flow) reference multiple")
 
 
 class AnalyzeResponse(BaseModel):
@@ -220,6 +229,17 @@ class ValuationSummary(BaseModel):
     # per-share figure -- carried so the headline number can be recomputed from
     # the response and the export instead of taken on trust.
     market_cap: Optional[float] = None
+    # The operands each non-earnings method inverts from, so a reader can
+    # recompute the implied figure straight from the response:
+    #   implied_revenue  == market_cap  / P/S
+    #   implied_fcf      == market_cap  / P/FCF
+    #   implied_ebitda   == enterprise_value / EV/EBITDA
+    # Each is the run's own observed fundamental -- a total in `currency`,
+    # never a per-share figure -- absent when the run did not observe it.
+    enterprise_value: Optional[float] = None
+    revenue: Optional[float] = None
+    ebitda: Optional[float] = None
+    fcf: Optional[float] = None
     summary_horizon_years: Optional[float] = None
     observed_pe: Optional[float] = None
     observed_ps: Optional[float] = None
@@ -557,6 +577,50 @@ class ProductionHistoricalMultiplesSummaryDTO(BaseModel):
     )
 
 
+class ValuationMethodResultDTO(BaseModel):
+    """
+    One valuation method's single-point reverse result: what the chosen
+    reference multiple implies the fundamental should be, what it was
+    observed at, and why it cannot be computed when it is not.
+
+    A method is a different question from the EPS matrix: it carries no
+    holding period, no required return and no EPS CAGR. Its implied figure
+    is the fundamental the chosen multiple corresponds to at the observed
+    market capitalisation or enterprise value -- never a forecast and never
+    a market expectation.
+    """
+
+    status: str = "NOT_COMPUTED"
+    # The reference multiple in force for this method. For revenue /
+    # cash_flow / enterprise_value this is a ReferenceMultiple-shaped dict;
+    # implied_net_margin carries a pe/revenue pair instead, so the shape is
+    # deliberately permissive and implied_net_margin is not rendered by the
+    # interface (excluded per scope).
+    reference_multiple: Optional[Dict[str, Any]] = None
+    implied: Optional[float] = None
+    observed: Optional[float] = None
+    unit: str = ""
+    gap_implied_vs_observed: Optional[float] = None
+    notes: List[str] = Field(default_factory=list)
+    reason_kind: Optional[str] = None
+    reason_detail: Optional[str] = None
+
+
+class ValuationMethodsDTO(BaseModel):
+    """
+    The non-earnings valuation methods the engine reports beside the EPS
+    matrix: revenue (P/S), cash flow (P/FCF) and enterprise value
+    (EV/EBITDA). Each is a single-point reference drawn from its own
+    eligible production distribution or an explicit user multiple; none is
+    ranked against another and none manufactures a consensus the evidence
+    does not contain.
+    """
+
+    methods: Dict[str, ValuationMethodResultDTO] = Field(default_factory=dict)
+    unavailable: List[Dict[str, Any]] = Field(default_factory=list)
+    reading_notes: List[str] = Field(default_factory=list)
+
+
 class ReverseRequirementsReportDTO(BaseModel):
     formula_version: str = "reverse-requirements/1.1"
     fingerprint: Optional[str] = None
@@ -583,6 +647,11 @@ class ReverseRequirementsReportDTO(BaseModel):
     production_historical_multiples_summary: Optional[
         ProductionHistoricalMultiplesSummaryDTO
     ] = None
+    # The per-method reverse results (revenue / P/S, cash flow / P/FCF,
+    # enterprise value / EV/EBITDA): single-point references implied by
+    # each method's own reference multiple, never ranked against each other
+    # and never substituted for a per-scenario EPS matrix row.
+    valuation_methods: Optional[ValuationMethodsDTO] = None
     # The consensus the gap column is differenced against, with the period the
     # source declared for it. An eligible gap can be checked against these
     # facts, and a missing gap is explained by them rather than read as a zero.

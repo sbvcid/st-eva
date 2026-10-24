@@ -116,6 +116,9 @@ export interface Translations {
     modeBadgeAuto: string
     modeBadgeRegression: string
     refMultipleLabel: string
+    refPsMultipleLabel: string
+    refPfcfMultipleLabel: string
+    refEvEbitdaMultipleLabel: string
     horizonsLabel: string
     returnsLabel: string
     epsAnchorLabel: string
@@ -262,6 +265,32 @@ export interface Translations {
     reinvestedLabel: string
     formulaCashRetained: string
     formulaReinvested: string
+  }
+  valuationMethods: {
+    sectionTitle: string
+    sectionNote: string
+    columnMethod: string
+    columnStatus: string
+    columnReference: string
+    columnImplied: string
+    columnObserved: string
+    columnGap: string
+    columnSource: string
+    sampleSizeLabel: string
+    minObservationsLabel: string
+    samplePeriodLabel: string
+    refusalReasonLabel: string
+    notComparable: string
+    notAvailable: string
+    sourceProductionPs: string
+    sourceProductionEvEbitda: string
+    sourceProductionPfcf: string
+    sourceUserSupplied: string
+    methodRevenue: string
+    methodPfcf: string
+    methodEvEbitda: string
+    noticeSomeUnavailable: string
+    noticeSomeUnavailableBody: string
   }
   export: {
     sectionTitle: string
