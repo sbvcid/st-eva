@@ -34,6 +34,14 @@ web/dist/
 data/historical_pe/SOFI/daily_prices.json
 data/historical_pe/SOFI/prices_manifest.json
 data/historical_pe/SOFI/manifest.json
+data/historical_pe/AAPL/daily_prices.json
+data/historical_pe/AAPL/manifest.json
+data/historical_pe/AEP/daily_prices.json
+data/historical_pe/AEP/manifest.json
+data/historical_pe/MSFT/daily_prices.json
+data/historical_pe/MSFT/manifest.json
+data/historical_pe/MU/daily_prices.json
+data/historical_pe/MU/daily_prices_metadata.json
 
 # Generated reverse-valuation output (backed up outside repo; do not commit)
 data/historical_pe/AAPL/reverse_requirements_output.json

@@ -244,3 +244,9 @@ Excluded (git rm --cached): SOFI.sqlite (Yahoo+EDGAR), daily_prices.json, prices
 ---
 
 *本文件為 ST-EVA 公開資料交付策略的正式記錄。所有分類、授權判定與測試證據均已在本輪實際驗證；未依賴檔名推測或歷史假設。若後續有新的資料來源或授權變更，應重新執行同類盤點並更新本文件。*
+
+---
+
+## 9. Phase 5 full Yahoo-derived audit (2026-10-26)
+
+Expanded removal (same C-1): AAPL, AEP, MSFT, MU daily_prices.json + manifests (SOFI already removed). Local copies preserved; .gitignore updated. SEC EDGAR JSON for all four retained and verified. Clean-clone adapter pipeline broken for price-dependent paths (same as SOFI); no synthetic price created; no test skip needed for other issuers (no dedicated adapter tests). C-1 still open; no authorization assumed by source name. No history rewrite.
