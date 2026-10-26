@@ -528,6 +528,14 @@ class TestSofiDatasetCanonicalBytes(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(
+    os.path.exists("data/archives/SOFI.sqlite")
+    and os.path.exists("data/historical_pe/SOFI/daily_prices.json")
+    and os.path.exists("data/historical_pe/SOFI/prices_manifest.json")
+    and os.path.exists("data/historical_pe/SOFI/manifest.json"),
+    "Requires local Yahoo-derived SOFI archive (unverified authorization C-1; "
+    "excluded from public delivery; see DATA-DELIVERY.md section 2.1 / REVIEW-2ND-PHASE.md C-1)",
+)
 class TestSofiManifestIntegrity(unittest.TestCase):
     """Both SOFI manifests must parse and their recorded digests must be true."""
 
@@ -826,6 +834,14 @@ class TestSofiSecEvidenceFiles(unittest.TestCase):
         self.assertGreaterEqual(len(fiscal_years), 2, "Q4 evidence should span multiple fiscal years")
 
 
+@unittest.skipUnless(
+    os.path.exists("data/archives/SOFI.sqlite")
+    and os.path.exists("data/historical_pe/SOFI/daily_prices.json")
+    and os.path.exists("data/historical_pe/SOFI/prices_manifest.json")
+    and os.path.exists("data/historical_pe/SOFI/manifest.json"),
+    "Requires local Yahoo-derived SOFI archive (unverified authorization C-1; "
+    "excluded from public delivery; see DATA-DELIVERY.md section 2.1 / REVIEW-2ND-PHASE.md C-1)",
+)
 class TestSofiHistoricalPePipeline(unittest.TestCase):
     """Run historical_pe.py production pipeline on SOFI and validate results."""
 

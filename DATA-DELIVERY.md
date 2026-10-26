@@ -237,4 +237,10 @@ archive isolation 6/6 passed, git status clean."`
 
 ---
 
+## 8. Phase 4 cleanup verification (2026-10-26)
+
+Excluded (git rm --cached): SOFI.sqlite (Yahoo+EDGAR), daily_prices.json, prices_manifest.json, manifest.json. Local backups preserved at original paths. SEC EDGAR JSON retained (filing_acceptance_evidence, sec_submissions, eps_diluted_concept, q4_evidence_records). Test: replay skips correctly when archive absent (3 skipped, 0 hidden pass); adapter 11 affected tests skip via @skipUnless with documented C-1 reason (no assertion lowered); clean-clone adapter 38 passed, 11 skipped, 0 failed. No synthetic price data created (per rule: synthetic must not impersonate real historical prices). C-1 Yahoo v8 terms still unconfirmed. See DATA-DELIVERY.md sections 2.1/2.2 and REVIEW-2ND-PHASE.md for evidence.
+
+---
+
 *本文件為 ST-EVA 公開資料交付策略的正式記錄。所有分類、授權判定與測試證據均已在本輪實際驗證；未依賴檔名推測或歷史假設。若後續有新的資料來源或授權變更，應重新執行同類盤點並更新本文件。*
