@@ -249,4 +249,6 @@ Excluded (git rm --cached): SOFI.sqlite (Yahoo+EDGAR), daily_prices.json, prices
 
 ## 9. Phase 5 full Yahoo-derived audit (2026-10-26)
 
+**Expanded removal (same C-1):** AAPL/AEP/MSFT/MU `data/historical_pe/*/daily_prices.json` + `manifest.json` + `MU/daily_prices_metadata.json`; `data/research_multiples/AAPL/KO/MSFT/daily_prices.json` + `manifest.json`. All local preserved; `.gitignore` updated; SEC EDGAR JSON kept; no synthetic price; C-1 still open.
+
 Expanded removal (same C-1): AAPL, AEP, MSFT, MU daily_prices.json + manifests (SOFI already removed). Local copies preserved; .gitignore updated. SEC EDGAR JSON for all four retained and verified. Clean-clone adapter pipeline broken for price-dependent paths (same as SOFI); no synthetic price created; no test skip needed for other issuers (no dedicated adapter tests). C-1 still open; no authorization assumed by source name. No history rewrite.

@@ -42,6 +42,12 @@ data/historical_pe/MSFT/daily_prices.json
 data/historical_pe/MSFT/manifest.json
 data/historical_pe/MU/daily_prices.json
 data/historical_pe/MU/daily_prices_metadata.json
+data/research_multiples/AAPL/daily_prices.json
+data/research_multiples/AAPL/manifest.json
+data/research_multiples/KO/daily_prices.json
+data/research_multiples/KO/manifest.json
+data/research_multiples/MSFT/daily_prices.json
+data/research_multiples/MSFT/manifest.json
 
 # Generated reverse-valuation output (backed up outside repo; do not commit)
 data/historical_pe/AAPL/reverse_requirements_output.json
