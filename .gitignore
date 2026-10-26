@@ -22,6 +22,10 @@ web/dist/
 /data/**/*.sqlite-wal
 /data/**/*.sqlite-shm
 /data/archives/
+# Explicit exception for replay determinism: data/archives/SOFI.sqlite
+# is tracked (commit 5dbc088) for tests/test_replay_determinism_sofi.py.
+# All other SQLite files (working DB, backups, other archives) remain excluded.
+# See DATA-DELIVERY.md for full data delivery strategy.
 
 # Generated reverse-valuation output (backed up outside repo; do not commit)
 data/historical_pe/AAPL/reverse_requirements_output.json
