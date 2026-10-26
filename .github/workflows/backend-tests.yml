@@ -48,6 +48,9 @@ jobs:
       - name: Run archive isolation tests
         run: python -m pytest tests/test_archive_isolation.py -v --tb=line --reruns 2 --reruns-delay 10
 
+      - name: Verify no unverified-authorized third-party data re-added
+        run: python scripts/check_unauthorized_data_precommit.py
+
       - name: Run web API tests
         run: python -m pytest tests/test_web_api.py -v --tb=line --reruns 2 --reruns-delay 10
 
