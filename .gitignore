@@ -22,10 +22,18 @@ web/dist/
 /data/**/*.sqlite-wal
 /data/**/*.sqlite-shm
 /data/archives/
-# Explicit exception for replay determinism: data/archives/SOFI.sqlite
-# is tracked (commit 5dbc088) for tests/test_replay_determinism_sofi.py.
-# All other SQLite files (working DB, backups, other archives) remain excluded.
+# Note (2026-10-26, phase 3 cleanup): data/archives/SOFI.sqlite and
+# data/historical_pe/SOFI/daily_prices.json / prices_manifest.json /
+# manifest.json removed from public delivery due to unverified Yahoo
+# Finance v8 chart API redistribution authorization (C-1). Local copies
+# preserved at original paths; see DATA-DELIVERY.md for authorization
+# evidence and exclusion rationale. All other SQLite files remain excluded.
 # See DATA-DELIVERY.md for full data delivery strategy.
+
+# Yahoo-derived price data excluded from public delivery (unverified auth)
+data/historical_pe/SOFI/daily_prices.json
+data/historical_pe/SOFI/prices_manifest.json
+data/historical_pe/SOFI/manifest.json
 
 # Generated reverse-valuation output (backed up outside repo; do not commit)
 data/historical_pe/AAPL/reverse_requirements_output.json

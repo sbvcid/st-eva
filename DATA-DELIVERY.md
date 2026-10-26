@@ -12,7 +12,7 @@
 
 | 路徑 | 大小 | Git 追蹤 | 用途 / 內容摘要 | 交付類別 |
 |---|---|---|---|---|
-| `data/archives/SOFI.sqlite` | 2,146,304 B (2.05 MB) | **已追蹤** (`87f41043...`, commit `5dbc088`) | SOFI 歷史觀察快照；包含 `assets` (CIK 0001818874)、`sources` (Yahoo Finance URL)、`observations`、`context_snapshots` 等；已驗證無 API 金鑰 / PII | **A — 正式納入**（測試歸檔） |
+| `data/archives/SOFI.sqlite` | 2,146,304 B (2.05 MB) | **已從 4c91517 移除（第 3 階段清理）**；本機副本保留 | SOFI 歷史觀察快照（Yahoo Finance + EDGAR 混合）；授權依據：SEC EDGAR 已確認；Yahoo Finance v8 API 授權仍未確認（C-1）；已排除於公開交付 | **E — 已排除（授權未確認）** |
 | `data/st-eva.sqlite` | 659,456 B (0.63 MB) | **未追蹤**（被 `.gitignore` 排除） | 空白工作 DB（41 表格，`assets`/`sources`/`observations`/`context_snapshots` 皆為 0 列，僅 `schema_migrations` 有記錄） | **E — 不應公開**（本機工作 DB，非固定快照） |
 | `data/archives/AAPL.sqlite` | 4,784,128 B | 未追蹤 | AAPL 歸檔 DB | **C / D — 其他儲存 / 略**（無強制測試依賴；測試 `test_aapl_sec_crossing.py` 自行建立臨時 DB） |
 | `data/archives/KO.sqlite` | 7,184,384 B | 未追蹤 | KO 歸檔 | 同上 |
@@ -58,21 +58,21 @@
 
 **來源：** Yahoo Finance 公開圖表 API (`https://query1.finance.yahoo.com/v8/finance/chart/...`) + SEC EDGAR 提交資料（`sec_submissions.json`、`filing_acceptance_evidence.json` 中的 10-K/10-Q/8-K 存取號）。
 
-**授權判定：**
-- **SEC EDGAR 資料：** 美國政府出版物，屬公共領域（public domain），可無限制再散布。已驗證 `docs/PROJECT-STATUS.md` 第 1914 行記錄「Acquired SOFI SEC data from official EDGAR endpoints」。
-- **Yahoo Finance 市場價格：** 為公開市場資料；Yahoo Finance 服務條款對商業重分發有限制，但**研究/非商業重現性快照**在學術與開源專案中普遍可接受，尤其已固定為 `as_of=2026-10-19` 的不可變快照。**已追蹤的 `data/historical_pe/` JSON 即為此類快照，已存在於 `origin/master` 且無撤回必要。**
-- **結論：** 已追蹤 JSON 資料可維持公開，無需移除或轉移。
+**授權判定（第 3 階段修正，未解決）：**
+- **已證實：** 來源為公開 Yahoo Finance chart API v8（`https://query1.finance.yahoo.com/v8/finance/chart/SOFI`）；內容為公開市場價格與財務觀察；`SOFI.sqlite` 與 `daily_prices.json` 已在本輪（2026-10-26）由 `git rm --cached` 移出公開交付（本地副本保留）。
+- **尚待確認（C-1，優先級高）：** Yahoo Finance 服務條款對 v8 圖表 API 快照的**再散布限制**未被直接引述或確認；`DATA-DELIVERY.md` 第 63 行的「研究/非商業重現性快照普遍可接受」為推論而非條款證據；`REVIEW-2ND-PHASE.md` 已記錄此缺口。
+- **處置：** 因授權依據不足，已將 `SOFI.sqlite` 及其 Yahoo 衍生 JSON（`daily_prices.json`、`prices_manifest.json`、`manifest.json`）排除於 GitHub；SEC EDGAR 部分（`filing_acceptance_evidence.json` 等）已保留。若未來取得條款確認，評估是否再納入；若條款限制再散布，維持排除。
 
 ### 2.2 `data/archives/SOFI.sqlite`
 
 **來源：** 同上（Yahoo Finance + EDGAR），已由 `historical_pe_adapter.py` 第 418 行與 `tests/test_replay_determinism_sofi.py` 第 45 行明確標示為 SQLite 归档。
 
-**授權判定：**
-- 內容為公開上市公司 (SOFI, CIK 0001818874) 的市場與財務觀察，無機密。
-- 無 API 金鑰嵌入（已掃描 `sources` 表：僅公開 URL）。
-- 無 PII。
-- **已存在於遠端 `origin/master` (commit `5dbc088`)，且為重播測試必要。**
-- **結論：** 可維持公開，無需移除。**不引入 Git LFS**（2.05 MB 遠低於 50 MB 閾值；單一 blob 無 delta，但可控）。
+**授權判定（第 3 階段修正）：**
+- 內容為公開上市公司 (SOFI, CIK 0001818874) 的市場與財務觀察，無機密；無 API 金鑰 / PII（已驗證）。
+- SEC EDGAR 部分（`filing_acceptance_evidence.json`、`sec_submissions.json`、`eps_diluted_concept.json`、`q4_evidence_records.json`）已確認為公共領域，已保留。
+- Yahoo Finance v8 chart API 部分（`daily_prices.json`、`prices_manifest.json`、`SOFI.sqlite` 中 `sources` 與 `observations`）的**再散布授權未確認**（C-1）：`DATA-DELIVERY.md` 第 2.1 及 `REVIEW-2ND-PHASE.md` 已記錄缺口，未直接引述 Yahoo 服務條款。
+- **處置（2026-10-26）：** `SOFI.sqlite`、`data/historical_pe/SOFI/daily_prices.json`、`prices_manifest.json`、`manifest.json` 已由 `git rm --cached` 移出 `4c91517`（本地副本保留）；`.gitignore` 已更新以防再次加入；重播測試 `test_replay_determinism_sofi.py` 在乾淨克隆中將跳過（`SkipTest`），而非假性通過。
+- **結論：** 因授權未確認，已排除於公開交付；若未來取得 Yahoo Finance 條款確認，可重新評估是否再納入。
 
 ### 2.3 `data/st-eva.sqlite`
 
@@ -103,10 +103,10 @@
 
 | 類別 | 定義 | 本專案實際內容 | 決定 |
 |---|---|---|---|
-| **A — 正式納入 Git** | 小型、固定、授權明確、對功能/測試必要 | `data/archives/SOFI.sqlite`; `data/historical_pe/*/*.json`, `manifest.json`, `prices_manifest.json`; `data/research_multiples/*/*.json`; `data/research_lanes/*/*.json`; `docs/PROJECT-STATUS.md`; `tests/`; `.github/workflows/`; `historical_pe_adapter.py`; `st_eva_runner.py` | **維持，已完整** |
-| **B — 小型固定測試樣本** | 專為重現測試設計的暫存/快照 | `SOFI.sqlite` 本身即屬此類（重播測試 `test_replay_determinism_sofi.py` 直接複製到 `tempfile`）；無其他缺失 | **已滿足** |
-| **C — 授權允許但應外部儲存** | 大、更新頻繁、或非核心功能需要 | 其餘 `.sqlite` 歸檔（KO, MU, AAPL, MSFT, MUFG, TSM）；`research/` 大型原始文本 | **維持排除**；若後續有需求，可單次提供（Release 附件）而非持續同步 |
-| **D — 需要使用者自行取得** | 由外部 API / 官方管道提供，非靜態 |  live Yahoo Finance 下載（已由 `historical_pe_adapter.py` 實現）；SEC EDGAR 直接下載（已由 `tests/test_aapl_sec_crossing.py` 實現） | **已由程式支援**；無需放入 Git |
+| **A — 正式納入 Git** | 小型、固定、授權明確、對功能/測試必要 | `data/historical_pe/SOFI/filing_acceptance_evidence.json`、`sec_submissions.json`、`eps_diluted_concept.json`、`q4_evidence_records.json`；`data/research_multiples/`、`data/research_lanes/`、`docs/`、`tests/`、`.github/`；`historical_pe_adapter.py`；`st_eva_runner.py` | **維持**（SEC EDGAR 已確認；Yahoo 衍生已排除） |
+| **B — 小型固定測試樣本** | 專為重現測試設計的暫存/快照 | `SOFI.sqlite` 已被排除（授權未確認）；重播測試 `test_replay_determinism_sofi.py` 在乾淨 clone 將跳過（`SkipTest`）而非假性通過 | **已調整：** 測試不要求強制存在；本地副本保留供需要重播驗證者使用 |
+| **C — 授權允許但應外部儲存** | 大、更新頻繁、或非核心功能需要 | 其餘 `data/archives/*.sqlite`（KO, MU, AAPL, MSFT, MUFG, TSM, 000660_KS）；`research/` 原始文本；**其他 `data/historical_pe/*/daily_prices.json`（AAPL, AEP, MSFT, MU）共享相同 Yahoo Finance 來源，授權尚未確認，建議後續逐一評估** | **維持排除**（SQLite）；**已移除 SOFI Yahoo 衍生 JSON**；其餘價格 JSON 尚未移除，因廣泛移除可能破壞現有功能，需另行批准 |
+| **D — 需要使用者自行取得** | 由外部 API / 官方管道提供，非靜態 |  live Yahoo Finance 下載（已由 `historical_pe_adapter.py` 實現）；SEC EDGAR 直接下載（已由 `tests/test_aapl_sec_crossing.py` 實現） | **已由程式支援**；若需要完整價格快照，使用者應自行從 Yahoo Finance 取得並自行判斷再散布權限 |
 | **E — 不應公開** | 空白工作 DB、備份、敏感、未授權 | `data/st-eva.sqlite`（空白工作 DB）；`NONEXISTENT.sqlite`（0 B 占位）；`AAPL.sqlite.pre-2026-10-20`（備份）；`archive/st-eva-phase-f.sqlite`（物件殘留） | **維持排除**；已記錄於文件 |
 | **F — 尚待授權確認** | 無明確來源或條款 | 無（所有已追蹤 JSON 均有來源記錄；SOFI.sqlite 來源已在 `docs/PROJECT-STATUS.md` 第 1887 行起記錄） | **無** |
 
@@ -133,7 +133,18 @@
 
 ### 4.3 同步操作（已執行，無盲目上傳）
 
-**未新增任何 SQLite 到 Git。** 原因：已滿足 A/B 類別；其他 SQLite 無必要性；`st-eva.sqlite` 屬 E 類（不應公開）。
+**已移除（第 3 階段清理，基線 `4c91517` → 新提交）：**
+- `git rm --cached data/archives/SOFI.sqlite`
+- `git rm --cached data/historical_pe/SOFI/daily_prices.json`
+- `git rm --cached data/historical_pe/SOFI/prices_manifest.json`
+- `git rm --cached data/historical_pe/SOFI/manifest.json`
+- 本機副本保留於原路徑；`.gitignore` 已更新（新增 `data/historical_pe/SOFI/daily_prices.json` 等排除，並修正 `SOFI.sqlite` 例外註解為「已排除」）。
+
+**已保留（SEC EDGAR 已確認）：**
+- `data/historical_pe/SOFI/filing_acceptance_evidence.json`（729 KB）、`sec_submissions.json`（298 KB）、`eps_diluted_concept.json`（17 KB）、`q4_evidence_records.json`（5 KB）
+- 其餘 `data/research_multiples/`、`data/research_lanes/`、`docs/`、`tests/` 未變更。
+
+**未修改：** `.gitignore` 未移除 `/data/archives/` 或 `/data/**/*.sqlite` 整體排除；只修正註解並新增特定 JSON 排除。
 
 **未修改 `.gitignore` 的忽略規則。** 只加入註解說明例外（見 4.4）。
 
