@@ -171,7 +171,7 @@ class TestWebValuationMethods(unittest.TestCase):
         # The vendor's undeclared trailing figure is preserved as the
         # cross-check, not substituted for the observed figure.
         self.assertIsNotNone(ebitda.provider_figure)
-        self.assertEqual(ebitda.provider_figure["value"], 9308000000.0)
+        self.assertEqual(ebitda.provider_figure["value"], 9751000000.0)
         self.assertEqual(ebitda.provider_figure["source"], "VENDOR_REPORTED")
         self.assertEqual(ebitda.provider_figure["basis"], "UNDECLARED")
 

@@ -1565,6 +1565,29 @@ class YahooFinanceProvider:
                 instrument_currency=currency,
             )
 
+            # Acquire dividend (and split) events from a longer window so the
+            # dividend package is populated for issuers that pay dividends.
+            # The price series above stays on its own short window; only the
+            # event payload is taken from this request, so price history and
+            # momentum metrics are unaffected.
+            dividend_events = None
+            try:
+                div_url = (
+                    "https://query1.finance.yahoo.com/v8/finance/chart/"
+                    f"{clean}?range=2y&interval=1d&events=div,splits"
+                )
+                div_request = urllib.request.Request(
+                    div_url,
+                    headers={"User-Agent": "Mozilla/5.0 ST-EVA/2.0"},
+                )
+                with urllib.request.urlopen(div_request, timeout=8) as response:
+                    div_payload = json.loads(response.read().decode("utf-8"))
+                div_result = (div_payload.get("chart", {}).get("result") or [None])[0]
+                if div_result:
+                    dividend_events = div_result.get("events")
+            except Exception:
+                dividend_events = None
+
             market_data = MarketData(
                 ticker=clean,
                 company_name=f"{clean} (Live Acquired)",
@@ -1580,7 +1603,10 @@ class YahooFinanceProvider:
                 provider=f"{self.name}+{acquisition.provider}",
                 errors=list(acquisition.errors),
                 retrieved_at=retrieved_at,
-                chart_events=result.get("events"),
+                chart_events=(
+                    dividend_events if dividend_events is not None
+                    else result.get("events")
+                ),
             )
 
             _apply_observations_to_view(
@@ -4818,6 +4844,74 @@ def _build_reverse_requirements(
     div_per_share = safe_float((dividend_pkg.get("summary") or {}).get("trailing_twelve_month_dividends"))
     div_source = str((dividend_pkg.get("summary") or {}).get("trailing_dividends_source") or "")
 
+    # Keep financial history and capital structure available even when the
+    # matrix cannot be built, so a missing starting EPS does not hide the
+    # filed balance-sheet and income history that were acquired for the run.
+    _early_history_observations = list(sec_observations or [])
+    if _early_history_observations:
+        from financial_history import build_financial_history as _bfh
+        _early_financial_history = _bfh(
+            _early_history_observations,
+            instant_metrics=("assets", "cash", "long_term_debt", "shares_outstanding"),
+        )
+        _early_financial_history["observation_count"] = len(_early_history_observations)
+        _early_financial_history["source_provider"] = str(
+            getattr(_early_history_observations[0], "provider", "")
+        )
+    else:
+        _early_financial_history = {
+            "formula_version": "financial-history/1.0",
+            "series": {},
+            "growth": {},
+            "margins": {},
+            "observation_count": 0,
+            "source_provider": None,
+            "unavailable": [
+                {
+                    "item": "financial_history",
+                    "reason": (
+                        "No filing observations were acquired for this run, so no financial "
+                        "history is presented. Pass --financial-history to acquire them."
+                    ),
+                    "reason_kind": "NOT_ACQUIRED",
+                    "blocks": ["financial_history"],
+                }
+            ],
+        }
+    if _early_history_observations:
+        from capital_structure import build_capital_structure as _bcs
+        _early_capital_structure = _bcs(
+            _early_history_observations,
+            price=data.price,
+            price_date=data.price_date,
+            currency=data.currency,
+            observed_market_cap=market_cap,
+            observed_enterprise_value=enterprise_value,
+            observed_ebitda=ebitda,
+            cross_source=None,
+        )
+    else:
+        _early_capital_structure = {
+            "formula_version": "capital-structure/2.0",
+            "status": "NOT_ACQUIRED",
+            "observations": {},
+            "observed": {},
+            "reconstructed_market_cap": {"status": "NOT_COMPUTED", "value": None},
+            "reconstructed_enterprise_value": {"status": "NOT_COMPUTED", "value": None},
+            "observed_vs_reconstructed": [],
+            "unavailable": [
+                {
+                    "item": "capital_structure",
+                    "reason": (
+                        "No filing observations were acquired for this run, so no balance "
+                        "sheet or share count is presented."
+                    ),
+                    "reason_kind": "NOT_ACQUIRED",
+                    "blocks": ["capital_structure"],
+                }
+            ],
+        }
+
     if anchor is None:
         report = {
             "report": "reverse_requirements_v1",
@@ -4861,6 +4955,8 @@ def _build_reverse_requirements(
                 "A CAGR is reported only when the gap between the two EPS anchors is long enough to annualise; otherwise the raw EPS change is reported without a rate.",
                 "Risk-free rates, modelled cost of equity and investor target returns are three separate kinds of number and are never merged into one figure.",
             ],
+            "financial_history": _early_financial_history,
+            "capital_structure": _early_capital_structure,
             "dividends": dividend_pkg,
             "status": "NOT_COMPUTED",
             "status_reason": (
