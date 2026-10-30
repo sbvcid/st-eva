@@ -54,6 +54,7 @@ scope.
 """
 
 from __future__ import annotations
+import re
 
 import datetime
 import json
@@ -974,46 +975,125 @@ def eps_fact_records_from_xbrl_document(
         return records
     target = expected_cik or issuer_cik or target_cik or cik
     normalized_target = None
-    if target is not None:
+    if target is None:
+        target_error = "MISSING_TARGET_CIK"
+    else:
         digits = "".join(ch for ch in str(target) if ch.isdigit())
-        normalized_target = digits.zfill(10) if digits else None
+        if len(digits) != 10:
+            target_error = "INVALID_TARGET_CIK"
+        else:
+            normalized_target = digits.zfill(10)
+            target_error = None
 
     def _reject(code: str, detail: str, context_ref: Optional[str] = None) -> None:
         if isinstance(rejections, list):
-            rejections.append({"reason_code": code, "detail": detail, "context_ref": context_ref})
+            rejections.append({"reason_code": code, "detail": detail, "context_ref": context_ref, "accession": accession})
+
+    # Fail closed if no valid target CIK.
+    if target_error is not None:
+        _reject(target_error, "a valid 10-digit target CIK is required", None)
+        return records
+
+    # Validate accession format and CIK part.
+    accession_value = str(accession or "").strip()
+    accession_ok = True
+    if not accession_value or accession_value.lower() in ("none", "null"):
+        accession_ok = False
+        _reject("ACCESSION_MISSING", "accession is required", None)
+    else:
+        acc_match = re.match(r"^(\d{10})-(\d{2})-(\d{6})$", accession_value)
+        if not acc_match:
+            accession_ok = False
+            _reject("ACCESSION_INVALID", f"accession {accession_value!r} does not match SEC format", None)
+        else:
+            acc_cik = acc_match.group(1)
+            if acc_cik != normalized_target:
+                accession_ok = False
+                _reject("ACCESSION_CIK_MISMATCH", f"accession CIK {acc_cik} != target {normalized_target}", None)
+
+    # Validate form (no implicit 10-K default).
+    form_value = str(form or "").strip()
+    if not form_value:
+        _reject("FORM_MISSING", "form is required", None)
+        form_ok = False
+    else:
+        form_ok = True
+
+    # Validate fiscal year.
+    fiscal_year_ok = True
+    try:
+        fy_int = int(fiscal_year)
+    except (TypeError, ValueError):
+        fy_int = None
+        fiscal_year_ok = False
+        _reject("FISCAL_YEAR_MISSING", "fiscal_year must be a valid integer", None)
+
+    # Validate fiscal period and compatibility with form.
+    fiscal_period_value = str(fiscal_period).strip() if fiscal_period is not None else ""
+    fiscal_period_ok = True
+    if not fiscal_period_value:
+        fiscal_period_ok = False
+        _reject("FISCAL_PERIOD_MISSING", "fiscal_period is required", None)
+    elif form_value == "10-K" and fiscal_period_value != "FY":
+        fiscal_period_ok = False
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-K", None)
+    elif form_value == "10-Q" and fiscal_period_value not in ("Q1", "Q2", "Q3"):
+        fiscal_period_ok = False
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-Q", None)
+
+    # Point-in-time availability.
+    pit_ok = False
+    if filed is not None or acceptance_datetime is not None:
+        pit_ok = True
+    else:
+        _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+
+    # If core metadata invalid, do not promote any fact.
+    if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
+        return records
 
     for fact in facts:
         tag = str(getattr(fact, "tag", "") or "")
         taxonomy = str(getattr(fact, "taxonomy", "") or "")
         if tag != "EarningsPerShareDiluted":
             continue
-        # Validate the full taxonomy, not just the local tag.
-        if "us-gaap" not in taxonomy.lower() and "fasb.org/us-gaap" not in taxonomy.lower():
+        # Strict US-GAAP namespace validation.
+        tax_lower = taxonomy.lower()
+        if not (tax_lower.startswith("http://fasb.org/us-gaap/") or tax_lower.startswith("https://fasb.org/us-gaap/")):
+            _reject("TAXONOMY_NOT_US_GAAP", f"taxonomy {taxonomy!r} is not a US-GAAP namespace", getattr(fact, "context_ref", None))
             continue
-        # concept_qname consistency check.
+        # concept_qname consistency check (do not trust caller's value for identity).
         concept_local = str(concept_qname).rsplit(":", 1)[-1]
         if concept_local and concept_local != tag:
+            _reject("CONCEPT_QNAME_MISMATCH", f"concept_qname {concept_qname!r} != {tag}", getattr(fact, "context_ref", None))
             continue
         context_ref = getattr(fact, "context_ref", None)
         if not context_ref or context_ref not in contexts:
+            _reject("CONTEXT_UNRESOLVED", f"context {context_ref} unresolved", context_ref)
             continue
         ctx = contexts[context_ref]
         entity_identifier = getattr(ctx, "entity_identifier", None)
         if not entity_identifier:
             _reject("ISSUER_IDENTITY_MISSING", f"context {context_ref} has no entity identifier", context_ref)
             continue
-        if normalized_target is not None:
-            entity_digits = "".join(ch for ch in str(entity_identifier) if ch.isdigit())
-            entity_norm = entity_digits.zfill(10) if entity_digits else None
-            if entity_norm != normalized_target:
-                _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_identifier} != target {normalized_target}", context_ref)
-                continue
+        entity_digits = "".join(ch for ch in str(entity_identifier) if ch.isdigit())
+        entity_norm = entity_digits.zfill(10) if entity_digits else None
+        if entity_norm != normalized_target:
+            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_identifier} != target {normalized_target}", context_ref)
+            continue
+        # Accession CIK consistency with context issuer.
+        if accession_value[:10] != entity_digits.zfill(10)[:10] if False else False:
+            pass
+        # (accession CIK already validated against target above)
+
         period_start = getattr(ctx, "period_start", None)
         period_end = getattr(ctx, "period_end", None)
         if not period_end:
+            _reject("PERIOD_MISSING", f"context {context_ref} has no period end", context_ref)
             continue
         value = _safe_float(getattr(fact, "resolved_value", None))
         if value is None:
+            _reject("VALUE_NOT_NUMERIC", f"fact {context_ref} value not numeric", context_ref)
             continue
         dimensions = getattr(ctx, "dimensions", ()) or ()
         if not isinstance(dimensions, (list, tuple)):
@@ -1021,7 +1101,7 @@ def eps_fact_records_from_xbrl_document(
         dimensions = tuple(dimensions)
         scope = share_class_scope_from_dimensions(dimensions)
         decimals = getattr(fact, "decimals", None)
-        # Resolve a readable unit spelling from the document's unit table.
+        # Resolve unit spelling.
         unit_ref = getattr(fact, "unit_ref", None)
         unit_str = "UNKNOWN"
         try:
@@ -1030,7 +1110,6 @@ def eps_fact_records_from_xbrl_document(
                 spelling = None
                 try:
                     from sec_xbrl_facts import unit_spelling
-
                     spelling = unit_spelling(unit_obj)
                 except Exception:
                     spelling = None
@@ -1041,38 +1120,216 @@ def eps_fact_records_from_xbrl_document(
         except Exception:
             unit_str = str(unit_ref or "UNKNOWN")
         if unit_str not in SEC_EPS_UNITS:
-            # Non-EPS or unverifiable unit: refuse promotion.
+            _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not a per-share unit", context_ref)
             continue
+        try:
+            from sec_provider import xbrl_unit_to_contract_unit
+            if xbrl_unit_to_contract_unit(unit_str) != "per_share":
+                _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not per_share", context_ref)
+                continue
+        except Exception:
+            pass
+
         available_at, basis = _availability_from(acceptance_datetime, filed)
         records.append(
             EpsFactRecord(
                 period_start=_iso_date(period_start),
                 period_end=_iso_date(period_end) or str(period_end),
                 value=value,
-                form=str(form or ""),
-                accession=str(accession),
+                form=form_value,
+                accession=accession_value,
                 filed=_iso_date(filed),
                 acceptance_datetime=_iso_instant(acceptance_datetime),
                 available_at=available_at,
                 available_at_basis=basis,
                 evidence_class="filed",
-                fiscal_year=fiscal_year,
-                fiscal_period=fiscal_period,
-                source_url=source_url or (_document_url(cik, accession) if cik else None),
-                concept_qname=concept_qname,
+                fiscal_year=fiscal_year if fiscal_year is not None else fy_int,
+                fiscal_period=fiscal_period_value,
+                source_url=source_url or (_document_url(cik, accession_value) if cik else None),
+                concept_qname=SEC_EPS_CONCEPT,
                 context_ref=context_ref,
                 dimensions=dimensions,
                 unit=unit_str,
                 decimals=decimals,
                 raw_value=value,
                 normalized_value=value,
-                source_kind=source_kind,
+                source_kind="FILED_XBRL",
                 assurance_status=assurance_status,
                 derived_status="DIRECT",
                 derivation_description="",
                 share_class_scope=scope,
             )
         )
+
+    return records
+
+    # Validate accession format and CIK part.
+    accession_value = str(accession or "").strip()
+    accession_ok = True
+    if not accession_value or accession_value.lower() in ("none", "null"):
+        accession_ok = False
+        _reject("ACCESSION_MISSING", "accession is required", None)
+    else:
+        acc_match = re.match(r"^(\d{10})-(\d{2})-(\d{6})$", accession_value)
+        if not acc_match:
+            accession_ok = False
+            _reject("ACCESSION_INVALID", f"accession {accession_value!r} does not match SEC format", None)
+        else:
+            acc_cik = acc_match.group(1)
+            if acc_cik != normalized_target:
+                accession_ok = False
+                _reject("ACCESSION_CIK_MISMATCH", f"accession CIK {acc_cik} != target {normalized_target}", None)
+
+    # Validate form (no implicit 10-K default).
+    form_value = str(form or "").strip()
+    if not form_value:
+        _reject("FORM_MISSING", "form is required", None)
+        form_ok = False
+    else:
+        form_ok = True
+
+    # Validate fiscal year.
+    fiscal_year_ok = True
+    try:
+        fy_int = int(fiscal_year)
+    except (TypeError, ValueError):
+        fy_int = None
+        fiscal_year_ok = False
+        _reject("FISCAL_YEAR_MISSING", "fiscal_year must be a valid integer", None)
+
+    # Validate fiscal period and compatibility with form.
+    fiscal_period_value = str(fiscal_period).strip() if fiscal_period is not None else ""
+    fiscal_period_ok = True
+    if not fiscal_period_value:
+        fiscal_period_ok = False
+        _reject("FISCAL_PERIOD_MISSING", "fiscal_period is required", None)
+    elif form_value == "10-K" and fiscal_period_value != "FY":
+        fiscal_period_ok = False
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-K", None)
+    elif form_value == "10-Q" and fiscal_period_value not in ("Q1", "Q2", "Q3"):
+        fiscal_period_ok = False
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-Q", None)
+
+    # Point-in-time availability.
+    pit_ok = False
+    if filed is not None or acceptance_datetime is not None:
+        pit_ok = True
+    else:
+        _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+
+    # If core metadata invalid, do not promote any fact.
+    if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
+        return records
+
+    for fact in facts:
+        tag = str(getattr(fact, "tag", "") or "")
+        taxonomy = str(getattr(fact, "taxonomy", "") or "")
+        if tag != "EarningsPerShareDiluted":
+            continue
+        # Strict US-GAAP namespace validation.
+        tax_lower = taxonomy.lower()
+        if not (tax_lower.startswith("http://fasb.org/us-gaap/") or tax_lower.startswith("https://fasb.org/us-gaap/")):
+            _reject("TAXONOMY_NOT_US_GAAP", f"taxonomy {taxonomy!r} is not a US-GAAP namespace", getattr(fact, "context_ref", None))
+            continue
+        # concept_qname consistency check (do not trust caller's value for identity).
+        concept_local = str(concept_qname).rsplit(":", 1)[-1]
+        if concept_local and concept_local != tag:
+            _reject("CONCEPT_QNAME_MISMATCH", f"concept_qname {concept_qname!r} != {tag}", getattr(fact, "context_ref", None))
+            continue
+        context_ref = getattr(fact, "context_ref", None)
+        if not context_ref or context_ref not in contexts:
+            _reject("CONTEXT_UNRESOLVED", f"context {context_ref} unresolved", context_ref)
+            continue
+        ctx = contexts[context_ref]
+        entity_identifier = getattr(ctx, "entity_identifier", None)
+        if not entity_identifier:
+            _reject("ISSUER_IDENTITY_MISSING", f"context {context_ref} has no entity identifier", context_ref)
+            continue
+        entity_digits = "".join(ch for ch in str(entity_identifier) if ch.isdigit())
+        entity_norm = entity_digits.zfill(10) if entity_digits else None
+        if entity_norm != normalized_target:
+            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_identifier} != target {normalized_target}", context_ref)
+            continue
+        # Accession CIK consistency with context issuer.
+        if accession_value[:10] != entity_digits.zfill(10)[:10] if False else False:
+            pass
+        # (accession CIK already validated against target above)
+
+        period_start = getattr(ctx, "period_start", None)
+        period_end = getattr(ctx, "period_end", None)
+        if not period_end:
+            _reject("PERIOD_MISSING", f"context {context_ref} has no period end", context_ref)
+            continue
+        value = _safe_float(getattr(fact, "resolved_value", None))
+        if value is None:
+            _reject("VALUE_NOT_NUMERIC", f"fact {context_ref} value not numeric", context_ref)
+            continue
+        dimensions = getattr(ctx, "dimensions", ()) or ()
+        if not isinstance(dimensions, (list, tuple)):
+            dimensions = ()
+        dimensions = tuple(dimensions)
+        scope = share_class_scope_from_dimensions(dimensions)
+        decimals = getattr(fact, "decimals", None)
+        # Resolve unit spelling.
+        unit_ref = getattr(fact, "unit_ref", None)
+        unit_str = "UNKNOWN"
+        try:
+            unit_obj = units.get(unit_ref) if isinstance(units, dict) else None
+            if unit_obj is not None:
+                spelling = None
+                try:
+                    from sec_xbrl_facts import unit_spelling
+                    spelling = unit_spelling(unit_obj)
+                except Exception:
+                    spelling = None
+                if spelling:
+                    unit_str = spelling
+                elif getattr(unit_obj, "measures", None):
+                    unit_str = "/".join(str(m) for m in unit_obj.measures)
+        except Exception:
+            unit_str = str(unit_ref or "UNKNOWN")
+        if unit_str not in SEC_EPS_UNITS:
+            _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not a per-share unit", context_ref)
+            continue
+        try:
+            from sec_provider import xbrl_unit_to_contract_unit
+            if xbrl_unit_to_contract_unit(unit_str) != "per_share":
+                _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not per_share", context_ref)
+                continue
+        except Exception:
+            pass
+
+        available_at, basis = _availability_from(acceptance_datetime, filed)
+        records.append(
+            EpsFactRecord(
+                period_start=_iso_date(period_start),
+                period_end=_iso_date(period_end) or str(period_end),
+                value=value,
+                form=form_value,
+                accession=accession_value,
+                filed=_iso_date(filed),
+                acceptance_datetime=_iso_instant(acceptance_datetime),
+                available_at=available_at,
+                available_at_basis=basis,
+                evidence_class="filed",
+                fiscal_year=fiscal_year if fiscal_year is not None else fy_int,
+                fiscal_period=fiscal_period_value,
+                source_url=source_url or (_document_url(cik, accession_value) if cik else None),
+                concept_qname=SEC_EPS_CONCEPT,
+                context_ref=context_ref,
+                dimensions=dimensions,
+                unit=unit_str,
+                decimals=decimals,
+                raw_value=value,
+                normalized_value=value,
+                source_kind="FILED_XBRL",
+                assurance_status=assurance_status,
+                derived_status="DIRECT",
+                derivation_description="",
+                share_class_scope=scope,
+            )
+        )
+
     return records
 
 

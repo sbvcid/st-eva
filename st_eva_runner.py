@@ -2885,6 +2885,8 @@ def run_st_eva(
         _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
     )
 
+    resolved_target_cik = _resolve_target_cik(data.ticker, eps_xbrl_expected_cik)
+
     eps_xbrl_records = []
     eps_xbrl_errors = []
     doc_inputs = []
@@ -2925,23 +2927,38 @@ def run_st_eva(
                 item = {"value": item}
             path = item.get("path") or item.get("document") or item.get("file") or item.get("filename")
             if not path:
+                eps_xbrl_errors.append(
+                    {
+                        "reason_code": "MANIFEST_PATH_MISSING",
+                        "detail": "manifest entry missing path",
+                        "accession": item.get("accession"),
+                        "context_ref": None,
+                        "path": None,
+                    }
+                )
                 continue
             try:
                 with open(str(path), "rb") as handle:
                     payload = handle.read()
                 document = parse_xbrl_document(payload)
+                for rejection in getattr(document, "rejections", ()) or ():
+                    eps_xbrl_errors.append(
+                        {
+                            "reason_code": getattr(rejection, "reason", "PARSER_REJECTION"),
+                            "detail": "parser rejected an XBRL fact",
+                            "context_ref": getattr(rejection, "context_ref", None),
+                            "accession": item.get("accession"),
+                            "path": path,
+                        }
+                    )
                 accession = item.get("accession")
-                if accession is None or str(accession).strip().lower() in ("", "none", "null"):
-                    raise ValueError("EPS XBRL document missing required accession")
                 form = item.get("form") or "10-K"
-                if not str(form).strip():
-                    raise ValueError("EPS XBRL document missing required form")
                 expected_cik = (
                     item.get("expected_cik")
                     or item.get("issuer_cik")
                     or item.get("target_cik")
                     or item.get("cik")
-                    or eps_xbrl_expected_cik
+                    or resolved_target_cik
                 )
                 doc_rejections = []
                 recs = eps_fact_records_from_xbrl_document(
@@ -2968,7 +2985,16 @@ def run_st_eva(
                     )
                 eps_xbrl_records.extend(recs)
             except OSError as exc:
-                raise ValueError(f"EPS XBRL document not found or unreadable: {path}: {exc}")
+                eps_xbrl_errors.append(
+                    {
+                        "reason_code": "DOCUMENT_UNREADABLE",
+                        "detail": str(exc),
+                        "accession": item.get("accession"),
+                        "context_ref": None,
+                        "path": path,
+                    }
+                )
+                continue
 
     reverse_requirements = _build_reverse_requirements(
         data,
@@ -6788,6 +6814,29 @@ def main() -> None:
             print("\n" + result["dossier_report_text"])
 
 
+_TARGET_CIK_BY_TICKER = {
+    "AAPL": "0000320193",
+    "APPLE": "0000320193",
+    "GOOGL": "0001652044",
+    "GOOG": "0001652044",
+    "ALPHABET": "0001652044",
+    "MSFT": "0000789019",
+    "MICROSOFT": "0000789019",
+    "SOFI": "0001818874",
+    "MUFG": "0000067732",
+}
+
+
+def _resolve_target_cik(ticker: Optional[str], explicit: Optional[str]) -> Optional[str]:
+    if explicit is not None and str(explicit).strip():
+        digits = "".join(ch for ch in str(explicit) if ch.isdigit())
+        if len(digits) == 10:
+            return digits
+        return None
+    key = str(ticker or "").upper().strip()
+    return _TARGET_CIK_BY_TICKER.get(key)
+
+
 def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
     documents: List[Dict[str, Any]] = []
     if getattr(args, "eps_xbrl_manifest", None):
@@ -6801,6 +6850,10 @@ def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
                         documents.append(dict(item))
                     elif isinstance(item, str):
                         documents.append({"path": item})
+                    else:
+                        raise ValueError(f"EPS XBRL manifest entry must be an object or path string: {item!r}")
+            else:
+                raise ValueError(f"EPS XBRL manifest root must be a JSON array, got {type(payload).__name__}")
         except (OSError, ValueError) as exc:
             raise ValueError(f"EPS XBRL manifest unreadable or invalid JSON: {args.eps_xbrl_manifest}: {exc}")
     if getattr(args, "eps_xbrl_document", None):
