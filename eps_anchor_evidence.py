@@ -1052,26 +1052,22 @@ def eps_fact_records_from_xbrl_document(
     filed_ok = False
     acceptance_ok = False
     if filed is not None:
-        try:
-            _iso_date(filed)
-            # _iso_date returns None on failure
-            if _iso_date(filed) is not None:
-                filed_ok = True
-        except Exception:
-            filed_ok = False
+        if _iso_date(filed) is not None:
+            filed_ok = True
+        else:
+            _reject("POINT_IN_TIME_UNPARSEABLE", f"filed {filed!r} is not a valid ISO date", None)
     if acceptance_datetime is not None:
-        try:
-            if _iso_instant(acceptance_datetime) is not None:
-                acceptance_ok = True
-        except Exception:
-            acceptance_ok = False
+        if _iso_instant(acceptance_datetime) is not None:
+            acceptance_ok = True
+        else:
+            _reject("POINT_IN_TIME_UNPARSEABLE", f"acceptance_datetime {acceptance_datetime!r} is not a timezone-aware instant", None)
     if filed_ok or acceptance_ok:
         pit_ok = True
     else:
         if filed is None and acceptance_datetime is None:
             _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
         else:
-            _reject("POINT_IN_TIME_UNPARSEABLE", "filed/acceptance_datetime could not be parsed", None)
+            _reject("POINT_IN_TIME_UNPARSEABLE", "no parseable point-in-time value", None)
 
     # If core metadata invalid, do not promote any fact.
     if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
@@ -1245,26 +1241,22 @@ def eps_fact_records_from_xbrl_document(
     filed_ok = False
     acceptance_ok = False
     if filed is not None:
-        try:
-            _iso_date(filed)
-            # _iso_date returns None on failure
-            if _iso_date(filed) is not None:
-                filed_ok = True
-        except Exception:
-            filed_ok = False
+        if _iso_date(filed) is not None:
+            filed_ok = True
+        else:
+            _reject("POINT_IN_TIME_UNPARSEABLE", f"filed {filed!r} is not a valid ISO date", None)
     if acceptance_datetime is not None:
-        try:
-            if _iso_instant(acceptance_datetime) is not None:
-                acceptance_ok = True
-        except Exception:
-            acceptance_ok = False
+        if _iso_instant(acceptance_datetime) is not None:
+            acceptance_ok = True
+        else:
+            _reject("POINT_IN_TIME_UNPARSEABLE", f"acceptance_datetime {acceptance_datetime!r} is not a timezone-aware instant", None)
     if filed_ok or acceptance_ok:
         pit_ok = True
     else:
         if filed is None and acceptance_datetime is None:
             _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
         else:
-            _reject("POINT_IN_TIME_UNPARSEABLE", "filed/acceptance_datetime could not be parsed", None)
+            _reject("POINT_IN_TIME_UNPARSEABLE", "no parseable point-in-time value", None)
 
     # If core metadata invalid, do not promote any fact.
     if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
