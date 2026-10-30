@@ -6456,6 +6456,13 @@ def main() -> None:
     parser.add_argument("--no-snapshot", action="store_true")
     parser.add_argument("--test", action="store_true")
     parser.add_argument(
+        "--prefer-eps-anchor",
+        dest="prefer_eps_anchor",
+        default=None,
+        metavar="ANCHOR_ID",
+        help="Select a specific EPS anchor from the issuer catalogue.",
+    )
+    parser.add_argument(
         "--json",
         dest="as_json",
         action="store_true",
@@ -6591,6 +6598,7 @@ def main() -> None:
         include_historical_pfcf=args.historical_pfcf,
         include_historical_multiples=args.historical_multiples,
         include_historical_income=args.historical_income,
+        prefer_eps_anchor=args.prefer_eps_anchor,
     )
 
     if result is None:
