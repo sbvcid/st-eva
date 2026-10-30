@@ -910,6 +910,14 @@ class SecFact:
     frame: Optional[str]
     filed: Optional[str]
     role: str = "primary"
+    # Raw fact identity (Phase 2)
+    context_ref: Optional[str] = None
+    dimensions: Tuple[Dict[str, Any], ...] = ()
+    decimals: Optional[str] = None
+    concept_qname: Optional[str] = None
+    source_kind: str = "SEC"
+    assurance_status: str = "UNDECLARED"
+    share_class_scope: str = "UNKNOWN"
     # The documents this fact was read out of. The concept document carries the
     # fact; the submissions document carries the acceptance timestamp that makes
     # it knowable, so both are part of the fact's provenance.
@@ -936,6 +944,13 @@ class SecFact:
             "frame": self.frame,
             "filed": self.filed,
             "role": self.role,
+            "context_ref": self.context_ref,
+            "dimensions": [dict(item) for item in self.dimensions],
+            "decimals": self.decimals,
+            "concept_qname": self.concept_qname,
+            "source_kind": self.source_kind,
+            "assurance_status": self.assurance_status,
+            "share_class_scope": self.share_class_scope,
             "document_hashes": list(self.document_hashes),
         }
 
@@ -1865,6 +1880,7 @@ class SECProvider:
                         filed=entry.get("filed"),
                         role=concept.role,
                         document_hashes=sources,
+                        concept_qname=f"{str(payload.get('taxonomy') or concept.taxonomy)}:{str(payload.get('tag') or concept.tag)}",
                     )
                 )
         return facts

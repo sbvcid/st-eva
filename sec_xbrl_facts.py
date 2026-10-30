@@ -468,6 +468,7 @@ class XbrlFact:
     decimals: Optional[str]
     language: Optional[str]
     locators: Tuple[Dict[str, int], ...]
+    dimensions: Tuple[Dict[str, Any], ...] = ()
     #: One group per *appearance* of this fact in the document. A single
     #: appearance -- even one split across an `ix:continuation` chain -- is one
     #: group; a fact stated in two separate elements is two. Each group
@@ -944,6 +945,7 @@ def parse_xbrl_document(payload: bytes) -> XbrlDocument:
             resolved_value=resolved, sign=None, scale=None, format_=None,
             decimals=node.attrs.get("decimals"), language=None,
             locators=node.spans,
+            dimensions=tuple(contexts.get(context_ref).dimensions) if contexts.get(context_ref) else (),
         ))
 
     merged, conflicts = merge_fact_occurrences(facts)
@@ -1071,6 +1073,7 @@ def _read_inline_fact(node: _Node, document: Sequence[_Node],
         decimals=node.attrs.get("decimals"),
         language=node.attrs.get("lang"),
         locators=tuple(spans),
+        dimensions=tuple(contexts.get(context_ref).dimensions) if contexts.get(context_ref) else (),
     )
 
 

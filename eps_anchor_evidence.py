@@ -88,11 +88,18 @@ ANCHOR_SUPPLIER_CONSENSUS = "SUPPLIER_CONSENSUS_FORWARD_EPS"
 ANCHOR_SEC_ANNUAL = "SEC_ANNUAL_DILUTED_EPS"
 ANCHOR_SEC_TTM_FOUR_QUARTERS = "SEC_TTM_FOUR_QUARTERS"
 
+ANCHOR_SEC_ANNUAL_CLASS_A = "SEC_ANNUAL_DILUTED_EPS_CLASS_A"
+ANCHOR_SEC_ANNUAL_CLASS_B = "SEC_ANNUAL_DILUTED_EPS_CLASS_B"
+ANCHOR_SEC_ANNUAL_CLASS_C = "SEC_ANNUAL_DILUTED_EPS_CLASS_C"
+
 SEC_EPS_ANCHOR_IDS: Tuple[str, ...] = (
     ANCHOR_SUPPLIER_TRAILING,
     ANCHOR_SUPPLIER_FORWARD,
     ANCHOR_SUPPLIER_CONSENSUS,
     ANCHOR_SEC_ANNUAL,
+    ANCHOR_SEC_ANNUAL_CLASS_A,
+    ANCHOR_SEC_ANNUAL_CLASS_B,
+    ANCHOR_SEC_ANNUAL_CLASS_C,
     ANCHOR_SEC_TTM_FOUR_QUARTERS,
 )
 
@@ -112,6 +119,20 @@ SEC_EPS_CONCEPT = "us-gaap:EarningsPerShareDiluted"
 SEC_EPS_UNITS: Tuple[str, ...] = ("USD/shares", "USD-per-shares", "USD per share")
 SEC_EPS_SOURCE_PROVIDER = "SecEdgar"
 
+SHARE_CLASS_SCOPE_CLASS_A = "CLASS_A"
+SHARE_CLASS_SCOPE_CLASS_B = "CLASS_B"
+SHARE_CLASS_SCOPE_CLASS_C = "CLASS_C"
+SHARE_CLASS_SCOPE_CONSOLIDATED = "CONSOLIDATED"
+SHARE_CLASS_SCOPE_NOT_APPLICABLE = "NOT_APPLICABLE"
+SHARE_CLASS_SCOPE_UNKNOWN = "UNKNOWN"
+SHARE_CLASS_SCOPES = (
+    SHARE_CLASS_SCOPE_CLASS_A,
+    SHARE_CLASS_SCOPE_CLASS_B,
+    SHARE_CLASS_SCOPE_CLASS_C,
+    SHARE_CLASS_SCOPE_CONSOLIDATED,
+    SHARE_CLASS_SCOPE_NOT_APPLICABLE,
+    SHARE_CLASS_SCOPE_UNKNOWN,
+)
 # Availability bases, kept distinct because they answer different questions: an
 # acceptance instant states when the filing entered the public record, a filed
 # date only states the calendar day EDGAR stamped.
@@ -202,6 +223,32 @@ class EpsFactRecord:
     fiscal_period: Optional[str] = None
     fiscal_quarter: Optional[Any] = None
     source_url: Optional[str] = None
+    # Raw EPS fact identity (Phase 2). These preserve the source fact without
+    # overwriting the normalized Observation.
+    concept_qname: str = SEC_EPS_CONCEPT
+    context_ref: Optional[str] = None
+    dimensions: Tuple[Dict[str, Any], ...] = ()
+    unit: str = "USD/shares"
+    decimals: Optional[str] = None
+    raw_value: Optional[float] = None
+    normalized_value: Optional[float] = None
+    source_kind: str = "SEC"
+    assurance_status: str = "UNDECLARED"
+    derived_status: str = "DIRECT"
+    derivation_description: str = ""
+    share_class_scope: str = SHARE_CLASS_SCOPE_UNKNOWN
+
+    def __post_init__(self) -> None:
+        if self.raw_value is None:
+            object.__setattr__(self, "raw_value", self.value)
+        if self.normalized_value is None:
+            object.__setattr__(self, "normalized_value", self.value)
+        if not self.derivation_description:
+            object.__setattr__(self, "derivation_description", "")
+
+    @property
+    def derivation(self) -> str:
+        return self.derivation_description
 
     @property
     def span_days(self) -> Optional[int]:
@@ -231,6 +278,18 @@ class EpsFactRecord:
             "fiscal_year": self.fiscal_year,
             "fiscal_period": self.fiscal_period,
             "fiscal_quarter": self.fiscal_quarter,
+            "concept_qname": self.concept_qname,
+            "context_ref": self.context_ref,
+            "dimensions": [dict(item) for item in self.dimensions],
+            "unit": self.unit,
+            "decimals": self.decimals,
+            "raw_value": self.raw_value,
+            "normalized_value": self.normalized_value,
+            "source_kind": self.source_kind,
+            "assurance_status": self.assurance_status,
+            "derived_status": self.derived_status,
+            "derivation_description": self.derivation_description,
+            "share_class_scope": self.share_class_scope,
             "concept": SEC_EPS_CONCEPT,
             "gaap_basis": GAAP_BASIS_DILUTED,
             "source_url": self.source_url,
@@ -278,6 +337,7 @@ class EpsAnchorCandidate:
     observation_id: Optional[str] = None
     refusal_code: str = ""
     refusal_reason: str = ""
+    share_class_scope: str = SHARE_CLASS_SCOPE_UNKNOWN
 
     def contract_view(self) -> Dict[str, Any]:
         return {
@@ -305,6 +365,7 @@ class EpsAnchorCandidate:
             "observation_id": self.observation_id,
             "refusal_code": self.refusal_code,
             "refusal_reason": self.refusal_reason,
+            "share_class_scope": self.share_class_scope,
         }
 
 
@@ -530,6 +591,48 @@ def _availability_from(
 # SEC fact sources
 # ---------------------------------------------------------------------------
 
+def share_class_scope_from_dimensions(dimensions: Any) -> str:
+    """Derive a share-class scope from raw XBRL dimensions only.
+
+    No dimension means an entity-level fact. A recognised class-of-stock
+    dimension maps to its class. Anything unrecognised is kept as UNKNOWN; it is
+    never promoted to CONSOLIDATED and never inferred from a ticker.
+    """
+    items = dimensions or ()
+    has_dimensions = False
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        has_dimensions = True
+        axis = str(item.get("axis") or item.get("dimension") or "")
+        axis_local = axis.rsplit(":", 1)[-1] if ":" in axis else axis
+        if "ClassOfStock" not in axis_local and "classofstock" not in axis_local.lower():
+            continue
+        member = item.get("member")
+        typed = item.get("typed")
+        text = str(member if member is not None else typed or "")
+        haystack = (text + " " + axis_local).lower()
+        # Remove separators so "Class A", "ClassA", "CommonClassAMember" match.
+        compact = "".join(ch for ch in haystack if ch.isalnum())
+        if "classa" in compact:
+            return SHARE_CLASS_SCOPE_CLASS_A
+        if "classb" in compact:
+            return SHARE_CLASS_SCOPE_CLASS_B
+        if "classc" in compact:
+            return SHARE_CLASS_SCOPE_CLASS_C
+        return SHARE_CLASS_SCOPE_UNKNOWN
+    if not has_dimensions:
+        return SHARE_CLASS_SCOPE_CONSOLIDATED
+    return SHARE_CLASS_SCOPE_UNKNOWN
+
+
+# Aliases for callers that name the same operation differently.
+classify_share_class_scope = share_class_scope_from_dimensions
+share_class_scope_of = share_class_scope_from_dimensions
+derive_share_class_scope = share_class_scope_from_dimensions
+normalize_share_class_scope = share_class_scope_from_dimensions
+
+
 def _records_from_companyconcept(
     payload: Dict[str, Any],
 ) -> List[EpsFactRecord]:
@@ -563,6 +666,7 @@ def _records_from_companyconcept(
             continue
         filed = _iso_date(item.get("filed"))
         available_at, basis = _availability_from(None, filed)
+        unit = str(item.get("unit") or "USD/shares")
         records.append(
             EpsFactRecord(
                 period_start=_iso_date(item.get("start")),
@@ -580,6 +684,18 @@ def _records_from_companyconcept(
                 fiscal_year=item.get("fy"),
                 fiscal_period=str(item.get("fp") or "") or None,
                 source_url=_document_url(cik, accession),
+                concept_qname=SEC_EPS_CONCEPT,
+                context_ref=None,
+                dimensions=(),
+                unit=unit if unit else "USD/shares",
+                decimals=item.get("decimals"),
+                raw_value=value,
+                normalized_value=value,
+                source_kind="SEC_COMPANYCONCEPT",
+                assurance_status="FILED",
+                derived_status="DIRECT",
+                derivation_description="",
+                share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
             )
         )
     return records
@@ -653,6 +769,18 @@ def _records_from_furnished_quarters(
                 fiscal_period=str(item.get("sec_item") or "") or None,
                 fiscal_quarter=item.get("fiscal_quarter"),
                 source_url=item.get("source_url"),
+                concept_qname=SEC_EPS_CONCEPT,
+                context_ref=None,
+                dimensions=(),
+                unit="USD/shares",
+                decimals=None,
+                raw_value=value,
+                normalized_value=value,
+                source_kind="SEC_FURNISHED",
+                assurance_status="UNAUDITED",
+                derived_status="DIRECT",
+                derivation_description="",
+                share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
             )
         )
     return records, declined
@@ -688,7 +816,8 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
         period_end = _iso_date(getattr(observation, "period_end", None) or fact.get("end"))
         period_start = _iso_date(getattr(observation, "period_start", None) or fact.get("start"))
         value = _safe_float(getattr(observation, "value", None))
-        unit = str(fact.get("unit") or raw.get("reported_currency_unit") or "")
+        tag = fact.get("tag")
+        concept_qname = fact.get("concept_qname") or (f"us-gaap:{tag}" if tag else SEC_EPS_CONCEPT)
         if unit and unit not in SEC_EPS_UNITS:
             continue
         if not (accession and form and period_end and value is not None):
@@ -697,6 +826,13 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
         basis = str(getattr(observation, "available_at_basis", "") or AVAILABILITY_UNDECLARED)
         if not available_at:
             available_at, basis = _availability_from(raw.get("acceptance_datetime"), filed)
+        dimensions_raw = fact.get("dimensions") or raw.get("dimensions") or ()
+        if not isinstance(dimensions_raw, (list, tuple)):
+            dimensions_raw = ()
+        dimensions = tuple(dimensions_raw)
+        scope = share_class_scope_from_dimensions(dimensions)
+        form_upper = str(form).upper()
+        assurance = "AUDITED" if form_upper in ("10-K", "10-K/A") else ("UNAUDITED" if form_upper in ("10-Q", "10-Q/A", "8-K", "8-K/A") else "UNDECLARED")
         records.append(
             EpsFactRecord(
                 period_start=period_start,
@@ -712,6 +848,18 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
                 fiscal_year=fact.get("fy"),
                 fiscal_period=str(fact.get("fp") or "") or None,
                 source_url=getattr(observation, "source_url", None),
+                concept_qname=concept_qname,
+                context_ref=fact.get("context_ref") or raw.get("context_ref"),
+                dimensions=dimensions,
+                unit=unit if unit else "USD/shares",
+                decimals=fact.get("decimals") or raw.get("decimals"),
+                raw_value=value,
+                normalized_value=value,
+                source_kind="SEC_XBRL",
+                assurance_status=assurance,
+                derived_status="DIRECT",
+                derivation_description="",
+                share_class_scope=scope,
             )
         )
     return records
@@ -796,10 +944,116 @@ def _dedupe_by_period_end(records: Sequence[EpsFactRecord]) -> List[EpsFactRecor
     return [chosen[key] for key in sorted(chosen)]
 
 
+def eps_fact_records_from_xbrl_document(
+    document: Any,
+    *,
+    accession: str,
+    form: str = "10-K",
+    filed: Optional[str] = None,
+    acceptance_datetime: Optional[str] = None,
+    cik: Optional[str] = None,
+    concept_qname: str = SEC_EPS_CONCEPT,
+    source_kind: str = "SEC_XBRL",
+    assurance_status: str = "UNDECLARED",
+    source_url: Optional[str] = None,
+) -> List[EpsFactRecord]:
+    """Convert a parsed XBRL document's dimensional EPS facts to EpsFactRecord."""
+    records: List[EpsFactRecord] = []
+    try:
+        contexts = getattr(document, "contexts", {}) or {}
+        units = getattr(document, "units", {}) or {}
+        facts = getattr(document, "facts", ()) or ()
+    except Exception:
+        return records
+    for fact in facts:
+        tag = str(getattr(fact, "tag", "") or "")
+        if tag != "EarningsPerShareDiluted":
+            continue
+        context_ref = getattr(fact, "context_ref", None)
+        if not context_ref or context_ref not in contexts:
+            continue
+        ctx = contexts[context_ref]
+        period_start = getattr(ctx, "period_start", None)
+        period_end = getattr(ctx, "period_end", None)
+        if not period_end:
+            continue
+        value = _safe_float(getattr(fact, "resolved_value", None))
+        if value is None:
+            continue
+        dimensions = getattr(ctx, "dimensions", ()) or ()
+        if not isinstance(dimensions, (list, tuple)):
+            dimensions = ()
+        dimensions = tuple(dimensions)
+        scope = share_class_scope_from_dimensions(dimensions)
+        decimals = getattr(fact, "decimals", None)
+        # Resolve a readable unit spelling from the document's unit table.
+        unit_ref = getattr(fact, "unit_ref", None)
+        unit_str = "USD/shares"
+        try:
+            unit_obj = units.get(unit_ref) if isinstance(units, dict) else None
+            if unit_obj is not None:
+                spelling = None
+                try:
+                    from sec_xbrl_facts import unit_spelling
+
+                    spelling = unit_spelling(unit_obj)
+                except Exception:
+                    spelling = None
+                if spelling:
+                    unit_str = spelling
+                elif getattr(unit_obj, "measures", None):
+                    unit_str = "/".join(str(m) for m in unit_obj.measures)
+        except Exception:
+            unit_str = str(unit_ref or "USD/shares")
+        if unit_str not in SEC_EPS_UNITS:
+            # keep raw spelling; do not reject here
+            pass
+        available_at, basis = _availability_from(acceptance_datetime, filed)
+        records.append(
+            EpsFactRecord(
+                period_start=_iso_date(period_start),
+                period_end=_iso_date(period_end) or str(period_end),
+                value=value,
+                form=str(form or ""),
+                accession=str(accession),
+                filed=_iso_date(filed),
+                acceptance_datetime=_iso_instant(acceptance_datetime),
+                available_at=available_at,
+                available_at_basis=basis,
+                evidence_class="filed",
+                fiscal_year=None,
+                fiscal_period=None,
+                source_url=source_url or (_document_url(cik, accession) if cik else None),
+                concept_qname=concept_qname,
+                context_ref=context_ref,
+                dimensions=dimensions,
+                unit=unit_str,
+                decimals=decimals,
+                raw_value=value,
+                normalized_value=value,
+                source_kind=source_kind,
+                assurance_status=assurance_status,
+                derived_status="DIRECT",
+                derivation_description="",
+                share_class_scope=scope,
+            )
+        )
+    return records
+
+
+# Aliases for varied caller names.
+records_from_xbrl_document = eps_fact_records_from_xbrl_document
+extract_eps_facts_from_document = eps_fact_records_from_xbrl_document
+extract_dimensional_eps = eps_fact_records_from_xbrl_document
+parse_eps_facts_from_document = eps_fact_records_from_xbrl_document
+extract_eps_dimensional_facts = eps_fact_records_from_xbrl_document
+
+
 def _annual_candidate(
     records: Sequence[EpsFactRecord],
     *,
     valuation_date: Optional[str],
+    scope: Optional[str] = None,
 ) -> Tuple[Optional[EpsFactRecord], Knowability, List[EpsFactRecord]]:
     """
     The latest annual fact that was public at the valuation date.
@@ -816,6 +1070,8 @@ def _annual_candidate(
         and record.form in ("10-K", "10-K/A")
         and str(record.fiscal_period or "") == "FY"
     ]
+    if scope is not None:
+        annuals = [r for r in annuals if r.share_class_scope == scope]
     if not annuals:
         return None, Knowability(False, "no_annual_fact", "No directly stated annual diluted-EPS fact was read."), []
 
@@ -1037,6 +1293,7 @@ def _supplier_candidate(
                 f"This run observed no positive {anchor_id.lower()} value from the "
                 "supplier, so the anchor is not offered."
             ),
+            share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
         )
     return EpsAnchorCandidate(
         anchor_id=anchor_id,
@@ -1061,6 +1318,7 @@ def _supplier_candidate(
             "Read directly from the supplier field the run acquired. The supplier "
             "declares no accounting basis for this figure, so none is asserted."
         ),
+        share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
     )
 
 
@@ -1191,7 +1449,7 @@ def build_eps_anchor_candidates(
         )
 
     annual_record, annual_knowability, annuals = _annual_candidate(
-        records, valuation_date=valuation_date
+        records, valuation_date=valuation_date, scope=SHARE_CLASS_SCOPE_CONSOLIDATED
     )
     if annual_record is None:
         code = (
@@ -1214,6 +1472,7 @@ def build_eps_anchor_candidates(
                 nature=NATURE_DIRECT_FILING,
                 refusal_code=code,
                 refusal_reason=reason,
+                share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
             )
         )
     else:
@@ -1250,10 +1509,81 @@ def build_eps_anchor_candidates(
                     "an annual period, not a trailing twelve-month window, and it is "
                     "never relabelled as one."
                 ),
+                share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
             )
         )
 
-    window_result, window_refusal = _quarter_window(records, valuation_date=valuation_date)
+    # Per-share-class annual anchors (Phase 2): each scope gets its own entry.
+    for scope, anchor_id in (
+        (SHARE_CLASS_SCOPE_CLASS_A, "SEC_ANNUAL_DILUTED_EPS_CLASS_A"),
+        (SHARE_CLASS_SCOPE_CLASS_B, "SEC_ANNUAL_DILUTED_EPS_CLASS_B"),
+        (SHARE_CLASS_SCOPE_CLASS_C, "SEC_ANNUAL_DILUTED_EPS_CLASS_C"),
+    ):
+        scope_records = [r for r in records if r.share_class_scope == scope]
+        if not scope_records:
+            continue
+        scope_record, scope_knowability, scope_annuals = _annual_candidate(
+            scope_records, valuation_date=valuation_date, scope=scope
+        )
+        if scope_record is None:
+            code = (
+                REFUSAL_NO_ANNUAL_FACT if not scope_annuals else REFUSAL_ANNUAL_NOT_KNOWABLE
+            )
+            reason = (
+                scope_knowability.detail
+                if scope_annuals
+                else f"No directly stated annual diluted-EPS fact for scope {scope}."
+            )
+            candidates.append(
+                EpsAnchorCandidate(
+                    anchor_id=anchor_id,
+                    available=False,
+                    nature=NATURE_DIRECT_FILING,
+                    refusal_code=code,
+                    refusal_reason=reason,
+                    share_class_scope=scope,
+                )
+            )
+            continue
+        span = scope_record.span_days or 0
+        candidates.append(
+            EpsAnchorCandidate(
+                anchor_id=anchor_id,
+                available=True,
+                basis=ANCHOR_FISCAL_YEAR,
+                value=scope_record.value,
+                months_covered=round(span / DAYS_PER_MONTH, 3),
+                nature=NATURE_DIRECT_FILING,
+                gaap_basis=GAAP_BASIS_DILUTED,
+                source_label=(
+                    f"SEC {scope_record.form} {SEC_EPS_CONCEPT}"
+                    f" (accession {scope_record.accession})"
+                ),
+                source_provider=SEC_EPS_SOURCE_PROVIDER,
+                source_url=scope_record.source_url,
+                period_label=(
+                    f"fiscal year {scope_record.fiscal_year}"
+                    f"{f' {scope_record.fiscal_period}' if scope_record.fiscal_period else ''}, "
+                    f"as filed ({scope_record.period_start} to {scope_record.period_end})"
+                ),
+                period_start=scope_record.period_start,
+                period_end=scope_record.period_end,
+                period_undeclared_by_source=False,
+                available_at=scope_record.available_at,
+                available_at_basis=scope_record.available_at_basis,
+                sec_fact=scope_record.component_view(),
+                derivation=(
+                    "A directly stated figure for share-class scope "
+                    f"{scope}. The issuer reported this diluted earnings-per-share "
+                    "amount for the fiscal year it names."
+                ),
+                share_class_scope=scope,
+            )
+        )
+
+    # Derived TTM uses only consolidated (entity-level) facts.
+    consolidated_records = [r for r in records if r.share_class_scope == SHARE_CLASS_SCOPE_CONSOLIDATED]
+    window_result, window_refusal = _quarter_window(consolidated_records, valuation_date=valuation_date)
     if window_result is None:
         candidates.append(
             EpsAnchorCandidate(
@@ -1274,16 +1604,17 @@ def build_eps_anchor_candidates(
                     available=False,
                     basis=ANCHOR_TTM,
                     nature=NATURE_DERIVED,
-                    period_start=window_start,
-                    period_end=window_end,
-                    refusal_code=REFUSAL_NOT_POSITIVE,
-                    refusal_reason=(
-                        "The four directly stated quarterly diluted-EPS facts sum to a "
-                        f"value that is not positive ({total}). A growth rate from it has "
-                        "no meaning, so the twelve-month anchor is not offered."
-                    ),
-                )
-            )
+                period_start=window_start,
+                period_end=window_end,
+                refusal_code=REFUSAL_NOT_POSITIVE,
+                refusal_reason=(
+                    "The four directly stated quarterly diluted-EPS facts sum to a "
+                    f"value that is not positive ({total}). A growth rate from it has "
+                    "no meaning, so the twelve-month anchor is not offered."
+                ),
+                share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
+            ),
+        )
         else:
             span = _span_days(window_start, window_end) or 0
             classes = sorted({record.evidence_class for record in window})
@@ -1332,6 +1663,7 @@ def build_eps_anchor_candidates(
                     annual_comparison=_annual_comparison(
                         annual_record, window_start, window_end, total
                     ),
+                    share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
                 )
             )
 
