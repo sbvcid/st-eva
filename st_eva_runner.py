@@ -6929,6 +6929,10 @@ def _resolve_target_identity(ticker: Optional[str], explicit: Optional[str]) -> 
     }
 
 
+def _resolve_target_cik(ticker: Optional[str], explicit: Optional[str] = None) -> Optional[str]:
+    return _resolve_target_identity(ticker, explicit).get("canonical_cik")
+
+
 def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
     documents: List[Dict[str, Any]] = []
     if getattr(args, "eps_xbrl_manifest", None):
