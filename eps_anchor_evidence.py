@@ -1040,12 +1040,12 @@ def eps_fact_records_from_xbrl_document(
     if not fiscal_period_value:
         fiscal_period_ok = False
         _reject("FISCAL_PERIOD_MISSING", "fiscal_period is required", None)
-    elif form_value == "10-K" and fiscal_period_value != "FY":
+    elif form_value in ("10-K", "10-K/A") and fiscal_period_value != "FY":
         fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-K", None)
-    elif form_value == "10-Q" and fiscal_period_value not in ("Q1", "Q2", "Q3"):
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
+    elif form_value in ("10-Q", "10-Q/A") and fiscal_period_value not in ("Q1", "Q2", "Q3"):
         fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-Q", None)
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
 
     # Point-in-time availability: values must be parseable, not merely present.
     pit_ok = False
@@ -1233,12 +1233,12 @@ def eps_fact_records_from_xbrl_document(
     if not fiscal_period_value:
         fiscal_period_ok = False
         _reject("FISCAL_PERIOD_MISSING", "fiscal_period is required", None)
-    elif form_value == "10-K" and fiscal_period_value != "FY":
+    elif form_value in ("10-K", "10-K/A") and fiscal_period_value != "FY":
         fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-K", None)
-    elif form_value == "10-Q" and fiscal_period_value not in ("Q1", "Q2", "Q3"):
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
+    elif form_value in ("10-Q", "10-Q/A") and fiscal_period_value not in ("Q1", "Q2", "Q3"):
         fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-Q", None)
+        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
 
     # Point-in-time availability: values must be parseable, not merely present.
     pit_ok = False

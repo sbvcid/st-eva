@@ -2920,7 +2920,20 @@ def run_st_eva(
                     else:
                         doc_inputs.append(item)
     if doc_inputs:
-        resolved_target_cik = _resolve_target_cik(data.ticker, eps_xbrl_expected_cik)
+        identity_result = _resolve_target_identity(data.ticker, eps_xbrl_expected_cik)
+        resolved_target_cik = identity_result["canonical_cik"]
+        identity_source = identity_result["identity_source"]
+        identity_conflict = identity_result["conflict"]
+        if identity_conflict:
+            eps_xbrl_errors.append(
+                {
+                    "reason_code": "IDENTITY_CONFLICT",
+                    "detail": f"explicit CIK {eps_xbrl_expected_cik} conflicts with canonical CIK {resolved_target_cik}",
+                    "accession": None,
+                    "context_ref": None,
+                    "path": None,
+                }
+            )
         from sec_xbrl_facts import parse_xbrl_document
         from eps_anchor_evidence import eps_fact_records_from_xbrl_document
         for item in doc_inputs:
@@ -3002,6 +3015,8 @@ def run_st_eva(
                         "accession": item.get("accession"),
                         "records": len(recs),
                         "rejections": list(doc_rejections) + [r for r in (parser_rejections if False else [])],
+                        "identity_source": identity_source,
+                        "final_status": "ACCEPTED" if recs else "REJECTED",
                     }
                 )
                 eps_xbrl_errors.extend(doc_rejections)
@@ -3069,6 +3084,7 @@ def run_st_eva(
             "documents": len(doc_inputs),
             "document_results": list(eps_xbrl_document_results),
             "errors": list(eps_xbrl_errors),
+            "identity_source": identity_source if doc_inputs else None,
         }
 
     if context_path is not None:
@@ -6858,30 +6874,59 @@ _TARGET_CIK_BY_TICKER = {
 }
 
 
-def _resolve_target_cik(ticker: Optional[str], explicit: Optional[str]) -> Optional[str]:
-    # Canonical CIK is bound to the ticker first. A manifest or CLI CIK can
-    # never replace it; it may only be used when the ticker cannot be resolved.
-    resolved = None
+def _resolve_target_identity(ticker: Optional[str], explicit: Optional[str]) -> Dict[str, Any]:
+    canonical_cik = None
+    identity_source = None
+    verification_status = "UNRESOLVED"
+    ticker_key = str(ticker or "").upper().strip()
+
+    # SEC official ticker map is the primary source.
     try:
         from sec_provider import SECProvider
 
-        entry = SECProvider().ticker_map().get(str(ticker or "").upper().strip())
+        entry = SECProvider().ticker_map().get(ticker_key)
         if entry is not None and entry.get("cik"):
-            resolved = str(entry["cik"])
+            digits = "".join(ch for ch in str(entry["cik"]) if ch.isdigit())
+            if len(digits) == 10:
+                canonical_cik = digits
+                identity_source = "SEC_TICKER_MAP"
+                verification_status = "SEC_VERIFIED"
     except Exception:
-        resolved = None
-    if not resolved:
-        resolved = _TARGET_CIK_BY_TICKER.get(str(ticker or "").upper().strip())
-    if resolved:
-        digits = "".join(ch for ch in str(resolved) if ch.isdigit())
-        if len(digits) == 10:
-            return digits
-        return None
-    if explicit is not None and str(explicit).strip():
+        pass
+
+    # Static mapping is an explicit fallback, not an SEC live verification.
+    if canonical_cik is None:
+        fallback = _TARGET_CIK_BY_TICKER.get(ticker_key)
+        if fallback:
+            digits = "".join(ch for ch in str(fallback) if ch.isdigit())
+            if len(digits) == 10:
+                canonical_cik = digits
+                identity_source = "STATIC_MAPPING"
+                verification_status = "STATIC_FALLBACK"
+
+    # Explicit CIK is only a manual backstop when ticker resolution failed.
+    if canonical_cik is None and explicit is not None and str(explicit).strip():
         digits = "".join(ch for ch in str(explicit) if ch.isdigit())
         if len(digits) == 10:
-            return digits
-    return None
+            canonical_cik = digits
+            identity_source = "USER_SUPPLIED"
+            verification_status = "USER_SUPPLIED"
+
+    # Detect conflict if both resolved and explicit are present and differ.
+    conflict = False
+    if canonical_cik is not None and explicit is not None and str(explicit).strip():
+        explicit_digits = "".join(ch for ch in str(explicit) if ch.isdigit())
+        if len(explicit_digits) == 10 and explicit_digits != canonical_cik:
+            conflict = True
+
+    return {
+        "ticker": ticker_key,
+        "canonical_cik": canonical_cik,
+        "identity_source": identity_source,
+        "verification_status": verification_status,
+        "conflict": conflict,
+        "explicit_cik": explicit,
+    }
 
 
 def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
