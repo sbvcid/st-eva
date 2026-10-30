@@ -2889,6 +2889,7 @@ def run_st_eva(
 
     eps_xbrl_records = []
     eps_xbrl_errors = []
+    eps_xbrl_document_results = []
     doc_inputs = []
     for candidate in (eps_xbrl_documents, eps_xbrl_inputs, xbrl_documents, eps_xbrl_paths):
         if candidate is None:
@@ -2941,7 +2942,8 @@ def run_st_eva(
                 with open(str(path), "rb") as handle:
                     payload = handle.read()
                 document = parse_xbrl_document(payload)
-                for rejection in getattr(document, "rejections", ()) or ():
+                _parser_rejections = list(getattr(document, "rejections", ()) or ())
+                for rejection in _parser_rejections:
                     eps_xbrl_errors.append(
                         {
                             "reason_code": getattr(rejection, "reason", "PARSER_REJECTION"),
@@ -2952,15 +2954,35 @@ def run_st_eva(
                         }
                     )
                 accession = item.get("accession")
-                form = item.get("form") or "10-K"
-                expected_cik = (
-                    item.get("expected_cik")
-                    or item.get("issuer_cik")
-                    or item.get("target_cik")
-                    or item.get("cik")
-                    or resolved_target_cik
-                )
+                form = item.get("form")
+                expected_cik = resolved_target_cik
+                doc_cik = item.get("expected_cik") or item.get("issuer_cik") or item.get("target_cik") or item.get("cik")
+                if doc_cik is not None and resolved_target_cik is not None:
+                    doc_digits = "".join(ch for ch in str(doc_cik) if ch.isdigit())
+                    if doc_digits and doc_digits.zfill(10) != resolved_target_cik:
+                        eps_xbrl_errors.append(
+                            {
+                                "reason_code": "MANIFEST_CIK_MISMATCH",
+                                "detail": f"manifest CIK {doc_cik} != canonical target CIK {resolved_target_cik}",
+                                "accession": item.get("accession"),
+                                "context_ref": None,
+                                "path": path,
+                            }
+                        )
+                        continue
                 doc_rejections = []
+                for _pr in _parser_rejections:
+                    doc_rejections.append(
+                        {
+                            "reason_code": getattr(_pr, "reason", "PARSER_REJECTION"),
+                            "detail": "parser rejected an XBRL fact",
+                            "context_ref": getattr(_pr, "context_ref", None),
+                            "accession": item.get("accession"),
+                            "path": path,
+                            "taxonomy": getattr(_pr, "taxonomy", None),
+                            "tag": getattr(_pr, "tag", None),
+                        }
+                    )
                 recs = eps_fact_records_from_xbrl_document(
                     document,
                     accession=accession,
@@ -2973,6 +2995,14 @@ def run_st_eva(
                     source_url=item.get("source_url"),
                     expected_cik=expected_cik,
                     rejections=doc_rejections,
+                )
+                eps_xbrl_document_results.append(
+                    {
+                        "path": path,
+                        "accession": item.get("accession"),
+                        "records": len(recs),
+                        "rejections": list(doc_rejections) + [r for r in (parser_rejections if False else [])],
+                    }
                 )
                 eps_xbrl_errors.extend(doc_rejections)
                 if not recs and not doc_rejections:
@@ -3037,6 +3067,7 @@ def run_st_eva(
     if isinstance(reverse_requirements, dict):
         reverse_requirements["eps_xbrl_acquisition"] = {
             "documents": len(doc_inputs),
+            "document_results": list(eps_xbrl_document_results),
             "errors": list(eps_xbrl_errors),
         }
 
@@ -6612,7 +6643,7 @@ def main() -> None:
     parser.add_argument(
         "--eps-xbrl-form",
         dest="eps_xbrl_form",
-        default="10-K",
+        default=None,
         metavar="FORM",
     )
     parser.add_argument(
@@ -6828,13 +6859,29 @@ _TARGET_CIK_BY_TICKER = {
 
 
 def _resolve_target_cik(ticker: Optional[str], explicit: Optional[str]) -> Optional[str]:
+    # Canonical CIK is bound to the ticker first. A manifest or CLI CIK can
+    # never replace it; it may only be used when the ticker cannot be resolved.
+    resolved = None
+    try:
+        from sec_provider import SecEdgarProvider
+
+        company = SecEdgarProvider().resolve_company(str(ticker or "").strip())
+        if company is not None and getattr(company, "cik", None):
+            resolved = str(company.cik)
+    except Exception:
+        resolved = None
+    if not resolved:
+        resolved = _TARGET_CIK_BY_TICKER.get(str(ticker or "").upper().strip())
+    if resolved:
+        digits = "".join(ch for ch in str(resolved) if ch.isdigit())
+        if len(digits) == 10:
+            return digits
+        return None
     if explicit is not None and str(explicit).strip():
         digits = "".join(ch for ch in str(explicit) if ch.isdigit())
         if len(digits) == 10:
             return digits
-        return None
-    key = str(ticker or "").upper().strip()
-    return _TARGET_CIK_BY_TICKER.get(key)
+    return None
 
 
 def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:

@@ -1013,8 +1013,12 @@ def eps_fact_records_from_xbrl_document(
 
     # Validate form (no implicit 10-K default).
     form_value = str(form or "").strip()
+    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A", "8-K", "8-K/A", "20-F", "6-K"}
     if not form_value:
         _reject("FORM_MISSING", "form is required", None)
+        form_ok = False
+    elif form_value not in supported_forms:
+        _reject("FORM_UNSUPPORTED", f"form {form_value!r} is not supported", None)
         form_ok = False
     else:
         form_ok = True
@@ -1041,12 +1045,31 @@ def eps_fact_records_from_xbrl_document(
         fiscal_period_ok = False
         _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-Q", None)
 
-    # Point-in-time availability.
+    # Point-in-time availability: values must be parseable, not merely present.
     pit_ok = False
-    if filed is not None or acceptance_datetime is not None:
+    filed_ok = False
+    acceptance_ok = False
+    if filed is not None:
+        try:
+            _iso_date(filed)
+            # _iso_date returns None on failure
+            if _iso_date(filed) is not None:
+                filed_ok = True
+        except Exception:
+            filed_ok = False
+    if acceptance_datetime is not None:
+        try:
+            if _iso_instant(acceptance_datetime) is not None:
+                acceptance_ok = True
+        except Exception:
+            acceptance_ok = False
+    if filed_ok or acceptance_ok:
         pit_ok = True
     else:
-        _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+        if filed is None and acceptance_datetime is None:
+            _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+        else:
+            _reject("POINT_IN_TIME_UNPARSEABLE", "filed/acceptance_datetime could not be parsed", None)
 
     # If core metadata invalid, do not promote any fact.
     if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
@@ -1072,19 +1095,20 @@ def eps_fact_records_from_xbrl_document(
             _reject("CONTEXT_UNRESOLVED", f"context {context_ref} unresolved", context_ref)
             continue
         ctx = contexts[context_ref]
-        entity_identifier = getattr(ctx, "entity_identifier", None)
-        if not entity_identifier:
-            _reject("ISSUER_IDENTITY_MISSING", f"context {context_ref} has no entity identifier", context_ref)
+        entity_scheme = getattr(ctx, "entity_scheme", None)
+        if str(entity_scheme or "").strip() != "http://www.sec.gov/CIK":
+            _reject("ENTITY_SCHEME_INVALID", f"context {context_ref} scheme {entity_scheme!r} is not the SEC CIK scheme", context_ref)
             continue
-        entity_digits = "".join(ch for ch in str(entity_identifier) if ch.isdigit())
-        entity_norm = entity_digits.zfill(10) if entity_digits else None
-        if entity_norm != normalized_target:
-            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_identifier} != target {normalized_target}", context_ref)
+        entity_identifier = getattr(ctx, "entity_identifier", None)
+        entity_text = str(entity_identifier or "").strip()
+        if not re.fullmatch(r"\d{10}", entity_text):
+            _reject("ENTITY_IDENTIFIER_INVALID", f"context {context_ref} identifier {entity_identifier!r} is not a 10-digit CIK", context_ref)
+            continue
+        if entity_text != normalized_target:
+            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_text} != target {normalized_target}", context_ref)
             continue
         # Accession CIK consistency with context issuer.
-        if accession_value[:10] != entity_digits.zfill(10)[:10] if False else False:
-            pass
-        # (accession CIK already validated against target above)
+        # Accession CIK is validated against the target above.
 
         period_start = getattr(ctx, "period_start", None)
         period_end = getattr(ctx, "period_end", None)
@@ -1182,8 +1206,12 @@ def eps_fact_records_from_xbrl_document(
 
     # Validate form (no implicit 10-K default).
     form_value = str(form or "").strip()
+    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A", "8-K", "8-K/A", "20-F", "6-K"}
     if not form_value:
         _reject("FORM_MISSING", "form is required", None)
+        form_ok = False
+    elif form_value not in supported_forms:
+        _reject("FORM_UNSUPPORTED", f"form {form_value!r} is not supported", None)
         form_ok = False
     else:
         form_ok = True
@@ -1210,12 +1238,31 @@ def eps_fact_records_from_xbrl_document(
         fiscal_period_ok = False
         _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form 10-Q", None)
 
-    # Point-in-time availability.
+    # Point-in-time availability: values must be parseable, not merely present.
     pit_ok = False
-    if filed is not None or acceptance_datetime is not None:
+    filed_ok = False
+    acceptance_ok = False
+    if filed is not None:
+        try:
+            _iso_date(filed)
+            # _iso_date returns None on failure
+            if _iso_date(filed) is not None:
+                filed_ok = True
+        except Exception:
+            filed_ok = False
+    if acceptance_datetime is not None:
+        try:
+            if _iso_instant(acceptance_datetime) is not None:
+                acceptance_ok = True
+        except Exception:
+            acceptance_ok = False
+    if filed_ok or acceptance_ok:
         pit_ok = True
     else:
-        _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+        if filed is None and acceptance_datetime is None:
+            _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+        else:
+            _reject("POINT_IN_TIME_UNPARSEABLE", "filed/acceptance_datetime could not be parsed", None)
 
     # If core metadata invalid, do not promote any fact.
     if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
@@ -1241,19 +1288,20 @@ def eps_fact_records_from_xbrl_document(
             _reject("CONTEXT_UNRESOLVED", f"context {context_ref} unresolved", context_ref)
             continue
         ctx = contexts[context_ref]
-        entity_identifier = getattr(ctx, "entity_identifier", None)
-        if not entity_identifier:
-            _reject("ISSUER_IDENTITY_MISSING", f"context {context_ref} has no entity identifier", context_ref)
+        entity_scheme = getattr(ctx, "entity_scheme", None)
+        if str(entity_scheme or "").strip() != "http://www.sec.gov/CIK":
+            _reject("ENTITY_SCHEME_INVALID", f"context {context_ref} scheme {entity_scheme!r} is not the SEC CIK scheme", context_ref)
             continue
-        entity_digits = "".join(ch for ch in str(entity_identifier) if ch.isdigit())
-        entity_norm = entity_digits.zfill(10) if entity_digits else None
-        if entity_norm != normalized_target:
-            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_identifier} != target {normalized_target}", context_ref)
+        entity_identifier = getattr(ctx, "entity_identifier", None)
+        entity_text = str(entity_identifier or "").strip()
+        if not re.fullmatch(r"\d{10}", entity_text):
+            _reject("ENTITY_IDENTIFIER_INVALID", f"context {context_ref} identifier {entity_identifier!r} is not a 10-digit CIK", context_ref)
+            continue
+        if entity_text != normalized_target:
+            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_text} != target {normalized_target}", context_ref)
             continue
         # Accession CIK consistency with context issuer.
-        if accession_value[:10] != entity_digits.zfill(10)[:10] if False else False:
-            pass
-        # (accession CIK already validated against target above)
+        # Accession CIK is validated against the target above.
 
         period_start = getattr(ctx, "period_start", None)
         period_end = getattr(ctx, "period_end", None)
