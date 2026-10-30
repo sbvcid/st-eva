@@ -24,7 +24,7 @@ def _doc_and_recs(fiscal_period="FY"):
 <ix:nonFraction name="us-gaap:EarningsPerShareDiluted" contextRef="c-c" unitRef="u" decimals="2">10.80</ix:nonFraction>
 </body></html>'''
     doc = parse_xbrl_document(payload)
-    recs = eps_fact_records_from_xbrl_document(doc, accession="0001652044-26-000018", form="10-K", filed="2026-02-04", fiscal_year=2025, fiscal_period=fiscal_period, assurance_status="AUDITED")
+    recs = eps_fact_records_from_xbrl_document(doc, accession="0001652044-26-000018", form="10-K", filed="2026-02-04", fiscal_year=2025, fiscal_period=fiscal_period, assurance_status="AUDITED", expected_cik="0001652044")
     return recs
 
 def test_googl_four_scopes():
