@@ -666,7 +666,7 @@ def _records_from_companyconcept(
             continue
         filed = _iso_date(item.get("filed"))
         available_at, basis = _availability_from(None, filed)
-        unit = str(item.get("unit") or "USD/shares")
+        unit = str(item.get("unit") or "UNKNOWN")
         records.append(
             EpsFactRecord(
                 period_start=_iso_date(item.get("start")),
@@ -687,12 +687,12 @@ def _records_from_companyconcept(
                 concept_qname=SEC_EPS_CONCEPT,
                 context_ref=None,
                 dimensions=(),
-                unit=unit if unit else "USD/shares",
+                unit=unit,
                 decimals=item.get("decimals"),
                 raw_value=value,
                 normalized_value=value,
                 source_kind="SEC_COMPANYCONCEPT",
-                assurance_status="FILED",
+                assurance_status="UNKNOWN",
                 derived_status="DIRECT",
                 derivation_description="",
                 share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
@@ -772,11 +772,11 @@ def _records_from_furnished_quarters(
                 concept_qname=SEC_EPS_CONCEPT,
                 context_ref=None,
                 dimensions=(),
-                unit="USD/shares",
+                unit="UNKNOWN",
                 decimals=None,
                 raw_value=value,
                 normalized_value=value,
-                source_kind="SEC_FURNISHED",
+                source_kind="FURNISHED_EXHIBIT",
                 assurance_status="UNAUDITED",
                 derived_status="DIRECT",
                 derivation_description="",
@@ -818,7 +818,8 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
         value = _safe_float(getattr(observation, "value", None))
         tag = fact.get("tag")
         concept_qname = fact.get("concept_qname") or (f"us-gaap:{tag}" if tag else SEC_EPS_CONCEPT)
-        if unit and unit not in SEC_EPS_UNITS:
+        unit = str(fact.get("unit") or raw.get("reported_currency_unit") or "")
+        if not unit or unit not in SEC_EPS_UNITS:
             continue
         if not (accession and form and period_end and value is not None):
             continue
@@ -832,7 +833,7 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
         dimensions = tuple(dimensions_raw)
         scope = share_class_scope_from_dimensions(dimensions)
         form_upper = str(form).upper()
-        assurance = "AUDITED" if form_upper in ("10-K", "10-K/A") else ("UNAUDITED" if form_upper in ("10-Q", "10-Q/A", "8-K", "8-K/A") else "UNDECLARED")
+        assurance = "UNKNOWN"
         records.append(
             EpsFactRecord(
                 period_start=period_start,
@@ -851,11 +852,11 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
                 concept_qname=concept_qname,
                 context_ref=fact.get("context_ref") or raw.get("context_ref"),
                 dimensions=dimensions,
-                unit=unit if unit else "USD/shares",
+                unit=unit,
                 decimals=fact.get("decimals") or raw.get("decimals"),
                 raw_value=value,
                 normalized_value=value,
-                source_kind="SEC_XBRL",
+                source_kind="FILED_XBRL",
                 assurance_status=assurance,
                 derived_status="DIRECT",
                 derivation_description="",
@@ -953,9 +954,11 @@ def eps_fact_records_from_xbrl_document(
     acceptance_datetime: Optional[str] = None,
     cik: Optional[str] = None,
     concept_qname: str = SEC_EPS_CONCEPT,
-    source_kind: str = "SEC_XBRL",
-    assurance_status: str = "UNDECLARED",
+    source_kind: str = "FILED_XBRL",
+    assurance_status: str = "UNKNOWN",
     source_url: Optional[str] = None,
+    fiscal_year: Optional[Any] = None,
+    fiscal_period: Optional[str] = None,
 ) -> List[EpsFactRecord]:
     """Convert a parsed XBRL document's dimensional EPS facts to EpsFactRecord."""
     records: List[EpsFactRecord] = []
@@ -988,7 +991,7 @@ def eps_fact_records_from_xbrl_document(
         decimals = getattr(fact, "decimals", None)
         # Resolve a readable unit spelling from the document's unit table.
         unit_ref = getattr(fact, "unit_ref", None)
-        unit_str = "USD/shares"
+        unit_str = "UNKNOWN"
         try:
             unit_obj = units.get(unit_ref) if isinstance(units, dict) else None
             if unit_obj is not None:
@@ -1021,8 +1024,8 @@ def eps_fact_records_from_xbrl_document(
                 available_at=available_at,
                 available_at_basis=basis,
                 evidence_class="filed",
-                fiscal_year=None,
-                fiscal_period=None,
+                fiscal_year=fiscal_year,
+                fiscal_period=fiscal_period,
                 source_url=source_url or (_document_url(cik, accession) if cik else None),
                 concept_qname=concept_qname,
                 context_ref=context_ref,
@@ -1293,7 +1296,7 @@ def _supplier_candidate(
                 f"This run observed no positive {anchor_id.lower()} value from the "
                 "supplier, so the anchor is not offered."
             ),
-            share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
+            share_class_scope=SHARE_CLASS_SCOPE_UNKNOWN,
         )
     return EpsAnchorCandidate(
         anchor_id=anchor_id,
@@ -1318,7 +1321,7 @@ def _supplier_candidate(
             "Read directly from the supplier field the run acquired. The supplier "
             "declares no accounting basis for this figure, so none is asserted."
         ),
-        share_class_scope=SHARE_CLASS_SCOPE_CONSOLIDATED,
+        share_class_scope=SHARE_CLASS_SCOPE_UNKNOWN,
     )
 
 
@@ -1349,7 +1352,19 @@ def build_eps_anchor_candidates(
     consensus_retrieved_at: Optional[str] = None,
     consensus_observation_id: Optional[str] = None,
     run_observations: Optional[Sequence[Any]] = None,
+    records: Optional[Sequence[EpsFactRecord]] = None,
+    xbrl_records: Optional[Sequence[EpsFactRecord]] = None,
+    dimensional_records: Optional[Sequence[EpsFactRecord]] = None,
+    xbrl_documents: Optional[Sequence[Any]] = None,
+    raw_xbrl_documents: Optional[Sequence[Any]] = None,
+    accession: Optional[str] = None,
+    form: str = "10-K",
+    filed: Optional[str] = None,
+    fiscal_year: Optional[Any] = None,
+    fiscal_period: Optional[str] = None,
+    assurance_status: str = "UNKNOWN",
     packaged_root: Optional[str] = None,
+    **kwargs: Any,
 ) -> EpsAnchorCandidateSet:
     """
     The EPS anchor catalogue for one issuer at one valuation date.
@@ -1365,7 +1380,54 @@ def build_eps_anchor_candidates(
     run_records = _records_from_run_observations(run_observations)
     if run_records:
         inputs["run_acquisition_facts"] = len(run_records)
-    records = run_records + list(packaged)
+
+    # Collect dimensional XBRL records supplied by callers (Phase 2.1).
+    xbrl_fact_records: List[EpsFactRecord] = []
+    for collection in (records, xbrl_records, dimensional_records):
+        if collection:
+            for item in collection:
+                if isinstance(item, EpsFactRecord):
+                    xbrl_fact_records.append(item)
+    for collection in (xbrl_documents, raw_xbrl_documents):
+        if collection:
+            for item in collection:
+                try:
+                    converted = eps_fact_records_from_xbrl_document(
+                        item,
+                        accession=accession or "",
+                        form=form,
+                        filed=filed,
+                        fiscal_year=fiscal_year,
+                        fiscal_period=fiscal_period,
+                        assurance_status=assurance_status,
+                        source_url=None,
+                    )
+                    xbrl_fact_records.extend(converted)
+                except Exception:
+                    continue
+    # kwargs may carry additional record collections.
+    for key, value in (kwargs or {}).items():
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                if isinstance(item, EpsFactRecord):
+                    xbrl_fact_records.append(item)
+                elif hasattr(item, "contexts") and hasattr(item, "facts"):
+                    try:
+                        converted = eps_fact_records_from_xbrl_document(
+                            item,
+                            accession=accession or "",
+                            form=form,
+                            filed=filed,
+                            fiscal_year=fiscal_year,
+                            fiscal_period=fiscal_period,
+                            assurance_status=assurance_status,
+                        )
+                        xbrl_fact_records.extend(converted)
+                    except Exception:
+                        continue
+    if xbrl_fact_records:
+        inputs["xbrl_dimensional_facts"] = len(xbrl_fact_records)
+    records = run_records + xbrl_fact_records + list(packaged)
 
     candidates: List[EpsAnchorCandidate] = [
         _supplier_candidate(
