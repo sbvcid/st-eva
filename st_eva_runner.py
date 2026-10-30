@@ -2772,6 +2772,11 @@ def run_st_eva(
     fx_rate_usd_per_jpy: Optional[float] = None,
     fx_analysis_date_usd_per_jpy: Optional[float] = None,
     adr_underlying_shares_per_adr: Optional[float] = None,
+    eps_xbrl_documents: Optional[Sequence[Any]] = None,
+    eps_xbrl_inputs: Optional[Sequence[Any]] = None,
+    xbrl_documents: Optional[Sequence[Any]] = None,
+    eps_xbrl_paths: Optional[Sequence[Any]] = None,
+    **kwargs: Any,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
     if data is None:
@@ -2879,6 +2884,65 @@ def run_st_eva(
         _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
     )
 
+    eps_xbrl_records = []
+    doc_inputs = []
+    for candidate in (eps_xbrl_documents, eps_xbrl_inputs, xbrl_documents, eps_xbrl_paths):
+        if candidate is None:
+            continue
+        if isinstance(candidate, (str, os.PathLike)):
+            doc_inputs.append({"path": str(candidate)})
+        elif isinstance(candidate, dict):
+            doc_inputs.append(dict(candidate))
+        else:
+            for item in candidate:
+                if isinstance(item, (str, os.PathLike)):
+                    doc_inputs.append({"path": str(item)})
+                elif isinstance(item, dict):
+                    doc_inputs.append(dict(item))
+                else:
+                    doc_inputs.append(item)
+    for key, value in (kwargs or {}).items():
+        if "xbrl" in str(key).lower() or "document" in str(key).lower():
+            if isinstance(value, (str, os.PathLike)):
+                doc_inputs.append({"path": str(value)})
+            elif isinstance(value, dict):
+                doc_inputs.append(dict(value))
+            elif isinstance(value, (list, tuple)):
+                for item in value:
+                    if isinstance(item, (str, os.PathLike)):
+                        doc_inputs.append({"path": str(item)})
+                    elif isinstance(item, dict):
+                        doc_inputs.append(dict(item))
+                    else:
+                        doc_inputs.append(item)
+    if doc_inputs:
+        from sec_xbrl_facts import parse_xbrl_document
+        from eps_anchor_evidence import eps_fact_records_from_xbrl_document
+        for item in doc_inputs:
+            if not isinstance(item, dict):
+                item = {"value": item}
+            path = item.get("path") or item.get("document") or item.get("file") or item.get("filename")
+            if not path:
+                continue
+            try:
+                with open(str(path), "rb") as handle:
+                    payload = handle.read()
+                document = parse_xbrl_document(payload)
+                recs = eps_fact_records_from_xbrl_document(
+                    document,
+                    accession=item.get("accession"),
+                    form=item.get("form") or "10-K",
+                    filed=item.get("filed"),
+                    acceptance_datetime=item.get("acceptance_datetime"),
+                    fiscal_year=item.get("fiscal_year"),
+                    fiscal_period=item.get("fiscal_period"),
+                    assurance_status=item.get("assurance_status") or "UNKNOWN",
+                    source_url=item.get("source_url"),
+                )
+                eps_xbrl_records.extend(recs)
+            except OSError:
+                continue
+
     reverse_requirements = _build_reverse_requirements(
         data,
         analysis,
@@ -2915,6 +2979,7 @@ def run_st_eva(
         production_historical_multiples=production_historical_multiples,
         prefer_eps_anchor=prefer_eps_anchor,
         user_eps=user_eps,
+        eps_xbrl_records=eps_xbrl_records,
     )
 
     if context_path is not None:
@@ -4345,6 +4410,8 @@ def _build_reverse_requirements(
     production_historical_multiples: Optional[Dict[str, Any]] = None,
     prefer_eps_anchor: Optional[str] = None,
     user_eps: Optional[float] = None,
+    eps_xbrl_records: Optional[Sequence[Any]] = None,
+    xbrl_records: Optional[Sequence[Any]] = None,
 ) -> Dict[str, Any]:
     """
     Assemble the V1 reverse requirements package from what this run observed.
@@ -4473,6 +4540,7 @@ def _build_reverse_requirements(
             consensus_retrieved_at=consensus_prov["retrieved_at"],
             consensus_observation_id=consensus_prov["observation_id"],
             run_observations=sec_observations,
+            records=list(eps_xbrl_records or []) + list(xbrl_records or []),
         )
         selection = select_anchor(catalogue, str(prefer_eps_anchor))
         eps_anchor_catalogue = catalogue.contract_view()
@@ -6463,6 +6531,64 @@ def main() -> None:
         help="Select a specific EPS anchor from the issuer catalogue.",
     )
     parser.add_argument(
+        "--eps-xbrl-document",
+        dest="eps_xbrl_document",
+        action="append",
+        default=None,
+        metavar="PATH",
+        help="Parse a raw Inline XBRL document for dimensional EPS facts.",
+    )
+    parser.add_argument(
+        "--eps-xbrl-manifest",
+        dest="eps_xbrl_manifest",
+        default=None,
+        metavar="PATH",
+        help="JSON manifest of raw Inline XBRL documents with per-file metadata.",
+    )
+    parser.add_argument(
+        "--eps-xbrl-accession",
+        dest="eps_xbrl_accession",
+        default=None,
+        metavar="ACCESSION",
+    )
+    parser.add_argument(
+        "--eps-xbrl-form",
+        dest="eps_xbrl_form",
+        default="10-K",
+        metavar="FORM",
+    )
+    parser.add_argument(
+        "--eps-xbrl-filed",
+        dest="eps_xbrl_filed",
+        default=None,
+        metavar="DATE",
+    )
+    parser.add_argument(
+        "--eps-xbrl-fiscal-year",
+        dest="eps_xbrl_fiscal_year",
+        type=int,
+        default=None,
+        metavar="YEAR",
+    )
+    parser.add_argument(
+        "--eps-xbrl-fiscal-period",
+        dest="eps_xbrl_fiscal_period",
+        default=None,
+        metavar="PERIOD",
+    )
+    parser.add_argument(
+        "--eps-xbrl-acceptance-datetime",
+        dest="eps_xbrl_acceptance_datetime",
+        default=None,
+        metavar="DATETIME",
+    )
+    parser.add_argument(
+        "--eps-xbrl-assurance-status",
+        dest="eps_xbrl_assurance_status",
+        default="UNKNOWN",
+        metavar="STATUS",
+    )
+    parser.add_argument(
         "--json",
         dest="as_json",
         action="store_true",
@@ -6599,6 +6725,8 @@ def main() -> None:
         include_historical_multiples=args.historical_multiples,
         include_historical_income=args.historical_income,
         prefer_eps_anchor=args.prefer_eps_anchor,
+        user_eps=args.user_eps if hasattr(args, "user_eps") else None,
+        eps_xbrl_documents=_cli_eps_xbrl_documents(args),
     )
 
     if result is None:
@@ -6619,6 +6747,38 @@ def main() -> None:
         print_report(result)
         if args.dossier_report and result.get("dossier_report_text"):
             print("\n" + result["dossier_report_text"])
+
+
+def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
+    documents: List[Dict[str, Any]] = []
+    if getattr(args, "eps_xbrl_manifest", None):
+        try:
+            with open(str(args.eps_xbrl_manifest), "r", encoding="utf-8") as handle:
+                import json as _json
+                payload = _json.load(handle)
+            if isinstance(payload, list):
+                for item in payload:
+                    if isinstance(item, dict):
+                        documents.append(dict(item))
+                    elif isinstance(item, str):
+                        documents.append({"path": item})
+        except (OSError, ValueError):
+            pass
+    if getattr(args, "eps_xbrl_document", None):
+        for path in args.eps_xbrl_document:
+            documents.append(
+                {
+                    "path": path,
+                    "accession": getattr(args, "eps_xbrl_accession", None),
+                    "form": getattr(args, "eps_xbrl_form", None) or "10-K",
+                    "filed": getattr(args, "eps_xbrl_filed", None),
+                    "fiscal_year": getattr(args, "eps_xbrl_fiscal_year", None),
+                    "fiscal_period": getattr(args, "eps_xbrl_fiscal_period", None),
+                    "acceptance_datetime": getattr(args, "eps_xbrl_acceptance_datetime", None),
+                    "assurance_status": getattr(args, "eps_xbrl_assurance_status", None) or "UNKNOWN",
+                }
+            )
+    return documents or None
 
 
 if __name__ == "__main__":

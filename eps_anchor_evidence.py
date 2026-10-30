@@ -856,7 +856,7 @@ def _records_from_run_observations(observations: Optional[Sequence[Any]]) -> Lis
                 decimals=fact.get("decimals") or raw.get("decimals"),
                 raw_value=value,
                 normalized_value=value,
-                source_kind="FILED_XBRL",
+                source_kind="SEC_COMPANYCONCEPT",
                 assurance_status=assurance,
                 derived_status="DIRECT",
                 derivation_description="",
@@ -970,7 +970,15 @@ def eps_fact_records_from_xbrl_document(
         return records
     for fact in facts:
         tag = str(getattr(fact, "tag", "") or "")
+        taxonomy = str(getattr(fact, "taxonomy", "") or "")
         if tag != "EarningsPerShareDiluted":
+            continue
+        # Validate the full taxonomy, not just the local tag.
+        if "us-gaap" not in taxonomy.lower() and "fasb.org/us-gaap" not in taxonomy.lower():
+            continue
+        # concept_qname consistency check.
+        concept_local = str(concept_qname).rsplit(":", 1)[-1]
+        if concept_local and concept_local != tag:
             continue
         context_ref = getattr(fact, "context_ref", None)
         if not context_ref or context_ref not in contexts:
@@ -1007,10 +1015,10 @@ def eps_fact_records_from_xbrl_document(
                 elif getattr(unit_obj, "measures", None):
                     unit_str = "/".join(str(m) for m in unit_obj.measures)
         except Exception:
-            unit_str = str(unit_ref or "USD/shares")
+            unit_str = str(unit_ref or "UNKNOWN")
         if unit_str not in SEC_EPS_UNITS:
-            # keep raw spelling; do not reject here
-            pass
+            # Non-EPS or unverifiable unit: refuse promotion.
+            continue
         available_at, basis = _availability_from(acceptance_datetime, filed)
         records.append(
             EpsFactRecord(
