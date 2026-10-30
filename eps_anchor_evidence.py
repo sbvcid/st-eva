@@ -421,7 +421,7 @@ def _iso_date(value: Any) -> Optional[str]:
     if not isinstance(value, str) or not value:
         return None
     try:
-        return datetime.date.fromisoformat(value.strip()[:10]).isoformat()
+        return datetime.date.fromisoformat(value.strip()).isoformat()
     except ValueError:
         return None
 
@@ -433,6 +433,8 @@ def _iso_instant(value: Any) -> Optional[str]:
     try:
         parsed = datetime.datetime.fromisoformat(text)
     except ValueError:
+        return None
+    if parsed.tzinfo is None:
         return None
     return parsed.isoformat()
 
@@ -1013,7 +1015,7 @@ def eps_fact_records_from_xbrl_document(
 
     # Validate form (no implicit 10-K default).
     form_value = str(form or "").strip()
-    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A", "8-K", "8-K/A", "20-F", "6-K"}
+    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A"}
     if not form_value:
         _reject("FORM_MISSING", "form is required", None)
         form_ok = False
@@ -1206,7 +1208,7 @@ def eps_fact_records_from_xbrl_document(
 
     # Validate form (no implicit 10-K default).
     form_value = str(form or "").strip()
-    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A", "8-K", "8-K/A", "20-F", "6-K"}
+    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A"}
     if not form_value:
         _reject("FORM_MISSING", "form is required", None)
         form_ok = False

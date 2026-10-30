@@ -2885,12 +2885,11 @@ def run_st_eva(
         _acquire_sec_evidence(data, context_sources) if wants_sec else _empty_sec_evidence()
     )
 
-    resolved_target_cik = _resolve_target_cik(data.ticker, eps_xbrl_expected_cik)
-
     eps_xbrl_records = []
     eps_xbrl_errors = []
     eps_xbrl_document_results = []
     doc_inputs = []
+    resolved_target_cik = None
     for candidate in (eps_xbrl_documents, eps_xbrl_inputs, xbrl_documents, eps_xbrl_paths):
         if candidate is None:
             continue
@@ -2921,6 +2920,7 @@ def run_st_eva(
                     else:
                         doc_inputs.append(item)
     if doc_inputs:
+        resolved_target_cik = _resolve_target_cik(data.ticker, eps_xbrl_expected_cik)
         from sec_xbrl_facts import parse_xbrl_document
         from eps_anchor_evidence import eps_fact_records_from_xbrl_document
         for item in doc_inputs:
@@ -6863,11 +6863,11 @@ def _resolve_target_cik(ticker: Optional[str], explicit: Optional[str]) -> Optio
     # never replace it; it may only be used when the ticker cannot be resolved.
     resolved = None
     try:
-        from sec_provider import SecEdgarProvider
+        from sec_provider import SECProvider
 
-        company = SecEdgarProvider().resolve_company(str(ticker or "").strip())
-        if company is not None and getattr(company, "cik", None):
-            resolved = str(company.cik)
+        entry = SECProvider().ticker_map().get(str(ticker or "").upper().strip())
+        if entry is not None and entry.get("cik"):
+            resolved = str(entry["cik"])
     except Exception:
         resolved = None
     if not resolved:
