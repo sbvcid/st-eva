@@ -959,6 +959,10 @@ def eps_fact_records_from_xbrl_document(
     source_url: Optional[str] = None,
     fiscal_year: Optional[Any] = None,
     fiscal_period: Optional[str] = None,
+    expected_cik: Optional[str] = None,
+    issuer_cik: Optional[str] = None,
+    target_cik: Optional[str] = None,
+    rejections: Optional[List[Dict[str, Any]]] = None,
 ) -> List[EpsFactRecord]:
     """Convert a parsed XBRL document's dimensional EPS facts to EpsFactRecord."""
     records: List[EpsFactRecord] = []
@@ -968,6 +972,16 @@ def eps_fact_records_from_xbrl_document(
         facts = getattr(document, "facts", ()) or ()
     except Exception:
         return records
+    target = expected_cik or issuer_cik or target_cik or cik
+    normalized_target = None
+    if target is not None:
+        digits = "".join(ch for ch in str(target) if ch.isdigit())
+        normalized_target = digits.zfill(10) if digits else None
+
+    def _reject(code: str, detail: str, context_ref: Optional[str] = None) -> None:
+        if isinstance(rejections, list):
+            rejections.append({"reason_code": code, "detail": detail, "context_ref": context_ref})
+
     for fact in facts:
         tag = str(getattr(fact, "tag", "") or "")
         taxonomy = str(getattr(fact, "taxonomy", "") or "")
@@ -984,6 +998,16 @@ def eps_fact_records_from_xbrl_document(
         if not context_ref or context_ref not in contexts:
             continue
         ctx = contexts[context_ref]
+        entity_identifier = getattr(ctx, "entity_identifier", None)
+        if not entity_identifier:
+            _reject("ISSUER_IDENTITY_MISSING", f"context {context_ref} has no entity identifier", context_ref)
+            continue
+        if normalized_target is not None:
+            entity_digits = "".join(ch for ch in str(entity_identifier) if ch.isdigit())
+            entity_norm = entity_digits.zfill(10) if entity_digits else None
+            if entity_norm != normalized_target:
+                _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_identifier} != target {normalized_target}", context_ref)
+                continue
         period_start = getattr(ctx, "period_start", None)
         period_end = getattr(ctx, "period_end", None)
         if not period_end:

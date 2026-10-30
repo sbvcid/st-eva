@@ -2776,6 +2776,7 @@ def run_st_eva(
     eps_xbrl_inputs: Optional[Sequence[Any]] = None,
     xbrl_documents: Optional[Sequence[Any]] = None,
     eps_xbrl_paths: Optional[Sequence[Any]] = None,
+    eps_xbrl_expected_cik: Optional[str] = None,
     **kwargs: Any,
 ) -> Optional[Dict[str, Any]]:
     data = CompanyResolver.resolve(ticker, mode=mode)
@@ -2885,6 +2886,7 @@ def run_st_eva(
     )
 
     eps_xbrl_records = []
+    eps_xbrl_errors = []
     doc_inputs = []
     for candidate in (eps_xbrl_documents, eps_xbrl_inputs, xbrl_documents, eps_xbrl_paths):
         if candidate is None:
@@ -2928,20 +2930,45 @@ def run_st_eva(
                 with open(str(path), "rb") as handle:
                     payload = handle.read()
                 document = parse_xbrl_document(payload)
+                accession = item.get("accession")
+                if accession is None or str(accession).strip().lower() in ("", "none", "null"):
+                    raise ValueError("EPS XBRL document missing required accession")
+                form = item.get("form") or "10-K"
+                if not str(form).strip():
+                    raise ValueError("EPS XBRL document missing required form")
+                expected_cik = (
+                    item.get("expected_cik")
+                    or item.get("issuer_cik")
+                    or item.get("target_cik")
+                    or item.get("cik")
+                    or eps_xbrl_expected_cik
+                )
+                doc_rejections = []
                 recs = eps_fact_records_from_xbrl_document(
                     document,
-                    accession=item.get("accession"),
-                    form=item.get("form") or "10-K",
+                    accession=accession,
+                    form=form,
                     filed=item.get("filed"),
                     acceptance_datetime=item.get("acceptance_datetime"),
                     fiscal_year=item.get("fiscal_year"),
                     fiscal_period=item.get("fiscal_period"),
                     assurance_status=item.get("assurance_status") or "UNKNOWN",
                     source_url=item.get("source_url"),
+                    expected_cik=expected_cik,
+                    rejections=doc_rejections,
                 )
+                eps_xbrl_errors.extend(doc_rejections)
+                if not recs and not doc_rejections:
+                    eps_xbrl_errors.append(
+                        {
+                            "reason_code": "NO_QUALIFYING_EPS_FACTS",
+                            "detail": f"document {path} produced no qualifying EPS fact",
+                            "context_ref": None,
+                        }
+                    )
                 eps_xbrl_records.extend(recs)
-            except OSError:
-                continue
+            except OSError as exc:
+                raise ValueError(f"EPS XBRL document not found or unreadable: {path}: {exc}")
 
     reverse_requirements = _build_reverse_requirements(
         data,
@@ -2981,6 +3008,11 @@ def run_st_eva(
         user_eps=user_eps,
         eps_xbrl_records=eps_xbrl_records,
     )
+    if isinstance(reverse_requirements, dict):
+        reverse_requirements["eps_xbrl_acquisition"] = {
+            "documents": len(doc_inputs),
+            "errors": list(eps_xbrl_errors),
+        }
 
     if context_path is not None:
         # Opt-in only. Nothing above this line changes when a context is not
@@ -6589,6 +6621,12 @@ def main() -> None:
         metavar="STATUS",
     )
     parser.add_argument(
+        "--eps-xbrl-expected-cik",
+        dest="eps_xbrl_expected_cik",
+        default=None,
+        metavar="CIK",
+    )
+    parser.add_argument(
         "--json",
         dest="as_json",
         action="store_true",
@@ -6727,6 +6765,7 @@ def main() -> None:
         prefer_eps_anchor=args.prefer_eps_anchor,
         user_eps=args.user_eps if hasattr(args, "user_eps") else None,
         eps_xbrl_documents=_cli_eps_xbrl_documents(args),
+        eps_xbrl_expected_cik=getattr(args, "eps_xbrl_expected_cik", None),
     )
 
     if result is None:
@@ -6762,8 +6801,8 @@ def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
                         documents.append(dict(item))
                     elif isinstance(item, str):
                         documents.append({"path": item})
-        except (OSError, ValueError):
-            pass
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"EPS XBRL manifest unreadable or invalid JSON: {args.eps_xbrl_manifest}: {exc}")
     if getattr(args, "eps_xbrl_document", None):
         for path in args.eps_xbrl_document:
             documents.append(
@@ -6776,6 +6815,7 @@ def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
                     "fiscal_period": getattr(args, "eps_xbrl_fiscal_period", None),
                     "acceptance_datetime": getattr(args, "eps_xbrl_acceptance_datetime", None),
                     "assurance_status": getattr(args, "eps_xbrl_assurance_status", None) or "UNKNOWN",
+                    "expected_cik": getattr(args, "eps_xbrl_expected_cik", None),
                 }
             )
     return documents or None
