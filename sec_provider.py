@@ -184,6 +184,7 @@ SEC_CONCEPTS: Dict[str, Tuple[Concept, ...]] = {
     ),
     METRIC_SHARES_OUTSTANDING: (
         Concept("dei", "EntityCommonStockSharesOutstanding"),
+        Concept("us-gaap", "CommonStockSharesOutstanding"),
     ),
     METRIC_MARKETABLE_SECURITIES_CURRENT: (
         Concept("us-gaap", "MarketableSecuritiesCurrent"),
