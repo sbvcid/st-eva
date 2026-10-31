@@ -3088,9 +3088,15 @@ def run_st_eva(
                 try:
                     document = parse_xbrl_document(payload)
                 except Exception as exc:
+                    document = None
+                    parse_err = str(exc)
+                else:
+                    parse_err = "document content is unparseable"
+
+                if document is None or getattr(document, "content_kind", None) == "UNPARSEABLE":
                     rej = {
                         "reason_code": "DOCUMENT_UNPARSEABLE",
-                        "detail": str(exc),
+                        "detail": parse_err,
                         "accession": accession,
                         "context_ref": None,
                         "path": path,
@@ -7020,62 +7026,8 @@ _TARGET_CIK_BY_TICKER = {
 
 
 def _resolve_target_identity(ticker: Optional[str], explicit: Optional[str]) -> Dict[str, Any]:
-    canonical_cik = None
-    identity_source = None
-    verification_status = "UNRESOLVED"
-    ticker_key = str(ticker or "").upper().strip()
-
-    # SEC official ticker map is the primary source.
-    try:
-        from sec_provider import SECProvider
-
-        entry = SECProvider().ticker_map().get(ticker_key)
-        if entry is not None and entry.get("cik"):
-            digits = "".join(ch for ch in str(entry["cik"]) if ch.isdigit())
-            if len(digits) == 10:
-                canonical_cik = digits
-                identity_source = "SEC_TICKER_MAP"
-                verification_status = "SEC_VERIFIED"
-    except Exception:
-        pass
-
-    # Static mapping is an explicit fallback, not an SEC live verification.
-    if canonical_cik is None:
-        fallback = _TARGET_CIK_BY_TICKER.get(ticker_key)
-        if fallback:
-            digits = "".join(ch for ch in str(fallback) if ch.isdigit())
-            if len(digits) == 10:
-                canonical_cik = digits
-                identity_source = "STATIC_MAPPING"
-                verification_status = "STATIC_FALLBACK"
-
-    # Explicit CIK is only a manual backstop when ticker resolution failed.
-    if canonical_cik is None and explicit is not None and str(explicit).strip():
-        digits = "".join(ch for ch in str(explicit) if ch.isdigit())
-        if digits and len(digits) <= 10:
-            canonical_cik = digits.zfill(10)
-            identity_source = "USER_SUPPLIED"
-            verification_status = "USER_SUPPLIED"
-
-    # Detect conflict if both resolved and explicit are present and differ.
-    conflict = False
-    if canonical_cik is not None and explicit is not None and str(explicit).strip():
-        explicit_digits = "".join(ch for ch in str(explicit) if ch.isdigit())
-        if explicit_digits and len(explicit_digits) <= 10:
-            if explicit_digits.zfill(10) != canonical_cik:
-                conflict = True
-        else:
-            conflict = True
-
-    return {
-        "ticker": ticker_key,
-        "canonical_cik": canonical_cik,
-        "identity_source": identity_source,
-        "verification_status": verification_status,
-        "conflict": conflict,
-        "explicit_cik": explicit,
-    }
-
+    from eps_anchor_evidence import resolve_target_identity
+    return resolve_target_identity(ticker, explicit)
 
 def _resolve_target_cik(ticker: Optional[str], explicit: Optional[str] = None) -> Optional[str]:
     return _resolve_target_identity(ticker, explicit).get("canonical_cik")

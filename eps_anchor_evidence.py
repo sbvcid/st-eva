@@ -345,6 +345,8 @@ class EpsAnchorCandidate:
     refusal_code: str = ""
     refusal_reason: str = ""
     share_class_scope: str = SHARE_CLASS_SCOPE_UNKNOWN
+    taxonomy: Optional[str] = None
+    concept_local_name: Optional[str] = None
 
     def contract_view(self) -> Dict[str, Any]:
         return {
@@ -961,7 +963,7 @@ def eps_fact_records_from_xbrl_document(
     document: Any,
     *,
     accession: str,
-    form: str = "10-K",
+    form: Optional[str] = None,
     filed: Optional[str] = None,
     acceptance_datetime: Optional[str] = None,
     cik: Optional[str] = None,
@@ -2140,3 +2142,79 @@ def candidate_to_eps_anchor(
             dict(candidate.annual_comparison) if candidate.annual_comparison else None
         ),
     )
+
+TARGET_CIK_BY_TICKER = {
+    "AAPL": "0000320193",
+    "APPLE": "0000320193",
+    "GOOGL": "0001652044",
+    "GOOG": "0001652044",
+    "ALPHABET": "0001652044",
+    "MSFT": "0000789019",
+    "MICROSOFT": "0000789019",
+    "SOFI": "0001818874",
+    "MUFG": "0000067732",
+}
+
+
+def resolve_target_identity(ticker: Optional[str], explicit: Optional[str]) -> Dict[str, Any]:
+    canonical_cik = None
+    identity_source = None
+    verification_status = "UNRESOLVED"
+    ticker_key = str(ticker or "").upper().strip()
+
+    # SEC official ticker map is the primary source.
+    try:
+        from sec_provider import SECProvider
+
+        entry = SECProvider().ticker_map().get(ticker_key)
+        if entry is not None and entry.get("cik"):
+            raw_cik = str(entry["cik"]).strip()
+            if raw_cik.isdigit() and len(raw_cik) <= 10:
+                canonical_cik = raw_cik.zfill(10)
+                identity_source = "SEC_TICKER_MAP"
+                verification_status = "SEC_VERIFIED"
+    except Exception:
+        pass
+
+    # Static mapping is an explicit fallback, not an SEC live verification.
+    if canonical_cik is None:
+        import sys
+        runner_mod = sys.modules.get("st_eva_runner")
+        mapping = getattr(runner_mod, "_TARGET_CIK_BY_TICKER", None) if runner_mod else None
+        if mapping is None:
+            mapping = TARGET_CIK_BY_TICKER
+        fallback = mapping.get(ticker_key)
+        if fallback:
+            raw_cik = str(fallback).strip()
+            if raw_cik.isdigit() and len(raw_cik) <= 10:
+                canonical_cik = raw_cik.zfill(10)
+                identity_source = "STATIC_MAPPING"
+                verification_status = "STATIC_FALLBACK"
+
+    explicit_raw = str(explicit).strip() if explicit is not None else ""
+    explicit_valid = False
+    normalized_explicit = None
+    if explicit_raw:
+        if explicit_raw.isdigit() and len(explicit_raw) <= 10:
+            explicit_valid = True
+            normalized_explicit = explicit_raw.zfill(10)
+
+    conflict = False
+    if explicit_raw and not explicit_valid:
+        conflict = True
+    elif canonical_cik is None and explicit_valid:
+        canonical_cik = normalized_explicit
+        identity_source = "USER_SUPPLIED"
+        verification_status = "USER_SUPPLIED"
+    elif canonical_cik is not None and explicit_raw:
+        if not explicit_valid or (normalized_explicit != canonical_cik):
+            conflict = True
+
+    return {
+        "ticker": ticker_key,
+        "canonical_cik": canonical_cik,
+        "identity_source": identity_source,
+        "verification_status": verification_status,
+        "conflict": conflict,
+        "explicit_cik": explicit,
+    }

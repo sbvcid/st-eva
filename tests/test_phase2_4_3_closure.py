@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, ".")
 from st_eva_runner import run_st_eva, _resolve_target_identity, _cli_eps_xbrl_documents
 from eps_anchor_evidence import (
+    eps_fact_records_from_xbrl_document,
     SHARE_CLASS_SCOPE_CONSOLIDATED,
     SHARE_CLASS_SCOPE_CLASS_A,
     SHARE_CLASS_SCOPE_CLASS_B,
@@ -19,6 +20,7 @@ from eps_anchor_evidence import (
     NATURE_DIRECT_FILING,
     NATURE_DERIVED,
 )
+from sec_xbrl_facts import parse_xbrl_document
 
 
 def _write_fixture_4scopes(tmp_path: Path) -> str:
@@ -36,6 +38,20 @@ def _write_fixture_4scopes(tmp_path: Path) -> str:
 <ix:nonFraction name="us-gaap:EarningsPerShareDiluted" contextRef="c-c" unitRef="u" decimals="2">10.84</ix:nonFraction>
 </body></html>"""
     path = tmp_path / "googl_xbrl_4scopes.htm"
+    path.write_bytes(payload)
+    return str(path)
+
+
+def _write_fixture_with_rejections(tmp_path: Path) -> str:
+    payload = b"""<?xml version="1.0"?>
+<html xmlns:ix="http://www.xbrl.org/2013/inlineXBRL" xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:us-gaap="http://fasb.org/us-gaap/2026">
+<body>
+<xbrli:context id="c-1"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0001652044</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period></xbrli:context>
+<xbrli:unit id="u"><xbrli:divide><xbrli:unitNumerator><xbrli:measure>USD</xbrli:measure></xbrli:unitNumerator><xbrli:unitDenominator><xbrli:measure>xbrli:shares</xbrli:measure></xbrli:unitDenominator></xbrli:divide></xbrli:unit>
+<ix:nonFraction name="us-gaap:EarningsPerShareDiluted" contextRef="c-1" unitRef="u" decimals="2">10.81</ix:nonFraction>
+<ix:nonFraction name="us-gaap:EarningsPerShareDiluted" contextRef="missing-ctx" unitRef="u" decimals="2">99.99</ix:nonFraction>
+</body></html>"""
+    path = tmp_path / "googl_with_rejections.htm"
     path.write_bytes(payload)
     return str(path)
 
@@ -102,20 +118,46 @@ def test_cli_missing_form(tmp_path):
     assert "FORM_MISSING" in rejection_codes
 
 
-def test_identity_sources(tmp_path, monkeypatch):
+def test_helper_direct_call_missing_form(tmp_path):
+    path = _write_fixture_4scopes(tmp_path)
+    with open(path, "rb") as f:
+        doc = parse_xbrl_document(f.read())
+    rejs = []
+    # Call directly without form argument (form omitted completely)
+    recs = eps_fact_records_from_xbrl_document(
+        doc,
+        accession="0001652044-26-000018",
+        filed="2026-02-04",
+        acceptance_datetime="2026-02-04T21:15:00Z",
+        fiscal_year=2025,
+        fiscal_period="FY",
+        expected_cik="0001652044",
+        rejections=rejs,
+    )
+    assert recs == []
+    assert any(r["reason_code"] == "FORM_MISSING" for r in rejs)
+
+
+def test_identity_sources(monkeypatch):
     import st_eva_runner
 
-    # 1. SEC_TICKER_MAP
+    # 1. SEC_TICKER_MAP (mock SECProvider.ticker_map with fixed GOOGL entry)
+    class MockSECProvider:
+        def ticker_map(self):
+            return {"GOOGL": {"cik": 1652044, "ticker": "GOOGL", "title": "Alphabet Inc."}}
+
+    monkeypatch.setattr("sec_provider.SECProvider", MockSECProvider, raising=False)
     id1 = _resolve_target_identity("GOOGL", None)
     assert id1["identity_source"] == "SEC_TICKER_MAP"
     assert id1["verification_status"] == "SEC_VERIFIED"
     assert id1["canonical_cik"] == "0001652044"
 
-    # 2. STATIC_MAPPING (when SECProvider fails)
-    class Boom:
+    # 2. STATIC_MAPPING (when SECProvider fails, uses static mapping fallback)
+    class FailingSECProvider:
         def ticker_map(self):
-            raise RuntimeError("no network")
-    monkeypatch.setattr("sec_provider.SECProvider", Boom, raising=False)
+            raise RuntimeError("network unavailable")
+
+    monkeypatch.setattr("sec_provider.SECProvider", FailingSECProvider, raising=False)
     id2 = _resolve_target_identity("GOOGL", None)
     assert id2["identity_source"] == "STATIC_MAPPING"
     assert id2["verification_status"] == "STATIC_FALLBACK"
@@ -127,6 +169,12 @@ def test_identity_sources(tmp_path, monkeypatch):
     assert id3["identity_source"] == "USER_SUPPLIED"
     assert id3["verification_status"] == "USER_SUPPLIED"
     assert id3["canonical_cik"] == "0000123456"
+
+    # Explicit CIK format validation: cannot treat string with non-digits as valid CIK
+    id_invalid = _resolve_target_identity("UNKNOWNCO", "0000123456x")
+    assert id_invalid["canonical_cik"] is None
+    assert id_invalid["identity_source"] is None
+    assert id_invalid["conflict"] is True
 
 
 def test_identity_conflict_stops_promotion(tmp_path):
@@ -229,6 +277,8 @@ def test_date_and_point_in_time_strictness(tmp_path):
 
 def test_multiple_documents_independent_statuses(tmp_path):
     path_valid = _write_fixture_4scopes(tmp_path)
+    path_rejections = _write_fixture_with_rejections(tmp_path)
+
     unparseable_path = tmp_path / "bad.xml"
     unparseable_path.write_bytes(b"not valid xml at all <<>>")
 
@@ -236,37 +286,53 @@ def test_multiple_documents_independent_statuses(tmp_path):
     empty_facts_path.write_bytes(b'<html><body><p>No XBRL</p></body></html>')
 
     doc_valid = _base_docs(path_valid)[0]
-    doc_unreadable = _base_docs(str(tmp_path / "nonexistent.htm"))[0]
-    doc_missing_path = {"accession": "0001652044-26-000099"}
+    doc_with_rej = _base_docs(path_rejections)[0]
+    doc_no_facts = _base_docs(str(empty_facts_path))[0]
     doc_meta_rej = _base_docs(path_valid, form="10-K", fiscal_period="Q1")[0]
     doc_ident_rej = _base_docs(path_valid, expected_cik="0000320193")[0]
-    doc_no_facts = _base_docs(str(empty_facts_path))[0]
+    doc_unreadable = _base_docs(str(tmp_path / "nonexistent.htm"))[0]
+    doc_unparseable = _base_docs(str(unparseable_path))[0]
 
     all_docs = [
         doc_valid,
-        doc_unreadable,
-        doc_missing_path,
+        doc_with_rej,
+        doc_no_facts,
         doc_meta_rej,
         doc_ident_rej,
-        doc_no_facts,
+        doc_unreadable,
+        doc_unparseable,
     ]
 
     res = run_st_eva("GOOGL", mode="regression", reference_multiple=25.0, eps_xbrl_documents=all_docs, save_snapshot=False)
     acq = res["reverse_requirements"]["eps_xbrl_acquisition"]
-    assert acq["documents"] == 6
+    assert acq["documents"] == 7
     doc_results = acq["document_results"]
-    assert len(doc_results) == 6
+    assert len(doc_results) == 7
 
+    # Verify all seven statuses
     statuses = [d["final_status"] for d in doc_results]
     assert statuses[0] == "ACCEPTED"
-    assert statuses[1] == "UNREADABLE"
-    assert statuses[2] == "METADATA_REJECTED"
+    assert statuses[1] == "ACCEPTED_WITH_REJECTIONS"
+    assert statuses[2] == "NO_QUALIFYING_EPS_FACTS"
     assert statuses[3] == "METADATA_REJECTED"
     assert statuses[4] == "IDENTITY_REJECTED"
-    assert statuses[5] == "NO_QUALIFYING_EPS_FACTS"
+    assert statuses[5] == "UNREADABLE"
+    assert statuses[6] == "UNPARSEABLE"
 
-    # Valid doc records are still accepted
+    # Verify record counts
     assert doc_results[0]["record_count"] == 4
+    assert doc_results[1]["record_count"] == 1
+    assert doc_results[2]["record_count"] == 0
+    assert doc_results[3]["record_count"] == 0
+    assert doc_results[4]["record_count"] == 0
+    assert doc_results[5]["record_count"] == 0
+    assert doc_results[6]["record_count"] == 0
+
+    # Verify rejections consistency with global errors
+    global_errors = acq["errors"]
+    for d in doc_results:
+        for r in d["rejections"]:
+            assert r in global_errors
 
 
 def test_googl_four_scopes_provenance(tmp_path):
