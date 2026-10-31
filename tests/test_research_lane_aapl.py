@@ -51,6 +51,8 @@ ROOT = Path(__file__).resolve().parent.parent
 _AAPL = settings_for_ticker("AAPL")
 CAPTURE_DIR = _AAPL.capture_dir
 LANE_DIR = ROOT / "data" / "research_lanes" / "AAPL"
+PRICES_EXIST = (CAPTURE_DIR / "daily_prices.json").exists()
+PRICES_SKIP = "AAPL research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 REVENUE_LANE = "aapl_reported_revenue_multiple"
 OPERATING_LANE = "aapl_reported_operating_profit_plus_reported_d_and_a_multiple"
@@ -98,6 +100,7 @@ def _results() -> dict:
     return build_lane_results(issuer_ids=["AAPL"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCapture(unittest.TestCase):
     """The capture holds filed evidence, hashed and named."""
 
@@ -194,6 +197,7 @@ class TheCapture(unittest.TestCase):
         self.assertEqual(days, ["2014-06-09", "2020-08-31"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheFiscalCycle(unittest.TestCase):
     """AAPL's calendar is a 52/53-week fiscal year, not a calendar year."""
 
@@ -266,6 +270,7 @@ class TheFiscalCycle(unittest.TestCase):
         self.assertTrue(off_calendar)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSplits(unittest.TestCase):
     """The price is the as-traded close, paired with the then-current shares."""
 
@@ -323,6 +328,7 @@ class TheSplits(unittest.TestCase):
         self.assertAlmostEqual(before.price / 4.0, 106.26, places=2)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheElementLineage(unittest.TestCase):
     """AAPL's depreciation element changed tag, and the lane says so."""
 
@@ -408,6 +414,7 @@ class TheElementLineage(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ThePointInTime(unittest.TestCase):
     """A filing accepted after the close is knowable the next trading day."""
 
@@ -478,6 +485,7 @@ class ThePointInTime(unittest.TestCase):
                         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheLanes(unittest.TestCase):
     """The two required lanes, and the third that shares their denominator."""
 
@@ -574,6 +582,7 @@ class TheLanes(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheProductionCrossCheck(unittest.TestCase):
     """The research lane and the production dataset read the same facts."""
 
@@ -704,6 +713,7 @@ class TheProductionCrossCheck(unittest.TestCase):
         self.assertTrue(research_dates - production_dates)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheIsolation(unittest.TestCase):
     """Nothing here moves a production figure."""
 
@@ -772,6 +782,7 @@ class TheIsolation(unittest.TestCase):
             self.assertIn(lane_id, candidate_lane_ids())
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheRefusals(unittest.TestCase):
     """The lanes refuse what they cannot state."""
 
@@ -859,6 +870,7 @@ class TheRefusals(unittest.TestCase):
         self.assertIn(REASON_INCOMPLETE_EV_BRIDGE, CLOSED_REASON_CODES)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheIdentityContract(unittest.TestCase):
     """What each identity covers, and what changes it."""
 

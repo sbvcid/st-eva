@@ -20,6 +20,8 @@ from st_eva_runner import REGRESSION_TEST_FIXTURES, CompanyResolver, YahooFinanc
 from web.service_adapter import AnalysisServiceAdapter
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+PRICES_EXIST = (REPO_ROOT / "data" / "historical_pe" / "AAPL" / "daily_prices.json").exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 EPS_PROVIDER = "YahooFinanceFundamentals"
 EPS_FIELD = "defaultKeyStatistics.trailingEps"
 EPS_URL = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/AAPL"
@@ -73,6 +75,7 @@ class TestAaplFixtureResolution(unittest.TestCase):
         self.assertIsNotNone(data)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestAaplOfflinePipeline(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

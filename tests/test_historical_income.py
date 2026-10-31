@@ -8,6 +8,10 @@ trailing figure must not become a denominator.
 """
 import copy
 import unittest
+from pathlib import Path
+
+PRICES_EXIST = Path("data/historical_pe/AAPL/daily_prices.json").exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 from historical_income import (
     ISSUER_CONFIGS,
@@ -28,6 +32,7 @@ def _payload():
     return load_issuer_historical_income(ISSUER_CONFIGS[TICKER]).to_dict()
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDataset(unittest.TestCase):
     """What the dataset holds, before anything is qualified from it."""
 
@@ -94,6 +99,7 @@ class TheDataset(unittest.TestCase):
             self.assertIn("cumulative difference", quarter["derivation"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheQualification(unittest.TestCase):
     """What has to be true before a trailing figure may be used."""
 
@@ -220,6 +226,7 @@ class TheQualification(unittest.TestCase):
         self.assertIsNone(qualified_ttm_ebitda(None, CUT, TICKER))
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheMetricNames(unittest.TestCase):
     """The dataset says which figures it produces."""
 
@@ -228,6 +235,7 @@ class TheMetricNames(unittest.TestCase):
         self.assertEqual(METRIC_TTM_EBITDA, "TTM_EBITDA")
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDocumentHoldsTheWindows(unittest.TestCase):
     """The context holds the windows, and recomputes the figures from them.
 

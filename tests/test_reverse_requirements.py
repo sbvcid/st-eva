@@ -11,8 +11,12 @@ from __future__ import annotations
 
 import sys
 import unittest
+from pathlib import Path
 
 sys.path.insert(0, ".")
+
+PRICES_EXIST = (Path("data/historical_pe/AAPL/daily_prices.json")).exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 from reverse_requirements import (
     ANCHOR_FORWARD,
@@ -1141,6 +1145,7 @@ class TestEarningsMethodRepresentativeProvenance(unittest.TestCase):
         self.assertEqual(view["source"], "user_supplied")
         self.assertTrue(view["is_user_assumption"])
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_the_end_to_end_report_names_the_production_median_as_its_source(self):
         from st_eva_runner import run_st_eva
 

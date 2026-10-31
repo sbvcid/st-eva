@@ -29,6 +29,9 @@ from pathlib import Path
 
 sys.path.insert(0, ".")
 
+PRICES_EXIST = (Path("data/historical_pe/AAPL/daily_prices.json")).exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+
 from data_contract import ValuationInputs
 from sec_derived_inputs import (
     BASIS_QUARTERLY,
@@ -453,6 +456,7 @@ class TestTheEngineTakesTheTrailingFigure(unittest.TestCase):
         self.assertIsNotNone(methods["forward_eps_at_reference_multiple"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestTheDocumentRecomputesTheTrailingFigure(unittest.TestCase):
     """
     The document holds the quarters and recomputes the sum itself.
@@ -538,6 +542,7 @@ class TestTheDocumentRecomputesTheTrailingFigure(unittest.TestCase):
         self.assertTrue(furnished[0]["usable_date"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestTheFiledFigureWinsOverTheProviders(unittest.TestCase):
     """
     Where the two differ, the filed figure is the one the valuation uses.

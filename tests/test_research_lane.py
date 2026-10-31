@@ -62,6 +62,8 @@ def build_ko_research_lanes():
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "data" / "research_lanes" / "KO"
+PRICES_EXIST = (CAPTURE_DIR / "daily_prices.json").exists()
+PRICES_SKIP = "KO research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 # The number the Phase 9.1 audit reported for KO's enterprise-value figure and
 # that could not be reproduced from the filed inputs. It is assembled from
@@ -226,6 +228,7 @@ def _production_shaped_capture(target: Path) -> HistoricalMultiplesConfig:
     )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheIsolation(unittest.TestCase):
     """The research lane may not take a production name."""
 
@@ -301,6 +304,7 @@ class TheIsolation(unittest.TestCase):
                 self.assertIs(distribution["production_eligible"], False)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCapture(unittest.TestCase):
     """The capture is versioned, hashed and read-only."""
 
@@ -369,6 +373,7 @@ class TheCapture(unittest.TestCase):
         self.assertEqual(_versioned_data_digest(), repo_before)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheProductionArithmetic(unittest.TestCase):
     """The lane and production compute the same figures on the same facts."""
 
@@ -432,6 +437,7 @@ class TheProductionArithmetic(unittest.TestCase):
             self.assertEqual(canonical_json_hash(payload), digest, ticker)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheLanes(unittest.TestCase):
     """The four candidate lanes and the one diagnostic."""
 
@@ -590,6 +596,7 @@ class TheLanes(unittest.TestCase):
             self.assertEqual(entry["sample_count"], result.distribution.sample_count)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheRefusals(unittest.TestCase):
     """A lane refuses what production refuses."""
 
@@ -768,6 +775,7 @@ class TheRefusals(unittest.TestCase):
             self.assertEqual(observation.bridge["components_absent"], [])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheBasisBreaks(unittest.TestCase):
     """What changed in the evidence is recorded, not absorbed."""
 
@@ -852,6 +860,7 @@ class TheBasisBreaks(unittest.TestCase):
         self.assertIn("us-gaap:MarketableSecurities", seen)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheUnattributedNumber(unittest.TestCase):
     """A number that could not be reproduced is not published as an expectation."""
 

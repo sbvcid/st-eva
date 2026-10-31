@@ -42,6 +42,8 @@ TOOLS = ROOT / "tools"
 _AAPL = settings_for_ticker("AAPL")
 CAPTURE_DIR = _AAPL.capture_dir
 LANE_DIR = ROOT / "data" / "research_lanes" / "AAPL"
+PRICES_EXIST = (CAPTURE_DIR / "daily_prices.json").exists()
+PRICES_SKIP = "AAPL research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 REVENUE_LANE = "aapl_reported_revenue_multiple"
 OPERATING_LANE = "aapl_reported_operating_profit_plus_reported_d_and_a_multiple"
@@ -77,6 +79,7 @@ def _elements(observation) -> set:
     }
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSemanticBoundary(unittest.TestCase):
     """The revenue lane reads two elements, and discloses it."""
 
@@ -222,6 +225,7 @@ class TheSemanticBoundary(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDeterministicReplay(unittest.TestCase):
     """The same committed inputs give the same figures, offline."""
 
@@ -317,6 +321,7 @@ class TheDeterministicReplay(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheIdentityContract(unittest.TestCase):
     """What each identity covers, and what moves it."""
 
@@ -472,6 +477,7 @@ class TheIdentityContract(unittest.TestCase):
                 load_research_lane(dataclasses.replace(config, capture_dir=target))
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheShareCountIsNotScaled(unittest.TestCase):
     """The unit policy scales amounts, not counts."""
 
@@ -577,6 +583,7 @@ class TheShareCountIsNotScaled(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheUnchangedCase(unittest.TestCase):
     """The KO case, and the production payloads, do not move."""
 

@@ -42,6 +42,9 @@ from st_eva_runner import (
 )
 from web.service_adapter import AnalysisServiceAdapter, default_replay_doc_builder
 
+PRICES_EXIST = (Path("data/historical_pe/AAPL/daily_prices.json")).exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+
 # The ticker under test has an established production historical P/E and P/FCF
 # distribution, so a run that asks for them gets a qualified reference.
 TICKER = "AAPL"
@@ -149,6 +152,7 @@ class _ReplayFixture(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ProductionReferenceReplay(_ReplayFixture):
     """The rebuild reproduces the reference the archived run selected."""
 
@@ -222,6 +226,7 @@ class ProductionReferenceReplay(_ReplayFixture):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class NegativePathReplay(_ReplayFixture):
     """The rebuild reads the load of the dataset the run used.
 

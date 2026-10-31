@@ -18,8 +18,12 @@ import sys
 import tempfile
 import time
 import unittest
+from pathlib import Path
 
 sys.path.insert(0, ".")
+
+PRICES_EXIST = (Path("data/historical_pe/MSFT/daily_prices.json")).exists()
+PRICES_SKIP = "MSFT daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 from data_contract import ValuationInputs
 from st_eva_runner import MarketImpliedAssumptionsEngine, production_pe_for_reference
@@ -328,6 +332,7 @@ class TestTheMatrixIsUnaffected(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestTheMatrixIsUnchanged(unittest.TestCase):
     """
     The matrix is a different calculation built from the distribution directly,

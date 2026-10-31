@@ -429,6 +429,11 @@ class TestAcquireStandardizedPrices(unittest.TestCase):
 class TestReadSqlitePriceObservations(unittest.TestCase):
     """Secondary source: SQLite archive read, clearly labelled."""
 
+    @unittest.skipUnless(
+        os.path.exists("data/archives/SOFI.sqlite"),
+        "Requires local Yahoo-derived SOFI archive (unverified authorization C-1; "
+        "excluded from public delivery; see DATA-DELIVERY.md section 2.1 / REVIEW-2ND-PHASE.md C-1)",
+    )
     def test_reads_existing_archive(self):
         result = read_sqlite_price_observations(
             "data/archives/SOFI.sqlite", ticker="SOFI"

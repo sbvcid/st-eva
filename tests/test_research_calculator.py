@@ -44,6 +44,8 @@ CAPTURE_DIR = _KO.capture_dir
 LANE_CONFIGS = lane_configs()
 
 ROOT = Path(__file__).resolve().parent.parent
+PRICES_EXIST = (ROOT / "data" / "research_multiples" / "KO" / "daily_prices.json").exists()
+PRICES_SKIP = "KO research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 EXPECTED = {
     "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE": (29, 6.403373, "market_cap"),
@@ -165,6 +167,7 @@ class TheCatalogue(unittest.TestCase):
             self.assertTrue(elements, metric.metric_id)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheEvidenceExplorer(unittest.TestCase):
     """The observations behind a statistic."""
 
@@ -216,6 +219,7 @@ class TheEvidenceExplorer(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCalculation(unittest.TestCase):
     """The reverse calculation."""
 
@@ -510,6 +514,7 @@ class TheCalculation(unittest.TestCase):
         self.assertIn("RESEARCH_REASON_INCOMPLETE_EV_BRIDGE", caught.exception.detail)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheResearchIsolation(unittest.TestCase):
     """A research figure reaches nothing in production."""
 
@@ -570,6 +575,7 @@ class TheResearchIsolation(unittest.TestCase):
         self.assertIn("/api/jobs/{job_id}", paths)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheRefusals(unittest.TestCase):
     """The conditions that must refuse a calculation."""
 
@@ -755,6 +761,7 @@ class TheRefusals(unittest.TestCase):
                     self.assertLessEqual(component["usable_date"], day)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheNonFiniteOperands(unittest.TestCase):
     """A non-finite operand is refused, on every path into the service."""
 
@@ -927,6 +934,7 @@ class TheNonFiniteOperands(unittest.TestCase):
             self.assertIn(code, CLOSED_CALCULATION_REASON_CODES)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDistributionState(unittest.TestCase):
     """The distribution's state, and the threshold it is read against."""
 
@@ -1029,6 +1037,7 @@ class TheDistributionState(unittest.TestCase):
         self.assertFalse(payload.production_eligible)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSourcePresentation(unittest.TestCase):
     """Every input says where it came from, in what unit, over what period."""
 
@@ -1103,6 +1112,7 @@ class TheResearchApi(unittest.TestCase):
             payload["user_assumption_label"], USER_ASSUMPTION_LABEL
         )
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_the_detail_carries_the_observations(self):
         response = self.client.get(
             "/api/research/metrics/RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"
@@ -1120,6 +1130,7 @@ class TheResearchApi(unittest.TestCase):
             self.assertTrue(observation["reason_code"])
             self.assertTrue(observation["reason_detail"])
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_the_evidence_of_one_observation_is_served(self):
         response = self.client.get(
             "/api/research/metrics/RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"

@@ -40,7 +40,7 @@ jobs:
         run: |
           test ! -e research/experiments/aapl-historical-pe-poc/contract/msft_validation \
             || (echo "MSFT production inputs must not live under research/" && exit 1)
-          for f in daily_prices.json eps_diluted_concept.json \
+          for f in eps_diluted_concept.json \
                    filing_acceptance_evidence.json q4_evidence_records.json; do
             test -f "data/historical_pe/MSFT/$f" || { echo "missing data/historical_pe/MSFT/$f"; exit 1; }
           done

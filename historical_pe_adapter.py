@@ -382,6 +382,11 @@ def read_sqlite_price_observations(
         "note": "Pre-existing archive observations only; no external data acquired.",
     }
 
+    if not Path(archive_path).is_file():
+        result["status"] = "ERROR"
+        result["blocking_reason"] = f"Archive read error: File not found: {archive_path}"
+        return result
+
     try:
         conn = sqlite3.connect(archive_path)
         conn.row_factory = sqlite3.Row

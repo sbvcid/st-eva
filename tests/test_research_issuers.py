@@ -44,6 +44,8 @@ C2 = "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_SHORT_TERM_BORROWINGS"
 A = "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"
 B = "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
 DIAGNOSTIC = "RESEARCH_KO_FILED_EV_BRIDGE_MULTIPLE_DOUBLE_COUNTED_DIAGNOSTIC"
+PRICES_EXIST = (ROOT / "data" / "research_multiples" / "KO" / "daily_prices.json").exists()
+PRICES_SKIP = "KO research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 
 class TheConfiguration(unittest.TestCase):
@@ -150,6 +152,7 @@ class TheConfiguration(unittest.TestCase):
             return load_issuer_settings(path)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSecondCase(unittest.TestCase):
     """AAPL is configured, its capture is committed, and its lanes compute."""
 
@@ -222,6 +225,7 @@ class TheSecondCase(unittest.TestCase):
             self.assertFalse(result.distribution.production_eligible)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheThirdCase(unittest.TestCase):
     """MSFT is configured, its capture is committed, and its lanes compute."""
 
@@ -289,6 +293,7 @@ class TheThirdCase(unittest.TestCase):
         self.assertFalse(revenue.distribution.production_eligible)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheThirdCaseAgainstProduction(unittest.TestCase):
     """
     MSFT's research revenue lane and the production P/S reference read the
@@ -403,6 +408,7 @@ class TheThirdCaseAgainstProduction(unittest.TestCase):
         self.assertEqual(quarters[3]["knowable_from"], "2020-10-28")
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheUnitPolicy(unittest.TestCase):
     """A lane refuses inputs it cannot state the units of."""
 
@@ -518,6 +524,7 @@ class TheUnitPolicy(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheBridgeGroups(unittest.TestCase):
     """The comparison reads the groups, not the component names."""
 
@@ -543,6 +550,7 @@ class TheBridgeGroups(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheMigration(unittest.TestCase):
     """The migration left the KO case as it was."""
 

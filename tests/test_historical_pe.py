@@ -10,6 +10,10 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 import unittest
+from pathlib import Path
+
+PRICES_EXIST = Path("data/historical_pe/AAPL/daily_prices.json").exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 from zoneinfo import ZoneInfo
 
 from historical_pe import (
@@ -97,6 +101,7 @@ class TestStockSplitRestoration(unittest.TestCase):
         self.assertIsNone(same_day_note)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestAAPL2020SplitEpsBasisConsistency(unittest.TestCase):
     """Regression: AAPL 4:1 split 2020-08-31 — price and quarterly EPS
     must share the same per-share basis at every evaluation date.
@@ -407,6 +412,7 @@ class TestInvariants(unittest.TestCase):
                 source_lineage={},
             )
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_f13_determinism_identical_content_hash(self):
         # Two identical runs produce identical content hashes
         res1 = load_aapl_historical_pe(enable_furnished=True)
@@ -521,6 +527,7 @@ class TestSufficiencyGate(unittest.TestCase):
 
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestAaplEndToEndAndNegativePath(unittest.TestCase):
     """AAPL real dataset end-to-end and negative-path verification."""
 

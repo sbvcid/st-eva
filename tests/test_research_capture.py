@@ -27,6 +27,8 @@ from tools.build_research_capture import (
 
 ROOT = Path(__file__).resolve().parent.parent
 CAPTURE = ROOT / "data" / "research_multiples" / "KO"
+PRICES_EXIST = (CAPTURE / "daily_prices.json").exists()
+PRICES_SKIP = "KO daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 # The usable dates the capture produces, pinned. Three of them moved when the
 # acceptance times were corrected to the real Eastern offset: the FY2018,
@@ -130,6 +132,7 @@ class TheAcceptanceTime(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheUsableDates(unittest.TestCase):
     """The capture's acceptance times produce the pinned usable dates."""
 

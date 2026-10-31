@@ -87,8 +87,10 @@ class TestSOFIReplayDeterminism(unittest.TestCase):
         self.store = SQLiteArchive(path=str(self.target))
 
     def tearDown(self) -> None:
-        self.store.close()
-        shutil.rmtree(self.tmpdir, ignore_errors=True)
+        if hasattr(self, "store"):
+            self.store.close()
+        if hasattr(self, "tmpdir"):
+            shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def assert_same_replay_output(self, result1, result2):
         """The complete same-input determinism contract between two replays.

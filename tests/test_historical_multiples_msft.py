@@ -41,6 +41,9 @@ from st_eva_runner import (
 TICKER = "MSFT"
 ROOT = Path(__file__).resolve().parent.parent
 
+PRICES_EXIST = (ROOT / "data" / "historical_pe" / "MSFT" / "daily_prices.json").exists()
+PRICES_SKIP = "MSFT daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+
 
 def _payload():
     return load_issuer_historical_multiples(ISSUER_CONFIGS[TICKER]).to_dict()
@@ -81,6 +84,7 @@ def _raw_shares():
     ]
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSources(unittest.TestCase):
     """What the dataset was built from, and what each file is."""
 
@@ -141,6 +145,7 @@ class TheSources(unittest.TestCase):
                 self.assertTrue(lineage["shares_accessions"], observation)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ThePointInTimeRule(unittest.TestCase):
     """No fact is used before its filing's usable date."""
 
@@ -186,6 +191,7 @@ class ThePointInTimeRule(unittest.TestCase):
             self.assertLess(ratio, 1.7, (previous_day, day, ratio))
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheFormulas(unittest.TestCase):
     """Every published multiple recomputes from the raw sources."""
 
@@ -291,6 +297,7 @@ class TheFormulas(unittest.TestCase):
                         self.assertNotIn(component, bridge["components"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheEligibility(unittest.TestCase):
     """Each distribution is qualified on its own evidence."""
 
@@ -348,6 +355,7 @@ class TheEligibility(unittest.TestCase):
         self.assertGreater(distribution["min_observations_required"], 0)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCrossCompanyBoundary(unittest.TestCase):
     """One issuer's data never becomes another issuer's reference."""
 
@@ -405,6 +413,7 @@ class TheCrossCompanyBoundary(unittest.TestCase):
         self.assertEqual(median, 7.257709)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDepreciationRole(unittest.TestCase):
     """Pure depreciation is not depreciation and amortization.
 
@@ -513,6 +522,7 @@ class TheDepreciationRole(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheProductWiring(unittest.TestCase):
     """The reference reaches the report, the context and the archive."""
 
@@ -621,6 +631,7 @@ class TheProductWiring(unittest.TestCase):
         self.assertEqual(summary["input_set_id"], payload["input_set_id"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheArchiveAndReplay(unittest.TestCase):
     """The archive keeps Microsoft's counts, and the replay reproduces them."""
 

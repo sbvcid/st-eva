@@ -56,6 +56,8 @@ from st_eva_runner import (
 from web.service_adapter import AnalysisServiceAdapter
 
 AUDIT_DATASET = ISSUER_CONFIGS["AAPL"].data_dir
+PRICES_EXIST = (Path("data/historical_pe/AAPL/daily_prices.json")).exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 
 def _loading_patch(ticker: str):
@@ -68,6 +70,7 @@ def _loading_patch(ticker: str):
     )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestProductionDistributionSummary(unittest.TestCase):
     """The compact statement the API reports describes the same dataset."""
 
@@ -118,6 +121,7 @@ class TestProductionDistributionSummary(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestProductionDistributionEligibility(unittest.TestCase):
     """The existing eligibility gate is not relaxed by the web path."""
 
@@ -162,6 +166,7 @@ class TestProductionDistributionEligibility(unittest.TestCase):
         self.assertEqual(unavailable, [])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestProductionDistributionInReport(unittest.TestCase):
     """The engine report carries the compact summary beside the full dataset."""
 
@@ -362,6 +367,7 @@ class _StubProvider:
         return _live_market_data(ticker)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestWebPathUsesProductionDistribution(unittest.TestCase):
     """The web request reaches the production path and reports its state."""
 

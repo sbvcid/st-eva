@@ -34,6 +34,11 @@ sys.path.insert(0, ".")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+SOFI_PRICES_EXIST = (REPO_ROOT / "data" / "historical_pe" / "SOFI" / "daily_prices.json").exists()
+SOFI_PRICES_SKIP = "SOFI daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+OTHER_PRICES_EXIST = (REPO_ROOT / "data" / "historical_pe" / "AAPL" / "daily_prices.json").exists()
+OTHER_PRICES_SKIP = "Other daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+
 
 class TestSofiIsRegisteredAsAnIssuer(unittest.TestCase):
     """SOFI is a configured issuer, not a loose directory of data."""
@@ -54,7 +59,6 @@ class TestSofiIsRegisteredAsAnIssuer(unittest.TestCase):
         resolved = (REPO_ROOT / config.data_dir).resolve()
         self.assertTrue(resolved.is_dir(), f"missing dataset directory: {resolved}")
         for name in (
-            "daily_prices.json",
             "eps_diluted_concept.json",
             "filing_acceptance_evidence.json",
             "q4_evidence_records.json",
@@ -62,8 +66,11 @@ class TestSofiIsRegisteredAsAnIssuer(unittest.TestCase):
             self.assertTrue(
                 (resolved / name).is_file(), f"missing canonical input: {name}"
             )
+        if SOFI_PRICES_EXIST:
+            self.assertTrue((resolved / "daily_prices.json").is_file())
 
 
+@unittest.skipUnless(SOFI_PRICES_EXIST, SOFI_PRICES_SKIP)
 class TestSofiDistributionIsQualified(unittest.TestCase):
     """The official configuration yields the qualified distribution."""
 
@@ -127,6 +134,7 @@ class TestSofiDistributionIsQualified(unittest.TestCase):
         self.assertEqual(recorded["content_hash"], self.result.content_hash)
 
 
+@unittest.skipUnless(SOFI_PRICES_EXIST, SOFI_PRICES_SKIP)
 class TestSofiEntersTheReverseValuationThroughTheProductPath(unittest.TestCase):
     """The web API is the product's own call path."""
 
@@ -241,6 +249,7 @@ class TestSofiEntersTheReverseValuationThroughTheProductPath(unittest.TestCase):
         self.assertAlmostEqual(row["required_eps_cagr"], expected_cagr, places=6)
 
 
+@unittest.skipUnless(SOFI_PRICES_EXIST, SOFI_PRICES_SKIP)
 class TestTheResultStatesItsAssumptions(unittest.TestCase):
     """Inputs, formula, period and conditionality stay explicit."""
 
@@ -343,6 +352,7 @@ class TestTheResultStatesItsAssumptions(unittest.TestCase):
                     )
 
 
+@unittest.skipUnless(SOFI_PRICES_EXIST, SOFI_PRICES_SKIP)
 class TestIneligibleWindowsStayRefused(unittest.TestCase):
     """The reference gate and the refusals are unchanged."""
 
@@ -394,6 +404,7 @@ class TestIneligibleWindowsStayRefused(unittest.TestCase):
 class TestOtherIssuersAreUnchanged(unittest.TestCase):
     """AAPL, MSFT and MU keep their results, and the MUFG limit is intact."""
 
+    @unittest.skipUnless(OTHER_PRICES_EXIST, OTHER_PRICES_SKIP)
     def test_the_other_issuers_still_qualify(self):
         from historical_pe import ISSUER_CONFIGS, load_issuer_historical_pe
 
@@ -411,6 +422,7 @@ class TestOtherIssuersAreUnchanged(unittest.TestCase):
                 self.assertEqual(result.distribution.sample_count, count)
                 self.assertEqual(result.distribution.percentiles["median"], median)
 
+    @unittest.skipUnless(OTHER_PRICES_EXIST, OTHER_PRICES_SKIP)
     def test_the_sofi_registration_did_not_change_the_other_issuers(self):
         from historical_pe import ISSUER_CONFIGS, load_issuer_historical_pe
 

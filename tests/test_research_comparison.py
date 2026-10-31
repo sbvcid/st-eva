@@ -33,6 +33,8 @@ from research_issuers import build_lane_results
 from web.app import create_app
 
 ROOT = Path(__file__).resolve().parent.parent
+PRICES_EXIST = (ROOT / "data" / "research_multiples" / "KO" / "daily_prices.json").exists()
+PRICES_SKIP = "KO research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 A = "RESEARCH_KO_REPORTED_REVENUE_MULTIPLE"
 B = "RESEARCH_KO_REPORTED_OPERATING_PROFIT_PLUS_REPORTED_D_AND_A_MULTIPLE"
@@ -54,6 +56,7 @@ def _observations(metric_id: str):
 class TheMetricDefinitions(unittest.TestCase):
     """Every metric declares what it may be compared with."""
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_the_definitions_carry_the_comparability_attributes(self):
         definitions = {d.metric_id: d for d in metric_definitions()}
         self.assertEqual(len(definitions), 10)
@@ -105,6 +108,7 @@ class TheMetricDefinitions(unittest.TestCase):
         self.assertIn("numerator_kind", attributes)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheHistoricalComparison(unittest.TestCase):
     """One metric at two dates."""
 
@@ -226,6 +230,7 @@ class TheHistoricalComparison(unittest.TestCase):
         self.assertFalse(payload["production_eligible"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ThePairedBridgeComparison(unittest.TestCase):
     """The two enterprise-value lanes on the dates where both published."""
 
@@ -398,6 +403,7 @@ class ThePairedBridgeComparison(unittest.TestCase):
         self.assertFalse(self.payload["production_eligible"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ThePairedReasonCounts(unittest.TestCase):
     """Each side's unpaired reason distribution, recomputed from the records.
 
@@ -553,6 +559,7 @@ class ThePairedReasonCounts(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSensitivity(unittest.TestCase):
     """One named assumption applied to one published figure."""
 
@@ -771,6 +778,7 @@ class TheComparisonApi(unittest.TestCase):
         self.assertEqual(set(manager.jobs), before)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheComparisonChangesNothing(unittest.TestCase):
     """A comparison changes nothing that production holds."""
 

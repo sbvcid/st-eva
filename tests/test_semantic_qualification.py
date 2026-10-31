@@ -47,6 +47,8 @@ from semantic_qualification import (
 from st_eva_runner import production_ps_for_reference
 
 TICKERS = ("AAPL", "MSFT", "AEP")
+PRICES_EXIST = (Path("data/historical_pe/AAPL/daily_prices.json")).exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 
 def _income_payload(ticker: str) -> dict:
@@ -182,6 +184,7 @@ class TheGate(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheProductionIssuers(unittest.TestCase):
     """The three production issuers' standing under the gate."""
 
@@ -308,6 +311,7 @@ class TheProductionIssuers(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheNegativeCase(unittest.TestCase):
     """An element the registry does not accept produces no reference."""
 
@@ -401,6 +405,7 @@ class TheNegativeCase(unittest.TestCase):
         self.assertTrue(enterprise["usable_for_reference"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheArchiveKeepsTheBasis(unittest.TestCase):
     """The archive holds the standing, and the replay checks it."""
 

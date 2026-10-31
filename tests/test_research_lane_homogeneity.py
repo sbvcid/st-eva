@@ -48,6 +48,8 @@ _AAPL = settings_for_ticker("AAPL")
 _KO = settings_for_ticker("KO")
 CAPTURE_DIR = _AAPL.capture_dir
 KO_CAPTURE_DIR = _KO.capture_dir
+PRICES_EXIST = (CAPTURE_DIR / "daily_prices.json").exists()
+PRICES_SKIP = "AAPL research capture daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 REVENUE_LANE = "aapl_reported_revenue_multiple"
 OPERATING_LANE = "aapl_reported_operating_profit_plus_reported_d_and_a_multiple"
@@ -81,6 +83,7 @@ def _median(values):
     return (ordered[middle - 1] + ordered[middle]) / 2
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheHomogeneousGroups(unittest.TestCase):
     """AAPL's revenue lane's three semantic sub-samples."""
 
@@ -251,6 +254,7 @@ class TheHomogeneousGroups(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheIdentityContract(unittest.TestCase):
     """A change to a published observation moves the identity that says so."""
 
@@ -334,6 +338,7 @@ class TheIdentityContract(unittest.TestCase):
         self.assertEqual(result.distribution.methodology, "research-multiples/1.0")
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCaptureManifest(unittest.TestCase):
     """The manifest describes the capture, and the capture is not touched."""
 

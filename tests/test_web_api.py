@@ -6,7 +6,14 @@ TSM refusals representation, and isolation from core mechanics.
 
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+PRICES_EXIST = (
+    Path("data/historical_pe/MSFT/daily_prices.json").exists()
+    and Path("data/historical_pe/AAPL/daily_prices.json").exists()
+)
+PRICES_SKIP = "Production historical price files excluded from clean checkout per C-1"
 
 from fastapi.testclient import TestClient
 from web.app import create_app
@@ -353,9 +360,13 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         tmpdir = tempfile.mkdtemp()
         try:
             adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
+            extra_kwargs = {}
+            if not PRICES_EXIST:
+                extra_kwargs["reference_multiple"] = 27.5
             dto = adapter.run_analysis_pipeline(
                 ticker="MSFT",
                 mode="regression",
+                **extra_kwargs,
             )
             self.assertIsNotNone(dto.reverse_requirements)
             rr = dto.reverse_requirements
@@ -461,11 +472,15 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
             adapter = AnalysisServiceAdapter(archives_dir=tmpdir)
             # MSFT fixture starting anchor is forward EPS covering 12 months.
             # A 1.0-year horizon leaves 0.0 growth years, which is uncomputable for CAGR.
+            extra_kwargs = {}
+            if not PRICES_EXIST:
+                extra_kwargs["reference_multiple"] = 27.5
             dto = adapter.run_analysis_pipeline(
                 ticker="MSFT",
                 mode="regression",
                 reverse_horizons=[1.0],
                 required_returns=[0.10],
+                **extra_kwargs,
             )
             self.assertIsNotNone(dto.reverse_requirements)
             rr = dto.reverse_requirements
@@ -633,6 +648,7 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_production_pfcf_reference_flows_through_the_web_path(self):
         """The cash-flow reference reaches the API with its own basis and state."""
         import tempfile
@@ -677,6 +693,7 @@ class TestAdapterIntegrationSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_references_are_isolated_per_ticker(self):
         """Each ticker's web result carries only its own references and consensus."""
         import tempfile

@@ -156,8 +156,14 @@ const MainApp: React.FC = () => {
           }) as IssuerCoverageDTO,
       )
     }
-    return Object.values(coverage.issuers)
+    const eligible = Object.values(coverage.issuers)
       .filter((issuer) => eligibleFamilies(issuer).length > 0)
+    if (eligible.length === 0) {
+      return Object.values(coverage.issuers)
+        .sort((a, b) => a.ticker.localeCompare(b.ticker))
+        .slice(0, QUICK_EXAMPLE_LIMIT)
+    }
+    return eligible
       .sort(
         (a, b) =>
           eligibleFamilies(b).length - eligibleFamilies(a).length ||

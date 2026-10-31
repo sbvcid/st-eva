@@ -138,7 +138,7 @@ class TestAuthorityTaxonomyIntegration:
         # Verified externally by git status; this test asserts 0022 schema unchanged
         import sqlite3, hashlib
         with open("archive/migrations/0022_authority_taxonomy_namespaces.sql", "rb") as f:
-            h = hashlib.sha256(f.read()).hexdigest()[:16]
+            h = hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()[:16]
         assert h == "3347303174edb0a4"
 
     # H. workflow completes with captured official catalog fixture (201 eligible assertions persisted, 194 unique identities in DB, 2 non-assertions excluded from writer)

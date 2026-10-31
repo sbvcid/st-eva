@@ -36,6 +36,8 @@ from st_eva_runner import (
 
 TICKER = "AEP"
 ROOT = Path(__file__).resolve().parent.parent
+PRICES_EXIST = (ROOT / "data" / "historical_pe" / TICKER / "daily_prices.json").exists()
+PRICES_SKIP = "AEP daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 
 def _payload():
@@ -74,6 +76,7 @@ def _raw_shares():
     ]
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSources(unittest.TestCase):
     """What the dataset was built from, and what each file is."""
 
@@ -179,6 +182,7 @@ class TheSources(unittest.TestCase):
             self.assertTrue(lineage["income_input_set_id"], observation)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ThePointInTimeRule(unittest.TestCase):
     """No fact is used before its filing's usable date."""
 
@@ -211,6 +215,7 @@ class ThePointInTimeRule(unittest.TestCase):
         self.assertEqual(chart.get("events", {}).get("splits", {}), {})
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheFormulas(unittest.TestCase):
     """Every published multiple recomputes from the raw sources."""
 
@@ -325,6 +330,7 @@ class TheFormulas(unittest.TestCase):
                         self.assertNotIn(component, bridge["components"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheWindowRule(unittest.TestCase):
     """A window's quarters are four consecutive periods of the issuer's own."""
 
@@ -389,6 +395,7 @@ class TheWindowRule(unittest.TestCase):
         self.assertIn("REASON_INSUFFICIENT_QUARTERS", codes)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheEligibility(unittest.TestCase):
     """Each distribution is qualified on its own evidence."""
 
@@ -435,6 +442,7 @@ class TheEligibility(unittest.TestCase):
         self.assertEqual(ev_status, "USABLE_FOR_REFERENCE")
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCrossCompanyBoundary(unittest.TestCase):
     """One issuer's data never becomes another issuer's reference."""
 
@@ -514,6 +522,7 @@ class TheCrossCompanyBoundary(unittest.TestCase):
         self.assertEqual(production_ev_ebitda_for_reference(electric)[0], 13.221693)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheProductWiring(unittest.TestCase):
     """The qualified reference reaches the report, the context and the archive."""
 
@@ -596,6 +605,7 @@ class TheProductWiring(unittest.TestCase):
         self.assertEqual(summary["input_set_id"], payload["input_set_id"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheArchiveAndReplay(unittest.TestCase):
     """The archive keeps the counts, and the replay reproduces the document."""
 

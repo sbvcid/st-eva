@@ -34,6 +34,9 @@ from pathlib import Path
 
 sys.path.insert(0, ".")
 
+PRICES_EXIST = Path("data/historical_pe/AAPL/daily_prices.json").exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+
 from historical_pe import MIN_OBSERVATIONS_FOR_REFERENCE
 from fiscal_calendar import build_fiscal_calendar_from_identities
 from historical_pfcf import (
@@ -890,6 +893,7 @@ class TestContextRecordsTheProductionBasis(unittest.TestCase):
         }
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestPromotedAaplDatasetRealResult(unittest.TestCase):
     """
     The reference's actual usability is judged here, on the real data.

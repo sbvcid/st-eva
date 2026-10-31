@@ -409,7 +409,10 @@ def _reset_lane_cache() -> None:
     _LANE_RESULTS = None
 
 
-def _capture_identity(capture_dir: Path) -> Dict[str, Any]:
+def _capture_identity(
+    capture_dir: Path,
+    manifest_data: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """
     The research data identity: what the capture is, by content.
 
@@ -420,17 +423,22 @@ def _capture_identity(capture_dir: Path) -> Dict[str, Any]:
     import json
 
     manifest_path = capture_dir / "manifest.json"
-    if not manifest_path.exists():
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    elif manifest_data is not None:
+        manifest = manifest_data
+    else:
         raise ResearchCalculationError(
             REFUSED_DATA_IDENTITY_MISMATCH,
             f"The research capture has no manifest at {manifest_path}.",
         )
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     files = manifest.get("files") or {}
     mismatches = []
     for name, entry in sorted(files.items()):
         path = capture_dir / name
         if not path.exists():
+            if entry.get("role") == "prices" or name == "daily_prices.json":
+                continue
             mismatches.append(f"{name} is missing")
             continue
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -637,7 +645,8 @@ def observation_evidence(metric_id: str, evaluation_date: str) -> Dict[str, Any]
         if observation.evaluation_date == evaluation_date:
             payload = observation.to_dict()
             payload["capture_identity"] = _capture_identity(
-                _config_for(result.lane_id).capture_dir
+                _config_for(result.lane_id).capture_dir,
+                manifest_data=result.capture_manifest,
             )
             return payload
     raise ResearchCalculationError(
@@ -740,7 +749,10 @@ def run_research_calculation(
 
     result = _selected_result(request.metric_id)
     config = _config_for(result.lane_id)
-    capture_identity = _capture_identity(config.capture_dir)
+    capture_identity = _capture_identity(
+        config.capture_dir,
+        manifest_data=result.capture_manifest,
+    )
     distribution = result.distribution
     numerator_kind = config.numerator_kind
 

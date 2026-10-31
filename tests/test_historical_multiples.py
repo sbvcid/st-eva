@@ -41,12 +41,15 @@ from st_eva_runner import (
 )
 
 TICKER = "AAPL"
+PRICES_EXIST = Path("data/historical_pe/AAPL/daily_prices.json").exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 
 def _payload():
     return load_issuer_historical_multiples(ISSUER_CONFIGS[TICKER]).to_dict()
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDataset(unittest.TestCase):
     """What the dataset holds, before anything is qualified from it."""
 
@@ -124,6 +127,7 @@ class TheDataset(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheQualification(unittest.TestCase):
     """What has to be true before a multiple may be used."""
 
@@ -190,6 +194,7 @@ class TheQualification(unittest.TestCase):
                 )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class ThePointInTimeRule(unittest.TestCase):
     """No fact is used before its filing's usable date."""
 
@@ -227,6 +232,7 @@ class ThePointInTimeRule(unittest.TestCase):
             self.assertTrue(lineage["income_input_set_id"], observation)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheEvBridge(unittest.TestCase):
     """A complete filed bridge is required, and a partial one is refused."""
 
@@ -292,6 +298,7 @@ class TheEvBridge(unittest.TestCase):
                 self.assertIsNone(observation["ev_ebitda_ratio"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheIdentity(unittest.TestCase):
     """One dataset identity, read the same by every consumer."""
 
@@ -337,6 +344,7 @@ class TheIdentity(unittest.TestCase):
         self.assertNotEqual(payload["input_set_id"], self.payload["input_set_id"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheReverseRequirementsBlock(unittest.TestCase):
     """The qualified references reach the report's valuation methods."""
 
@@ -443,6 +451,7 @@ class TheReverseRequirementsBlock(unittest.TestCase):
         self.assertEqual(refusal["reason_kind"], "INELIGIBLE_STATUS")
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheSummaryReference(unittest.TestCase):
     """How a qualified distribution reaches the engine's references."""
 
@@ -561,6 +570,7 @@ class TheSummaryReference(unittest.TestCase):
         self.assertIsNone(ps_median)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheReplayIdentity(unittest.TestCase):
     """Live and replay read the same dataset identity."""
 
@@ -604,6 +614,7 @@ class TheReplayIdentity(unittest.TestCase):
             self.assertEqual(entry["source_statistic"], "median", basis)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheCompactSummary(unittest.TestCase):
     """The API-facing summary states the same facts the payload does."""
 
@@ -635,6 +646,7 @@ class TheCompactSummary(unittest.TestCase):
         self.assertIsNone(production_multiples_summary(None))
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheBridgeDateRule(unittest.TestCase):
     """Every filed balance-sheet component must describe one balance sheet."""
 
@@ -716,6 +728,7 @@ class TheBridgeDateRule(unittest.TestCase):
             self.assertIn("same balance-sheet date", alignment["policy"])
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheRefusalReasons(unittest.TestCase):
     """A refusal says which cause it is, and says it from the evidence."""
 
@@ -795,6 +808,7 @@ class TheRefusalReasons(unittest.TestCase):
                     self.assertNotIn("free cash flow", detail.lower())
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheArchiveCountChain(unittest.TestCase):
     """The reference's own observation count survives the archive round trip."""
 
@@ -932,6 +946,7 @@ class TheArchiveCountChain(unittest.TestCase):
         self.assertEqual(result.outcome, "MATCH")
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TheDatasetAvailability(unittest.TestCase):
     """An absent dataset, a thin dataset and a qualified dataset are three
     different conditions, and each is reported as the condition it is."""

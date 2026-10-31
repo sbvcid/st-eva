@@ -11,6 +11,20 @@ from historical_pe import (
 )
 
 
+
+expected_accessions = {
+    "0001193125-21-225746",
+    "0001193125-22-202034",
+    "0000950170-23-034400",
+    "0000950170-24-087835",
+    "0000950170-25-100226",
+    "0001193125-26-323632",
+}
+
+PRICES_EXIST = Path("data/historical_pe/MSFT/daily_prices.json").exists()
+PRICES_SKIP = "MSFT daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+
+
 class TestMsftHistoricalPeIntegration(unittest.TestCase):
     """Verify MSFT can be loaded through the generic pipeline with furnished Q4 evidence."""
 
@@ -22,6 +36,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         self.assertEqual(config.issuer_id, "CIK0000789019")
         self.assertEqual(config.fye_month, 6)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_loads_through_generic_pipeline(self):
         """MSFT can be loaded using the generic load_issuer_historical_pe."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -31,6 +46,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         self.assertIn(result.distribution.status, ("UNAVAILABLE", STATUS_INSUFFICIENT_OBSERVATIONS))
         self.assertFalse(result.distribution.usable_for_reference)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_observations_are_valid(self):
         """MSFT observations structure is valid even if unavailable without furnished."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -66,6 +82,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
             self.assertIn("usable_date", rec, f"Record {i}: missing usable_date")
             self.assertIn("document_identifier", rec, f"Record {i}: missing document_identifier")
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_q4_evidence_actually_loaded_in_observations(self):
         """Six Q4 furnished records are actually loaded into quarterly evidence."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -106,6 +123,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
             self.assertEqual(actual_eps, expected_eps_val,
                            f"Q4 EPS mismatch for {accession}: {actual_eps} != {expected_eps_val}")
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_ttm_components_include_q4_furnished_evidence_ids(self):
         """TTM components contain Q4 furnished evidence IDs matching accessions."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -130,6 +148,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         
         self.assertTrue(found_with_q4, "No observation with Q4 furnished component found")
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_with_furnished_q4_evidence_qualifies(self):
         """MSFT with furnished Q4 evidence reaches 24 qualifying observations."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -141,6 +160,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         self.assertEqual(result.distribution.sample_count, 24)
         self.assertGreaterEqual(result.distribution.sample_count, 20)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_reconciles_with_poc_eval_dates(self):
         """Production observations match POC evaluation dates."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -150,6 +170,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         prod_eval_dates = sorted({obs.evaluation_date for obs in result.observations})
         self.assertEqual(len(prod_eval_dates), 27, "Expected 27 evaluation dates")
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_reconciles_with_poc_pe_values(self):
         """Production TTM P/E distribution statistics match POC."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -163,6 +184,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         self.assertAlmostEqual(dist.min, 24.272619, places=4)
         self.assertAlmostEqual(dist.max, 39.112903, places=4)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_furnished_evidence_includes_q4_records(self):
         """MSFT observations include furnished Q4 evidence from 8-K exhibits."""
         config = ISSUER_CONFIGS["MSFT"]
@@ -182,6 +204,7 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         # Should have Q4 furnished evidence
         self.assertGreater(q4_evidence_count, 0)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_msft_runner_integration(self):
         """MSFT returns USABLE_FOR_REFERENCE status through the runner."""
         from st_eva_runner import run_st_eva
@@ -202,15 +225,6 @@ class TestMsftHistoricalPeIntegration(unittest.TestCase):
         self.assertEqual(dist.get("sample_count"), 24)
 
 
-# Expected accessions for use in tests
-expected_accessions = {
-    "0001193125-21-225746",
-    "0001193125-22-202034", 
-    "0000950170-23-034400",
-    "0000950170-24-087835",
-    "0000950170-25-100226",
-    "0001193125-26-323632"
-}
 
 
 if __name__ == "__main__":

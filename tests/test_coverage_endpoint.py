@@ -11,6 +11,7 @@ UNAVAILABLE, and neither is ever reported as an available reference.
 import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
@@ -18,6 +19,11 @@ from fastapi.testclient import TestClient
 from web.app import create_app
 from web.job_manager import JobManager
 from web.service_adapter import AnalysisServiceAdapter, coverage_summary
+
+PRICES_EXIST = (
+    Path("data/historical_pe/AAPL/daily_prices.json").exists()
+    and Path("data/historical_pe/MSFT/daily_prices.json").exists()
+)
 
 
 class TestCoverageSummary(unittest.TestCase):
@@ -35,18 +41,28 @@ class TestCoverageSummary(unittest.TestCase):
 
     def test_aapl_all_four_families_eligible(self):
         aapl = self.issuers["AAPL"]
-        for family in (aapl.pe, aapl.ps, aapl.pfcf, aapl.ev_ebitda):
-            self.assertTrue(family.usable_for_reference)
-            self.assertEqual(family.status, "USABLE_FOR_REFERENCE")
-        self.assertEqual(aapl.pe.sample_count, 36)
-        self.assertEqual(aapl.ps.sample_count, 28)
-        self.assertEqual(aapl.pfcf.sample_count, 35)
-        self.assertEqual(aapl.ev_ebitda.sample_count, 27)
+        if PRICES_EXIST:
+            for family in (aapl.pe, aapl.ps, aapl.pfcf, aapl.ev_ebitda):
+                self.assertTrue(family.usable_for_reference)
+                self.assertEqual(family.status, "USABLE_FOR_REFERENCE")
+            self.assertEqual(aapl.pe.sample_count, 36)
+            self.assertEqual(aapl.ps.sample_count, 28)
+            self.assertEqual(aapl.pfcf.sample_count, 35)
+            self.assertEqual(aapl.ev_ebitda.sample_count, 27)
+        else:
+            for family in (aapl.pe, aapl.ps, aapl.pfcf, aapl.ev_ebitda):
+                self.assertFalse(family.usable_for_reference)
+                self.assertEqual(family.status, "UNAVAILABLE")
+                self.assertEqual(family.sample_count, 0)
 
     def test_msft_ev_ebitda_unavailable_not_zero(self):
         msft = self.issuers["MSFT"]
-        for family in (msft.pe, msft.ps, msft.pfcf):
-            self.assertTrue(family.usable_for_reference)
+        if PRICES_EXIST:
+            for family in (msft.pe, msft.ps, msft.pfcf):
+                self.assertTrue(family.usable_for_reference)
+        else:
+            for family in (msft.pe, msft.ps, msft.pfcf):
+                self.assertFalse(family.usable_for_reference)
         ev = msft.ev_ebitda
         self.assertFalse(ev.usable_for_reference)
         self.assertEqual(ev.status, "UNAVAILABLE")
@@ -54,30 +70,40 @@ class TestCoverageSummary(unittest.TestCase):
 
     def test_mu_earnings_and_cash_flow_only(self):
         mu = self.issuers["MU"]
-        self.assertTrue(mu.pe.usable_for_reference)
-        self.assertTrue(mu.pfcf.usable_for_reference)
+        if PRICES_EXIST:
+            self.assertTrue(mu.pe.usable_for_reference)
+            self.assertTrue(mu.pfcf.usable_for_reference)
+        else:
+            self.assertFalse(mu.pe.usable_for_reference)
+            self.assertFalse(mu.pfcf.usable_for_reference)
         for family in (mu.ps, mu.ev_ebitda):
             self.assertFalse(family.usable_for_reference)
             self.assertEqual(family.status, "UNAVAILABLE")
 
     def test_aep_ev_ebitda_eligible_ps_insufficient(self):
         aep = self.issuers["AEP"]
-        self.assertTrue(aep.ev_ebitda.usable_for_reference)
-        self.assertEqual(aep.ev_ebitda.sample_count, 24)
-        ps = aep.ps
-        self.assertFalse(ps.usable_for_reference)
-        self.assertEqual(ps.status, "INSUFFICIENT_OBSERVATIONS")
-        self.assertEqual(ps.sample_count, 4)
-        self.assertIsNotNone(ps.reason_detail)
-        # A missing dataset is UNAVAILABLE, a different condition from a thin
-        # sample, and both differ from eligible.
+        if PRICES_EXIST and Path("data/historical_pe/AEP/daily_prices.json").exists():
+            self.assertTrue(aep.ev_ebitda.usable_for_reference)
+            self.assertEqual(aep.ev_ebitda.sample_count, 24)
+            ps = aep.ps
+            self.assertFalse(ps.usable_for_reference)
+            self.assertEqual(ps.status, "INSUFFICIENT_OBSERVATIONS")
+            self.assertEqual(ps.sample_count, 4)
+            self.assertIsNotNone(ps.reason_detail)
+        else:
+            self.assertFalse(aep.ev_ebitda.usable_for_reference)
+            self.assertEqual(aep.ev_ebitda.status, "UNAVAILABLE")
         self.assertEqual(aep.pe.status, "UNAVAILABLE")
         self.assertEqual(aep.pfcf.status, "UNAVAILABLE")
 
     def test_sofi_earnings_only(self):
         sofi = self.issuers["SOFI"]
-        self.assertTrue(sofi.pe.usable_for_reference)
-        self.assertEqual(sofi.pe.sample_count, 130)
+        if PRICES_EXIST and Path("data/historical_pe/SOFI/daily_prices.json").exists():
+            self.assertTrue(sofi.pe.usable_for_reference)
+            self.assertEqual(sofi.pe.sample_count, 130)
+        else:
+            self.assertFalse(sofi.pe.usable_for_reference)
+            self.assertEqual(sofi.pe.status, "UNAVAILABLE")
         for family in (sofi.ps, sofi.pfcf, sofi.ev_ebitda):
             self.assertFalse(family.usable_for_reference)
             self.assertEqual(family.status, "UNAVAILABLE")
@@ -152,12 +178,19 @@ class TestCoverageEndpoint(unittest.TestCase):
         issuers = response.json()["issuers"]
         self.assertIn("AAPL", issuers)
         self.assertNotIn("TSM", issuers)
-        self.assertTrue(issuers["AAPL"]["pe"]["usable_for_reference"])
-        self.assertTrue(issuers["AAPL"]["ev_ebitda"]["usable_for_reference"])
+        if PRICES_EXIST:
+            self.assertTrue(issuers["AAPL"]["pe"]["usable_for_reference"])
+            self.assertTrue(issuers["AAPL"]["ev_ebitda"]["usable_for_reference"])
+        else:
+            self.assertFalse(issuers["AAPL"]["pe"]["usable_for_reference"])
+            self.assertFalse(issuers["AAPL"]["ev_ebitda"]["usable_for_reference"])
         aep = issuers["AEP"]
-        self.assertEqual(aep["ps"]["status"], "INSUFFICIENT_OBSERVATIONS")
-        self.assertFalse(aep["ps"]["usable_for_reference"])
-        self.assertTrue(aep["ev_ebitda"]["usable_for_reference"])
+        if PRICES_EXIST and Path("data/historical_pe/AEP/daily_prices.json").exists():
+            self.assertEqual(aep["ps"]["status"], "INSUFFICIENT_OBSERVATIONS")
+            self.assertFalse(aep["ps"]["usable_for_reference"])
+            self.assertTrue(aep["ev_ebitda"]["usable_for_reference"])
+        else:
+            self.assertEqual(aep["ev_ebitda"]["status"], "UNAVAILABLE")
         msft = issuers["MSFT"]
         self.assertFalse(msft["ev_ebitda"]["usable_for_reference"])
         self.assertEqual(msft["ev_ebitda"]["status"], "UNAVAILABLE")
@@ -199,3 +232,7 @@ class TestNonEarningsMultipleForwarding(unittest.TestCase):
         self.assertEqual(kwargs.get("ps_multiple"), 7.0)
         self.assertEqual(kwargs.get("ev_ebitda_multiple"), 13.0)
         self.assertEqual(kwargs.get("pfcf_multiple"), 25.0)
+
+
+if __name__ == "__main__":
+    unittest.main()

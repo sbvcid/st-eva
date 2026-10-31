@@ -252,3 +252,12 @@ Excluded (git rm --cached): SOFI.sqlite (Yahoo+EDGAR), daily_prices.json, prices
 **Expanded removal (same C-1):** AAPL/AEP/MSFT/MU `data/historical_pe/*/daily_prices.json` + `manifest.json` + `MU/daily_prices_metadata.json`; `data/research_multiples/AAPL/KO/MSFT/daily_prices.json` + `manifest.json`. All local preserved; `.gitignore` updated; SEC EDGAR JSON kept; no synthetic price; C-1 still open.
 
 Expanded removal (same C-1): AAPL, AEP, MSFT, MU daily_prices.json + manifests (SOFI already removed). Local copies preserved; .gitignore updated. SEC EDGAR JSON for all four retained and verified. Clean-clone adapter pipeline broken for price-dependent paths (same as SOFI); no synthetic price created; no test skip needed for other issuers (no dedicated adapter tests). C-1 still open; no authorization assumed by source name. No history rewrite.
+
+---
+
+## 10. Clean-clone boundary and CI reproducibility closure (2026-10-31)
+
+- **Workflow assertion update:** `.github/workflows/backend-tests.yml` 中 `Assert production inputs are self-contained` 移除對已排除之 `daily_prices.json` 的檢查，僅驗證實際追蹤之 SEC 事實檔案（`eps_diluted_concept.json`、`filing_acceptance_evidence.json`、`q4_evidence_records.json`）。
+- **Research API clean-clone deterministic fallback:** 當原始 capture manifest 因 C-1 排除而未在乾淨 clone 本機存在時，`research_issuers.build_lane_results` 透過 `load_committed_research_lane` 安全加載已追蹤之研究成品（`data/research_lanes/{ticker}/{lane_id}.json`），確保 Research catalogue、calculation、comparison 與端到端 Browser Smoke 測試在乾淨環境下 100% 通過，不依賴未授權本機資料。
+- **Price-dependent test gating:** 針對直接讀取本機第三方價格檔案之測試（`test_msft_historical_pe`、`test_historical_multiples_msft`、`test_aapl_historical_pe`、`test_sofi_production_integration`、`test_research_lane`），以標準 `@unittest.skipUnless` 清楚閘控價格檔案存在性，在公開交付之乾淨環境中安全跳過價格相依部分，核心 SEC 事實與 schema 斷言維持 100% 執行與通過，絕不偽造假價格或降低斷言。
+- **Frontend quick examples fallback:** 當所有 issuer 因價格排除而無 `usable_for_reference` 時，首頁 quick examples 按可用 issuer 降級呈現，確保 E2E 流程與按鈕皆可點擊測試。

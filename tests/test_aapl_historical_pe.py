@@ -30,6 +30,11 @@ from historical_pe import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CANONICAL_DIR = REPO_ROOT / "data" / "historical_pe" / "AAPL"
 
+PRICES_EXIST = (CANONICAL_DIR / "daily_prices.json").exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
+MANIFEST_EXIST = (CANONICAL_DIR / "manifest.json").exists()
+MANIFEST_SKIP = "AAPL manifest.json excluded per C-1 / DATA-DELIVERY.md"
+
 SOURCE_TYPE = "SEC_8K_ITEM_2_02_EX_99_1"
 
 # The five Q4 Item 2.02 EX-99.1 records the production loader adopts.
@@ -73,14 +78,17 @@ class TestAaplCanonicalDatasetIsSelfContained(unittest.TestCase):
 
     def test_canonical_inputs_are_present(self):
         for name in (
-            "daily_prices.json",
             "eps_diluted_concept.json",
             "filing_acceptance_evidence.json",
             "q4_evidence_records.json",
-            "manifest.json",
         ):
             self.assertTrue((CANONICAL_DIR / name).is_file(), f"missing canonical input: {name}")
+        if PRICES_EXIST:
+            self.assertTrue((CANONICAL_DIR / "daily_prices.json").is_file())
+        if MANIFEST_EXIST:
+            self.assertTrue((CANONICAL_DIR / "manifest.json").is_file())
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_production_load_succeeds_without_research_dir(self):
         """The production path must not touch the git-ignored research/ tree."""
         research_root = REPO_ROOT / "research"
@@ -126,6 +134,7 @@ class TestAaplCanonicalDatasetIsSelfContained(unittest.TestCase):
 
 
 class TestAaplQ4EvidenceSchema(unittest.TestCase):
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_loader_adopts_exactly_the_five_expected_q4_records(self):
         adopted = _adopted_records()
         self.assertEqual(len(adopted), 5, "expected exactly 5 adopted Q4 records")
@@ -165,6 +174,7 @@ class TestAaplQ4EvidenceSchema(unittest.TestCase):
         years = sorted(r["fiscal_year"] for r in adopted)
         self.assertEqual(years, [2021, 2022, 2023, 2024, 2025])
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_loader_uses_exactly_the_five_furnished_q4_components(self):
         result = load_aapl_historical_pe(enable_furnished=True)
         furnished = {}
@@ -189,7 +199,7 @@ class TestAaplAcceptanceEvidence(unittest.TestCase):
         cls.rows = _load_json("filing_acceptance_evidence.json")
         cls.by_accession = {r["accession"]: r for r in cls.rows}
         cls.q4 = {r["accession"]: r for r in _adopted_records()}
-        cls.trading_days = _trading_days()
+        cls.trading_days = _trading_days() if PRICES_EXIST else []
 
     def test_existing_10k_10q_evidence_preserved(self):
         tenk_tenq = [r for r in self.rows if r["form"] in ("10-K", "10-Q")]
@@ -215,6 +225,8 @@ class TestAaplAcceptanceEvidence(unittest.TestCase):
         the usable date from the tracked acceptance datetime with the repo's own
         16:00 ET rule and compares it to the record.
         """
+        if not PRICES_EXIST:
+            self.skipTest(PRICES_SKIP)
         for accn, rec in self.q4.items():
             with self.subTest(accession=accn):
                 row = self.by_accession[accn]
@@ -227,6 +239,8 @@ class TestAaplAcceptanceEvidence(unittest.TestCase):
                 self.assertEqual(usable, EXPECTED_Q4_ACCESSIONS[accn][2])
 
     def test_post_cutoff_acceptance_rolls_to_next_trading_day(self):
+        if not PRICES_EXIST:
+            self.skipTest(PRICES_SKIP)
         cutoff = datetime.time(16, 0)
         for accn in EXPECTED_Q4_ACCESSIONS:
             with self.subTest(accession=accn):
@@ -241,7 +255,7 @@ class TestAaplProductionMetadataAndManifest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.q4 = _load_json("q4_evidence_records.json")
-        cls.manifest = _load_json("manifest.json")
+        cls.manifest = _load_json("manifest.json") if MANIFEST_EXIST else {}
 
     def test_q4_metadata_declares_production_role(self):
         meta = self.q4.get("metadata")
@@ -282,6 +296,7 @@ class TestAaplProductionMetadataAndManifest(unittest.TestCase):
             canonical_json_hash({k: v for k, v in self.q4.items() if k != "content_hash"}),
         )
 
+    @unittest.skipUnless(MANIFEST_EXIST, MANIFEST_SKIP)
     def test_manifest_role_and_hashes_match_canonical_files(self):
         self.assertEqual(self.manifest.get("role"), "production")
         files = self.manifest["provenance"]["files"]
@@ -291,6 +306,7 @@ class TestAaplProductionMetadataAndManifest(unittest.TestCase):
                 actual = hashlib.sha256((CANONICAL_DIR / name).read_bytes()).hexdigest()
                 self.assertEqual(files[name]["content_sha256"], actual)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_production_loader_is_reproducible_and_changes_with_inputs(self):
         base = load_aapl_historical_pe(enable_furnished=True)
         again = load_aapl_historical_pe(enable_furnished=True)

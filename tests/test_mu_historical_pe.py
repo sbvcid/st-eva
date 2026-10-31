@@ -46,6 +46,8 @@ from historical_pe import (
 from zoneinfo import ZoneInfo
 
 DATA = Path("data/historical_pe/MU")
+PRICES_EXIST = (DATA / "daily_prices.json").exists()
+PRICES_SKIP = "MU daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 # The 43 evidence-relevant accessions whose acceptance times were verified
 # against the filings' own SGML headers (10-Q/10-K filings that carry the
@@ -200,6 +202,7 @@ class TestMuQ4EvidenceRecords(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestMuLoaderAdoptsFurnishedQ4(unittest.TestCase):
     """The production loader adopts the furnished Q4 records and keeps classes."""
 
@@ -257,6 +260,7 @@ class TestMuLoaderAdoptsFurnishedQ4(unittest.TestCase):
                 self.assertEqual(classes, {EVIDENCE_CLASS_FILED, EVIDENCE_CLASS_FURNISHED})
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestMuUsableDates(unittest.TestCase):
     """The 16:00 ET rule against real MU trading days."""
 
@@ -446,6 +450,7 @@ class TestWindowContinuityGuard(unittest.TestCase):
         # Sum 0.68; close 100 -> 147.058824
         self.assertAlmostEqual(obs.value, 100.0 / 0.68, places=6)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_real_mu_fy2023_era_windows_are_true_fiscal_quarters_excluded_as_losses(self):
         # The fiscal-year 2023 loss era assembles honestly under issuer-
         # declared identity: each window holds the four issuer-declared
@@ -486,6 +491,7 @@ class TestWindowContinuityGuard(unittest.TestCase):
             self.assertIsNone(o.value)
             self.assertEqual(o.reason_code, REASON_NON_POSITIVE_EPS)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_real_mu_valid_windows_are_consecutive_calendar_quarters(self):
         result = _load_mu()
         valid = [
@@ -512,6 +518,7 @@ class TestWindowContinuityGuard(unittest.TestCase):
                 self.assertLessEqual(gap, 100)
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestMuDistributionState(unittest.TestCase):
     """The reference gate and the observation set on the real MU dataset."""
 
@@ -693,6 +700,7 @@ class TestQuarterEpsEvidenceContract(unittest.TestCase):
         self.assertNotEqual(filed.to_dict(), furnished.to_dict())
 
 
+@unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
 class TestMuHistoricalPfcfFiscalIdentity(unittest.TestCase):
     """The P/FCF pipeline shares the fiscal identity model: MU's drifted
     quarter ends must land in their true fiscal positions there too, and the

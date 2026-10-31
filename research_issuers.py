@@ -27,8 +27,10 @@ from research_lane import (
     FORMULA_DENOMINATOR,
     FORMULA_OPERATING_INCOME,
     FORMULA_SHARES,
+    ResearchDistribution,
     ResearchLaneConfig,
     ResearchLaneResult,
+    ResearchObservation,
     ResearchRole,
     ResearchUnitPolicy,
     assert_research_isolation,
@@ -421,6 +423,65 @@ def all_lane_ids(path: Optional[Path] = None) -> Tuple[str, ...]:
     return tuple(ids)
 
 
+def load_committed_research_lane(
+    lane: ResearchLaneConfig,
+    base_dir: Optional[Path] = None,
+) -> Optional[ResearchLaneResult]:
+    """Load the pre-computed research lane artifact when raw capture is not present.
+
+    The raw Yahoo price series was excluded from git tracking under C-1 / DATA-DELIVERY.md.
+    The committed research outputs in data/research_lanes/{ticker}/{lane_id}.json allow
+    the research API and exploratory UI to operate deterministically in clean checkouts
+    without re-adding unverified third-party price data.
+    """
+    if base_dir is None:
+        base_dir = ROOT / "data" / "research_lanes"
+    lane_path = base_dir / lane.capture_dir.name / f"{lane.lane_id}.json"
+    if not lane_path.exists():
+        return None
+    data = json.loads(lane_path.read_text(encoding="utf-8"))
+    dist_data = dict(data["distribution"])
+    dist_data.pop("production_eligible", None)
+    dist = ResearchDistribution(**dist_data)
+    obs_list = []
+    for o in data.get("observations", []):
+        denom = o.get("denominator")
+        denom_dict = {"value": denom} if denom is not None else None
+        obs_list.append(
+            ResearchObservation(
+                observation_id=f"{data['lane_id']}:{o['evaluation_date']}",
+                lane_id=data["lane_id"],
+                issuer_id=data["issuer_id"],
+                instrument_id=data["instrument_id"],
+                evaluation_date=o["evaluation_date"],
+                status=o["status"],
+                metric_id=data["metric_id"],
+                reason_code=o.get("reason_code"),
+                value=o.get("value"),
+                price=o.get("price"),
+                shares_outstanding=o.get("shares_outstanding"),
+                market_cap=o.get("market_cap"),
+                enterprise_value=o.get("enterprise_value"),
+                denominator=denom_dict,
+            )
+        )
+    return ResearchLaneResult(
+        lane_id=data["lane_id"],
+        issuer_id=data["issuer_id"],
+        instrument_id=data["instrument_id"],
+        metric_id=data["metric_id"],
+        candidate_metric=data["candidate_metric"],
+        input_set_id=data["input_set_id"],
+        content_hash=data["content_hash"],
+        distribution=dist,
+        observations=obs_list,
+        capture_manifest=data.get("capture_manifest", {}),
+        methodology=data.get("methodology", "research-multiples/1.0"),
+        logic_version=data.get("logic_version", "research-multiples/1.0.0"),
+        formula_version=data.get("formula_version", "research-multiples/1.0"),
+    )
+
+
 def build_lane_results(
     issuer_ids: Optional[Sequence[str]] = None, path: Optional[Path] = None
 ) -> Dict[str, ResearchLaneResult]:
@@ -438,7 +499,12 @@ def build_lane_results(
         for lane in settings.lanes:
             if not lane.capture_dir.exists():
                 continue
-            results[lane.lane_id] = load_research_lane(lane)
+            if (lane.capture_dir / "manifest.json").exists():
+                results[lane.lane_id] = load_research_lane(lane)
+            else:
+                committed = load_committed_research_lane(lane)
+                if committed is not None:
+                    results[lane.lane_id] = committed
     return results
 
 

@@ -7,6 +7,10 @@ operands, with explicit refusals where an input is missing.
 
 import tempfile
 import unittest
+from pathlib import Path
+
+PRICES_EXIST = (Path("data/historical_pe/AAPL/daily_prices.json")).exists()
+PRICES_SKIP = "AAPL daily_prices.json excluded per C-1 / DATA-DELIVERY.md"
 
 from web.service_adapter import AnalysisServiceAdapter
 from web.schemas import AnalyzeRequest
@@ -31,6 +35,7 @@ class TestWebValuationMethods(unittest.TestCase):
         self.assertEqual(req.ev_ebitda_multiple, 13.0)
         self.assertEqual(req.pfcf_multiple, 25.0)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_aep_matrix_uncomputed_but_ev_ebitda_method_computed(self):
         dto = self._run("AEP")
         self.assertEqual(dto.status, "success")
@@ -64,6 +69,7 @@ class TestWebValuationMethods(unittest.TestCase):
         # The matrix being uncomputed must not hide a computed method.
         self.assertEqual(ev.status, "COMPUTED")
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_aep_ps_shows_insufficient_observations(self):
         dto = self._run("AEP")
         vm = dto.reverse_requirements.valuation_methods
@@ -80,6 +86,7 @@ class TestWebValuationMethods(unittest.TestCase):
         rm = ps.reference_multiple
         self.assertTrue(rm is None or rm.get("value") is None)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_aapl_ps_and_ev_ebitda_references_present(self):
         dto = self._run("AAPL")
         vm = dto.reverse_requirements.valuation_methods
@@ -110,6 +117,7 @@ class TestWebValuationMethods(unittest.TestCase):
         self.assertIsNotNone(ev_dist)
         self.assertEqual(ev_dist.sample_count, 0)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_historical_references_stay_non_user_assumption(self):
         dto = self._run("AAPL")
         # No user multiple supplied in regression: references stay historical.
@@ -152,6 +160,7 @@ class TestWebValuationMethods(unittest.TestCase):
         self.assertIsNone(req.pfcf_multiple)
         self.assertIsNone(req.reference_multiple)
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_input_provenance_observed_ebitda_sec_derived_ttm(self):
         # The web path loads the filed income statement, so the observed EBITDA
         # the enterprise-value multiple is computed from is the qualified filed
@@ -175,6 +184,7 @@ class TestWebValuationMethods(unittest.TestCase):
         self.assertEqual(ebitda.provider_figure["source"], "VENDOR_REPORTED")
         self.assertEqual(ebitda.provider_figure["basis"], "UNDECLARED")
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_implied_and_observed_share_one_run(self):
         # Implied EBITDA = enterprise value / selected EV/EBITDA; observed
         # EBITDA = the qualified filed TTM figure. Both come from the same run
@@ -197,6 +207,7 @@ class TestWebValuationMethods(unittest.TestCase):
             places=6,
         )
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_aapl_and_msft_historical_references_unchanged(self):
         for ticker, ps_value, ps_count, ev_value, ev_count in (
             ("AAPL", 7.257709, 28, 22.326, 27),
