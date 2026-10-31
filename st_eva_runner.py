@@ -2924,78 +2924,209 @@ def run_st_eva(
         resolved_target_cik = identity_result["canonical_cik"]
         identity_source = identity_result["identity_source"]
         identity_conflict = identity_result["conflict"]
+        verification_status = identity_result["verification_status"]
         if identity_conflict:
-            eps_xbrl_errors.append(
-                {
-                    "reason_code": "IDENTITY_CONFLICT",
-                    "detail": f"explicit CIK {eps_xbrl_expected_cik} conflicts with canonical CIK {resolved_target_cik}",
-                    "accession": None,
-                    "context_ref": None,
-                    "path": None,
-                }
-            )
-        from sec_xbrl_facts import parse_xbrl_document
-        from eps_anchor_evidence import eps_fact_records_from_xbrl_document
-        for item in doc_inputs:
-            if not isinstance(item, dict):
-                item = {"value": item}
-            path = item.get("path") or item.get("document") or item.get("file") or item.get("filename")
-            if not path:
-                eps_xbrl_errors.append(
+            conflict_rej = {
+                "reason_code": "IDENTITY_CONFLICT",
+                "detail": f"explicit CIK {eps_xbrl_expected_cik} conflicts with canonical CIK {resolved_target_cik}",
+                "accession": None,
+                "context_ref": None,
+                "path": None,
+            }
+            eps_xbrl_errors.append(conflict_rej)
+            for item in doc_inputs:
+                p = (item.get("path") or item.get("document") or item.get("file") or item.get("filename")) if isinstance(item, dict) else None
+                acc = item.get("accession") if isinstance(item, dict) else None
+                eps_xbrl_document_results.append(
                     {
+                        "path": p,
+                        "accession": acc,
+                        "record_count": 0,
+                        "records": 0,
+                        "canonical_cik": resolved_target_cik,
+                        "identity_source": identity_source,
+                        "verification_status": verification_status,
+                        "final_status": "IDENTITY_REJECTED",
+                        "rejections": [conflict_rej],
+                    }
+                )
+        else:
+            from sec_xbrl_facts import parse_xbrl_document
+            from eps_anchor_evidence import eps_fact_records_from_xbrl_document
+
+            identity_reject_codes = {
+                "IDENTITY_CONFLICT",
+                "MANIFEST_CIK_MISMATCH",
+                "MANIFEST_CIK_INVALID",
+                "MANIFEST_CIK_MISSING",
+                "MISSING_TARGET_CIK",
+                "INVALID_TARGET_CIK",
+                "ACCESSION_CIK_MISMATCH",
+                "ISSUER_IDENTITY_MISMATCH",
+                "ENTITY_SCHEME_INVALID",
+                "ENTITY_IDENTIFIER_INVALID",
+            }
+            metadata_reject_codes = {
+                "MANIFEST_PATH_MISSING",
+                "ACCESSION_MISSING",
+                "ACCESSION_INVALID",
+                "FORM_MISSING",
+                "FORM_UNSUPPORTED",
+                "FISCAL_YEAR_MISSING",
+                "FISCAL_PERIOD_MISSING",
+                "FISCAL_PERIOD_INCOMPATIBLE",
+                "POINT_IN_TIME_MISSING",
+                "POINT_IN_TIME_UNPARSEABLE",
+            }
+
+            for item in doc_inputs:
+                if not isinstance(item, dict):
+                    item = {"value": item}
+                path = item.get("path") or item.get("document") or item.get("file") or item.get("filename")
+                accession = item.get("accession")
+                if not path:
+                    rej = {
                         "reason_code": "MANIFEST_PATH_MISSING",
                         "detail": "manifest entry missing path",
-                        "accession": item.get("accession"),
+                        "accession": accession,
                         "context_ref": None,
                         "path": None,
                     }
-                )
-                continue
-            try:
-                with open(str(path), "rb") as handle:
-                    payload = handle.read()
-                document = parse_xbrl_document(payload)
-                _parser_rejections = list(getattr(document, "rejections", ()) or ())
-                for rejection in _parser_rejections:
-                    eps_xbrl_errors.append(
+                    eps_xbrl_errors.append(rej)
+                    eps_xbrl_document_results.append(
                         {
-                            "reason_code": getattr(rejection, "reason", "PARSER_REJECTION"),
-                            "detail": "parser rejected an XBRL fact",
-                            "context_ref": getattr(rejection, "context_ref", None),
-                            "accession": item.get("accession"),
-                            "path": path,
+                            "path": None,
+                            "accession": accession,
+                            "record_count": 0,
+                            "records": 0,
+                            "canonical_cik": resolved_target_cik,
+                            "identity_source": identity_source,
+                            "verification_status": verification_status,
+                            "final_status": "METADATA_REJECTED",
+                            "rejections": [rej],
                         }
                     )
-                accession = item.get("accession")
-                form = item.get("form")
-                expected_cik = resolved_target_cik
-                doc_cik = item.get("expected_cik") or item.get("issuer_cik") or item.get("target_cik") or item.get("cik")
-                if doc_cik is not None and resolved_target_cik is not None:
-                    doc_digits = "".join(ch for ch in str(doc_cik) if ch.isdigit())
-                    if doc_digits and doc_digits.zfill(10) != resolved_target_cik:
-                        eps_xbrl_errors.append(
-                            {
-                                "reason_code": "MANIFEST_CIK_MISMATCH",
-                                "detail": f"manifest CIK {doc_cik} != canonical target CIK {resolved_target_cik}",
-                                "accession": item.get("accession"),
-                                "context_ref": None,
-                                "path": path,
-                            }
-                        )
-                        continue
+                    continue
+
+                doc_cik = None
+                for _cik_key in ("expected_cik", "issuer_cik", "target_cik", "cik"):
+                    if _cik_key in item:
+                        doc_cik = item[_cik_key]
+                        break
+                manifest_cik_rej = None
+                if doc_cik is not None:
+                    doc_cik_str = str(doc_cik).strip()
+                    if not doc_cik_str:
+                        manifest_cik_rej = {
+                            "reason_code": "MANIFEST_CIK_INVALID",
+                            "detail": "manifest CIK is empty",
+                            "accession": accession,
+                            "context_ref": None,
+                            "path": path,
+                        }
+                    elif not (doc_cik_str.isdigit() and len(doc_cik_str) <= 10):
+                        manifest_cik_rej = {
+                            "reason_code": "MANIFEST_CIK_INVALID",
+                            "detail": f"manifest CIK {doc_cik!r} is not a valid CIK format",
+                            "accession": accession,
+                            "context_ref": None,
+                            "path": path,
+                        }
+                    elif resolved_target_cik is not None and doc_cik_str.zfill(10) != resolved_target_cik:
+                        manifest_cik_rej = {
+                            "reason_code": "MANIFEST_CIK_MISMATCH",
+                            "detail": f"manifest CIK {doc_cik} != canonical target CIK {resolved_target_cik}",
+                            "accession": accession,
+                            "context_ref": None,
+                            "path": path,
+                        }
+
+                if manifest_cik_rej is not None:
+                    eps_xbrl_errors.append(manifest_cik_rej)
+                    eps_xbrl_document_results.append(
+                        {
+                            "path": path,
+                            "accession": accession,
+                            "record_count": 0,
+                            "records": 0,
+                            "canonical_cik": resolved_target_cik,
+                            "identity_source": identity_source,
+                            "verification_status": verification_status,
+                            "final_status": "IDENTITY_REJECTED",
+                            "rejections": [manifest_cik_rej],
+                        }
+                    )
+                    continue
+
+                try:
+                    with open(str(path), "rb") as handle:
+                        payload = handle.read()
+                except OSError as exc:
+                    rej = {
+                        "reason_code": "DOCUMENT_UNREADABLE",
+                        "detail": str(exc),
+                        "accession": accession,
+                        "context_ref": None,
+                        "path": path,
+                    }
+                    eps_xbrl_errors.append(rej)
+                    eps_xbrl_document_results.append(
+                        {
+                            "path": path,
+                            "accession": accession,
+                            "record_count": 0,
+                            "records": 0,
+                            "canonical_cik": resolved_target_cik,
+                            "identity_source": identity_source,
+                            "verification_status": verification_status,
+                            "final_status": "UNREADABLE",
+                            "rejections": [rej],
+                        }
+                    )
+                    continue
+
+                try:
+                    document = parse_xbrl_document(payload)
+                except Exception as exc:
+                    rej = {
+                        "reason_code": "DOCUMENT_UNPARSEABLE",
+                        "detail": str(exc),
+                        "accession": accession,
+                        "context_ref": None,
+                        "path": path,
+                    }
+                    eps_xbrl_errors.append(rej)
+                    eps_xbrl_document_results.append(
+                        {
+                            "path": path,
+                            "accession": accession,
+                            "record_count": 0,
+                            "records": 0,
+                            "canonical_cik": resolved_target_cik,
+                            "identity_source": identity_source,
+                            "verification_status": verification_status,
+                            "final_status": "UNPARSEABLE",
+                            "rejections": [rej],
+                        }
+                    )
+                    continue
+
+                _parser_rejections = list(getattr(document, "rejections", ()) or ())
                 doc_rejections = []
                 for _pr in _parser_rejections:
-                    doc_rejections.append(
-                        {
-                            "reason_code": getattr(_pr, "reason", "PARSER_REJECTION"),
-                            "detail": "parser rejected an XBRL fact",
-                            "context_ref": getattr(_pr, "context_ref", None),
-                            "accession": item.get("accession"),
-                            "path": path,
-                            "taxonomy": getattr(_pr, "taxonomy", None),
-                            "tag": getattr(_pr, "tag", None),
-                        }
-                    )
+                    rej_item = {
+                        "reason_code": getattr(_pr, "reason", "PARSER_REJECTION"),
+                        "detail": "parser rejected an XBRL fact",
+                        "context_ref": getattr(_pr, "context_ref", None),
+                        "accession": accession,
+                        "path": path,
+                        "taxonomy": getattr(_pr, "taxonomy", None),
+                        "tag": getattr(_pr, "tag", None),
+                    }
+                    doc_rejections.append(rej_item)
+                    eps_xbrl_errors.append(rej_item)
+
+                form = item.get("form")
                 recs = eps_fact_records_from_xbrl_document(
                     document,
                     accession=accession,
@@ -3006,40 +3137,51 @@ def run_st_eva(
                     fiscal_period=item.get("fiscal_period"),
                     assurance_status=item.get("assurance_status") or "UNKNOWN",
                     source_url=item.get("source_url"),
-                    expected_cik=expected_cik,
+                    expected_cik=resolved_target_cik,
                     rejections=doc_rejections,
                 )
+                for r in doc_rejections:
+                    if r not in eps_xbrl_errors:
+                        eps_xbrl_errors.append(r)
+
+                rejection_codes = {r.get("reason_code") for r in doc_rejections if isinstance(r, dict)}
+                if recs:
+                    eps_xbrl_records.extend(recs)
+                    if doc_rejections:
+                        final_status = "ACCEPTED_WITH_REJECTIONS"
+                    else:
+                        final_status = "ACCEPTED"
+                else:
+                    if rejection_codes & identity_reject_codes:
+                        final_status = "IDENTITY_REJECTED"
+                    elif rejection_codes & metadata_reject_codes:
+                        final_status = "METADATA_REJECTED"
+                    else:
+                        final_status = "NO_QUALIFYING_EPS_FACTS"
+                        if not doc_rejections:
+                            no_facts_rej = {
+                                "reason_code": "NO_QUALIFYING_EPS_FACTS",
+                                "detail": f"document {path} produced no qualifying EPS fact",
+                                "context_ref": None,
+                                "accession": accession,
+                                "path": path,
+                            }
+                            eps_xbrl_errors.append(no_facts_rej)
+                            doc_rejections.append(no_facts_rej)
+
                 eps_xbrl_document_results.append(
                     {
                         "path": path,
-                        "accession": item.get("accession"),
+                        "accession": accession,
+                        "record_count": len(recs),
                         "records": len(recs),
-                        "rejections": list(doc_rejections) + [r for r in (parser_rejections if False else [])],
+                        "canonical_cik": resolved_target_cik,
                         "identity_source": identity_source,
-                        "final_status": "ACCEPTED" if recs else "REJECTED",
+                        "verification_status": verification_status,
+                        "final_status": final_status,
+                        "rejections": list(doc_rejections),
                     }
                 )
-                eps_xbrl_errors.extend(doc_rejections)
-                if not recs and not doc_rejections:
-                    eps_xbrl_errors.append(
-                        {
-                            "reason_code": "NO_QUALIFYING_EPS_FACTS",
-                            "detail": f"document {path} produced no qualifying EPS fact",
-                            "context_ref": None,
-                        }
-                    )
-                eps_xbrl_records.extend(recs)
-            except OSError as exc:
-                eps_xbrl_errors.append(
-                    {
-                        "reason_code": "DOCUMENT_UNREADABLE",
-                        "detail": str(exc),
-                        "accession": item.get("accession"),
-                        "context_ref": None,
-                        "path": path,
-                    }
-                )
-                continue
 
     reverse_requirements = _build_reverse_requirements(
         data,
@@ -3084,7 +3226,10 @@ def run_st_eva(
             "documents": len(doc_inputs),
             "document_results": list(eps_xbrl_document_results),
             "errors": list(eps_xbrl_errors),
+            "canonical_cik": resolved_target_cik if doc_inputs else None,
             "identity_source": identity_source if doc_inputs else None,
+            "verification_status": verification_status if doc_inputs else None,
+            "identity_conflict": identity_conflict if doc_inputs else False,
         }
 
     if context_path is not None:
@@ -6907,8 +7052,8 @@ def _resolve_target_identity(ticker: Optional[str], explicit: Optional[str]) -> 
     # Explicit CIK is only a manual backstop when ticker resolution failed.
     if canonical_cik is None and explicit is not None and str(explicit).strip():
         digits = "".join(ch for ch in str(explicit) if ch.isdigit())
-        if len(digits) == 10:
-            canonical_cik = digits
+        if digits and len(digits) <= 10:
+            canonical_cik = digits.zfill(10)
             identity_source = "USER_SUPPLIED"
             verification_status = "USER_SUPPLIED"
 
@@ -6916,7 +7061,10 @@ def _resolve_target_identity(ticker: Optional[str], explicit: Optional[str]) -> 
     conflict = False
     if canonical_cik is not None and explicit is not None and str(explicit).strip():
         explicit_digits = "".join(ch for ch in str(explicit) if ch.isdigit())
-        if len(explicit_digits) == 10 and explicit_digits != canonical_cik:
+        if explicit_digits and len(explicit_digits) <= 10:
+            if explicit_digits.zfill(10) != canonical_cik:
+                conflict = True
+        else:
             conflict = True
 
     return {
@@ -6958,7 +7106,7 @@ def _cli_eps_xbrl_documents(args: Any) -> Optional[List[Dict[str, Any]]]:
                 {
                     "path": path,
                     "accession": getattr(args, "eps_xbrl_accession", None),
-                    "form": getattr(args, "eps_xbrl_form", None) or "10-K",
+                    "form": getattr(args, "eps_xbrl_form", None),
                     "filed": getattr(args, "eps_xbrl_filed", None),
                     "fiscal_year": getattr(args, "eps_xbrl_fiscal_year", None),
                     "fiscal_period": getattr(args, "eps_xbrl_fiscal_period", None),

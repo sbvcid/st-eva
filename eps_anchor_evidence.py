@@ -238,6 +238,8 @@ class EpsFactRecord:
     derived_status: str = "DIRECT"
     derivation_description: str = ""
     share_class_scope: str = SHARE_CLASS_SCOPE_UNKNOWN
+    taxonomy: Optional[str] = None
+    concept_local_name: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.raw_value is None:
@@ -246,6 +248,8 @@ class EpsFactRecord:
             object.__setattr__(self, "normalized_value", self.value)
         if not self.derivation_description:
             object.__setattr__(self, "derivation_description", "")
+        if self.concept_local_name is None:
+            object.__setattr__(self, "concept_local_name", self.concept_qname.rsplit(":", 1)[-1] if self.concept_qname else "")
 
     @property
     def derivation(self) -> str:
@@ -291,6 +295,8 @@ class EpsFactRecord:
             "derived_status": self.derived_status,
             "derivation_description": self.derivation_description,
             "share_class_scope": self.share_class_scope,
+            "taxonomy": self.taxonomy,
+            "concept_local_name": self.concept_local_name,
             "concept": SEC_EPS_CONCEPT,
             "gaap_basis": GAAP_BASIS_DILUTED,
             "source_url": self.source_url,
@@ -420,8 +426,11 @@ def _safe_float(value: Any) -> Optional[float]:
 def _iso_date(value: Any) -> Optional[str]:
     if not isinstance(value, str) or not value:
         return None
+    text = value.strip()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+        return None
     try:
-        return datetime.date.fromisoformat(value.strip()).isoformat()
+        return datetime.date.fromisoformat(text).isoformat()
     except ValueError:
         return None
 
@@ -1048,26 +1057,25 @@ def eps_fact_records_from_xbrl_document(
         _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
 
     # Point-in-time availability: values must be parseable, not merely present.
-    pit_ok = False
+    pit_valid = True
     filed_ok = False
     acceptance_ok = False
     if filed is not None:
         if _iso_date(filed) is not None:
             filed_ok = True
         else:
+            pit_valid = False
             _reject("POINT_IN_TIME_UNPARSEABLE", f"filed {filed!r} is not a valid ISO date", None)
     if acceptance_datetime is not None:
         if _iso_instant(acceptance_datetime) is not None:
             acceptance_ok = True
         else:
+            pit_valid = False
             _reject("POINT_IN_TIME_UNPARSEABLE", f"acceptance_datetime {acceptance_datetime!r} is not a timezone-aware instant", None)
-    if filed_ok or acceptance_ok:
-        pit_ok = True
-    else:
-        if filed is None and acceptance_datetime is None:
-            _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
-        else:
-            _reject("POINT_IN_TIME_UNPARSEABLE", "no parseable point-in-time value", None)
+    if filed is None and acceptance_datetime is None:
+        pit_valid = False
+        _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
+    pit_ok = pit_valid and (filed_ok or acceptance_ok)
 
     # If core metadata invalid, do not promote any fact.
     if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
@@ -1146,11 +1154,13 @@ def eps_fact_records_from_xbrl_document(
             continue
         try:
             from sec_provider import xbrl_unit_to_contract_unit
-            if xbrl_unit_to_contract_unit(unit_str) != "per_share":
-                _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not per_share", context_ref)
-                continue
-        except Exception:
-            pass
+            contract_unit = xbrl_unit_to_contract_unit(unit_str)
+        except Exception as exc:
+            _reject("UNIT_INVALID", f"unit {unit_str!r} validation error: {exc}", context_ref)
+            continue
+        if contract_unit != "per_share":
+            _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not per_share", context_ref)
+            continue
 
         available_at, basis = _availability_from(acceptance_datetime, filed)
         records.append(
@@ -1180,195 +1190,8 @@ def eps_fact_records_from_xbrl_document(
                 derived_status="DIRECT",
                 derivation_description="",
                 share_class_scope=scope,
-            )
-        )
-
-    return records
-
-    # Validate accession format and CIK part.
-    accession_value = str(accession or "").strip()
-    accession_ok = True
-    if not accession_value or accession_value.lower() in ("none", "null"):
-        accession_ok = False
-        _reject("ACCESSION_MISSING", "accession is required", None)
-    else:
-        acc_match = re.match(r"^(\d{10})-(\d{2})-(\d{6})$", accession_value)
-        if not acc_match:
-            accession_ok = False
-            _reject("ACCESSION_INVALID", f"accession {accession_value!r} does not match SEC format", None)
-        else:
-            acc_cik = acc_match.group(1)
-            if acc_cik != normalized_target:
-                accession_ok = False
-                _reject("ACCESSION_CIK_MISMATCH", f"accession CIK {acc_cik} != target {normalized_target}", None)
-
-    # Validate form (no implicit 10-K default).
-    form_value = str(form or "").strip()
-    supported_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A"}
-    if not form_value:
-        _reject("FORM_MISSING", "form is required", None)
-        form_ok = False
-    elif form_value not in supported_forms:
-        _reject("FORM_UNSUPPORTED", f"form {form_value!r} is not supported", None)
-        form_ok = False
-    else:
-        form_ok = True
-
-    # Validate fiscal year.
-    fiscal_year_ok = True
-    try:
-        fy_int = int(fiscal_year)
-    except (TypeError, ValueError):
-        fy_int = None
-        fiscal_year_ok = False
-        _reject("FISCAL_YEAR_MISSING", "fiscal_year must be a valid integer", None)
-
-    # Validate fiscal period and compatibility with form.
-    fiscal_period_value = str(fiscal_period).strip() if fiscal_period is not None else ""
-    fiscal_period_ok = True
-    if not fiscal_period_value:
-        fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_MISSING", "fiscal_period is required", None)
-    elif form_value in ("10-K", "10-K/A") and fiscal_period_value != "FY":
-        fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
-    elif form_value in ("10-Q", "10-Q/A") and fiscal_period_value not in ("Q1", "Q2", "Q3"):
-        fiscal_period_ok = False
-        _reject("FISCAL_PERIOD_INCOMPATIBLE", f"fiscal_period {fiscal_period_value} incompatible with form {form_value}", None)
-
-    # Point-in-time availability: values must be parseable, not merely present.
-    pit_ok = False
-    filed_ok = False
-    acceptance_ok = False
-    if filed is not None:
-        if _iso_date(filed) is not None:
-            filed_ok = True
-        else:
-            _reject("POINT_IN_TIME_UNPARSEABLE", f"filed {filed!r} is not a valid ISO date", None)
-    if acceptance_datetime is not None:
-        if _iso_instant(acceptance_datetime) is not None:
-            acceptance_ok = True
-        else:
-            _reject("POINT_IN_TIME_UNPARSEABLE", f"acceptance_datetime {acceptance_datetime!r} is not a timezone-aware instant", None)
-    if filed_ok or acceptance_ok:
-        pit_ok = True
-    else:
-        if filed is None and acceptance_datetime is None:
-            _reject("POINT_IN_TIME_MISSING", "filed or acceptance_datetime is required", None)
-        else:
-            _reject("POINT_IN_TIME_UNPARSEABLE", "no parseable point-in-time value", None)
-
-    # If core metadata invalid, do not promote any fact.
-    if not (accession_ok and form_ok and fiscal_year_ok and fiscal_period_ok and pit_ok):
-        return records
-
-    for fact in facts:
-        tag = str(getattr(fact, "tag", "") or "")
-        taxonomy = str(getattr(fact, "taxonomy", "") or "")
-        if tag != "EarningsPerShareDiluted":
-            continue
-        # Strict US-GAAP namespace validation.
-        tax_lower = taxonomy.lower()
-        if not (tax_lower.startswith("http://fasb.org/us-gaap/") or tax_lower.startswith("https://fasb.org/us-gaap/")):
-            _reject("TAXONOMY_NOT_US_GAAP", f"taxonomy {taxonomy!r} is not a US-GAAP namespace", getattr(fact, "context_ref", None))
-            continue
-        # concept_qname consistency check (do not trust caller's value for identity).
-        concept_local = str(concept_qname).rsplit(":", 1)[-1]
-        if concept_local and concept_local != tag:
-            _reject("CONCEPT_QNAME_MISMATCH", f"concept_qname {concept_qname!r} != {tag}", getattr(fact, "context_ref", None))
-            continue
-        context_ref = getattr(fact, "context_ref", None)
-        if not context_ref or context_ref not in contexts:
-            _reject("CONTEXT_UNRESOLVED", f"context {context_ref} unresolved", context_ref)
-            continue
-        ctx = contexts[context_ref]
-        entity_scheme = getattr(ctx, "entity_scheme", None)
-        if str(entity_scheme or "").strip() != "http://www.sec.gov/CIK":
-            _reject("ENTITY_SCHEME_INVALID", f"context {context_ref} scheme {entity_scheme!r} is not the SEC CIK scheme", context_ref)
-            continue
-        entity_identifier = getattr(ctx, "entity_identifier", None)
-        entity_text = str(entity_identifier or "").strip()
-        if not re.fullmatch(r"\d{10}", entity_text):
-            _reject("ENTITY_IDENTIFIER_INVALID", f"context {context_ref} identifier {entity_identifier!r} is not a 10-digit CIK", context_ref)
-            continue
-        if entity_text != normalized_target:
-            _reject("ISSUER_IDENTITY_MISMATCH", f"context {context_ref} entity {entity_text} != target {normalized_target}", context_ref)
-            continue
-        # Accession CIK consistency with context issuer.
-        # Accession CIK is validated against the target above.
-
-        period_start = getattr(ctx, "period_start", None)
-        period_end = getattr(ctx, "period_end", None)
-        if not period_end:
-            _reject("PERIOD_MISSING", f"context {context_ref} has no period end", context_ref)
-            continue
-        value = _safe_float(getattr(fact, "resolved_value", None))
-        if value is None:
-            _reject("VALUE_NOT_NUMERIC", f"fact {context_ref} value not numeric", context_ref)
-            continue
-        dimensions = getattr(ctx, "dimensions", ()) or ()
-        if not isinstance(dimensions, (list, tuple)):
-            dimensions = ()
-        dimensions = tuple(dimensions)
-        scope = share_class_scope_from_dimensions(dimensions)
-        decimals = getattr(fact, "decimals", None)
-        # Resolve unit spelling.
-        unit_ref = getattr(fact, "unit_ref", None)
-        unit_str = "UNKNOWN"
-        try:
-            unit_obj = units.get(unit_ref) if isinstance(units, dict) else None
-            if unit_obj is not None:
-                spelling = None
-                try:
-                    from sec_xbrl_facts import unit_spelling
-                    spelling = unit_spelling(unit_obj)
-                except Exception:
-                    spelling = None
-                if spelling:
-                    unit_str = spelling
-                elif getattr(unit_obj, "measures", None):
-                    unit_str = "/".join(str(m) for m in unit_obj.measures)
-        except Exception:
-            unit_str = str(unit_ref or "UNKNOWN")
-        if unit_str not in SEC_EPS_UNITS:
-            _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not a per-share unit", context_ref)
-            continue
-        try:
-            from sec_provider import xbrl_unit_to_contract_unit
-            if xbrl_unit_to_contract_unit(unit_str) != "per_share":
-                _reject("UNIT_NOT_PER_SHARE", f"unit {unit_str!r} is not per_share", context_ref)
-                continue
-        except Exception:
-            pass
-
-        available_at, basis = _availability_from(acceptance_datetime, filed)
-        records.append(
-            EpsFactRecord(
-                period_start=_iso_date(period_start),
-                period_end=_iso_date(period_end) or str(period_end),
-                value=value,
-                form=form_value,
-                accession=accession_value,
-                filed=_iso_date(filed),
-                acceptance_datetime=_iso_instant(acceptance_datetime),
-                available_at=available_at,
-                available_at_basis=basis,
-                evidence_class="filed",
-                fiscal_year=fiscal_year if fiscal_year is not None else fy_int,
-                fiscal_period=fiscal_period_value,
-                source_url=source_url or (_document_url(cik, accession_value) if cik else None),
-                concept_qname=SEC_EPS_CONCEPT,
-                context_ref=context_ref,
-                dimensions=dimensions,
-                unit=unit_str,
-                decimals=decimals,
-                raw_value=value,
-                normalized_value=value,
-                source_kind="FILED_XBRL",
-                assurance_status=assurance_status,
-                derived_status="DIRECT",
-                derivation_description="",
-                share_class_scope=scope,
+                taxonomy=taxonomy,
+                concept_local_name=tag,
             )
         )
 
