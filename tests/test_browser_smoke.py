@@ -15,10 +15,22 @@ import threading
 import socket
 import tempfile
 import unittest
+from pathlib import Path
 import uvicorn
 from playwright.sync_api import sync_playwright
 
 from web.app import create_app
+
+
+ROOT = Path(__file__).resolve().parent.parent
+PRICES_EXIST = all(
+    (ROOT / "data" / "historical_pe" / ticker / "daily_prices.json").exists()
+    for ticker in ("AAPL", "MSFT")
+)
+PRICES_SKIP = (
+    "Historical P/E daily_prices.json excluded per C-1 / DATA-DELIVERY.md; "
+    "browser checks needing them are skipped in clean clones."
+)
 
 
 def find_free_port() -> int:
@@ -436,6 +448,7 @@ class TestBrowserSmoke(unittest.TestCase):
             context.close()
             browser.close()
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_browser_bilingual_switch(self):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -644,6 +657,7 @@ class TestBrowserSmoke(unittest.TestCase):
             context.close()
             browser.close()
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_desktop_matrix_audit_drawer_inspection(self):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -726,6 +740,7 @@ class TestBrowserSmoke(unittest.TestCase):
             browser.close()
 
 
+    @unittest.skipUnless(PRICES_EXIST, PRICES_SKIP)
     def test_desktop_matrix_shows_limitations_for_a_computed_matrix(self):
         """
         A computed matrix still carries the supporting inputs it could not use.

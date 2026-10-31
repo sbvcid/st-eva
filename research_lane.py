@@ -1338,7 +1338,17 @@ def _refused_result(
         capture_manifest={
             "capture_dir": str(config.capture_dir),
             "files": {
-                name: entry.get("sha256")
+                name: {
+                    "sha256": (
+                        entry.get("sha256") if isinstance(entry, dict) else entry
+                    ),
+                    "role": (
+                        entry.get("role") if isinstance(entry, dict) else None
+                    ),
+                    "source": (
+                        entry.get("source") if isinstance(entry, dict) else None
+                    ),
+                }
                 for name, entry in sorted((capture.get("files") or {}).items())
             },
             "unit_policy": dict(unit_record),

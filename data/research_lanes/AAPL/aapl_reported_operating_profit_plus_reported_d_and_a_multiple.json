@@ -603,6 +603,13 @@
   "observation_lineage": "The committed summary carries one line per evaluation date. The full lineage -- every operand, accession, element, period, unit and usable date -- is regenerated exactly by the lane from the capture, whose files are hashed in the capture manifest.",
   "observations": [
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "7c056f973256cbcc0a1d0f40f985a53046788375430dc63aa6b323f493f281fc",
       "denominator": null,
       "enterprise_value": null,
@@ -615,6 +622,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "16e6e5d5d69f90aa05f13aa42f1551f04fa6ddb9ce50286a8a5bdd8309522234",
       "denominator": null,
       "enterprise_value": null,
@@ -627,6 +641,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "8fc6bc8d3bcaa8d957cd6b529a382ac78626771473543273f454f4af5df49e3f",
       "denominator": null,
       "enterprise_value": null,
@@ -639,6 +660,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "474a92d47d56cfcd529cf7eb242b4b9f8e88ea427f108904795cff16d0682468",
       "denominator": null,
       "enterprise_value": null,
@@ -651,6 +679,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "b0e9d123bc1f2c21ca8776f05a23bc7c18d7cf31293e5cb7d5b2b65f019846c4",
       "denominator": null,
       "enterprise_value": null,
@@ -663,6 +698,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "d4c1c04f544977a9b03576a870022d4cecbfc3da0a341dd558aba1dd6ee2a9dd",
       "denominator": null,
       "enterprise_value": null,
@@ -675,6 +717,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "e6d7f64820ad410753f8e8f42a1e68a4e5ccd6b87c011e22aec6a7645fe6f7c4",
       "denominator": null,
       "enterprise_value": null,
@@ -687,6 +736,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "c0ee8248f0b7b4bd757f0b2654193a48369428e4cdb57511863da189d52d30b7",
       "denominator": null,
       "enterprise_value": null,
@@ -699,6 +755,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "80f269a14c7deb0a75aa4e6c8279b595f4865eb1e2a874d9a7bc1ee3dcfb0d10",
       "denominator": null,
       "enterprise_value": null,
@@ -711,6 +774,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "9a997e8b9274ffafdb0fbee89c68fb3250d93f762c5f1ccf25432040fe2d17ef",
       "denominator": null,
       "enterprise_value": null,
@@ -723,6 +793,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "97bae09763935a1de95a555f488fd1e167f1a6000866b72cb744e326673ae431",
       "denominator": null,
       "enterprise_value": null,
@@ -735,6 +812,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "ec03197f1348f4b301214a23b3b72fadd852661c14d4d058f78f48e8c71b7b6a",
       "denominator": null,
       "enterprise_value": null,
@@ -747,6 +831,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "1b07f20f66827e750b7176d4945dd9f5b09678acd3e424f3cb400c185ebbcdbe",
       "denominator": null,
       "enterprise_value": null,
@@ -759,6 +850,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "da45f262df35d3500e00bb518aba1b3e9235a9404fb529060504cb6e8199ef52",
       "denominator": null,
       "enterprise_value": null,
@@ -771,6 +869,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "de43e16d1c4e607fc2e60b7377b2610e6df6e5150d405446d12842514b07ab5e",
       "denominator": null,
       "enterprise_value": null,
@@ -783,6 +888,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "e9f0e786211b4667dbfadd82f78e5ba95340d08a340c6ff701612cf3dbf14f04",
       "denominator": null,
       "enterprise_value": null,
@@ -795,6 +907,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "a698b993ed906f7d8dd82aeabe45cd5add3532e5868ac334ffb4fc45669c81d0",
       "denominator": null,
       "enterprise_value": null,
@@ -807,6 +926,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "5e2d230a7561ca3d27313e8329b526c7f5573b798c933eb4c42a8d5721f28727",
       "denominator": null,
       "enterprise_value": null,
@@ -819,6 +945,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "12985c4cd5b92a181bbcb39c636aaa4137c9945972e70ae04fd9887c93ea90bd",
       "denominator": null,
       "enterprise_value": null,
@@ -831,6 +964,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "15502367486dbf6234e16f9dfb15c5f138349b3036768b5305781e5f809e5b08",
       "denominator": null,
       "enterprise_value": null,
@@ -843,6 +983,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "46a7bf71a9f88f6b449184a939ab3ce1a2a94b3ae2d88b6b27dcbdb5cb22b585",
       "denominator": null,
       "enterprise_value": null,
@@ -855,6 +1002,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "a65ce39a4051583fe96097f8597b23c0759b5143848be60bab766a225c9f7b44",
       "denominator": null,
       "enterprise_value": null,
@@ -867,6 +1021,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "1ae791011ae4211f9b3789e4ff594eff5ad2c57f119c9cf8396d4d27a391dc26",
       "denominator": null,
       "enterprise_value": null,
@@ -879,6 +1040,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "798486314ef2c8fcfc2590138c13954b81010b8d239fefe480df8e07322affc3",
       "denominator": null,
       "enterprise_value": null,
@@ -891,6 +1059,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "c5073feaa6f107b36000d7dba32b257e07fa1cb15f229aa53a264c0ba723f607",
       "denominator": null,
       "enterprise_value": null,
@@ -903,6 +1078,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "42cadea54ceeb67b72670dfb135fb5396d15bf8b9ee04927366d1fba5d599103",
       "denominator": null,
       "enterprise_value": null,
@@ -915,6 +1097,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "1fdd7990c2a3ae36dccf5548924e4b527f40fd56f16faecb97bd7bfb580dfc7c",
       "denominator": null,
       "enterprise_value": null,
@@ -927,6 +1116,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "010b06f3fe64228085181c2ca7a24dcea0908ffcfbe12d2abfb57198c98b046b",
       "denominator": null,
       "enterprise_value": null,
@@ -939,6 +1135,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "247dd819261556f20abf076fef17a56c896c89d786b4bf590db4de8be905ba75",
       "denominator": null,
       "enterprise_value": null,
@@ -951,6 +1154,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "ead0d9c792f3040b77ef90c602a6334f0ecc8b14f560a069ac80ad4c8c5acd24",
       "denominator": null,
       "enterprise_value": null,
@@ -963,6 +1173,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "351f0714fe1f65b1b549150094bcdca51e3f1d85fccb7ce7370b71815b0ee761",
       "denominator": null,
       "enterprise_value": null,
@@ -975,6 +1192,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "c62ea5babda50bd3ea1e3de5cde6ee8b76ab341512f8d4344e1542b4fac397a7",
       "denominator": null,
       "enterprise_value": null,
@@ -987,6 +1211,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "2c143a9740dbf1c7800b278160cce6e59ca4ffd16197e06ac9c9e38fed3396a8",
       "denominator": null,
       "enterprise_value": null,
@@ -999,6 +1230,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "91dc89105bc605631e10abdabeb0fdc167e777f74cad8f58aeb677e19fc734f3",
       "denominator": null,
       "enterprise_value": null,
@@ -1011,6 +1249,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "35e9b2856830cb0a4d74bfd036b5652dd0bdd5ffb6b6aa2a75425e37d54b555d",
       "denominator": null,
       "enterprise_value": null,
@@ -1023,6 +1268,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "ab11c08da048bec9403dad9071af21ab5d80f07a141241c989af76c9a7643a95",
       "denominator": null,
       "enterprise_value": null,
@@ -1035,6 +1287,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "26669bf90e5dcd47ea8d986dde1e11851e19f567e8bb06409b5ba73606fd793f",
       "denominator": null,
       "enterprise_value": null,
@@ -1047,6 +1306,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "ab794d73063a977b03cd308159babc9451fe0efb5c14704398f8efc0ae5307b8",
       "denominator": null,
       "enterprise_value": null,
@@ -1059,6 +1325,13 @@
       "value": null
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "c9dd11500ceac0adb7ba7f8737840c5b295d1810041177d675f880b9164053ca",
       "denominator": 76545000000.0,
       "enterprise_value": null,
@@ -1071,6 +1344,13 @@
       "value": 12.305607
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "441595ca6660ce3adaea3c921f2ffd2c703ba96a7096af0aed428548ee613ceb",
       "denominator": 76477000000.0,
       "enterprise_value": null,
@@ -1083,6 +1363,13 @@
       "value": 14.452798
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "20a3c8a0e4a25ba680d520c1fade6a102116ea0057eaf41fc37ba9767143f0c0",
       "denominator": 78121000000.0,
       "enterprise_value": null,
@@ -1095,6 +1382,13 @@
       "value": 18.165963
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "ae1fb8780566b58c0c9833354da84f1ee56f304727f653447504d440e85587b4",
       "denominator": 77305000000.0,
       "enterprise_value": null,
@@ -1107,6 +1401,13 @@
       "value": 16.20757
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "aaefde67888d396b5decfad51cec0aff88bb1d135532493128baaf96cb66d534",
       "denominator": 78671000000.0,
       "enterprise_value": null,
@@ -1119,6 +1420,13 @@
       "value": 23.100195
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "daa577e9c8fd8136527065fb894d6d0cce3d5a0b009ab9c90af6475ebed9a45e",
       "denominator": 77344000000.0,
       "enterprise_value": null,
@@ -1131,6 +1439,13 @@
       "value": 23.929667
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "d14e3c1babf192a7fbab038e2dc3355ffaa0ea1b871ccede75e589db22e6d9f2",
       "denominator": 85159000000.0,
       "enterprise_value": null,
@@ -1143,6 +1458,13 @@
       "value": 27.025682
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "fe20cb82002cdb6cd1bc609ec0ca31f2f2d4a95592415a6ecaf4a92f53883b67",
       "denominator": 99820000000.0,
       "enterprise_value": null,
@@ -1155,6 +1477,13 @@
       "value": 22.314817
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "8c3aa719b6295ed0612c38c3214dc1e4981da9bd5fb4617ecc40efae5c249929",
       "denominator": 110935000000.0,
       "enterprise_value": null,
@@ -1167,6 +1496,13 @@
       "value": 21.603132
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "22c50766feadeedf65dd55cadd4c9d96eec684036a179f005a5a8c72a46adefd",
       "denominator": 120233000000.0,
       "enterprise_value": null,
@@ -1179,6 +1515,13 @@
       "value": 20.440963
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "190fa94913cec68f485c21602cd01e8bba55e8dc2f7071a018ef66c409fb87a6",
       "denominator": 128218000000.0,
       "enterprise_value": null,
@@ -1191,6 +1534,13 @@
       "value": 21.679408
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "5676ee9e9f52f67b97fcca84f8f1831d1bf2f006cd710b297879689a5b168445",
       "denominator": 130634000000.0,
       "enterprise_value": null,
@@ -1203,6 +1553,13 @@
       "value": 19.532387
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "20701ae7391890a0a10f17cf5c7e95ffc859d0756925307516b5d6ad006b39d1",
       "denominator": 129557000000.0,
       "enterprise_value": null,
@@ -1215,6 +1572,13 @@
       "value": 20.15837
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "d2088b654d708e301586b092a6f86226f86b13afd2fdb8e824c066b87be73855",
       "denominator": 130541000000.0,
       "enterprise_value": null,
@@ -1227,6 +1591,13 @@
       "value": 18.978944
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "a951702b0ee9e9462ba8057e36774ddc92c95074780fac9e391e206142420f09",
       "denominator": 125288000000.0,
       "enterprise_value": null,
@@ -1239,6 +1610,13 @@
       "value": 19.510972
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "5c6e4ff9c2ad5d4d1041b887b8a8c32f7c43fa644e0bb26f3e7933beb855157d",
       "denominator": 123788000000.0,
       "enterprise_value": null,
@@ -1251,6 +1629,13 @@
       "value": 22.054083
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "75beb6f0d1bf1efcc0aeb03150ab118911f1f658e50509e392235ab3c3fe106f",
       "denominator": 123957000000.0,
       "enterprise_value": null,
@@ -1263,6 +1648,13 @@
       "value": 22.953717
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "91b2056a35c67ab2e0535e571da6c54cabcdeb7816d2c3602030e6108ec12421",
       "denominator": 125820000000.0,
       "enterprise_value": null,
@@ -1275,6 +1667,13 @@
       "value": 21.835906
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "252aa848ccccd00ae850f9d4c79af8c822082ea0d179719d1bcf6d75b1b3e0d8",
       "denominator": 130109000000.0,
       "enterprise_value": null,
@@ -1287,6 +1686,13 @@
       "value": 22.057456
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "8ecb5b04facb2324bbf28512184bfa8069e32c8bec8cc3ee85207d11836a51e3",
       "denominator": 129629000000.0,
       "enterprise_value": null,
@@ -1299,6 +1705,13 @@
       "value": 21.692399
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "d72b2e9a07a9911cc5fc66adcea9d287504809864a2fee60365bc7cde4562f03",
       "denominator": 131781000000.0,
       "enterprise_value": null,
@@ -1311,6 +1724,13 @@
       "value": 25.366188
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "3cc82cab859030114a4376149e4ed124ebe23534321f7e21ee647cbf38c6a6bc",
       "denominator": 134661000000.0,
       "enterprise_value": null,
@@ -1323,6 +1743,13 @@
       "value": 25.021856
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "5ca5912266af96319e1cc8dedd3899056e944007efe18668736491c0351db62d",
       "denominator": 137352000000.0,
       "enterprise_value": null,
@@ -1335,6 +1762,13 @@
       "value": 25.811122
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "8281ae25a427a516068b00b05641821c6178fd37ae37e6a06333482e5030dc08",
       "denominator": 138866000000.0,
       "enterprise_value": null,
@@ -1347,6 +1781,13 @@
       "value": 22.086557
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "501741ab90b16c516082999e4afb6c220f4c25c321c119e77f71b886a6980bb9",
       "denominator": 141696000000.0,
       "enterprise_value": null,
@@ -1359,6 +1800,13 @@
       "value": 21.196069
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "836ba7f8b23a7a298f6fa0e64545f7331939c962e7cd667217921fb5aa4e3708",
       "denominator": 144748000000.0,
       "enterprise_value": null,
@@ -1371,6 +1819,13 @@
       "value": 27.600261
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "27d9057bd7f8cceeac67f2de155084e26a458b06d160a5dd3d260a2e4e854960",
       "denominator": 152902000000.0,
       "enterprise_value": null,
@@ -1383,6 +1838,13 @@
       "value": 24.914404
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "899b0d1599480c8956844c53f4d8329f0ea7ba33c8f0f68c455c0ec2bad9dee6",
       "denominator": 159976000000.0,
       "enterprise_value": null,
@@ -1395,6 +1857,13 @@
       "value": 25.719582
     },
     {
+      "bridge": {
+        "basis_breaks": [],
+        "complete": false,
+        "components": {},
+        "components_absent": [],
+        "policy": "Every filed balance-sheet component must be knowable at the evaluation date and must describe the same balance-sheet date. The bridge is never completed by omission, substitution or zero-fill."
+      },
       "content_hash": "45f4222dea1f8af7c53a9a81a1aa86ebf7009cc8793ceb2badf8012971fbd481",
       "denominator": 167959000000.0,
       "enterprise_value": null,

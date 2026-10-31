@@ -4,16 +4,106 @@
   "capture_manifest": {
     "capture_dir": "C:\\git\\st-eva\\data\\research_multiples\\MSFT",
     "files": {
-      "cash_concept.json": "816aa78abc264d0b79102113e7f833a09e29f7f34a87c6ad110a4e0d1ab82e9b",
-      "commercial_paper_concept.json": "bc08e80a9f8cad85287a54e4b1ee0e0a6189ed294c135acf47679f4df5e11877",
-      "daily_prices.json": "90f3e7fd5f85386c03a0a236a313cd60ca810d0e0720f451779da0b654ff872a",
-      "filing_acceptance_evidence.json": "3a994a5e44c0ad46901761d92d7c6b9d3e24b24a1e38b9d3ab6ffc8b49f0d704",
-      "long_term_debt_current_concept.json": "54054eb59985f1f3828fd46c462a0dcf3460fc32dd56992c4ee5d80730e0dde0",
-      "long_term_debt_noncurrent_concept.json": "1bfd1971caca690f3d1381a7b58c22cbb9eee098b0c13a3ad277dd748ecbaa65",
-      "marketable_securities_current_concept.json": "b97c3139d92c84d4d8a0cab29be6fd3b6f3751af0e8abdaff0c1661c80460eb4",
-      "operating_income_concept.json": "83d295e09ae391db4ebfe3cb98fcad02d07495b2a1fe1dd78050666fa69c7b1b",
-      "revenue_concept.json": "d305a1d8e6d0925105ce23ec48597f61a08a7f0b3640d94702dd10d429ccc745",
-      "shares_outstanding_concept.json": "654ee4b79b5971a5954ec534e23fa1a62fe692482060d7e1aa9c0fe42a71f0d1"
+      "cash_concept.json": {
+        "role": "cash",
+        "sha256": "816aa78abc264d0b79102113e7f833a09e29f7f34a87c6ad110a4e0d1ab82e9b",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "commercial_paper_concept.json": {
+        "role": "commercial_paper",
+        "sha256": "bc08e80a9f8cad85287a54e4b1ee0e0a6189ed294c135acf47679f4df5e11877",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "daily_prices.json": {
+        "role": "prices",
+        "sha256": "90f3e7fd5f85386c03a0a236a313cd60ca810d0e0720f451779da0b654ff872a",
+        "source": {
+          "note": "The provider's close series reflects later split events. The lane restores the as-traded close from the split events in this payload before it pairs a price with a share count.",
+          "retrieval": "one daily-granularity chart request for the issuer's ticker; the payload is stored verbatim, including its split events",
+          "source_document_sha256": "90f3e7fd5f85386c03a0a236a313cd60ca810d0e0720f451779da0b654ff872a",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?period1=1262304000&period2=1790000000&interval=1d&events=div%2Csplit"
+        }
+      },
+      "filing_acceptance_evidence.json": {
+        "role": "acceptance index",
+        "sha256": "3a994a5e44c0ad46901761d92d7c6b9d3e24b24a1e38b9d3ab6ffc8b49f0d704",
+        "source": {
+          "note": "The acceptance datetime decides when a filing's facts first become knowable, which is the point-in-time rule the lane applies.",
+          "retrieval": "one request per periodic filing for the filing's SGML header; the acceptance datetime is read from the header's ACCEPTANCE-DATETIME field, which is America/New_York local time and carries the offset the date has",
+          "source_document_sha256": null,
+          "url": "https://www.sec.gov/Archives/edgar/data/<cik>/<accession>/<accession>-index-headers.html"
+        }
+      },
+      "long_term_debt_current_concept.json": {
+        "role": "long_term_debt_current",
+        "sha256": "54054eb59985f1f3828fd46c462a0dcf3460fc32dd56992c4ee5d80730e0dde0",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "long_term_debt_noncurrent_concept.json": {
+        "role": "long_term_debt_noncurrent",
+        "sha256": "1bfd1971caca690f3d1381a7b58c22cbb9eee098b0c13a3ad277dd748ecbaa65",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "marketable_securities_current_concept.json": {
+        "role": "marketable_securities_current",
+        "sha256": "b97c3139d92c84d4d8a0cab29be6fd3b6f3751af0e8abdaff0c1661c80460eb4",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "operating_income_concept.json": {
+        "role": "operating_income",
+        "sha256": "83d295e09ae391db4ebfe3cb98fcad02d07495b2a1fe1dd78050666fa69c7b1b",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "revenue_concept.json": {
+        "role": "revenue",
+        "sha256": "d305a1d8e6d0925105ce23ec48597f61a08a7f0b3640d94702dd10d429ccc745",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      },
+      "shares_outstanding_concept.json": {
+        "role": "shares_outstanding",
+        "sha256": "654ee4b79b5971a5954ec534e23fa1a62fe692482060d7e1aa9c0fe42a71f0d1",
+        "source": {
+          "note": "the element came from the companyfacts",
+          "retrieval": "the element's rows are taken from the filer's own XBRL facts, verbatim, and re-keyed to the companyconcept shape",
+          "source_document_sha256": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json"
+        }
+      }
     },
     "isolation": {
       "checked": "against archive.PRODUCTION_REFERENCE_BASES and investment_context.REFERENCE_SOURCES as they are in this repository, at run time",

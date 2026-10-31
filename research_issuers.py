@@ -463,6 +463,7 @@ def load_committed_research_lane(
                 market_cap=o.get("market_cap"),
                 enterprise_value=o.get("enterprise_value"),
                 denominator=denom_dict,
+                bridge=o.get("bridge") or {},
             )
         )
     return ResearchLaneResult(
@@ -640,6 +641,7 @@ def _summary_payload(result: ResearchLaneResult) -> Dict[str, Any]:
                 if observation.denominator
                 else None
             ),
+            "bridge": observation.bridge,
             "content_hash": observation.content_hash,
         }
         for observation in result.observations

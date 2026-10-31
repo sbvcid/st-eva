@@ -434,15 +434,23 @@ def _capture_identity(
         )
     files = manifest.get("files") or {}
     mismatches = []
+    def _entry_sha256(entry):
+        if isinstance(entry, dict):
+            return entry.get("sha256")
+        return entry
+    def _entry_role(entry):
+        if isinstance(entry, dict):
+            return entry.get("role")
+        return None
     for name, entry in sorted(files.items()):
         path = capture_dir / name
         if not path.exists():
-            if entry.get("role") == "prices" or name == "daily_prices.json":
+            if _entry_role(entry) == "prices" or name == "daily_prices.json":
                 continue
             mismatches.append(f"{name} is missing")
             continue
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        if digest != entry.get("sha256"):
+        if digest != _entry_sha256(entry):
             mismatches.append(f"{name} does not match its recorded SHA-256")
     if mismatches:
         raise ResearchCalculationError(
@@ -457,7 +465,7 @@ def _capture_identity(
         "issuer": manifest.get("issuer"),
         "capture_policy": manifest.get("capture_policy"),
         "files": {
-            name: {"sha256": entry.get("sha256"), "role": entry.get("role")}
+            name: {"sha256": _entry_sha256(entry), "role": _entry_role(entry)}
             for name, entry in sorted(files.items())
         },
     }
